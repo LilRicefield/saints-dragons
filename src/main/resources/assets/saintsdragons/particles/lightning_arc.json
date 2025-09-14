@@ -1,13 +1,13 @@
 {
   "textures": [
-    "lightningdragon:lightning_arc_0",
-    "lightningdragon:lightning_arc_1",
-    "lightningdragon:lightning_arc_2",
-    "lightningdragon:lightning_arc_3",
-    "lightningdragon:lightning_arc_4",
-    "lightningdragon:lightning_arc_5",
-    "lightningdragon:lightning_arc_6",
-    "lightningdragon:lightning_arc_7"
+    "saintsdragons:lightning_arc_0",
+    "saintsdragons:lightning_arc_1",
+    "saintsdragons:lightning_arc_2",
+    "saintsdragons:lightning_arc_3",
+    "saintsdragons:lightning_arc_4",
+    "saintsdragons:lightning_arc_5",
+    "saintsdragons:lightning_arc_6",
+    "saintsdragons:lightning_arc_7"
   ]
 }
 
