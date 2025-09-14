@@ -1,12 +1,12 @@
 {
   "textures": [
-    "lightningdragon:lightning_storm_0",
-    "lightningdragon:lightning_storm_1",
-    "lightningdragon:lightning_storm_2",
-    "lightningdragon:lightning_storm_3",
-    "lightningdragon:lightning_storm_4",
-    "lightningdragon:lightning_storm_5",
-    "lightningdragon:lightning_storm_6",
-    "lightningdragon:lightning_storm_7"
+    "saintsdragons:lightning_storm_0",
+    "saintsdragons:lightning_storm_1",
+    "saintsdragons:lightning_storm_2",
+    "saintsdragons:lightning_storm_3",
+    "saintsdragons:lightning_storm_4",
+    "saintsdragons:lightning_storm_5",
+    "saintsdragons:lightning_storm_6",
+    "saintsdragons:lightning_storm_7"
   ]
 }
