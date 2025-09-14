@@ -1,0 +1,63 @@
+{
+  "_comment": "Lightning Dragon Entity",
+  "entity.saintsdragons.lightning_dragon": "Lightning Dragon",
+
+  "_comment": "Items",
+  "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
+
+  "_comment": "Interaction Messages",
+  "message.saintsdragons.tamed": "%s has been tamed!",
+  "message.saintsdragons.already_tamed": "This Lightning Dragon is already tamed!",
+  "message.saintsdragons.not_owner": "You are not the owner of this Lightning Dragon!",
+  "message.saintsdragons.sit": "%s is now sitting",
+  "message.saintsdragons.stand": "%s is now following",
+  "message.saintsdragons.flying": "Lightning Dragon takes flight",
+  "message.saintsdragons.landing": "Lightning Dragon is landing",
+
+  "_comment": "Owner Command Action Bar",
+  "entity.saintsdragons.all.command_0": "%s is following",
+  "entity.saintsdragons.all.command_1": "%s is staying",
+  "entity.saintsdragons.all.command_2": "%s is wandering",
+
+  "_comment": "Subtitles for Sound Events",
+  "subtitles.saintsdragons.dragon.roar": "Lightning Dragon roars",
+  "subtitles.saintsdragons.dragon.growl": "Lightning Dragon growls",
+  "subtitles.saintsdragons.dragon.hurt": "Lightning Dragon hurts",
+  "subtitles.saintsdragons.dragon.death": "Lightning Dragon dies",
+  "subtitles.saintsdragons.dragon.fly": "Lightning Dragon flaps wings",
+  "subtitles.saintsdragons.dragon.land": "Lightning Dragon lands",
+  "subtitles.saintsdragons.dragon.takeoff": "Lightning Dragon takes off",
+  "subtitles.saintsdragons.dragon.step": "Lightning Dragon steps",
+  "subtitles.saintsdragons.dragon.breath": "Lightning Dragon breathes",
+  "subtitles.saintsdragons.dragon.dodge": "Lightning Dragon dodges",
+  "subtitles.saintsdragons.lightning.strike": "Lightning strikes",
+  "subtitles.saintsdragons.lightning.charge": "Lightning charges",
+
+  "_comment": "Death Messages",
+  "death.attack.lightning_dragon": "%1$s was electrocuted by %2$s",
+  "death.attack.lightning_dragon.item": "%1$s was electrocuted by %2$s using %3$s",
+
+  "_comment": "Tooltips and Descriptions",
+  "tooltip.saintsdragons.dragon_egg.line1": "Right-click to place",
+  "tooltip.saintsdragons.dragon_egg.line2": "Feed with salmons to tame",
+  "tooltip.saintsdragons.controls.line1": "Crouch + Right-click: Command",
+  "tooltip.saintsdragons.controls.line3": "Left-click while riding: Melee ability",
+  "tooltip.saintsdragons.controls.sleep": "Tamed dragons sleep near you at night",
+
+  "_comment": "Status Effects (if I add any later)",
+  "effect.saintsdragons.lightning_charged": "Lightning Charged",
+  "effect.saintsdragons.lightning_resistance": "Lightning Resistance",
+
+  "_comment": "Creative Tab (if I make one)",
+  "itemGroup.saintsdragons": "Lightning Dragon",
+
+  "_comment": "Dragon Riding Controls",
+  "key.categories.saintsdragons": "Lightning Dragon",
+  "key.saintsdragons.ascend": "Dragon Ascend",
+  "key.saintsdragons.descend": "Dragon Descend",
+  "key.saintsdragons.accelerate": "Dragon Sprint",
+  "key.saintsdragons.attack": "Melee Attack (Left Click)",
+  "key.saintsdragons.ability3": "Lightning Beam",
+  "key.saintsdragons.roar": "Dragon Roar",
+  "key.saintsdragons.summon_storm": "Summon Storm"
+}
