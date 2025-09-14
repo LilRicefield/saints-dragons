@@ -22,8 +22,8 @@ import java.util.WeakHashMap;
  */
 public class LightningBeamLayer extends GeoRenderLayer<LightningDragonEntity> {
     // Core textures: inner (crisp) + outer (soft)
-    private static final ResourceLocation INNER_TEX = ResourceLocation.fromNamespaceAndPath("lightningdragon", "textures/effects/lightning_beam_inner.png");
-    private static final ResourceLocation OUTER_TEX = ResourceLocation.fromNamespaceAndPath("lightningdragon", "textures/effects/lightning_beam_outer.png");
+    private static final ResourceLocation INNER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/lightning_beam_inner.png");
+    private static final ResourceLocation OUTER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/lightning_beam_outer.png");
     // Beam tuning constants - adjust these to change beam appearance
     private static final float BASE_BEAM_WIDTH = 0.1F;        // Base width of the beam
     private static final float OUTER_BEAM_BONUS = 0.05F;      // Extra width for outer glow layer
