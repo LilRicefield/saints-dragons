@@ -1,6 +1,6 @@
-Hi, I'm Leon. This sole Lightning Dragon mod is made with AI, and it is specifically Claude Sonnet 4.
+Hi, I'm Leon. This sole dragons mod is made with AI, and it is specifically Claude Sonnet 4.
 
-This is just a past-time project of mine. Took one look at Bob Mowzie's Naga and Alex's Ice & Fire: Dragons and fell in love with those. So I think to myself, "How about I make my own Lightning Dragon and make it dodge while using other abilities too?" Then came the birth of this project. You can say that this project is HEAVILY inspired by Mowzie's Mobs and Ice & Fire: Dragons. Shout out to the amazing, talented, and smart folks over there and check those mods out too.
+This is just a past-time project of mine. Took one look at Bob Mowzie's Naga and Alex's Ice & Fire: Dragons and fell in love with those. So I think to myself, "How about I make my own Lightning Dragon and make it dodge while using other abilities too?" Then came the birth of this project. You can say that this project is HEAVILY inspired by Mowzie's Mobs and Ice & Fire: Dragons. Shout out to the amazing, talented, and smart folks over there and check those mods out too. And maybe I'll make more in the future.
 
 Mowzie's Mobs: https://www.curseforge.com/minecraft/mc-mods/mowzies-mobs
 Ice & Fire: Dragons: https://www.curseforge.com/minecraft/mc-mods/ice-and-fire-dragons
