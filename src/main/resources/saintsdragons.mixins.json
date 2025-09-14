@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "package": "com.leon.saintsdragons.mixin",
+  "refmap": "saintsdragons.refmap.json",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [],
+  "client": [
+    "client.CameraMixin"
+  ],
+  "server": [
+  ],
+
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8"
+}
+
