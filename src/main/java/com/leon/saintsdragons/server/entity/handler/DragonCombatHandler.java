@@ -94,6 +94,13 @@ public class DragonCombatHandler {
     public void setAbilityCooldown(DragonAbilityType<?, ?> abilityType, int cooldownTicks) {
         abilityCooldowns.put(abilityType, cooldownTicks);
     }
+    
+    /**
+     * Get remaining cooldown ticks for a specific ability type
+     */
+    public int getCooldownTicks(DragonAbilityType<?, ?> abilityType) {
+        return abilityCooldowns.getOrDefault(abilityType, 0);
+    }
 
     public void tryUseAbility(DragonAbilityType<?, ?> abilityType) {
         // Enforce global and per-ability cooldowns

@@ -1952,8 +1952,12 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        // Lightning Dragon's primary attack is bite, with horn gore as secondary
-        return com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE;
+        // Lightning Dragon alternates between bite and horn gore attacks
+        // Use entity tick count to alternate between attacks (every 2 seconds)
+        boolean useHornGore = (tickCount / 40) % 2 == 1; // Switch every 2 seconds
+        return useHornGore ? 
+            com.leon.saintsdragons.common.registry.LightningDragonAbilities.HORN_GORE : 
+            com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE;
     }
 
     @Override
