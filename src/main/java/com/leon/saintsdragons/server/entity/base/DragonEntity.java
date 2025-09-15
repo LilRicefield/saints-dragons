@@ -5,6 +5,7 @@ package com.leon.saintsdragons.server.entity.base;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
+import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -40,6 +41,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     
     // Dragon ability system (lightweight base – no global cooldown here)
     private DragonAbility<?> activeAbility = null;
+    
+    // Sound handler for all dragons
+    protected DragonSoundHandler soundHandler;
     
     // Combat manager for handling abilities and cooldowns
     public final DragonCombatHandler combatManager;
@@ -136,6 +140,24 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     public boolean isDying() {
         return false;
+    }
+
+    /**
+     * Set the dragon's dying state
+     */
+    public void setDying(boolean dying) {
+        // Default implementation does nothing
+        // Subclasses should override this method
+    }
+
+    /**
+     * Get the dragon's sound handler
+     */
+    public DragonSoundHandler getSoundHandler() {
+        if (soundHandler == null) {
+            soundHandler = new DragonSoundHandler(this);
+        }
+        return soundHandler;
     }
 
     /**

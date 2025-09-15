@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.common.registry.BaseDragonAbilities;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.SpawnPlacements;
@@ -48,9 +49,10 @@ public class SaintsDragons {
         ModSounds.REGISTER.register(modBus);
         ModParticles.REGISTER.register(modBus);
 
-        // Force-load ability registry so static registrations (BITE, HORN_GORE, LIGHTNING_BEAM) occur
+        // Force-load ability registry so static registrations occur
         // This ensures AbilityRegistry knows about our abilities before any network-triggered use
-        @SuppressWarnings("unused") var _forceInit = ModAbilities.BITE;
+        @SuppressWarnings("unused") var _forceInitAbilities = ModAbilities.BITE;
+        @SuppressWarnings("unused") var _forceInitBase = BaseDragonAbilities.HURT;
 
         // Register event handlers
         modBus.addListener(this::onEntityAttributes);
