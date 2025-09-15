@@ -9,16 +9,15 @@ import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData
 import com.leon.saintsdragons.server.ai.goals.*;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
-import com.leon.saintsdragons.server.entity.controller.DragonPhysicsController;
+import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonPhysicsController;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.interfaces.DragonCombatCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
-import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
-import com.leon.saintsdragons.server.entity.controller.DragonFlightController;
+import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonFlightController;
 import com.leon.saintsdragons.server.entity.handler.DragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
-import com.leon.saintsdragons.server.entity.controller.DragonRiderController;
+import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonRiderController;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.util.DragonMathUtil;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -239,12 +238,12 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     public boolean usingAirNav = false;
 
     // ===== CONTROLLER INSTANCES =====
-    public final DragonFlightController flightController;
+    public final LightningDragonFlightController flightController;
     public final DragonInteractionHandler interactionHandler;
 
     // ===== SPECIALIZED HANDLER SYSTEMS =====
     private final DragonKeybindHandler keybindHandler;
-    private final DragonRiderController riderController;
+    private final LightningDragonRiderController riderController;
     private final DragonSoundHandler soundHandler;
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
@@ -270,7 +269,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     public float getHoveringFraction() {
         return animationController.hoveringFraction;
     }
-    private final DragonPhysicsController animationController = new DragonPhysicsController(this);
+    private final LightningDragonPhysicsController animationController = new LightningDragonPhysicsController(this);
 
     // Animation controller is internal-only; external integration goes via GeckoLib controllers.
 
@@ -303,12 +302,12 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.setPathfindingMalus(BlockPathTypes.FENCE, -1.0F);
 
         // Initialize controllers
-        this.flightController = new DragonFlightController(this);
+        this.flightController = new LightningDragonFlightController(this);
         this.interactionHandler = new DragonInteractionHandler(this);
 
         // Initialize specialized handler systems
         this.keybindHandler = new DragonKeybindHandler(this);
-        this.riderController = new DragonRiderController(this);
+        this.riderController = new LightningDragonRiderController(this);
         this.soundHandler = new DragonSoundHandler(this);
 
         // Desynchronize ambient system across instances to avoid synchronized vocals/animations

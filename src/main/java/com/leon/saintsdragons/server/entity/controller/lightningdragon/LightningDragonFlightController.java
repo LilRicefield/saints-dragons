@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.controller;
+package com.leon.saintsdragons.server.entity.controller.lightningdragon;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import net.minecraft.core.BlockPos;
@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
  * - Banking and pitch control
  * - Gliding and hovering behavior
  */
-public class DragonFlightController {
+public class LightningDragonFlightController {
     private final LightningDragonEntity dragon;
     private net.minecraft.core.BlockPos plannedLandingPos = null;
 
@@ -25,7 +25,7 @@ public class DragonFlightController {
     private static final int TAKEOFF_TIME_THRESHOLD = 30;
     private static final int LANDING_TIME_THRESHOLD = 40;
 
-    public DragonFlightController(LightningDragonEntity dragon) {
+    public LightningDragonFlightController(LightningDragonEntity dragon) {
         this.dragon = dragon;
     }
 
