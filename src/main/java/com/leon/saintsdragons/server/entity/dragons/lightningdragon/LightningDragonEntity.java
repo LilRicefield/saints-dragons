@@ -76,7 +76,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
     private int ownerDistanceCacheTime = -1;
-    private List<Projectile> cachedNearbyProjectiles = new ArrayList<>();
+    private List<Projectile> cachedNearbyProjectiles = new java.util.concurrent.CopyOnWriteArrayList<>();
     private int nearbyProjectilesCacheTime = -1;
     private int projectileCacheIntervalTicks = 3; // dynamic backoff (min 3)
     private int emptyProjectileScans = 0;
@@ -104,9 +104,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     public static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.lightning_dragon.landing");
 
     public static final RawAnimation DODGE = RawAnimation.begin().thenPlay("animation.lightning_dragon.dodge");
-
-    // ===== ABILITY SYSTEM =====
-    // TODO: Define new DragonAbilityType abilities here
 
     // ===== CONSTANTS =====
     public static final float MODEL_SCALE = 4.5f;
@@ -520,11 +517,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     public boolean isBeaming() { return this.entityData.get(DATA_BEAMING); }
     public void setBeaming(boolean beaming) {
         this.entityData.set(DATA_BEAMING, beaming);
-        if (beaming && level().isClientSide) {
-            // Initialize beam start position immediately to prevent drift on first frame
-            this.prevClientBeamStart = this.clientBeamStart;
-            this.clientBeamStart = getBeamStartPosition();
-        }
     }
 
     // (No client/server rider anchor fields; seat uses math-based head-space anchor)
@@ -532,8 +524,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // ===== BEAM END SYNC + CLIENT LERP =====
     private Vec3 prevClientBeamEnd = null;
     private Vec3 clientBeamEnd = null;
-    private Vec3 prevClientBeamStart = null;
-    private Vec3 clientBeamStart = null;
 
     public void setBeamEndPosition(@org.jetbrains.annotations.Nullable Vec3 pos) {
         if (pos == null) {
@@ -560,7 +550,8 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             Vec3 d = clientBeamEnd.subtract(prevClientBeamEnd);
             return prevClientBeamEnd.add(d.scale(partialTicks));
         }
-        return clientBeamEnd != null ? clientBeamEnd : getBeamEndPosition();
+        Vec3 serverPos = getBeamEndPosition();
+        return clientBeamEnd != null ? clientBeamEnd : (serverPos != null ? serverPos : Vec3.ZERO);
     }
 
     public void setBeamStartPosition(@org.jetbrains.annotations.Nullable Vec3 pos) {
@@ -691,7 +682,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             // Dragon is being ridden, ignore landing requests to maintain player control
             return;
         }
-        
+
         this.entityData.set(DATA_LANDING, landing);
         if (landing) {
             landingTimer = 0;
@@ -974,8 +965,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                             moveState = 2; // running-level velocity
                         } else if (speedSqr > 0.005) {
                             moveState = 1; // walking-level velocity
-                        } else {
-                            moveState = 0; // idle
                         }
                     }
                 } else {
@@ -990,8 +979,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                         moveState = 2; // run
                     } else if (velSqr > WALK_MIN) {
                         moveState = 1; // walk
-                    } else {
-                        moveState = 0; // idle
+
                     }
                 }
             }
@@ -1070,14 +1058,14 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                         double velSqr = getDeltaMovement().horizontalDistanceSqr();
                         final double WALK_MIN = 0.0008;
                         final double RUN_MIN  = 0.0200;
-                        if (velSqr > RUN_MIN) moveState = 2; else if (velSqr > WALK_MIN) moveState = 1; else moveState = 0;
+                        if (velSqr > RUN_MIN) moveState = 2; else if (velSqr > WALK_MIN) moveState = 1;
                     }
                 } else {
                     // Use horizontal velocity (matches HUD) for AI classification
                     double velSqr = getDeltaMovement().horizontalDistanceSqr();
                     final double WALK_MIN = 0.0008;
                     final double RUN_MIN  = 0.0200;
-                    if (velSqr > RUN_MIN) moveState = 2; else if (velSqr > WALK_MIN) moveState = 1; else moveState = 0;
+                    if (velSqr > RUN_MIN) moveState = 2; else if (velSqr > WALK_MIN) moveState = 1;
                 }
             }
             boolean changed = false;
@@ -1149,8 +1137,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             this.prevClientBeamEnd = this.clientBeamEnd;
             this.clientBeamEnd = getBeamEndPosition();
 
-            this.prevClientBeamStart = this.clientBeamStart;
-            this.clientBeamStart = getBeamStartPosition();
         }
         if (this.isRunning() && this.getDeltaMovement().horizontalDistanceSqr() < 0.01) {
             this.setRunning(false);
@@ -1397,7 +1383,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
         // Movement/idle
         // Unified sleep goal: high priority to preempt follow/wander, but calm() prevents overriding combat/aggro
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.DragonSleepGoal(this));
+        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.DragonSleepGoal(this)); // Higher priority than follow
         this.goalSelector.addGoal(1, new DragonFollowOwnerGoal(this));
         this.goalSelector.addGoal(2, new DragonGroundWanderGoal(this, 1.0, 60));
         this.goalSelector.addGoal(9, new DragonFlightGoal(this));
@@ -1412,7 +1398,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    public boolean hurt(DamageSource damageSource, float amount) {
+    public boolean hurt(@NotNull DamageSource damageSource, float amount) {
         // During dying sequence, ignore all damage except the final generic kill used by DieAbility
         if (isDying()) {
             if (damageSource.is(DamageTypes.GENERIC_KILL)) {
@@ -1436,8 +1422,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Store previous flying state to restore if being ridden
         boolean wasFlying = isFlying();
         boolean wasRidden = isVehicle();
-
-        // TODO: Trigger hurt ability with new Dragon ability system
 
         // Intercept lethal damage to play custom death ability first
         if (!level().isClientSide && !dying) {
@@ -1754,12 +1738,12 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         tag.putBoolean("UsingAirNav", usingAirNav);
         tag.putFloat("SitProgress", sitProgress);
         tag.putInt("RiderTakeoffTicks", riderTakeoffTicks);
-        
+
         // Save critical flight state variables that were missing
         tag.putLong("LastLandingGameTime", lastLandingGameTime);
         tag.putBoolean("LandingFlag", landingFlag);
         tag.putInt("LandingTimer", landingTimer);
-        
+
         // Save lock states
         tag.putInt("RiderControlLockTicks", riderControlLockTicks);
         tag.putInt("TakeoffLockTicks", takeoffLockTicks);
@@ -1781,7 +1765,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         tag.putInt("SleepAmbientCooldownTicks", Math.max(0, this.sleepAmbientCooldownTicks));
         tag.putInt("SleepReentryCooldownTicks", Math.max(0, this.sleepReentryCooldownTicks));
         tag.putInt("SleepCancelTicks", Math.max(0, this.sleepCancelTicks));
-        
+
         animationController.writeToNBT(tag);
     }
 
@@ -1798,12 +1782,12 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.sitProgress = tag.getFloat("SitProgress");
         this.prevSitProgress = this.sitProgress;
         this.riderTakeoffTicks = tag.contains("RiderTakeoffTicks") ? tag.getInt("RiderTakeoffTicks") : 0;
-        
+
         // Restore critical flight state variables that were missing
         this.lastLandingGameTime = tag.contains("LastLandingGameTime") ? tag.getLong("LastLandingGameTime") : Long.MIN_VALUE;
         this.landingFlag = tag.contains("LandingFlag") && tag.getBoolean("LandingFlag");
         this.landingTimer = tag.contains("LandingTimer") ? tag.getInt("LandingTimer") : 0;
-        
+
         // Restore lock states
         this.riderControlLockTicks = tag.contains("RiderControlLockTicks") ? tag.getInt("RiderControlLockTicks") : 0;
         this.takeoffLockTicks = tag.contains("TakeoffLockTicks") ? tag.getInt("TakeoffLockTicks") : 0;
@@ -1814,12 +1798,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Restore supercharge timer if present
         if (tag.contains("SuperchargeTicks")) {
             this.superchargeTicks = Math.max(0, tag.getInt("SuperchargeTicks"));
-            if (this.superchargeTicks > 0) {
-                // Ensure invulnerability state is consistent if it was set earlier elsewhere
-                // (No invuln implied by supercharge; leave as-is)
-            }
         }
-
         // Restore temporary invulnerability
         if (tag.contains("TempInvulnTicks")) {
             this.tempInvulnTicks = Math.max(0, tag.getInt("TempInvulnTicks"));
@@ -1836,7 +1815,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.sleepAmbientCooldownTicks = Math.max(0, tag.getInt("SleepAmbientCooldownTicks"));
         this.sleepReentryCooldownTicks = Math.max(0, tag.getInt("SleepReentryCooldownTicks"));
         this.sleepCancelTicks = Math.max(0, tag.getInt("SleepCancelTicks"));
-        
+
         animationController.readFromNBT(tag);
 
         if (this.usingAirNav) {
@@ -1850,7 +1829,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             this.postLoadAirStabilizeTicks = 40; // ~2 seconds of grace to receive rider inputs
             // Also treat as takeoff for a short while to apply upward force
             this.riderTakeoffTicks = Math.max(this.riderTakeoffTicks, 30);
-            
+
             // Ensure flight controller is properly reactivated for wild dragons
             if (!this.isTame() || this.getOwner() == null) {
                 // For wild dragons, restart flight controller to prevent drifting
@@ -2078,10 +2057,11 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // Cache frequently used calculations
     public double getCachedDistanceToOwner() {
         // Lower cache window for snappier follow responsiveness
-        if (tickCount - ownerDistanceCacheTime >= 3) {
+        int currentTick = tickCount;
+        if (currentTick - ownerDistanceCacheTime >= 3) {
             LivingEntity owner = getOwner();
             cachedOwnerDistance = owner != null ? distanceToSqr(owner) : Double.MAX_VALUE;
-            ownerDistanceCacheTime = tickCount;
+            ownerDistanceCacheTime = currentTick;
         }
         return cachedOwnerDistance;
     }
@@ -2107,18 +2087,14 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         return cachedNearbyProjectiles;
     }
     // DYNAMIC EYE HEIGHT SYSTEM
-    private float cachedEyeHeight = 0f; // Will be calculated dynamically from renderer
-
-    public void setCachedEyeHeight(float height) {
-        this.cachedEyeHeight = height;
-    }
+    // Will be calculated dynamically from renderer
 
     // While > 0, rider input is ignored to keep action animation coherent (e.g., roar)
     private int riderControlLockTicks = 0;
     public boolean areRiderControlsLocked() { return riderControlLockTicks > 0; }
     private void tickRiderControlLock() { if (riderControlLockTicks > 0) riderControlLockTicks--; }
     public void lockRiderControls(int ticks) { this.riderControlLockTicks = Math.max(this.riderControlLockTicks, Math.max(0, ticks)); }
-    
+
     // While > 0, only takeoff is locked (allows running/movement during roar)
     private int takeoffLockTicks = 0;
     public boolean isTakeoffLocked() { return takeoffLockTicks > 0; }
@@ -2126,7 +2102,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     private void tickTakeoffLock() { if (takeoffLockTicks > 0) takeoffLockTicks--; }
 
     // ===== RECENT AGGRO TRACKING (for roar lightning targeting) =====
-    private final java.util.Map<Integer, Long> recentAggroIds = new java.util.HashMap<>();
+    private final java.util.Map<Integer, Long> recentAggroIds = new java.util.concurrent.ConcurrentHashMap<>();
     private static final int AGGRO_TTL_TICKS = 200; // ~10s
 
     public void noteAggroFrom(net.minecraft.world.entity.LivingEntity target) {
@@ -2144,6 +2120,9 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             net.minecraft.world.entity.Entity ent = this.level().getEntity(e.getKey());
             if (ent instanceof net.minecraft.world.entity.LivingEntity le && le.isAlive()) {
                 out.add(le);
+            } else {
+                // Clean up dead/invalid entities
+                it.remove();
             }
         }
         return out;
@@ -2152,9 +2131,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     @Override
     public float getEyeHeight(@NotNull Pose pose) {
         // Always use dynamically calculated eye height when available
-        if (this.cachedEyeHeight > 0f) {
-            return this.cachedEyeHeight;
-        }
         EntityDimensions dimensions = getDimensions(pose);
         return dimensions.height * 0.6f;
     }
@@ -2162,9 +2138,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     @Override
     protected float getStandingEyeHeight(@NotNull Pose pose, @NotNull EntityDimensions dimensions) {
         // Always use cached value when available (both client and server need this)
-        if (this.cachedEyeHeight > 0f) {
-            return this.cachedEyeHeight;
-        }
         return dimensions.height * 0.6f;
     }
     // Cache horizontal flight speed - used in physics calculations
