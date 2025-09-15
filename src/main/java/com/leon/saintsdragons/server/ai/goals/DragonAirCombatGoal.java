@@ -157,10 +157,24 @@ public class DragonAirCombatGoal extends Goal {
 
     private void handleClimb(LivingEntity target) {
         double groundLevel = groundLevelAt(target.position());
-        double desiredY = com.leon.saintsdragons.util.DragonMathUtil.clampAltitude(target.getY() + 8.0, groundLevel, 8, 22);
-        Vec3 goal = new Vec3(target.getX(), desiredY, target.getZ());
-        dragon.getMoveControl().setWantedPosition(goal.x, goal.y, goal.z, 1.0);
-        if (dragon.distanceToSqr(goal) < 9.0) {
+        double desiredY = com.leon.saintsdragons.util.DragonMathUtil.clampAltitude(target.getY() + 12.0, groundLevel, 10, 25);
+        
+        // Position slightly ahead of target for better engagement
+        Vec3 lead = leadPoint(target, 4.0);
+        Vec3 goal = new Vec3(lead.x, desiredY, lead.z);
+        
+        dragon.getMoveControl().setWantedPosition(goal.x, goal.y, goal.z, 1.1);
+        dragon.getLookControl().setLookAt(target, 20f, 20f);
+        
+        // Transition to air fight when we're at proper altitude and position
+        if (dragon.distanceToSqr(goal) < 16.0 && dragon.getY() > target.getY() + 8.0) {
+            phase = Phase.AIR_FIGHT;
+            phaseTimer = 0;
+            mode = null;
+        }
+        
+        // Timeout climb phase to prevent getting stuck
+        if (phaseTimer > 60) {
             phase = Phase.AIR_FIGHT;
             phaseTimer = 0;
             mode = null;
@@ -168,17 +182,36 @@ public class DragonAirCombatGoal extends Goal {
     }
 
     private void handleAirFight(LivingEntity target) {
+        double dist = dragon.distanceTo(target);
+        
+        // Dynamic mode selection based on distance and situation
         if (mode == null) {
-            double d = dragon.distanceTo(target);
-            mode = (d > 26.0) ? AirMode.RANGED_CIRCLE : AirMode.DIVE_BOMB;
+            // Choose mode based on distance and terrain
+            boolean hasClearDivePath = isPathClear(dragon.position(), target.position(), 15);
+            boolean targetOnGround = target.onGround();
+            
+            if (dist > 30.0 || !hasClearDivePath || !targetOnGround) {
+                mode = AirMode.RANGED_CIRCLE;
+            } else {
+                mode = AirMode.DIVE_BOMB;
+            }
             circleClockwise = null;
         }
-        if (mode == AirMode.DIVE_BOMB) doDiveBomb(target); else doRangedCircle(target);
+        
+        // Execute current mode
+        if (mode == AirMode.DIVE_BOMB) {
+            doDiveBomb(target);
+        } else {
+            doRangedCircle(target);
+        }
 
-        if (phaseTimer > 140 && dragon.distanceTo(target) < 10.0) {
+        // Check if we should land (closer to target, been airborne too long)
+        boolean shouldLand = (dist < 8.0 && target.onGround()) || phaseTimer > 300;
+        if (shouldLand) {
             phase = Phase.LANDING;
             phaseTimer = 0;
             dragon.setLanding(true);
+            mode = null; // Reset mode for next air combat session
         }
     }
 
@@ -199,66 +232,96 @@ public class DragonAirCombatGoal extends Goal {
 
     // ===== Air modes =====
     private void doDiveBomb(LivingEntity target) {
-        int windup = 10;
-        int commit = 14;
+        int windup = 15;  // Longer windup for dramatic effect
+        int commit = 20;  // Longer commit phase for better tracking
+        int recover = 25; // Longer recovery
 
         if (phaseTimer < windup) {
-            Vec3 lead = leadPoint(target, 4.0);
-            Vec3 aim = new Vec3(lead.x, target.getEyeY() + 1.0, lead.z);
+            // Position above and slightly ahead of target
+            Vec3 lead = leadPoint(target, 6.0);
+            Vec3 aim = new Vec3(lead.x, target.getEyeY() + 8.0, lead.z);
             Vec3 p = ensureClearArc(aim, 8);
-            dragon.getMoveControl().setWantedPosition(p.x, p.y, p.z, 1.2);
-            com.leon.saintsdragons.util.DragonMathUtil.smoothLookAt(dragon, target, 25f, 25f);
+            dragon.getMoveControl().setWantedPosition(p.x, p.y, p.z, 1.0);
+            com.leon.saintsdragons.util.DragonMathUtil.smoothLookAt(dragon, target, 20f, 20f);
             dragon.setAttackKind(ATTACK_KIND_DIVE);
             dragon.setAttackPhase(PHASE_WINDUP);
             return;
         }
 
         if (phaseTimer < windup + commit) {
-            Vec3 lead = leadPoint(target, 2.0);
-            Vec3 aim = new Vec3(lead.x, Math.min(dragon.getY(), target.getY() + 0.3), lead.z);
-            Vec3 p = ensureClearArc(aim, 10);
-            dragon.getMoveControl().setWantedPosition(p.x, p.y, p.z, 1.4);
-            com.leon.saintsdragons.util.DragonMathUtil.smoothLookAt(dragon, target, 35f, 35f);
+            // Dive down toward target with lead prediction
+            Vec3 lead = leadPoint(target, 3.0);
+            Vec3 aim = new Vec3(lead.x, target.getY() + 0.5, lead.z);
+            Vec3 p = ensureClearArc(aim, 12);
+            dragon.getMoveControl().setWantedPosition(p.x, p.y, p.z, 1.6); // Faster dive speed
+            com.leon.saintsdragons.util.DragonMathUtil.smoothLookAt(dragon, target, 40f, 40f);
             dragon.setAttackKind(ATTACK_KIND_DIVE);
             dragon.setAttackPhase(PHASE_COMMIT);
-            // Dive impulse at commit start for dramatic acceleration
+            
+            // Dramatic dive impulse at commit start
             if (phaseTimer == windup) {
                 Vec3 fwd = dragon.getLookAngle().normalize();
-                // Forward-and-down bias to sell the dive
-                Vec3 impulse = new Vec3(fwd.x * 0.45, -0.12, fwd.z * 0.45);
+                Vec3 impulse = new Vec3(fwd.x * 0.6, -0.2, fwd.z * 0.6); // Stronger dive
                 dragon.setDeltaMovement(dragon.getDeltaMovement().add(impulse));
             }
-            if (dragon.distanceTo(target) <= 3.2 && com.leon.saintsdragons.util.DragonMathUtil.hasLineOfSight(dragon, target)) {
+            
+            // Attack when close enough with line of sight
+            if (dragon.distanceTo(target) <= 4.0 && com.leon.saintsdragons.util.DragonMathUtil.hasLineOfSight(dragon, target)) {
                 dragon.combatManager.tryUseAbility(ModAbilities.BITE);
             }
             return;
         }
 
+        // Recovery phase - climb back up
         dragon.setAttackPhase(PHASE_RECOVER);
-        if (phaseTimer > windup + commit + 18) {
-            phaseTimer = 0;
-            mode = null;
-            airDwell = Math.max(airDwell, MIN_AIR_DWELL_TICKS);
+        if (phaseTimer < windup + commit + recover) {
+            // Climb back up to maintain altitude
+            Vec3 climbPos = new Vec3(target.getX(), target.getY() + 12.0, target.getZ());
+            dragon.getMoveControl().setWantedPosition(climbPos.x, climbPos.y, climbPos.z, 0.8);
+            return;
         }
+        
+        // Reset for next attack
+        phaseTimer = 0;
+        mode = null;
+        airDwell = Math.max(airDwell, MIN_AIR_DWELL_TICKS);
     }
 
     private void doRangedCircle(LivingEntity target) {
         if (circleClockwise == null) circleClockwise = dragon.getRandom().nextBoolean();
+        
         double d = dragon.distanceTo(target);
-        float radius = (float) Math.min(35.0, Math.max(25.0, d * 0.75));
-        float speed = 0.05f;
+        float radius = (float) Math.min(40.0, Math.max(20.0, d * 0.8)); // Better radius calculation
+        float speed = 0.03f; // Slower circling for better aim
+        
+        // Calculate circling position
         Vec3 circle = com.leon.saintsdragons.util.DragonMathUtil.circleEntityPosition(target, radius, speed, circleClockwise, phaseTimer, 0);
-        Vec3 goal = circle.add(0, 10, 0);
+        
+        // Add altitude variation for more dynamic movement
+        double altitudeOffset = Math.sin(phaseTimer * 0.1) * 3.0; // Gentle altitude variation
+        Vec3 goal = circle.add(0, 8.0 + altitudeOffset, 0);
         goal = ensureClearArc(goal, 8);
-        dragon.getMoveControl().setWantedPosition(goal.x, goal.y, goal.z, 1.0);
-        com.leon.saintsdragons.util.DragonMathUtil.smoothLookAt(dragon, target, 20f, 20f);
+        
+        dragon.getMoveControl().setWantedPosition(goal.x, goal.y, goal.z, 0.9);
+        com.leon.saintsdragons.util.DragonMathUtil.smoothLookAt(dragon, target, 25f, 25f);
 
+        // Check for beam attack opportunity
         float yawErr = com.leon.saintsdragons.util.DragonMathUtil.yawErrorToTarget(dragon, target);
         boolean los = com.leon.saintsdragons.util.DragonMathUtil.hasLineOfSight(dragon, target);
-        if (yawErr <= 6f && los && dragon.combatManager.canStart(ModAbilities.LIGHTNING_BEAM)) {
+        
+        // More lenient aiming requirements for better beam usage
+        if (yawErr <= 8f && los && dragon.combatManager.canStart(ModAbilities.LIGHTNING_BEAM)) {
             dragon.setAttackKind(ATTACK_KIND_BEAM);
             dragon.setAttackPhase(PHASE_COMMIT);
             dragon.combatManager.tryUseAbility(ModAbilities.LIGHTNING_BEAM);
+            
+            // Brief pause after beam to avoid spam
+            phaseTimer += 20;
+        }
+        
+        // Switch circling direction occasionally for unpredictability
+        if (phaseTimer > 200 && dragon.getRandom().nextFloat() < 0.02f) {
+            circleClockwise = !circleClockwise;
             phaseTimer = 0;
         }
     }
