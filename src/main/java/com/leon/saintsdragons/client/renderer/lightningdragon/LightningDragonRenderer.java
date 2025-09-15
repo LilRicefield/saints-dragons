@@ -16,7 +16,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.leon.saintsdragons.client.renderer.layer.lightningdragon.LightningBeamLayer;
-import com.leon.saintsdragons.client.renderer.layer.lightningdragon.DragonRiderLayer;
 
 @OnlyIn(Dist.CLIENT)
 public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEntity> {
@@ -25,8 +24,6 @@ public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEn
         super(renderManager, new LightningDragonModel());
         // Attach beam render layer
         this.addRenderLayer(new LightningBeamLayer());
-        // Attach rider render layer
-        this.addRenderLayer(new DragonRiderLayer(renderManager.getEntityRenderDispatcher()));
     }
 
     // Suppress vanilla death flip; use custom death animation instead (method name varies by MC version)
