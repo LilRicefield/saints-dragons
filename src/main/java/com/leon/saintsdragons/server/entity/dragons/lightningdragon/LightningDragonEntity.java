@@ -6,7 +6,6 @@ package com.leon.saintsdragons.server.entity.dragons.lightningdragon;
 //Custom stuff
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningArcData;
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData;
-import com.leon.saintsdragons.server.ai.goals.*;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonPhysicsController;
@@ -1375,8 +1374,8 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // ===== AI GOALS =====
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(3, new DragonPanicGoal(this));
-        this.goalSelector.addGoal(2, new DragonDodgeGoal(this));
+        this.goalSelector.addGoal(3, new LightningDragonPanicGoal(this));
+        this.goalSelector.addGoal(2, new LightningDragonDodgeGoal(this));
         this.goalSelector.addGoal(4, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(5, new FloatGoal(this));
 
@@ -1388,9 +1387,9 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Movement/idle
         // Unified sleep goal: high priority to preempt follow/wander, but calm() prevents overriding combat/aggro
         this.goalSelector.addGoal(0, new LightningDragonSleepGoal(this));         // Higher priority than follow
-        this.goalSelector.addGoal(1, new DragonFollowOwnerGoal(this));
-        this.goalSelector.addGoal(2, new DragonGroundWanderGoal(this, 1.0, 60));
-        this.goalSelector.addGoal(9, new DragonFlightGoal(this));
+        this.goalSelector.addGoal(1, new LightningDragonFollowOwnerGoal(this));
+        this.goalSelector.addGoal(2, new LightningDragonGroundWanderGoal(this, 1.0, 60));
+        this.goalSelector.addGoal(9, new LightningDragonFlightGoal(this));
         this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
