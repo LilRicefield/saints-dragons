@@ -4,6 +4,7 @@ package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -36,8 +37,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Dragon ability system (lightweight base – no global cooldown here)
     private DragonAbility<?> activeAbility = null;
     
+    // Combat manager for handling abilities and cooldowns
+    public final DragonCombatHandler combatManager;
+    
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
+        this.combatManager = new DragonCombatHandler(this);
     }
 
     @Override
@@ -91,6 +96,86 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             setActiveAbility(ability);
             ability.start();
         }
+    }
+
+    /**
+     * Get the primary attack ability for this dragon type.
+     * Override in subclasses to define dragon-specific attack abilities.
+     */
+    public abstract DragonAbilityType<?, ?> getPrimaryAttackAbility();
+
+    // ===== DRAGON STATE METHODS =====
+    // These methods should be implemented by dragon subclasses
+    // Default implementations return false/null for basic functionality
+
+    /**
+     * Check if the dragon is currently dying
+     */
+    public boolean isDying() {
+        return false;
+    }
+
+    /**
+     * Check if the dragon is in a muted state (sitting/staying)
+     */
+    public boolean isStayOrSitMuted() {
+        return false;
+    }
+
+    /**
+     * Check if the dragon is transitioning between sleep states
+     */
+    public boolean isSleepTransitioning() {
+        return false;
+    }
+
+    /**
+     * Check if the dragon is flying
+     */
+    public boolean isFlying() {
+        return false;
+    }
+
+    /**
+     * Check if the dragon is running
+     */
+    public boolean isRunning() {
+        return false;
+    }
+
+    /**
+     * Check if the dragon is walking
+     */
+    public boolean isWalking() {
+        return false;
+    }
+
+    /**
+     * Check if the dragon is actually running (not just flagged as running)
+     */
+    public boolean isActuallyRunning() {
+        return false;
+    }
+
+    /**
+     * Get cached horizontal speed for performance
+     */
+    public double getCachedHorizontalSpeed() {
+        return 0.0;
+    }
+
+    /**
+     * Check if rider controls are locked
+     */
+    public boolean areRiderControlsLocked() {
+        return false;
+    }
+
+    /**
+     * Get client-side locator position for sound effects
+     */
+    public Vec3 getClientLocatorPosition(String locator) {
+        return null;
     }
 
     /**

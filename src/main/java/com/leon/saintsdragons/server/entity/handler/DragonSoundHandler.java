@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.handler;
 
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -9,11 +9,11 @@ import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 
 /**
- * Handles all sound effects for the Lightning Dragon
+ * Handles all sound effects for dragons
  * Separates sound logic from entity class for cleaner organization
  */
 public class DragonSoundHandler {
-    private final LightningDragonEntity dragon;
+    private final DragonEntity dragon;
     // Step timing control for walk animation to match Blockbench keyframes precisely
     private static final int WALK_STEP_SEPARATION_TICKS = 12; // 0.6s @ 20 TPS
     private static final int RUN_STEP_SEPARATION_TICKS  = 10; // ~0.476s @ 20 TPS (0.5 of 0.9524s)
@@ -31,7 +31,7 @@ public class DragonSoundHandler {
     private PendingStep pendingStep1 = null;
     private PendingStep pendingStep2 = null;
     
-    public DragonSoundHandler(LightningDragonEntity dragon) {
+    public DragonSoundHandler(DragonEntity dragon) {
         this.dragon = dragon;
     }
 
@@ -56,20 +56,26 @@ public class DragonSoundHandler {
      * Handle keyframe-based sound effects during animations
      * Call this from animation controller sound handlers (legacy support)
      */
-    public void handleAnimationSound(SoundKeyframeEvent<LightningDragonEntity> event) {
+    public void handleAnimationSound(DragonEntity entity, Object keyframeData, software.bernie.geckolib.core.animation.AnimationController<?> controller) {
         if (dragon.isDying()) return;
-        if (event == null || event.getKeyframeData() == null) return;
-        String controller = null;
+        if (keyframeData == null) return;
+        String controllerName = null;
         try {
-            if (event.getController() != null && event.getController().getName() != null) {
-                controller = event.getController().getName();
+            if (controller != null && controller.getName() != null) {
+                controllerName = controller.getName();
             }
         } catch (Throwable ignored) {}
         // Gate non-action sounds during sit/sleep; allow action controller during sleep transitions so enter/exit can play
         if (dragon.isStayOrSitMuted()) return;
         if (dragon.isSleeping()) return;
-        if (dragon.isSleepTransitioning() && (!"action".equals(controller))) return;
-        String raw = event.getKeyframeData().getSound();
+        if (dragon.isSleepTransitioning() && (!"action".equals(controllerName))) return;
+        String raw = null;
+        try {
+            // Use reflection to call getSound() method on the keyframe data
+            raw = (String) keyframeData.getClass().getMethod("getSound").invoke(keyframeData);
+        } catch (Exception e) {
+            return; // If we can't get the sound data, skip
+        }
         if (raw == null || raw.isEmpty()) return;
         String sound = raw.toLowerCase(java.util.Locale.ROOT);
 
@@ -83,8 +89,8 @@ public class DragonSoundHandler {
         if (sound.startsWith("step") || sound.startsWith("run_step")) {
             // Only handle footsteps from the movement controller (runs walk/run)
             try {
-                if (event.getController() != null && event.getController().getName() != null) {
-                    String ctrl = event.getController().getName();
+                if (controller != null && controller.getName() != null) {
+                    String ctrl = controller.getName();
                     if (!"movement".equals(ctrl)) return; // ignore non-movement controllers for steps
                 }
             } catch (Throwable ignored) {}
@@ -375,10 +381,11 @@ public class DragonSoundHandler {
         Vec3 cached = dragon.getClientLocatorPosition(locator);
         if (cached != null) return cached;
 
-        // Fallback: Convert model-space units (pixels) into world units using MODEL_SCALE
-        double sx = (lx / 16.0) * LightningDragonEntity.MODEL_SCALE;
-        double sy = (ly / 16.0) * LightningDragonEntity.MODEL_SCALE;
-        double sz = (lz / 16.0) * LightningDragonEntity.MODEL_SCALE;
+        // Fallback: Convert model-space units (pixels) into world units using dragon's model scale
+        double modelScale = dragon.getBbWidth() / 4.5f; // Default dragon width is 4.5f, adjust based on actual size
+        double sx = (lx / 16.0) * modelScale;
+        double sy = (ly / 16.0) * modelScale;
+        double sz = (lz / 16.0) * modelScale;
 
         // Rotate around Y by the dragon's body yaw
         double yawDeg = dragon.yBodyRot;

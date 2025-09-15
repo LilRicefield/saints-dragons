@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.handler;
 
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 
@@ -11,7 +11,7 @@ import java.util.Map;
  * Single responsibility: Track active ability and global cooldowns
  */
 public class DragonCombatHandler {
-    private final LightningDragonEntity dragon;
+    private final DragonEntity dragon;
     
     private DragonAbility<?> activeAbility;
     private int globalCooldown = 0; // Global cooldown between any abilities
@@ -51,7 +51,7 @@ public class DragonCombatHandler {
         }
     }
 
-    public DragonCombatHandler(LightningDragonEntity dragon) {
+    public DragonCombatHandler(DragonEntity dragon) {
         this.dragon = dragon;
     }
 
@@ -102,7 +102,7 @@ public class DragonCombatHandler {
         processingAbility = true; // Guard against re-entry
         try {
             @SuppressWarnings("unchecked")
-            var ability = ((DragonAbilityType<LightningDragonEntity, ?>) abilityType).makeInstance(dragon);
+            var ability = ((DragonAbilityType<DragonEntity, ?>) abilityType).makeInstance(dragon);
             
             if (ability.tryAbility()) {
                 // Set ability active IMMEDIATELY to prevent race conditions

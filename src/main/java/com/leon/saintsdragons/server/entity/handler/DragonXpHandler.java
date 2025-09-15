@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.entity.handler;
 
 import com.leon.saintsdragons.SaintsDragons;
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -10,7 +10,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * Awards XP orbs for kills made by the Lightning Dragon in multiplayer.
+ * Awards XP orbs for kills made by dragons in multiplayer.
  *
  * By default, Minecraft drops XP when a player (or player-attributed source) kills a mob.
  * When the dragon kills directly (bite/gore), the victim may not drop XP.
@@ -29,7 +29,7 @@ public class DragonXpHandler {
         if (!(event.getEntity().level() instanceof ServerLevel server)) return;
 
         // We only care when the DRAGON dies, and is wild (untamed)
-        if (!(event.getEntity() instanceof LightningDragonEntity dragonVictim)) return;
+        if (!(event.getEntity() instanceof DragonEntity dragonVictim)) return;
         if (dragonVictim.isTame()) return; // tamed dragons: do not drop extra XP
 
         // Like vanilla mobs: only drop XP when killed by a player (or player-owned source)

@@ -244,7 +244,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     // ===== CONTROLLER INSTANCES =====
     public final DragonFlightController flightController;
-    public final DragonCombatHandler combatManager;
     public final DragonInteractionHandler interactionHandler;
 
     // ===== SPECIALIZED HANDLER SYSTEMS =====
@@ -312,7 +311,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
         // Initialize controllers
         this.flightController = new DragonFlightController(this);
-        this.combatManager = new DragonCombatHandler(this);
         this.interactionHandler = new DragonInteractionHandler(this);
 
         // Initialize specialized handler systems
@@ -1962,9 +1960,16 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         controllers.add(actionController);
     }
 
+    @Override
+    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
+        // Lightning Dragon's primary attack is bite, with horn gore as secondary
+        return com.leon.saintsdragons.common.registry.ModAbilities.BITE;
+    }
+
     private void onAnimationSound(SoundKeyframeEvent<LightningDragonEntity> event) {
         // Delegate all keyframed sounds to the sound handler
-        this.getSoundHandler().handleAnimationSound(event);
+        // Pass the raw event data to the sound handler
+        this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
     }
 
     // No particle keyframe anchoring needed; beam origin uses computeHeadMouthOrigin
