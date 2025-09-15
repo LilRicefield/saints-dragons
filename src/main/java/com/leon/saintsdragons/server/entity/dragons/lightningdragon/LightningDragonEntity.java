@@ -1168,7 +1168,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         }
         // Custom: activate one-shot hurt ability (plays sound + animation once)
         if (!level().isClientSide) {
-            this.tryActivateAbility(com.leon.saintsdragons.common.registry.ModAbilities.HURT);
+            this.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.HURT);
         }
         // Short cooldown; extend slightly when being ridden
         this.hurtSoundCooldown = this.isVehicle() ? 15 : 8;
@@ -1443,7 +1443,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             if (remaining <= 0.0f) {
                 // Start death sequence; make dragon briefly invulnerable to suppress further deaths
                 this.setInvulnerable(true);
-                this.tryActivateAbility(com.leon.saintsdragons.common.registry.ModAbilities.DIE);
+                this.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.DIE);
                 return true; // handled
             }
         }
@@ -1963,7 +1963,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         // Lightning Dragon's primary attack is bite, with horn gore as secondary
-        return com.leon.saintsdragons.common.registry.ModAbilities.BITE;
+        return com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE;
     }
 
     private void onAnimationSound(SoundKeyframeEvent<LightningDragonEntity> event) {

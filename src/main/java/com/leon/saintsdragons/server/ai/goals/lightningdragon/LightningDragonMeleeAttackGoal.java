@@ -197,8 +197,8 @@ public class LightningDragonMeleeAttackGoal extends DragonMeleeAttackGoalBase {
     
     private boolean chooseMove(double dist, double angle, boolean los) {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        boolean hornReady = lightningDragon.combatManager.canStart(ModAbilities.HORN_GORE);
-        boolean biteReady = lightningDragon.combatManager.canStart(ModAbilities.BITE);
+        boolean hornReady = lightningDragon.combatManager.canStart(com.leon.saintsdragons.common.registry.LightningDragonAbilities.HORN_GORE);
+        boolean biteReady = lightningDragon.combatManager.canStart(com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE);
 
         boolean hornOk = hornReady && los && dist >= 2.0 && dist <= 6.0 && Math.abs(angle) <= 35.0; // Tighter range for horn
         boolean biteOk = biteReady && los && dist >= 1.0 && dist <= 4.0 && Math.abs(angle) <= 50.0; // Tighter range for bite
@@ -221,14 +221,14 @@ public class LightningDragonMeleeAttackGoal extends DragonMeleeAttackGoalBase {
 
     private void triggerAbility(Move m) {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        if (m == Move.HORN) lightningDragon.combatManager.tryUseAbility(ModAbilities.HORN_GORE);
-        else if (m == Move.BITE) lightningDragon.combatManager.tryUseAbility(ModAbilities.BITE);
+        if (m == Move.HORN) lightningDragon.combatManager.tryUseAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.HORN_GORE);
+        else if (m == Move.BITE) lightningDragon.combatManager.tryUseAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE);
     }
 
     private void setAbilityCooldown(Move m) {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        if (m == Move.HORN) lightningDragon.combatManager.setAbilityCooldown(ModAbilities.HORN_GORE, 50);
-        else if (m == Move.BITE) lightningDragon.combatManager.setAbilityCooldown(ModAbilities.BITE, 18);
+        if (m == Move.HORN) lightningDragon.combatManager.setAbilityCooldown(com.leon.saintsdragons.common.registry.LightningDragonAbilities.HORN_GORE, 50);
+        else if (m == Move.BITE) lightningDragon.combatManager.setAbilityCooldown(com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE, 18);
     }
 
     private static int kindId(Move m) {
@@ -292,10 +292,10 @@ public class LightningDragonMeleeAttackGoal extends DragonMeleeAttackGoalBase {
             
             if (abilityChance < 0.25f) {
                 // 25% chance to use Horn Gore ability
-                lightningDragon.tryActivateAbility(ModAbilities.HORN_GORE);
+                lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.HORN_GORE);
             } else if (abilityChance < 0.4f) {
                 // 15% chance to use Lightning Bite ability
-                lightningDragon.tryActivateAbility(ModAbilities.BITE);
+                lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE);
             }
         }
     }
