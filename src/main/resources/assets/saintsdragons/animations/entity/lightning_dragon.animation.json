@@ -7658,16 +7658,16 @@
 			},
 			"sound_effects": {
 				"0.25": {
-					"effect": "flap2"
+					"effect": "lightningdragon_flap1"
 				},
 				"1.5": {
-					"effect": "flap2"
+					"effect": "lightningdragon_flap1"
 				},
 				"2.875": {
-					"effect": "flap2"
+					"effect": "lightningdragon_flap1 "
 				},
 				"4.125": {
-					"effect": "flap2"
+					"effect": "lightningdragon_flap1 "
 				}
 			}
 		},
