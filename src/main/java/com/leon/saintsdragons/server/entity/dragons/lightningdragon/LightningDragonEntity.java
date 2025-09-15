@@ -726,16 +726,31 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // ===== Client animation overrides (for robust observer sync) =====
     private int clientGroundOverride = Integer.MIN_VALUE;
     private int clientFlightOverride = Integer.MIN_VALUE;
+    private int clientOverrideExpiry = 0;
+    
     public void applyClientAnimState(int groundState, int flightMode) {
         this.clientGroundOverride = groundState;
         this.clientFlightOverride = flightMode;
+        this.clientOverrideExpiry = this.tickCount + 40; // Expire after 2 seconds
     }
     public int getEffectiveGroundState() {
-        if (level().isClientSide && clientGroundOverride != Integer.MIN_VALUE) return clientGroundOverride;
+        if (level().isClientSide && clientGroundOverride != Integer.MIN_VALUE && tickCount < clientOverrideExpiry) {
+            return clientGroundOverride;
+        }
+        // Clear expired overrides
+        if (level().isClientSide && tickCount >= clientOverrideExpiry) {
+            clientGroundOverride = Integer.MIN_VALUE;
+        }
         return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
     public int getEffectiveFlightMode() {
-        if (level().isClientSide && clientFlightOverride != Integer.MIN_VALUE) return clientFlightOverride;
+        if (level().isClientSide && clientFlightOverride != Integer.MIN_VALUE && tickCount < clientOverrideExpiry) {
+            return clientFlightOverride;
+        }
+        // Clear expired overrides
+        if (level().isClientSide && tickCount >= clientOverrideExpiry) {
+            clientFlightOverride = Integer.MIN_VALUE;
+        }
         int v = this.entityData.get(DATA_FLIGHT_MODE);
         if (v < 0 && isFlying()) {
             // Derive from flags if missing
@@ -1025,9 +1040,9 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                         new com.leon.saintsdragons.common.network.MessageDragonAnimState(this.getId(), (byte) moveState, (byte) flightMode)
                 );
             }
-            // Periodic redundancy while ridden or airborne to bury any missed updates
+            // Reduced frequency redundancy - only every 20 ticks (1 second) for critical states
             boolean needsPulse = this.isVehicle() || flightMode >= 0 || moveState != 0;
-            if (needsPulse && (this.tickCount & 3) == 0) {
+            if (needsPulse && (this.tickCount & 19) == 0) {
                 com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
                         net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this),
                         new com.leon.saintsdragons.common.network.MessageDragonAnimState(this.getId(), (byte) moveState, (byte) flightMode)
@@ -1100,13 +1115,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             if (changed && (lastBroadcastGroundState != moveState || lastBroadcastFlightMode != flightMode)) {
                 lastBroadcastGroundState = moveState;
                 lastBroadcastFlightMode = flightMode;
-                com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
-                        net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this),
-                        new com.leon.saintsdragons.common.network.MessageDragonAnimState(this.getId(), (byte) moveState, (byte) flightMode)
-                );
-            }
-            boolean needsPulse = this.isVehicle() || flightMode >= 0 || moveState != 0;
-            if (needsPulse && (this.tickCount & 3) == 0) {
                 com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
                         net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this),
                         new com.leon.saintsdragons.common.network.MessageDragonAnimState(this.getId(), (byte) moveState, (byte) flightMode)
