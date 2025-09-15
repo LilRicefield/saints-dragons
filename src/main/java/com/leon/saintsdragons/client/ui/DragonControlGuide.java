@@ -102,23 +102,11 @@ public class DragonControlGuide extends DragonUIElement {
             int currentY = startY + i * lineHeight;
             
             if (control.isMouseIcon) {
-                // Special mouse icon rendering (smaller)
-                int mouseWidth = 16;
-                int mouseHeight = 8;
-                
-                // Mouse body (gray)
-                guiGraphics.fill(x + 2, currentY + 1, x + 2 + mouseWidth, currentY + 1 + mouseHeight, 0xFF666666);
-                guiGraphics.fill(x + 3, currentY + 2, x + 1 + mouseWidth, currentY + mouseHeight, 0xFF888888);
-                
-                // Left mouse button (red)
-                guiGraphics.fill(x + 2, currentY + 1, x + 2 + 6, currentY + 1 + 4, control.color);
-                guiGraphics.fill(x + 3, currentY + 2, x + 1 + 6, currentY + 4, 0xFFFF4444);
-                
-                // Mouse text
-                guiGraphics.drawString(font, control.keyText, x + 2 + mouseWidth + 2, currentY + 1, 0xFFFFFFFF);
+                // Simple text-based mouse icon (no texture complications)
+                guiGraphics.drawString(font, control.keyText, x + 2, currentY + 1, 0xFFFFFFFF);
                 
                 // Function text
-                guiGraphics.drawString(font, control.functionText, x + 2 + mouseWidth + 2 + font.width(control.keyText) + 4, currentY + 1, control.color);
+                guiGraphics.drawString(font, control.functionText, x + 2 + font.width(control.keyText) + 4, currentY + 1, control.color);
             } else {
                 // Regular keybind background (smaller)
                 int keyWidth = font.width(control.keyText) + 4;
