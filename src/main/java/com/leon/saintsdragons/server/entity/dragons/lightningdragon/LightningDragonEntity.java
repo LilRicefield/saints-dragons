@@ -2464,7 +2464,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     @Override
     public boolean shouldRiderSit() {
         // Hide the vanilla player when riding the dragon
-        // The player will be positioned by the DragonRiderLayer
+        // Simple and reliable approach
         return true;
     }
 }
