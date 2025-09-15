@@ -1,216 +1,216 @@
 {
-  "dragon_grumble_1": {
+  "lightningdragon_grumble_1": {
     "subtitle": "Dragon grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_grumble_1",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_grumble_1",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_grumble_2": {
+  "lightningdragon_grumble_2": {
     "subtitle": "Dragon grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_grumble_2",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_grumble_2",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_grumble_3": {
+  "lightningdragon_grumble_3": {
     "subtitle": "Dragon grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_grumble_3",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_grumble_3",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_purr": {
+  "lightningdragon_purr": {
     "subtitle": "Dragon purrs contentedly",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_purr",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_purr",
         "volume": 0.7,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_snort": {
+  "lightningdragon_snort": {
     "subtitle": "Dragon snorts",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_snort",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_snort",
         "volume": 0.9,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_chuff": {
+  "lightningdragon_chuff": {
     "subtitle": "Dragon chuffs",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_chuff",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_chuff",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_content": {
+  "lightningdragon_content": {
     "subtitle": "Dragon sounds content",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_content",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_content",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_annoyed": {
+  "lightningdragon_annoyed": {
     "subtitle": "Dragon sounds annoyed",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_annoyed",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_annoyed",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_excited": {
+  "lightningdragon_excited": {
     "subtitle": "Dragon sounds excited",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_excited",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_excited",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_roar": {
+  "lightningdragon_roar": {
     "subtitle": "Dragon roars",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_roar",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_roar",
         "volume": 2.5,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_bite": {
+  "lightningdragon_bite": {
     "subtitle": "Dragon bites",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_bite",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_bite",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_horngore": {
+  "lightningdragon_horngore": {
     "subtitle": "Dragon gores with horn",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_horngore",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_horngore",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_growl_warning": {
+  "lightningdragon_growl_warning": {
     "subtitle": "Dragon growls menacingly",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_growl_warning",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_growl_warning",
         "volume": 1.1,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_hurt": {
+  "lightningdragon_hurt": {
     "subtitle": "Dragon hurt",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_hurt",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_hurt",
         "volume": 1.2,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_die": {
+  "lightningdragon_die": {
     "subtitle": "Dragon dies",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/dragon_die",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_die",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "dragon_step": {
+  "lightningdragon_step": {
     "subtitle": "Heavy footsteps",
     "sounds": [
-      { "name": "saintsdragons:entity/lightningdragon/step1", "volume": 0.8, "pitch": 1.0 },
-      { "name": "saintsdragons:entity/lightningdragon/step2", "volume": 0.8, "pitch": 1.0 }
+      { "name": "saintsdragons:entity/lightningdragon/lightningdragon_step1", "volume": 0.8, "pitch": 1.0 },
+      { "name": "saintsdragons:entity/lightningdragon/lightningdragon_step2", "volume": 0.8, "pitch": 1.0 }
     ]
   },
-  "flap1": {
+  "lightningdragon_flap1": {
     "subtitle": "Wings flap",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/flap1",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_flap1",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "step1": {
+  "lightningdragon_step1": {
     "subtitle": "Dragon steps",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/step1",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_step1",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "step2": {
+  "lightningdragon_step2": {
     "subtitle": "Dragon steps",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/step2",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_step2",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "run_step1": {
+  "lightningdragon_run_step1": {
     "subtitle": "Dragon runs",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/run_step1",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_run_step1",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "run_step2": {
+  "lightningdragon_run_step2": {
     "subtitle": "Dragon runs",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/run_step2",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_run_step2",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "summon_storm": {
+  "lightningdragon_summon_storm": {
     "subtitle": "Storm gathers",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/summon_storm",
+        "name": "saintsdragons:entity/lightningdragon/lightningdragon_summon_storm",
         "volume": 2.0,
         "pitch": 1.0
       }
