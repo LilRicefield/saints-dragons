@@ -24,6 +24,7 @@ public class DragonMeleeAttackGoal extends Goal {
     private int timer = 0;
     private int pathCooldown = 0;
     private boolean directChase = false; // straight-line closing under short range
+    private int pathCommitmentTicks = 0; // How long we've been on current path
     private int turnHoldTicks = 0;   // prevent rapid turn direction flipping
     private int lastTurnDir = 0;      // -1 left, 0 none, 1 right
     private static final int MIN_TURN_HOLD = 6;
@@ -68,6 +69,7 @@ public class DragonMeleeAttackGoal extends Goal {
         move = Move.NONE;
         timer = 0;
         directChase = false;
+        pathCommitmentTicks = 0;
     }
 
     @Override
@@ -101,7 +103,8 @@ public class DragonMeleeAttackGoal extends Goal {
                 setRun(true);
                 
                 // Straight-line close when very near and with LOS; else pathfind
-                boolean canDirect = los && dist < 6.5;
+                // Increased range for direct chase to reduce zigzagging
+                boolean canDirect = los && dist < 10.0;
                 if (canDirect) {
                     directChase = true;
                     dragon.getNavigation().stop();
@@ -112,10 +115,13 @@ public class DragonMeleeAttackGoal extends Goal {
                         pathCooldown = 0;
                     }
                     // Throttled re-path with higher speed for approach
-                    if (pathCooldown-- <= 0 || dragon.getNavigation().isDone()) {
+                    // Only recalculate path if cooldown expired AND we're significantly off course
+                    pathCommitmentTicks++;
+                    if (pathCooldown-- <= 0) {
                         double speed = dist > 12 ? 1.6 : 1.35; // Faster approach speeds
                         dragon.getNavigation().moveTo(target, speed);
-                        pathCooldown = 5; // repath more frequently
+                        pathCooldown = 15; // Less frequent repathing for straighter approach
+                        pathCommitmentTicks = 0; // Reset commitment counter
                     }
                 }
                 // Deliberate rotation toward target to reduce spin
