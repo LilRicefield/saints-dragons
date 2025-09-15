@@ -13,6 +13,8 @@ public class DragonStatusUIManager {
     private static DragonStatusUIManager instance;
     private final DragonStatusUI dragonStatusUI;
     private DragonEntity lastRiddenDragon = null;
+    private int lastScreenWidth = 0;
+    private int lastScreenHeight = 0;
     
     private DragonStatusUIManager() {
         this.dragonStatusUI = new DragonStatusUI();
@@ -32,6 +34,18 @@ public class DragonStatusUIManager {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) {
             return;
+        }
+        
+        // Check for screen size changes
+        if (minecraft.getWindow() != null) {
+            int currentWidth = minecraft.getWindow().getGuiScaledWidth();
+            int currentHeight = minecraft.getWindow().getGuiScaledHeight();
+            
+            if (currentWidth != lastScreenWidth || currentHeight != lastScreenHeight) {
+                lastScreenWidth = currentWidth;
+                lastScreenHeight = currentHeight;
+                dragonStatusUI.onWindowResize();
+            }
         }
         
         Player player = minecraft.player;

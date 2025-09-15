@@ -28,10 +28,8 @@ public class DragonStatusUI {
     }
     
     private void initializeElements() {
-        // Create UI elements with default positions (moved away from hotbar)
-        healthBar = new DragonHealthBar(10, 10);
-        speedIndicator = new DragonSpeedIndicator(10, 130); // Moved down to avoid overlap
-        controlGuide = new DragonControlGuide(10, 160);
+        // Create UI elements with responsive positions
+        updateElementPositions();
         
         elements.add(healthBar);
         elements.add(speedIndicator);
@@ -39,6 +37,41 @@ public class DragonStatusUI {
         
         // Load saved positions
         loadPositions();
+    }
+    
+    /**
+     * Update UI element positions based on screen size and scaling
+     */
+    private void updateElementPositions() {
+        if (minecraft == null || minecraft.getWindow() == null) {
+            // Fallback to default positions if window not available
+            healthBar = new DragonHealthBar(380, 10);
+            speedIndicator = new DragonSpeedIndicator(10, 130);
+            controlGuide = new DragonControlGuide(10, 160);
+            return;
+        }
+        
+        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        
+        // Calculate responsive positions
+        int leftMargin = Math.max(10, screenWidth / 50); // Minimum 10px, or 2% of screen width
+        int rightMargin = Math.max(10, screenWidth / 50); // Same margin for right side
+        int topMargin = Math.max(10, screenHeight / 50); // Minimum 10px, or 2% of screen height
+        
+        // Health bar on right side (responsive to screen width)
+        int healthBarX = screenWidth - rightMargin - 20; // 20px for health bar width
+        int healthBarY = topMargin;
+        
+        // Speed and controls on left side
+        int leftX = leftMargin;
+        int speedY = topMargin + 120; // 120px below health bar
+        int controlsY = speedY + 40; // 40px below speed indicator
+        
+        // Create elements with responsive positions
+        healthBar = new DragonHealthBar(healthBarX, healthBarY);
+        speedIndicator = new DragonSpeedIndicator(leftX, speedY);
+        controlGuide = new DragonControlGuide(leftX, controlsY);
     }
     
     /**
@@ -157,7 +190,7 @@ public class DragonStatusUI {
     /**
      * Save UI element positions to config
      */
-    private void savePositions() {
+    public void savePositions() {
         // TODO: Implement config saving
         // For now, we'll use a simple approach
         System.out.println("Saving UI positions:");
@@ -179,9 +212,19 @@ public class DragonStatusUI {
      * Reset all UI elements to default positions
      */
     public void resetPositions() {
-        healthBar.setPosition(10, 10);
-        speedIndicator.setPosition(10, 130);
-        controlGuide.setPosition(10, 160);
+        // Update positions based on current screen size
+        updateElementPositions();
         savePositions();
+    }
+    
+    /**
+     * Handle window resize - recalculate positions for new screen size
+     */
+    public void onWindowResize() {
+        // Only update if UI is visible to avoid unnecessary calculations
+        if (visible) {
+            updateElementPositions();
+            savePositions();
+        }
     }
 }
