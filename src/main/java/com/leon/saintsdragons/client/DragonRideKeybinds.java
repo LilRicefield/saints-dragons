@@ -193,6 +193,8 @@ public class DragonRideKeybinds {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.options.keyAttack.isDown()) controlState |= 4; // Bit 2: Attack
+        if (DRAGON_ROAR.isDown()) controlState |= 8;     // Bit 3: Roar
+        if (DRAGON_SUMMON.isDown()) controlState |= 16;  // Bit 4: Summon Storm
         if (mc.options.keyShift.isDown()) controlState |= 32; // Bit 5: Dismount
         return controlState;
     }

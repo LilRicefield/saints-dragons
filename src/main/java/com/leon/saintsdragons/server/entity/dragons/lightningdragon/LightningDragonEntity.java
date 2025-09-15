@@ -162,8 +162,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
     static final EntityDataAccessor<Float> DATA_BEAM_START_Z =
             SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    public static final EntityDataAccessor<Float> DATA_SIT_PROGRESS =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
 
     // Riding control state accessors
     static final EntityDataAccessor<Boolean> DATA_GOING_UP =
@@ -182,8 +180,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     public int landingTimer = 0;
     int runningTicks = 0;
-    float prevSitProgress = 0f;
-    public float sitProgress = 0f;
     // Banking smoothing state
     private float bankSmoothedYaw = 0f;
     private int bankHoldTicks = 0;
@@ -257,9 +253,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // ===== CUSTOM SITTING SYSTEM =====
     // Completely replace TamableAnimal's broken sitting behavior
 
-    public float maxSitTicks() {
-        return 15.0F; // Takes 15 ticks to fully sit (about 0.75 seconds)
-    }
 
     @Override
     public boolean isInSittingPose() {
@@ -385,7 +378,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.entityData.define(DATA_BEAM_START_X, 0f);
         this.entityData.define(DATA_BEAM_START_Y, 0f);
         this.entityData.define(DATA_BEAM_START_Z, 0f);
-        this.entityData.define(DATA_SIT_PROGRESS, 0.0f);
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
@@ -784,7 +776,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         }
     }
 
-    public float getSitProgress() { return this.entityData.get(DATA_SIT_PROGRESS); }
 
     // Control state system
     private byte controlState = 0;
@@ -1964,6 +1955,16 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         // Lightning Dragon's primary attack is bite, with horn gore as secondary
         return com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE;
+    }
+
+    @Override
+    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getRoarAbility() {
+        return com.leon.saintsdragons.common.registry.LightningDragonAbilities.ROAR;
+    }
+
+    @Override
+    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getSummonStormAbility() {
+        return com.leon.saintsdragons.common.registry.LightningDragonAbilities.SUMMON_STORM;
     }
 
     private void onAnimationSound(SoundKeyframeEvent<LightningDragonEntity> event) {
