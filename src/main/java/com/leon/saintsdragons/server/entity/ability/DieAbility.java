@@ -1,12 +1,13 @@
 package com.leon.saintsdragons.server.entity.ability;
 
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 
 /**
- * Death ability: plays a short death animation and sound, then finalizes death.
+ * Generic death ability: plays a short death animation and sound, then finalizes death.
  * Duration: ~3.071s (62 ticks) before removal.
+ * Works with any dragon type that extends DragonEntity.
  */
-public class DieAbility extends DragonAbility<LightningDragonEntity> {
+public class DieAbility extends DragonAbility<DragonEntity> {
 
     // 3.071s ~= 61.42 ticks; round up to 62
     private static final int DURATION_TICKS = 62;
@@ -14,8 +15,8 @@ public class DieAbility extends DragonAbility<LightningDragonEntity> {
             new DragonAbilitySection.AbilitySectionDuration(DragonAbilitySection.AbilitySectionType.ACTIVE, DURATION_TICKS)
     };
 
-    public DieAbility(DragonAbilityType<LightningDragonEntity, ? extends DragonAbility<LightningDragonEntity>> type,
-                      LightningDragonEntity user) {
+    public DieAbility(DragonAbilityType<DragonEntity, ? extends DragonAbility<DragonEntity>> type,
+                      DragonEntity user) {
         super(type, user, TRACK, 0);
     }
 

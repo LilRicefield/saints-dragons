@@ -1157,7 +1157,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         }
         // Custom: activate one-shot hurt ability (plays sound + animation once)
         if (!level().isClientSide) {
-            this.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.HURT);
+            this.tryActivateAbility(com.leon.saintsdragons.common.registry.BaseDragonAbilities.HURT);
         }
         // Short cooldown; extend slightly when being ridden
         this.hurtSoundCooldown = this.isVehicle() ? 15 : 8;
@@ -1432,7 +1432,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             if (remaining <= 0.0f) {
                 // Start death sequence; make dragon briefly invulnerable to suppress further deaths
                 this.setInvulnerable(true);
-                this.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.DIE);
+                this.tryActivateAbility(com.leon.saintsdragons.common.registry.BaseDragonAbilities.DIE);
                 return true; // handled
             }
         }
