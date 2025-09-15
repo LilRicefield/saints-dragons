@@ -2460,4 +2460,11 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Check if Lightning Dragon is charging
         return false; // Implement based on your charging logic
     }
+    
+    @Override
+    public boolean shouldRiderSit() {
+        // Hide the vanilla player when riding the dragon
+        // The player will be positioned by the DragonRiderLayer
+        return true;
+    }
 }
