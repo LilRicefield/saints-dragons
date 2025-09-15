@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -80,7 +81,7 @@ public class DebugHud {
         boolean hovering = target.isHovering();
         boolean orderedSit = target.isOrderedToSit();
         boolean sittingPose = target.isInSittingPose();
-        float sitProg = target.getEntityData().get(LightningDragonEntity.DATA_SIT_PROGRESS);
+        float sitProg = target.getEntityData().get(DragonEntity.DATA_SIT_PROGRESS);
 
         g.drawString(mc.font, Component.literal("groundState: " + ground + " (walk=" + walking + ", run=" + running + ")"), x, y, 0xFFFFFF, false); y += dy;
         g.drawString(mc.font, Component.literal("flightMode: " + flight + " (flying=" + flying + ", takeoff=" + takeoff + ", hover=" + hovering + ", landing=" + landing + ")"), x, y, 0xFFFFFF, false); y += dy;

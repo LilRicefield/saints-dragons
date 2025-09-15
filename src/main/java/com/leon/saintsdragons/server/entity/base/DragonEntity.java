@@ -31,6 +31,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Shared command synced data for all dragons
     protected static final EntityDataAccessor<Integer> DATA_COMMAND =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
+    
+    // Shared sit progress data for all dragons
+    public static final EntityDataAccessor<Float> DATA_SIT_PROGRESS =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     
@@ -39,6 +43,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     
     // Combat manager for handling abilities and cooldowns
     public final DragonCombatHandler combatManager;
+    
+    // Sit progress fields
+    public float sitProgress = 0f;
+    public float prevSitProgress = 0f;
     
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -49,6 +57,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_COMMAND, 0); // 0=Follow, 1=Sit, 2=Wander (default Follow)
+        this.entityData.define(DATA_SIT_PROGRESS, 0.0f); // Sit progress for smooth animations
     }
 
     @Override
@@ -103,6 +112,20 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Override in subclasses to define dragon-specific attack abilities.
      */
     public abstract DragonAbilityType<?, ?> getPrimaryAttackAbility();
+
+    /**
+     * Get the roar ability for this dragon type (if any)
+     */
+    public DragonAbilityType<?, ?> getRoarAbility() {
+        return null; // Default: no roar ability
+    }
+
+    /**
+     * Get the summon storm ability for this dragon type (if any)
+     */
+    public DragonAbilityType<?, ?> getSummonStormAbility() {
+        return null; // Default: no summon storm ability
+    }
 
     // ===== DRAGON STATE METHODS =====
     // These methods should be implemented by dragon subclasses
@@ -175,6 +198,58 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Get client-side locator position for sound effects
      */
     public Vec3 getClientLocatorPosition(String locator) {
+        return null;
+    }
+
+    /**
+     * Get the maximum sit progress ticks for smooth sitting animation
+     */
+    public float maxSitTicks() {
+        return 15.0F; // Default: 15 ticks to fully sit (about 0.75 seconds)
+    }
+
+    /**
+     * Get the current sit progress
+     */
+    public float getSitProgress() {
+        return this.entityData.get(DATA_SIT_PROGRESS);
+    }
+
+    /**
+     * Check if the dragon is going up (for riding controls)
+     */
+    public boolean isGoingUp() {
+        return false; // Default implementation - override in subclasses
+    }
+
+    /**
+     * Set if the dragon is going up (for riding controls)
+     */
+    public void setGoingUp(boolean goingUp) {
+        // Default implementation - override in subclasses
+    }
+
+    /**
+     * Check if the dragon is going down (for riding controls)
+     */
+    public boolean isGoingDown() {
+        return false; // Default implementation - override in subclasses
+    }
+
+    /**
+     * Set if the dragon is going down (for riding controls)
+     */
+    public void setGoingDown(boolean goingDown) {
+        // Default implementation - override in subclasses
+    }
+
+    /**
+     * Get the riding player if any
+     */
+    public net.minecraft.world.entity.player.Player getRidingPlayer() {
+        if (this.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player player) {
+            return player;
+        }
         return null;
     }
 

@@ -1,17 +1,16 @@
 package com.leon.saintsdragons.server.entity.handler;
 
-import com.leon.saintsdragons.common.registry.ModAbilities;
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 
 /**
- * Handles all keybind and control state logic for the Lightning Dragon
+ * Handles all keybind and control state logic for dragons
  */
 public class DragonKeybindHandler {
-    private final LightningDragonEntity dragon;
+    private final DragonEntity dragon;
 
     private byte controlState = 0;
     
-    public DragonKeybindHandler(LightningDragonEntity dragon) {
+    public DragonKeybindHandler(DragonEntity dragon) {
         this.dragon = dragon;
     }
     
@@ -28,34 +27,57 @@ public class DragonKeybindHandler {
         boolean up = (controlState & 1) != 0;
         boolean down = (controlState & 2) != 0;
         boolean attack = (controlState & 4) != 0;
+        boolean roar = (controlState & 8) != 0;
+        boolean summon = (controlState & 16) != 0;
 
         dragon.setGoingUp(up);
         dragon.setGoingDown(down);
-        // (Drop mirrored rider-attacking flag; not used elsewhere)
 
-        // Rising-edge detect attack while ridden; entity-clicks are handled by DragonAttackEventHandler
+        // Rising-edge detect abilities while ridden
         boolean prevAttack = (previous & 4) != 0;
-        if (!prevAttack && attack && dragon.getRidingPlayer() != null) {
+        boolean prevRoar = (previous & 8) != 0;
+        boolean prevSummon = (previous & 16) != 0;
+
+        if (dragon.getRidingPlayer() != null) {
             var rider = dragon.getRidingPlayer();
-            var hitResult = rider.pick(6.0, 1.0f, false);
-            if (hitResult.getType() != net.minecraft.world.phys.HitResult.Type.ENTITY) {
-                // Decide which melee to use: prefer bite while flying; randomize on ground
-                boolean useBite = dragon.isFlying() || dragon.getRandom().nextBoolean();
-                var chosen = useBite ? ModAbilities.BITE : ModAbilities.HORN_GORE;
+            
+            // Handle attack keybind
+            if (!prevAttack && attack) {
+                var hitResult = rider.pick(6.0, 1.0f, false);
+                if (hitResult.getType() != net.minecraft.world.phys.HitResult.Type.ENTITY) {
+                    // Use the dragon's primary attack ability
+                    var chosen = dragon.getPrimaryAttackAbility();
 
-                // Only align + trigger when the ability can actually start (cooldowns ready)
-                if (dragon.combatManager.canStart(chosen)) {
-                    // Align dragon to rider's current view just before triggering the animation
-                    float yaw = rider.getYRot();
-                    float pitch = rider.getXRot();
-                    if (pitch > 35f) pitch = 35f;
-                    if (pitch < -35f) pitch = -35f;
-                    dragon.setYRot(yaw);
-                    dragon.yBodyRot = yaw;
-                    dragon.yHeadRot = yaw;
-                    dragon.setXRot(pitch);
+                    // Only align + trigger when the ability can actually start (cooldowns ready)
+                    if (dragon.combatManager.canStart(chosen)) {
+                        // Align dragon to rider's current view just before triggering the animation
+                        float yaw = rider.getYRot();
+                        float pitch = rider.getXRot();
+                        if (pitch > 35f) pitch = 35f;
+                        if (pitch < -35f) pitch = -35f;
+                        dragon.setYRot(yaw);
+                        dragon.yBodyRot = yaw;
+                        dragon.yHeadRot = yaw;
+                        dragon.setXRot(pitch);
 
-                    dragon.combatManager.tryUseAbility(chosen);
+                        dragon.combatManager.tryUseAbility(chosen);
+                    }
+                }
+            }
+
+            // Handle roar keybind (R)
+            if (!prevRoar && roar) {
+                var roarAbility = dragon.getRoarAbility();
+                if (roarAbility != null && dragon.combatManager.canStart(roarAbility)) {
+                    dragon.combatManager.tryUseAbility(roarAbility);
+                }
+            }
+
+            // Handle summon storm keybind (H)
+            if (!prevSummon && summon) {
+                var summonAbility = dragon.getSummonStormAbility();
+                if (summonAbility != null && dragon.combatManager.canStart(summonAbility)) {
+                    dragon.combatManager.tryUseAbility(summonAbility);
                 }
             }
         }
