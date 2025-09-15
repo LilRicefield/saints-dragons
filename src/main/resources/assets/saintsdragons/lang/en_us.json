@@ -6,5 +6,11 @@
   "key.saintsdragons.ability3": "Dragon Lightning Beam",
   "key.saintsdragons.roar": "Dragon Roar",
   "key.saintsdragons.summon_storm": "Dragon Summon Storm",
-  "key.categories.saintsdragons": "Saint's Dragons"
+  "key.categories.saintsdragons": "Saint's Dragons",
+  "entity.saintsdragons.all.command_0": "%s is now following you",
+  "entity.saintsdragons.all.command_1": "%s is now sitting",
+  "entity.saintsdragons.all.command_2": "%s is now wandering freely",
+  "entity.saintsdragons.lightning_dragon": "Lightning Dragon",
+  "death.attack.lightning_dragon": "%s was electrocuted by a Lightning Dragon",
+  "death.attack.lightning_dragon.player": "%s was electrocuted by %s's Lightning Dragon"
 }
