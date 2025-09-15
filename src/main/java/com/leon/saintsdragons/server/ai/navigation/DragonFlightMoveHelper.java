@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.navigation;
 
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.util.DragonMathUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.control.MoveControl;
@@ -9,11 +9,14 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 
 /**
- * Dragon flight movement controller - handles AI flight pathfinding
+ * Generic dragon flight movement controller - handles AI flight pathfinding for any dragon type
  * Banking is handled elsewhere; MoveHelper focuses on movement only
+ * 
+ * Works with any entity that implements DragonFlightCapable interface
  */
 public class DragonFlightMoveHelper extends MoveControl {
-    private final LightningDragonEntity dragon;
+    private final DragonFlightCapable dragon;
+    private final net.minecraft.world.entity.Mob mob;
     private float speedFactor = 1.0F;
 
     // Constants for smooth movement
@@ -22,9 +25,10 @@ public class DragonFlightMoveHelper extends MoveControl {
     private static final float SPEED_FACTOR_MIN = 0.5F;
     private static final float SPEED_FACTOR_MAX = 3.2F; // Higher ceiling for snappier flight
 
-    public DragonFlightMoveHelper(LightningDragonEntity dragon) {
-        super(dragon);
+    public DragonFlightMoveHelper(DragonFlightCapable dragon) {
+        super((net.minecraft.world.entity.Mob) dragon);
         this.dragon = dragon;
+        this.mob = (net.minecraft.world.entity.Mob) dragon;
     }
 
     @Override
@@ -46,17 +50,17 @@ public class DragonFlightMoveHelper extends MoveControl {
      */
     private void handleGlidingMovement() {
         // Collision handling - simple 180 turn
-        if (dragon.horizontalCollision) {
-            dragon.setYRot(dragon.getYRot() + 180.0F);
+        if (mob.horizontalCollision) {
+            mob.setYRot(mob.getYRot() + 180.0F);
             this.speedFactor = SPEED_FACTOR_MIN;
-            dragon.getNavigation().stop();
+            mob.getNavigation().stop();
             return;
         }
 
         // Calculate movement vectors to target
-        float distX = (float) (this.wantedX - dragon.getX());
-        float distY = (float) (this.wantedY - dragon.getY());
-        float distZ = (float) (this.wantedZ - dragon.getZ());
+        float distX = (float) (this.wantedX - mob.getX());
+        float distY = (float) (this.wantedY - mob.getY());
+        float distZ = (float) (this.wantedZ - mob.getZ());
 
         // Reduce Y influence on horizontal movement (guard against division by zero)
         double horizontalDist = Math.sqrt(distX * distX + distZ * distZ);
@@ -74,26 +78,26 @@ public class DragonFlightMoveHelper extends MoveControl {
         }
 
         // === YAW CALCULATION ===
-        float currentYaw = dragon.getYRot();
+        float currentYaw = mob.getYRot();
         float desiredYaw = (float) Mth.atan2(distZ, distX) * 57.295776F; // Convert to degrees
 
         // Smooth yaw approach
         float wrappedCurrentYaw = Mth.wrapDegrees(currentYaw + 90.0F);
         float wrappedDesiredYaw = Mth.wrapDegrees(desiredYaw);
-        dragon.setYRot(Mth.approachDegrees(wrappedCurrentYaw, wrappedDesiredYaw, MAX_YAW_CHANGE) - 90.0F);
+        mob.setYRot(Mth.approachDegrees(wrappedCurrentYaw, wrappedDesiredYaw, MAX_YAW_CHANGE) - 90.0F);
 
         // Banking handled in animation/predicate; keep MoveHelper focused on movement
         // MoveHelper only handles movement - no banking calculation needed
 
         // Body rotation follows head
-        dragon.yBodyRot = dragon.getYRot();
+        mob.yBodyRot = mob.getYRot();
 
         // === PITCH CALCULATION ===
         float desiredPitch = (float) (-(Mth.atan2(-distY, horizontalDist) * 57.295776F));
-        dragon.setXRot(Mth.approachDegrees(dragon.getXRot(), desiredPitch, MAX_PITCH_CHANGE));
+        mob.setXRot(Mth.approachDegrees(mob.getXRot(), desiredPitch, MAX_PITCH_CHANGE));
 
         // === ENHANCED SPEED MODULATION ===
-        float yawDifference = Math.abs(Mth.wrapDegrees(dragon.getYRot() - currentYaw));
+        float yawDifference = Math.abs(Mth.wrapDegrees(mob.getYRot() - currentYaw));
 
         // Base speed factor adjustments
         float targetSpeedFactor;
@@ -112,12 +116,12 @@ public class DragonFlightMoveHelper extends MoveControl {
         targetSpeedFactor *= distScale;
 
         // Combat bias: fly a bit faster when we have a live target and are airborne
-        if (dragon.isFlying() && dragon.getTarget() != null && dragon.getTarget().isAlive()) {
+        if (dragon.isFlying() && mob.getTarget() != null && mob.getTarget().isAlive()) {
             targetSpeedFactor *= 1.12f; // modest global boost in combat
         }
 
         // If straight path to wanted position is obstructed by blocks, damp speed to avoid wall pushing
-        if (isLineObstructed(dragon.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ))) {
+        if (isLineObstructed(mob.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ))) {
             targetSpeedFactor *= 0.5f;
         }
 
@@ -126,19 +130,19 @@ public class DragonFlightMoveHelper extends MoveControl {
 
         // === 3D MOVEMENT APPLICATION (robust, normalized toward target) ===
         Vec3 dir = new Vec3(distX, distY, distZ).scale(1.0 / totalDist); // normalized
-        Vec3 motion = dragon.getDeltaMovement();
+        Vec3 motion = mob.getDeltaMovement();
         Vec3 targetVel = dir.scale(this.speedFactor);
         // Blend toward target velocity with per-axis acceleration cap to reduce twitch/overshoot
         Vec3 delta = targetVel.subtract(motion).scale(0.16D); // stronger blend toward target velocity
         double accelCap = 0.22D;
         // Additional dampening when obstructed
-        if (isLineObstructed(dragon.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ))) {
+        if (isLineObstructed(mob.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ))) {
             accelCap *= 0.6D;
             delta = delta.scale(0.6D);
         }
         delta = clampPerAxis(delta, accelCap);
         Vec3 blended = motion.add(delta);
-        dragon.setDeltaMovement(blended);
+        mob.setDeltaMovement(blended);
     }
 
     /**
@@ -146,26 +150,26 @@ public class DragonFlightMoveHelper extends MoveControl {
      */
     private void handleHoveringMovement() {
         // Look at target if we have one - use smooth looking with deadzone to avoid jitter
-        if (dragon.getTarget() != null && dragon.distanceToSqr(dragon.getTarget()) < 1600.0D) {
-            var tgt = dragon.getTarget();
-            float yawErr = DragonMathUtil.yawErrorToTarget(dragon, tgt);
+        if (mob.getTarget() != null && mob.distanceToSqr(mob.getTarget()) < 1600.0D) {
+            var tgt = mob.getTarget();
+            float yawErr = DragonMathUtil.yawErrorToTarget(mob, tgt);
             if (yawErr > 4.0f) {
-                DragonMathUtil.smoothLookAt(dragon, tgt, 10.0f, 10.0f);
+                DragonMathUtil.smoothLookAt(mob, tgt, 10.0f, 10.0f);
             } // else: within deadzone, do not adjust this tick
         }
 
         if (this.operation == Operation.MOVE_TO) {
             Vec3 targetVec = new Vec3(
-                    this.wantedX - dragon.getX(),
-                    this.wantedY - dragon.getY(),
-                    this.wantedZ - dragon.getZ()
+                    this.wantedX - mob.getX(),
+                    this.wantedY - mob.getY(),
+                    this.wantedZ - mob.getZ()
             );
             double distance = targetVec.length();
             targetVec = targetVec.normalize();
 
             // Simple collision check for hovering
             if (checkCollisions(targetVec, Mth.ceil(distance))) {
-                dragon.setDeltaMovement(dragon.getDeltaMovement().add(targetVec.scale(0.1D)));
+                mob.setDeltaMovement(mob.getDeltaMovement().add(targetVec.scale(0.1D)));
             } else {
                 this.operation = Operation.WAIT;
             }
@@ -176,10 +180,10 @@ public class DragonFlightMoveHelper extends MoveControl {
      * Collision checking for hovering mode
      */
     private boolean checkCollisions(Vec3 direction, int steps) {
-        var boundingBox = dragon.getBoundingBox();
+        var boundingBox = mob.getBoundingBox();
         for (int i = 1; i < steps; ++i) {
             boundingBox = boundingBox.move(direction);
-            if (!dragon.level().noCollision(dragon, boundingBox)) {
+            if (!mob.level().noCollision(mob, boundingBox)) {
                 return false;
             }
         }
@@ -194,11 +198,11 @@ public class DragonFlightMoveHelper extends MoveControl {
     }
 
     private boolean isLineObstructed(Vec3 from, Vec3 to) {
-        HitResult hit = dragon.level().clip(new ClipContext(
+        HitResult hit = mob.level().clip(new ClipContext(
                 from, to,
                 ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE,
-                dragon
+                mob
         ));
         return hit.getType() != HitResult.Type.MISS;
     }
