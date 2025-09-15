@@ -40,9 +40,6 @@ public record DragonRiderController(LightningDragonEntity dragon) {
         }
         return null;
     }
-
-    // (isBeingRidden and getFlightSpeedModifier removed; not referenced)
-
     // ===== RIDER INPUT PROCESSING =====
 
     /**
@@ -264,3 +261,4 @@ public record DragonRiderController(LightningDragonEntity dragon) {
         dragon.setRiderTakeoffTicks(30);
     }
 }
+
