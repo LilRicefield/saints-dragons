@@ -31,6 +31,15 @@ public record DragonRiderController(LightningDragonEntity dragon) {
     private static final double ASCEND_RATE = 0.15D;
     private static final double DESCEND_RATE = 0.5D;
 
+    // ===== AIR SPRINT / ACCELERATION TUNING =====
+    // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
+    // Base cruise cap is intentionally lower; sprint raises cap and accel.
+    private static final double CRUISE_MAX_MULT = 10.0;   // max horizontal blocks/tick relative to base speed
+    private static final double SPRINT_MAX_MULT = 40.0;   // top speed cap while accelerating
+    private static final double AIR_ACCEL_MULT = 0.10;    // accel per tick toward forward while holding W
+    private static final double SPRINT_ACCEL_MULT = 0.20; // accel per tick when accelerating
+    private static final double AIR_DRAG = 0.05;          // per-tick horizontal damping
+
     // ===== RIDING UTILITIES =====
 
     @Nullable
@@ -145,22 +154,74 @@ public record DragonRiderController(LightningDragonEntity dragon) {
         }
 
         if (dragon.isFlying()) {
-            dragon.moveRelative(getRiddenSpeed(player), motion);
-            Vec3 delta = dragon.getDeltaMovement();
+            // Directional input comes in local space via `motion` (strafe X, forward Z)
+            // We implement a throttle-based acceleration model with drag and speed caps.
+            final double base = dragon.getAttributeValue(Attributes.FLYING_SPEED);
+            final boolean sprinting = dragon.isAccelerating();
+            final double accel = (sprinting ? SPRINT_ACCEL_MULT : AIR_ACCEL_MULT) * base;
+            final double maxSpeed = (sprinting ? SPRINT_MAX_MULT : CRUISE_MAX_MULT) * base;
 
-            // Handle vertical movement from rider input
-            if (dragon.isGoingUp()) {
-                delta = delta.add(0, ASCEND_RATE, 0);
-            } else if (dragon.isGoingDown()) {
-                delta = delta.add(0, -DESCEND_RATE, 0);
+            // Current velocity split into horizontal and vertical
+            Vec3 cur = dragon.getDeltaMovement();
+            Vec3 horiz = new Vec3(cur.x, 0.0, cur.z);
+
+            // First apply horizontal drag (decay) to the carried velocity
+            horiz = horiz.scale(1.0 - AIR_DRAG);
+
+            // Build desired heading from forward + strafe.
+            // Allow pure lateral thrust (strafe) even without forward input.
+            double forwardInput = Math.max(0.0, motion.z); // ignore backward for thrust
+            double strafeInput = motion.x;                 // allow left/right
+
+            float yawRad = (float) Math.toRadians(dragon.getYRot());
+            // Basis vectors
+            double fx = -Math.sin(yawRad);  // forward X
+            double fz =  Math.cos(yawRad);  // forward Z
+            double rx =  Math.cos(yawRad);  // right X
+            double rz =  Math.sin(yawRad);  // right Z
+
+            // When not pushing forward, give strafe more authority; when pushing forward, blend lower to keep heading stable.
+            double strafeWeight = forwardInput > 0.2 ? 0.35 : 0.8;
+            double dx = fx * forwardInput + rx * (strafeInput * strafeWeight);
+            double dz = fz * forwardInput + rz * (strafeInput * strafeWeight);
+            double len = Math.hypot(dx, dz);
+            if (len > 1e-4) {
+                dx /= len; dz /= len;
+                // Scale thrust by overall input magnitude (so tiny taps give smaller accel)
+                double inputMag = Math.min(1.0, Math.hypot(forwardInput, strafeInput * strafeWeight));
+                horiz = horiz.add(dx * accel * inputMag, 0.0, dz * accel * inputMag);
             }
 
-            dragon.move(MoverType.SELF, delta);
-            // Less friction for more responsive flight
-            dragon.setDeltaMovement(delta.scale(0.91D));
+            // Clamp horizontal speed to cap after drag and thrust
+            double speed = Math.hypot(horiz.x, horiz.z);
+            if (speed > maxSpeed) {
+                double s = maxSpeed / speed;
+                horiz = new Vec3(horiz.x * s, 0.0, horiz.z * s);
+            }
+
+            // Vertical movement from rider input (decoupled from horizontal model)
+            double vy = cur.y;
+            if (dragon.isGoingUp()) {
+                vy += ASCEND_RATE;
+            } else if (dragon.isGoingDown()) {
+                vy -= DESCEND_RATE;
+            } else {
+                // Mild vertical damping to stabilize when no vertical input
+                vy *= 0.98;
+            }
+
+            Vec3 next = new Vec3(horiz.x, vy, horiz.z);
+            // Final hard clamp on horizontal component before applying
+            double nextH = Math.hypot(next.x, next.z);
+            if (nextH > maxSpeed) {
+                double s = maxSpeed / nextH;
+                next = new Vec3(next.x * s, next.y, next.z * s);
+            }
+            dragon.move(MoverType.SELF, next);
+            dragon.setDeltaMovement(next);
             dragon.calculateEntityAnimation(true);
 
-            // While airborne and ridden, continuously clear fall distance
+            // While airborne and ridden, continuously clear fall damage
             player.fallDistance = 0.0F;
             dragon.fallDistance = 0.0F;
         }
@@ -261,4 +322,3 @@ public record DragonRiderController(LightningDragonEntity dragon) {
         dragon.setRiderTakeoffTicks(30);
     }
 }
-
