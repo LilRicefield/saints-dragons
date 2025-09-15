@@ -52,6 +52,7 @@ public class DragonSleepGoal extends Goal {
         if (agitated()) return false;
         if (dragon.isSleepSuppressed()) return false;
         if (dragon.isTame()) {
+            // Tamed dragons can sleep when owner sleeps OR at night near owner
             if (ownerSleeping()) return true;
             return isNight() && nearOwner();
         } else {
@@ -61,10 +62,17 @@ public class DragonSleepGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (!dragon.isSleeping() && !dragon.isSleepTransitioning()) return false;
+        // If already sleeping or transitioning, continue unless agitated
+        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
+            return !agitated();
+        }
+        
+        // If not sleeping, check if we should start sleeping
         if (agitated()) return false;
+        if (dragon.isSleepSuppressed()) return false;
+        
         if (dragon.isTame()) {
-            return ownerSleeping() || isNight();
+            return ownerSleeping() || (isNight() && nearOwner());
         } else {
             return isDay() && isClearWeather() && isSheltered();
         }
