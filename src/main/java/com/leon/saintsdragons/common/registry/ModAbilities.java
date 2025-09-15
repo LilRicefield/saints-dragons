@@ -1,41 +1,38 @@
 package com.leon.saintsdragons.common.registry;
 
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
-import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningBiteAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.HornGoreAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningBeamAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningRoarAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.SummonStormAbility;
-import com.leon.saintsdragons.server.entity.ability.HurtAbility;
-import com.leon.saintsdragons.server.entity.ability.DieAbility;
-
 /**
- * Simple holder for dragon ability types.
+ * Central registry for all dragon abilities.
+ * This class provides backward compatibility and easy access to dragon abilities.
+ * 
+ * For dragon-specific abilities, use the individual dragon ability classes:
+ * - LightningDragonAbilities for Lightning Dragon abilities
+ * - (Future dragon types will have their own ability classes)
  */
 public final class ModAbilities {
     private ModAbilities() {}
 
-    public static final DragonAbilityType<LightningDragonEntity, LightningBiteAbility> BITE =
-            AbilityRegistry.register(new DragonAbilityType<>("bite", LightningBiteAbility::new));
-
-    public static final DragonAbilityType<LightningDragonEntity, HornGoreAbility> HORN_GORE =
-            AbilityRegistry.register(new DragonAbilityType<>("horn_gore", HornGoreAbility::new));
-
-    public static final DragonAbilityType<LightningDragonEntity, LightningBeamAbility> LIGHTNING_BEAM =
-            AbilityRegistry.register(new DragonAbilityType<>("lightning_beam", LightningBeamAbility::new));
-
-    public static final DragonAbilityType<LightningDragonEntity, LightningRoarAbility> ROAR =
-            AbilityRegistry.register(new DragonAbilityType<>("roar", LightningRoarAbility::new));
-
-    // Ultimate: Summon Storm
-    public static final DragonAbilityType<LightningDragonEntity, SummonStormAbility> SUMMON_STORM =
-            AbilityRegistry.register(new DragonAbilityType<>("summon_storm", SummonStormAbility::new));
-
-    // Passive/triggered on damage; one-shot animation + sound
-    public static final DragonAbilityType<LightningDragonEntity, HurtAbility> HURT =
-            AbilityRegistry.register(new DragonAbilityType<>("hurt", HurtAbility::new));
-
-    public static final DragonAbilityType<LightningDragonEntity, DieAbility> DIE =
-            AbilityRegistry.register(new DragonAbilityType<>("die", DieAbility::new));
+    // ===== LIGHTNING DRAGON ABILITIES =====
+    // These are kept here for backward compatibility
+    // New code should use LightningDragonAbilities directly
+    
+    public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> BITE = 
+            LightningDragonAbilities.BITE;
+    
+    public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> HORN_GORE = 
+            LightningDragonAbilities.HORN_GORE;
+    
+    public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> LIGHTNING_BEAM = 
+            LightningDragonAbilities.LIGHTNING_BEAM;
+    
+    public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> ROAR = 
+            LightningDragonAbilities.ROAR;
+    
+    public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> SUMMON_STORM = 
+            LightningDragonAbilities.SUMMON_STORM;
+    
+    public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> HURT = 
+            LightningDragonAbilities.HURT;
+    
+    public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> DIE = 
+            LightningDragonAbilities.DIE;
 }

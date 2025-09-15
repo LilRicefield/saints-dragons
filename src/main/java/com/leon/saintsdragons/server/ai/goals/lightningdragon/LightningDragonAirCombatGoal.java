@@ -41,7 +41,7 @@ public class LightningDragonAirCombatGoal extends DragonAirCombatGoalBase {
         // Lightning Dragon specific dive attack
         if (lightningDragon.canUseAbility() && lightningDragon.getRandom().nextFloat() < 0.4f) {
             // 40% chance for lightning dive attack
-            lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.ModAbilities.ROAR);
+            lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.ROAR);
         }
         
         // Trigger dive attack animation
@@ -55,7 +55,7 @@ public class LightningDragonAirCombatGoal extends DragonAirCombatGoalBase {
         // Lightning Dragon specific ranged attack
         if (lightningDragon.canUseAbility() && lightningDragon.getRandom().nextFloat() < 0.6f) {
             // 60% chance for lightning beam attack
-            lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.ModAbilities.LIGHTNING_BEAM);
+            lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.LIGHTNING_BEAM);
         }
         
         // Trigger ranged attack animation
@@ -205,10 +205,10 @@ public class LightningDragonAirCombatGoal extends DragonAirCombatGoalBase {
             
             if (abilityChance < 0.4f) {
                 // 40% chance for lightning dive attack
-                lightningDragon.tryActivateAbility(ModAbilities.ROAR);
+                lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.ROAR);
             } else if (abilityChance < 0.7f) {
                 // 30% chance for lightning beam during dive
-                lightningDragon.tryActivateAbility(ModAbilities.LIGHTNING_BEAM);
+                lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.LIGHTNING_BEAM);
             }
         }
         
@@ -234,10 +234,10 @@ public class LightningDragonAirCombatGoal extends DragonAirCombatGoalBase {
             
             if (abilityChance < 0.6f) {
                 // 60% chance for lightning beam attack
-                lightningDragon.tryActivateAbility(ModAbilities.LIGHTNING_BEAM);
+                lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.LIGHTNING_BEAM);
             } else if (abilityChance < 0.8f) {
                 // 20% chance for lightning storm
-                lightningDragon.tryActivateAbility(ModAbilities.ROAR);
+                lightningDragon.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.ROAR);
             }
         }
         
