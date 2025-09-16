@@ -6,7 +6,17 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 
 /**
  * Lightning Dragon specific sleep goal.
- * Extends the base sleep goal with Lightning Dragon specific behaviors.
+ * 
+ * Lightning Dragons have unique sleep patterns:
+ * - Highly energized by storms and rain (less likely to sleep)
+ * - Prefer to sleep during the day in sheltered areas
+ * - Can sleep at night but are more active during storms
+ * - Won't sleep while charging or during severe weather
+ * 
+ * Sleep Probability:
+ * - Clear weather: Normal sleep patterns
+ * - Rain: 40% chance to stay awake
+ * - Storms: Only 15% chance to sleep (they're too excited!)
  */
 public class LightningDragonSleepGoal extends DragonSleepGoalBase {
     
@@ -23,9 +33,15 @@ public class LightningDragonSleepGoal extends DragonSleepGoalBase {
             return false; // Don't sleep while charging
         }
         
-        // Lightning Dragons are more active during storms
-        if (lightningDragon.level().isThundering() && lightningDragon.getRandom().nextFloat() < 0.7f) {
-            return false; // 70% chance to stay awake during storms
+        // Lightning Dragons are energized by storms - much less likely to sleep
+        if (lightningDragon.level().isThundering()) {
+            // Only 15% chance to sleep during storms (they're too excited!)
+            return lightningDragon.getRandom().nextFloat() < 0.15f;
+        }
+        
+        // Lightning Dragons are more active during rain (but not as much as storms)
+        if (lightningDragon.level().isRaining() && lightningDragon.getRandom().nextFloat() < 0.4f) {
+            return false; // 40% chance to stay awake during rain
         }
         
         return super.canUse();
@@ -34,31 +50,21 @@ public class LightningDragonSleepGoal extends DragonSleepGoalBase {
     @Override
     protected boolean canWildDragonSleep() {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        
-        // Lightning Dragons have unique sleep preferences
         DragonSleepCapable.SleepPreferences prefs = sleepCapable.getSleepPreferences();
         
-        // Check day sleeping (Lightning Dragons prefer to sleep during day)
-        if (prefs.canSleepDuringDay() && isDay() && isSheltered()) {
-            // Lightning Dragons are less affected by thunderstorms
-            if (prefs.avoidsThunderstorms() && lightningDragon.level().isThundering()) {
-                // Only 30% chance to avoid sleeping during storms
-                return lightningDragon.getRandom().nextFloat() < 0.3f;
-            }
-            return true;
+        // Check if basic conditions are met (day/night + shelter)
+        boolean canSleepNow = (prefs.canSleepDuringDay() && isDay() && isSheltered()) ||
+                             (prefs.canSleepAtNight() && isNight() && isSheltered());
+        
+        if (!canSleepNow) return false;
+        
+        // Lightning Dragons are energized by storms - less likely to sleep during them
+        if (prefs.avoidsThunderstorms() && lightningDragon.level().isThundering()) {
+            // Only 30% chance to sleep during storms (they're too excited!)
+            return lightningDragon.getRandom().nextFloat() < 0.3f;
         }
         
-        // Check night sleeping (Lightning Dragons can sleep at night but prefer day)
-        if (prefs.canSleepAtNight() && isNight() && isSheltered()) {
-            // Lightning Dragons are less affected by thunderstorms
-            if (prefs.avoidsThunderstorms() && lightningDragon.level().isThundering()) {
-                // Only 30% chance to avoid sleeping during storms
-                return lightningDragon.getRandom().nextFloat() < 0.3f;
-            }
-            return true;
-        }
-        
-        return false;
+        return true;
     }
     
     @Override
@@ -67,8 +73,6 @@ public class LightningDragonSleepGoal extends DragonSleepGoalBase {
         
         // Use the proper sleep transition system instead of bypassing it
         lightningDragon.startSleepEnter();
-        
-        super.start();
     }
     
     @Override
@@ -77,7 +81,5 @@ public class LightningDragonSleepGoal extends DragonSleepGoalBase {
         
         // Use the proper sleep transition system instead of bypassing it
         lightningDragon.startSleepExit();
-        
-        super.stop();
     }
 }
