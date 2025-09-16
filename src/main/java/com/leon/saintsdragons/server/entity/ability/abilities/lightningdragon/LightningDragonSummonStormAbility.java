@@ -31,6 +31,14 @@ public class LightningDragonSummonStormAbility extends DragonAbility<LightningDr
     }
 
     @Override
+    public void tickUsing() {
+        // Continuously trigger screen shake during the entire ability
+        if (!getUser().level().isClientSide) {
+            getUser().triggerScreenShake(3.0F);
+        }
+    }
+
+    @Override
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
@@ -38,6 +46,7 @@ public class LightningDragonSummonStormAbility extends DragonAbility<LightningDr
             getUser().lockRiderControls(20 * 6);
             getUser().lockTakeoff(20 * 6);
             getUser().startTemporaryInvuln(20 * 6);
+            // Screen shake is now handled by the animation predicate
             // Play summon_storm animation variant + sound
             boolean flying = getUser().isFlying();
             String trigger = flying ? "summon_storm_air" : "summon_storm_ground";

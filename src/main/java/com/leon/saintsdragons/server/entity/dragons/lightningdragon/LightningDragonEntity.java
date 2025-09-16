@@ -18,6 +18,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.interfaces.DragonCombatCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
+import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonFlightController;
 import com.leon.saintsdragons.server.entity.handler.DragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
@@ -80,7 +81,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //Just everything
 public class LightningDragonEntity extends DragonEntity implements FlyingAnimal, RangedAttackMob,
-        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable {
+        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen {
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
     private int ownerDistanceCacheTime = -1;
@@ -97,6 +98,10 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // Sound frequency constants (in ticks)
     private static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
     private static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
+
+    // ===== SCREEN SHAKE SYSTEM =====
+    private float prevScreenShakeAmount = 0.0F;
+    private float screenShakeAmount = 0.0F;
 
     // ===== CORE ANIMATIONS =====
     public static final RawAnimation GROUND_IDLE = RawAnimation.begin().thenLoop("animation.lightning_dragon.ground_idle");
@@ -147,6 +152,8 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.INT);
     static final EntityDataAccessor<Integer> DATA_ATTACK_PHASE =
             SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.INT);
+    static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
+            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
     static final EntityDataAccessor<Boolean> DATA_BEAMING =
             SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
     static final EntityDataAccessor<Boolean> DATA_BEAM_END_SET =
@@ -372,6 +379,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.entityData.define(DATA_RIDER_STRAFE, 0f);
         this.entityData.define(DATA_ATTACK_KIND, 0);
         this.entityData.define(DATA_ATTACK_PHASE, 0);
+        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_BEAM_END_SET, false);
         this.entityData.define(DATA_BEAM_END_X, 0f);
@@ -847,6 +855,13 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Client-side animation sync no longer required; standard controller handles timing
 
         super.tick();
+
+        // Update screen shake interpolation
+        prevScreenShakeAmount = screenShakeAmount;
+        if (screenShakeAmount > 0) {
+            screenShakeAmount = Math.max(0, screenShakeAmount - 0.34F);
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
+        }
 
         // Clear sitting state if the dragon is being ridden
         if (!this.level().isClientSide && this.isVehicle() && this.isOrderedToSit()) {
@@ -2479,5 +2494,42 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     public boolean isCharging() {
         // Check if Lightning Dragon is charging
         return false; // Implement based on your charging logic
+    }
+
+    // ===== SCREEN SHAKE INTERFACE IMPLEMENTATION =====
+    
+    @Override
+    public float getScreenShakeAmount(float partialTicks) {
+        float currentAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+        return prevScreenShakeAmount + (currentAmount - prevScreenShakeAmount) * partialTicks;
+    }
+
+    @Override
+    public double getShakeDistance() {
+        return 25.0; // Lightning Dragons have a larger shake radius than Tremorsaurus
+    }
+
+    @Override
+    public boolean canFeelShake(Entity player) {
+        // Allow screen shake regardless of whether player is on ground
+        // This is important for dragon riding scenarios
+        return true;
+    }
+
+    /**
+     * Triggers screen shake for the specified intensity.
+     * 
+     * @param intensity The shake intensity (0.0 to 1.0+)
+     */
+    public void triggerScreenShake(float intensity) {
+        this.screenShakeAmount = Math.max(this.screenShakeAmount, intensity);
+        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
+    }
+    
+    /**
+     * Test method to manually trigger screen shake for debugging
+     */
+    public void testScreenShake() {
+        this.screenShakeAmount = 2.0F;
     }
 }
