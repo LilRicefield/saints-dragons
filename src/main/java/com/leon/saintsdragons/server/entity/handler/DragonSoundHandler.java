@@ -135,6 +135,9 @@ public class DragonSoundHandler {
     public void playVocal(String key) {
         if (key == null || key.isEmpty() || dragon.level().isClientSide) return;
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) return; // Gate vocals during sleep/transition
+        
+        // Special case: allow death sound even when dying
+        boolean isDeathSound = "die".equals(key);
 
         switch (key) {
             case "grumble1" -> dragon.playSound(ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f);
@@ -148,6 +151,7 @@ public class DragonSoundHandler {
             case "growl_warning" -> dragon.playSound(ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f);
             case "roar"      -> dragon.playSound(ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f);
             case "hurt"      -> dragon.playSound(ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f);
+            case "die"       -> dragon.playSound(ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f);
             default -> {
                 // Unknown key - do nothing
             }

@@ -1437,6 +1437,13 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             if (remaining <= 0.0f) {
                 // Start death sequence; make dragon briefly invulnerable to suppress further deaths
                 this.setInvulnerable(true);
+                this.setDying(true);
+                
+                // Force interrupt any active ability and start death ability
+                if (!this.canUseAbility()) {
+                    // If we can't use ability, there's an active one - interrupt it
+                    this.setActiveAbility(null);
+                }
                 this.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.DIE);
                 return true; // handled
             }

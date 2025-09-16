@@ -23,6 +23,11 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         
+        // Set dying flag to prevent further damage/interactions
+        if (getUser() instanceof com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity lightningDragon) {
+            lightningDragon.setDying(true);
+        }
+        
         // Trigger death animation
         getUser().triggerAnim("action", "die");
         
