@@ -1190,19 +1190,17 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         float yawChange = getYRot() - yRotO;
         bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
 
-        // Much more responsive thresholds - like the original
-        float enter = 3.0f;
-        float exit = 3.0f;
+        // More aggressive thresholds for responsive banking
+        float enter = 1.0f; 
+        float exit = 5.0f;
 
         int desiredDir = bankDir;
         if (bankSmoothedYaw > enter) desiredDir = 1;
         else if (bankSmoothedYaw < -enter) desiredDir = -1;
         else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;  // banking_off when flying straight
-
-        // Much faster transitions - like the original
         if (desiredDir != bankDir) {
             // If transitioning to "off" (0), use very short hold time for instant reset
-            int holdTime = (desiredDir == 0) ? 1 : 2;  // Reduced from 3/8 to 1/4
+            int holdTime = (desiredDir == 0) ? 1 : 2;
             if (bankHoldTicks >= holdTime) {
                 bankDir = desiredDir;
                 bankHoldTicks = 0;
@@ -1995,9 +1993,9 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         AnimationController<LightningDragonEntity> movementController =
                 new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
         AnimationController<LightningDragonEntity> bankingController =
-                new AnimationController<>(this, "banking", 12, animationHandler::bankingPredicate);
+                new AnimationController<>(this, "banking", 8, animationHandler::bankingPredicate);
         AnimationController<LightningDragonEntity> pitchingController =
-                new AnimationController<>(this, "pitching", 12, animationHandler::pitchingPredicate);
+                new AnimationController<>(this, "pitching", 6, animationHandler::pitchingPredicate);
         AnimationController<LightningDragonEntity> actionController =
                 new AnimationController<>(this, "action", 0, animationHandler::actionPredicate);
 
