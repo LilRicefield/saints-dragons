@@ -62,32 +62,30 @@ public class LightningDragonSleepGoal extends DragonSleepGoalBase {
     }
     
     @Override
-    protected boolean shouldTamedDragonContinueSleeping() {
+    public void start() {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
         
-        // Tamed Lightning Dragons sleep at night and wake up in the morning
-        // But they're more active during storms
-        if (lightningDragon.level().isThundering() && lightningDragon.getRandom().nextFloat() < 0.3f) {
-            return false; // 30% chance to wake up during storms
-        }
+        // Lightning Dragon specific sleep start behavior
+        lightningDragon.setSleeping(true);
+        // lightningDragon.setSleepTransitioning(true);
         
-        return isNight();
+        // Trigger Lightning Dragon specific sleep animation
+        lightningDragon.playSleepAnimation();
+        
+        super.start();
     }
     
     @Override
-    protected boolean shouldWildDragonContinueSleeping() {
+    public void stop() {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
         
-        // Wild Lightning Dragons sleep during the day (in shelter) and wake up at night
-        // But they're less affected by thunderstorms
-        if (lightningDragon.level().isThundering() && lightningDragon.getRandom().nextFloat() < 0.2f) {
-            return false; // 20% chance to wake up during storms
-        }
+        // Lightning Dragon specific sleep stop behavior
+        lightningDragon.setSleeping(false);
+        // lightningDragon.setSleepTransitioning(false);
         
-        return isDay() && isSheltered();
+        // Trigger Lightning Dragon specific wake animation
+        lightningDragon.playWakeAnimation();
+        
+        super.stop();
     }
-    
-    // Note: We don't override start() and stop() because the base class
-    // already calls startSleepEnter() and startSleepExit() which handle
-    // the sleep_enter and sleep_exit animations properly
 }

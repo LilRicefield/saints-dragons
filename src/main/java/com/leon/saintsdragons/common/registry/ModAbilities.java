@@ -31,8 +31,8 @@ public final class ModAbilities {
             LightningDragonAbilities.SUMMON_STORM;
     
     public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> HURT = 
-            BaseDragonAbilities.HURT;
+            LightningDragonAbilities.HURT;
     
     public static final com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> DIE = 
-            BaseDragonAbilities.DIE;
+            LightningDragonAbilities.DIE;
 }
