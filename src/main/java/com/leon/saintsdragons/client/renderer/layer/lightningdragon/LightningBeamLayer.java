@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.renderer.layer.lightningdragon;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -101,7 +102,7 @@ public class LightningBeamLayer extends GeoRenderLayer<LightningDragonEntity> {
         double ox = net.minecraft.util.Mth.lerp(partialTick, animatable.xo, animatable.getX());
         double oy = net.minecraft.util.Mth.lerp(partialTick, animatable.yo, animatable.getY());
         double oz = net.minecraft.util.Mth.lerp(partialTick, animatable.zo, animatable.getZ());
-        float scale = LightningDragonEntity.MODEL_SCALE;
+        float scale = MODEL_SCALE;
         
         // Calculate beam direction and prepare transformation
         net.minecraft.world.phys.Vec3 rawBeamPosition = end.subtract(mouthWorld);
