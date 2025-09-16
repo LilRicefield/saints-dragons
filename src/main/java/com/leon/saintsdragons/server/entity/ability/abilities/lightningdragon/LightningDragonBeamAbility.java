@@ -11,7 +11,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * No charge: starts immediately, remains active until interrupted.
  * Initial version: only toggles beaming state; damage/VFX added later.
  */
-public class LightningBeamAbility extends DragonAbility<LightningDragonEntity> {
+public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEntity> {
 
     // Unified beam animation: 1s delay (startup), ~3.03s active beaming, no explicit recovery
     // 1s  = 20 ticks; 3.03s ≈ 61 ticks
@@ -22,7 +22,7 @@ public class LightningBeamAbility extends DragonAbility<LightningDragonEntity> {
     
     private boolean hasBeamFired = false; // Track if beam has been fired this activation
 
-    public LightningBeamAbility(DragonAbilityType<LightningDragonEntity, LightningBeamAbility> type, LightningDragonEntity user) {
+    public LightningDragonBeamAbility(DragonAbilityType<LightningDragonEntity, LightningDragonBeamAbility> type, LightningDragonEntity user) {
         super(type, user, TRACK, 0); // No cooldown; gated by input
     }
 

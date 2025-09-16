@@ -14,7 +14,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Simple one-shot roar ability: plays a roar vocal and triggers the matching
  * action animation. No damage/effects here; purely audiovisual.
  */
-public class LightningRoarAbility extends DragonAbility<LightningDragonEntity> {
+public class LightningDragonRoarAbility extends DragonAbility<LightningDragonEntity> {
 
     // Brief startup to sync with animation pose, a short active window
     // so the ability keeps itself alive while the clip plays, then recover.
@@ -32,7 +32,7 @@ public class LightningRoarAbility extends DragonAbility<LightningDragonEntity> {
     private java.util.List<Integer> targetIds = java.util.Collections.emptyList();
     private int targetCursor = 0;
 
-    public LightningRoarAbility(DragonAbilityType<LightningDragonEntity, LightningRoarAbility> type, LightningDragonEntity user) {
+    public LightningDragonRoarAbility(DragonAbilityType<LightningDragonEntity, LightningDragonRoarAbility> type, LightningDragonEntity user) {
         super(type, user, TRACK, 40);
     }
 

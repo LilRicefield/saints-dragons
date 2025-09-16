@@ -12,7 +12,7 @@ import java.util.EnumSet;
  * Features smart flight triggering, performance optimizations, and realistic distances... maybe, cuz if the player keeps walking away from Dink, he'd move incrementally, not walk to his owner in an instant.
  */
 
-public class DragonFollowOwnerGoal extends Goal {
+public class LightningDragonFollowOwnerGoal extends Goal {
     private final LightningDragonEntity dragon;
 
     // Distance constants - tuned for better behavior
@@ -29,7 +29,7 @@ public class DragonFollowOwnerGoal extends Goal {
     private BlockPos previousOwnerPos;
     private int repathCooldown = 0;
 
-    public DragonFollowOwnerGoal(LightningDragonEntity dragon) {
+    public LightningDragonFollowOwnerGoal(LightningDragonEntity dragon) {
         this.dragon = dragon;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }

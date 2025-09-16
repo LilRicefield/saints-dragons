@@ -16,7 +16,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * - Supercharges the dragon for 2 minutes: x2 damage on abilities
  * - Cooldown: 4 minutes
  */
-public class SummonStormAbility extends DragonAbility<LightningDragonEntity> {
+public class LightningDragonSummonStormAbility extends DragonAbility<LightningDragonEntity> {
     private static final int SUPERCHARGE_TICKS = 20 * 120; // 120s
     private static final int COOLDOWN_TICKS = 20 * 240; // 240s
 
@@ -26,7 +26,7 @@ public class SummonStormAbility extends DragonAbility<LightningDragonEntity> {
             new AbilitySectionDuration(AbilitySectionType.RECOVERY, 20) // small tail to keep action controller busy
     };
 
-    public SummonStormAbility(DragonAbilityType<LightningDragonEntity, SummonStormAbility> type, LightningDragonEntity user) {
+    public LightningDragonSummonStormAbility(DragonAbilityType<LightningDragonEntity, LightningDragonSummonStormAbility> type, LightningDragonEntity user) {
         super(type, user, TRACK, COOLDOWN_TICKS);
     }
 
