@@ -84,7 +84,7 @@ public class LightningDragonRoarAbility extends DragonAbility<LightningDragonEnt
 
         // Continuously trigger screen shake during the entire ability
         if (!getUser().level().isClientSide) {
-            getUser().triggerScreenShake(2.0F);
+            getUser().triggerScreenShake(1.0F); // Reduced intensity for Roar
         }
 
         // During ACTIVE section, spawn lightning strikes at the selected target

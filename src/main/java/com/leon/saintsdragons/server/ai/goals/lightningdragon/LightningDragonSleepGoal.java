@@ -65,12 +65,8 @@ public class LightningDragonSleepGoal extends DragonSleepGoalBase {
     public void start() {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
         
-        // Lightning Dragon specific sleep start behavior
-        lightningDragon.setSleeping(true);
-        // lightningDragon.setSleepTransitioning(true);
-        
-        // Trigger Lightning Dragon specific sleep animation
-        lightningDragon.playSleepAnimation();
+        // Use the proper sleep transition system instead of bypassing it
+        lightningDragon.startSleepEnter();
         
         super.start();
     }
@@ -79,12 +75,8 @@ public class LightningDragonSleepGoal extends DragonSleepGoalBase {
     public void stop() {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
         
-        // Lightning Dragon specific sleep stop behavior
-        lightningDragon.setSleeping(false);
-        // lightningDragon.setSleepTransitioning(false);
-        
-        // Trigger Lightning Dragon specific wake animation
-        lightningDragon.playWakeAnimation();
+        // Use the proper sleep transition system instead of bypassing it
+        lightningDragon.startSleepExit();
         
         super.stop();
     }
