@@ -169,8 +169,9 @@ public record LightningDragonRiderController(LightningDragonEntity dragon) {
 
             // Build desired heading from forward + strafe.
             // Allow pure lateral thrust (strafe) even without forward input.
-            double forwardInput = Math.max(0.0, motion.z); // ignore backward for thrust
-            double strafeInput = motion.x;                 // allow left/right
+            // Support backward movement by using full motion.z range
+            double forwardInput = motion.z;               // allow forward/backward movement
+            double strafeInput = motion.x;                // allow left/right
 
             float yawRad = (float) Math.toRadians(dragon.getYRot());
             // Basis vectors
@@ -179,15 +180,16 @@ public record LightningDragonRiderController(LightningDragonEntity dragon) {
             double rx =  Math.cos(yawRad);  // right X
             double rz =  Math.sin(yawRad);  // right Z
 
-            // When not pushing forward, give strafe more authority; when pushing forward, blend lower to keep heading stable.
-            double strafeWeight = forwardInput > 0.2 ? 0.35 : 0.8;
+            // When moving forward/backward, give strafe less authority to keep heading stable.
+            // When not moving forward/backward, give strafe more authority for pure lateral movement.
+            double strafeWeight = Math.abs(forwardInput) > 0.2 ? 0.35 : 0.8;
             double dx = fx * forwardInput + rx * (strafeInput * strafeWeight);
             double dz = fz * forwardInput + rz * (strafeInput * strafeWeight);
             double len = Math.hypot(dx, dz);
             if (len > 1e-4) {
                 dx /= len; dz /= len;
                 // Scale thrust by overall input magnitude (so tiny taps give smaller accel)
-                double inputMag = Math.min(1.0, Math.hypot(forwardInput, strafeInput * strafeWeight));
+                double inputMag = Math.min(1.0, Math.hypot(Math.abs(forwardInput), Math.abs(strafeInput * strafeWeight)));
                 horiz = horiz.add(dx * accel * inputMag, 0.0, dz * accel * inputMag);
             }
 
