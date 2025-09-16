@@ -13,13 +13,7 @@ import net.minecraft.world.item.ItemStack;
  * Handles all player interactions with Lightning Dragons.
  * Extracted from LightningDragonEntity to improve maintainability and reduce class size.
  */
-public class LightningDragonInteractionHandler {
-    
-    private final LightningDragonEntity dragon;
-    
-    public LightningDragonInteractionHandler(LightningDragonEntity dragon) {
-        this.dragon = dragon;
-    }
+public record LightningDragonInteractionHandler(LightningDragonEntity dragon) {
     
     /**
      * Main interaction entry point.

@@ -1,10 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.core.object.PlayState;
 
 import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
@@ -13,13 +11,7 @@ import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handl
  * Handles all animation logic for the Lightning Dragon
  * Extracted from LightningDragonEntity to improve organization and maintainability
  */
-public class LightningDragonAnimationHandler {
-    
-    private final LightningDragonEntity dragon;
-    
-    public LightningDragonAnimationHandler(LightningDragonEntity dragon) {
-        this.dragon = dragon;
-    }
+public record LightningDragonAnimationHandler(LightningDragonEntity dragon) {
     
     // ===== ANIMATION TRIGGERS =====
     
