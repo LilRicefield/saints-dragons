@@ -6,11 +6,11 @@ package com.leon.saintsdragons.server.entity.dragons.lightningdragon;
 //Custom stuff
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningArcData;
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData;
-import com.leon.saintsdragons.server.ai.goals.LightningDragonDodgeGoal;
-import com.leon.saintsdragons.server.ai.goals.LightningDragonFlightGoal;
-import com.leon.saintsdragons.server.ai.goals.LightningDragonFollowOwnerGoal;
-import com.leon.saintsdragons.server.ai.goals.LightningDragonGroundWanderGoal;
-import com.leon.saintsdragons.server.ai.goals.LightningDragonPanicGoal;
+import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonDodgeGoal;
+import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonFlightGoal;
+import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonFollowOwnerGoal;
+import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonGroundWanderGoal;
+import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonPanicGoal;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonPhysicsController;
