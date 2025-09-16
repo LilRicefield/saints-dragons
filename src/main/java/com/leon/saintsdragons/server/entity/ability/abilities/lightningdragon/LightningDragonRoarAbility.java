@@ -47,6 +47,7 @@ public class LightningDragonRoarAbility extends DragonAbility<LightningDragonEnt
             getUser().triggerAnim("action", trigger);
             // Queue the roar sound slightly delayed to sync with mouth opening
             roarQueued = true;
+            // Screen shake is now handled by the animation predicate
             // Lock takeoff only on ground, but allow running and other controls.
             // While flying, allow normal controls (including ascend/descend) during roar.
             if (!getUser().isFlying()) {
@@ -79,6 +80,11 @@ public class LightningDragonRoarAbility extends DragonAbility<LightningDragonEnt
                 dragon.playSound(com.leon.saintsdragons.common.registry.ModSounds.DRAGON_ROAR.get(), 1.4f, pitch);
                 roarQueued = false;
             }
+        }
+
+        // Continuously trigger screen shake during the entire ability
+        if (!getUser().level().isClientSide) {
+            getUser().triggerScreenShake(2.0F);
         }
 
         // During ACTIVE section, spawn lightning strikes at the selected target
