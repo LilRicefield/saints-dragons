@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import net.minecraft.world.damagesource.DamageTypes;
 
 /**
  * Generic death ability for all dragons.
@@ -38,7 +37,12 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     @Override
     protected void endSection(DragonAbilitySection section) {
-        // Let the existing death system handle the rest
+        // After death animation completes, actually kill the dragon
+        if (!getLevel().isClientSide) {
+            // Remove invulnerability and kill the dragon
+            getUser().setInvulnerable(false);
+            getUser().hurt(getLevel().damageSources().genericKill(), Float.MAX_VALUE);
+        }
         complete();
     }
 
