@@ -23,6 +23,7 @@ import com.leon.saintsdragons.server.entity.controller.lightningdragon.Lightning
 import com.leon.saintsdragons.server.entity.handler.DragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonAnimationHandler;
 import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonRiderController;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -164,8 +165,8 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // Dying gate to coordinate custom death ability/timing
     private boolean dying = false;
     // Sleep transition state
-    private boolean sleepingEntering = false;
-    private boolean sleepingExiting = false;
+    public boolean sleepingEntering = false;
+    public boolean sleepingExiting = false;
     private int sleepTransitionTicks = 0;
     // Tiny ambient resume buffer after exit completes
     private int sleepAmbientCooldownTicks = 0;
@@ -208,6 +209,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     public final LightningDragonFlightController flightController;
     public final DragonInteractionHandler interactionHandler;
     private final LightningDragonInteractionHandler lightningInteractionHandler;
+    private final LightningDragonAnimationHandler animationHandler;
 
     // ===== SPECIALIZED HANDLER SYSTEMS =====
     private final DragonKeybindHandler keybindHandler;
@@ -273,6 +275,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.flightController = new LightningDragonFlightController(this);
         this.interactionHandler = new DragonInteractionHandler(this);
         this.lightningInteractionHandler = new LightningDragonInteractionHandler(this);
+        this.animationHandler = new LightningDragonAnimationHandler(this);
 
         // Initialize specialized handler systems
         this.keybindHandler = new DragonKeybindHandler(this);
@@ -833,6 +836,10 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             tickSleepTransition();
             tickSleepCooldowns();
         }
+        
+        // Update banking and pitching logic every tick
+        tickBankingLogic();
+        tickPitchingLogic();
 
         // Wake up if mounted or target appears/aggression
         if (!level().isClientSide && (isSleeping() || sleepingEntering || sleepingExiting)) {
@@ -1166,6 +1173,94 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
         if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
         if (sleepCancelTicks > 0) sleepCancelTicks--;
+    }
+    
+    private void tickBankingLogic() {
+        // Reset banking when not flying or when controls are locked - INSTANT reset
+        if (areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
+            if (bankDir != 0) {
+                bankDir = 0;
+                bankSmoothedYaw = 0f;
+                bankHoldTicks = 0;
+            }
+            return;
+        }
+        
+        // Exponential smoothing to avoid jitter
+        float yawChange = getYRot() - yRotO;
+        bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
+
+        // Much more responsive thresholds - like the original
+        float enter = 3.0f;
+        float exit = 3.0f;
+
+        int desiredDir = bankDir;
+        if (bankSmoothedYaw > enter) desiredDir = 1;
+        else if (bankSmoothedYaw < -enter) desiredDir = -1;
+        else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;  // banking_off when flying straight
+
+        // Much faster transitions - like the original
+        if (desiredDir != bankDir) {
+            // If transitioning to "off" (0), use very short hold time for instant reset
+            int holdTime = (desiredDir == 0) ? 1 : 2;  // Reduced from 3/8 to 1/4
+            if (bankHoldTicks >= holdTime) {
+                bankDir = desiredDir;
+                bankHoldTicks = 0;
+            } else {
+                bankHoldTicks++;
+            }
+        } else {
+            bankHoldTicks = Math.min(bankHoldTicks + 1, 10);  // Reduced max from 20 to 10
+        }
+    }
+    
+    private void tickPitchingLogic() {
+        // Reset pitching when not flying or when controls are locked - INSTANT reset
+        if (areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
+            if (pitchDir != 0) {
+                pitchDir = 0;
+                pitchSmoothedPitch = 0f;
+                pitchHoldTicks = 0;
+            }
+            return;
+        }
+        
+        int desiredDir = pitchDir;
+
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player) {
+            if (isGoingUp()) {
+                desiredDir = -1;  // Pitching up
+            } else if (isGoingDown()) {
+                desiredDir = 1;   // Pitching down
+            } else {
+                desiredDir = 0;   // No pitching
+            }
+        } else {
+            float pitchChange = getXRot() - xRotO;
+            pitchSmoothedPitch = pitchSmoothedPitch * 0.85f + pitchChange * 0.15f;
+
+            // Hysteresis thresholds - tighter for more responsive straight flight
+            float enter = 3.0f;
+            float exit = 3.0f;
+
+            if (pitchSmoothedPitch > enter) desiredDir = 1;
+            else if (pitchSmoothedPitch < -enter) desiredDir = -1;
+            else if (Math.abs(pitchSmoothedPitch) < exit) desiredDir = 0;  // pitching_off when flying straight
+        }
+
+        // Faster reset to off state (reduced hold time)
+        if (desiredDir != pitchDir) {
+            // If transitioning to "off" (0), use shorter hold time for faster reset
+            int holdTime = (desiredDir == 0) ? 1 : 2;
+            if (pitchHoldTicks >= holdTime) {
+                pitchDir = desiredDir;
+                pitchHoldTicks = 0;
+            } else {
+                pitchHoldTicks++;
+            }
+        } else {
+            pitchHoldTicks = Math.min(pitchHoldTicks + 1, 20);
+        }
     }
 
     @Override
@@ -1512,6 +1607,32 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     public boolean isDying() {
         return dying;
     }
+    
+    // ===== ANIMATION HELPER METHODS =====
+    
+    /**
+     * Gets the current bank direction for animation purposes
+     * @return -1 for left, 0 for none, 1 for right
+     */
+    public int getBankDirection() {
+        return bankDir;
+    }
+    
+    /**
+     * Gets the current pitch direction for animation purposes
+     * @return -1 for up, 0 for none, 1 for down
+     */
+    public int getPitchDirection() {
+        return pitchDir;
+    }
+    
+    /**
+     * Checks if the dragon is currently summoning (controls locked for ability)
+     * @return true if summoning
+     */
+    public boolean isSummoning() {
+        return areRiderControlsLocked() && !isDying() && !isSleeping() && !sleepingEntering && !sleepingExiting;
+    }
     public void setDying(boolean dying) {
         this.dying = dying;
     }
@@ -1597,7 +1718,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         if (isSleeping() || sleepingEntering || sleepingExiting) return;
         sleepingEntering = true;
         sleepTransitionTicks = 81; // ~4.021s (enter)
-        triggerAnim("action", "sleep_enter");
+        animationHandler.triggerSleepEnter();
     }
     public void startSleepExit() {
         if ((!isSleeping() && !sleepingEntering) || sleepingExiting) return;
@@ -1606,7 +1727,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         sleepingEntering = false;
         sleepingExiting = true;
         sleepTransitionTicks = 122; // ~6.075s (exit)
-        triggerAnim("action", "sleep_exit");
+        animationHandler.triggerSleepExit();
     }
 
     /** Immediately cancel any sleep state/transition without playing animations. */
@@ -1861,7 +1982,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
      */
     public void triggerDodgeAnimation() {
         // Trigger native GeckoLib action key
-        triggerAnim("action", "dodge");
+        animationHandler.triggerDodgeAnimation();
     }
 
     // Note: We rely on GeckoLib triggerAnim(...) to play action clips.
@@ -1874,11 +1995,11 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         AnimationController<LightningDragonEntity> movementController =
                 new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
         AnimationController<LightningDragonEntity> bankingController =
-                new AnimationController<>(this, "banking", 12, this::bankingPredicate);
+                new AnimationController<>(this, "banking", 12, animationHandler::bankingPredicate);
         AnimationController<LightningDragonEntity> pitchingController =
-                new AnimationController<>(this, "pitching", 12, this::pitchingPredicate);
+                new AnimationController<>(this, "pitching", 12, animationHandler::pitchingPredicate);
         AnimationController<LightningDragonEntity> actionController =
-                new AnimationController<>(this, "action", 0, this::actionPredicate);
+                new AnimationController<>(this, "action", 0, animationHandler::actionPredicate);
 
         // Sound keyframes
         bankingController.setSoundKeyframeHandler(this::onAnimationSound);
@@ -1886,27 +2007,8 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
 
-        // Register triggerable one-shots for server-side triggerAnim()
-        registerVocalTriggers(actionController);
-        // Register native keys for triggers
-        actionController.triggerableAnim("lightning_bite",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.lightning_bite"));
-        actionController.triggerableAnim("horn_gore",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.horn_gore"));
-        actionController.triggerableAnim("dodge",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.dodge"));
-        actionController.triggerableAnim("lightning_beam",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.lightning_beam"));
-        // Summon Storm variants
-        actionController.triggerableAnim("summon_storm_ground",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.summon_storm_ground"));
-        actionController.triggerableAnim("summon_storm_air",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.summon_storm_air"));
-        // Sleep transitions
-        actionController.triggerableAnim("sleep_enter",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.sleep_enter"));
-        actionController.triggerableAnim("sleep_exit",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.sleep_exit"));
+        // Setup animation triggers via animation handler
+        animationHandler.setupActionController(actionController);
 
 
         // Add controllers in order
@@ -1936,154 +2038,11 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         return com.leon.saintsdragons.common.registry.LightningDragonAbilities.SUMMON_STORM;
     }
 
-    private void onAnimationSound(SoundKeyframeEvent<LightningDragonEntity> event) {
+    public void onAnimationSound(SoundKeyframeEvent<LightningDragonEntity> event) {
         // Delegate all keyframed sounds to the sound handler
         // Pass the raw event data to the sound handler
         this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
     }
-
-    // No particle keyframe anchoring needed; beam origin uses computeHeadMouthOrigin
-
-    private void registerVocalTriggers(AnimationController<LightningDragonEntity> action) {
-        String[] keys = new String[] {
-                "grumble1","grumble2","grumble3","purr","snort","chuff","content","annoyed",
-                "growl_warning","roar","roar_ground","roar_air","hurt","die","lightning_bite","dodge"
-        };
-        for (String key : keys) {
-            action.triggerableAnim(key, RawAnimation.begin().thenPlay("animation.lightning_dragon." + key));
-        }
-    }
-
-
-
-    //PREDICATES
-
-    private PlayState bankingPredicate(AnimationState<LightningDragonEntity> state) {
-        state.getController().transitionLength(10);
-        if (areRiderControlsLocked()) return PlayState.STOP;
-        // Only apply banking during flight and when not sitting
-        if (!isFlying() || isOrderedToSit()) return PlayState.STOP;
-
-        // Exponential smoothing to avoid jitter
-        float yawChange = getYRot() - yRotO;
-        bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
-
-        // Hysteresis thresholds
-        float enter = 0.25f;
-        float exit = 0.12f;
-
-        int desiredDir = bankDir;
-        if (bankSmoothedYaw > enter) desiredDir = 1;
-        else if (bankSmoothedYaw < -enter) desiredDir = -1;
-        else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;
-
-        // Minimum hold time to prevent flicker
-        if (desiredDir != bankDir) {
-            if (bankHoldTicks >= 8) {
-                bankDir = desiredDir;
-                bankHoldTicks = 0;
-            } else {
-                bankHoldTicks++;
-            }
-        } else {
-            bankHoldTicks = Math.min(bankHoldTicks + 1, 20);
-        }
-
-        if (bankDir > 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.lightning_dragon.banking_right"));
-        } else if (bankDir < 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.lightning_dragon.banking_left"));
-        } else {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.lightning_dragon.banking_off"));
-        }
-        return PlayState.CONTINUE;
-    }
-
-    private PlayState pitchingPredicate(AnimationState<LightningDragonEntity> state) {
-        state.getController().transitionLength(10);
-        if (areRiderControlsLocked()) return PlayState.STOP;
-        // Only apply pitching during flight and when not sitting
-        if (!isFlying() || isOrderedToSit()) return PlayState.STOP;
-
-        int desiredDir = pitchDir;
-
-        if (this.isVehicle() && this.getControllingPassenger() instanceof Player) {
-            if (isGoingUp()) {
-                desiredDir = -1;  // Pitching up
-            } else if (isGoingDown()) {
-                desiredDir = 1;   // Pitching down
-            } else {
-                desiredDir = 0;   // No pitching
-            }
-        } else {
-            float pitchChange = getXRot() - xRotO;
-            pitchSmoothedPitch = pitchSmoothedPitch * 0.85f + pitchChange * 0.15f;
-
-            // Hysteresis thresholds
-            float enter = 0.25f;
-            float exit = 0.12f;
-
-            if (pitchSmoothedPitch > enter) desiredDir = 1;
-            else if (pitchSmoothedPitch < -enter) desiredDir = -1;
-            else if (Math.abs(pitchSmoothedPitch) < exit) desiredDir = 0;
-        }
-
-        // Minimum hold time to prevent flicker
-        if (desiredDir != pitchDir) {
-            if (pitchHoldTicks >= 8) {
-                pitchDir = desiredDir;
-                pitchHoldTicks = 0;
-            } else {
-                pitchHoldTicks++;
-            }
-        } else {
-            pitchHoldTicks = Math.min(pitchHoldTicks + 1, 20);
-        }
-
-        if (pitchDir > 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.lightning_dragon.pitching_down"));
-        } else if (pitchDir < 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.lightning_dragon.pitching_up"));
-        } else {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.lightning_dragon.pitching_off"));
-        }
-        return PlayState.CONTINUE;
-    }
-
-    private PlayState actionPredicate(AnimationState<LightningDragonEntity> state) {
-        // Native GeckoLib: controller idles until triggerAnim is fired
-        state.getController().transitionLength(5);
-        // If summoning (controls locked), force the summon clip variant to prevent bleed
-        if (areRiderControlsLocked() && !isDying() && !isSleeping() && !sleepingEntering && !sleepingExiting) {
-            String clip = isFlying() ?
-                    "animation.lightning_dragon.summon_storm_air" :
-                    "animation.lightning_dragon.summon_storm_ground";
-            state.setAndContinue(RawAnimation.begin().thenPlay(clip));
-            return PlayState.CONTINUE;
-        }
-        // If dying, force the death clip to hold until completion
-        if (isDying()) {
-            state.setAndContinue(RawAnimation.begin().thenPlay("animation.lightning_dragon.die"));
-            return PlayState.CONTINUE;
-        }
-        // Sleep transitions and loop
-        if (sleepingEntering) {
-            state.setAndContinue(RawAnimation.begin().thenPlay("animation.lightning_dragon.sleep_enter"));
-            return PlayState.CONTINUE;
-        }
-        if (isSleeping()) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.lightning_dragon.sleep"));
-            return PlayState.CONTINUE;
-        }
-        if (sleepingExiting) {
-            state.setAndContinue(RawAnimation.begin().thenPlay("animation.lightning_dragon.sleep_exit"));
-            return PlayState.CONTINUE;
-        }
-        // No sleep state: stop action controller to clear any lingering sleep clip
-        return PlayState.STOP;
-    }
-
-    //NO MORE PREDICATES
     // Cache frequently used calculations
     public double getCachedDistanceToOwner() {
         // Lower cache window for snappier follow responsiveness
@@ -2402,12 +2361,12 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     
     public void playSleepAnimation() {
         // Trigger sleep animation
-        triggerAnim("sleep_controller", "sleep");
+        animationHandler.triggerSleepAnimation();
     }
     
     public void playWakeAnimation() {
         // Trigger wake animation
-        triggerAnim("sleep_controller", "wake");
+        animationHandler.triggerWakeAnimation();
     }
     
     public boolean hasEnhancedLineOfSight(Vec3 target) {
