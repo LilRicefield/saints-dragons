@@ -1622,7 +1622,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                 if (!level().isClientSide) {
                     if (!player.getAbilities().instabuild) itemstack.shrink(1);
 
-                    if (this.random.nextInt(3) == 0) {
+                    if (this.random.nextInt(10) == 0) {
                         this.tame(player);
                         this.setOrderedToSit(true);
                         this.level().broadcastEntityEvent(this, (byte) 7);
