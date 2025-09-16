@@ -33,6 +33,7 @@ public class ClientEventHandler {
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
         Entity player = Minecraft.getInstance().getCameraEntity();
         if (player != null && player.isPassenger() && player.getVehicle() instanceof LightningDragonEntity && event.getCamera().isDetached()) {
+            // Base zoom for dragon riding - adjusted distance for better dragon visibility
             event.getCamera().move(-event.getCamera().getMaxZoom(10F), 0, 0);
         }
     }
