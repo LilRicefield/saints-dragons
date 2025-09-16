@@ -1189,8 +1189,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Exponential smoothing to avoid jitter
         float yawChange = getYRot() - yRotO;
         bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
-
-        // More aggressive thresholds for responsive banking
         float enter = 1.0f; 
         float exit = 5.0f;
 
