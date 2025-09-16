@@ -19,7 +19,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 /**
  * Simple horn gore melee: modest damage + strong knockback in front of head.
  */
-public class HornGoreAbility extends DragonAbility<LightningDragonEntity> {
+public class LightningDragonHornGoreAbility extends DragonAbility<LightningDragonEntity> {
     private static final float GORE_DAMAGE = 12.0f;
     private static final double GORE_RANGE = 6.5; // Increased from 3.8
     private static final double GORE_RANGE_RIDDEN = 8.0; // Increased from 5.2
@@ -35,7 +35,7 @@ public class HornGoreAbility extends DragonAbility<LightningDragonEntity> {
     private final java.util.Set<Integer> hitIdsThisUse = new java.util.HashSet<>();
     private boolean playedSoundThisUse = false;
 
-    public HornGoreAbility(DragonAbilityType<LightningDragonEntity, HornGoreAbility> type, LightningDragonEntity user) {
+    public LightningDragonHornGoreAbility(DragonAbilityType<LightningDragonEntity, LightningDragonHornGoreAbility> type, LightningDragonEntity user) {
         super(type, user, TRACK, 22);
     }
 

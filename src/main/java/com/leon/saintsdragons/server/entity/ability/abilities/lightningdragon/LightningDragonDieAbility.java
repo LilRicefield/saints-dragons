@@ -1,12 +1,15 @@
-package com.leon.saintsdragons.server.entity.ability;
+package com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon;
 
+import com.leon.saintsdragons.server.entity.ability.DragonAbility;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 
 /**
  * Death ability: plays a short death animation and sound, then finalizes death.
  * Duration: ~3.071s (62 ticks) before removal.
  */
-public class DieAbility extends DragonAbility<LightningDragonEntity> {
+public class LightningDragonDieAbility extends DragonAbility<LightningDragonEntity> {
 
     // 3.071s ~= 61.42 ticks; round up to 62
     private static final int DURATION_TICKS = 62;
@@ -14,8 +17,8 @@ public class DieAbility extends DragonAbility<LightningDragonEntity> {
             new DragonAbilitySection.AbilitySectionDuration(DragonAbilitySection.AbilitySectionType.ACTIVE, DURATION_TICKS)
     };
 
-    public DieAbility(DragonAbilityType<LightningDragonEntity, ? extends DragonAbility<LightningDragonEntity>> type,
-                      LightningDragonEntity user) {
+    public LightningDragonDieAbility(DragonAbilityType<LightningDragonEntity, ? extends DragonAbility<LightningDragonEntity>> type,
+                                     LightningDragonEntity user) {
         super(type, user, TRACK, 0);
     }
 

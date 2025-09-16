@@ -22,7 +22,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 /**
  * Bite + chain lightning ability for LightningDragon.
  */
-public class LightningBiteAbility extends DragonAbility<LightningDragonEntity> {
+public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEntity> {
     // Tuning knobs
     private static final float BITE_DAMAGE = 25.0f;
     // Slightly larger reach to match large model scale and AI stop distance
@@ -46,7 +46,7 @@ public class LightningBiteAbility extends DragonAbility<LightningDragonEntity> {
 
     private boolean didHitThisActive = false;
 
-    public LightningBiteAbility(DragonAbilityType<LightningDragonEntity, LightningBiteAbility> type, LightningDragonEntity user) {
+    public LightningDragonBiteAbility(DragonAbilityType<LightningDragonEntity, LightningDragonBiteAbility> type, LightningDragonEntity user) {
         super(type, user, TRACK, 24); // ~1.2s cooldown
     }
 
