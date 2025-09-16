@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.network;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -80,8 +81,8 @@ public record MessageDragonRideInput(boolean goingUp,
                         if (mag > 0.05f) {
                             moveState = dragon.isAccelerating() ? 2 : 1;
                         }
-                        if (dragon.getEntityData().get(LightningDragonEntity.DATA_GROUND_MOVE_STATE) != moveState) {
-                            dragon.getEntityData().set(LightningDragonEntity.DATA_GROUND_MOVE_STATE, moveState);
+                        if (dragon.getEntityData().get(DATA_GROUND_MOVE_STATE) != moveState) {
+                            dragon.getEntityData().set(DATA_GROUND_MOVE_STATE, moveState);
                             // Also nudge observers immediately
                             com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
                                     net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> dragon),

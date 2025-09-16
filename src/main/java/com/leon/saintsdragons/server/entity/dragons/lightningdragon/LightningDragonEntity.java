@@ -22,6 +22,8 @@ import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonFlightController;
 import com.leon.saintsdragons.server.entity.handler.DragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
+import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonInteractionHandler;
+import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonRiderController;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.util.DragonMathUtil;
@@ -36,8 +38,6 @@ import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -94,95 +94,51 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // ===== AMBIENT SOUND SYSTEM =====
     private int ambientSoundTimer;
     private int nextAmbientSoundDelay;
-
-    // Sound frequency constants (in ticks)
-    private static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
-    private static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
-
     // ===== SCREEN SHAKE SYSTEM =====
     private float prevScreenShakeAmount = 0.0F;
     private float screenShakeAmount = 0.0F;
+    // ===== ENTITY DATA HELPER METHODS =====
+    /**
+     * Helper method for boolean entity data access
+     */
+    private boolean getBooleanData(EntityDataAccessor<Boolean> accessor) {
+        return this.entityData.get(accessor);
+    }
 
-    // ===== CORE ANIMATIONS =====
-    public static final RawAnimation GROUND_IDLE = RawAnimation.begin().thenLoop("animation.lightning_dragon.ground_idle");
-    public static final RawAnimation GROUND_WALK = RawAnimation.begin().thenLoop("animation.lightning_dragon.walk");
-    public static final RawAnimation GROUND_RUN = RawAnimation.begin().thenLoop("animation.lightning_dragon.run");
-    public static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.lightning_dragon.sit");
-
-    public static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.lightning_dragon.takeoff");
-    public static final RawAnimation FLY_GLIDE = RawAnimation.begin().thenLoop("animation.lightning_dragon.fly_gliding");
-    public static final RawAnimation FLY_FORWARD = RawAnimation.begin().thenLoop("animation.lightning_dragon.fly_forward");
-    // Air hover/stationary flight (gentle wing holds)
-    public static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.lightning_dragon.flap");
-    public static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.lightning_dragon.landing");
-
-    public static final RawAnimation DODGE = RawAnimation.begin().thenPlay("animation.lightning_dragon.dodge");
-
-    // ===== CONSTANTS =====
-    public static final float MODEL_SCALE = 4.5f;
-
-    // Speed constants
-    private static final double WALK_SPEED = 0.25D;
-    private static final double RUN_SPEED = 0.45D;
-
-
-    // ===== DATA ACCESSORS (Package-private for controller access) =====
-    static final EntityDataAccessor<Boolean> DATA_FLYING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Boolean> DATA_HOVERING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Boolean> DATA_LANDING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Boolean> DATA_RUNNING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    // 0 = idle, 1 = walk, 2 = run (server-authoritative ground move state)
-    public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.INT);
-    // 0=glide,1=forward,2=hover,3=takeoff,-1=ground
-    public static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.INT);
-    // Latest rider input snapshot for reliable ground animation sync
-    static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    static final EntityDataAccessor<Integer> DATA_ATTACK_KIND =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.INT);
-    static final EntityDataAccessor<Integer> DATA_ATTACK_PHASE =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.INT);
-    static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    static final EntityDataAccessor<Boolean> DATA_BEAMING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Boolean> DATA_BEAM_END_SET =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Float> DATA_BEAM_END_X =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    static final EntityDataAccessor<Float> DATA_BEAM_END_Y =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    static final EntityDataAccessor<Float> DATA_BEAM_END_Z =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    static final EntityDataAccessor<Boolean> DATA_BEAM_START_SET =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Float> DATA_BEAM_START_X =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    static final EntityDataAccessor<Float> DATA_BEAM_START_Y =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-    static final EntityDataAccessor<Float> DATA_BEAM_START_Z =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
-
-    // Riding control state accessors
-    static final EntityDataAccessor<Boolean> DATA_GOING_UP =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-    static final EntityDataAccessor<Boolean> DATA_SLEEPING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
-
+    /**
+     * Helper method for boolean entity data setting
+     */
+    private void setBooleanData(EntityDataAccessor<Boolean> accessor, boolean value) {
+        this.entityData.set(accessor, value);
+    }
+    
+    /**
+     * Helper method for integer entity data access
+     */
+    private int getIntegerData(EntityDataAccessor<Integer> accessor) {
+        return this.entityData.get(accessor);
+    }
+    
+    /**
+     * Helper method for integer entity data setting
+     */
+    private void setIntegerData(EntityDataAccessor<Integer> accessor, int value) {
+        this.entityData.set(accessor, value);
+    }
+    
+    /**
+     * Helper method for float entity data access
+     */
+    private float getFloatData(EntityDataAccessor<Float> accessor) {
+        return this.entityData.get(accessor);
+    }
+    
+    /**
+     * Helper method for float entity data setting
+     */
+    private void setFloatData(EntityDataAccessor<Float> accessor, float value) {
+        this.entityData.set(accessor, value);
+    }
 
     // ===== STATE VARIABLES (Package-private for controller access) =====
     public int timeFlying = 0;
@@ -251,6 +207,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // ===== CONTROLLER INSTANCES =====
     public final LightningDragonFlightController flightController;
     public final DragonInteractionHandler interactionHandler;
+    private final LightningDragonInteractionHandler lightningInteractionHandler;
 
     // ===== SPECIALIZED HANDLER SYSTEMS =====
     private final DragonKeybindHandler keybindHandler;
@@ -315,6 +272,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Initialize controllers
         this.flightController = new LightningDragonFlightController(this);
         this.interactionHandler = new DragonInteractionHandler(this);
+        this.lightningInteractionHandler = new LightningDragonInteractionHandler(this);
 
         // Initialize specialized handler systems
         this.keybindHandler = new DragonKeybindHandler(this);
@@ -520,9 +478,9 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         combatManager.forceEndActiveAbility();
     }
 
-    public boolean isBeaming() { return this.entityData.get(DATA_BEAMING); }
+    public boolean isBeaming() { return getBooleanData(DATA_BEAMING); }
     public void setBeaming(boolean beaming) {
-        this.entityData.set(DATA_BEAMING, beaming);
+        setBooleanData(DATA_BEAMING, beaming);
     }
 
     // (No client/server rider anchor fields; seat uses math-based head-space anchor)
@@ -543,11 +501,11 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     public Vec3 getBeamEndPosition() {
-        if (!this.entityData.get(DATA_BEAM_END_SET)) return null;
+        if (!getBooleanData(DATA_BEAM_END_SET)) return null;
         return new Vec3(
-                this.entityData.get(DATA_BEAM_END_X),
-                this.entityData.get(DATA_BEAM_END_Y),
-                this.entityData.get(DATA_BEAM_END_Z)
+                getFloatData(DATA_BEAM_END_X),
+                getFloatData(DATA_BEAM_END_Y),
+                getFloatData(DATA_BEAM_END_Z)
         );
     }
 
@@ -572,11 +530,11 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     public Vec3 getBeamStartPosition() {
-        if (!this.entityData.get(DATA_BEAM_START_SET)) return null;
+        if (!getBooleanData(DATA_BEAM_START_SET)) return null;
         return new Vec3(
-                this.entityData.get(DATA_BEAM_START_X),
-                this.entityData.get(DATA_BEAM_START_Y),
-                this.entityData.get(DATA_BEAM_START_Z)
+                getFloatData(DATA_BEAM_START_X),
+                getFloatData(DATA_BEAM_START_Y),
+                getFloatData(DATA_BEAM_START_Z)
         );
     }
 
@@ -603,7 +561,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     // ===== STATE MANAGEMENT =====
-    public boolean isFlying() { return this.entityData.get(DATA_FLYING); }
+    public boolean isFlying() { return getBooleanData(DATA_FLYING); }
 
     public void setFlying(boolean flying) {
         if (flying && this.isBaby()) flying = false;
@@ -633,23 +591,23 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         }
     }
 
-    public boolean isTakeoff() { return this.entityData.get(DATA_TAKEOFF); }
+    public boolean isTakeoff() { return getBooleanData(DATA_TAKEOFF); }
     public void setTakeoff(boolean takeoff) {
         if (takeoff && this.isBaby()) takeoff = false;
         this.entityData.set(DATA_TAKEOFF, takeoff);
     }
 
-    public boolean isHovering() { return this.entityData.get(DATA_HOVERING); }
+    public boolean isHovering() { return getBooleanData(DATA_HOVERING); }
     public void setHovering(boolean hovering) {
         if (hovering && this.isBaby()) hovering = false;
         this.entityData.set(DATA_HOVERING, hovering);
     }
 
 
-    public boolean isRunning() { return this.entityData.get(DATA_RUNNING); }
+    public boolean isRunning() { return getBooleanData(DATA_RUNNING); }
 
     public void setRunning(boolean running) {
-        this.entityData.set(DATA_RUNNING, running);
+        setBooleanData(DATA_RUNNING, running);
         if (running) {
             runningTicks = 0;
             Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(RUN_SPEED);
@@ -677,10 +635,10 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         if (s == 2) return true;
         if (s == 1) return false;
         // Fallback: rely on synced running flag if state not yet set
-        return this.entityData.get(DATA_RUNNING);
+        return getBooleanData(DATA_RUNNING);
     }
 
-    public boolean isLanding() { return this.entityData.get(DATA_LANDING); }
+    public boolean isLanding() { return getBooleanData(DATA_LANDING); }
 
     public void setLanding(boolean landing) {
         // Prevent forced landing when being ridden by a player
@@ -705,29 +663,29 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     // (Removed unused DATA_ATTACKING flag)
 
-    public void setAttackKind(int kind) { this.entityData.set(DATA_ATTACK_KIND, kind); }
+    public void setAttackKind(int kind) { setIntegerData(DATA_ATTACK_KIND, kind); }
 
-    public void setAttackPhase(int phase) { this.entityData.set(DATA_ATTACK_PHASE, phase); }
+    public void setAttackPhase(int phase) { setIntegerData(DATA_ATTACK_PHASE, phase); }
 
     // Riding control states
-    public boolean isGoingUp() { return this.entityData.get(DATA_GOING_UP); }
-    public void setGoingUp(boolean goingUp) { this.entityData.set(DATA_GOING_UP, goingUp); }
+    public boolean isGoingUp() { return getBooleanData(DATA_GOING_UP); }
+    public void setGoingUp(boolean goingUp) { setBooleanData(DATA_GOING_UP, goingUp); }
 
-    public boolean isGoingDown() { return this.entityData.get(DATA_GOING_DOWN); }
-    public void setGoingDown(boolean goingDown) { this.entityData.set(DATA_GOING_DOWN, goingDown); }
+    public boolean isGoingDown() { return getBooleanData(DATA_GOING_DOWN); }
+    public void setGoingDown(boolean goingDown) { setBooleanData(DATA_GOING_DOWN, goingDown); }
 
-    public boolean isAccelerating() { return this.entityData.get(DATA_ACCELERATING); }
-    public void setAccelerating(boolean accelerating) { this.entityData.set(DATA_ACCELERATING, accelerating); }
+    public boolean isAccelerating() { return getBooleanData(DATA_ACCELERATING); }
+    public void setAccelerating(boolean accelerating) { setBooleanData(DATA_ACCELERATING, accelerating); }
 
     // Rider input snapshots for server-side animation sync
-    public void setLastRiderForward(float forward) { this.entityData.set(DATA_RIDER_FORWARD, forward); }
-    public void setLastRiderStrafe(float strafe) { this.entityData.set(DATA_RIDER_STRAFE, strafe); }
+    public void setLastRiderForward(float forward) { setFloatData(DATA_RIDER_FORWARD, forward); }
+    public void setLastRiderStrafe(float strafe) { setFloatData(DATA_RIDER_STRAFE, strafe); }
 
     // Flight mode accessor for controllers (avoids accessing protected entityData outside entity)
-    public int getSyncedFlightMode() { return this.entityData.get(DATA_FLIGHT_MODE); }
+    public int getSyncedFlightMode() { return getIntegerData(DATA_FLIGHT_MODE); }
 
     // Debug/inspection helper: expose raw ground move state
-    public int getGroundMoveState() { return this.entityData.get(DATA_GROUND_MOVE_STATE); }
+    public int getGroundMoveState() { return getIntegerData(DATA_GROUND_MOVE_STATE); }
 
     // ===== Client animation overrides (for robust observer sync) =====
     private int clientGroundOverride = Integer.MIN_VALUE;
@@ -845,73 +803,18 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.hasImpulse = true;
     }
 
-    // (Target validation handled by DragonCombatManager.)
-
     // ===== MAIN TICK METHOD =====
     @Override
     public void tick() {
         animationController.tick();
-
-        // Client-side animation sync no longer required; standard controller handles timing
-
         super.tick();
-
-        // Update screen shake interpolation
-        prevScreenShakeAmount = screenShakeAmount;
-        if (screenShakeAmount > 0) {
-            screenShakeAmount = Math.max(0, screenShakeAmount - 0.34F);
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
-        }
-
-        // Clear sitting state if the dragon is being ridden
-        if (!this.level().isClientSide && this.isVehicle() && this.isOrderedToSit()) {
-            this.setOrderedToSit(false);
-        }
-
-        // Drive pending sound scheduling (both sides)
-        this.getSoundHandler().tick();
-
-        // If we loaded while flying (e.g., player saved while riding in air), hold flight for a short grace period
-        if (!level().isClientSide && postLoadAirStabilizeTicks > 0) {
-            // Ensure air nav + flight flags are consistent
-            if (!isFlying()) setFlying(true);
-            if (!isTakeoff()) setTakeoff(true);
-            setLanding(false);
-            setHovering(true);
-            switchToAirNavigation();
-
-            // Reset flight timer so auto-landing logic doesn't immediately cancel flight
-            timeFlying = Math.min(timeFlying, 5);
-            landingFlag = false;
-            landingTimer = 0;
-
-            // Give stronger buoyancy to counter immediate drop before rider inputs arrive
-            var v = getDeltaMovement();
-            if (v.y < 0.05) {
-                // Apply upward force to prevent drifting down
-                setDeltaMovement(v.x * 0.95, Math.max(0.05, v.y + 0.02), v.z * 0.95);
-            }
-
-            postLoadAirStabilizeTicks--;
-        }
-
-        // Decrement rider takeoff window (no-op while dying)
-        if (!level().isClientSide && riderTakeoffTicks > 0 && !isDying()) {
-            riderTakeoffTicks--;
-        }
-
-        // (No action window/gate ticking)
-
-        // Delegate to controllers (disabled while dying)
-        if (!isDying()) {
-            flightController.handleFlightLogic();
-            combatManager.tick();
-        }
-        interactionHandler.updateSittingProgress();
-
-        // Cool down hurt sound throttle
-        if (hurtSoundCooldown > 0) hurtSoundCooldown--;
-
+        tickScreenShake();
+        tickSittingState();
+        tickSound();
+        tickPostLoadStabilization();
+        tickRiderTakeoff();
+        tickControllers();
+        tickHurtSoundCooldown();
         if (!level().isClientSide) {
             // When ridden and flying, never stay in 'hovering' unless explicitly landing or beaming or taking off
             if (isFlying() && getControllingPassenger() != null) {
@@ -919,48 +822,16 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                     setHovering(false);
                 }
             }
-            // While rider controls are locked (e.g., Summon Storm windup), freeze movement and AI
-            if (areRiderControlsLocked()) {
-                this.getNavigation().stop();
-                this.setTarget(null);
-                this.setDeltaMovement(0, 0, 0);
-            }
+            tickRiderControlLockMovement();
             handleAmbientSounds();
             // no-op
         }
-
-        // Handle sleep enter/exit timers
         if (!level().isClientSide) {
-            // Supercharge timer (summon storm)
-            if (superchargeTicks > 0) superchargeTicks--;
-            // Temporary invulnerability timer
-            if (tempInvulnTicks > 0) {
-                tempInvulnTicks--;
-                if (tempInvulnTicks == 0 && !isDying()) this.setInvulnerable(false);
-            }
-            // Supercharge VFX: periodic arcs/sparks around the body
-            if ((isSupercharged() || this.level().isThundering()) && superchargeVfxCooldown-- <= 0) {
-                spawnSuperchargeVfx();
-                superchargeVfxCooldown = 6 + this.random.nextInt(6); // pulse every ~0.3-0.6s
-            }
-            if (sleepTransitionTicks > 0) {
-                sleepTransitionTicks--;
-                if (sleepTransitionTicks == 0) {
-                    if (sleepingEntering) {
-                        // Enter finished: mark sleeping
-                        setSleeping(true);
-                        sleepingEntering = false;
-                    } else if (sleepingExiting) {
-                        // Exit finished
-                        sleepingExiting = false;
-                        // Start small ambient cooldown buffer (~0.5s)
-                        sleepAmbientCooldownTicks = 10;
-                    }
-                }
-            }
-            if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
-            if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
-            if (sleepCancelTicks > 0) sleepCancelTicks--;
+            tickSuperchargeTimer();
+            tickTempInvulnTimer();
+            tickSuperchargeVfx();
+            tickSleepTransition();
+            tickSleepCooldowns();
         }
 
         // Wake up if mounted or target appears/aggression
@@ -1143,14 +1014,53 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             return;
         }
 
+        tickRunningTime();
+
+
+        tickClientSideUpdates();
+        if (this.isRunning() && this.getDeltaMovement().horizontalDistanceSqr() < 0.01) {
+            this.setRunning(false);
+        }
+    }
+    
+    // ===== TICK SUBMETHODS =====
+    
+    private void tickScreenShake() {
+        // Update screen shake interpolation
+        prevScreenShakeAmount = screenShakeAmount;
+        if (screenShakeAmount > 0) {
+            screenShakeAmount = Math.max(0, screenShakeAmount - 0.34F);
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
+        }
+    }
+    
+    private void tickHurtSoundCooldown() {
+        // Cool down hurt sound throttle
+        if (hurtSoundCooldown > 0) hurtSoundCooldown--;
+    }
+    
+    private void tickSound() {
+        // Drive pending sound scheduling (both sides)
+        this.getSoundHandler().tick();
+    }
+    
+    private void tickSittingState() {
+        // Clear sitting state if the dragon is being ridden
+        if (!this.level().isClientSide && this.isVehicle() && this.isOrderedToSit()) {
+            this.setOrderedToSit(false);
+        }
+    }
+    
+    private void tickRunningTime() {
         // Track running time for animations
         if (this.isRunning()) {
             runningTicks++;
         } else {
             runningTicks = Math.max(0, runningTicks - 2);
         }
-
-
+    }
+    
+    private void tickClientSideUpdates() {
         // Update client-side sit progress and lerp beam end from synchronized data
         if (level().isClientSide) {
             prevSitProgress = sitProgress;
@@ -1159,11 +1069,103 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             // Beam end/start lerp
             this.prevClientBeamEnd = this.clientBeamEnd;
             this.clientBeamEnd = getBeamEndPosition();
+        }
+    }
+    
+    private void tickRiderTakeoff() {
+        // Decrement rider takeoff window (no-op while dying)
+        if (!level().isClientSide && riderTakeoffTicks > 0 && !isDying()) {
+            riderTakeoffTicks--;
+        }
+    }
+    
+    private void tickPostLoadStabilization() {
+        // If we loaded while flying (e.g., player saved while riding in air), hold flight for a short grace period
+        if (!level().isClientSide && postLoadAirStabilizeTicks > 0) {
+            // Ensure air nav + flight flags are consistent
+            if (!isFlying()) setFlying(true);
+            if (!isTakeoff()) setTakeoff(true);
+            setLanding(false);
+            setHovering(true);
+            switchToAirNavigation();
 
+            // Reset flight timer so auto-landing logic doesn't immediately cancel flight
+            timeFlying = Math.min(timeFlying, 5);
+            landingFlag = false;
+            landingTimer = 0;
+
+            // Give stronger buoyancy to counter immediate drop before rider inputs arrive
+            var v = getDeltaMovement();
+            if (v.y < 0.05) {
+                // Apply upward force to prevent drifting down
+                setDeltaMovement(v.x * 0.95, Math.max(0.05, v.y + 0.02), v.z * 0.95);
+            }
+
+            postLoadAirStabilizeTicks--;
         }
-        if (this.isRunning() && this.getDeltaMovement().horizontalDistanceSqr() < 0.01) {
-            this.setRunning(false);
+    }
+    
+    private void tickControllers() {
+        // Delegate to controllers (disabled while dying)
+        if (!isDying()) {
+            flightController.handleFlightLogic();
+            combatManager.tick();
         }
+        interactionHandler.updateSittingProgress();
+    }
+    
+    private void tickRiderControlLockMovement() {
+        // While rider controls are locked (e.g., Summon Storm windup), freeze movement and AI
+        if (areRiderControlsLocked()) {
+            this.getNavigation().stop();
+            this.setTarget(null);
+            this.setDeltaMovement(0, 0, 0);
+        }
+    }
+    
+    private void tickSuperchargeTimer() {
+        // Supercharge timer (summon storm)
+        if (superchargeTicks > 0) superchargeTicks--;
+    }
+    
+    private void tickTempInvulnTimer() {
+        // Temporary invulnerability timer
+        if (tempInvulnTicks > 0) {
+            tempInvulnTicks--;
+            if (tempInvulnTicks == 0 && !isDying()) this.setInvulnerable(false);
+        }
+    }
+    
+    private void tickSuperchargeVfx() {
+        // Supercharge VFX: periodic arcs/sparks around the body
+        if ((isSupercharged() || this.level().isThundering()) && superchargeVfxCooldown-- <= 0) {
+            spawnSuperchargeVfx();
+            superchargeVfxCooldown = 6 + this.random.nextInt(6); // pulse every ~0.3-0.6s
+        }
+    }
+    
+    private void tickSleepTransition() {
+        if (sleepTransitionTicks > 0) {
+            sleepTransitionTicks--;
+            if (sleepTransitionTicks == 0) {
+                if (sleepingEntering) {
+                    // Enter finished: mark sleeping
+                    setSleeping(true);
+                    sleepingEntering = false;
+                } else if (sleepingExiting) {
+                    // Exit finished
+                    sleepingExiting = false;
+                    // Start small ambient cooldown buffer (~0.5s)
+                    sleepAmbientCooldownTicks = 10;
+                }
+            }
+        }
+    }
+    
+    private void tickSleepCooldowns() {
+        if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
+        if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
+        if (sleepCancelTicks > 0) sleepCancelTicks--;
     }
 
     @Override
@@ -1583,10 +1585,10 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     // ===== SLEEPING =====
     public boolean isSleeping() {
-        return this.entityData.get(DATA_SLEEPING);
+        return getBooleanData(DATA_SLEEPING);
     }
     public void setSleeping(boolean sleeping) {
-        this.entityData.set(DATA_SLEEPING, sleeping);
+        setBooleanData(DATA_SLEEPING, sleeping);
     }
     public boolean isSleepTransitioning() {
         return sleepingEntering || sleepingExiting;
@@ -1626,127 +1628,15 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // ===== INTERACTION =====
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
-        if (this.isDying()) {
-            return InteractionResult.PASS;
+        // Delegate to the specialized interaction handler
+        InteractionResult result = lightningInteractionHandler.handleInteraction(player, hand);
+        
+        // If the handler didn't handle it, fall back to super implementation
+        if (result == InteractionResult.PASS) {
+            return super.mobInteract(player, hand);
         }
-        ItemStack itemstack = player.getItemInHand(hand);
-
-        if (!this.isTame()) {
-            if (this.isFood(itemstack)) {
-                // Taming logic must be server-only to avoid client-only visual state changes
-                if (!level().isClientSide) {
-                    if (!player.getAbilities().instabuild) itemstack.shrink(1);
-
-                    if (this.random.nextInt(10) == 0) {
-                        this.tame(player);
-                        this.setOrderedToSit(true);
-                        this.level().broadcastEntityEvent(this, (byte) 7);
-                        
-                        // Trigger advancement for taming Lightning Dragon
-                        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                            net.minecraft.advancements.Advancement advancement = serverPlayer.server.getAdvancements()
-                                    .getAdvancement(com.leon.saintsdragons.SaintsDragons.rl("tame_lightning_dragon"));
-                            if (advancement != null) {
-                                serverPlayer.getAdvancements().award(advancement, "tame_lightning_dragon");
-                            }
-                        }
-                    } else {
-                        this.level().broadcastEntityEvent(this, (byte) 6);
-                    }
-                }
-                // Let both sides know we handled the interaction without duplicating logic client-side
-                return InteractionResult.sidedSuccess(level().isClientSide);
-            }
-        } else {
-            // Handle feeding tamed dragons for healing
-            if (this.isFood(itemstack)) {
-                if (!level().isClientSide) {
-                    if (!player.getAbilities().instabuild) itemstack.shrink(1);
-                    
-                    // Heal the dragon when fed
-                    float healAmount = 10.0f; // Heal 5 hearts per salmon
-                    float oldHealth = this.getHealth();
-                    float newHealth = Math.min(oldHealth + healAmount, this.getMaxHealth());
-                    this.setHealth(newHealth);
-                    
-                    // Play eating sound and particles
-                    this.level().broadcastEntityEvent(this, (byte) 6); // Eating sound
-                    this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
-                    
-                    // Only show "fed and healed" message if dragon is now at full health
-                    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                        if (newHealth >= this.getMaxHealth()) {
-                            // Dragon is fully healed
-                            serverPlayer.displayClientMessage(
-                                net.minecraft.network.chat.Component.translatable(
-                                    "entity.saintsdragons.lightning_dragon.fed",
-                                    this.getName()
-                                ),
-                                true
-                            );
-                        } else {
-                            // Dragon is partially healed
-                            serverPlayer.displayClientMessage(
-                                net.minecraft.network.chat.Component.translatable(
-                                    "entity.saintsdragons.lightning_dragon.fed_partial",
-                                    this.getName()
-                                ),
-                                true
-                            );
-                        }
-                    }
-                }
-                return InteractionResult.sidedSuccess(level().isClientSide);
-            }
-            
-            if (player.equals(this.getOwner())) {
-                // Command cycling - Shift+Right-click cycles through commands
-                if (canOwnerCommand(player) && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND) {
-                    int currentCommand = getCommand();
-                    int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
-                    setCommand(nextCommand);
-
-                    // Send feedback message to player (action bar), server-side only to avoid duplicates
-                    if (!level().isClientSide) {
-                        player.displayClientMessage(
-                                net.minecraft.network.chat.Component.translatable(
-                                        "entity.saintsdragons.all.command_" + nextCommand,
-                                        this.getName()
-                                ),
-                                true
-                        );
-                    }
-
-                    return InteractionResult.SUCCESS;
-                }
-                // Mounting - Right-click without shift
-                else if (!player.isCrouching() && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND && canOwnerMount(player)) {
-                    if (!this.isVehicle()) {
-                        // Force the dragon to stand if sitting
-                        if (this.isOrderedToSit()) {
-                            this.setOrderedToSit(false);
-                        }
-                        // Wake up immediately when mounting (bypass transitions/animations)
-                        if (this.isSleeping() || this.sleepingEntering || this.sleepingExiting) {
-                            this.wakeUpImmediately();
-                        }
-                        
-                        // Clear all combat and AI states when mounting
-                        this.clearAllStatesForMounting();
-                        
-                        // Start riding
-                        if (player.startRiding(this)) {
-                            // Play excited sound when mounting
-                            this.playExcitedSound();
-                            // Player can manually take off using Space key when ready
-                            return InteractionResult.sidedSuccess(level().isClientSide);
-                        }
-                    }
-                    return InteractionResult.sidedSuccess(level().isClientSide);
-                }
-            }
-        }
-        return super.mobInteract(player, hand);
+        
+        return result;
     }
 
     @Override
@@ -1936,7 +1826,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     /**
      * Clears all states when mounting to ensure clean transition to rider control
      */
-    private void clearAllStatesForMounting() {
+    public void clearAllStatesForMounting() {
         // Clear combat states
         this.setTarget(null);
         this.setAttacking(false);
@@ -2243,7 +2133,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     // ===== RECENT AGGRO TRACKING (for roar lightning targeting) =====
     private final java.util.Map<Integer, Long> recentAggroIds = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final int AGGRO_TTL_TICKS = 200; // ~10s
 
     public void noteAggroFrom(net.minecraft.world.entity.LivingEntity target) {
         if (target == null || target.level().isClientSide) return;
@@ -2541,7 +2430,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     
     @Override
     public float getScreenShakeAmount(float partialTicks) {
-        float currentAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+        float currentAmount = getFloatData(DATA_SCREEN_SHAKE_AMOUNT);
         return prevScreenShakeAmount + (currentAmount - prevScreenShakeAmount) * partialTicks;
     }
 

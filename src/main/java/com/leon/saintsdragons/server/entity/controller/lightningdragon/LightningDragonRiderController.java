@@ -19,9 +19,9 @@ public record LightningDragonRiderController(LightningDragonEntity dragon) {
     // Baseline vertical offset relative to dragon height
     private static final double SEAT_BASE_FACTOR = 0.50D; // 0.0..1.0 of bbHeight
     // Additional vertical lift to avoid clipping
-    private static final double SEAT_LIFT = 0.1D;
+    private static final double SEAT_LIFT = 0.05D;
     // Forward/back relative to body (blocks). +forward = toward head, - = toward tail
-    private static final double SEAT_FORWARD = 3.5D;
+    private static final double SEAT_FORWARD = 4.5D;
     // Sideways relative to body (blocks). +side = to the dragon's right, - = left
     private static final double SEAT_SIDE = 0.00D;
 

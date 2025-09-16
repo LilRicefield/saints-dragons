@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.lightningdragon;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -50,7 +51,7 @@ public class LightningDragonPhysicsController {
     public float prevHoveringFraction = 0f;
 
     // Flight animation state tracking
-    private RawAnimation currentFlightAnimation = LightningDragonEntity.FLY_GLIDE;
+    private RawAnimation currentFlightAnimation = FLY_GLIDE;
 
     // Enhanced flap timing
     private int discreteFlapCooldown = 0;
@@ -128,31 +129,31 @@ public class LightningDragonPhysicsController {
         }
         // Drive SIT from pose/progress instead of owner order to avoid desync
         if (dragon.isInSittingPose() || dragon.getSitProgress() > 0.5f) {
-            state.setAndContinue(LightningDragonEntity.SIT);
+            state.setAndContinue(SIT);
         } else if (dragon.isDodging()) {
-            state.setAndContinue(LightningDragonEntity.DODGE);
+            state.setAndContinue(DODGE);
         } else if (dragon.isLanding()) {
-            state.setAndContinue(LightningDragonEntity.LANDING);
+            state.setAndContinue(LANDING);
         } else if (dragon.isFlying()) {
             // Ensure short ascents finish a full flap cycle
             if (flapLockTicks > 0) {
                 flapLockTicks--;
                 state.getController().transitionLength(4);
                 boolean ascendingNow = dragon.isGoingUp() || dragon.getDeltaMovement().y > 0.02;
-                state.setAndContinue(ascendingNow ? LightningDragonEntity.FLAP : LightningDragonEntity.FLY_FORWARD);
+                state.setAndContinue(ascendingNow ? FLAP : FLY_FORWARD);
                 return PlayState.CONTINUE;
             }
             // Prefer server-synced flight mode when available for observer consistency
             int syncedMode = dragon.getEffectiveFlightMode();
             if (syncedMode == 3) {
                 state.getController().transitionLength(4);
-                state.setAndContinue(LightningDragonEntity.TAKEOFF);
+                state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 2) {
                 // Stationary/hover: play dedicated air hover clip
                 state.getController().transitionLength(6);
-                state.setAndContinue(LightningDragonEntity.FLAP);
+                state.setAndContinue(FLAP);
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 1) {
@@ -163,45 +164,45 @@ public class LightningDragonPhysicsController {
                         || dragon.isHovering()
                         || hoveringFraction > 0.45f;
                 RawAnimation desired = (ascendingNow || stationaryAir)
-                        ? LightningDragonEntity.FLAP
-                        : LightningDragonEntity.FLY_FORWARD;
+                        ? FLAP
+                        : FLY_FORWARD;
                 state.setAndContinue(desired);
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 0) {
                 // Server says GLIDE: render GLIDE unconditionally for consistency
                 state.getController().transitionLength(6);
-                state.setAndContinue(LightningDragonEntity.FLY_GLIDE);
+                state.setAndContinue(FLY_GLIDE);
                 return PlayState.CONTINUE;
             }
 
             if (shouldPlayTakeoff()) {
                 // Snappier blend into takeoff when leaving ground
                 state.getController().transitionLength(4);
-                state.setAndContinue(LightningDragonEntity.TAKEOFF);
+                state.setAndContinue(TAKEOFF);
             } else {
                 // HYSTERESIS - prevent rapid switching between animations
                 float hoverWeight = hoveringFraction;
                 float flapWeight = flappingFraction;
 
                 // Base thresholds for entering/exiting flap (without locks)
-                boolean shouldFlapBase = (currentFlightAnimation == LightningDragonEntity.FLY_FORWARD)
+                boolean shouldFlapBase = (currentFlightAnimation == FLY_FORWARD)
                         ? (flapWeight > 0.22f || hoverWeight > 0.28f) // Lower threshold to exit
                         : (flapWeight > 0.55f || hoverWeight > 0.65f); // Higher threshold to enter
 
                 // If we are clearly in hover without a synced mode (fallback), play air hover
                 if (hoverWeight > 0.45f) {
                     state.getController().transitionLength(6);
-                    currentFlightAnimation = LightningDragonEntity.FLAP;
-                    state.setAndContinue(LightningDragonEntity.FLAP);
+                    currentFlightAnimation = FLAP;
+                    state.setAndContinue(FLAP);
                     return PlayState.CONTINUE;
                 }
 
                 if (shouldFlapBase || dragon.getDeltaMovement().y >= -0.005) {
                     boolean ascendingNow = dragon.isGoingUp() || dragon.getDeltaMovement().y > 0.02;
                     RawAnimation desired = ascendingNow
-                            ? LightningDragonEntity.FLAP
-                            : LightningDragonEntity.FLY_FORWARD;
+                            ? FLAP
+                            : FLY_FORWARD;
                     if (currentFlightAnimation != desired) {
                         // Slightly quicker blend into flap so the beat reads
                         state.getController().transitionLength(4);
@@ -209,25 +210,25 @@ public class LightningDragonPhysicsController {
                     }
                     state.setAndContinue(desired);
                 } else {
-                    if (currentFlightAnimation != LightningDragonEntity.FLY_GLIDE) {
+                    if (currentFlightAnimation != FLY_GLIDE) {
                         // Smooth but not too long blend out of flap
                         state.getController().transitionLength(6);
-                        currentFlightAnimation = LightningDragonEntity.FLY_GLIDE;
+                        currentFlightAnimation = FLY_GLIDE;
                     }
-                    state.setAndContinue(LightningDragonEntity.FLY_GLIDE);
+                    state.setAndContinue(FLY_GLIDE);
                 }
             }
         } else {
             // Ground movement transitions tuned to be snappier
             if (dragon.isActuallyRunning()) {
                 state.getController().transitionLength(3); // even faster into run
-                state.setAndContinue(LightningDragonEntity.GROUND_RUN);
+                state.setAndContinue(GROUND_RUN);
             } else if (dragon.isWalking()) {
                 state.getController().transitionLength(3); // quicker walk engage/disengage
-                state.setAndContinue(LightningDragonEntity.GROUND_WALK);
+                state.setAndContinue(GROUND_WALK);
             } else {
                 state.getController().transitionLength(4); // slightly softer into idle
-                state.setAndContinue(LightningDragonEntity.GROUND_IDLE);
+                state.setAndContinue(GROUND_IDLE);
             }
         }
         return PlayState.CONTINUE;
