@@ -39,6 +39,12 @@ public record LightningDragonRiderController(LightningDragonEntity dragon) {
     private static final double AIR_ACCEL_MULT = 0.10;    // accel per tick toward forward while holding W
     private static final double SPRINT_ACCEL_MULT = 0.25; // accel per tick when accelerating
     private static final double AIR_DRAG = 0.05;          // per-tick horizontal damping
+    
+    // ===== LIGHTNING DRAGON MANEUVERABILITY =====
+    // Enhanced turning capabilities for lightning dragon's agility
+    private static final double TURN_ACCEL_MULT = 0.15;   // additional acceleration for direction changes
+    private static final double MIN_TURN_SPEED = 0.3;     // minimum speed to enable enhanced turning
+    private static final double TURN_MOMENTUM_FACTOR = 0.8; // how much momentum to preserve during turns
 
     // ===== RIDING UTILITIES =====
 
@@ -190,7 +196,27 @@ public record LightningDragonRiderController(LightningDragonEntity dragon) {
                 dx /= len; dz /= len;
                 // Scale thrust by overall input magnitude (so tiny taps give smaller accel)
                 double inputMag = Math.min(1.0, Math.hypot(Math.abs(forwardInput), Math.abs(strafeInput * strafeWeight)));
-                horiz = horiz.add(dx * accel * inputMag, 0.0, dz * accel * inputMag);
+                
+                // LIGHTNING DRAGON ENHANCED MANEUVERABILITY
+                // Calculate current speed and direction for enhanced turning
+                double currentSpeed = Math.hypot(horiz.x, horiz.z);
+                Vec3 currentDirection = currentSpeed > 1e-4 ? new Vec3(horiz.x / currentSpeed, 0, horiz.z / currentSpeed) : Vec3.ZERO;
+                Vec3 desiredDirection = new Vec3(dx, 0, dz);
+                
+                // Calculate turn angle (dot product gives us the angle between vectors)
+                double turnAngle = currentSpeed > 1e-4 ? Math.acos(Math.max(-1, Math.min(1, currentDirection.dot(desiredDirection)))) : 0;
+                
+                // Enhanced turning for lightning dragon - more responsive direction changes
+                double turnMultiplier = 1.0;
+                if (currentSpeed > MIN_TURN_SPEED && turnAngle > 0.1) { // Significant direction change
+                    // Lightning dragons can turn more sharply - reduce momentum penalty
+                    turnMultiplier = TURN_MOMENTUM_FACTOR + (TURN_ACCEL_MULT * (1.0 - turnAngle / Math.PI));
+                    turnMultiplier = Math.max(0.3, Math.min(1.2, turnMultiplier)); // Clamp for safety
+                }
+                
+                // Apply enhanced maneuverability
+                double enhancedAccel = accel * turnMultiplier;
+                horiz = horiz.add(dx * enhancedAccel * inputMag, 0.0, dz * enhancedAccel * inputMag);
             }
 
             // Clamp horizontal speed to cap after drag and thrust
