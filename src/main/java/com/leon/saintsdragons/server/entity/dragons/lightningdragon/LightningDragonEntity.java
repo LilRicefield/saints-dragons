@@ -1626,6 +1626,15 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                         this.tame(player);
                         this.setOrderedToSit(true);
                         this.level().broadcastEntityEvent(this, (byte) 7);
+                        
+                        // Trigger advancement for taming Lightning Dragon
+                        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                            net.minecraft.advancements.Advancement advancement = serverPlayer.server.getAdvancements()
+                                    .getAdvancement(com.leon.saintsdragons.SaintsDragons.rl("tame_lightning_dragon"));
+                            if (advancement != null) {
+                                serverPlayer.getAdvancements().award(advancement, "tame_lightning_dragon");
+                            }
+                        }
                     } else {
                         this.level().broadcastEntityEvent(this, (byte) 6);
                     }
