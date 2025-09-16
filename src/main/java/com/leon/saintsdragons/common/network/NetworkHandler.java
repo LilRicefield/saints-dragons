@@ -40,8 +40,5 @@ public class NetworkHandler {
                 .decoder(MessageDragonAnimState::decode)
                 .consumerNetworkThread(MessageDragonAnimState::handle)
                 .add();
-
-        // No client-driven beam or rider anchor sync; server computes authoritative state
-        // Rider anchor sync disabled; use server-deterministic seat placement
     }
 }
