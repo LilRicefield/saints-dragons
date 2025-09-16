@@ -1658,6 +1658,47 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                 return InteractionResult.sidedSuccess(level().isClientSide);
             }
         } else {
+            // Handle feeding tamed dragons for healing
+            if (this.isFood(itemstack)) {
+                if (!level().isClientSide) {
+                    if (!player.getAbilities().instabuild) itemstack.shrink(1);
+                    
+                    // Heal the dragon when fed
+                    float healAmount = 10.0f; // Heal 5 hearts per salmon
+                    float oldHealth = this.getHealth();
+                    float newHealth = Math.min(oldHealth + healAmount, this.getMaxHealth());
+                    this.setHealth(newHealth);
+                    
+                    // Play eating sound and particles
+                    this.level().broadcastEntityEvent(this, (byte) 6); // Eating sound
+                    this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
+                    
+                    // Only show "fed and healed" message if dragon is now at full health
+                    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                        if (newHealth >= this.getMaxHealth()) {
+                            // Dragon is fully healed
+                            serverPlayer.displayClientMessage(
+                                net.minecraft.network.chat.Component.translatable(
+                                    "entity.saintsdragons.lightning_dragon.fed",
+                                    this.getName()
+                                ),
+                                true
+                            );
+                        } else {
+                            // Dragon is partially healed
+                            serverPlayer.displayClientMessage(
+                                net.minecraft.network.chat.Component.translatable(
+                                    "entity.saintsdragons.lightning_dragon.fed_partial",
+                                    this.getName()
+                                ),
+                                true
+                            );
+                        }
+                    }
+                }
+                return InteractionResult.sidedSuccess(level().isClientSide);
+            }
+            
             if (player.equals(this.getOwner())) {
                 // Command cycling - Shift+Right-click cycles through commands
                 if (canOwnerCommand(player) && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND) {

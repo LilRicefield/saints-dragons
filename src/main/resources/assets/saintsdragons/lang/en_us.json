@@ -10,6 +10,8 @@
   "entity.saintsdragons.all.command_0": "%s is now following you",
   "entity.saintsdragons.all.command_1": "%s is now sitting",
   "entity.saintsdragons.all.command_2": "%s is now wandering freely",
+  "entity.saintsdragons.lightning_dragon.fed": "%s has been fed and healed!",
+  "entity.saintsdragons.lightning_dragon.fed_partial": "%s is healing...",
   "entity.saintsdragons.lightning_dragon": "Lightning Dragon",
   "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
   "death.attack.lightning_dragon": "%s was electrocuted by a Lightning Dragon",
