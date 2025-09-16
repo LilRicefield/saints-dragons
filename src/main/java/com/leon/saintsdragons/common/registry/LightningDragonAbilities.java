@@ -7,8 +7,8 @@ import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.Li
 import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningDragonBeamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningDragonRoarAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningDragonSummonStormAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningDragonHurtAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningDragonDieAbility;
+import com.leon.saintsdragons.server.entity.ability.HurtAbility;
+import com.leon.saintsdragons.server.entity.ability.DieAbility;
 
 /**
  * Lightning Dragon specific abilities.
@@ -34,10 +34,10 @@ public final class LightningDragonAbilities {
     public static final DragonAbilityType<LightningDragonEntity, LightningDragonSummonStormAbility> SUMMON_STORM =
             AbilityRegistry.register(new DragonAbilityType<>("lightning_summon_storm", LightningDragonSummonStormAbility::new));
 
-    // Passive/triggered abilities
-    public static final DragonAbilityType<LightningDragonEntity, LightningDragonHurtAbility> HURT =
-            AbilityRegistry.register(new DragonAbilityType<>("lightning_hurt", LightningDragonHurtAbility::new));
+    // Generic abilities (can be used by any dragon)
+    public static final DragonAbilityType<LightningDragonEntity, HurtAbility<LightningDragonEntity>> HURT =
+            AbilityRegistry.register(new DragonAbilityType<>("hurt", HurtAbility::new));
 
-    public static final DragonAbilityType<LightningDragonEntity, LightningDragonDieAbility> DIE =
-            AbilityRegistry.register(new DragonAbilityType<>("lightning_die", LightningDragonDieAbility::new));
+    public static final DragonAbilityType<LightningDragonEntity, DieAbility<LightningDragonEntity>> DIE =
+            AbilityRegistry.register(new DragonAbilityType<>("die", DieAbility::new));
 }
