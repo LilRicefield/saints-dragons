@@ -34,7 +34,10 @@ public final class LightningDragonAbilities {
     public static final DragonAbilityType<LightningDragonEntity, SummonStormAbility> SUMMON_STORM =
             AbilityRegistry.register(new DragonAbilityType<>("lightning_summon_storm", SummonStormAbility::new));
 
-    // Passive/triggered abilities (use base abilities)
-    public static final DragonAbilityType<?, ?> HURT = BaseDragonAbilities.HURT;
-    public static final DragonAbilityType<?, ?> DIE = BaseDragonAbilities.DIE;
+    // Passive/triggered abilities
+    public static final DragonAbilityType<LightningDragonEntity, HurtAbility> HURT =
+            AbilityRegistry.register(new DragonAbilityType<>("lightning_hurt", HurtAbility::new));
+
+    public static final DragonAbilityType<LightningDragonEntity, DieAbility> DIE =
+            AbilityRegistry.register(new DragonAbilityType<>("lightning_die", DieAbility::new));
 }

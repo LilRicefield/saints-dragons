@@ -39,17 +39,9 @@ public abstract class DragonSleepGoalBase extends Goal {
     
     @Override
     public boolean canContinueToUse() {
-        // If already sleeping or transitioning, check if we should wake up
+        // If already sleeping or transitioning, continue unless agitated
         if (sleepCapable.isSleeping() || sleepCapable.isSleepTransitioning()) {
-            // Wake up if agitated
-            if (agitated()) return false;
-            
-            // Wake up based on time patterns
-            if (dragon.isTame()) {
-                return shouldTamedDragonContinueSleeping();
-            } else {
-                return shouldWildDragonContinueSleeping();
-            }
+            return !agitated();
         }
         
         // If not sleeping, check if we should start sleeping
@@ -139,17 +131,5 @@ public abstract class DragonSleepGoalBase extends Goal {
         boolean noSky = !level.canSeeSky(pos);
         int light = level.getMaxLocalRawBrightness(pos);
         return noSky || light < 7;
-    }
-    
-    protected boolean shouldTamedDragonContinueSleeping() {
-        // Tamed dragons sleep at night and wake up in the morning
-        // They follow the owner's pattern: sleep at night regardless of owner's sleep state
-        return isNight();
-    }
-    
-    protected boolean shouldWildDragonContinueSleeping() {
-        // Wild dragons sleep during the day (in shelter) and wake up at night
-        // They sleep in the morning and wake up when it gets dark
-        return isDay() && isSheltered();
     }
 }

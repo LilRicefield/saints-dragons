@@ -1,19 +1,19 @@
 package com.leon.saintsdragons.server.entity.ability;
 
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 
 /**
- * Generic hurt reaction ability: plays a one-shot animation and sound.
- * Works with any dragon type that extends DragonEntity.
+ * Simple, extendable hurt reaction ability: plays a one-shot animation and sound.
+ * Future dragons can extend or mirror this pattern for their own hurt clips/sfx.
  */
-public class HurtAbility extends DragonAbility<DragonEntity> {
+public class HurtAbility extends DragonAbility<LightningDragonEntity> {
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new DragonAbilitySection.AbilitySectionInstant(DragonAbilitySection.AbilitySectionType.ACTIVE)
     };
 
-    public HurtAbility(DragonAbilityType<DragonEntity, ? extends DragonAbility<DragonEntity>> type,
-                       DragonEntity user) {
+    public HurtAbility(DragonAbilityType<LightningDragonEntity, ? extends DragonAbility<LightningDragonEntity>> type,
+                       LightningDragonEntity user) {
         super(type, user, TRACK, 10); // tiny cooldown to avoid spam
     }
 
@@ -41,3 +41,4 @@ public class HurtAbility extends DragonAbility<DragonEntity> {
         return false;
     }
 }
+
