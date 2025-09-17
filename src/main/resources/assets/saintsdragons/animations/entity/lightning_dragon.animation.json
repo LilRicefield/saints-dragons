@@ -8749,6 +8749,11 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"membrane": {
+					"scale": {
+						"vector": [1, 1, 1]
+					}
 				}
 			},
 			"sound_effects": {
@@ -21308,6 +21313,11 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"membrane": {
+					"scale": {
+						"vector": [1, 1, 1]
+					}
 				}
 			},
 			"sound_effects": {
@@ -22297,12 +22307,112 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"membrane": {
+					"scale": {
+						"vector": [1, 1, 1]
+					}
 				}
 			},
 			"sound_effects": {
 				"0.0": {
 					"effect": "lightningdragon_summon_storm",
 					"locator": "mouth_origin"
+				}
+			}
+		},
+		"animation.lightning_dragon.landing": {
+			"loop": true,
+			"bones": {
+				"body": {
+					"rotation": {
+						"vector": [-22.5, 0, 0]
+					}
+				},
+				"neckstartController": {
+					"rotation": {
+						"vector": [-17.5, 0, 0]
+					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [10, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [15, 0, 0]
+					}
+				},
+				"neck3Controller": {
+					"rotation": {
+						"vector": [10, 0, 0]
+					}
+				},
+				"neck4Controller": {
+					"rotation": {
+						"vector": [17.5, 0, 0]
+					}
+				},
+				"leftleg": {
+					"rotation": {
+						"vector": [-25, 0, 0]
+					}
+				},
+				"leftknee": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftankle": {
+					"rotation": {
+						"vector": [17.5, 0, 0]
+					}
+				},
+				"rightleg": {
+					"rotation": {
+						"vector": [-50, 0, 0]
+					}
+				},
+				"rightknee": {
+					"rotation": {
+						"vector": [-20, 0, 0]
+					}
+				},
+				"rightankle": {
+					"rotation": {
+						"vector": [35, 0, 0]
+					}
+				},
+				"leftshoulderController": {
+					"rotation": {
+						"vector": [-20, 5, -45]
+					}
+				},
+				"lefthandController": {
+					"rotation": {
+						"vector": [0, 80, 0]
+					}
+				},
+				"leftfingerController": {
+					"rotation": {
+						"vector": [-2.5, 37.5, 0]
+					}
+				},
+				"rightshoulderController": {
+					"rotation": {
+						"vector": [-20, -5, 45]
+					}
+				},
+				"righthandController": {
+					"rotation": {
+						"vector": [0, -80, 0]
+					}
+				},
+				"rightfingerController": {
+					"rotation": {
+						"vector": [-2.5, -37.5, 0]
+					}
 				}
 			}
 		}
