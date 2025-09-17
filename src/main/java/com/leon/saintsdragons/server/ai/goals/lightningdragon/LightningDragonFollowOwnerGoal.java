@@ -256,11 +256,7 @@ public class LightningDragonFollowOwnerGoal extends Goal {
         boolean ownerAbove = (owner.getY() - dragon.getY()) > FLIGHT_HEIGHT_DIFF;
         
         // Check more frequently when we should be flying
-        if (farAway || ownerAbove) {
-            return true;
-        }
-        
-        return false;
+        return farAway || ownerAbove;
     }
 
     /**
