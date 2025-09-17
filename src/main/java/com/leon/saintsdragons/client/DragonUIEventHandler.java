@@ -45,7 +45,7 @@ public class DragonUIEventHandler {
      * This is used to prevent double rendering of players on dragons
      */
     @SubscribeEvent
-    public static void preRenderLiving(RenderLivingEvent.Pre event) {
+    public static void preRenderLiving(RenderLivingEvent.Pre<?, ?> event) {
         if (ClientProxy.blockedEntityRenders.contains(event.getEntity().getUUID())) {
             // Skip rendering the player in first-person view (let the camera handle it)
             if (!(event.getEntity() == Minecraft.getInstance().player && Minecraft.getInstance().options.getCameraType().isFirstPerson())) {
