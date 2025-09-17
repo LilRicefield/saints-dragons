@@ -9,6 +9,7 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 
+import javax.annotation.Nonnull;
 import java.util.Locale;
 
 /**
@@ -17,14 +18,14 @@ import java.util.Locale;
 public class LightningArcData implements ParticleOptions {
     public static final ParticleOptions.Deserializer<LightningArcData> DESERIALIZER = new ParticleOptions.Deserializer<>() {
         @Override
-        public LightningArcData fromCommand(ParticleType<LightningArcData> type, StringReader reader) throws CommandSyntaxException {
+        public LightningArcData fromCommand(@Nonnull ParticleType<LightningArcData> type, @Nonnull StringReader reader) throws CommandSyntaxException {
             reader.expect(' ');
             float size = reader.readFloat();
             return new LightningArcData(size);
         }
 
         @Override
-        public LightningArcData fromNetwork(ParticleType<LightningArcData> type, FriendlyByteBuf buf) {
+        public LightningArcData fromNetwork(@Nonnull ParticleType<LightningArcData> type, @Nonnull FriendlyByteBuf buf) {
             return new LightningArcData(buf.readFloat());
         }
     };
@@ -40,7 +41,7 @@ public class LightningArcData implements ParticleOptions {
     public float getSize() { return size; }
 
     @Override
-    public void writeToNetwork(FriendlyByteBuf buf) { buf.writeFloat(this.size); }
+    public void writeToNetwork(@Nonnull FriendlyByteBuf buf) { buf.writeFloat(this.size); }
 
     @Override
     public String writeToString() {

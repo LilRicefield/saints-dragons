@@ -31,9 +31,12 @@ public record MessageDragonAnimState(int entityId, byte groundState, byte flight
 
     public static void handle(MessageDragonAnimState msg, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-            Entity e = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getEntity(msg.entityId()) : null;
-            if (e instanceof LightningDragonEntity dragon) {
-                dragon.applyClientAnimState(msg.groundState(), msg.flightMode());
+            var level = Minecraft.getInstance().level;
+            if (level != null) {
+                Entity e = level.getEntity(msg.entityId());
+                if (e instanceof LightningDragonEntity dragon) {
+                    dragon.applyClientAnimState(msg.groundState(), msg.flightMode());
+                }
             }
         }));
         ctx.get().setPacketHandled(true);

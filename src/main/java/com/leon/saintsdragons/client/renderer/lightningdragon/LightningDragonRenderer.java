@@ -6,7 +6,7 @@ import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDra
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

@@ -74,9 +74,8 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 
 //WHO ARE THESE SUCKAS
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.object.PlayState;
 import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -252,7 +251,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.groundNav = new GroundPathNavigation(this, level);
         this.airNav = new FlyingPathNavigation(this, level) {
             @Override
-            public boolean isStableDestination(@NotNull BlockPos pos) {
+            public boolean isStableDestination(@Nonnull BlockPos pos) {
                 return !this.level.getBlockState(pos.below()).isAir();
             }
         };
@@ -310,7 +309,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
+    protected void playStepSound(@Nonnull BlockPos pos, @Nonnull BlockState state) {
         // Intentionally empty — step sounds are driven by GeckoLib keyframes (step1/step2)
     }
 
@@ -559,7 +558,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
+    protected @NotNull PathNavigation createNavigation(@Nonnull Level level) {
         return new GroundPathNavigation(this, level);
     }
 
@@ -786,12 +785,12 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    protected void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
+    protected void positionRider(@Nonnull Entity passenger, @Nonnull Entity.MoveFunction moveFunction) {
         riderController.positionRider(passenger, moveFunction);
     }
 
     @Override
-    public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
+    public @NotNull Vec3 getDismountLocationForPassenger(@Nonnull LivingEntity passenger) {
         return riderController.getDismountLocationForPassenger(passenger);
     }
 
@@ -1300,7 +1299,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    protected void playHurtSound(@NotNull net.minecraft.world.damagesource.DamageSource source) {
+    protected void playHurtSound(@Nonnull net.minecraft.world.damagesource.DamageSource source) {
         if (isDying()) {
             return;
         }
@@ -1458,7 +1457,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     // ===== RANGED ATTACK IMPLEMENTATION =====
     @Override
-    public void performRangedAttack(@NotNull LivingEntity target, float distanceFactor) {
+    public void performRangedAttack(@Nonnull LivingEntity target, float distanceFactor) {
         // No ranged logic for now; ground melee goal handles combat
         // Intentionally left blank to avoid unintended ranged behavior
     }
@@ -1554,7 +1553,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    public boolean hurt(@NotNull DamageSource damageSource, float amount) {
+    public boolean hurt(@Nonnull DamageSource damageSource, float amount) {
         // During dying sequence, ignore all damage except the final generic kill used by DieAbility
         if (isDying()) {
             if (damageSource.is(DamageTypes.GENERIC_KILL)) {
@@ -1614,7 +1613,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    public boolean isInvulnerableTo(@NotNull DamageSource source) {
+    public boolean isInvulnerableTo(@Nonnull DamageSource source) {
         if (source.is(DamageTypes.LIGHTNING_BOLT)) return true;
         return super.isInvulnerableTo(source);
     }
@@ -1635,7 +1634,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     // Prevent lightning strikes from igniting or applying any side effects
     @Override
-    public void thunderHit(@NotNull ServerLevel level, @NotNull LightningBolt lightning) {
+    public void thunderHit(@Nonnull ServerLevel level, @Nonnull LightningBolt lightning) {
         // Do not call super; ignore ignition and effects
         if (this.isOnFire()) this.clearFire();
     }
@@ -1851,7 +1850,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    public boolean isFood(ItemStack stack) {
+    public boolean isFood(@Nonnull ItemStack stack) {
         return stack.is(Items.SALMON);
     }
 
@@ -2162,14 +2161,14 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    public float getEyeHeight(@NotNull Pose pose) {
+    public float getEyeHeight(@Nonnull Pose pose) {
         // Always use dynamically calculated eye height when available
         EntityDimensions dimensions = getDimensions(pose);
         return dimensions.height * 0.6f;
     }
 
     @Override
-    protected float getStandingEyeHeight(@NotNull Pose pose, @NotNull EntityDimensions dimensions) {
+    protected float getStandingEyeHeight(@Nonnull Pose pose, @Nonnull EntityDimensions dimensions) {
         // Always use cached value when available (both client and server need this)
         return dimensions.height * 0.6f;
     }
@@ -2184,13 +2183,13 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
     @Override
     @Nullable
-    public AgeableMob getBreedOffspring(net.minecraft.server.level.@NotNull ServerLevel level, @NotNull AgeableMob otherParent) {
+    public AgeableMob getBreedOffspring(@Nonnull net.minecraft.server.level.ServerLevel level, @Nonnull AgeableMob otherParent) {
         return null;
     }
 
     // ===== RIDING INPUT IMPLEMENTATION =====
     @Override
-    protected @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
+    protected @NotNull Vec3 getRiddenInput(@Nonnull Player player, @Nonnull Vec3 deltaIn) {
         if (areRiderControlsLocked()) {
             // Ignore rider strafe/forward while locked
             return net.minecraft.world.phys.Vec3.ZERO;
@@ -2206,7 +2205,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         return input;
     }
     @Override
-    protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
+    protected void tickRidden(@Nonnull Player player, @Nonnull Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         // Decrement locks on server authority
         if (!this.level().isClientSide) {
@@ -2234,7 +2233,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    protected float getRiddenSpeed(@NotNull Player rider) {
+    protected float getRiddenSpeed(@Nonnull Player rider) {
         if (areRiderControlsLocked()) {
             return 0.0F;
         }
@@ -2242,7 +2241,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    protected void removePassenger(@NotNull Entity passenger) {
+    protected void removePassenger(@Nonnull Entity passenger) {
         // Prevent dismounting while rider controls are locked (e.g., Summon Storm windup)
         if (areRiderControlsLocked() && passenger == getControllingPassenger()) {
             return;
@@ -2294,7 +2293,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     // Prevent dragon and its riders from taking fall damage when mounted/landing
     @Override
-    public boolean causeFallDamage(float fallDistance, float damageMultiplier, @NotNull DamageSource source) {
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, @Nonnull DamageSource source) {
         // Absorb fall damage; clear accumulated fall distance for passengers
         if (!this.level().isClientSide) {
             this.fallDistance = 0.0F;

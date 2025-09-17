@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import javax.annotation.Nonnull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -44,7 +45,7 @@ public class LightningStormParticle extends TextureSheetParticle {
     }
 
     @Override
-    public void render(VertexConsumer buffer, Camera camera, float partialTicks) {
+    public void render(@Nonnull VertexConsumer buffer, @Nonnull Camera camera, float partialTicks) {
         Vec3 cam = camera.getPosition();
         float cx = (float)(Mth.lerp(partialTicks, this.xo, this.x) - cam.x());
         float cy = (float)(Mth.lerp(partialTicks, this.yo, this.y) - cam.y());
@@ -120,7 +121,7 @@ public class LightningStormParticle extends TextureSheetParticle {
         private final SpriteSet spriteSet;
         public Factory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
         @Override
-        public Particle createParticle(LightningStormData data, ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+        public Particle createParticle(@Nonnull LightningStormData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             return new LightningStormParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.getSize(), spriteSet);
         }
     }
@@ -130,7 +131,7 @@ public class LightningStormParticle extends TextureSheetParticle {
         private final SpriteSet spriteSet;
         public FactoryArc(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
         @Override
-        public Particle createParticle(LightningArcData data, ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+        public Particle createParticle(@Nonnull LightningArcData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             return new LightningStormParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.getSize(), spriteSet);
         }
     }
