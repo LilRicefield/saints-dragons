@@ -78,11 +78,13 @@ public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEn
     // --- Helpers ---
     private static final float L_LEFT_X =  2.2f,  L_LEFT_Y = 0.05f, L_LEFT_Z = 2.85f;
     private static final float L_RIGHT_X = -2.2f, L_RIGHT_Y = 0.05f, L_RIGHT_Z = 2.85f;
+    private static final float MOUTH_X = 0.1f, MOUTH_Y = 8.7f, MOUTH_Z = -17.4f;
 
     private void enableTrackingForFootBones(BakedGeoModel model) {
         if (model == null) return;
         model.getBone("leftfeet").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("rightfeet").ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone("head").ifPresent(b -> b.setTrackingMatrices(true));
     }
 
     private void sampleAndStashFootLocatorsAccurate(LightningDragonEntity entity) {
@@ -96,6 +98,11 @@ public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEn
         this.lastBakedModel.getBone("rightfeet").ifPresent(b -> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, L_RIGHT_X, L_RIGHT_Y, L_RIGHT_Z);
             if (world != null) entity.setClientLocatorPosition("rightfeetLocator", world);
+        });
+        // Sample mouth origin
+        this.lastBakedModel.getBone("head").ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, MOUTH_X, MOUTH_Y, MOUTH_Z);
+            if (world != null) entity.setClientLocatorPosition("mouth_origin", world);
         });
         // No beam_origin sampling required; beam uses computeHeadMouthOrigin()
     }
