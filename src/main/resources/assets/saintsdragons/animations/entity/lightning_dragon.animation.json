@@ -4513,6 +4513,11 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"membrane": {
+					"scale": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -4945,6 +4950,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"membrane": {
+					"scale": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}
@@ -7654,6 +7664,11 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"membrane": {
+					"scale": {
+						"vector": [0, 0, 0]
+					}
 				}
 			},
 			"sound_effects": {
@@ -8735,6 +8750,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_roar",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.roar_air": {
@@ -9254,6 +9275,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_roar",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.lightning_bite": {
@@ -9547,6 +9574,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_bite",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.horn_gore": {
@@ -9796,6 +9829,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_horngore",
+					"locator": "mouth_origin"
 				}
 			}
 		},
@@ -11416,6 +11455,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_grumble_1",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.grumble2": {
@@ -12319,6 +12364,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_grumble_2",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.grumble3": {
@@ -12851,6 +12902,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_grumble_3",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.chuff": {
@@ -13069,6 +13126,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_chuff",
+					"locator": "mouth_origin"
 				}
 			}
 		},
@@ -13328,6 +13391,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_purr",
+					"locator": "mouth_origin"
 				}
 			}
 		},
@@ -13597,6 +13666,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_chuff",
+					"locator": "mouth_origin"
 				}
 			}
 		},
@@ -19259,6 +19334,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_die",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.summon_storm_ground": {
@@ -21228,6 +21309,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_summon_storm",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.summon_storm_air": {
@@ -22210,6 +22297,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_summon_storm",
+					"locator": "mouth_origin"
 				}
 			}
 		}

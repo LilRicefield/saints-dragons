@@ -138,19 +138,22 @@ public class DragonSoundHandler {
         // Special case: allow death sound even when dying
         boolean isDeathSound = "die".equals(key);
 
+        // Get mouth position for spatial audio
+        Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
+        
         switch (key) {
-            case "grumble1" -> dragon.playSound(ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f);
-            case "grumble2" -> dragon.playSound(ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f);
-            case "grumble3" -> dragon.playSound(ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f);
-            case "purr"      -> dragon.playSound(ModSounds.DRAGON_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f);
-            case "snort"     -> dragon.playSound(ModSounds.DRAGON_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f);
-            case "chuff"     -> dragon.playSound(ModSounds.DRAGON_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f);
-            case "content"   -> dragon.playSound(ModSounds.DRAGON_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f);
-            case "annoyed"   -> dragon.playSound(ModSounds.DRAGON_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f);
-            case "growl_warning" -> dragon.playSound(ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f);
-            case "roar"      -> dragon.playSound(ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f);
-            case "hurt"      -> dragon.playSound(ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f);
-            case "die"       -> dragon.playSound(ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f);
+            case "grumble1" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
+            case "grumble2" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
+            case "grumble3" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
+            case "purr"      -> playRouted(dragon.level(), ModSounds.DRAGON_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos);
+            case "snort"     -> playRouted(dragon.level(), ModSounds.DRAGON_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos);
+            case "chuff"     -> playRouted(dragon.level(), ModSounds.DRAGON_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos);
+            case "content"   -> playRouted(dragon.level(), ModSounds.DRAGON_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
+            case "annoyed"   -> playRouted(dragon.level(), ModSounds.DRAGON_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos);
+            case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos);
+            case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos);
+            case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
+            case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
             default -> {
                 // Unknown key - do nothing
             }
@@ -366,9 +369,10 @@ public class DragonSoundHandler {
      */
     private Vec3 resolveLocatorWorldPos(String locator) {
         if (locator == null || locator.isEmpty()) return null;
-        // Only compute for known footstep locators. Values taken from lightning_dragon.geo.json
+        // Only compute for known locators. Values taken from lightning_dragon.geo.json
         // "leftfeetLocator":  [ 2.2, 0.05, 2.85]
         // "rightfeetLocator": [-2.2, 0.05, 2.85]
+        // "mouth_origin":      [ 0.1, 8.7, -17.4]
         double lx, ly, lz;
         switch (locator) {
             case "leftfeetLocator" -> {
@@ -376,6 +380,9 @@ public class DragonSoundHandler {
             }
             case "rightfeetLocator" -> {
                 lx = -2.2; ly = 0.05; lz = 2.85;
+            }
+            case "mouth_origin" -> {
+                lx = 0.1; ly = 8.7; lz = -17.4;
             }
             default -> { return null; }
         }
