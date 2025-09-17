@@ -71,6 +71,11 @@ public abstract class DragonSleepGoalBase extends Goal {
     protected boolean canTamedDragonSleep() {
         DragonSleepCapable.SleepPreferences prefs = sleepCapable.getSleepPreferences();
         
+        // Check weather conditions first - tamed dragons should respect weather like wild dragons
+        if (prefs.avoidsThunderstorms() && dragon.level().isThundering()) {
+            return false; // Don't sleep during thunderstorms
+        }
+        
         // Check if owner is sleeping
         if (ownerSleeping()) return true;
         

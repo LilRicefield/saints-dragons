@@ -835,6 +835,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             tickSuperchargeVfx();
             tickSleepTransition();
             tickSleepCooldowns();
+            tickMountingState();
         }
         
         // Update banking and pitching logic every tick
@@ -845,6 +846,8 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         if (!level().isClientSide && (isSleeping() || sleepingEntering || sleepingExiting)) {
             if (this.isVehicle()) {
                 wakeUpImmediately();
+                // Clear all states when mounted to ensure full control
+                clearAllStatesWhenMounted();
             } else if (this.getTarget() != null || this.isAggressive()) {
                 // On aggression/target, clear immediately and suppress re-entry for a short window
                 wakeUpImmediately();
@@ -1055,6 +1058,39 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Clear sitting state if the dragon is being ridden
         if (!this.level().isClientSide && this.isVehicle() && this.isOrderedToSit()) {
             this.setOrderedToSit(false);
+        }
+    }
+    
+    private boolean wasVehicleLastTick = false;
+    
+    private void tickMountingState() {
+        // Check if dragon just became a vehicle and clear all states
+        if (!this.level().isClientSide && this.isVehicle() && !wasVehicleLastTick) {
+            clearAllStatesWhenMounted();
+        }
+        wasVehicleLastTick = this.isVehicle();
+    }
+    
+    /**
+     * Clears all dragon states (sleep, sit) when mounted to ensure full player control
+     */
+    private void clearAllStatesWhenMounted() {
+        if (!this.level().isClientSide && this.isVehicle()) {
+            // Clear sleep states aggressively - including any ongoing transitions
+            wakeUpImmediately();
+            
+            // Clear sitting state
+            if (this.isOrderedToSit()) {
+                this.setOrderedToSit(false);
+            }
+            
+            // Stop any AI navigation
+            if (this.getNavigation().getPath() != null) {
+                this.getNavigation().stop();
+            }
+            
+            // Suppress sleep for a longer period to prevent immediate re-entry
+            suppressSleep(300); // ~15 seconds
         }
     }
     
@@ -2334,7 +2370,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             true,  // canSleepAtNight
             true,  // canSleepDuringDay
             true,  // requiresShelter
-            false, // avoidsThunderstorms (Lightning Dragons like storms!)
+            true,  // avoidsThunderstorms (Lightning Dragons should not sleep in storms like wild dragons)
             true   // sleepsNearOwner
         );
     }

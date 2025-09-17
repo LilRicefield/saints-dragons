@@ -2,7 +2,6 @@ package com.leon.saintsdragons.server.ai.goals.lightningdragon;
 
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepGoalBase;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
-import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 
 /**
  * Lightning Dragon specific sleep goal.
@@ -33,38 +32,34 @@ public class LightningDragonSleepGoal extends DragonSleepGoalBase {
             return false; // Don't sleep while charging
         }
         
-        // Lightning Dragons are energized by storms - much less likely to sleep
+        // Additional check: Never sleep during thunderstorms (double-check)
         if (lightningDragon.level().isThundering()) {
-            // Only 15% chance to sleep during storms (they're too excited!)
-            return lightningDragon.getRandom().nextFloat() < 0.15f;
+            return false; // Absolutely no sleeping during thunderstorms
         }
         
-        // Lightning Dragons are more active during rain (but not as much as storms)
-        if (lightningDragon.level().isRaining() && lightningDragon.getRandom().nextFloat() < 0.4f) {
-            return false; // 40% chance to stay awake during rain
-        }
+        // Weather conditions are now handled by the base class based on sleep preferences
+        // Lightning Dragons will not sleep during thunderstorms (avoidsThunderstorms = true)
         
         return super.canUse();
     }
     
     @Override
-    protected boolean canWildDragonSleep() {
+    public boolean canContinueToUse() {
         LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        DragonSleepCapable.SleepPreferences prefs = sleepCapable.getSleepPreferences();
         
-        // Check if basic conditions are met (day/night + shelter)
-        boolean canSleepNow = (prefs.canSleepDuringDay() && isDay() && isSheltered()) ||
-                             (prefs.canSleepAtNight() && isNight() && isSheltered());
-        
-        if (!canSleepNow) return false;
-        
-        // Lightning Dragons are energized by storms - less likely to sleep during them
-        if (prefs.avoidsThunderstorms() && lightningDragon.level().isThundering()) {
-            // Only 30% chance to sleep during storms (they're too excited!)
-            return lightningDragon.getRandom().nextFloat() < 0.3f;
+        // Additional check: Stop sleeping immediately if thunderstorm starts
+        if (lightningDragon.level().isThundering()) {
+            return false; // Immediately stop sleeping during thunderstorms
         }
         
-        return true;
+        return super.canContinueToUse();
+    }
+    
+    @Override
+    protected boolean canWildDragonSleep() {
+        // Use the base class implementation which properly handles weather conditions
+        // based on the sleep preferences (avoidsThunderstorms = true)
+        return super.canWildDragonSleep();
     }
     
     @Override
