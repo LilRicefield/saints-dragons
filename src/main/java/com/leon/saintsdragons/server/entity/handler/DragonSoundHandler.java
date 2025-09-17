@@ -135,9 +135,6 @@ public class DragonSoundHandler {
         if (key == null || key.isEmpty() || dragon.level().isClientSide) return;
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) return; // Gate vocals during sleep/transition
         
-        // Special case: allow death sound even when dying
-        boolean isDeathSound = "die".equals(key);
-
         // Get mouth position for spatial audio
         Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
         
@@ -211,18 +208,6 @@ public class DragonSoundHandler {
      */
     private void handleStepSound(String key, String locator) {
         if (dragon.isStayOrSitMuted()) return;
-        // Heavier steps when running or carrying rider
-        float weight = 1.0f;
-        if (dragon.isRunning()) weight *= 1.2f;
-        if (dragon.isVehicle()) weight *= 1.1f;
-        if (dragon.getHealth() < dragon.getMaxHealth() * 0.5f) weight *= 0.9f; // Slightly lighter when injured
-
-        float volume = 0.65f * weight;
-        float pitch = (0.9f + dragon.getRandom().nextFloat() * 0.2f) / weight; // Lower pitch for heavier steps
-
-        // If we have a locator, resolve world-space position for more precise footfalls
-        Vec3 at = resolveLocatorWorldPos(locator);
-
         // Choose step variant based on keyframe name (e.g., "step1" vs "step2")
         // Respect Blockbench spacing for walk and run
         boolean running = dragon.isActuallyRunning() && !dragon.isFlying();
