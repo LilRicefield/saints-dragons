@@ -54,7 +54,10 @@ public class ClientEventHandler {
         tremorAmount = 0.0F; // Reset tremor amount each frame
         
         AABB aabb = player.getBoundingBox().inflate(shakeDistanceScale);
-        for (Mob screenShaker : Minecraft.getInstance().level.getEntitiesOfClass(Mob.class, aabb, (mob -> mob instanceof ShakesScreen))) {
+        var level = Minecraft.getInstance().level;
+        if (level == null) return;
+        
+        for (Mob screenShaker : level.getEntitiesOfClass(Mob.class, aabb, (mob -> mob instanceof ShakesScreen))) {
             ShakesScreen shakesScreen = (ShakesScreen) screenShaker;
             if (shakesScreen.canFeelShake(player) && screenShaker.distanceTo(player) < distance) {
                 distance = screenShaker.distanceTo(player);
@@ -79,7 +82,7 @@ public class ClientEventHandler {
     }
 
     @SubscribeEvent
-    public static void preRenderLiving(RenderLivingEvent.Pre event) {
+    public static void preRenderLiving(RenderLivingEvent.Pre<?, ?> event) {
         if (blockedEntityRenders.contains(event.getEntity().getUUID())) {
             if (!isFirstPersonPlayer(event.getEntity())) {
                 MinecraftForge.EVENT_BUS.post(new RenderLivingEvent.Post<>(event.getEntity(), event.getRenderer(), event.getPartialTick(), 
