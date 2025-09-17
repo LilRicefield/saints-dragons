@@ -2379,10 +2379,10 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     @Override
     public DragonSleepCapable.SleepPreferences getSleepPreferences() {
         return new DragonSleepCapable.SleepPreferences(
-            true,  // canSleepAtNight
-            true,  // canSleepDuringDay
+            false, // canSleepAtNight - wild Lightning Dragons are nocturnal, they sleep during day
+            true,  // canSleepDuringDay - wild Lightning Dragons sleep during day
             true,  // requiresShelter
-            true,  // avoidsThunderstorms (Lightning Dragons should not sleep in storms like wild dragons)
+            true,  // avoidsThunderstorms (Lightning Dragons should not sleep in storms like other dragons)
             true   // sleepsNearOwner
         );
     }
