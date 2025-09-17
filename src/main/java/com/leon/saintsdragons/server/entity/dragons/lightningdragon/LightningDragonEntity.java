@@ -1079,9 +1079,13 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             // Clear sleep states aggressively - including any ongoing transitions
             wakeUpImmediately();
             
-            // Clear sitting state
+            // Clear sitting state and sync command value
             if (this.isOrderedToSit()) {
                 this.setOrderedToSit(false);
+                // If dragon was sitting, set command to Follow (0) when mounted
+                if (this.getCommand() == 1) {
+                    this.setCommand(0);
+                }
             }
             
             // Stop any AI navigation
@@ -1993,6 +1997,15 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.setTakeoff(false);
         this.setLanding(false);
         this.setHovering(false);
+        
+        // Clear sitting state and sync command value
+        if (this.isOrderedToSit()) {
+            this.setOrderedToSit(false);
+            // If dragon was sitting, set command to Follow (0) when mounted
+            if (this.getCommand() == 1) {
+                this.setCommand(0);
+            }
+        }
         
         // Clear any pending timers
         this.riderTakeoffTicks = 0;
