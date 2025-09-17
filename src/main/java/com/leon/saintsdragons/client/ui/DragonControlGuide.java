@@ -1,8 +1,6 @@
 package com.leon.saintsdragons.client.ui;
 
-import com.leon.saintsdragons.client.DragonRideKeybinds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.Font;
