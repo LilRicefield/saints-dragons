@@ -139,18 +139,18 @@ public class DragonSoundHandler {
         Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
         
         switch (key) {
-            case "grumble1" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
-            case "grumble2" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
-            case "grumble3" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
-            case "purr"      -> playRouted(dragon.level(), ModSounds.DRAGON_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos);
-            case "snort"     -> playRouted(dragon.level(), ModSounds.DRAGON_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos);
-            case "chuff"     -> playRouted(dragon.level(), ModSounds.DRAGON_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos);
-            case "content"   -> playRouted(dragon.level(), ModSounds.DRAGON_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
-            case "annoyed"   -> playRouted(dragon.level(), ModSounds.DRAGON_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos);
-            case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos);
-            case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos);
-            case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
-            case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos);
+            case "grumble1" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "grumble2" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "grumble3" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "purr"      -> playRouted(dragon.level(), ModSounds.DRAGON_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos, true);  // Allow when sitting
+            case "snort"     -> playRouted(dragon.level(), ModSounds.DRAGON_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "chuff"     -> playRouted(dragon.level(), ModSounds.DRAGON_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "content"   -> playRouted(dragon.level(), ModSounds.DRAGON_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, true);  // Allow when sitting
+            case "annoyed"   -> playRouted(dragon.level(), ModSounds.DRAGON_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
+            case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
+            case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             default -> {
                 // Unknown key - do nothing
             }
@@ -312,11 +312,16 @@ public class DragonSoundHandler {
      * Plays sound properly on both client and server sides
      */
     private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
-        playRouted(level, sound, volume, pitch, null);
+        playRouted(level, sound, volume, pitch, null, false);
     }
 
     private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at) {
-        if (dragon.isStayOrSitMuted() || dragon.isSleeping()) return;
+        playRouted(level, sound, volume, pitch, at, false);
+    }
+
+    private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting) {
+        if (dragon.isSleeping()) return;
+        if (!allowWhenSitting && dragon.isStayOrSitMuted()) return;
         if (level == null) return;
         double px = dragon.getX();
         double py = dragon.getY();
