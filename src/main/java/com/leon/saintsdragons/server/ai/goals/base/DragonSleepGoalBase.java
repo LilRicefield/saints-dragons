@@ -48,6 +48,20 @@ public abstract class DragonSleepGoalBase extends Goal {
         if (dragon.isTame()) {
             return canTamedDragonSleep();
         } else {
+            // For wild dragons, check if they should wake up due to day/night transition
+            DragonSleepCapable.SleepPreferences prefs = sleepCapable.getSleepPreferences();
+            
+            // If dragon is sleeping at night and it becomes day, they should wake up
+            if (prefs.canSleepAtNight() && !prefs.canSleepDuringDay() && isDay()) {
+                return false; // Wake up when day comes
+            }
+            
+            // If dragon is sleeping during day and it becomes night, they should wake up
+            if (prefs.canSleepDuringDay() && !prefs.canSleepAtNight() && isNight()) {
+                return false; // Wake up when night comes
+            }
+            
+            // Otherwise, continue sleeping if conditions are still met
             return canWildDragonSleep();
         }
     }
