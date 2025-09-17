@@ -1,26 +1,13 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-    }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
-}
-
 plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-// Provide Mixin annotation processor with the 'official' obfuscation environment
-
-apply plugin: 'org.spongepowered.mixin'
-
 version = '1.0.0'
-group = 'com.leon.saintsdragon'
+group = 'com.leon.saintsdragons'
 
 base {
     archivesName = mod_id
@@ -73,7 +60,7 @@ minecraft {
         data {
             workingDirectory project.file('run-data')
 
-            args '--mod', 'saintsdragon', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            args '--mod', 'saintsdragons', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
         }
     }
 }
@@ -118,7 +105,6 @@ dependencies {
     minecraft "net.minecraftforge:forge:1.20.1-47.4.0"
     implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
     implementation("com.eliotlash.mclib:mclib:20")
-    // Mixin annotation processor to generate refmap
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
