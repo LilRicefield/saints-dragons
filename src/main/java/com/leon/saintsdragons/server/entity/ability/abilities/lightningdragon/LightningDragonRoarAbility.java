@@ -57,11 +57,19 @@ public class LightningDragonRoarAbility extends DragonAbility<LightningDragonEnt
             selectLightningTargets();
             // If multiple targets, cover more with extra strikes; else 2-3 strikes on single target
             int count = targetIds.size();
+            boolean isSupercharged = getUser().isSupercharged();
+            
             if (count > 1) {
                 strikesLeft = Math.min(6, Math.max(3, count * 2));
             } else {
                 strikesLeft = 2 + getUser().getRandom().nextInt(2); // 2-3 strikes
             }
+            
+            // Double the strikes when supercharged
+            if (isSupercharged) {
+                strikesLeft *= 2;
+            }
+            
             strikeCooldown = 0; // strike asap when ACTIVE begins
         }
     }

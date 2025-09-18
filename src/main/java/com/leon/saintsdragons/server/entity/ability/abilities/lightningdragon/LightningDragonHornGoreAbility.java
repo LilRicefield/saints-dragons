@@ -130,11 +130,14 @@ public class LightningDragonHornGoreAbility extends DragonAbility<LightningDrago
         DamageSource src = dragon.level().damageSources().mobAttack(dragon);
 
         float mult = dragon.getDamageMultiplier();
+        boolean isSupercharged = dragon.isSupercharged();
 
         // Armor penetration: ignore 2 armor points when calculating effective damage
+        // When supercharged, ignore 4 armor points (2x enhancement)
+        float armorPenetration = isSupercharged ? 4.0f : 2.0f;
         float armor = (float) target.getAttributeValue(Attributes.ARMOR);
         float toughness = (float) target.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
-        float desiredPostArmor = damageAfterArmor(GORE_DAMAGE * mult, Math.max(0f, armor - 2f), toughness);
+        float desiredPostArmor = damageAfterArmor(GORE_DAMAGE * mult, Math.max(0f, armor - armorPenetration), toughness);
 
         // Find a raw damage value which, after the target's ACTUAL armor/toughness, equals desiredPostArmor
         float rawToDeal = solveRawDamageForPostArmor(desiredPostArmor, armor, toughness);
@@ -143,13 +146,14 @@ public class LightningDragonHornGoreAbility extends DragonAbility<LightningDrago
 
         // Strong directional knockback away from dragon head
         Vec3 look = dragon.getLookAngle().normalize();
-        double strength = 1.4; // tune
+        double strength = isSupercharged ? 2.8 : 1.4; // 2x knockback when supercharged
         // knockback(strength, x, z): applies horizontal knockback opposite to (x,z)
         target.knockback((float) strength, -look.x, -look.z);
 
-        // Small vertical lift
+        // Small vertical lift - enhanced when supercharged
         Vec3 dv = target.getDeltaMovement();
-        target.setDeltaMovement(dv.x, Math.max(dv.y, 0.35), dv.z);
+        float verticalLift = isSupercharged ? 0.7f : 0.35f; // 2x vertical lift when supercharged
+        target.setDeltaMovement(dv.x, Math.max(dv.y, verticalLift), dv.z);
 
     }
 
