@@ -21,11 +21,11 @@ import java.util.List;
  * Allows adding/removing allies by username with validation.
  */
 public class DragonAllyScreen extends Screen {
-    private static final ResourceLocation GUI_TEXTURE = new ResourceLocation(SaintsDragons.MOD_ID, "textures/gui/dragon_ally_screen.png");
+    private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(SaintsDragons.MOD_ID, "textures/gui/dragon_ally_screen.png");
     
     private final DragonEntity dragon;
     private final Player player;
-    
+
     // GUI dimensions
     private static final int GUI_WIDTH = 256;
     private static final int GUI_HEIGHT = 200;
