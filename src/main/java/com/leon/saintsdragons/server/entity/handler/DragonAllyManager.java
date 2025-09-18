@@ -48,6 +48,41 @@ public class DragonAllyManager {
         
         username = username.trim();
         
+        // Validate username length and format
+        if (username.length() < 3 || username.length() > 16) {
+            return AllyResult.INVALID_USERNAME;
+        }
+        
+        // Check for valid Minecraft username characters (alphanumeric and underscore only)
+        if (!username.matches("^[a-zA-Z0-9_]+$")) {
+            return AllyResult.INVALID_USERNAME;
+        }
+        
+        // Easter egg: Check for famous names first
+        if (username.equalsIgnoreCase("Notch")) {
+            return AllyResult.EASTER_EGG;
+        }
+        if (username.equalsIgnoreCase("jeb_")) {
+            return AllyResult.EASTER_EGG;
+        }
+        if (username.equalsIgnoreCase("Dinnerbone")) {
+            return AllyResult.EASTER_EGG;
+        }
+        if (username.equalsIgnoreCase("Grumm")) {
+            return AllyResult.EASTER_EGG;
+        }
+        if (username.equalsIgnoreCase("Herobrine")) {
+            return AllyResult.EASTER_EGG;
+        }
+        
+        // Check if trying to add the dragon owner as an ally (they're already the owner!)
+        if (dragon.getOwner() != null) {
+            String ownerName = dragon.getOwner().getName().getString();
+            if (username.equalsIgnoreCase(ownerName)) {
+                return AllyResult.IS_OWNER;
+            }
+        }
+        
         // Check if already an ally
         if (usernameCache.containsKey(username)) {
             UUID existingUuid = usernameCache.get(username);
@@ -180,19 +215,14 @@ public class DragonAllyManager {
         MinecraftServer server = serverLevel.getServer();
         if (server == null) return null;
         
-        // Try to find online player first
+        // ONLY allow currently online players - no profile cache lookup!
         ServerPlayer onlinePlayer = server.getPlayerList().getPlayerByName(username);
         if (onlinePlayer != null) {
             return onlinePlayer.getUUID();
         }
         
-        // Try to resolve from server's player data
-        try {
-            return server.getProfileCache().get(username).map(profile -> profile.getId()).orElse(null);
-        } catch (Exception e) {
-            LOGGER.warn("Failed to resolve username '{}' to UUID: {}", username, e.getMessage());
-            return null;
-        }
+        // Player is not online - return null
+        return null;
     }
     
     /**
@@ -267,7 +297,9 @@ public class DragonAllyManager {
         UUID_MISMATCH("Username-UUID validation failed"),
         ALREADY_ALLY("Player is already an ally"),
         NOT_ALLY("Player is not an ally"),
-        ALLY_LIMIT_REACHED("Maximum ally limit reached");
+        ALLY_LIMIT_REACHED("Maximum ally limit reached"),
+        EASTER_EGG("Easter egg message"),
+        IS_OWNER("You are already the owner of this dragon!");
         
         private final String message;
         
