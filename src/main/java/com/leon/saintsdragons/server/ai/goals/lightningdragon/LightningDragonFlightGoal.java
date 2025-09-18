@@ -28,6 +28,10 @@ public class LightningDragonFlightGoal extends Goal {
     
     // Flight decision cooldown
     private int flightDecisionCooldown = 0;
+    
+    // Weather state tracking for immediate response
+    private boolean wasThundering = false;
+    private boolean wasRaining = false;
 
     public LightningDragonFlightGoal(LightningDragonEntity dragon) {
         this.dragon = dragon;
@@ -53,6 +57,14 @@ public class LightningDragonFlightGoal extends Goal {
         boolean thundering = dragon.level().isThundering();
         boolean raining = !thundering && dragon.level().isRaining();
         boolean stormy = thundering || raining;
+        
+        // Check for weather changes that should trigger immediate takeoff
+        boolean weatherChangedToStorm = (thundering && !wasThundering) || (raining && !wasRaining);
+        boolean weatherChangedToThunder = thundering && !wasThundering;
+        
+        // Update weather state tracking
+        wasThundering = thundering;
+        wasRaining = raining;
 
         // If tamed and close to owner, chill — except during storms
         if (dragon.isTame()) {
@@ -67,14 +79,31 @@ public class LightningDragonFlightGoal extends Goal {
         int cooldown = LANDING_COOLDOWN_TICKS; // fixed
         if (thundering) cooldown = 0;            // no cooldown in thunder
         else if (raining) cooldown = cooldown / 4; // shorter cooldown in rain
+        
+        // Override cooldown if weather just changed to storm conditions
+        if (weatherChangedToStorm) {
+            cooldown = 0;
+        }
+        
         if (!dragon.isFlying() && (currentTime - lastLandingTime) < cooldown) {
             return false;
         }
 
         // Use desynced cooldown to prevent all dragons making flight decisions same tick
+        int decisionInterval = flightDecisionInterval(thundering, raining);
         if (flightDecisionCooldown > 0) {
             flightDecisionCooldown--;
-            return false;
+            if (flightDecisionCooldown > 0) {
+                // Override cooldown if weather just changed to thunder for immediate response
+                if (weatherChangedToThunder) {
+                    flightDecisionCooldown = 0;
+                } else if ((thundering || raining) && flightDecisionCooldown > decisionInterval) {
+                    flightDecisionCooldown = decisionInterval;
+                }
+                if (flightDecisionCooldown > 0) {
+                    return false;
+                }
+            }
         }
 
         // Must fly if over danger
@@ -93,12 +122,12 @@ public class LightningDragonFlightGoal extends Goal {
         if (isFlying) {
             this.targetPosition = findFlightTarget();
             // Reset cooldown for next decision
-            this.flightDecisionCooldown = 30;
+            this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
             return true;
         }
 
         // Reset cooldown even when not flying
-        this.flightDecisionCooldown = 20;
+        this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
         return false;
     }
 
@@ -309,18 +338,34 @@ public class LightningDragonFlightGoal extends Goal {
 
     // ===== DECISION MAKING (FIXED) =====
 
+    private int flightDecisionInterval(boolean thundering, boolean raining) {
+        if (thundering) {
+            return 2; // Very frequent decisions during thunder
+        }
+        if (raining) {
+            return 8; // More frequent decisions during rain
+        }
+        return 25; // Normal frequency during clear weather
+    }
+
+    private int nextDecisionCooldown(int baseInterval) {
+        int jitter = Math.max(1, baseInterval / 2);
+        return baseInterval + dragon.getRandom().nextInt(jitter);
+    }
+
     private boolean shouldTakeOff(boolean thundering, boolean raining) {
         if (isOverDanger()) {
             return true;
         }
 
-        // Strong bias: frequently take off in thunderstorms, occasionally in rain, rarely in clear
         if (thundering) {
-            return dragon.getRandom().nextInt(30) == 0;   // ~every 1.5s on average
+            // Much more aggressive takeoff during thunder - almost immediate
+            return dragon.getRandom().nextInt(4) == 0; // 25% chance per decision interval
         } else if (raining) {
-            return dragon.getRandom().nextInt(80) == 0;   // ~every 4s on average
+            // More frequent takeoff during rain
+            return dragon.getRandom().nextInt(8) == 0; // 12.5% chance per decision interval
         } else {
-            return dragon.getRandom().nextInt(1200) == 0; // ~once per minute in clear
+            return dragon.getRandom().nextInt(80) == 0; // 1.25% chance per decision interval
         }
     }
 
