@@ -1,21 +1,37 @@
 {
-  "key.saintsdragons.toggle_dragon_ui": "Toggle Dragon UI",
-  "key.saintsdragons.ascend": "Dragon Ascend",
-  "key.saintsdragons.descend": "Dragon Descend", 
-  "key.saintsdragons.accelerate": "Dragon Accelerate",
-  "key.saintsdragons.ability3": "Dragon Lightning Beam",
-  "key.saintsdragons.roar": "Dragon Roar",
-  "key.saintsdragons.summon_storm": "Dragon Summon Storm",
-  "key.categories.saintsdragons": "Saint's Dragons",
-  "entity.saintsdragons.all.command_0": "%s is now following you",
-  "entity.saintsdragons.all.command_1": "%s is now sitting",
-  "entity.saintsdragons.all.command_2": "%s is now wandering freely",
-  "entity.saintsdragons.lightning_dragon.fed": "%s has been fed and healed!",
-  "entity.saintsdragons.lightning_dragon.fed_partial": "%s is healing...",
-  "entity.saintsdragons.lightning_dragon": "Lightning Dragon",
+  "item.saintsdragons.dragon_ally_book": "Dragon Ally Book",
   "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
-  "death.attack.lightning_dragon": "%s was electrocuted by a Lightning Dragon",
-  "death.attack.lightning_dragon.player": "%s was electrocuted by %s's Lightning Dragon",
+  
+  "entity.saintsdragons.lightning_dragon": "Lightning Dragon",
+  "entity.saintsdragons.lightning_chain": "Lightning Chain",
+  
+  "saintsdragons.gui.dragon_ally.title": "Dragon Ally Management",
+  "saintsdragons.gui.dragon_ally.username_input": "Enter username...",
+  "saintsdragons.gui.dragon_ally.add": "Add Ally",
+  "saintsdragons.gui.dragon_ally.remove": "Remove Ally",
+  "saintsdragons.gui.dragon_ally.count": "Allies: %d/%d",
+  
+  "saintsdragons.tooltip.dragon_ally_book.line1": "Right-click on your dragon to manage allies",
+  "saintsdragons.tooltip.dragon_ally_book.line2": "Allies won't be hurt by dragon attacks",
+  "saintsdragons.tooltip.dragon_ally_book.line3": "Supports up to 10 allies per dragon",
+  
+  "saintsdragons.message.dragon_not_found": "Dragon not found",
+  "saintsdragons.message.not_dragon_owner": "You don't own this dragon",
+  "saintsdragons.message.ally.success": "Successfully managed ally: %s",
+  "saintsdragons.message.ally.invalid_username": "Invalid username provided",
+  "saintsdragons.message.ally.player_not_found": "Player '%s' not found on server",
+  "saintsdragons.message.ally.uuid_mismatch": "Username-UUID validation failed for '%s'",
+  "saintsdragons.message.ally.already_ally": "Player '%s' is already an ally",
+  "saintsdragons.message.ally.not_ally": "Player '%s' is not an ally",
+  "saintsdragons.message.ally.ally_limit_reached": "Maximum ally limit reached (10 allies)",
+  
+  "saintsdragons.command.ally.add.result": "Dragon %s: %s - %s",
+  "saintsdragons.command.ally.remove.result": "Dragon %s: %s - %s",
+  "saintsdragons.command.ally.list.header": "Allies for %s (%d/%d):",
+  "saintsdragons.command.ally.list.empty": "No allies set",
+  "saintsdragons.command.ally.clear.success": "Cleared all allies for %s",
+  "saintsdragons.command.ally.not_dragon": "Entity %s is not a dragon",
+  
   "advancement.saintsdragons.tame_lightning_dragon.title": "Bleeding Bolt",
-  "advancement.saintsdragons.tame_lightning_dragon.description": "Tame a Lightning Dragon with patience and earn its trust"
+  "advancement.saintsdragons.tame_lightning_dragon.description": "Tame a Lightning Dragon with salmon and patience."
 }

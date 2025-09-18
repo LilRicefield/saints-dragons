@@ -10,12 +10,14 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModAbilities;
+import com.leon.saintsdragons.server.command.DragonAllyCommand;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -30,6 +32,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 @Mod(SaintsDragons.MOD_ID)
 public class SaintsDragons {
     public static final String MOD_ID = "saintsdragons";
+    public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(MOD_ID);
     public static ResourceLocation rl(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
@@ -58,8 +61,9 @@ public class SaintsDragons {
         modBus.addListener(this::onRegisterRenderers);
         modBus.addListener(this::onBuildCreativeTabContents);
 
-        // Register spawn placements on the Forge event bus
+        // Register spawn placements and commands on the Forge event bus
         MinecraftForge.EVENT_BUS.addListener(this::onSpawnPlacements);
+        MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
 
         // Initialize client-side proxy
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
@@ -86,6 +90,10 @@ public class SaintsDragons {
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(ModItems.LIGHTNING_DRAGON_SPAWN_EGG);
         }
+        // Add to tools tab
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+            event.accept(ModItems.DRAGON_ALLY_BOOK);
+        }
     }
 
     private void onSpawnPlacements(SpawnPlacementRegisterEvent event) {
@@ -97,5 +105,10 @@ public class SaintsDragons {
                 LightningDragonEntity::canSpawnHere,
                 SpawnPlacementRegisterEvent.Operation.AND
         );
+    }
+    
+    private void onRegisterCommands(RegisterCommandsEvent event) {
+        // Register dragon ally commands
+        DragonAllyCommand.register(event.getDispatcher());
     }
 }

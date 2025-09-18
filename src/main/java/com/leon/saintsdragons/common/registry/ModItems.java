@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.SaintsDragons;
+import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.registries.DeferredRegister;
@@ -17,6 +18,15 @@ public final class ModItems {
                             ModEntities.LIGHTNING_DRAGON,
                             0x000000, 0x8B0000, // base=black, spots=dark red
                             new Item.Properties()
+                    )
+            );
+    
+    public static final RegistryObject<Item> DRAGON_ALLY_BOOK =
+            REGISTER.register("dragon_ally_book",
+                    () -> new DragonAllyBookItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(0) // Unbreakable
                     )
             );
 }
