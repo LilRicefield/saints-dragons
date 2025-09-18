@@ -5,14 +5,12 @@ import com.leon.saintsdragons.common.network.MessageDragonAllyManagement;
 import com.leon.saintsdragons.common.network.MessageDragonAllyRequest;
 import com.leon.saintsdragons.common.network.ModNetworkHandler;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -21,32 +19,34 @@ import java.util.List;
  * Allows adding/removing allies by username with validation.
  */
 public class DragonAllyScreen extends Screen {
-    private static final ResourceLocation GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(SaintsDragons.MOD_ID, "textures/gui/dragon_ally_screen.png");
-    
     private final DragonEntity dragon;
-    private final Player player;
 
-    // GUI dimensions
+    // GUI dimensions - adjust to match Minecraft's GUI scaling
     private static final int GUI_WIDTH = 256;
     private static final int GUI_HEIGHT = 200;
+    
+    // Calculate actual GUI size based on screen scaling
+    private int getActualGuiWidth() {
+        return Math.min(GUI_WIDTH, this.width - 40); // Leave 20px margin on each side
+    }
+    
+    private int getActualGuiHeight() {
+        return Math.min(GUI_HEIGHT, this.height - 40); // Leave 20px margin on top/bottom
+    }
     private int leftPos;
     private int topPos;
     
     // Components
     private EditBox usernameInput;
-    private Button addButton;
-    private Button removeButton;
-    private Button closeButton;
-    
+
     // Ally list display
     private List<String> allyList;
     private int scrollOffset = 0;
     private static final int MAX_VISIBLE_ALLIES = 8;
     
-    public DragonAllyScreen(DragonEntity dragon, Player player) {
+    public DragonAllyScreen(DragonEntity dragon) {
         super(Component.translatable("saintsdragons.gui.dragon_ally.title"));
         this.dragon = dragon;
-        this.player = player;
         this.allyList = new java.util.ArrayList<>(); // Start empty, will be populated by server
     }
     
@@ -54,9 +54,21 @@ public class DragonAllyScreen extends Screen {
     protected void init() {
         super.init();
         
-        // Center the GUI
-        this.leftPos = (this.width - GUI_WIDTH) / 2;
-        this.topPos = (this.height - GUI_HEIGHT) / 2;
+        // Center the GUI, but ensure it fits on screen
+        int actualWidth = getActualGuiWidth();
+        int actualHeight = getActualGuiHeight();
+        
+        this.leftPos = Math.max(0, (this.width - actualWidth) / 2);
+        this.topPos = Math.max(0, (this.height - actualHeight) / 2);
+        
+        // Ensure GUI doesn't go off the bottom of the screen
+        if (this.topPos + actualHeight > this.height - 20) { // Leave 20px margin from bottom
+            this.topPos = this.height - actualHeight - 20; // Leave 20px margin from bottom
+        }
+        
+        // Debug: Log GUI positioning (only once)
+        SaintsDragons.LOGGER.info("GUI positioning - Screen: {}x{}, GUI: {}x{}, Position: ({}, {})", 
+            this.width, this.height, GUI_WIDTH, GUI_HEIGHT, this.leftPos, this.topPos);
         
         // Request current ally list from server
         requestAllyListFromServer();
@@ -68,24 +80,24 @@ public class DragonAllyScreen extends Screen {
         this.addRenderableWidget(usernameInput);
         
         // Add ally button
-        this.addButton = Button.builder(
-            Component.translatable("saintsdragons.gui.dragon_ally.add"),
-            button -> addAlly()
+        Button addButton = Button.builder(
+                Component.translatable("saintsdragons.gui.dragon_ally.add"),
+                button -> addAlly()
         ).bounds(leftPos + 180, topPos + 30, 60, 20).build();
         this.addRenderableWidget(addButton);
         
         // Remove ally button
-        this.removeButton = Button.builder(
-            Component.translatable("saintsdragons.gui.dragon_ally.remove"),
-            button -> removeAlly()
+        Button removeButton = Button.builder(
+                Component.translatable("saintsdragons.gui.dragon_ally.remove"),
+                button -> removeAlly()
         ).bounds(leftPos + 180, topPos + 55, 60, 20).build();
         this.addRenderableWidget(removeButton);
         
-        // Close button
-        this.closeButton = Button.builder(
-            Component.translatable("gui.cancel"),
-            button -> onClose()
-        ).bounds(leftPos + GUI_WIDTH - 60, topPos + GUI_HEIGHT - 30, 50, 20).build();
+        // Close button - moved up to avoid covering inner border
+        Button closeButton = Button.builder(
+                Component.translatable("gui.cancel"),
+                button -> onClose()
+        ).bounds(leftPos + GUI_WIDTH - 60, topPos + GUI_HEIGHT - 50, 50, 20).build();
         this.addRenderableWidget(closeButton);
         
         // Set initial focus
@@ -93,16 +105,27 @@ public class DragonAllyScreen extends Screen {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
         
-        // Draw GUI background
-        RenderSystem.setShaderTexture(0, GUI_TEXTURE);
-        guiGraphics.blit(GUI_TEXTURE, leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT);
+        // Use the reliable programmatic drawing system - it works perfectly!
+        int actualWidth = getActualGuiWidth();
+        int actualHeight = getActualGuiHeight();
+        
+        // Draw beautiful gold-bordered GUI
+        guiGraphics.fill(leftPos, topPos, leftPos + actualWidth, topPos + actualHeight, 0x80000000); // Semi-transparent black background
+        guiGraphics.fill(leftPos, topPos, leftPos + actualWidth, topPos + 1, 0xFFD4AF37); // Top border (gold)
+        guiGraphics.fill(leftPos, topPos, leftPos + 1, topPos + actualHeight, 0xFFD4AF37); // Left border (gold)
+        guiGraphics.fill(leftPos + actualWidth - 1, topPos, leftPos + actualWidth, topPos + actualHeight, 0xFFD4AF37); // Right border (gold)
+        guiGraphics.fill(leftPos, topPos + actualHeight - 1, leftPos + actualWidth, topPos + actualHeight, 0xFFD4AF37); // Bottom border (gold)
+        
+        // Add some decorative elements to make it look more medieval/fantasy
+        guiGraphics.fill(leftPos + 10, topPos + 10, leftPos + actualWidth - 10, topPos + 12, 0xFFB8860B); // Inner top border (darker gold)
+        guiGraphics.fill(leftPos + 10, topPos + actualHeight - 12, leftPos + actualWidth - 10, topPos + actualHeight - 10, 0xFFB8860B); // Inner bottom border (darker gold)
         
         // Draw title
         guiGraphics.drawCenteredString(this.font, this.title, 
-            leftPos + GUI_WIDTH / 2, topPos + 10, 0x404040);
+            leftPos + GUI_WIDTH / 2, topPos + 16, 0x404040);
         
         // Draw ally count
         String allyCountText = Component.translatable("saintsdragons.gui.dragon_ally.count", 
@@ -129,9 +152,9 @@ public class DragonAllyScreen extends Screen {
             int y = startY + (i * 12);
             
             // Highlight if mouse is over this entry (mouseX and mouseY are parameters from render method)
-            boolean hovered = false; // TODO: Implement mouse hover detection
-            
-            int color = hovered ? 0xFFFFFF : 0x404040;
+            // TODO: Implement mouse hover detection
+
+            int color = 0x404040;
             guiGraphics.drawString(this.font, allyName, leftPos + 20, y, color);
         }
         
