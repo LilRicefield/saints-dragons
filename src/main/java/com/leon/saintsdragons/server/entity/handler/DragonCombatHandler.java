@@ -166,10 +166,10 @@ public class DragonCombatHandler {
                 // Ability finished, set a small fixed global cooldown between abilities
                 // ~0.3s between abilities
                 globalCooldown = 6;
-                // Apply per-ability cooldown based on the finished ability's configured cooldown
+                // Apply per-ability cooldown based on the finished ability's current cooldown
                 DragonAbilityType<?, ?> finishedType = getActiveAbilityType();
                 if (finishedType != null) {
-                    setAbilityCooldown(finishedType, activeAbility.getMaxCooldown());
+                    setAbilityCooldown(finishedType, activeAbility.getCooldownTimer());
                 }
                 activeAbility = null;
             }
