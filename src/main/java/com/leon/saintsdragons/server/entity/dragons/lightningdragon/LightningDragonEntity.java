@@ -2429,6 +2429,37 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         return false; // Implement based on your charging logic
     }
 
+    // ===== WATER CONDUCTIVITY SYSTEM =====
+    
+    /**
+     * Check if the dragon is currently underwater or in water
+     */
+    public boolean isInWater() {
+        return super.isInWater() || this.level().getBlockState(this.blockPosition()).getFluidState().is(net.minecraft.world.level.material.Fluids.WATER);
+    }
+    
+    /**
+     * Get water conductivity multiplier for lightning damage
+     * Water conducts electricity better, so lightning is more effective underwater
+     */
+    public float getWaterConductivityMultiplier() {
+        if (isInWater()) {
+            return 1.5f; // 50% damage boost underwater
+        }
+        return 1.0f; // Normal damage on land/air
+    }
+    
+    /**
+     * Get water conductivity multiplier for lightning range/radius
+     * Water allows lightning to spread further
+     */
+    public double getWaterRangeMultiplier() {
+        if (isInWater()) {
+            return 1.3; // 30% range boost underwater
+        }
+        return 1.0; // Normal range on land/air
+    }
+
     // ===== SCREEN SHAKE INTERFACE IMPLEMENTATION =====
     
     @Override
