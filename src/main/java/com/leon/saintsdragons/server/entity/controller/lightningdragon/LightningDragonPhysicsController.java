@@ -127,8 +127,8 @@ public class LightningDragonPhysicsController {
         if (dragon.isDying() || dragon.isSleeping()) {
             return PlayState.STOP;
         }
-        // Drive SIT from pose/progress instead of owner order to avoid desync
-        if (dragon.isInSittingPose() || dragon.getSitProgress() > 0.5f) {
+        // Drive SIT from our custom progress system only to avoid desync
+        if (dragon.getSitProgress() > 0.5f) {
             state.setAndContinue(SIT);
         } else if (dragon.isDodging()) {
             state.setAndContinue(DODGE);

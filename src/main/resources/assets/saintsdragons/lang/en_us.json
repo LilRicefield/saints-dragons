@@ -33,5 +33,24 @@
   "saintsdragons.command.ally.not_dragon": "Entity %s is not a dragon",
   
   "advancement.saintsdragons.tame_lightning_dragon.title": "Bleeding Bolt",
-  "advancement.saintsdragons.tame_lightning_dragon.description": "Tame a Lightning Dragon with salmon and patience."
+  "advancement.saintsdragons.tame_lightning_dragon.description": "Tame a Lightning Dragon with salmon and patience.",
+  
+  "key.categories.saintsdragons": "Saints Dragons",
+  "key.saintsdragons.ascend": "Dragon Ascend",
+  "key.saintsdragons.descend": "Dragon Descend", 
+  "key.saintsdragons.accelerate": "Dragon Accelerate",
+  "key.saintsdragons.ability3": "Dragon Lightning Beam",
+  "key.saintsdragons.roar": "Dragon Roar",
+  "key.saintsdragons.summon_storm": "Dragon Summon Storm",
+  "key.saintsdragons.toggle_dragon_ui": "Toggle Dragon UI",
+  
+  "commands.dragonally.description": "Manage dragon allies",
+  "commands.dragonally.add.description": "Add a player as an ally to a dragon",
+  "commands.dragonally.remove.description": "Remove a player as an ally from a dragon", 
+  "commands.dragonally.list.description": "List all allies of a dragon",
+  "commands.dragonally.clear.description": "Clear all allies from a dragon",
+  
+  "entity.saintsdragons.all.command_0": "%s is now following you",
+  "entity.saintsdragons.all.command_1": "%s is now sitting", 
+  "entity.saintsdragons.all.command_2": "%s is now wandering"
 }

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers;
 
 import com.leon.saintsdragons.SaintsDragons;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -148,12 +149,18 @@ public record LightningDragonInteractionHandler(LightningDragonEntity dragon) {
         switch (command) {
             case 0: // Follow
                 dragon.setOrderedToSit(false);
+                // Immediately reset sit progress when standing up
+                dragon.sitProgress = 0f;
+                dragon.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
                 break;
             case 1: // Sit
                 dragon.setOrderedToSit(true);
                 break;
             case 2: // Wander
                 dragon.setOrderedToSit(false);
+                // Immediately reset sit progress when standing up
+                dragon.sitProgress = 0f;
+                dragon.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
                 break;
         }
     }

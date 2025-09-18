@@ -23,6 +23,13 @@ public record DragonInteractionHandler(DragonEntity dragon) {
             if (!dragon.level().isClientSide) {
                 dragon.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, dragon.sitProgress);
             }
+            // Ensure sit progress doesn't go below 0
+            if (dragon.sitProgress < 0F) {
+                dragon.sitProgress = 0F;
+                if (!dragon.level().isClientSide) {
+                    dragon.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0F);
+                }
+            }
         }
     }
 }
