@@ -74,7 +74,32 @@ public class MessageDragonAllyManagement {
             }
             
             // Send result message to player
-            Component resultMessage = Component.translatable("saintsdragons.message.ally." + result.name().toLowerCase(), message.username);
+            Component resultMessage;
+            if (result == DragonAllyManager.AllyResult.EASTER_EGG) {
+                // Special easter egg messages
+                switch (message.username.toLowerCase()) {
+                    case "notch":
+                        resultMessage = Component.translatable("saintsdragons.message.easter_egg.notch");
+                        break;
+                    case "jeb_":
+                        resultMessage = Component.translatable("saintsdragons.message.easter_egg.jeb_");
+                        break;
+                    case "dinnerbone":
+                        resultMessage = Component.translatable("saintsdragons.message.easter_egg.dinnerbone");
+                        break;
+                    case "grumm":
+                        resultMessage = Component.translatable("saintsdragons.message.easter_egg.grumm");
+                        break;
+                    case "herobrine":
+                        resultMessage = Component.translatable("saintsdragons.message.easter_egg.herobrine");
+                        break;
+                    default:
+                        resultMessage = Component.translatable("saintsdragons.message.ally.easter_egg");
+                        break;
+                }
+            } else {
+                resultMessage = Component.translatable("saintsdragons.message.ally." + result.name().toLowerCase(), message.username);
+            }
             player.sendSystemMessage(resultMessage);
             
             // Send updated ally list to client

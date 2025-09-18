@@ -52,5 +52,21 @@
   
   "entity.saintsdragons.all.command_0": "%s is now following you",
   "entity.saintsdragons.all.command_1": "%s is now sitting", 
-  "entity.saintsdragons.all.command_2": "%s is now wandering"
+  "entity.saintsdragons.all.command_2": "%s is now wandering",
+  
+  "saintsdragons.message.ally.success": "Successfully managed ally %s",
+  "saintsdragons.message.ally.invalid_username": "Invalid username, by the way. Must be 3-16 characters, letters/numbers/underscores only",
+  "saintsdragons.message.ally.player_not_found": "Who is %s? Are you sure you're playing with that person?",
+  "saintsdragons.message.ally.uuid_mismatch": "Username-UUID validation failed for %s",
+  "saintsdragons.message.ally.already_ally": "%s is already an ally",
+  "saintsdragons.message.ally.not_ally": "%s is not an ally",
+  "saintsdragons.message.ally.ally_limit_reached": "Maximum ally limit reached (10 allies max)",
+  "saintsdragons.message.ally.easter_egg": "Easter egg message",
+  "saintsdragons.message.ally.is_owner": "Must you try? You are already the owner of this dragon!",
+  
+  "saintsdragons.message.easter_egg.notch": "Yes, he created this game. But he's not on this server!",
+  "saintsdragons.message.easter_egg.jeb_": "The lead developer! But he's busy working on the next update.",
+  "saintsdragons.message.easter_egg.dinnerbone": "The developer who makes everything upside down! But he's not here.",
+  "saintsdragons.message.easter_egg.grumm": "Another Minecraft developer! But he's not on this server.",
+  "saintsdragons.message.easter_egg.herobrine": "Trying to be funny?"
 }
