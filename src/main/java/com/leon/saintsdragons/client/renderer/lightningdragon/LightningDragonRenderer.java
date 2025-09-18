@@ -50,7 +50,7 @@ public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEn
 
         // Enable matrix tracking for the feet bones we care about
         this.lastBakedModel = model;
-        enableTrackingForFootBones(model);
+        enableTrackingForBones(model);
 
         // Call super.preRender
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
@@ -67,7 +67,7 @@ public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEn
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
         // After bones have been processed, sample accurate world positions for foot locators
-        sampleAndStashFootLocatorsAccurate(entity);
+        sampleAndStashLocatorsAccurate(entity);
     }
     @Override
     public RenderType getRenderType(LightningDragonEntity animatable, ResourceLocation texture,
@@ -80,14 +80,14 @@ public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEn
     private static final float L_RIGHT_X = -2.2f, L_RIGHT_Y = 0.05f, L_RIGHT_Z = 2.85f;
     private static final float MOUTH_X = 0.1f, MOUTH_Y = 8.7f, MOUTH_Z = -17.4f;
 
-    private void enableTrackingForFootBones(BakedGeoModel model) {
+    private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) return;
         model.getBone("leftfeet").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("rightfeet").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("head").ifPresent(b -> b.setTrackingMatrices(true));
     }
 
-    private void sampleAndStashFootLocatorsAccurate(LightningDragonEntity entity) {
+    private void sampleAndStashLocatorsAccurate(LightningDragonEntity entity) {
         if (this.lastBakedModel == null || entity == null) return;
         // Sample left foot
         this.lastBakedModel.getBone("leftfeet").ifPresent(b -> {
