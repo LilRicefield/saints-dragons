@@ -20,7 +20,7 @@ public class ModEntities {
     // ===== LIGHTNING DRAGON =====
     public static final RegistryObject<EntityType<LightningDragonEntity>> LIGHTNING_DRAGON =
             REGISTER.register("lightning_dragon", () -> EntityType.Builder.of(LightningDragonEntity::new, MobCategory.CREATURE)
-                    .sized(4.5F, 4.5F)
+                    .sized(3.5F, 3.0F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("lightning_dragon"));
