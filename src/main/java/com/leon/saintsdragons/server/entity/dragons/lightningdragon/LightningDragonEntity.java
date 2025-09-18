@@ -11,6 +11,7 @@ import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonFli
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonPanicGoal;
+import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonTemptGoal;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonPhysicsController;
@@ -1541,6 +1542,14 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.goalSelector.addGoal(0, new LightningDragonSleepGoal(this));         // Higher priority than follow
         this.goalSelector.addGoal(1, new LightningDragonFollowOwnerGoal(this));
         this.goalSelector.addGoal(2, new LightningDragonGroundWanderGoal(this, 1.0, 60));
+        
+        // Item pickup behavior (like foxes eating berries) + ground fish taming
+        this.goalSelector.addGoal(7, new LightningDragonTemptGoal(this, 1.2, 
+                net.minecraft.world.item.crafting.Ingredient.of(net.minecraft.world.item.Items.SALMON, 
+                                                               net.minecraft.world.item.Items.COD, 
+                                                               net.minecraft.world.item.Items.TROPICAL_FISH, 
+                                                               net.minecraft.world.item.Items.PUFFERFISH), false));
+        
         this.goalSelector.addGoal(9, new LightningDragonFlightGoal(this));
         this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F));

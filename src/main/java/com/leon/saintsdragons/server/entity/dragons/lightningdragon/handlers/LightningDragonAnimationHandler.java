@@ -68,6 +68,8 @@ public record LightningDragonAnimationHandler(LightningDragonEntity dragon) {
                 RawAnimation.begin().thenPlay("animation.lightning_dragon.dodge"));
         actionController.triggerableAnim("lightning_beam",
                 RawAnimation.begin().thenPlay("animation.lightning_dragon.lightning_beam"));
+        actionController.triggerableAnim("eat",
+                RawAnimation.begin().thenPlay("animation.lightning_dragon.eat"));
         
         // Summon Storm variants
         actionController.triggerableAnim("summon_storm_ground",
