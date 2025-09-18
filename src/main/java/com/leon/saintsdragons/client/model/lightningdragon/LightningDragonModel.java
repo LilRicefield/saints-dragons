@@ -141,8 +141,8 @@ public class LightningDragonModel extends DefaultedEntityGeoModel<LightningDrago
         float yawErr = yawErrDeg * Mth.DEG_TO_RAD;
         float pitchErr = desiredPitchDeg * Mth.DEG_TO_RAD;
 
-        // Distribute along neck1..neck4 with increasing weight toward the head
-        String[] bones = {"neck1", "neck2", "neck3", "neck4"};
+        // Distribute along neck segments with increasing weight toward the head
+        String[] bones = {"neck1Controller", "neck2Controller", "neck3Controller", "neck4Controller"};
         float[] weights = {0.18f, 0.22f, 0.26f, 0.30f};
         float maxYaw = 0.70f;   // ~40° per bone
         float maxPitch = 0.90f; // ~52° per bone (allows near-90° combined)
