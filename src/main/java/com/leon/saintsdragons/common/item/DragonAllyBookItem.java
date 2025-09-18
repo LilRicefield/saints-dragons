@@ -49,7 +49,7 @@ public class DragonAllyBookItem extends Item {
     
     @OnlyIn(Dist.CLIENT)
     private void openAllyScreen(DragonEntity dragon, Player player) {
-        net.minecraft.client.Minecraft.getInstance().setScreen(new DragonAllyScreen(dragon, player));
+        net.minecraft.client.Minecraft.getInstance().setScreen(new DragonAllyScreen(dragon));
     }
     
     @Override
