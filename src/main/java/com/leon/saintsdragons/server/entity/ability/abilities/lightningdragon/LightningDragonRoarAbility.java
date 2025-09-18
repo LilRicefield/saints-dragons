@@ -181,12 +181,15 @@ public class LightningDragonRoarAbility extends DragonAbility<LightningDragonEnt
     }
 
     private void spawnRoarArc(ServerLevel server, Vec3 from, Vec3 to) {
+        // Spawn simpler lightning arc impact effects (less layered)
         Vec3 delta = to.subtract(from);
-        int steps = Math.max(3, (int) (delta.length() * 6));
+        int steps = Math.max(2, (int) (delta.length() * 4)); // Fewer steps
         Vec3 step = delta.scale(1.0 / steps);
         Vec3 pos = from;
         Vec3 dir = step.normalize();
-        float size = 1.1f;
+        float size = 0.8f; // Smaller base size
+        
+        // Spawn single particle at each position (no layering)
         for (int i = 0; i <= steps; i++) {
             server.sendParticles(new LightningArcData(size),
                     pos.x, pos.y, pos.z,

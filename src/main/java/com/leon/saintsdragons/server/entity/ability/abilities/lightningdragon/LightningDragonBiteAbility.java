@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon;
 
-import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData;
+import com.leon.saintsdragons.server.entity.effect.lightningdragon.LightningChainEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -278,23 +278,17 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
 
     private void spawnArc(Vec3 from, Vec3 to) {
         if (!(getLevel() instanceof ServerLevel server)) return;
-        // Spawn connected lightning segments to form a continuous line
-        Vec3 delta = to.subtract(from);
-        double distance = delta.length();
-        int segments = Math.max(2, (int) (distance * 4)); // Fewer, larger segments for better connection
         
-        Vec3 step = delta.scale(1.0 / segments);
-        Vec3 dir = delta.normalize();
+        // Create a single lightning chain entity instead of multiple particles
+        LightningDragonEntity dragon = getUser();
+        float damage = CHAIN_DAMAGE_BASE * dragon.getDamageMultiplier() * dragon.getWaterConductivityMultiplier();
         
-        // Spawn particles at segment boundaries to create connected effect
-        for (int i = 0; i <= segments; i++) {
-            Vec3 pos = from.add(step.scale(i));
-            float size = 0.8f; // Slightly smaller for better connection
-            
-            // Use direction vector to orient particles along the lightning path
-            server.sendParticles(new LightningStormData(size),
-                    pos.x, pos.y, pos.z,
-                    1, dir.x, dir.y, dir.z, 0.0);
-        }
+        LightningChainEntity lightningEntity = new LightningChainEntity(
+            server, from, to, 
+            damage, 1.2f, 
+            dragon, false // Not a chain lightning, just a single strike
+        );
+        
+        server.addFreshEntity(lightningEntity);
     }
 }

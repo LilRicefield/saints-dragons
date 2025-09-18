@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.effect.lightningdragon.LightningChainEntity;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -24,6 +25,14 @@ public class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("lightning_dragon"));
+
+    // ===== EFFECT ENTITIES =====
+    public static final RegistryObject<EntityType<LightningChainEntity>> LIGHTNING_CHAIN =
+            REGISTER.register("lightning_chain", () -> EntityType.Builder.<LightningChainEntity>of(LightningChainEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build("lightning_chain"));
 
     // ===== FUTURE DRAGON TYPES =====
     // Add new dragon types here as they are implemented

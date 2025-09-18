@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.client.particle.lightningdragon;
 
-import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData;
-import com.leon.saintsdragons.common.particle.lightningdragon.LightningArcData;
+import com.leon.saintsdragons.common.particle.lightningdragon.LightningChainData;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -11,26 +10,38 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nonnull;
-
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-public class LightningParticle extends TextureSheetParticle {
+/**
+ * Animated lightning chain particle that traces a path between two points.
+ * Creates the visual effect of lightning jumping from target to target.
+ */
+public class LightningChainParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
+    private final Vec3 startPos;
+    private final Vec3 endPos;
+    private final float totalDistance;
+    private final float speed;
+    private float progress = 0.0f;
 
-    protected LightningParticle(ClientLevel level, double x, double y, double z,
-                                double xSpeed, double ySpeed, double zSpeed,
-                                float size, SpriteSet spriteSet) {
+    protected LightningChainParticle(ClientLevel level, double x, double y, double z,
+                                    double xSpeed, double ySpeed, double zSpeed,
+                                    float size, SpriteSet spriteSet, Vec3 startPos, Vec3 endPos) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.sprites = spriteSet;
-        this.setSpriteFromAge(this.sprites);
-        this.xd = xSpeed;
-        this.yd = ySpeed;
-        this.zd = zSpeed;
+        this.startPos = startPos;
+        this.endPos = endPos;
+        this.totalDistance = (float) startPos.distanceTo(endPos);
+        this.speed = 0.15f; // How fast the lightning travels along the path
         this.quadSize = size;
-        this.lifetime = 8; // Match 8-frame texture list
-        this.setSize(size * 1.5F, size * 1.5F);
+        this.lifetime = (int) (totalDistance / speed) + 10; // Extra frames for cleanup
+        this.setSize(size * 2.0F, size * 2.0F);
+        this.setSpriteFromAge(this.sprites);
+        
+        // Set initial position to start
+        this.setPos(startPos.x, startPos.y, startPos.z);
     }
 
     @Override
@@ -42,7 +53,20 @@ public class LightningParticle extends TextureSheetParticle {
         if (this.age++ >= this.lifetime) {
             this.remove();
         } else {
+            // Animate along the path
+            progress = Math.min(1.0f, (float) this.age / (this.lifetime - 10));
+            
+            // Interpolate position along the path
+            Vec3 currentPos = startPos.lerp(endPos, progress);
+            this.setPos(currentPos.x, currentPos.y, currentPos.z);
+            
+            // Update sprite for animation
             this.setSpriteFromAge(this.sprites);
+            
+            // Fade out at the end
+            if (progress > 0.8f) {
+                this.alpha = 1.0f - ((progress - 0.8f) / 0.2f);
+            }
         }
     }
 
@@ -95,22 +119,13 @@ public class LightningParticle extends TextureSheetParticle {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static class Factory implements ParticleProvider<LightningStormData> {
+    public static class Factory implements ParticleProvider<LightningChainData> {
         private final SpriteSet spriteSet;
         public Factory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
+        
         @Override
-        public Particle createParticle(@Nonnull LightningStormData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new LightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
-        }
-    }
-
-    // Secondary factory to reuse the same renderer with a different ParticleOptions type
-    public static class FactoryArc implements ParticleProvider<LightningArcData> {
-        private final SpriteSet spriteSet;
-        public FactoryArc(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
-        @Override
-        public Particle createParticle(@Nonnull LightningArcData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new LightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
+        public Particle createParticle(@Nonnull LightningChainData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+            return new LightningChainParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.startPos(), data.endPos());
         }
     }
 }
