@@ -1941,6 +1941,8 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.usingAirNav = tag.getBoolean("UsingAirNav");
         this.sitProgress = tag.getFloat("SitProgress");
         this.prevSitProgress = this.sitProgress;
+        // Sync the sit progress with client
+        this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
         this.riderTakeoffTicks = tag.contains("RiderTakeoffTicks") ? tag.getInt("RiderTakeoffTicks") : 0;
 
         // Restore critical flight state variables that were missing
