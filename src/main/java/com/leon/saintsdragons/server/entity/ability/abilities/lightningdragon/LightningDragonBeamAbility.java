@@ -182,8 +182,12 @@ public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEnt
         if (!(dragon.level() instanceof net.minecraft.server.level.ServerLevel server)) return;
 
         final double STEP = 1.0;         // sample spacing
-        final double RADIUS = 1.2;       // affect radius around beam core
-        final float DAMAGE = 35.0f;       // Per-tick damage (35 damage per tick for 40 ticks = 1400 total damage OH MY GOODNESS)
+        final double BASE_RADIUS = 1.2;  // base affect radius around beam core
+        final float BASE_DAMAGE = 35.0f;  // base per-tick damage
+        
+        // Apply water conductivity bonuses
+        final double RADIUS = BASE_RADIUS * dragon.getWaterRangeMultiplier();
+        final float DAMAGE = BASE_DAMAGE * dragon.getWaterConductivityMultiplier() * dragon.getDamageMultiplier();
 
         var delta = end.subtract(start);
         double len = delta.length();

@@ -183,7 +183,8 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
 
             // Damage and VFX
             float mult = dragon.getDamageMultiplier();
-            next.hurt(dragon.level().damageSources().lightningBolt(), damage * mult);
+            float waterMult = dragon.getWaterConductivityMultiplier();
+            next.hurt(dragon.level().damageSources().lightningBolt(), damage * mult * waterMult);
             dragon.noteAggroFrom(next);
             spawnArc(current.position().add(0, current.getBbHeight() * 0.5, 0),
                     next.position().add(0, next.getBbHeight() * 0.5, 0));
@@ -247,7 +248,8 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
 
     private LivingEntity findNearestChainTarget(LivingEntity origin, Set<LivingEntity> exclude) {
         LightningDragonEntity dragon = getUser();
-        List<LivingEntity> nearby = DragonMathUtil.getEntitiesNearby(origin, LivingEntity.class, CHAIN_RADIUS);
+        double waterRangeMult = dragon.getWaterRangeMultiplier();
+        List<LivingEntity> nearby = DragonMathUtil.getEntitiesNearby(origin, LivingEntity.class, CHAIN_RADIUS * waterRangeMult);
         LivingEntity best = null;
         double bestDist = Double.MAX_VALUE;
         for (LivingEntity e : nearby) {
