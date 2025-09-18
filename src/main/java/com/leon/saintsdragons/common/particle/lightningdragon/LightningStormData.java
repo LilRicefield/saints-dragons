@@ -8,6 +8,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.FriendlyByteBuf;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.util.Locale;
@@ -16,43 +17,37 @@ import java.util.Locale;
  * Server-safe ParticleOptions payload for the lightning_storm particle.
  * Holds a single float parameter: size.
  */
-public class LightningStormData implements ParticleOptions {
+public record LightningStormData(float size) implements ParticleOptions {
     public static final ParticleOptions.Deserializer<LightningStormData> DESERIALIZER = new ParticleOptions.Deserializer<>() {
         @Override
-        public LightningStormData fromCommand(@Nonnull ParticleType<LightningStormData> type, @Nonnull StringReader reader) throws CommandSyntaxException {
+        public @NotNull LightningStormData fromCommand(@Nonnull ParticleType<LightningStormData> type, @Nonnull StringReader reader) throws CommandSyntaxException {
             reader.expect(' ');
             float size = reader.readFloat();
             return new LightningStormData(size);
         }
 
         @Override
-        public LightningStormData fromNetwork(@Nonnull ParticleType<LightningStormData> type, @Nonnull FriendlyByteBuf buf) {
+        public @NotNull LightningStormData fromNetwork(@Nonnull ParticleType<LightningStormData> type, @Nonnull FriendlyByteBuf buf) {
             return new LightningStormData(buf.readFloat());
         }
     };
 
-    public static Codec<LightningStormData> CODEC(ParticleType<LightningStormData> type) {
+    public static Codec<LightningStormData> CODEC(@SuppressWarnings("unused") ParticleType<LightningStormData> type) {
         return RecordCodecBuilder.create(b -> b.group(
-                Codec.FLOAT.fieldOf("size").forGetter(LightningStormData::getSize)
+                Codec.FLOAT.fieldOf("size").forGetter(LightningStormData::size)
         ).apply(b, LightningStormData::new));
     }
-
-    private final float size;
-    public LightningStormData(float size) { this.size = size; }
-
-    public float getSize() { return size; }
 
     @Override
     public void writeToNetwork(@Nonnull FriendlyByteBuf buf) { buf.writeFloat(this.size); }
 
     @Override
-    public String writeToString() {
+    public @NotNull String writeToString() {
         return String.format(Locale.ROOT, "%s %.2f", ModParticles.LIGHTNING_STORM.getId(), this.size);
     }
 
     @Override
-    public ParticleType<LightningStormData> getType() {
+    public @NotNull ParticleType<LightningStormData> getType() {
         return ModParticles.LIGHTNING_STORM.get();
     }
 }
-
