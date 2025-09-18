@@ -11,15 +11,17 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nonnull;
+
+import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-public class LightningStormParticle extends TextureSheetParticle {
+public class LightningParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
 
-    protected LightningStormParticle(ClientLevel level, double x, double y, double z,
-                                     double xSpeed, double ySpeed, double zSpeed,
-                                     float size, SpriteSet spriteSet) {
+    protected LightningParticle(ClientLevel level, double x, double y, double z,
+                                double xSpeed, double ySpeed, double zSpeed,
+                                float size, SpriteSet spriteSet) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.sprites = spriteSet;
         this.setSpriteFromAge(this.sprites);
@@ -112,7 +114,7 @@ public class LightningStormParticle extends TextureSheetParticle {
     }
 
     @Override
-    public ParticleRenderType getRenderType() {
+    public @NotNull ParticleRenderType getRenderType() {
         return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
@@ -122,7 +124,7 @@ public class LightningStormParticle extends TextureSheetParticle {
         public Factory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
         @Override
         public Particle createParticle(@Nonnull LightningStormData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new LightningStormParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.getSize(), spriteSet);
+            return new LightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
         }
     }
 
@@ -132,7 +134,7 @@ public class LightningStormParticle extends TextureSheetParticle {
         public FactoryArc(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
         @Override
         public Particle createParticle(@Nonnull LightningArcData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new LightningStormParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.getSize(), spriteSet);
+            return new LightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
         }
     }
 }
