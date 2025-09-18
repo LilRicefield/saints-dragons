@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.client.particle.lightningdragon;
 
-import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData;
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningArcData;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
@@ -11,17 +10,20 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nonnull;
-
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-public class LightningParticle extends TextureSheetParticle {
+/**
+ * Lightning arc particle for impact/explosion visuals.
+ * Creates layered, duplicated effects for dramatic impact.
+ */
+public class LightningArcParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
 
-    protected LightningParticle(ClientLevel level, double x, double y, double z,
-                                double xSpeed, double ySpeed, double zSpeed,
-                                float size, SpriteSet spriteSet) {
+    protected LightningArcParticle(ClientLevel level, double x, double y, double z,
+                                  double xSpeed, double ySpeed, double zSpeed,
+                                  float size, SpriteSet spriteSet) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.sprites = spriteSet;
         this.setSpriteFromAge(this.sprites);
@@ -29,8 +31,8 @@ public class LightningParticle extends TextureSheetParticle {
         this.yd = ySpeed;
         this.zd = zSpeed;
         this.quadSize = size;
-        this.lifetime = 8; // Match 8-frame texture list
-        this.setSize(size * 1.5F, size * 1.5F);
+        this.lifetime = 12; // Shorter lifetime for impact effect
+        this.setSize(size * 2.0F, size * 2.0F);
     }
 
     @Override
@@ -95,22 +97,24 @@ public class LightningParticle extends TextureSheetParticle {
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static class Factory implements ParticleProvider<LightningStormData> {
+    public static class Factory implements ParticleProvider<LightningArcData> {
         private final SpriteSet spriteSet;
         public Factory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
+        
         @Override
-        public Particle createParticle(@Nonnull LightningStormData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new LightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
+        public Particle createParticle(@Nonnull LightningArcData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+            return new LightningArcParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
         }
     }
 
-    // Secondary factory to reuse the same renderer with a different ParticleOptions type
-    public static class FactoryArc implements ParticleProvider<LightningArcData> {
+    @OnlyIn(Dist.CLIENT)
+    public static class ChainFactory implements ParticleProvider<com.leon.saintsdragons.common.particle.lightningdragon.LightningChainData> {
         private final SpriteSet spriteSet;
-        public FactoryArc(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
+        public ChainFactory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
+        
         @Override
-        public Particle createParticle(@Nonnull LightningArcData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new LightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
+        public Particle createParticle(@Nonnull com.leon.saintsdragons.common.particle.lightningdragon.LightningChainData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+            return new LightningArcParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
         }
     }
 }

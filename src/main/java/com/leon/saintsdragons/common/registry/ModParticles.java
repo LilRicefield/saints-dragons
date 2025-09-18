@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData;
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningArcData;
+import com.leon.saintsdragons.common.particle.lightningdragon.LightningChainData;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -27,6 +28,15 @@ public class ModParticles {
                         @Override
                         public com.mojang.serialization.Codec<LightningArcData> codec() {
                             return LightningArcData.CODEC(this);
+                        }
+                    });
+
+    public static final RegistryObject<ParticleType<LightningChainData>> LIGHTNING_CHAIN =
+            REGISTER.register("lightning_chain",
+                    () -> new ParticleType<LightningChainData>(false, LightningChainData.DESERIALIZER) {
+                        @Override
+                        public com.mojang.serialization.Codec<LightningChainData> codec() {
+                            return LightningChainData.CODEC(this);
                         }
                     });
 }

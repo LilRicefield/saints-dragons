@@ -1,6 +1,7 @@
 package com.leon.saintsdragons;
 
 import com.leon.saintsdragons.client.renderer.lightningdragon.LightningDragonRenderer;
+import com.leon.saintsdragons.client.renderer.lightningdragon.LightningChainRenderer;
 import com.leon.saintsdragons.client.ClientProxy;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -77,6 +78,7 @@ public class SaintsDragons {
     private void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         // Register entity renderers
         event.registerEntityRenderer(ModEntities.LIGHTNING_DRAGON.get(), LightningDragonRenderer::new);
+        event.registerEntityRenderer(ModEntities.LIGHTNING_CHAIN.get(), LightningChainRenderer::new);
     }
 
     private void onBuildCreativeTabContents(BuildCreativeModeTabContentsEvent event) {
