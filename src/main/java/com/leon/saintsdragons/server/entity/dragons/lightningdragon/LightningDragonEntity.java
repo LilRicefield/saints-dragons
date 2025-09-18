@@ -1172,7 +1172,17 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     
     private void tickSuperchargeTimer() {
         // Supercharge timer (summon storm)
-        if (superchargeTicks > 0) superchargeTicks--;
+        if (superchargeTicks > 0) {
+            superchargeTicks--;
+            // When supercharge ends, restore normal max health
+            if (superchargeTicks == 0) {
+                Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(180.0D);
+                // Don't let health go above the new max
+                if (this.getHealth() > this.getMaxHealth()) {
+                    this.setHealth(this.getMaxHealth());
+                }
+            }
+        }
     }
     
     private void tickTempInvulnTimer() {
@@ -1684,8 +1694,19 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     // ===== SUPERCHARGE (Summon Storm) =====
     private int superchargeTicks = 0;
     public void startSupercharge(int ticks) {
+        boolean wasNotSupercharged = !isSupercharged();
         this.superchargeTicks = Math.max(this.superchargeTicks, Math.max(0, ticks));
+        
+        // When becoming supercharged, double the max health attribute and heal to full
+        if (wasNotSupercharged && isSupercharged()) {
+            // Double the max health attribute
+            Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(360.0D);
+            // Heal to full health
+            this.setHealth(this.getMaxHealth());
+        }
     }
+    
+    
     public boolean isSupercharged() { return superchargeTicks > 0; }
     public float getDamageMultiplier() { return isSupercharged() ? 2.0f : 1.0f; }
     // Temporary invulnerability timer (e.g., during Summon Storm windup)

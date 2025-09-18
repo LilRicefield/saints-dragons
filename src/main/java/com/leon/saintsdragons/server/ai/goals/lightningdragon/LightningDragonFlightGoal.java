@@ -66,11 +66,14 @@ public class LightningDragonFlightGoal extends Goal {
         wasThundering = thundering;
         wasRaining = raining;
 
-        // If tamed and close to owner, chill — except during storms
+        // If tamed, don't take off due to weather - only take off if in danger
         if (dragon.isTame()) {
             var owner = dragon.getOwner();
-            if (!stormy && owner != null && dragon.distanceToSqr(owner) < 15.0 * 15.0) {
-                return false;
+            if (owner != null && dragon.distanceToSqr(owner) < 15.0 * 15.0) {
+                // Only take off if over danger, not due to weather
+                if (!isOverDanger()) {
+                    return false;
+                }
             }
         }
 
