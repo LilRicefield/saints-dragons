@@ -278,19 +278,23 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
 
     private void spawnArc(Vec3 from, Vec3 to) {
         if (!(getLevel() instanceof ServerLevel server)) return;
-        // Spawn a simple electric spark trail along the segment
+        // Spawn connected lightning segments to form a continuous line
         Vec3 delta = to.subtract(from);
-        int steps = Math.max(3, (int) (delta.length() * 6));
-        Vec3 step = delta.scale(1.0 / steps);
-        Vec3 pos = from;
-        Vec3 dir = step.normalize();
-        float size = 1.0f;
-        for (int i = 0; i <= steps; i++) {
-            // Use custom animated lightning sprite for richer arc visuals
+        double distance = delta.length();
+        int segments = Math.max(2, (int) (distance * 4)); // Fewer, larger segments for better connection
+        
+        Vec3 step = delta.scale(1.0 / segments);
+        Vec3 dir = delta.normalize();
+        
+        // Spawn particles at segment boundaries to create connected effect
+        for (int i = 0; i <= segments; i++) {
+            Vec3 pos = from.add(step.scale(i));
+            float size = 0.8f; // Slightly smaller for better connection
+            
+            // Use direction vector to orient particles along the lightning path
             server.sendParticles(new LightningStormData(size),
                     pos.x, pos.y, pos.z,
                     1, dir.x, dir.y, dir.z, 0.0);
-            pos = pos.add(step);
         }
     }
 }

@@ -53,41 +53,54 @@ public class LightningParticle extends TextureSheetParticle {
         float cy = (float)(Mth.lerp(partialTicks, this.yo, this.y) - cam.y());
         float cz = (float)(Mth.lerp(partialTicks, this.zo, this.z) - cam.z());
 
-        // Build a camera-facing billboard, then roll it in-plane to align with direction (xd,yd,zd)
+        // Create a billboard that's oriented along the lightning direction for better connection
         Quaternionf camQ = new Quaternionf(camera.rotation());
-
+        float size = this.getQuadSize(partialTicks);
+        
         Vector3f[] corners = new Vector3f[] {
             new Vector3f(-1.0F, -1.0F, 0.0F),
             new Vector3f(-1.0F,  1.0F, 0.0F),
             new Vector3f( 1.0F,  1.0F, 0.0F),
             new Vector3f( 1.0F, -1.0F, 0.0F)
         };
-        float size = this.getQuadSize(partialTicks);
-        // Compute roll to align with projected direction
+
+        // For lightning particles, orient them along the direction vector for better connection
         Vector3f dir = new Vector3f((float)this.xd, (float)this.yd, (float)this.zd);
         if (dir.lengthSquared() > 1.0e-6f) {
             dir.normalize();
-            // Derive camera right/up basis by rotating unit axes by camQ
-            Vector3f camRight = new Vector3f(1,0,0).rotate(camQ);
-            Vector3f camUp = new Vector3f(0,1,0).rotate(camQ);
-            float rx = dir.dot(camRight);
-            float uy = dir.dot(camUp);
-            float roll = (float)Math.atan2(uy, rx);
-            float cs = (float)Math.cos(roll);
-            float sn = (float)Math.sin(roll);
+            
+            // Create a rotation that aligns the particle with the lightning direction
+            // This helps create a more connected appearance
+            Vector3f up = new Vector3f(0, 1, 0);
+            Vector3f right = new Vector3f();
+            dir.cross(up, right);
+            if (right.lengthSquared() < 0.1f) {
+                // If direction is nearly vertical, use a different up vector
+                up.set(1, 0, 0);
+                dir.cross(up, right);
+            }
+            right.normalize();
+            up.cross(right, up);
+            up.normalize();
+            
+            // Apply the orientation to each corner
             for (int i = 0; i < 4; ++i) {
                 Vector3f v = corners[i];
-                float x0 = v.x();
-                float y0 = v.y();
-                // In-plane rotation (about Z in quad-local space)
-                float xr = x0 * cs - y0 * sn;
-                float yr = x0 * sn + y0 * cs;
-                v.set(xr, yr, 0);
-                v.rotate(camQ);
-                v.mul(size);
-                v.add(cx, cy, cz);
+                // Transform the corner to align with the lightning direction
+                Vector3f transformed = new Vector3f();
+                transformed.add(right.mul(v.x()));
+                transformed.add(up.mul(v.y()));
+                transformed.add(dir.mul(v.z()));
+                
+                // Apply camera rotation and position
+                transformed.rotate(camQ);
+                transformed.mul(size);
+                transformed.add(cx, cy, cz);
+                
+                corners[i] = transformed;
             }
         } else {
+            // Fallback to camera-facing billboard
             for (int i = 0; i < 4; ++i) {
                 Vector3f v = corners[i];
                 v.rotate(camQ);
