@@ -266,14 +266,8 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
     }
 
     private boolean isAllied(LightningDragonEntity dragon, Entity other) {
-        if (other instanceof LightningDragonEntity od) {
-            return dragon.isTame() && od.isTame() && dragon.getOwner() != null && dragon.getOwner().equals(od.getOwner());
-        }
-        if (other instanceof LivingEntity le) {
-            if (dragon.isTame() && le.equals(dragon.getOwner())) return true;
-            return dragon.isAlliedTo(le);
-        }
-        return false;
+        // Use the comprehensive ally system from DragonEntity
+        return dragon.isAlly(other);
     }
 
     private void spawnArc(Vec3 from, Vec3 to) {

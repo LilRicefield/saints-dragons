@@ -2,9 +2,11 @@
 
 package com.leon.saintsdragons.server.entity.base;
 
+import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
+import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -44,6 +46,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Combat manager for handling abilities and cooldowns
     public final DragonCombatHandler combatManager;
     
+    // Ally manager for handling dragon allies
+    public final DragonAllyManager allyManager;
+    
     // Sit progress fields
     public float sitProgress = 0f;
     public float prevSitProgress = 0f;
@@ -51,6 +56,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
+        this.allyManager = new DragonAllyManager(this);
     }
 
     @Override
@@ -317,6 +323,41 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public boolean canOwnerMount(Player player) {
         return !this.isBaby();
     }
+    
+    /**
+     * Check if an entity is an ally of this dragon.
+     * Includes owner, other dragons owned by the same player, and manually set allies.
+     */
+    public boolean isAlly(net.minecraft.world.entity.Entity entity) {
+        if (entity == null) return false;
+        
+        // Owner is always an ally
+        if (entity instanceof Player player && this.isTame() && this.isOwnedBy(player)) {
+            return true;
+        }
+        
+        // Other dragons owned by the same player are allies
+        if (entity instanceof DragonEntity otherDragon && this.isTame() && otherDragon.isTame()) {
+            net.minecraft.world.entity.LivingEntity owner = this.getOwner();
+            return owner != null && otherDragon.isOwnedBy(owner);
+        }
+        
+        // Check manually set allies
+        if (entity instanceof Player player) {
+            return allyManager.isAlly(player);
+        }
+        
+        // Check if entity is owned by an ally (including the dragon's owner)
+        if (entity instanceof net.minecraft.world.entity.TamableAnimal tamable && tamable.isTame()) {
+            net.minecraft.world.entity.LivingEntity owner = tamable.getOwner();
+            if (owner instanceof Player playerOwner) {
+                // Check if the pet's owner is the dragon's owner OR a manually set ally
+                return (this.isTame() && this.isOwnedBy(playerOwner)) || allyManager.isAlly(playerOwner);
+            }
+        }
+        
+        return false;
+    }
 
     /**
      * Default interaction handling for command cycling (Shift + empty hand).
@@ -341,6 +382,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("Command", getCommand());
+        allyManager.saveToNBT(tag);
     }
 
     /**
@@ -352,6 +394,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         if (tag.contains("Command")) {
             setCommand(tag.getInt("Command"));
         }
+        allyManager.loadFromNBT(tag);
     }
 
     /**
