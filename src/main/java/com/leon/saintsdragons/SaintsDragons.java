@@ -29,6 +29,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import software.bernie.geckolib.GeckoLib;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 
 @Mod(SaintsDragons.MOD_ID)
@@ -38,12 +41,15 @@ public class SaintsDragons {
     public static ResourceLocation rl(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
+    
 
     public SaintsDragons() {
         this(FMLJavaModLoadingContext.get().getModEventBus());
     }
 
     public SaintsDragons(IEventBus modBus) {
+        // Debug logging
+        System.out.println("SaintsDragons: Mod constructor called");
 
         // Initialize GeckoLib to enable animation controllers and ticking
         GeckoLib.initialize();
@@ -53,6 +59,8 @@ public class SaintsDragons {
         ModItems.REGISTER.register(modBus);
         ModSounds.REGISTER.register(modBus);
         ModParticles.REGISTER.register(modBus);
+        
+        // Biome modifiers are handled via data generation in worldgen/biome_modifier/
 
         // Force-load ability registry so static registrations (BITE, HORN_GORE, LIGHTNING_BEAM) occur
         // This ensures AbilityRegistry knows about our abilities before any network-triggered use

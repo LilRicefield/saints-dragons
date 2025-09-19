@@ -39,6 +39,6 @@ public class PrimitiveDrakeRenderer extends GeoEntityRenderer<PrimitiveDrakeEnti
 
     @Override
     public @NotNull ResourceLocation getTextureLocation(@NotNull PrimitiveDrakeEntity entity) {
-        return  ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/primitivedrake/primitivedrake.png");
+        return ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/primitive_drake.png");
     }
 }

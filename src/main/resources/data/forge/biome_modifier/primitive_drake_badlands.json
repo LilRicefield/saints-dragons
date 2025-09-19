@@ -1,0 +1,16 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": [
+    "minecraft:badlands",
+    "minecraft:eroded_badlands",
+    "minecraft:wooded_badlands"
+  ],
+  "spawners": [
+    {
+      "type": "saintsdragons:primitive_drake",
+      "weight": 6,
+      "minCount": 1,
+      "maxCount": 4
+    }
+  ]
+}
