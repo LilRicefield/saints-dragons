@@ -215,13 +215,13 @@ public class PrimitiveDrakeSpawner {
             return false;
         }
         
-        // Check for open space around the spawn point (reduced to 2x2x2 area for performance)
-        for (int x = -1; x <= 1; x += 2) { // Only check corners
+        // Check for open space around the spawn point (3x3x3 area to prevent spawning in blocks)
+        for (int x = -1; x <= 1; x++) {
             for (int y = 1; y <= 2; y++) {
-                for (int z = -1; z <= 1; z += 2) { // Only check corners
+                for (int z = -1; z <= 1; z++) {
                     BlockPos checkPos = pos.offset(x, y, z);
                     
-                    // Check if any corner position is blocked
+                    // Check if any position is blocked
                     if (level.getBlockState(checkPos).canOcclude()) {
                         return false; // Too cramped!
                     }
@@ -275,6 +275,9 @@ public class PrimitiveDrakeSpawner {
         for (var drake : drakes) {
             if (drake == null || drake.isRemoved()) continue;
             
+            // Skip tamed drakes - they should never despawn from distance
+            if (drake.isTame()) continue;
+            
             // Check distance to nearest player
             double distanceToPlayer = playerPos.distSqr(drake.blockPosition());
             
@@ -319,6 +322,9 @@ public class PrimitiveDrakeSpawner {
         
         for (var drake : drakes) {
             if (drake == null || drake.isRemoved()) continue;
+            
+            // Skip tamed drakes - they should never despawn from wandering
+            if (drake.isTame()) continue;
             
             int drakeId = drake.getId();
             boolean isBeingLookedAt = false;
