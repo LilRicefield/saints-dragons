@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.primitivedrake;
 
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepGoalBase;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 
 /**
  * Primitive Drake specific sleep goal.
@@ -28,6 +29,32 @@ public class PrimitiveDrakeSleepGoal extends DragonSleepGoalBase {
     public boolean canContinueToUse() {
         // Use base implementation - it handles day/night transitions properly
         return super.canContinueToUse();
+    }
+    
+    @Override
+    protected boolean canWildDragonSleep() {
+        DragonSleepCapable.SleepPreferences prefs = sleepCapable.getSleepPreferences();
+        
+        // Primitive Drake doesn't need shelter - simple sleep behavior
+        // Check day sleeping (for naps)
+        if (prefs.canSleepDuringDay() && isDay()) {
+            // Check weather conditions
+            if (prefs.avoidsThunderstorms() && dragon.level().isThundering()) {
+                return false;
+            }
+            return true;
+        }
+        
+        // Check night sleeping
+        if (prefs.canSleepAtNight() && isNight()) {
+            // Check weather conditions
+            if (prefs.avoidsThunderstorms() && dragon.level().isThundering()) {
+                return false;
+            }
+            return true;
+        }
+        
+        return false;
     }
     
     @Override

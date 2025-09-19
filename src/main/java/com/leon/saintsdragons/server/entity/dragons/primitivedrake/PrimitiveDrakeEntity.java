@@ -50,10 +50,20 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     private int napTicks = 0; // For short naps
     private int napCooldown = 0; // Cooldown between naps
     
+    // Synced sleep state for client-side animation
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING = 
+            net.minecraft.network.syncher.SynchedEntityData.defineId(PrimitiveDrakeEntity.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    
     public PrimitiveDrakeEntity(EntityType<? extends PrimitiveDrakeEntity> entityType, Level level) {
         super(entityType, level);
         // Initialize animation state
         animationController.initializeAnimation();
+    }
+    
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DATA_SLEEPING, false);
     }
     
     @Override
@@ -321,7 +331,8 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     
     @Override
     public boolean isSleeping() {
-        return sleeping;
+        // Use synced data for client-side animation detection
+        return level().isClientSide ? this.entityData.get(DATA_SLEEPING) : sleeping;
     }
     
     @Override
@@ -340,6 +351,8 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         if (!sleeping && !sleepTransitioning) {
             sleepTransitioning = true;
             sleeping = true;
+            // Sync sleep state to client
+            this.entityData.set(DATA_SLEEPING, true);
             // Simple sleep - just lie down, no complex transitions
             setOrderedToSit(true);
         }
@@ -350,6 +363,8 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         if (sleeping && !sleepTransitioning) {
             sleepTransitioning = true;
             sleeping = false;
+            // Sync sleep state to client
+            this.entityData.set(DATA_SLEEPING, false);
             // Wake up - stand up
             setOrderedToSit(false);
             sitProgress = 0f;
