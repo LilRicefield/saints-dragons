@@ -19,6 +19,11 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> DRAGON_GRUMBLE_1 = registerSound("lightningdragon_grumble_1");
     public static final RegistryObject<SoundEvent> DRAGON_GRUMBLE_2 = registerSound("lightningdragon_grumble_2");
     public static final RegistryObject<SoundEvent> DRAGON_GRUMBLE_3 = registerSound("lightningdragon_grumble_3");
+    
+    // ===== PRIMITIVE DRAKE SOUNDS =====
+    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_GRUMBLE_1 = registerSound("primitivedrake_grumble1");
+    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_GRUMBLE_2 = registerSound("primitivedrake_grumble2");
+    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_GRUMBLE_3 = registerSound("primitivedrake_grumble3");
 
     public static final RegistryObject<SoundEvent> DRAGON_PURR = registerSound("lightningdragon_purr");
     public static final RegistryObject<SoundEvent> DRAGON_SNORT = registerSound("lightningdragon_snort");

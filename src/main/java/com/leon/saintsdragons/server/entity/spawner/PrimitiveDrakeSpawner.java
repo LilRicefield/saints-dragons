@@ -19,6 +19,8 @@ public class PrimitiveDrakeSpawner {
     private static final int MIN_SPAWN_DISTANCE = 24; // Minimum distance from player
     private static final int MAX_SPAWN_DISTANCE = 48; // Maximum distance from player (reduced)
     private static final int MAX_DRAKES_PER_PLAYER = 5; // Max drakes per player
+    private static final int DESPAWN_DISTANCE = 128; // Despawn drakes beyond this distance
+    private static final int DESPAWN_CHECK_INTERVAL = 600; // Check despawning every 30 seconds
     
     /**
      * Attempt to spawn Primitive Drakes around the player
@@ -30,6 +32,9 @@ public class PrimitiveDrakeSpawner {
             return; // Too many drakes already
         }
         if (level.getGameTime() % 200 != 0) return; // Only check every 10 seconds
+        
+        // Handle despawning of distant drakes
+        handleDespawning(level, playerPos);
         
         RandomSource random = level.getRandom();
         
@@ -233,5 +238,47 @@ public class PrimitiveDrakeSpawner {
         }
         
         return false;
+    }
+    
+    /**
+     * Handle despawning of Primitive Drakes that are too far from players
+     */
+    private static void handleDespawning(ServerLevel level, BlockPos playerPos) {
+        // Only check despawning every 30 seconds to avoid performance issues
+        if (level.getGameTime() % DESPAWN_CHECK_INTERVAL != 0) return;
+        
+        // Find all Primitive Drakes in a large area around the player
+        var drakes = level.getEntitiesOfClass(PrimitiveDrakeEntity.class, 
+            new net.minecraft.world.phys.AABB(
+                playerPos.getX() - DESPAWN_DISTANCE, playerPos.getY() - 20, playerPos.getZ() - DESPAWN_DISTANCE,
+                playerPos.getX() + DESPAWN_DISTANCE, playerPos.getY() + 20, playerPos.getZ() + DESPAWN_DISTANCE));
+        
+        for (var drake : drakes) {
+            if (drake == null || drake.isRemoved()) continue;
+            
+            // Check distance to nearest player
+            double distanceToPlayer = playerPos.distSqr(drake.blockPosition());
+            
+            // Despawn if too far from any player
+            if (distanceToPlayer > DESPAWN_DISTANCE * DESPAWN_DISTANCE) {
+                // Check if there are any other players nearby
+                boolean hasNearbyPlayer = false;
+                for (var player : level.players()) {
+                    if (player.isAlive() && !player.isSpectator()) {
+                        double distanceToOtherPlayer = player.blockPosition().distSqr(drake.blockPosition());
+                        if (distanceToOtherPlayer <= DESPAWN_DISTANCE * DESPAWN_DISTANCE) {
+                            hasNearbyPlayer = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Only despawn if no players are nearby
+                if (!hasNearbyPlayer) {
+                    System.out.println("Despawning Primitive Drake at " + drake.blockPosition() + " - too far from players");
+                    drake.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+                }
+            }
+        }
     }
 }

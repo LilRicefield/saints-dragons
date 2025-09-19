@@ -215,5 +215,35 @@
         "pitch": 1.0
       }
     ]
+  },
+  "primitivedrake_grumble1": {
+    "subtitle": "Primitive Drake grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/primitivedrake/primitivedrake_grumble1",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "primitivedrake_grumble2": {
+    "subtitle": "Primitive Drake grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/primitivedrake/primitivedrake_grumble2",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "primitivedrake_grumble3": {
+    "subtitle": "Primitive Drake grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/primitivedrake/primitivedrake_grumble3",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
   }
 }
