@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Renderer for LightningChainEntity.
@@ -20,8 +21,8 @@ public class LightningChainRenderer extends EntityRenderer<LightningChainEntity>
     }
 
     @Override
-    public ResourceLocation getTextureLocation(LightningChainEntity entity) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull LightningChainEntity entity) {
         // Return a dummy texture since we don't actually render the entity
-        return new ResourceLocation("minecraft", "textures/entity/lightning_bolt.png");
+        return ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/lightning_bolt.png");
     }
 }
