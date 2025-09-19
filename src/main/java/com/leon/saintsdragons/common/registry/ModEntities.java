@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.server.entity.effect.lightningdragon.LightningChainEntity;
 
 import net.minecraft.world.entity.EntityType;
@@ -25,6 +26,14 @@ public class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("lightning_dragon"));
+
+    // ===== PRIMITIVE DRAKE =====
+    public static final RegistryObject<EntityType<PrimitiveDrakeEntity>> PRIMITIVE_DRAKE =
+            REGISTER.register("primitive_drake", () -> EntityType.Builder.of(PrimitiveDrakeEntity::new, MobCategory.CREATURE)
+                    .sized(1.5F, 1.0F)  // Smaller than lightning dragon - cute little drake!
+                    .clientTrackingRange(32)
+                    .updateInterval(1)
+                    .build("primitive_drake"));
 
     // ===== EFFECT ENTITIES =====
     public static final RegistryObject<EntityType<LightningChainEntity>> LIGHTNING_CHAIN =
