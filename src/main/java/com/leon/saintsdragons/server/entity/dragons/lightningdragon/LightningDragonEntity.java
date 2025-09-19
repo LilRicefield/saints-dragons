@@ -1841,7 +1841,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     @Override
     public boolean isFood(@Nonnull ItemStack stack) {
-        return stack.is(Items.SALMON);
+        return stack.is(Items.SALMON) || stack.is(Items.COD);
     }
 
 
