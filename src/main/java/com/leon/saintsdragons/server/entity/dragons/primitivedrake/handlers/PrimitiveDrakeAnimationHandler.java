@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.dragons.primitivedrake.handler;
+package com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import software.bernie.geckolib.core.animation.AnimationState;
