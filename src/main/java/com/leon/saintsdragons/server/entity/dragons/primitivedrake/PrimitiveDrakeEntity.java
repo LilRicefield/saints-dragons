@@ -20,6 +20,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.AgeableMob;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import net.minecraft.world.InteractionHand;
@@ -27,9 +29,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
@@ -43,6 +47,9 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final PrimitiveDrakeAnimationHandler animationController = new PrimitiveDrakeAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
+    
+    // ===== CLIENT LOCATOR CACHE (client-side only) =====
+    private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
     
     // Sleep system fields
     private boolean sleeping = false;
@@ -96,7 +103,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     }
     
     @Override
-    public boolean isFood(@NotNull net.minecraft.world.item.ItemStack stack) {
+    public boolean isFood(@Nonnull net.minecraft.world.item.ItemStack stack) {
         // Simple food - maybe raw meat or fish?
         return stack.is(net.minecraft.world.item.Items.BEEF) || 
                stack.is(net.minecraft.world.item.Items.PORKCHOP) ||
@@ -127,7 +134,15 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         // Use the new smooth animation controller
-        controllers.add(new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation));
+        AnimationController<PrimitiveDrakeEntity> movementController = new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
+        movementController.setSoundKeyframeHandler(this::onAnimationSound);
+        controllers.add(movementController);
+        
+        // Add action controller for grumble animations
+        AnimationController<PrimitiveDrakeEntity> actionController = new AnimationController<>(this, "action", 1, animationController::actionPredicate);
+        animationController.setupActionController(actionController);
+        actionController.setSoundKeyframeHandler(this::onAnimationSound);
+        controllers.add(actionController);
     }
     
     @Override
@@ -136,7 +151,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     }
     
     @Override
-    public AgeableMob getBreedOffspring(@NotNull ServerLevel level, @NotNull AgeableMob other) {
+    public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob other) {
         // Simple breeding - just spawn a new Primitive Drake
         return ModEntities.PRIMITIVE_DRAKE.get().create(level);
     }
@@ -314,17 +329,24 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         
         float grumbleChance = getRandom().nextFloat();
         String vocalKey;
+        String animationTrigger;
         
         if (grumbleChance < 0.4f) {
             vocalKey = "primitivedrake_grumble1";
+            animationTrigger = "grumble1";
         } else if (grumbleChance < 0.7f) {
             vocalKey = "primitivedrake_grumble2";
+            animationTrigger = "grumble2";
         } else {
             vocalKey = "primitivedrake_grumble3";
+            animationTrigger = "grumble3";
         }
         
         // Play the grumble sound
         getSoundHandler().playVocal(vocalKey);
+        
+        // Trigger the corresponding animation
+        triggerAnim("action", animationTrigger);
     }
     
     // ===== SLEEP SYSTEM IMPLEMENTATION =====
@@ -445,5 +467,33 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             napTicks = 1200 + getRandom().nextInt(1200); // 1-2 minutes
             startSleepEnter();
         }
+    }
+    
+    // ===== SOUND KEYFRAME HANDLING =====
+    
+    /**
+     * Handle sound keyframes from animations (for grumble sounds)
+     */
+    public void onAnimationSound(SoundKeyframeEvent<PrimitiveDrakeEntity> event) {
+        // Delegate all keyframed sounds to the sound handler
+        this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
+    }
+    
+    // ===== CLIENT LOCATOR CACHE METHODS =====
+    
+    /**
+     * Client-only: stash per-frame sampled locator world positions
+     */
+    public void setClientLocatorPosition(String name, Vec3 pos) {
+        if (level().isClientSide) {
+            this.clientLocatorCache.put(name, pos);
+        }
+    }
+    
+    /**
+     * Client-only: retrieve cached locator world position
+     */
+    public Vec3 getClientLocatorPosition(String name) {
+        return this.clientLocatorCache.get(name);
     }
 }

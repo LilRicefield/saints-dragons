@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
+import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
@@ -134,5 +135,31 @@ public class PrimitiveDrakeAnimationHandler {
     public void resetAnimationState() {
         currentAnimation = null;
         animationTransitionTicks = 0;
+    }
+    
+    // ===== ACTION CONTROLLER SETUP =====
+    
+    /**
+     * Sets up all GeckoLib animation triggers for the action controller
+     */
+    public void setupActionController(AnimationController<PrimitiveDrakeEntity> actionController) {
+        // Register grumble animations
+        actionController.triggerableAnim("grumble1",
+                RawAnimation.begin().thenPlay("animation.primitive_drake.grumble1"));
+        actionController.triggerableAnim("grumble2",
+                RawAnimation.begin().thenPlay("animation.primitive_drake.grumble2"));
+        actionController.triggerableAnim("grumble3",
+                RawAnimation.begin().thenPlay("animation.primitive_drake.grumble3"));
+    }
+    
+    /**
+     * Handles action animations (grumbles, etc.)
+     */
+    public PlayState actionPredicate(AnimationState<PrimitiveDrakeEntity> state) {
+        // Native GeckoLib: controller idles until triggerAnim is fired
+        state.getController().transitionLength(5);
+        
+        // For now, just return STOP - the action animations will be triggered via triggerAnim()
+        return PlayState.STOP;
     }
 }
