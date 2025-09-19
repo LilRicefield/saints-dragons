@@ -396,55 +396,15 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     @Override
     public Vec3 getHeadPosition() {
-        // Use GeckoLib bone position if available
-        Vec3 bonePos = getBonePosition("head");
-        if (bonePos != null) {
-            return bonePos;
-        }
-        // Fallback to eye position
         return getEyePosition();
     }
-
-    // Get mouth position using beam_origin bone from GeckoLib model
     @Override
     public Vec3 getMouthPosition() {
-        // Try to get the beam_origin bone position (works on both client and server)
-        Vec3 bonePos = getBonePosition("beam_origin");
-        if (bonePos != null) {
-            return bonePos;
-        }
-        Vec3 basePos = getHeadPosition();
-        double localX = 15.0 / 16.0 * MODEL_SCALE;    // Forward from head
-        double localY = 6.6 / 16.0 * MODEL_SCALE;     // Up from head base (matches geo ~6.6)
-        double localZ = 0.0;                          // No lateral offset; beam_origin pivot x=0 in geo
-
-        // Apply rotation based on entity's body rotation
-        double radians = Math.toRadians(-yBodyRot); // Negative to rotate local X into world forward correctly
-        double rotatedX = localX * Math.cos(radians) - localZ * Math.sin(radians);
-        double rotatedZ = localX * Math.sin(radians) + localZ * Math.cos(radians);
-
-        Vec3 lookDirection = getLookAngle();
-        double pitchAdjustment = 0;
-        if (isFlying()) {
-            // When flying and looking down, adjust the beam origin to be more forward
-            float pitch = getXRot(); // Positive pitch means looking down
-            if (pitch > 0) {
-                // The more the dragon looks down, the more forward the beam origin should be
-                pitchAdjustment = (pitch / 90.0) * MODEL_SCALE * 0.5; // Scale with pitch
-            }
-        }
-
-        // Final position calculation
-        double finalX = basePos.x + rotatedX + (lookDirection.x * pitchAdjustment);
-        double finalY = basePos.y + localY - (lookDirection.y * pitchAdjustment); // Subtract to go forward when looking down
-        double finalZ = basePos.z + rotatedZ + (lookDirection.z * pitchAdjustment);
-
-        return new Vec3(finalX, finalY, finalZ);
+        // Use the proven computeHeadMouthOrigin method - it does everything correctly!
+        return computeHeadMouthOrigin(1.0f);
     }
-
     /**
      * Compute a mouth origin in world space from head yaw/pitch and a fixed local offset.
-     * This mirrors the Ice & Fire approach and is safe on server/client.
      */
     public Vec3 computeHeadMouthOrigin(float partialTicks) {
         double x = Mth.lerp(partialTicks, this.xo, this.getX());
