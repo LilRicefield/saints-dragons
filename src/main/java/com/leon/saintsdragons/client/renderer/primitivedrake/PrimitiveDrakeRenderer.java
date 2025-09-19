@@ -2,10 +2,8 @@ package com.leon.saintsdragons.client.renderer.primitivedrake;
 
 import com.leon.saintsdragons.client.model.primitivedrake.PrimitiveDrakeModel;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
-
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
