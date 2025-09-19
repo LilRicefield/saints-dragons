@@ -214,13 +214,7 @@ public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEnt
     }
 
     private boolean isAllied(LightningDragonEntity dragon, net.minecraft.world.entity.Entity other) {
-        if (other instanceof LightningDragonEntity od) {
-            return dragon.isTame() && od.isTame() && dragon.getOwner() != null && dragon.getOwner().equals(od.getOwner());
-        }
-        if (other instanceof net.minecraft.world.entity.LivingEntity le) {
-            if (dragon.isTame() && le.equals(dragon.getOwner())) return true;
-            return dragon.isAlliedTo(le);
-        }
-        return false;
+        // Use the comprehensive ally system from DragonEntity
+        return dragon.isAlly(other);
     }
 }
