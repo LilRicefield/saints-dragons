@@ -55,9 +55,6 @@ public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEn
         // Call super.preRender
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
-
-
-        // No rider_anchor sampling; seat uses math-based anchor
     }
     @Override
     public void render(@NotNull LightningDragonEntity entity, float entityYaw, float partialTick,
