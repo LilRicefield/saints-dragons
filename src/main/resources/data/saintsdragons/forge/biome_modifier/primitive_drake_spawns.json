@@ -1,0 +1,12 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "#saintsdragons:has_primitive_drake",
+  "spawners": [
+    {
+      "type": "saintsdragons:primitive_drake",
+      "weight": 6,
+      "minCount": 1,
+      "maxCount": 2
+    }
+  ]
+}
