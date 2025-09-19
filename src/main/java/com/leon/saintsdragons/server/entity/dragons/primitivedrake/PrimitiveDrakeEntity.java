@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.primitivedrake;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -34,12 +35,20 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 /**
  * Primitive Drake - A simple ground drake that wanders around and runs away from players.
  * No complex abilities, just basic AI and cute behavior.
+ * 
+ * Sleep behavior: Sleeps at night, awake during day. Simple nap system for short rests.
  */
-public class PrimitiveDrakeEntity extends DragonEntity {
+public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCapable {
     
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final PrimitiveDrakeAnimationHandler animationController = new PrimitiveDrakeAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
+    
+    // Sleep system fields
+    private boolean sleeping = false;
+    private boolean sleepTransitioning = false;
+    private int napTicks = 0; // For short naps
+    private int napCooldown = 0; // Cooldown between naps
     
     public PrimitiveDrakeEntity(EntityType<? extends PrimitiveDrakeEntity> entityType, Level level) {
         super(entityType, level);
@@ -51,10 +60,11 @@ public class PrimitiveDrakeEntity extends DragonEntity {
     protected void registerGoals() {
         // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeFollowOwnerGoal(this));
-        this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeGroundWanderGoal(this, 0.35D, 120));
-        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeSleepGoal(this));
+        this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeFollowOwnerGoal(this));
+        this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeGroundWanderGoal(this, 0.35D, 120));
+        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
     }
     
     public static AttributeSupplier.Builder createAttributes() {
@@ -285,24 +295,6 @@ public class PrimitiveDrakeEntity extends DragonEntity {
         return soundHandler;
     }
     
-    @Override
-    public void tick() {
-        super.tick();
-        
-        // Tick sound handler
-        soundHandler.tick();
-        
-        // Handle grumble cooldown
-        if (grumbleCooldown > 0) {
-            grumbleCooldown--;
-        } else if (!level().isClientSide && !isDying() && !isSleeping()) {
-            // Random chance to grumble every tick (very low chance)
-            if (getRandom().nextFloat() < 0.001f) { // 0.1% chance per tick
-                playRandomGrumble();
-                grumbleCooldown = 200 + getRandom().nextInt(400); // 10-30 second cooldown
-            }
-        }
-    }
     
     /**
      * Play random grumble sounds for personality
@@ -323,5 +315,120 @@ public class PrimitiveDrakeEntity extends DragonEntity {
         
         // Play the grumble sound
         getSoundHandler().playVocal(vocalKey);
+    }
+    
+    // ===== SLEEP SYSTEM IMPLEMENTATION =====
+    
+    @Override
+    public boolean isSleeping() {
+        return sleeping;
+    }
+    
+    @Override
+    public boolean isSleepTransitioning() {
+        return sleepTransitioning;
+    }
+    
+    @Override
+    public boolean isSleepSuppressed() {
+        // Don't sleep while in combat, in water, or while being ridden
+        return getTarget() != null || isInWaterOrBubble() || isVehicle();
+    }
+    
+    @Override
+    public void startSleepEnter() {
+        if (!sleeping && !sleepTransitioning) {
+            sleepTransitioning = true;
+            sleeping = true;
+            // Simple sleep - just lie down, no complex transitions
+            setOrderedToSit(true);
+        }
+    }
+    
+    @Override
+    public void startSleepExit() {
+        if (sleeping && !sleepTransitioning) {
+            sleepTransitioning = true;
+            sleeping = false;
+            // Wake up - stand up
+            setOrderedToSit(false);
+            sitProgress = 0f;
+            getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+        }
+    }
+    
+    @Override
+    public SleepPreferences getSleepPreferences() {
+        // Simple sleep preferences: sleep at night, awake during day
+        return new SleepPreferences(
+            true,  // canSleepAtNight
+            false, // canSleepDuringDay (only for naps)
+            false, // requiresShelter (simple drake doesn't need shelter)
+            false, // avoidsThunderstorms (not afraid of storms)
+            false  // sleepsNearOwner (independent)
+        );
+    }
+    
+    @Override
+    public boolean canSleepNow() {
+        // Can sleep at night or take a nap during day
+        if (level().isDay()) {
+            // During day, only allow short naps if not on cooldown
+            return napCooldown <= 0 && getRandom().nextFloat() < 0.01f; // 1% chance per tick for nap
+        } else {
+            // At night, always allow sleep
+            return true;
+        }
+    }
+    
+    @Override
+    public void tick() {
+        super.tick();
+        
+        // Tick sound handler
+        soundHandler.tick();
+        
+        // Handle sleep transition completion
+        if (sleepTransitioning) {
+            sleepTransitioning = false;
+        }
+        
+        // Handle nap system
+        if (napTicks > 0) {
+            napTicks--;
+            if (napTicks <= 0) {
+                // Nap finished, wake up
+                if (sleeping) {
+                    startSleepExit();
+                }
+                napCooldown = 1200 + getRandom().nextInt(1800); // 1-2.5 minute cooldown
+            }
+        }
+        
+        // Handle nap cooldown
+        if (napCooldown > 0) {
+            napCooldown--;
+        }
+        
+        // Handle grumble cooldown
+        if (grumbleCooldown > 0) {
+            grumbleCooldown--;
+        } else if (!level().isClientSide && !isDying() && !isSleeping()) {
+            // Random chance to grumble every tick (very low chance)
+            if (getRandom().nextFloat() < 0.001f) { // 0.1% chance per tick
+                playRandomGrumble();
+                grumbleCooldown = 200 + getRandom().nextInt(400); // 10-30 second cooldown
+            }
+        }
+    }
+    
+    /**
+     * Start a short nap (1-2 minutes)
+     */
+    public void startNap() {
+        if (!sleeping && napCooldown <= 0) {
+            napTicks = 1200 + getRandom().nextInt(1200); // 1-2 minutes
+            startSleepEnter();
+        }
     }
 }
