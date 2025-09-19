@@ -25,6 +25,7 @@ public class PrimitiveDrakeAnimationHandler {
     // Animation constants
     private static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("animation.primitive_drake.idle");
     private static final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("animation.primitive_drake.walk");
+    private static final RawAnimation SLEEP_ANIM = RawAnimation.begin().thenLoop("animation.primitive_drake.sleep");
     
     public PrimitiveDrakeAnimationHandler(PrimitiveDrakeEntity drake) {
         this.drake = drake;
@@ -36,6 +37,11 @@ public class PrimitiveDrakeAnimationHandler {
     public PlayState handleMovementAnimation(AnimationState<PrimitiveDrakeEntity> state) {
         // Set default transition length for smooth blending
         state.getController().transitionLength(8); // Smooth but not too slow
+        
+        // Check if sleeping first - sleep animation takes priority
+        if (drake.isSleeping()) {
+            return handleSleepAnimation(state);
+        }
         
         // Update movement detection with smoothing
         boolean isMoving = detectMovement();
@@ -65,6 +71,19 @@ public class PrimitiveDrakeAnimationHandler {
         
         // Set the animation
         state.setAndContinue(currentAnimation != null ? currentAnimation : IDLE_ANIM);
+        
+        return PlayState.CONTINUE;
+    }
+    
+    /**
+     * Handle sleep animation - simple and smooth
+     */
+    private PlayState handleSleepAnimation(AnimationState<PrimitiveDrakeEntity> state) {
+        // Set smooth transition to sleep animation
+        state.getController().transitionLength(12); // Slower transition for sleep
+        
+        // Always use sleep animation when sleeping
+        state.setAndContinue(SLEEP_ANIM);
         
         return PlayState.CONTINUE;
     }
