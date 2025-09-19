@@ -2,8 +2,10 @@ package com.leon.saintsdragons;
 
 import com.leon.saintsdragons.client.renderer.lightningdragon.LightningDragonRenderer;
 import com.leon.saintsdragons.client.renderer.lightningdragon.LightningChainRenderer;
+import com.leon.saintsdragons.client.renderer.primitivedrake.PrimitiveDrakeRenderer;
 import com.leon.saintsdragons.client.ClientProxy;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
@@ -77,18 +79,21 @@ public class SaintsDragons {
     private void onEntityAttributes(EntityAttributeCreationEvent event) {
         // Register entity attributes
         event.put(ModEntities.LIGHTNING_DRAGON.get(), LightningDragonEntity.createAttributes().build());
+        event.put(ModEntities.PRIMITIVE_DRAKE.get(), PrimitiveDrakeEntity.createAttributes().build());
     }
 
     private void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         // Register entity renderers
         event.registerEntityRenderer(ModEntities.LIGHTNING_DRAGON.get(), LightningDragonRenderer::new);
         event.registerEntityRenderer(ModEntities.LIGHTNING_CHAIN.get(), LightningChainRenderer::new);
+        event.registerEntityRenderer(ModEntities.PRIMITIVE_DRAKE.get(), PrimitiveDrakeRenderer::new);
     }
 
     private void onBuildCreativeTabContents(BuildCreativeModeTabContentsEvent event) {
         // Add to spawn eggs tab
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(ModItems.LIGHTNING_DRAGON_SPAWN_EGG);
+            event.accept(ModItems.PRIMITIVE_DRAKE_SPAWN_EGG);
         }
         // Add to tools tab
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
@@ -103,6 +108,14 @@ public class SaintsDragons {
                 SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 LightningDragonEntity::canSpawnHere,
+                SpawnPlacementRegisterEvent.Operation.AND
+        );
+        
+        event.register(
+                ModEntities.PRIMITIVE_DRAKE.get(),
+                SpawnPlacements.Type.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                PrimitiveDrakeEntity::canSpawnHere,
                 SpawnPlacementRegisterEvent.Operation.AND
         );
     }

@@ -20,6 +20,15 @@ public final class ModItems {
                             new Item.Properties()
                     )
             );
+
+    public static final RegistryObject<Item> PRIMITIVE_DRAKE_SPAWN_EGG =
+            REGISTER.register("primitive_drake_spawn_egg",
+                    () -> new ForgeSpawnEggItem(
+                            ModEntities.PRIMITIVE_DRAKE,
+                            0x8B4513, 0xCD853F, // base=brown, spots=sandy brown
+                            new Item.Properties()
+                    )
+            );
     
     public static final RegistryObject<Item> DRAGON_ALLY_BOOK =
             REGISTER.register("dragon_ally_book",
