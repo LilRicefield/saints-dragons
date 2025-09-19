@@ -100,7 +100,7 @@ public record LightningDragonInteractionHandler(LightningDragonEntity dragon) {
             }
             
             // Heal the dragon when fed
-            float healAmount = 10.0f; // Heal 5 hearts per salmon
+            float healAmount = 10.0f; // Heal 5 hearts per fish
             float oldHealth = dragon.getHealth();
             float newHealth = Math.min(oldHealth + healAmount, dragon.getMaxHealth());
             dragon.setHealth(newHealth);

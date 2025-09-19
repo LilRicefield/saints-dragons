@@ -1,0 +1,12 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "#saintsdragons:has_lightning_dragon",
+  "spawners": [
+    {
+      "type": "saintsdragons:lightning_dragon",
+      "weight": 1,
+      "minCount": 1,
+      "maxCount": 1
+    }
+  ]
+}
