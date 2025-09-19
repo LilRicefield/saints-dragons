@@ -14,13 +14,22 @@ import net.minecraft.util.RandomSource;
  */
 public class PrimitiveDrakeSpawner {
     
-    private static final int SPAWN_CHUNK_RADIUS = 4; // Check 4 chunks around player (reduced)
-    private static final int SPAWN_ATTEMPTS_PER_CHUNK = 1; // Try 1 spawn per chunk (reduced)
+    private static final int SPAWN_CHUNK_RADIUS = 2; // Check 2 chunks around player (further reduced)
+    private static final int SPAWN_ATTEMPTS_PER_CHUNK = 1; // Try 1 spawn per chunk
     private static final int MIN_SPAWN_DISTANCE = 24; // Minimum distance from player
-    private static final int MAX_SPAWN_DISTANCE = 48; // Maximum distance from player (reduced)
-    private static final int MAX_DRAKES_PER_PLAYER = 5; // Max drakes per player
-    private static final int DESPAWN_DISTANCE = 128; // Despawn drakes beyond this distance
-    private static final int DESPAWN_CHECK_INTERVAL = 600; // Check despawning every 30 seconds
+    private static final int MAX_SPAWN_DISTANCE = 32; // Maximum distance from player (further reduced)
+    private static final int MAX_DRAKES_PER_PLAYER = 3; // Max drakes per player (reduced)
+    private static final int DESPAWN_DISTANCE = 96; // Despawn drakes beyond this distance (reduced)
+    private static final int DESPAWN_CHECK_INTERVAL = 1200; // Check despawning every 60 seconds (less frequent)
+    private static final int SPAWN_CHECK_INTERVAL = 400; // Check spawning every 20 seconds (less frequent)
+    private static final int WANDER_DESPAWN_TIME = 300; // Despawn drakes after 15 seconds of no player looking at them
+    private static final int WANDER_CHECK_INTERVAL = 100; // Check wandering every 5 seconds
+    
+    // Simple biome cache to reduce expensive biome lookups
+    private static final java.util.Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome>, Boolean> BIOME_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    
+    // Track when drakes were last seen by players
+    private static final java.util.Map<Integer, Long> LAST_SEEN_TIMES = new java.util.concurrent.ConcurrentHashMap<>();
     
     /**
      * Attempt to spawn Primitive Drakes around the player
@@ -31,10 +40,13 @@ public class PrimitiveDrakeSpawner {
         if (existingDrakes >= MAX_DRAKES_PER_PLAYER) {
             return; // Too many drakes already
         }
-        if (level.getGameTime() % 200 != 0) return; // Only check every 10 seconds
+        if (level.getGameTime() % SPAWN_CHECK_INTERVAL != 0) return; // Only check every 20 seconds
         
         // Handle despawning of distant drakes
         handleDespawning(level, playerPos);
+        
+        // Handle wandering despawning (drakes that players aren't looking at)
+        handleWanderingDespawning(level, playerPos);
         
         RandomSource random = level.getRandom();
         
@@ -71,9 +83,11 @@ public class PrimitiveDrakeSpawner {
         // Get surface height and ensure proper positioning
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         
-        // Double-check the ground level - find the actual solid ground
-        while (y > 0 && !level.getBlockState(new BlockPos(x, y - 1, z)).canOcclude()) {
+        // Double-check the ground level - find the actual solid ground (limited iterations)
+        int maxGroundSearch = 5; // Limit ground search to prevent infinite loops
+        while (y > 0 && maxGroundSearch > 0 && !level.getBlockState(new BlockPos(x, y - 1, z)).canOcclude()) {
             y--;
+            maxGroundSearch--;
         }
         
         BlockPos spawnPos = new BlockPos(x, y, z);
@@ -105,28 +119,39 @@ public class PrimitiveDrakeSpawner {
             
             if (level.addFreshEntity(drake)) {
                 // Spawn successful!
-                System.out.println("Spawned Primitive Drake at " + spawnPos);
                 return; // Only spawn one drake per attempt
             }
         }
     }
     
     /**
-     * Check if the biome is suitable for Primitive Drake spawning
+     * Check if the biome is suitable for Primitive Drake spawning (with caching)
      */
     private static boolean isSuitableBiome(ServerLevel level, BlockPos pos) {
         var biomeKey = level.getBiome(pos).unwrapKey().orElse(null);
+        if (biomeKey == null) return false;
+        
+        // Check cache first
+        Boolean cached = BIOME_CACHE.get(biomeKey);
+        if (cached != null) {
+            return cached;
+        }
         
         // Check for suitable biomes - only Plains, Badlands, Deserts, and Savannas
-        return biomeKey == Biomes.PLAINS ||
-               biomeKey == Biomes.SUNFLOWER_PLAINS ||
-               biomeKey == Biomes.DESERT ||
-               biomeKey == Biomes.BADLANDS ||
-               biomeKey == Biomes.ERODED_BADLANDS ||
-               biomeKey == Biomes.WOODED_BADLANDS ||
-               biomeKey == Biomes.SAVANNA ||
-               biomeKey == Biomes.SAVANNA_PLATEAU ||
-               biomeKey == Biomes.WINDSWEPT_SAVANNA;
+        boolean suitable = biomeKey == Biomes.PLAINS ||
+                          biomeKey == Biomes.SUNFLOWER_PLAINS ||
+                          biomeKey == Biomes.DESERT ||
+                          biomeKey == Biomes.BADLANDS ||
+                          biomeKey == Biomes.ERODED_BADLANDS ||
+                          biomeKey == Biomes.WOODED_BADLANDS ||
+                          biomeKey == Biomes.SAVANNA ||
+                          biomeKey == Biomes.SAVANNA_PLATEAU ||
+                          biomeKey == Biomes.WINDSWEPT_SAVANNA;
+        
+        // Cache the result
+        BIOME_CACHE.put(biomeKey, suitable);
+        
+        return suitable;
     }
     
     /**
@@ -190,16 +215,13 @@ public class PrimitiveDrakeSpawner {
             return false;
         }
         
-        // Check for WIDE open space around the spawn point (3x3x3 area)
-        for (int x = -1; x <= 1; x++) {
-            for (int y = 0; y <= 2; y++) {
-                for (int z = -1; z <= 1; z++) {
+        // Check for open space around the spawn point (reduced to 2x2x2 area for performance)
+        for (int x = -1; x <= 1; x += 2) { // Only check corners
+            for (int y = 1; y <= 2; y++) {
+                for (int z = -1; z <= 1; z += 2) { // Only check corners
                     BlockPos checkPos = pos.offset(x, y, z);
                     
-                    // Skip the ground check for the bottom layer
-                    if (y == 0 && x == 0 && z == 0) continue;
-                    
-                    // Check if any position in the 3x3x3 area is blocked
+                    // Check if any corner position is blocked
                     if (level.getBlockState(checkPos).canOcclude()) {
                         return false; // Too cramped!
                     }
@@ -216,21 +238,18 @@ public class PrimitiveDrakeSpawner {
     }
     
     /**
-     * Check if there are walls or cliffs too close to the spawn position
+     * Check if there are walls or cliffs too close to the spawn position (optimized)
      */
     private static boolean hasNearbyWalls(ServerLevel level, BlockPos pos) {
-        // Check in a 5x5 area around the spawn point for walls
-        for (int x = -2; x <= 2; x++) {
-            for (int z = -2; z <= 2; z++) {
-                if (x == 0 && z == 0) continue; // Skip center
-                
+        // Check in a 3x3 area around the spawn point for walls (reduced from 5x5)
+        for (int x = -1; x <= 1; x += 2) { // Only check edges
+            for (int z = -1; z <= 1; z += 2) { // Only check edges
                 BlockPos checkPos = pos.offset(x, 0, z);
                 
                 // Check if there's a wall (solid block) at ground level
                 if (level.getBlockState(checkPos).canOcclude()) {
                     // Check if there's also a wall above it (indicating a cliff/mountain)
-                    if (level.getBlockState(checkPos.above()).canOcclude() && 
-                        level.getBlockState(checkPos.above(2)).canOcclude()) {
+                    if (level.getBlockState(checkPos.above()).canOcclude()) {
                         return true; // Too close to a wall/cliff!
                     }
                 }
@@ -275,10 +294,132 @@ public class PrimitiveDrakeSpawner {
                 
                 // Only despawn if no players are nearby
                 if (!hasNearbyPlayer) {
-                    System.out.println("Despawning Primitive Drake at " + drake.blockPosition() + " - too far from players");
+                    // Clean up tracking data before despawning
+                    LAST_SEEN_TIMES.remove(drake.getId());
                     drake.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
                 }
             }
+        }
+    }
+    
+    /**
+     * Handle despawning of Primitive Drakes that players aren't looking at (wandering off)
+     */
+    private static void handleWanderingDespawning(ServerLevel level, BlockPos playerPos) {
+        // Only check wandering every 5 seconds to avoid performance issues
+        if (level.getGameTime() % WANDER_CHECK_INTERVAL != 0) return;
+        
+        long currentTime = level.getGameTime();
+        
+        // Find all Primitive Drakes in a medium area around the player
+        var drakes = level.getEntitiesOfClass(PrimitiveDrakeEntity.class, 
+            new net.minecraft.world.phys.AABB(
+                playerPos.getX() - MAX_SPAWN_DISTANCE, playerPos.getY() - 10, playerPos.getZ() - MAX_SPAWN_DISTANCE,
+                playerPos.getX() + MAX_SPAWN_DISTANCE, playerPos.getY() + 10, playerPos.getZ() + MAX_SPAWN_DISTANCE));
+        
+        for (var drake : drakes) {
+            if (drake == null || drake.isRemoved()) continue;
+            
+            int drakeId = drake.getId();
+            boolean isBeingLookedAt = false;
+            
+            // Check if any player is looking at this drake
+            for (var player : level.players()) {
+                if (player.isAlive() && !player.isSpectator()) {
+                    if (isPlayerLookingAtDrake(player, drake)) {
+                        isBeingLookedAt = true;
+                        // Update last seen time
+                        LAST_SEEN_TIMES.put(drakeId, currentTime);
+                        break;
+                    }
+                }
+            }
+            
+            // If not being looked at, check if enough time has passed
+            if (!isBeingLookedAt) {
+                Long lastSeen = LAST_SEEN_TIMES.get(drakeId);
+                if (lastSeen == null) {
+                    // First time checking this drake, record current time
+                    LAST_SEEN_TIMES.put(drakeId, currentTime);
+                } else if (currentTime - lastSeen > WANDER_DESPAWN_TIME) {
+                    // Drake hasn't been seen for too long, make it wander off
+                    makeDrakeWanderOff(drake);
+                    LAST_SEEN_TIMES.remove(drakeId);
+                }
+            }
+        }
+        
+        // Clean up old entries for drakes that no longer exist
+        LAST_SEEN_TIMES.entrySet().removeIf(entry -> {
+            var drake = level.getEntity(entry.getKey());
+            return drake == null || drake.isRemoved() || !(drake instanceof PrimitiveDrakeEntity);
+        });
+        
+        // Additional safety: clean up entries older than 5 minutes to prevent memory leaks
+        long fiveMinutesAgo = currentTime - (5 * 60 * 20); // 5 minutes in ticks
+        LAST_SEEN_TIMES.entrySet().removeIf(entry -> entry.getValue() < fiveMinutesAgo);
+    }
+    
+    /**
+     * Check if a player is looking at a drake (within field of view)
+     */
+    private static boolean isPlayerLookingAtDrake(net.minecraft.world.entity.player.Player player, PrimitiveDrakeEntity drake) {
+        // Calculate distance
+        double distance = player.distanceTo(drake);
+        if (distance > 32.0) return false; // Too far to see
+        
+        // Calculate angle between player's look direction and direction to drake
+        net.minecraft.world.phys.Vec3 playerLook = player.getLookAngle();
+        net.minecraft.world.phys.Vec3 toDrake = drake.position().subtract(player.position()).normalize();
+        
+        // Calculate dot product (cosine of angle)
+        double dotProduct = playerLook.dot(toDrake);
+        
+        // Player's field of view is roughly 70 degrees (cos(35°) ≈ 0.82)
+        return dotProduct > 0.82;
+    }
+    
+    /**
+     * Make a drake wander off (play animation and despawn)
+     */
+    private static void makeDrakeWanderOff(PrimitiveDrakeEntity drake) {
+        if (drake == null || drake.isRemoved()) return;
+        
+        // Make the drake look around briefly before wandering off
+        drake.getLookControl().setLookAt(
+            drake.getX() + drake.getRandom().nextGaussian() * 2.0,
+            drake.getY() + drake.getRandom().nextGaussian() * 1.0,
+            drake.getZ() + drake.getRandom().nextGaussian() * 2.0,
+            2.0f, 1.0f
+        );
+        
+        // Remove from tracking immediately
+        LAST_SEEN_TIMES.remove(drake.getId());
+        
+        // Despawn the drake (it has "wandered off")
+        drake.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+    }
+    
+    /**
+     * Periodic cleanup method to prevent memory leaks
+     * Should be called occasionally to clean up stale tracking data
+     */
+    public static void cleanupTrackingData(ServerLevel level) {
+        long currentTime = level.getGameTime();
+        
+        // Clean up entries for entities that no longer exist
+        LAST_SEEN_TIMES.entrySet().removeIf(entry -> {
+            var entity = level.getEntity(entry.getKey());
+            return entity == null || entity.isRemoved() || !(entity instanceof PrimitiveDrakeEntity);
+        });
+        
+        // Clean up entries older than 10 minutes (extra safety)
+        long tenMinutesAgo = currentTime - (10 * 60 * 20); // 10 minutes in ticks
+        LAST_SEEN_TIMES.entrySet().removeIf(entry -> entry.getValue() < tenMinutesAgo);
+        
+        // Clean up biome cache if it gets too large (prevent unbounded growth)
+        if (BIOME_CACHE.size() > 100) {
+            BIOME_CACHE.clear(); // Reset biome cache if it gets too large
         }
     }
 }
