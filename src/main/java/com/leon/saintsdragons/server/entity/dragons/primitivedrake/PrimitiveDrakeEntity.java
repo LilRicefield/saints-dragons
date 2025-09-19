@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.primitivedrake;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
+import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -38,6 +39,7 @@ public class PrimitiveDrakeEntity extends DragonEntity {
     
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final PrimitiveDrakeAnimationHandler animationController = new PrimitiveDrakeAnimationHandler(this);
+    private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     
     public PrimitiveDrakeEntity(EntityType<? extends PrimitiveDrakeEntity> entityType, Level level) {
         super(entityType, level);
@@ -270,5 +272,56 @@ public class PrimitiveDrakeEntity extends DragonEntity {
                 this.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
                 break;
         }
+    }
+    
+    // ===== SOUND SYSTEM =====
+    
+    private int grumbleCooldown = 0;
+    
+    /**
+     * Get the sound handler for this drake
+     */
+    public DragonSoundHandler getSoundHandler() {
+        return soundHandler;
+    }
+    
+    @Override
+    public void tick() {
+        super.tick();
+        
+        // Tick sound handler
+        soundHandler.tick();
+        
+        // Handle grumble cooldown
+        if (grumbleCooldown > 0) {
+            grumbleCooldown--;
+        } else if (!level().isClientSide && !isDying() && !isSleeping()) {
+            // Random chance to grumble every tick (very low chance)
+            if (getRandom().nextFloat() < 0.001f) { // 0.1% chance per tick
+                playRandomGrumble();
+                grumbleCooldown = 200 + getRandom().nextInt(400); // 10-30 second cooldown
+            }
+        }
+    }
+    
+    /**
+     * Play random grumble sounds for personality
+     */
+    public void playRandomGrumble() {
+        if (level().isClientSide || isDying()) return;
+        
+        float grumbleChance = getRandom().nextFloat();
+        String vocalKey;
+        
+        if (grumbleChance < 0.4f) {
+            vocalKey = "primitivedrake_grumble1";
+        } else if (grumbleChance < 0.7f) {
+            vocalKey = "primitivedrake_grumble2";
+        } else {
+            vocalKey = "primitivedrake_grumble3";
+        }
+        
+        // Play the grumble sound
+        getSoundHandler().playVocal(vocalKey);
     }
 }

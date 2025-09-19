@@ -363,6 +363,12 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
+						"1.3333": {
+							"post": {
+								"vector": [7.54, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
 						"1.6667": {
 							"post": {
 								"vector": [0, 0, 0]
@@ -426,6 +432,26 @@
 						"1.6667": {
 							"post": {
 								"vector": [-15, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"1.3333": {
+							"post": {
+								"vector": [0, 1, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"1.6667": {
+							"post": {
+								"vector": [0, 0, 0]
 							},
 							"lerp_mode": "catmullrom"
 						}
@@ -657,7 +683,13 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"0.8333": {
+						"0.6667": {
+							"post": {
+								"vector": [12.54, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"1.0": {
 							"post": {
 								"vector": [0, 0, 0]
 							},
@@ -729,6 +761,26 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					},
+					"position": {
+						"0.0": {
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": {
+							"post": {
+								"vector": [0, 0.3, 1]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"1.6667": {
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
 					}
 				},
 				"rightbackankle": {
@@ -775,13 +827,7 @@
 						},
 						"0.4167": {
 							"post": {
-								"vector": [-15, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"0.625": {
-							"post": {
-								"vector": [9.7, 0, 0]
+								"vector": [-43.97, 0, 0]
 							},
 							"lerp_mode": "catmullrom"
 						},
@@ -1192,6 +1238,15 @@
 					}
 				}
 			}
+		},
+		"animation.primitive_drake.grumble1": {
+			"loop": true
+		},
+		"animation.primitive_drake.grumble2": {
+			"loop": true
+		},
+		"animation.primitive_drake.grumble3": {
+			"loop": true
 		}
 	},
 	"geckolib_format_version": 2

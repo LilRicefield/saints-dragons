@@ -135,13 +135,18 @@ public class DragonSoundHandler {
         if (key == null || key.isEmpty() || dragon.level().isClientSide) return;
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) return; // Gate vocals during sleep/transition
         
-        // Get mouth position for spatial audio
+        // Get mouth position for spatial audio - both entities use mouth_origin locator
         Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
         
         switch (key) {
             case "grumble1" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "grumble2" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "grumble3" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            
+            // Primitive Drake grumbles - smaller, cuter sounds
+            case "primitivedrake_grumble1" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_1.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "primitivedrake_grumble2" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_2.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "primitivedrake_grumble3" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_3.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             case "purr"      -> playRouted(dragon.level(), ModSounds.DRAGON_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos, true);  // Allow when sitting
             case "snort"     -> playRouted(dragon.level(), ModSounds.DRAGON_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             case "chuff"     -> playRouted(dragon.level(), ModSounds.DRAGON_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
@@ -178,6 +183,11 @@ public class DragonSoundHandler {
             case "grumble1" -> 120;  // ~5.9s
             case "grumble2" -> 180;  // ~8.7s
             case "grumble3" -> 60;   // ~2.6s
+            
+            // Primitive Drake grumbles - shorter, simpler animations
+            case "primitivedrake_grumble1" -> 40;  // ~2s - short cute grumble
+            case "primitivedrake_grumble2" -> 60;  // ~3s - medium grumble
+            case "primitivedrake_grumble3" -> 30;  // ~1.5s - quick grumble
             case "content"  -> 100;  // ~4.7s
             case "purr"     -> 110;  // ~5.2s
             case "snort"    -> 24;   // ~0.9s
@@ -372,6 +382,8 @@ public class DragonSoundHandler {
                 lx = -2.2; ly = 0.05; lz = 2.85;
             }
             case "mouth_origin" -> {
+                // Lightning Dragon mouth position - fallback for both entities
+                // Primitive Drake will use renderer-sampled position when available
                 lx = 0.1; ly = 8.7; lz = -17.4;
             }
             default -> { return null; }
