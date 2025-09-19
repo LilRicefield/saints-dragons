@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.primitivedrake;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
+import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handler.PrimitiveDrakeAnimationHandler;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -9,7 +9,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -25,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
@@ -36,16 +33,19 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class PrimitiveDrakeEntity extends DragonEntity {
     
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final PrimitiveDrakeAnimationHandler animationController = new PrimitiveDrakeAnimationHandler(this);
     
     public PrimitiveDrakeEntity(EntityType<? extends PrimitiveDrakeEntity> entityType, Level level) {
         super(entityType, level);
+        // Initialize animation state
+        animationController.initializeAnimation();
     }
     
     @Override
     protected void registerGoals() {
         // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeGroundWanderGoal(this, 0.25D, 120));
+        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeGroundWanderGoal(this, 0.35D, 120));
         this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
     }
@@ -53,7 +53,7 @@ public class PrimitiveDrakeEntity extends DragonEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.25D)
+                .add(Attributes.MOVEMENT_SPEED, 0.35D)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.FOLLOW_RANGE, 16.0D);
     }
@@ -62,10 +62,7 @@ public class PrimitiveDrakeEntity extends DragonEntity {
     public boolean isFlying() {
         return false;
     }
-    
-    public boolean canFly() {
-        return false;
-    }
+
     
     public boolean isTameable() {
         return true; // Can be tamed like other dragons
@@ -102,14 +99,8 @@ public class PrimitiveDrakeEntity extends DragonEntity {
     
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // Simple animation controller - just basic movement
-        controllers.add(new AnimationController<>(this, "movement", 0, this::movementController));
-    }
-    
-    private PlayState movementController(AnimationState<PrimitiveDrakeEntity> event) {
-        // Simple movement animation - just idle for now
-        event.getController().setAnimation(software.bernie.geckolib.core.animation.RawAnimation.begin().thenLoop("idle"));
-        return PlayState.CONTINUE;
+        // Use the new smooth animation controller
+        controllers.add(new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation));
     }
     
     @Override
@@ -124,9 +115,7 @@ public class PrimitiveDrakeEntity extends DragonEntity {
     }
     
     public static boolean canSpawnHere(EntityType<? extends PrimitiveDrakeEntity> entityType, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
-        // Simple spawn conditions - just need solid ground
-        return level.getBlockState(pos.below()).isSolidRender(level, pos.below()) && 
-               level.getBlockState(pos).isAir() &&
-               level.getBlockState(pos.above()).isAir();
+        // Use vanilla animal spawn rules for better compatibility
+        return net.minecraft.world.entity.animal.Animal.checkAnimalSpawnRules(entityType, level, spawnType, pos, random);
     }
 }
