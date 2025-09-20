@@ -236,7 +236,7 @@ public class LightningChainEntity extends Entity {
         for (LivingEntity entity : this.level().getEntitiesOfClass(LivingEntity.class, damageBox)) {
             if (entity.isAlive() && !entity.isInvulnerable() && entity != getCaster()) {
                 LivingEntity caster = getCaster();
-                if (caster == null || !caster.isAlliedTo(entity)) {
+                if (!isProtectedFromCaster(caster, entity)) {
                     DamageSource damageSource = caster != null ? 
                         this.damageSources().mobAttack(caster) : 
                         this.damageSources().magic();
@@ -308,7 +308,7 @@ public class LightningChainEntity extends Entity {
         for (LivingEntity entity : serverLevel.getEntitiesOfClass(LivingEntity.class, searchBox)) {
             if (entity.isAlive() && !entity.isInvulnerable() && entity != getCaster()) {
                 LivingEntity caster = getCaster();
-                if (caster == null || !caster.isAlliedTo(entity)) {
+                if (!isProtectedFromCaster(caster, entity)) {
                     double distance = this.distanceTo(entity);
                     if (distance < nearestDistance) {
                         nearestTarget = entity;
@@ -336,6 +336,19 @@ public class LightningChainEntity extends Entity {
             
             serverLevel.addFreshEntity(chainEntity);
         }
+    }
+
+
+    private boolean isProtectedFromCaster(@Nullable LivingEntity caster, LivingEntity target) {
+        if (caster == null) {
+            return false;
+        }
+
+        if (caster instanceof com.leon.saintsdragons.server.entity.base.DragonEntity dragon && dragon.isAlly(target)) {
+            return true;
+        }
+
+        return caster.isAlliedTo(target);
     }
 
     @Override

@@ -2,7 +2,6 @@
 
 package com.leon.saintsdragons.server.entity.base;
 
-import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
@@ -14,6 +13,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
@@ -258,16 +257,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         return null;
     }
-
-    /**
-     * Trigger an animation on this entity.
-     * Override in subclasses to provide proper animation handling.
-     */
-    public void playAnimation(RawAnimation animation) {
-        // Default implementation - subclasses should override this
-        // The animation parameter contains the animation data, implementation is entity-specific
-    }
-
     /**
      * Tick Dragon ability system
      */
@@ -336,11 +325,22 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return true;
         }
         
-        // Other dragons owned by the same player are allies
+        // Other dragons owned by the same player or allied players are allies
         if (entity instanceof DragonEntity otherDragon && this.isTame() && otherDragon.isTame()) {
-            net.minecraft.world.entity.LivingEntity owner = this.getOwner();
-            return owner != null && otherDragon.isOwnedBy(owner);
+            LivingEntity owner = this.getOwner();
+            if (owner instanceof Player ownerPlayer) {
+                if (otherDragon.isOwnedBy(ownerPlayer)) {
+                    return true;
+                }
+
+                LivingEntity otherOwner = otherDragon.getOwner();
+                if (otherOwner instanceof Player otherPlayer) {
+                    return allyManager.isAlly(otherPlayer);
+                }
+            }
+            return false;
         }
+
         
         // Check manually set allies
         if (entity instanceof Player player) {
@@ -411,16 +411,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     // ===== ABSTRACT METHODS =====
-
-    /**
-     * Get a bone/locator position from the GeckoLib model.
-     * Override this in subclasses to provide proper bone position lookup.
-     */
-    public Vec3 getBonePosition(String boneName) {
-        // Default implementation - subclasses should override this; null = no bone available
-        return null;
-    }
-
     /**
      * Get head position for targeting and ability positioning.
      * Override this in subclasses to provide accurate head positioning.
