@@ -70,6 +70,9 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     public static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_PLAYING_DEAD = 
             net.minecraft.network.syncher.SynchedEntityData.defineId(PrimitiveDrakeEntity.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
     
+    // Binding state for Drake Binder
+    private boolean boundToBinder = false;
+    
     public PrimitiveDrakeEntity(EntityType<? extends PrimitiveDrakeEntity> entityType, Level level) {
         super(entityType, level);
         // Initialize animation state
@@ -665,6 +668,9 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             tag.putInt("PlayDeadTicks", playDeadGoal.getRemainingPlayDeadTicks());
             tag.putInt("PlayDeadCooldown", playDeadGoal.getRemainingCooldownTicks());
         }
+        
+        // Save binding state
+        tag.putBoolean("BoundToBinder", boundToBinder);
     }
     
     @Override
@@ -679,6 +685,9 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         
         // Load grumble cooldown
         grumbleCooldown = tag.getInt("GrumbleCooldown");
+        
+        // Load binding state
+        boundToBinder = tag.getBoolean("BoundToBinder");
         
         // Sync sleep state to client
         this.entityData.set(DATA_SLEEPING, sleeping);
@@ -704,5 +713,28 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             this.pendingRestoreCooldownTicks = 0;
             this.entityData.set(DATA_PLAYING_DEAD, false);
         }
+    }
+    
+    // ===== DRAKE BINDER FUNCTIONALITY =====
+    
+    /**
+     * Check if this drake is bound to a Drake Binder
+     */
+    public boolean isBoundToBinder() {
+        return boundToBinder;
+    }
+    
+    /**
+     * Set the binding state for Drake Binder
+     */
+    public void setBoundToBinder(boolean bound) {
+        this.boundToBinder = bound;
+    }
+    
+    /**
+     * Check if this drake can be bound (not playing dead, not sleeping, etc.)
+     */
+    public boolean canBeBound() {
+        return !isPlayingDead() && !isSleeping() && !isDying();
     }
 }
