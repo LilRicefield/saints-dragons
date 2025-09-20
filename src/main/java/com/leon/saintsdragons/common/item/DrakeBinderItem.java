@@ -120,6 +120,11 @@ public class DrakeBinderItem extends Item {
         // Store drake data
         tag.putUUID(BOUND_DRAGON_UUID, drake.getUUID());
         tag.putString(BOUND_DRAGON_NAME, drake.getName().getString());
+        if (drake.hasCustomName()) {
+            tag.putString("BoundCustomName", net.minecraft.network.chat.Component.Serializer.toJson(drake.getCustomName()));
+        } else {
+            tag.remove("BoundCustomName");
+        }
         tag.putBoolean(IS_BOUND, true);
 
         // Store owner data
@@ -207,6 +212,13 @@ public class DrakeBinderItem extends Item {
             newDrake.tame(player);
         }
 
+        if (tag.contains("BoundCustomName")) {
+            net.minecraft.network.chat.Component customName = net.minecraft.network.chat.Component.Serializer.fromJson(tag.getString("BoundCustomName"));
+            if (customName != null) {
+                newDrake.setCustomName(customName);
+            }
+        }
+
         // Spawn the drake
         serverLevel.addFreshEntity(newDrake);
 
@@ -215,6 +227,7 @@ public class DrakeBinderItem extends Item {
         tag.remove(BOUND_DRAGON_NAME);
         tag.remove(BOUND_OWNER_UUID);
         tag.remove(BOUND_OWNER_NAME);
+        tag.remove("BoundCustomName");
         tag.remove("DrakeData");
         tag.putBoolean(IS_BOUND, false);
 
