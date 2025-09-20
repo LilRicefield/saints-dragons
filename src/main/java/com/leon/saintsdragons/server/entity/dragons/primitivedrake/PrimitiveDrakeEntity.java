@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.primitivedrake;
 
+import com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -38,7 +39,11 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Primitive Drake - A simple ground drake that wanders around and runs away from players.
  * No complex abilities, just basic AI and cute behavior.
  * 
- * Sleep behavior: Sleeps at night, awake during day. Simple nap system for short rests.
+ * Features:
+ * - Sleep behavior: Sleeps at night, awake during day. Simple nap system for short rests.
+ * - Play dead behavior: Plays dead when lightning dragons are nearby
+ * - Resistance aura: Provides resistance buff to nearby players and allies
+ * - NOT rideable: Too small and simple to be a mount
  */
 public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCapable {
     
@@ -83,7 +88,9 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeSleepGoal(this)); // Highest priority - deep slumber takes precedence
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal(this)); // Second priority - play dead when lightning dragon nearby
+        PrimitiveDrakePlayDeadGoal playDeadGoalInstance = new PrimitiveDrakePlayDeadGoal(this); // Second priority - play dead when lightning dragon nearby
+        this.playDeadGoal = playDeadGoalInstance;
+        this.goalSelector.addGoal(1, playDeadGoalInstance);
         this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeFollowOwnerGoal(this));
         this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeGroundWanderGoal(this, 0.35D, 120));
         this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeLookAtPlayerGoal(this, Player.class, 8.0F));
@@ -110,6 +117,10 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     public boolean isStayOrSitMuted() {
         return this.isOrderedToSit() || this.isInSittingPose() || this.isPlayingDead();
     }
+    
+    /**
+     * Primitive Drakes are NOT rideable - they're too small and simple
+     */
 
     
     public boolean isTameable() {
@@ -179,6 +190,14 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        // Prevent any mounting attempts - Primitive Drakes are NOT rideable
+        if (hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty()) {
+            // If player is trying to mount (shift+right-click), deny it
+            if (player.isShiftKeyDown()) {
+                return InteractionResult.PASS; // Don't allow mounting
+            }
+        }
+        
         if (!this.isTame()) {
             return handleUntamedInteraction(player, hand);
         } else {
@@ -206,6 +225,30 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             this.tame(player);
             this.setOrderedToSit(true);
             this.setCommand(1); // Set command to Sit (1) to match the sitting state
+            
+            // Re-evaluate play dead state when tamed
+            if (this.isPlayingDead()) {
+                // Check if there's still a reason to play dead (wild lightning dragon nearby)
+                boolean shouldStillPlayDead = false;
+                
+                // Look for nearby lightning dragons
+                var nearbyLightningDragons = this.level().getEntitiesOfClass(
+                    com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity.class,
+                    this.getBoundingBox().inflate(8.0), // Same range as play dead detection
+                    dragon -> dragon != null && !dragon.isRemoved() && !dragon.isTame() // Only wild lightning dragons
+                );
+                
+                if (!nearbyLightningDragons.isEmpty()) {
+                    shouldStillPlayDead = true;
+                }
+                
+                // If no wild lightning dragons nearby, stop playing dead
+                if (!shouldStillPlayDead) {
+                    this.clearPlayDeadGoal();
+                }
+                // If wild lightning dragons are nearby, let the goal continue (it will re-evaluate)
+            }
+            
             this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
             
             // Send taming success message
@@ -363,6 +406,17 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         triggerAnim("action", animationTrigger);
     }
     
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        if (!this.level().isClientSide && this.pendingRestorePlayDead && this.playDeadGoal != null) {
+            this.pendingRestorePlayDead = false;
+            this.playDeadGoal.restorePlayDeadState(this.pendingRestorePlayDeadTicks, this.pendingRestoreCooldownTicks);
+            this.pendingRestorePlayDeadTicks = 0;
+            this.pendingRestoreCooldownTicks = 0;
+        }
+    }
+
     // ===== SLEEP SYSTEM IMPLEMENTATION =====
     
     @Override
@@ -523,6 +577,9 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     
     // Reference to the play dead goal for easy access
     private com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal playDeadGoal = null;
+    private boolean pendingRestorePlayDead = false;
+    private int pendingRestorePlayDeadTicks = 0;
+    private int pendingRestoreCooldownTicks = 0;
     
     /**
      * Set the play dead goal reference (called by the goal when it starts)
@@ -535,7 +592,10 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
      * Clear the play dead goal reference (called by the goal when it stops)
      */
     public void clearPlayDeadGoal() {
-        this.playDeadGoal = null;
+        if (this.playDeadGoal != null) {
+            this.playDeadGoal.markSkipCooldownOnNextStop();
+            this.playDeadGoal.stop();
+        }
     }
     
     /**
@@ -605,11 +665,18 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         
         // If we were playing dead when saved, restore that state
         if (wasPlayingDead && savedPlayDeadTicks > 0) {
-            // Create a new play dead goal and restore its state
-            var restoredGoal = new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal(this);
-            restoredGoal.restorePlayDeadState(savedPlayDeadTicks, savedCooldownTicks);
-            this.playDeadGoal = restoredGoal;
+            if (this.playDeadGoal != null) {
+                this.playDeadGoal.restorePlayDeadState(savedPlayDeadTicks, savedCooldownTicks);
+                this.pendingRestorePlayDead = false;
+            } else {
+                this.pendingRestorePlayDead = true;
+                this.pendingRestorePlayDeadTicks = savedPlayDeadTicks;
+                this.pendingRestoreCooldownTicks = savedCooldownTicks;
+            }
         } else {
+            this.pendingRestorePlayDead = false;
+            this.pendingRestorePlayDeadTicks = 0;
+            this.pendingRestoreCooldownTicks = 0;
             this.entityData.set(DATA_PLAYING_DEAD, false);
         }
     }

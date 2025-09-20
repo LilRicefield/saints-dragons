@@ -3,10 +3,10 @@ package com.leon.saintsdragons.server.ai.goals.primitivedrake;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.level.Level;
 
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * AI Goal for Primitive Drakes to play dead when near Lightning Dragons.
@@ -33,11 +33,7 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
     private int playDeadTicks = 0;
     private int cooldownTicks = 0;
     private LightningDragonEntity nearbyLightningDragon = null;
-    
-    // Targeting conditions for finding lightning dragons
-    private final TargetingConditions lightningDragonTargeting = TargetingConditions.forNonCombat()
-            .range(DETECTION_RANGE)
-            .ignoreLineOfSight(); // Drakes can "sense" lightning dragons even through walls
+    private boolean skipCooldownOnStop = false;
     
     public PrimitiveDrakePlayDeadGoal(PrimitiveDrakeEntity drake) {
         this.drake = drake;
@@ -47,38 +43,41 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
     
     @Override
     public boolean canUse() {
-        // Don't play dead if already playing dead or on cooldown
-        if (isPlayingDead || cooldownTicks > 0) {
+        // Don't play dead if already playing dead
+        if (isPlayingDead) {
             return false;
         }
-        
+
         // Don't play dead if sleeping, dying, or being ridden
         if (drake.isSleeping() || drake.isDying() || drake.isVehicle()) {
             return false;
         }
-        
+
         // Check for nearby lightning dragons first
         if (!findNearbyLightningDragon()) {
             return false;
         }
-        
-        // If tamed drake, check if the lightning dragon is also tamed
+
+        // If tamed drake, only play dead around WILD lightning dragons
         if (drake.isTame()) {
-            // Tamed drakes don't play dead around tamed lightning dragons (both are pets)
-            if (nearbyLightningDragon != null && nearbyLightningDragon.isTame()) {
+            if (nearbyLightningDragon == null || nearbyLightningDragon.isTame()) {
                 return false;
             }
-            
-            // Tamed drakes still play dead around wild lightning dragons, but only if owner is far
-            var owner = drake.getOwner();
-            if (owner != null) {
-                double distanceToOwner = drake.distanceToSqr(owner);
-                if (distanceToOwner < 16.0) { // Within 4 blocks of owner = feels safe
-                    return false;
-                }
+        }
+
+        // Skip cooldown when a real threat is nearby
+        if (cooldownTicks > 0) {
+            boolean hasThreat = drake.isTame()
+                    ? (nearbyLightningDragon != null && !nearbyLightningDragon.isTame())
+                    : nearbyLightningDragon != null;
+
+            if (hasThreat) {
+                cooldownTicks = 0;
+            } else {
+                return false;
             }
         }
-        
+
         return true;
     }
     
@@ -91,22 +90,41 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
         
         // Continue if still playing dead and haven't exceeded duration
         if (isPlayingDead && playDeadTicks > 0) {
-            // If tamed drake, check if the lightning dragon is also tamed
+            // If tamed drake, only continue playing dead around WILD lightning dragons
             if (drake.isTame()) {
                 // Tamed drakes don't continue playing dead around tamed lightning dragons
                 if (nearbyLightningDragon != null && nearbyLightningDragon.isTame()) {
+                    skipCooldownOnStop = true;
                     return false;
                 }
-                
-                // Tamed drakes stop playing dead if owner gets close
-                var owner = drake.getOwner();
-                if (owner != null) {
-                    double distanceToOwner = drake.distanceToSqr(owner);
-                    if (distanceToOwner < 16.0) { // Within 4 blocks of owner = feels safe
-                        return false;
+
+                // For tamed drakes, re-check if there are any wild lightning dragons nearby
+                // If not, stop playing dead immediately
+                var nearbyWildLightningDragons = drake.level().getEntitiesOfClass(
+                    com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity.class,
+                    drake.getBoundingBox().inflate(DETECTION_RANGE),
+                    dragon -> dragon != null && !dragon.isRemoved() && !dragon.isTame()
+                );
+
+                if (nearbyWildLightningDragons.isEmpty()) {
+                    skipCooldownOnStop = true;
+                    return false; // No wild lightning dragons nearby, stop playing dead
+                }
+
+                LightningDragonEntity closestWild = null;
+                double closestDistance = Double.MAX_VALUE;
+                for (LightningDragonEntity dragon : nearbyWildLightningDragons) {
+                    double distance = drake.distanceToSqr(dragon);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestWild = dragon;
                     }
                 }
+                if (closestWild != null) {
+                    nearbyLightningDragon = closestWild;
+                }
             }
+            // Wild drakes continue playing dead around ANY lightning dragon (wild or tamed)
             
             // Check if lightning dragon is still nearby - if not, continue playing dead for a bit longer
             if (nearbyLightningDragon != null && !nearbyLightningDragon.isRemoved()) {
@@ -126,6 +144,7 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
     public void start() {
         // Start playing dead
         isPlayingDead = true;
+        skipCooldownOnStop = false;
         playDeadTicks = MIN_PLAY_DEAD_DURATION + drake.getRandom().nextInt(MAX_PLAY_DEAD_DURATION - MIN_PLAY_DEAD_DURATION);
         
         // Register this goal with the drake for easy access
@@ -190,14 +209,18 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
         playDeadTicks = 0;
         nearbyLightningDragon = null;
         
-        // Unregister this goal from the drake
-        drake.clearPlayDeadGoal();
         
         // Start cooldown
-        cooldownTicks = PLAY_DEAD_COOLDOWN + drake.getRandom().nextInt(600); // 60-90 seconds
+        if (skipCooldownOnStop) {
+            cooldownTicks = 0;
+        } else {
+            cooldownTicks = PLAY_DEAD_COOLDOWN + drake.getRandom().nextInt(600); // 60-90 seconds
+        }
+        skipCooldownOnStop = false;
         
         // Stand up
         drake.setOrderedToSit(false);
+        drake.triggerAnim("action", "clear_fake_death");
         drake.sitProgress = 0f;
         drake.getEntityData().set(com.leon.saintsdragons.server.entity.base.DragonEntity.DATA_SIT_PROGRESS, 0f);
         
@@ -218,22 +241,55 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
      */
     private boolean findNearbyLightningDragon() {
         // Look for lightning dragons in range
-        LightningDragonEntity foundDragon = level.getNearestEntity(
+        List<LightningDragonEntity> dragonsInRange = level.getEntitiesOfClass(
             LightningDragonEntity.class,
-            lightningDragonTargeting,
-            drake,
-            drake.getX(),
-            drake.getY(),
-            drake.getZ(),
-            drake.getBoundingBox().inflate(DETECTION_RANGE)
+            drake.getBoundingBox().inflate(DETECTION_RANGE),
+            dragon -> dragon != null && !dragon.isRemoved()
         );
-        
-        if (foundDragon != null) {
-            nearbyLightningDragon = foundDragon;
-            return true;
+
+        if (dragonsInRange.isEmpty()) {
+            nearbyLightningDragon = null;
+            return false;
         }
-        
-        return false;
+
+        LightningDragonEntity closestDragon = null;
+        LightningDragonEntity closestWildDragon = null;
+        double closestDistance = Double.MAX_VALUE;
+        double closestWildDistance = Double.MAX_VALUE;
+
+        for (LightningDragonEntity dragon : dragonsInRange) {
+            double distance = drake.distanceToSqr(dragon);
+
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestDragon = dragon;
+            }
+
+            if (!dragon.isTame() && distance < closestWildDistance) {
+                closestWildDistance = distance;
+                closestWildDragon = dragon;
+            }
+        }
+
+        if (drake.isTame()) {
+            if (closestWildDragon != null) {
+                nearbyLightningDragon = closestWildDragon;
+                return true;
+            }
+
+            nearbyLightningDragon = closestDragon;
+            return nearbyLightningDragon != null;
+        }
+
+        nearbyLightningDragon = closestWildDragon != null ? closestWildDragon : closestDragon;
+        return nearbyLightningDragon != null;
+    }
+
+    /**
+     * Skip the cooldown when the goal stops, used when retreating from friendly dragons.
+     */
+    public void markSkipCooldownOnNextStop() {
+        this.skipCooldownOnStop = true;
     }
     
     /**
@@ -266,6 +322,7 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
             this.isPlayingDead = true;
             this.playDeadTicks = playDeadTicks;
             this.cooldownTicks = cooldownTicks;
+            this.skipCooldownOnStop = false;
             
             // Register this goal with the drake
             drake.setPlayDeadGoal(this);
