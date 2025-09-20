@@ -121,7 +121,12 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     /**
      * Primitive Drakes are NOT rideable - they're too small and simple
      */
-
+    
+    @Override
+    public boolean canOwnerCommand(Player player) {
+        // Primitive Drakes respond to commands from their owner without requiring crouching
+        return player != null && player.equals(this.getOwner());
+    }
     
     public boolean isTameable() {
         return true; // Can be tamed like other dragons
@@ -321,6 +326,17 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
      * Handle command cycling (Follow/Sit/Wander)
      */
     private InteractionResult handleCommandCycling(Player player) {
+        // Check if drake is playing dead - if so, show special message instead of cycling commands
+        if (this.isPlayingDead()) {
+            if (!this.level().isClientSide) {
+                player.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.primitive_drake.busy_playing_dead", this.getName()),
+                    true
+                );
+            }
+            return InteractionResult.SUCCESS;
+        }
+        
         // Get current command and cycle to next
         int currentCommand = this.getCommand();
         int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
