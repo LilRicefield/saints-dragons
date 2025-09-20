@@ -23,9 +23,7 @@ public class ClientEventHandler {
     
     // Entity hiding mechanism for custom rider positioning
     public static List<UUID> blockedEntityRenders = new ArrayList<>();
-    
-    // Screen shake system
-    private static float tremorAmount = 0.0F;
+
     private static final double[] randomTremorOffsets = new double[3];
 
     public static void blockRenderingEntity(UUID id) {
@@ -45,14 +43,15 @@ public class ClientEventHandler {
         // Dragon riding camera adjustments
         if (player.isPassenger() && player.getVehicle() instanceof LightningDragonEntity && event.getCamera().isDetached()) {
             // Base zoom for dragon riding - adjusted distance for better dragon visibility
-            event.getCamera().move(-event.getCamera().getMaxZoom(10F), 0, 0);
+            event.getCamera().move(-event.getCamera().getMaxZoom(20F), 0, 0);
         }
         
         // Screen shake detection and application
         double shakeDistanceScale = 64.0;
         double distance = Double.MAX_VALUE;
-        tremorAmount = 0.0F; // Reset tremor amount each frame
-        
+        // Screen shake system
+        float tremorAmount = 0.0F; // Reset tremor amount each frame
+
         AABB aabb = player.getBoundingBox().inflate(shakeDistanceScale);
         var level = Minecraft.getInstance().level;
         if (level == null) return;

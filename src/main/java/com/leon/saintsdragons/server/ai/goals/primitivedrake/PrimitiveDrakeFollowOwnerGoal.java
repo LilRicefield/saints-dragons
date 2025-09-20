@@ -36,6 +36,11 @@ public class PrimitiveDrakeFollowOwnerGoal extends Goal {
             return false;
         }
 
+        // Never follow while playing dead
+        if (drake.isPlayingDead()) {
+            return false;
+        }
+
         // Never follow while actively targeting an enemy
         LivingEntity target = drake.getTarget();
         if (target != null && target.isAlive()) {
@@ -61,6 +66,11 @@ public class PrimitiveDrakeFollowOwnerGoal extends Goal {
     public boolean canContinueToUse() {
         LivingEntity owner = drake.getOwner();
         if (owner == null || !owner.isAlive() || drake.isOrderedToSit()) {
+            return false;
+        }
+
+        // Suspend following while playing dead
+        if (drake.isPlayingDead()) {
             return false;
         }
 
