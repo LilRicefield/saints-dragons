@@ -34,6 +34,6 @@ public class ModNetworkHandler {
      * Send a message to all players in a dimension
      */
     public static void sendToDimension(net.minecraft.world.level.Level level, Object message) {
-        NetworkHandler.INSTANCE.send(PacketDistributor.DIMENSION.with(() -> level.dimension()), message);
+        NetworkHandler.INSTANCE.send(PacketDistributor.DIMENSION.with(level::dimension), message);
     }
 }

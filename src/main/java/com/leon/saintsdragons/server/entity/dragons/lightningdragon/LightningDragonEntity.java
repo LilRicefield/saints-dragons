@@ -861,28 +861,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                 changed = true;
             }
             // Flight mode sync for observers
-            int flightMode = -1;
-            if (isFlying()) {
-                double yDelta = getYDelta();
-                if (isTakeoff()) {
-                    flightMode = 3; // takeoff
-                } else if (getControllingPassenger() != null) {
-                    // Ridden: always glide when rider holds descend; flap when holding ascend
-                    if (isGoingDown()) flightMode = 0; // glide
-                    else if (isGoingUp()) flightMode = 1; // flap
-                    else if (yDelta < -0.005) flightMode = 0; // natural descent -> glide
-                    else flightMode = 1; // otherwise flap
-                } else {
-                    // AI: keep original behavior using fractions with small bias
-                    float glide = getGlidingFraction();
-                    float flap = getFlappingFraction();
-                    float hover = getHoveringFraction();
-                    if (yDelta > 0.02) flightMode = 1;
-                    else if (yDelta < -0.02) flightMode = 0;
-                    else if (isHovering() || hover > 0.55f) flightMode = 2;
-                    else flightMode = (glide >= flap + 0.10f) ? 0 : 1;
-                }
-            }
+            int flightMode = getFlightMode();
             if (this.entityData.get(DATA_FLIGHT_MODE) != flightMode) {
                 this.entityData.set(DATA_FLIGHT_MODE, flightMode);
                 changed = true;
@@ -944,26 +923,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                 this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
                 changed = true;
             }
-            int flightMode = -1;
-            if (isFlying()) {
-                double yDelta = getYDelta();
-                if (isTakeoff()) {
-                    flightMode = 3; // takeoff
-                } else if (getControllingPassenger() != null) {
-                    if (isGoingDown()) flightMode = 0;
-                    else if (isGoingUp()) flightMode = 1;
-                    else if (yDelta < -0.005) flightMode = 0;
-                    else flightMode = 1;
-                } else {
-                    float glide = getGlidingFraction();
-                    float flap = getFlappingFraction();
-                    float hover = getHoveringFraction();
-                    if (yDelta > 0.02) flightMode = 1;
-                    else if (yDelta < -0.02) flightMode = 0;
-                    else if (isHovering() || hover > 0.55f) flightMode = 2;
-                    else flightMode = (glide >= flap + 0.10f) ? 0 : 1;
-                }
-            }
+            int flightMode = getFlightMode();
             if (this.entityData.get(DATA_FLIGHT_MODE) != flightMode) {
                 this.entityData.set(DATA_FLIGHT_MODE, flightMode);
                 changed = true;
@@ -992,7 +952,33 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
             this.setRunning(false);
         }
     }
-    
+
+    private int getFlightMode() {
+        int flightMode = -1;
+        if (isFlying()) {
+            double yDelta = getYDelta();
+            if (isTakeoff()) {
+                flightMode = 3; // takeoff
+            } else if (getControllingPassenger() != null) {
+                // Ridden: always glide when rider holds descend; flap when holding ascend
+                if (isGoingDown()) flightMode = 0; // glide
+                else if (isGoingUp()) flightMode = 1; // flap
+                else if (yDelta < -0.005) flightMode = 0; // natural descent -> glide
+                else flightMode = 1; // otherwise flap
+            } else {
+                // AI: keep original behavior using fractions with small bias
+                float glide = getGlidingFraction();
+                float flap = getFlappingFraction();
+                float hover = getHoveringFraction();
+                if (yDelta > 0.02) flightMode = 1;
+                else if (yDelta < -0.02) flightMode = 0;
+                else if (isHovering() || hover > 0.55f) flightMode = 2;
+                else flightMode = (glide >= flap + 0.10f) ? 0 : 1;
+            }
+        }
+        return flightMode;
+    }
+
     // ===== TICK SUBMETHODS =====
     
     private void tickScreenShake() {
@@ -2340,11 +2326,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     
     @Override
     public void setAttacking(boolean attacking) {
-        if (attacking) {
-            setBeaming(true);
-        } else {
-            setBeaming(false);
-        }
+        setBeaming(attacking);
     }
     
     // ===== DRAGON FLIGHT CAPABLE INTERFACE =====
@@ -2394,17 +2376,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                 position.x, position.y, position.z, 0.0, 0.0, 0.0);
         }
     }
-    
-    public void playSleepAnimation() {
-        // Trigger sleep animation
-        animationHandler.triggerSleepAnimation();
-    }
-    
-    public void playWakeAnimation() {
-        // Trigger wake animation
-        animationHandler.triggerWakeAnimation();
-    }
-    
+
     public boolean hasEnhancedLineOfSight(Vec3 target) {
         // Lightning Dragons can see through some obstacles
         // For now, use simple distance check - can be enhanced later
@@ -2481,11 +2453,5 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         this.screenShakeAmount = Math.max(this.screenShakeAmount, intensity);
         this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
     }
-    
-    /**
-     * Test method to manually trigger screen shake for debugging
-     */
-    public void testScreenShake() {
-        this.screenShakeAmount = 2.0F;
-    }
+
 }
