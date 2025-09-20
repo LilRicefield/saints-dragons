@@ -7,6 +7,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
@@ -95,6 +96,22 @@ public class PrimitiveDrakePassiveBuffAbility {
 
         if (entity instanceof DragonEntity dragon) {
             return isDragonEligible(dragon);
+        }
+
+        if (entity instanceof OwnableEntity ownable) {
+            LivingEntity owner = ownable.getOwner();
+            if (owner instanceof Player ownerPlayer) {
+                if (!drake.isTame()) {
+                    return false;
+                }
+                LivingEntity drakeOwner = drake.getOwner();
+                if (drakeOwner instanceof Player drakeOwnerPlayer) {
+                    if (drakeOwnerPlayer.getUUID().equals(ownerPlayer.getUUID())) {
+                        return true;
+                    }
+                    return drake.allyManager.isAlly(ownerPlayer);
+                }
+            }
         }
 
         return false;
