@@ -1,16 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "L L",
-    " I ",
-    "L L"
+    "ISI",
+    "SAS",
+    "ISI"
   ],
   "key": {
-    "L": {
-      "item": "minecraft:leather"
+    "A": {
+      "item": "minecraft:amethyst_shard"
     },
     "I": {
       "item": "minecraft:iron_ingot"
+    },
+    "S": {
+      "item": "minecraft:stone"
     }
   },
   "result": {

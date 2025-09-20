@@ -12,6 +12,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -26,7 +27,7 @@ public class DragonAllyBookItem extends Item {
     }
     
     @Override
-    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+    public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
         if (target instanceof DragonEntity dragon) {
             // Check if player owns the dragon
             if (!dragon.isTame() || !dragon.isOwnedBy(player)) {
@@ -54,7 +55,7 @@ public class DragonAllyBookItem extends Item {
     
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<net.minecraft.network.chat.Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, List<net.minecraft.network.chat.Component> tooltip, @NotNull TooltipFlag flag) {
         tooltip.add(net.minecraft.network.chat.Component.translatable("saintsdragons.tooltip.dragon_ally_book.line1"));
         tooltip.add(net.minecraft.network.chat.Component.translatable("saintsdragons.tooltip.dragon_ally_book.line2"));
         tooltip.add(net.minecraft.network.chat.Component.translatable("saintsdragons.tooltip.dragon_ally_book.line3"));

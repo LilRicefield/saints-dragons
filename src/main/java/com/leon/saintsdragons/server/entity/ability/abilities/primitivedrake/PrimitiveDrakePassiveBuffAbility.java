@@ -16,33 +16,26 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Ability for Primitive Drakes to provide resistance buffs to nearby players and allies.
- * This makes the drake a valuable companion that protects its friends.
+ * Provides the Primitive Drake's passive aura: Resistance and Absorption to allies.
  */
-public class PrimitiveDrakeResistanceAbility {
+public class PrimitiveDrakePassiveBuffAbility {
+    private static final double BUFF_RANGE = 8.0;
+    private static final int UPDATE_INTERVAL = 20;
+    private static final int BUFF_DURATION_TICKS = 40;
+    private static final int RESISTANCE_AMPLIFIER = 0;
+    private static final int ABSORPTION_AMPLIFIER = 0;
+
     private final PrimitiveDrakeEntity drake;
     private final Level level;
 
-    // Buff parameters
-    private static final double BUFF_RANGE = 8.0; // 8 block radius
-    private static final int BUFF_DURATION_TICKS = 40; // Short duration so we can expire when leaving range
-    private static final int BUFF_AMPLIFIER = 0; // Resistance I (20% damage reduction)
-
-    // Performance optimization
     private int tickCounter = 0;
-    private static final int UPDATE_INTERVAL = 20; // Update every second
-
-    // Track entities that currently have the resistance buff
     private Set<UUID> buffedEntityIds = new HashSet<>();
 
-    public PrimitiveDrakeResistanceAbility(PrimitiveDrakeEntity drake) {
+    public PrimitiveDrakePassiveBuffAbility(PrimitiveDrakeEntity drake) {
         this.drake = drake;
         this.level = drake.level();
     }
 
-    /**
-     * Called every tick to apply resistance buffs to nearby entities
-     */
     public void tick() {
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
@@ -58,13 +51,10 @@ public class PrimitiveDrakeResistanceAbility {
             return;
         }
 
-        applyResistanceBuffs(serverLevel);
+        applyBuffs(serverLevel);
     }
 
-    /**
-     * Apply resistance buffs to all eligible entities within range
-     */
-    private void applyResistanceBuffs(ServerLevel serverLevel) {
+    private void applyBuffs(ServerLevel serverLevel) {
         List<LivingEntity> nearbyEntities = serverLevel.getEntitiesOfClass(
             LivingEntity.class,
             drake.getBoundingBox().inflate(BUFF_RANGE),
@@ -74,16 +64,14 @@ public class PrimitiveDrakeResistanceAbility {
         Set<UUID> currentNearby = new HashSet<>();
 
         for (LivingEntity entity : nearbyEntities) {
-            applyResistanceToEntity(entity);
+            applyResistance(entity);
+            applyAbsorption(entity);
             currentNearby.add(entity.getUUID());
         }
 
         buffedEntityIds = currentNearby;
     }
 
-    /**
-     * Check if an entity is eligible for the resistance buff
-     */
     private boolean isEligibleForBuff(LivingEntity entity) {
         if (entity == drake || !entity.isAlive()) {
             return false;
@@ -134,25 +122,28 @@ public class PrimitiveDrakeResistanceAbility {
         return dragon instanceof PrimitiveDrakeEntity alliedDrake && alliedDrake.allyManager.isAlly(ownerPlayer);
     }
 
-    /**
-     * Apply resistance buff to a specific entity
-     */
-    private void applyResistanceToEntity(LivingEntity entity) {
-        MobEffectInstance resistanceEffect = new MobEffectInstance(
+    private void applyResistance(LivingEntity entity) {
+        entity.addEffect(new MobEffectInstance(
             MobEffects.DAMAGE_RESISTANCE,
             BUFF_DURATION_TICKS,
-            BUFF_AMPLIFIER,
+            RESISTANCE_AMPLIFIER,
             false,
             false,
             true
-        );
-
-        entity.addEffect(resistanceEffect);
+        ));
     }
 
-    /**
-     * Clean up all buffed entities when the drake is removed
-     */
+    private void applyAbsorption(LivingEntity entity) {
+        entity.addEffect(new MobEffectInstance(
+            MobEffects.ABSORPTION,
+            BUFF_DURATION_TICKS,
+            ABSORPTION_AMPLIFIER,
+            false,
+            false,
+            true
+        ));
+    }
+
     public void cleanup() {
         if (level instanceof ServerLevel serverLevel) {
             clearTrackedBuffs(serverLevel);
@@ -166,22 +157,22 @@ public class PrimitiveDrakeResistanceAbility {
             Entity entity = serverLevel.getEntity(uuid);
             if (entity instanceof LivingEntity livingEntity) {
                 livingEntity.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+                livingEntity.removeEffect(MobEffects.ABSORPTION);
             }
         }
         buffedEntityIds.clear();
     }
 
-    /**
-     * Get the buff range for display purposes
-     */
     public static double getBuffRange() {
         return BUFF_RANGE;
     }
 
-    /**
-     * Get the buff amplifier level
-     */
-    public static int getBuffAmplifier() {
-        return BUFF_AMPLIFIER;
+    public static int getResistanceAmplifier() {
+        return RESISTANCE_AMPLIFIER;
+    }
+
+    public static int getAbsorptionAmplifier() {
+        return ABSORPTION_AMPLIFIER;
     }
 }
+
