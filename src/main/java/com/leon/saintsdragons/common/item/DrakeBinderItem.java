@@ -30,6 +30,8 @@ public class DrakeBinderItem extends Item {
     // NBT keys for storing bound drake data
     private static final String BOUND_DRAGON_UUID = "BoundDragonUUID";
     private static final String BOUND_DRAGON_NAME = "BoundDragonName";
+    private static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
+    private static final String BOUND_OWNER_NAME = "BoundOwnerName";
     private static final String IS_BOUND = "IsBound";
     
     public DrakeBinderItem(Properties properties) {
@@ -86,8 +88,9 @@ public class DrakeBinderItem extends Item {
         
         if (player != null && isBound(stack)) {
             // Release the drake at the clicked location
-            releaseDrake(stack, player, context.getClickedPos());
-            return InteractionResult.SUCCESS;
+            return releaseDrake(stack, player, context.getClickedPos())
+                    ? InteractionResult.SUCCESS
+                    : InteractionResult.FAIL;
         }
         
         return super.useOn(context);
@@ -118,7 +121,17 @@ public class DrakeBinderItem extends Item {
         tag.putUUID(BOUND_DRAGON_UUID, drake.getUUID());
         tag.putString(BOUND_DRAGON_NAME, drake.getName().getString());
         tag.putBoolean(IS_BOUND, true);
-        
+
+        // Store owner data
+        LivingEntity owner = drake.getOwner();
+        if (owner instanceof Player ownerPlayer) {
+            tag.putUUID(BOUND_OWNER_UUID, ownerPlayer.getUUID());
+            tag.putString(BOUND_OWNER_NAME, ownerPlayer.getName().getString());
+        } else {
+            tag.remove(BOUND_OWNER_UUID);
+            tag.remove(BOUND_OWNER_NAME);
+        }
+
         // Store drake's current state
         CompoundTag drakeData = new CompoundTag();
         drake.addAdditionalSaveData(drakeData);
@@ -154,46 +167,63 @@ public class DrakeBinderItem extends Item {
     /**
      * Release the drake from this binder (Pokeball style)
      */
-    private void releaseDrake(ItemStack stack, Player player, net.minecraft.core.BlockPos pos) {
+    private boolean releaseDrake(ItemStack stack, Player player, net.minecraft.core.BlockPos pos) {
         CompoundTag tag = stack.getTag();
         if (tag == null || !tag.contains(BOUND_DRAGON_UUID)) {
-            return;
+            return false;
         }
         
         String drakeName = tag.getString(BOUND_DRAGON_NAME);
         CompoundTag drakeData = tag.getCompound("DrakeData");
+        UUID ownerUUID = tag.hasUUID(BOUND_OWNER_UUID) ? tag.getUUID(BOUND_OWNER_UUID) : null;
         
-        // Create new drake entity
-        if (player.level() instanceof ServerLevel serverLevel) {
-            PrimitiveDrakeEntity newDrake = new PrimitiveDrakeEntity(
-                com.leon.saintsdragons.common.registry.ModEntities.PRIMITIVE_DRAKE.get(),
-                serverLevel
-            );
-            
-            // Set position
-            newDrake.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
-            
-            // Restore drake data
-            newDrake.readAdditionalSaveData(drakeData);
-            
-            // Ensure it's still tamed to the player
-            newDrake.tame(player);
-            
-            // Spawn the drake
-            serverLevel.addFreshEntity(newDrake);
-            
-            // Clear binder data
-            tag.remove(BOUND_DRAGON_UUID);
-            tag.remove(BOUND_DRAGON_NAME);
-            tag.remove("DrakeData");
-            tag.putBoolean(IS_BOUND, false);
-            
-            // Send success message
+        if (ownerUUID != null && !player.getUUID().equals(ownerUUID)) {
             player.displayClientMessage(
-                Component.translatable("saintsdragons.message.drake_released", drakeName),
+                Component.translatable("saintsdragons.message.not_dragon_owner"),
                 true
             );
+            return false;
         }
+        
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return true;
+        }
+
+        PrimitiveDrakeEntity newDrake = new PrimitiveDrakeEntity(
+            com.leon.saintsdragons.common.registry.ModEntities.PRIMITIVE_DRAKE.get(),
+            serverLevel
+        );
+
+        // Set position
+        newDrake.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
+
+        // Restore drake data
+        newDrake.readAdditionalSaveData(drakeData);
+
+        if (ownerUUID != null) {
+            newDrake.setTame(true);
+            newDrake.setOwnerUUID(ownerUUID);
+        } else {
+            newDrake.tame(player);
+        }
+
+        // Spawn the drake
+        serverLevel.addFreshEntity(newDrake);
+
+        // Clear binder data
+        tag.remove(BOUND_DRAGON_UUID);
+        tag.remove(BOUND_DRAGON_NAME);
+        tag.remove(BOUND_OWNER_UUID);
+        tag.remove(BOUND_OWNER_NAME);
+        tag.remove("DrakeData");
+        tag.putBoolean(IS_BOUND, false);
+
+        // Send success message
+        player.displayClientMessage(
+            Component.translatable("saintsdragons.message.drake_released", drakeName),
+            true
+        );
+        return true;
     }
     
     /**

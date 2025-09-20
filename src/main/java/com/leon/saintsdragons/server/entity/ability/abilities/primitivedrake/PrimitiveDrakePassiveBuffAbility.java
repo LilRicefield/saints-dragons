@@ -69,6 +69,18 @@ public class PrimitiveDrakePassiveBuffAbility {
             currentNearby.add(entity.getUUID());
         }
 
+        if (!buffedEntityIds.isEmpty()) {
+            for (UUID uuid : new HashSet<>(buffedEntityIds)) {
+                if (!currentNearby.contains(uuid)) {
+                    Entity entity = serverLevel.getEntity(uuid);
+                    if (entity instanceof LivingEntity livingEntity) {
+                        livingEntity.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+                        livingEntity.removeEffect(MobEffects.ABSORPTION);
+                    }
+                }
+            }
+        }
+
         buffedEntityIds = currentNearby;
     }
 
