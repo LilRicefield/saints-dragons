@@ -261,6 +261,15 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
                 Component.translatable("entity.saintsdragons.primitive_drake.tamed", this.getName()),
                 true
             );
+            
+            // Trigger advancement for taming Primitive Drake
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                var advancement = serverPlayer.server.getAdvancements()
+                    .getAdvancement(com.leon.saintsdragons.SaintsDragons.rl("tame_primitive_drake"));
+                if (advancement != null) {
+                    serverPlayer.getAdvancements().award(advancement, "tame_primitive_drake");
+                }
+            }
         }
         
         return InteractionResult.sidedSuccess(this.level().isClientSide);
