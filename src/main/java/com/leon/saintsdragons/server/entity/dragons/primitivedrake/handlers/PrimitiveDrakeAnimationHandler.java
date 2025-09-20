@@ -177,6 +177,8 @@ public class PrimitiveDrakeAnimationHandler {
         // Register fake death animation for lightning dragon interaction
         actionController.triggerableAnim("fake_death",
                 RawAnimation.begin().thenLoop("animation.primitive_drake.fake_death"));
+        actionController.triggerableAnim("clear_fake_death",
+                RawAnimation.begin().thenWait(1));
     }
     
     /**
