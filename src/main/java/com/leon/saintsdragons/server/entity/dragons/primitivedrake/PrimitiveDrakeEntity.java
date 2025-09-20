@@ -39,7 +39,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 /**
  * Primitive Drake - A simple ground drake that wanders around and runs away from players.
  * No complex abilities, just basic AI and cute behavior.
- * 
  * Features:
  * - Sleep behavior: Sleeps at night, awake during day. Simple nap system for short rests.
  * - Play dead behavior: Plays dead when lightning dragons are nearby
@@ -651,7 +650,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     // ===== SAVE/LOAD DATA =====
     
     @Override
-    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         
         // Save sleep state
@@ -675,7 +674,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     }
     
     @Override
-    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         
         // Load sleep state

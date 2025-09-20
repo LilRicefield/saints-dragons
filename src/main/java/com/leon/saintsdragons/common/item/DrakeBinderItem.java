@@ -2,7 +2,6 @@ package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -15,6 +14,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class DrakeBinderItem extends Item {
     }
     
     @Override
-    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+    public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
         if (target instanceof PrimitiveDrakeEntity drake) {
             // Check if player owns the drake
             if (!drake.isTame() || !drake.isOwnedBy(player)) {
@@ -80,7 +80,7 @@ public class DrakeBinderItem extends Item {
     }
     
     @Override
-    public InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
+    public @NotNull InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
         Player player = context.getPlayer();
         ItemStack stack = context.getItemInHand();
         
@@ -94,7 +94,7 @@ public class DrakeBinderItem extends Item {
     }
     
     @Override
-    public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public net.minecraft.world.@NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         
         if (isBound(stack)) {
@@ -231,7 +231,7 @@ public class DrakeBinderItem extends Item {
     
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         if (isBound(stack)) {
             String drakeName = getBoundDrakeName(stack);
             if (drakeName != null) {
@@ -245,7 +245,7 @@ public class DrakeBinderItem extends Item {
     }
     
     @Override
-    public boolean isFoil(ItemStack stack) {
+    public boolean isFoil(@NotNull ItemStack stack) {
         // Make bound binders have enchantment glint
         return isBound(stack);
     }
