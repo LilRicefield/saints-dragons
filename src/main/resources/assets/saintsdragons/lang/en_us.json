@@ -1,5 +1,6 @@
 {
   "item.saintsdragons.dragon_ally_book": "Dragon Ally Book",
+  "item.saintsdragons.drake_binder": "Drake Binder",
   "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
   "item.saintsdragons.primitive_drake_spawn_egg": "Primitive Drake Spawn Egg",
   
@@ -17,6 +18,11 @@
   "saintsdragons.tooltip.dragon_ally_book.line2": "Allies won't be hurt by dragon attacks",
   "saintsdragons.tooltip.dragon_ally_book.line3": "Supports up to 10 allies per dragon",
   
+  "saintsdragons.tooltip.drake_binder.unbound": "Right-click on a tamed Primitive Drake to capture it",
+  "saintsdragons.tooltip.drake_binder.unbound_desc": "Right-click on ground to release captured drake",
+  "saintsdragons.tooltip.drake_binder.bound": "Contains: %s",
+  "saintsdragons.tooltip.drake_binder.bound_desc": "Provides resistance buff while carried",
+  
   "saintsdragons.message.dragon_not_found": "Dragon not found",
   "saintsdragons.message.not_dragon_owner": "You don't own this dragon",
   "saintsdragons.message.ally.success": "Successfully managed ally: %s",
@@ -26,6 +32,12 @@
   "saintsdragons.message.ally.already_ally": "Player '%s' is already an ally",
   "saintsdragons.message.ally.not_ally": "Player '%s' is not an ally",
   "saintsdragons.message.ally.ally_limit_reached": "Maximum ally limit reached (10 allies)",
+  
+  "saintsdragons.message.drake_captured": "Captured %s in Drake Binder!",
+  "saintsdragons.message.drake_released": "Released %s from Drake Binder!",
+  "saintsdragons.message.drake_cannot_be_captured": "This drake cannot be captured right now",
+  "saintsdragons.message.binder_already_occupied": "This binder already contains a drake",
+  "saintsdragons.message.binder_not_bound": "This binder is empty - capture a drake first",
   
   "saintsdragons.command.ally.add.result": "Dragon %s: %s - %s",
   "saintsdragons.command.ally.remove.result": "Dragon %s: %s - %s",

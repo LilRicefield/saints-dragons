@@ -104,6 +104,7 @@ public class SaintsDragons {
         // Add to tools tab
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(ModItems.DRAGON_ALLY_BOOK);
+            event.accept(ModItems.DRAKE_BINDER);
         }
     }
 
