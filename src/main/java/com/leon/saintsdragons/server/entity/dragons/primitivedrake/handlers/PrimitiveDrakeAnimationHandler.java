@@ -39,7 +39,12 @@ public class PrimitiveDrakeAnimationHandler {
         // Set default transition length for smooth blending
         state.getController().transitionLength(8); // Smooth but not too slow
         
-        // Check if sleeping first - sleep animation takes priority
+        // Check if playing dead first - play dead animation takes highest priority
+        if (drake.isPlayingDead()) {
+            return handlePlayDeadAnimation(state);
+        }
+        
+        // Check if sleeping - sleep animation takes priority
         if (drake.isSleeping()) {
             return handleSleepAnimation(state);
         }
@@ -77,6 +82,19 @@ public class PrimitiveDrakeAnimationHandler {
     }
     
     /**
+     * Handle play dead animation - takes priority over all other animations
+     */
+    private PlayState handlePlayDeadAnimation(AnimationState<PrimitiveDrakeEntity> state) {
+        // Set smooth transition to play dead animation
+        state.getController().transitionLength(15); // Slower transition for dramatic effect
+        
+        // While playing dead, the movement controller should NOT play any movement animations
+        // The fake_death animation is handled by the action controller
+        // Just return STOP to prevent any movement animations from playing
+        return PlayState.STOP;
+    }
+    
+    /**
      * Handle sleep animation - simple and smooth
      */
     private PlayState handleSleepAnimation(AnimationState<PrimitiveDrakeEntity> state) {
@@ -93,6 +111,11 @@ public class PrimitiveDrakeAnimationHandler {
      * Enhanced movement detection with smoothing to prevent jittery animations
      */
     private boolean detectMovement() {
+        // If playing dead, never detect movement - drake should stay completely still
+        if (drake.isPlayingDead()) {
+            return false;
+        }
+        
         // Multiple movement detection methods for reliability
         boolean velocityMoving = drake.getDeltaMovement().lengthSqr() > 0.005;
         boolean navigationMoving = drake.getNavigation().isInProgress();
@@ -150,6 +173,10 @@ public class PrimitiveDrakeAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.primitive_drake.grumble2"));
         actionController.triggerableAnim("grumble3",
                 RawAnimation.begin().thenPlay("animation.primitive_drake.grumble3"));
+        
+        // Register fake death animation for lightning dragon interaction
+        actionController.triggerableAnim("fake_death",
+                RawAnimation.begin().thenLoop("animation.primitive_drake.fake_death"));
     }
     
     /**

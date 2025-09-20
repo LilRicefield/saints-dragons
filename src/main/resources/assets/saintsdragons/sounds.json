@@ -245,5 +245,25 @@
         "pitch": 1.0
       }
     ]
+  },
+  "primitivedrake_scared": {
+    "subtitle": "Primitive Drake is scared",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/primitivedrake/primitivedrake_scared",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "primitivedrake_relieved": {
+    "subtitle": "Primitive Drake sighs with relief",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/primitivedrake/primitivedrake_relieved",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
   }
 }

@@ -77,6 +77,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     protected void registerGoals() {
         // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal(this)); // Highest priority - play dead when lightning dragon nearby
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeSleepGoal(this));
         this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeFollowOwnerGoal(this));
         this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeGroundWanderGoal(this, 0.35D, 120));
@@ -495,5 +496,45 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
      */
     public Vec3 getClientLocatorPosition(String name) {
         return this.clientLocatorCache.get(name);
+    }
+    
+    // ===== PLAY DEAD BEHAVIOR SUPPORT =====
+    
+    // Reference to the play dead goal for easy access
+    private com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal playDeadGoal = null;
+    
+    /**
+     * Set the play dead goal reference (called by the goal when it starts)
+     */
+    public void setPlayDeadGoal(com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal goal) {
+        this.playDeadGoal = goal;
+    }
+    
+    /**
+     * Clear the play dead goal reference (called by the goal when it stops)
+     */
+    public void clearPlayDeadGoal() {
+        this.playDeadGoal = null;
+    }
+    
+    /**
+     * Check if this drake is currently playing dead
+     */
+    public boolean isPlayingDead() {
+        return playDeadGoal != null && playDeadGoal.isPlayingDead();
+    }
+    
+    /**
+     * Get the remaining play dead duration in ticks
+     */
+    public int getRemainingPlayDeadTicks() {
+        return playDeadGoal != null ? playDeadGoal.getRemainingPlayDeadTicks() : 0;
+    }
+    
+    /**
+     * Get the remaining cooldown before can play dead again
+     */
+    public int getPlayDeadCooldownTicks() {
+        return playDeadGoal != null ? playDeadGoal.getRemainingCooldownTicks() : 0;
     }
 }
