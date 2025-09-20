@@ -62,6 +62,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     private boolean sleepTransitioning = false;
     private int napTicks = 0; // For short naps
     private int napCooldown = 0; // Cooldown between naps
+    private boolean dayNapQueued = false;
     
     // Synced sleep state for client-side animation
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING = 
@@ -496,7 +497,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         // Simple sleep preferences: sleep at night, awake during day
         return new SleepPreferences(
             true,  // canSleepAtNight
-            false, // canSleepDuringDay (only for naps)
+            true,  // canSleepDuringDay (for occasional naps)
             false, // requiresShelter (simple drake doesn't need shelter)
             false, // avoidsThunderstorms (not afraid of storms)
             false  // sleepsNearOwner (independent)
@@ -508,8 +509,14 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         // Can sleep at night or take a nap during day
         if (level().isDay()) {
             // During day, only allow short naps if not on cooldown
-            return napCooldown <= 0 && getRandom().nextFloat() < 0.01f; // 1% chance per tick for nap
+            if (napCooldown <= 0 && getRandom().nextFloat() < 0.01f) {
+                dayNapQueued = true;
+                return true;
+            }
+            dayNapQueued = false;
+            return false;
         } else {
+            dayNapQueued = false;
             // At night, always allow sleep
             return true;
         }
@@ -570,9 +577,19 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     public void startNap() {
         if (!sleeping && napCooldown <= 0) {
             napTicks = 1200 + getRandom().nextInt(1200); // 1-2 minutes
-            startSleepEnter();
         }
     }
+
+    public boolean isDayNapQueued() {
+        return dayNapQueued;
+    }
+
+    public boolean consumeDayNapQueued() {
+        boolean queued = dayNapQueued;
+        dayNapQueued = false;
+        return queued;
+    }
+
     
     // ===== SOUND KEYFRAME HANDLING =====
     
