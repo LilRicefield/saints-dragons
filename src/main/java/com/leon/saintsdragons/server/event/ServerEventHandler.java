@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.event;
 
-import com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake.DrakeBinderResistanceAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake.DrakeBinderAbility;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,7 +17,7 @@ public class ServerEventHandler {
         if (event.phase == TickEvent.Phase.END) {
             if (event.getServer().getTickCount() % 20 == 0) {
                 for (ServerLevel level : event.getServer().getAllLevels()) {
-                    DrakeBinderResistanceAbility.updateAllPortableBuffs(level);
+                    DrakeBinderAbility.updateAllPortableBuffs(level);
                 }
             }
         }

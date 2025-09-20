@@ -23,17 +23,18 @@ import java.util.UUID;
  * When a player carries a bound Drake Binder anywhere in their inventory,
  * they and nearby allies get resistance buffs.
  */
-public final class DrakeBinderResistanceAbility {
+public final class DrakeBinderAbility {
 
     // Buff parameters
     private static final double BUFF_RANGE = 8.0; // Same range as the drake's original ability
     private static final int BUFF_DURATION_TICKS = 40; // Short duration so we can expire it when binder removed
     private static final int BUFF_AMPLIFIER = 0; // Resistance I
+    private static final int ABSORPTION_AMPLIFIER = 0; // Absorption I
 
     // Track which entities are currently buffed per dimension so effects can be cleaned up
     private static final Map<ResourceKey<Level>, Set<UUID>> ACTIVE_BUFF_TARGETS = new HashMap<>();
 
-    private DrakeBinderResistanceAbility() {
+    private DrakeBinderAbility() {
         // Utility class
     }
 
@@ -75,7 +76,7 @@ public final class DrakeBinderResistanceAbility {
      * Apply portable resistance buffs to the player and nearby allies
      */
     private static void applyPortableResistanceBuffs(ServerLevel level, Player player, Set<UUID> currentTargets) {
-        applyResistanceToEntity(player, currentTargets);
+        applyBuffsToEntity(player, currentTargets);
 
         var nearbyEntities = level.getEntitiesOfClass(
             LivingEntity.class,
@@ -84,7 +85,7 @@ public final class DrakeBinderResistanceAbility {
         );
 
         for (LivingEntity entity : nearbyEntities) {
-            applyResistanceToEntity(entity, currentTargets);
+            applyBuffsToEntity(entity, currentTargets);
         }
     }
 
@@ -139,7 +140,7 @@ public final class DrakeBinderResistanceAbility {
     /**
      * Apply resistance effect to an entity and record it for cleanup tracking
      */
-    private static void applyResistanceToEntity(LivingEntity entity, Set<UUID> currentTargets) {
+    private static void applyBuffsToEntity(LivingEntity entity, Set<UUID> currentTargets) {
         MobEffectInstance resistanceEffect = new MobEffectInstance(
             MobEffects.DAMAGE_RESISTANCE,
             BUFF_DURATION_TICKS,
@@ -148,7 +149,16 @@ public final class DrakeBinderResistanceAbility {
             false,
             false
         );
+        MobEffectInstance absorptionEffect = new MobEffectInstance(
+            MobEffects.ABSORPTION,
+            BUFF_DURATION_TICKS,
+            ABSORPTION_AMPLIFIER,
+            false,
+            false,
+            false
+        );
         entity.addEffect(resistanceEffect);
+        entity.addEffect(absorptionEffect);
         currentTargets.add(entity.getUUID());
     }
 }
