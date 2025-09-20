@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.primitivedrake;
 
 import com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal;
-import com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake.PrimitiveDrakeResistanceAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake.PrimitiveDrakePassiveBuffAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -42,7 +42,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Features:
  * - Sleep behavior: Sleeps at night, awake during day. Simple nap system for short rests.
  * - Play dead behavior: Plays dead when lightning dragons are nearby
- * - Resistance aura: Provides resistance buff to nearby players and allies
+ * - Protective aura: Grants resistance and absorption to nearby players and allies
  * - NOT rideable: Too small and simple to be a mount
  */
 public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCapable {
@@ -50,8 +50,9 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final PrimitiveDrakeAnimationHandler animationController = new PrimitiveDrakeAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
-    private final PrimitiveDrakeResistanceAbility resistanceAbility =
-            new PrimitiveDrakeResistanceAbility(this);
+    // Passive aura that applies resistance and absorption to allies
+    private final PrimitiveDrakePassiveBuffAbility passiveBuffAbility =
+            new PrimitiveDrakePassiveBuffAbility(this);
     
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
@@ -521,12 +522,12 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         // Tick sound handler
         soundHandler.tick();
         
-        // Tick resistance ability (only if alive)
+        // Tick passive buff ability (only if alive)
         if (this.isAlive()) {
-            resistanceAbility.tick();
+            passiveBuffAbility.tick();
         } else {
             // Clean up resistance buffs when dead
-            resistanceAbility.cleanup();
+            passiveBuffAbility.cleanup();
         }
         
         // Handle sleep transition completion
@@ -738,3 +739,4 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         return !isPlayingDead() && !isSleeping() && !isDying();
     }
 }
+
