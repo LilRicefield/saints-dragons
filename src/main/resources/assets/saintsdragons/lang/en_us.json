@@ -62,6 +62,7 @@
   "entity.saintsdragons.primitive_drake.tamed": "%s has been tamed!",
   "entity.saintsdragons.primitive_drake.fed": "%s is fully healed!",
   "entity.saintsdragons.primitive_drake.fed_partial": "%s is being healed... (you must love this thing to even heal it).",
+  "entity.saintsdragons.primitive_drake.busy_playing_dead": "%s is currently doing something \"important\".",
   
   "saintsdragons.message.ally.success": "Successfully managed ally %s",
   "saintsdragons.message.ally.invalid_username": "Invalid username! Must be 3-16 characters, letters/numbers/underscores only, and appropriate content",
