@@ -35,7 +35,7 @@
   "saintsdragons.command.ally.not_dragon": "Entity %s is not a dragon",
   
   "advancement.saintsdragons.tame_lightning_dragon.title": "Bleeding Bolt",
-  "advancement.saintsdragons.tame_lightning_dragon.description": "Tame a Lightning Dragon with salmon and patience.",
+  "advancement.saintsdragons.tame_lightning_dragon.description": "Tame a Lightning Dragon with salmon or cod and a lot of patience.",
   
   "key.categories.saintsdragons": "Saints Dragons",
   "key.saintsdragons.ascend": "Dragon Ascend",
@@ -55,6 +55,13 @@
   "entity.saintsdragons.all.command_0": "%s is now following you",
   "entity.saintsdragons.all.command_1": "%s is now sitting", 
   "entity.saintsdragons.all.command_2": "%s is now wandering",
+  
+  "entity.saintsdragons.lightning_dragon.fed": "%s is fully healed!",
+  "entity.saintsdragons.lightning_dragon.fed_partial": "%s is being healed...",
+  
+  "entity.saintsdragons.primitive_drake.tamed": "%s has been tamed!",
+  "entity.saintsdragons.primitive_drake.fed": "%s is fully healed!",
+  "entity.saintsdragons.primitive_drake.fed_partial": "%s is being healed... (you must love this thing to even heal it).",
   
   "saintsdragons.message.ally.success": "Successfully managed ally %s",
   "saintsdragons.message.ally.invalid_username": "Invalid username! Must be 3-16 characters, letters/numbers/underscores only, and appropriate content",

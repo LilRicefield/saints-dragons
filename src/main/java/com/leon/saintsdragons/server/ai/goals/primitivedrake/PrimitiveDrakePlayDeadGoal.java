@@ -125,6 +125,9 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
         // Trigger the fake death animation
         drake.triggerAnim("action", "fake_death");
         
+        // Sync state to client
+        drake.getEntityData().set(com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity.DATA_PLAYING_DEAD, true);
+        
         // Play a scared sound
         drake.getSoundHandler().playVocal("primitivedrake_scared");
         
@@ -182,6 +185,9 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
         drake.sitProgress = 0f;
         drake.getEntityData().set(com.leon.saintsdragons.server.entity.base.DragonEntity.DATA_SIT_PROGRESS, 0f);
         
+        // Sync state to client
+        drake.getEntityData().set(com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity.DATA_PLAYING_DEAD, false);
+        
         // Play a relieved sound
         drake.getSoundHandler().playVocal("primitivedrake_relieved");
         
@@ -233,5 +239,29 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
      */
     public int getRemainingCooldownTicks() {
         return cooldownTicks;
+    }
+    
+    /**
+     * Restore play dead state from saved data
+     * Called when the entity is loaded from NBT
+     */
+    public void restorePlayDeadState(int playDeadTicks, int cooldownTicks) {
+        if (playDeadTicks > 0) {
+            this.isPlayingDead = true;
+            this.playDeadTicks = playDeadTicks;
+            this.cooldownTicks = cooldownTicks;
+            
+            // Register this goal with the drake
+            drake.setPlayDeadGoal(this);
+            
+            // Set sitting pose for the "dead" look
+            drake.setOrderedToSit(true);
+            
+            // Trigger the fake death animation
+            drake.triggerAnim("action", "fake_death");
+            
+            // Sync state to client
+            drake.getEntityData().set(com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity.DATA_PLAYING_DEAD, true);
+        }
     }
 }

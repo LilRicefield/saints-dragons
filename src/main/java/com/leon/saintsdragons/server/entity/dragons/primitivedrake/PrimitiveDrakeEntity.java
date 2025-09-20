@@ -61,6 +61,10 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING = 
             net.minecraft.network.syncher.SynchedEntityData.defineId(PrimitiveDrakeEntity.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
     
+    // Synced play dead state for client-side animation
+    public static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_PLAYING_DEAD = 
+            net.minecraft.network.syncher.SynchedEntityData.defineId(PrimitiveDrakeEntity.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    
     public PrimitiveDrakeEntity(EntityType<? extends PrimitiveDrakeEntity> entityType, Level level) {
         super(entityType, level);
         // Initialize animation state
@@ -71,6 +75,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_SLEEPING, false);
+        this.entityData.define(DATA_PLAYING_DEAD, false);
     }
     
     @Override
@@ -536,5 +541,60 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
      */
     public int getPlayDeadCooldownTicks() {
         return playDeadGoal != null ? playDeadGoal.getRemainingCooldownTicks() : 0;
+    }
+    
+    // ===== SAVE/LOAD DATA =====
+    
+    @Override
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        
+        // Save sleep state
+        tag.putBoolean("Sleeping", sleeping);
+        tag.putBoolean("SleepTransitioning", sleepTransitioning);
+        tag.putInt("NapTicks", napTicks);
+        tag.putInt("NapCooldown", napCooldown);
+        
+        // Save grumble cooldown
+        tag.putInt("GrumbleCooldown", grumbleCooldown);
+        
+        // Save play dead state
+        tag.putBoolean("PlayingDead", isPlayingDead());
+        if (playDeadGoal != null) {
+            tag.putInt("PlayDeadTicks", playDeadGoal.getRemainingPlayDeadTicks());
+            tag.putInt("PlayDeadCooldown", playDeadGoal.getRemainingCooldownTicks());
+        }
+    }
+    
+    @Override
+    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        
+        // Load sleep state
+        sleeping = tag.getBoolean("Sleeping");
+        sleepTransitioning = tag.getBoolean("SleepTransitioning");
+        napTicks = tag.getInt("NapTicks");
+        napCooldown = tag.getInt("NapCooldown");
+        
+        // Load grumble cooldown
+        grumbleCooldown = tag.getInt("GrumbleCooldown");
+        
+        // Sync sleep state to client
+        this.entityData.set(DATA_SLEEPING, sleeping);
+        
+        // Load play dead state
+        boolean wasPlayingDead = tag.getBoolean("PlayingDead");
+        int savedPlayDeadTicks = tag.getInt("PlayDeadTicks");
+        int savedCooldownTicks = tag.getInt("PlayDeadCooldown");
+        
+        // If we were playing dead when saved, restore that state
+        if (wasPlayingDead && savedPlayDeadTicks > 0) {
+            // Create a new play dead goal and restore its state
+            var restoredGoal = new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal(this);
+            restoredGoal.restorePlayDeadState(savedPlayDeadTicks, savedCooldownTicks);
+            this.playDeadGoal = restoredGoal;
+        } else {
+            this.entityData.set(DATA_PLAYING_DEAD, false);
+        }
     }
 }
