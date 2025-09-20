@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.event;
 
-import com.leon.saintsdragons.server.entity.dragons.primitivedrake.abilities.DrakeBinderResistanceAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake.DrakeBinderResistanceAbility;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
