@@ -1931,6 +1931,89 @@
 					}
 				}
 			}
+		},
+		"animation.primitive_drake.fake_death": {
+			"loop": true,
+			"bones": {
+				"body": {
+					"rotation": {
+						"vector": [0, 0, -90]
+					},
+					"position": {
+						"vector": [0, 7, 0]
+					}
+				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, -35, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 15, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 20, 0]
+					}
+				},
+				"head": {
+					"rotation": {
+						"vector": [0, 27.5, 0]
+					}
+				},
+				"upperjaw": {
+					"rotation": {
+						"vector": [-20, 0, 0]
+					}
+				},
+				"leftfrontleg": {
+					"rotation": {
+						"vector": [0, 0, 50]
+					}
+				},
+				"leftfrontknee": {
+					"rotation": {
+						"vector": [45, -40, 0]
+					}
+				},
+				"rightfrontknee": {
+					"rotation": {
+						"vector": [30, 0, 0]
+					}
+				},
+				"rightfrontfeet": {
+					"rotation": {
+						"vector": [47.5, 0, 0]
+					}
+				},
+				"leftbackleg": {
+					"rotation": {
+						"vector": [-13.64973, 6.27967, 24.24769]
+					}
+				},
+				"leftbackknee": {
+					"rotation": {
+						"vector": [45, 0, 0]
+					}
+				},
+				"rightbackleg": {
+					"rotation": {
+						"vector": [27.5, 0, 0]
+					}
+				},
+				"rightbackankle": {
+					"rotation": {
+						"vector": [27.5, 0, 0]
+					}
+				},
+				"rightbackfeet": {
+					"rotation": {
+						"vector": [17.5, 0, 0]
+					}
+				}
+			}
 		}
 	},
 	"geckolib_format_version": 2
