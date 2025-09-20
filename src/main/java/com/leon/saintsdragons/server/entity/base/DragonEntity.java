@@ -14,6 +14,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -356,6 +357,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             }
         }
         
+        if (entity instanceof OwnableEntity ownable) {
+            LivingEntity owner = ownable.getOwner();
+            if (owner instanceof Player playerOwner) {
+                return (this.isTame() && this.isOwnedBy(playerOwner)) || allyManager.isAlly(playerOwner);
+            }
+        }
         return false;
     }
 
