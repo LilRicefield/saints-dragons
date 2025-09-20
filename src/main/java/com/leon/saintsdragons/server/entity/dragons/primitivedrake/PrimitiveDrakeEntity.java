@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.primitivedrake;
 
 import com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal;
+import com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake.PrimitiveDrakeResistanceAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -50,8 +51,8 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final PrimitiveDrakeAnimationHandler animationController = new PrimitiveDrakeAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
-    private final com.leon.saintsdragons.server.entity.dragons.primitivedrake.abilities.PrimitiveDrakeResistanceAbility resistanceAbility = 
-            new com.leon.saintsdragons.server.entity.dragons.primitivedrake.abilities.PrimitiveDrakeResistanceAbility(this);
+    private final PrimitiveDrakeResistanceAbility resistanceAbility =
+            new PrimitiveDrakeResistanceAbility(this);
     
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
