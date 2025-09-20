@@ -9,8 +9,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -47,6 +45,8 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final PrimitiveDrakeAnimationHandler animationController = new PrimitiveDrakeAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
+    private final com.leon.saintsdragons.server.entity.dragons.primitivedrake.abilities.PrimitiveDrakeResistanceAbility resistanceAbility = 
+            new com.leon.saintsdragons.server.entity.dragons.primitivedrake.abilities.PrimitiveDrakeResistanceAbility(this);
     
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
@@ -82,12 +82,12 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     protected void registerGoals() {
         // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal(this)); // Highest priority - play dead when lightning dragon nearby
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeSleepGoal(this));
+        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeSleepGoal(this)); // Highest priority - deep slumber takes precedence
+        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal(this)); // Second priority - play dead when lightning dragon nearby
         this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeFollowOwnerGoal(this));
         this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeGroundWanderGoal(this, 0.35D, 120));
-        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeLookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeRandomLookAroundGoal(this));
     }
     
     public static AttributeSupplier.Builder createAttributes() {
@@ -101,6 +101,14 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     // Ground drake, no flying!
     public boolean isFlying() {
         return false;
+    }
+    
+    /**
+     * Check if the dragon is in a muted state (sitting/staying/playing dead)
+     * Used by sound system to prevent ambient sounds
+     */
+    public boolean isStayOrSitMuted() {
+        return this.isOrderedToSit() || this.isInSittingPose() || this.isPlayingDead();
     }
 
     
@@ -430,6 +438,14 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         
         // Tick sound handler
         soundHandler.tick();
+        
+        // Tick resistance ability (only if alive)
+        if (this.isAlive()) {
+            resistanceAbility.tick();
+        } else {
+            // Clean up resistance buffs when dead
+            resistanceAbility.cleanup();
+        }
         
         // Handle sleep transition completion
         if (sleepTransitioning) {

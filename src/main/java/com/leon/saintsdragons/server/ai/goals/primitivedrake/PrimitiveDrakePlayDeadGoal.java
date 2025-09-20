@@ -57,19 +57,29 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
             return false;
         }
         
-        // Don't play dead if tamed and owner is nearby (they feel safe)
+        // Check for nearby lightning dragons first
+        if (!findNearbyLightningDragon()) {
+            return false;
+        }
+        
+        // If tamed drake, check if the lightning dragon is also tamed
         if (drake.isTame()) {
+            // Tamed drakes don't play dead around tamed lightning dragons (both are pets)
+            if (nearbyLightningDragon != null && nearbyLightningDragon.isTame()) {
+                return false;
+            }
+            
+            // Tamed drakes still play dead around wild lightning dragons, but only if owner is far
             var owner = drake.getOwner();
             if (owner != null) {
                 double distanceToOwner = drake.distanceToSqr(owner);
-                if (distanceToOwner < 16.0) { // Within 4 blocks of owner
+                if (distanceToOwner < 16.0) { // Within 4 blocks of owner = feels safe
                     return false;
                 }
             }
         }
         
-        // Check for nearby lightning dragons
-        return findNearbyLightningDragon();
+        return true;
     }
     
     @Override
@@ -79,19 +89,25 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
             return false;
         }
         
-        // Don't continue if tamed and owner is nearby (they feel safe)
-        if (drake.isTame()) {
-            var owner = drake.getOwner();
-            if (owner != null) {
-                double distanceToOwner = drake.distanceToSqr(owner);
-                if (distanceToOwner < 16.0) { // Within 4 blocks of owner
-                    return false;
-                }
-            }
-        }
-        
         // Continue if still playing dead and haven't exceeded duration
         if (isPlayingDead && playDeadTicks > 0) {
+            // If tamed drake, check if the lightning dragon is also tamed
+            if (drake.isTame()) {
+                // Tamed drakes don't continue playing dead around tamed lightning dragons
+                if (nearbyLightningDragon != null && nearbyLightningDragon.isTame()) {
+                    return false;
+                }
+                
+                // Tamed drakes stop playing dead if owner gets close
+                var owner = drake.getOwner();
+                if (owner != null) {
+                    double distanceToOwner = drake.distanceToSqr(owner);
+                    if (distanceToOwner < 16.0) { // Within 4 blocks of owner = feels safe
+                        return false;
+                    }
+                }
+            }
+            
             // Check if lightning dragon is still nearby - if not, continue playing dead for a bit longer
             if (nearbyLightningDragon != null && !nearbyLightningDragon.isRemoved()) {
                 double distance = drake.distanceToSqr(nearbyLightningDragon);

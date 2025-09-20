@@ -26,6 +26,11 @@ public class PrimitiveDrakeGroundWanderGoal extends RandomStrollGoal {
             return false;
         }
 
+        // Don't wander while playing dead
+        if (drake.isPlayingDead()) {
+            return false;
+        }
+
         // Don't wander during combat
         if (drake.getTarget() != null && drake.getTarget().isAlive()) {
             return false;
@@ -51,6 +56,11 @@ public class PrimitiveDrakeGroundWanderGoal extends RandomStrollGoal {
 
         // Stop if ordered to sit
         if (drake.isOrderedToSit()) {
+            return false;
+        }
+
+        // Stop if playing dead
+        if (drake.isPlayingDead()) {
             return false;
         }
 

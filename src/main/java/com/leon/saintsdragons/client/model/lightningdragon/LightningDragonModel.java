@@ -39,9 +39,6 @@ public class LightningDragonModel extends DefaultedEntityGeoModel<LightningDrago
 
             // When beaming, bias the neck chain to aim along the beam direction
             applyNeckAimAlongBeam(entity, animationState);
-
-            // Tail physics retained
-            applyTailPhysics(entity, animationState);
         }
     }
 
@@ -168,84 +165,4 @@ public class LightningDragonModel extends DefaultedEntityGeoModel<LightningDrago
         }
     }
 
-    /**
-     * Apply physics-based tail animation using GeoBone chain approach
-     * Adapted for aerial/terrestrial dragon movement with smooth following behavior
-     */
-    private void applyTailPhysics(LightningDragonEntity entity, AnimationState<LightningDragonEntity> animationState) {
-        float partialTicks = animationState.getPartialTick();
-        float ageInTicks = (entity.tickCount + partialTicks);
-
-        // Flight phase influence from entity flight controller
-        float glideFrac = entity.getGlidingFraction();
-        float flapFrac = entity.getFlappingFraction();
-        float hoverFrac = entity.getHoveringFraction();
-
-        // Get all tail bones
-        GeoBone[] tailBones = new GeoBone[10];
-        for (int i = 0; i < 10; i++) {
-            var boneOpt = getBone("tail" + (i + 1));
-            if (boneOpt.isPresent()) {
-                tailBones[i] = boneOpt.get();
-            }
-        }
-        // Calculate dragon's current body rotation and movement
-        float bodyYaw = entity.yBodyRot;
-        float previousBodyYaw = entity.yBodyRotO;
-        float bodyYawDelta = Mth.wrapDegrees(bodyYaw - previousBodyYaw);
-
-        // Movement-based values
-        boolean isFlying = !entity.onGround() && entity.getDeltaMovement().y > -0.1;
-
-        // Base idle swaying (calmer while gliding, stronger while flapping/hovering)
-        float idleBase = 5F;
-        float idleScale = Mth.lerp(glideFrac, 1.0f, 0.6f) + flapFrac * 0.3f + hoverFrac * 0.1f;
-        float idleSwaying = (float) (Math.sin(ageInTicks * 0.03F) * idleBase * idleScale);
-
-        // Apply chain physics simulation - each segment follows the previous
-        for (int i = 0; i < tailBones.length; i++) {
-            if (tailBones[i] != null) {
-                float segmentIndex = i + 1;
-                float segmentInfluence = segmentIndex / 10.0F; // 0.1 to 1.0
-
-                // Tail following body rotation with increasing delay down the chain
-                float followDelay = segmentIndex * 0.5F; // Reduced delay for less sensitivity
-                float delayedBodyYaw = bodyYaw - (bodyYawDelta * followDelay * 0.05F);
-                float targetYaw = Mth.wrapDegrees(delayedBodyYaw - bodyYaw) * segmentInfluence * 0.3F; // Reduced influence
-
-                // Add idle swaying that increases toward tail tip
-                float sway = idleSwaying * segmentInfluence * 0.5F; // Reduced sway
-
-                // Add movement-based swing (tail follows turn direction); emphasize when flapping
-                float movementSwing = bodyYawDelta * segmentInfluence * (0.8F + 0.3f * flapFrac);
-
-                // Natural wave motion for organic feel; calmer while gliding
-                float waveAmp = Mth.lerp(glideFrac, 1.0f, 0.5f);
-                float waveMotion = (float) (Math.sin((ageInTicks * 0.06F) + (segmentIndex * 0.4F)) * waveAmp * segmentInfluence);
-
-                // Flying gets more dramatic movement; modulate by flap/hover
-                float flyModifier = isFlying ? (1.3F + 0.25f * flapFrac + 0.1f * hoverFrac) : 1.0F;
-
-                // Combine all Y (horizontal) rotations
-                float totalYaw = (targetYaw + sway + movementSwing + waveMotion) * flyModifier;
-
-                // Apply rotation smoothly without resetting to snapshot
-                float currentRotY = tailBones[i].getRotY();
-                float targetRotY = tailBones[i].getInitialSnapshot().getRotY() + (totalYaw * Mth.DEG_TO_RAD);
-                tailBones[i].setRotY(Mth.lerp(0.15f, currentRotY, targetRotY)); // Smooth interpolation
-
-                // Add subtle vertical motion - same for both flying and grounded
-
-                // Subtle vertical motion; slightly stronger while flapping, calmer while gliding
-                float basePitchAmp = 0.5F * (1.0f + 0.25f * flapFrac);
-                basePitchAmp = basePitchAmp * Mth.lerp(glideFrac, 1.0f, 0.7f);
-                float totalPitch = (float) (Math.sin((ageInTicks * 0.04F) + (segmentIndex * 0.3F)) * basePitchAmp * segmentInfluence);
-
-                // Apply X rotation smoothly without resetting to snapshot
-                float currentRotX = tailBones[i].getRotX();
-                float targetRotX = tailBones[i].getInitialSnapshot().getRotX() + (totalPitch * Mth.DEG_TO_RAD);
-                tailBones[i].setRotX(Mth.lerp(0.15f, currentRotX, targetRotX)); // Smooth interpolation
-            }
-        }
-    }
 }

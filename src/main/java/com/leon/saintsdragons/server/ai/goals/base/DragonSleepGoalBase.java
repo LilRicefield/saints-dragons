@@ -27,6 +27,11 @@ public abstract class DragonSleepGoalBase extends Goal {
         if (agitated()) return false;
         if (sleepCapable.isSleepSuppressed()) return false;
         
+        // Don't sleep while playing dead (deep slumber takes priority)
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity drake && drake.isPlayingDead()) {
+            return false;
+        }
+        
         // Use interface method to check if dragon can sleep
         if (!sleepCapable.canSleepNow()) return false;
         
@@ -41,6 +46,11 @@ public abstract class DragonSleepGoalBase extends Goal {
     public boolean canContinueToUse() {
         // If agitated, stop sleeping immediately
         if (agitated()) return false;
+        
+        // Don't continue sleeping while playing dead (deep slumber takes priority)
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity drake && drake.isPlayingDead()) {
+            return false;
+        }
         
         // Check if we should continue sleeping based on current conditions
         if (sleepCapable.isSleepSuppressed()) return false;
