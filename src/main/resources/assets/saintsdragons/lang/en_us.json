@@ -25,13 +25,6 @@
   
   "saintsdragons.message.dragon_not_found": "Dragon not found",
   "saintsdragons.message.not_dragon_owner": "You don't own this dragon",
-  "saintsdragons.message.ally.success": "Successfully managed ally: %s",
-  "saintsdragons.message.ally.invalid_username": "Invalid username provided",
-  "saintsdragons.message.ally.player_not_found": "Player '%s' not found on server",
-  "saintsdragons.message.ally.uuid_mismatch": "Username-UUID validation failed for '%s'",
-  "saintsdragons.message.ally.already_ally": "Player '%s' is already an ally",
-  "saintsdragons.message.ally.not_ally": "Player '%s' is not an ally",
-  "saintsdragons.message.ally.ally_limit_reached": "Maximum ally limit reached (10 allies)",
   
   "saintsdragons.message.drake_captured": "Captured %s in Drake Binder!",
   "saintsdragons.message.drake_released": "Released %s from Drake Binder!",
@@ -50,7 +43,7 @@
   "advancement.saintsdragons.tame_lightning_dragon.description": "Tame a Lightning Dragon with salmon or cod and a lot of patience.",
   
   "advancement.saintsdragons.tame_primitive_drake.title": "Iron Idiot",
-  "advancement.saintsdragons.tame_primitive_drake.description": "Tame a Primitive Drake with some fish.",
+  "advancement.saintsdragons.tame_primitive_drake.description": "Tame a Primitive Drake.",
   
   "key.categories.saintsdragons": "Saints Dragons",
   "key.saintsdragons.ascend": "Dragon Ascend",
@@ -76,7 +69,7 @@
   
   "entity.saintsdragons.primitive_drake.tamed": "%s has been tamed!",
   "entity.saintsdragons.primitive_drake.fed": "%s is fully healed!",
-  "entity.saintsdragons.primitive_drake.fed_partial": "%s is being healed... (you must love this thing to even heal it).",
+  "entity.saintsdragons.primitive_drake.fed_partial": "%s is being healed... (you must love this thing to even heal it)",
   "entity.saintsdragons.primitive_drake.busy_playing_dead": "%s is currently doing something \"important\".",
   
   "saintsdragons.message.ally.success": "Successfully managed ally %s",
@@ -87,7 +80,7 @@
   "saintsdragons.message.ally.not_ally": "%s is not an ally",
   "saintsdragons.message.ally.ally_limit_reached": "Maximum ally limit reached (10 allies max)",
   "saintsdragons.message.ally.easter_egg": "Easter egg message",
-  "saintsdragons.message.ally.is_owner": "Must you try? You are already the owner of this dragon!",
+  "saintsdragons.message.ally.is_owner": "Must you try? You are the owner of this dragon.",
   "saintsdragons.message.ally.inappropriate_content": "Trying to be funny?",
   
   "saintsdragons.message.easter_egg.notch": "Yes, he created this game. But he's not on this server!",
