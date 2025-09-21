@@ -2,6 +2,7 @@
 package com.leon.saintsdragons.common.network;
 
 import com.leon.saintsdragons.SaintsDragons;
+import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -10,10 +11,9 @@ public class NetworkHandler {
     private static final String PROTOCOL_VERSION = "1";
     private static final int ID_RIDER_INPUT = 0;
     private static final int ID_CONTROL_STATE = 1;
-    private static final int ID_ANIM_STATE   = 2;
-    private static final int ID_ALLY_MANAGEMENT = 3;
-    private static final int ID_ALLY_LIST = 4;
-    private static final int ID_ALLY_REQUEST = 5;
+    private static final int ID_ALLY_MANAGEMENT = 2;
+    private static final int ID_ALLY_LIST = 3;
+    private static final int ID_ALLY_REQUEST = 4;
 
     public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(SaintsDragons.MOD_ID, "main"),
@@ -23,6 +23,7 @@ public class NetworkHandler {
     );
 
     public static void register() {
+        DragonAnimTickets.bootstrap();
         // Message: Rider input
         INSTANCE.messageBuilder(MessageDragonRideInput.class, ID_RIDER_INPUT)
                 .encoder(MessageDragonRideInput::encode)
@@ -37,12 +38,6 @@ public class NetworkHandler {
                 .consumerNetworkThread(MessageDragonControl::handle)
                 .add();
 
-        // Message: Server->Client animation state pulse
-        INSTANCE.messageBuilder(MessageDragonAnimState.class, ID_ANIM_STATE)
-                .encoder(MessageDragonAnimState::encode)
-                .decoder(MessageDragonAnimState::decode)
-                .consumerNetworkThread(MessageDragonAnimState::handle)
-                .add();
 
         // Message: Client->Server ally management (add/remove)
         INSTANCE.messageBuilder(MessageDragonAllyManagement.class, ID_ALLY_MANAGEMENT)

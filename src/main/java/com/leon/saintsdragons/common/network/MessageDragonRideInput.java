@@ -89,10 +89,7 @@ public record MessageDragonRideInput(boolean goingUp,
             }
             if (dragon.getEntityData().get(DATA_GROUND_MOVE_STATE) != moveState) {
                 dragon.getEntityData().set(DATA_GROUND_MOVE_STATE, moveState);
-                com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
-                        net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> dragon),
-                        new com.leon.saintsdragons.common.network.MessageDragonAnimState(dragon.getId(), (byte) moveState, (byte) dragon.getSyncedFlightMode())
-                );
+                dragon.syncAnimState(moveState, dragon.getSyncedFlightMode());
             }
         }
 

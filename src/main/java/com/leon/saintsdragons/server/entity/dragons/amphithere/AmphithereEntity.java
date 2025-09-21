@@ -12,6 +12,7 @@ import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.Amphithe
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereInteractionHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -113,9 +114,6 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     private int pitchDir = 0;
 
     // ===== Client animation overrides (for robust observer sync) =====
-    private int clientGroundOverride = Integer.MIN_VALUE;
-    private int clientFlightOverride = Integer.MIN_VALUE;
-    private int clientOverrideExpiry = 0;
 
     public AmphithereEntity(EntityType<? extends AmphithereEntity> type, Level level) {
         super(type, level);
@@ -316,14 +314,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
         this.entityData.set(DATA_GROUND_MOVE_STATE, 0);
         this.entityData.set(DATA_FLIGHT_MODE, -1);
-        clientGroundOverride = Integer.MIN_VALUE;
-        clientFlightOverride = Integer.MIN_VALUE;
-        clientOverrideExpiry = 0;
-
-        com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
-                net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this),
-                new com.leon.saintsdragons.common.network.MessageDragonAnimState(this.getId(), (byte) 0, (byte) -1)
-        );
+        this.syncAnimState(0, -1);
 
         this.setTarget(null);
     }
@@ -492,6 +483,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             int s = Mth.clamp(state, 0, 2);
             if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
                 this.entityData.set(DATA_GROUND_MOVE_STATE, s);
+                this.syncAnimState(s, getSyncedFlightMode());
             }
         }
     }
@@ -504,29 +496,11 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     public void setAccelerating(boolean accelerating) { this.entityData.set(DATA_ACCELERATING, accelerating); }
 
     // ===== Client animation overrides (for robust observer sync) =====
-    public void applyClientAnimState(int groundState, int flightMode) {
-        this.clientGroundOverride = groundState;
-        this.clientFlightOverride = flightMode;
-        this.clientOverrideExpiry = this.tickCount + 40; // Expire after 2 seconds
-    }
     
     public int getEffectiveGroundState() {
-        if (level().isClientSide && clientGroundOverride != Integer.MIN_VALUE && tickCount < clientOverrideExpiry) {
-            return clientGroundOverride;
-        }
-        // Clear expired overrides
-        if (level().isClientSide && tickCount >= clientOverrideExpiry) {
-            clientGroundOverride = Integer.MIN_VALUE;
-        }
-        if (level().isClientSide) {
-            // Client-side calculation based on movement with refined thresholds
-            double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-            final double WALK_MIN = 0.0008;
-            final double RUN_MIN = 0.0200;
-            
-            if (velSqr > RUN_MIN) return 2; // running
-            if (velSqr > WALK_MIN) return 1; // walking
-            return 0; // idle
+        Integer state = this.getAnimData(DragonAnimTickets.GROUND_STATE);
+        if (state != null) {
+            return state;
         }
         return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
@@ -581,10 +555,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         
         // Send animation state sync to clients when states change
         if (groundStateChanged || flightModeChanged) {
-            com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
-                    net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this),
-                    new com.leon.saintsdragons.common.network.MessageDragonAnimState(this.getId(), (byte) moveState, (byte) flightMode)
-            );
+            this.syncAnimState(moveState, flightMode);
         }
         
         // Stop running if not moving
@@ -835,9 +806,6 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             airTicks = Math.max(airTicks, 1);
         }
 
-        clientGroundOverride = Integer.MIN_VALUE;
-        clientFlightOverride = Integer.MIN_VALUE;
-        clientOverrideExpiry = 0;
 
         this.setNoGravity(isFlying() || isHovering());
     }

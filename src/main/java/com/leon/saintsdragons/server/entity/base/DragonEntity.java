@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
+import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -73,6 +74,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     @Override
     public abstract void registerControllers(AnimatableManager.ControllerRegistrar controllers);
+
+    public void syncAnimState(int groundState, int flightMode) {
+        if (level().isClientSide) {
+            return;
+        }
+        this.setAnimData(DragonAnimTickets.GROUND_STATE, groundState);
+        this.setAnimData(DragonAnimTickets.FLIGHT_MODE, flightMode);
+    }
 
     // ===== DRAGON ABILITY SYSTEM =====
     /**
