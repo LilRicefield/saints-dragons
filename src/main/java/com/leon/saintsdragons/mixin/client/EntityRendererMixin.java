@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.mixin.client;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -23,26 +24,48 @@ public class EntityRendererMixin {
     private void modifyFOV(Camera camera, float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Double> cir) {
         Minecraft mc = Minecraft.getInstance();
         double targetFOVMultiplier = 1.0;
-        if (mc.player != null && mc.player.getVehicle() instanceof LightningDragonEntity dragon) {
+        if (mc.player != null && (mc.player.getVehicle() instanceof LightningDragonEntity dragon || mc.player.getVehicle() instanceof AmphithereEntity amphithere)) {
             // Calculate target FOV multiplier based on dragon sprint state
-            if (dragon.isAccelerating()) {
-                double currentSpeed;
-                double maxSpeed;
+            boolean isAccelerating = false;
+            boolean isFlying = false;
+            double currentSpeed = 0;
+            double maxSpeed = 0;
+            
+            if (mc.player.getVehicle() instanceof LightningDragonEntity lightningDragon) {
+                isAccelerating = lightningDragon.isAccelerating();
+                isFlying = lightningDragon.isFlying();
                 
-                if (dragon.isFlying()) {
-                    // Flying sprint - use flying speed attributes
-                    currentSpeed = dragon.getDeltaMovement().horizontalDistance();
-                    maxSpeed = dragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 40.0; // SPRINT_MAX_MULT
-                } else {
-                    // Ground sprint - use movement speed attributes
-                    currentSpeed = dragon.getDeltaMovement().horizontalDistance();
-                    maxSpeed = dragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7; // Ground sprint multiplier
+                if (isAccelerating) {
+                    currentSpeed = lightningDragon.getDeltaMovement().horizontalDistance();
+                    if (isFlying) {
+                        // Flying sprint - use flying speed attributes
+                        maxSpeed = lightningDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 50.0; // SPRINT_MAX_MULT
+                    } else {
+                        // Ground sprint - use movement speed attributes
+                        maxSpeed = lightningDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7; // Ground sprint multiplier
+                    }
                 }
+            } else if (mc.player.getVehicle() instanceof AmphithereEntity amphithereDragon) {
+                isAccelerating = amphithereDragon.isAccelerating();
+                isFlying = amphithereDragon.isFlying();
                 
+                if (isAccelerating) {
+                    currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
+                    if (isFlying) {
+                        // Flying sprint - use flying speed attributes
+                        maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.0; // SPRINT_MAX_MULT
+                    } else {
+                        // Ground sprint - use movement speed attributes
+                        maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.6; // Ground sprint multiplier
+                    }
+                }
+            }
+            
+            if (isAccelerating && maxSpeed > 0) {
                 double speedRatio = Math.min(1.0, currentSpeed / maxSpeed);
                 
                 // Different FOV multipliers for flying vs ground sprinting
-                if (dragon.isFlying()) {
+                if (isFlying) {
                     // Flying sprint - dramatic but cinematic FOV effect
                     targetFOVMultiplier = 1.0 + (speedRatio); // Up to 100% wider FOV at max speed
                 } else {
