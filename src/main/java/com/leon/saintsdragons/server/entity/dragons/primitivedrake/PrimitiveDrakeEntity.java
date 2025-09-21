@@ -72,6 +72,10 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     public static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_PLAYING_DEAD = 
             net.minecraft.network.syncher.SynchedEntityData.defineId(PrimitiveDrakeEntity.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
     
+    // Synced ground movement state for reliable animation
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = 
+            net.minecraft.network.syncher.SynchedEntityData.defineId(PrimitiveDrakeEntity.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+    
     // Binding state for Drake Binder
     private boolean boundToBinder = false;
     
@@ -86,6 +90,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         super.defineSynchedData();
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_PLAYING_DEAD, false);
+        this.entityData.define(DATA_GROUND_MOVE_STATE, 0); // 0=idle, 1=walking, 2=running
     }
     
     @Override
@@ -445,6 +450,11 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             this.pendingRestorePlayDeadTicks = 0;
             this.pendingRestoreCooldownTicks = 0;
         }
+        
+        // Update animation states
+        if (!this.level().isClientSide) {
+            tickAnimationStates();
+        }
     }
 
     // ===== SLEEP SYSTEM IMPLEMENTATION =====
@@ -649,6 +659,77 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
      */
     public boolean isPlayingDead() {
         return playDeadGoal != null && playDeadGoal.isPlayingDead();
+    }
+    
+    // ===== MOVEMENT STATE METHODS =====
+    
+    /**
+     * Check if the drake is currently walking
+     */
+    public boolean isWalking() {
+        if (level().isClientSide) {
+            int s = getEffectiveGroundState();
+            return s == 1; // walking state
+        }
+        int s = this.entityData.get(DATA_GROUND_MOVE_STATE);
+        return s == 1; // walking state
+    }
+    
+    /**
+     * Check if the drake is currently running
+     */
+    public boolean isRunning() {
+        if (level().isClientSide) {
+            int s = getEffectiveGroundState();
+            return s == 2; // running state
+        }
+        int s = this.entityData.get(DATA_GROUND_MOVE_STATE);
+        return s == 2; // running state
+    }
+    
+    /**
+     * Get the effective ground movement state (with client-side prediction)
+     */
+    public int getEffectiveGroundState() {
+        if (level().isClientSide) {
+            // Client-side calculation based on movement with refined thresholds
+            double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
+            final double WALK_MIN = 0.0008;
+            final double RUN_MIN = 0.0200;
+            
+            if (velSqr > RUN_MIN) return 2; // running
+            if (velSqr > WALK_MIN) return 1; // walking
+            return 0; // idle
+        }
+        return this.entityData.get(DATA_GROUND_MOVE_STATE);
+    }
+    
+    /**
+     * Update animation states based on current movement
+     */
+    private void tickAnimationStates() {
+        // Update ground movement state with more sophisticated detection
+        int moveState = 0; // idle
+        
+        if (!isSleeping() && !isPlayingDead()) {
+            // Ground movement with refined thresholds
+            double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
+            
+            // Use similar thresholds to LightningDragonEntity for consistency
+            final double WALK_MIN = 0.0008;
+            final double RUN_MIN = 0.0200;
+            
+            if (velSqr > RUN_MIN) {
+                moveState = 2; // running
+            } else if (velSqr > WALK_MIN) {
+                moveState = 1; // walking
+            }
+        }
+        
+        // Update entity data
+        if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
+            this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
+        }
     }
     
     /**

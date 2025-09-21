@@ -33,9 +33,18 @@ public class AmphithereAnimationHandler {
 
         if (dragon.isFlying()) {
             state.setAndContinue(GLIDE);
-        } else if (dragon.getDeltaMovement().horizontalDistanceSqr() > 0.01 || dragon.getNavigation().isInProgress()) {
-            state.setAndContinue(WALK);
+        } else if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isHovering()) {
+            // Use the improved movement state detection
+            if (dragon.isRunning()) {
+                // TODO: Add run animation when available
+                state.setAndContinue(WALK); // Fallback to walk for now
+            } else if (dragon.isWalking()) {
+                state.setAndContinue(WALK);
+            } else {
+                state.setAndContinue(IDLE);
+            }
         } else {
+            // During takeoff, landing, or hovering, play idle animation
             state.setAndContinue(IDLE);
         }
 
