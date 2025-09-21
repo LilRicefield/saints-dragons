@@ -29,6 +29,6 @@ side="BOTH"
 [[dependencies.saintsdragons]]
 modId="geckolib"
 mandatory=true
-versionRange="[4.7.4,)"
+versionRange="[4.8,)"
 ordering="BEFORE"
 side="BOTH"
