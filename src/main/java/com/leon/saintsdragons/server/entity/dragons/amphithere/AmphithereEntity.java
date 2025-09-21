@@ -126,9 +126,9 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     public static AttributeSupplier.Builder createAttributes() {
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 60.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.40D)
+                .add(Attributes.MOVEMENT_SPEED, 0.45D)
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
-                .add(Attributes.FLYING_SPEED, 0.50D)
+                .add(Attributes.FLYING_SPEED, 0.35D)
                 .add(Attributes.ARMOR, 4.0D);
     }
 

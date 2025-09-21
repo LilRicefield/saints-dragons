@@ -43,6 +43,7 @@ public class PrimitiveDrakeGroundWanderGoal extends RandomStrollGoal {
                 return false;
             }
         }
+        // Untamed drakes can always wander (they don't follow commands)
 
         return super.canUse();
     }
