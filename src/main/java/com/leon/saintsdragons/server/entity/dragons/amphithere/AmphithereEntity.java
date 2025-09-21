@@ -62,6 +62,10 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_LANDING =
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_GOING_UP =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final AmphithereAnimationHandler animationHandler = new AmphithereAnimationHandler(this);
@@ -128,6 +132,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         this.entityData.define(DATA_TAKEOFF, false);
         this.entityData.define(DATA_HOVERING, false);
         this.entityData.define(DATA_LANDING, false);
+        this.entityData.define(DATA_GOING_UP, false);
+        this.entityData.define(DATA_GOING_DOWN, false);
     }
 
     @Override
@@ -180,31 +186,29 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     private void tickBankingLogic() {
-        if (!isFlying() || isLanding() || isHovering()) {
-            if (bankDir != 0 || bankSmoothedYaw != 0f) {
+        // Reset banking when not flying or when controls are locked - INSTANT reset
+        if (!isFlying() || isLanding() || isHovering() || isOrderedToSit()) {
+            if (bankDir != 0) {
                 bankDir = 0;
                 bankSmoothedYaw = 0f;
                 bankHoldTicks = 0;
             }
             return;
         }
-
+        
+        // Exponential smoothing to avoid jitter
         float yawChange = getYRot() - yRotO;
         bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
-
-        float enter = 0.8f;
-        float exit = 3.5f;
+        float enter = 1.0f;  // Less sensitive than before for smoother banking
+        float exit = 5.0f;   // Larger exit threshold for more stable straight flight
 
         int desiredDir = bankDir;
-        if (bankSmoothedYaw > enter) {
-            desiredDir = 1;
-        } else if (bankSmoothedYaw < -enter) {
-            desiredDir = -1;
-        } else if (Math.abs(bankSmoothedYaw) < exit) {
-            desiredDir = 0;
-        }
-
+        if (bankSmoothedYaw > enter) desiredDir = 1;
+        else if (bankSmoothedYaw < -enter) desiredDir = -1;
+        else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;  // banking_off when flying straight
+        
         if (desiredDir != bankDir) {
+            // If transitioning to "off" (0), use very short hold time for instant reset
             int holdTime = (desiredDir == 0) ? 1 : 2;
             if (bankHoldTicks >= holdTime) {
                 bankDir = desiredDir;
@@ -213,12 +217,13 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
                 bankHoldTicks++;
             }
         } else {
-            bankHoldTicks = Math.min(bankHoldTicks + 1, 10);
+            bankHoldTicks = Math.min(bankHoldTicks + 1, 10);  // Reduced max from 20 to 10
         }
     }
 
     private void tickPitchingLogic() {
-        if (!isFlying() || isLanding() || isHovering()) {
+        // Reset pitching when not flying or when controls are locked - INSTANT reset
+        if (!isFlying() || isLanding() || isHovering() || isOrderedToSit()) {
             if (pitchDir != 0) {
                 pitchDir = 0;
                 pitchSmoothedPitch = 0f;
@@ -226,23 +231,35 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             }
             return;
         }
-
-        float pitchChange = getXRot() - xRotO;
-        pitchSmoothedPitch = pitchSmoothedPitch * 0.85f + pitchChange * 0.15f;
-
+        
         int desiredDir = pitchDir;
-        float enter = 3.0f;
-        float exit = 3.0f;
 
-        if (pitchSmoothedPitch > enter) {
-            desiredDir = 1;
-        } else if (pitchSmoothedPitch < -enter) {
-            desiredDir = -1;
-        } else if (Math.abs(pitchSmoothedPitch) < exit) {
-            desiredDir = 0;
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player) {
+            // Handle rider input for pitching
+            if (isGoingUp()) {
+                desiredDir = -1;  // Pitching up
+            } else if (isGoingDown()) {
+                desiredDir = 1;   // Pitching down
+            } else {
+                desiredDir = 0;   // No pitching
+            }
+        } else {
+            // AI-controlled pitching based on movement
+            float pitchChange = getXRot() - xRotO;
+            pitchSmoothedPitch = pitchSmoothedPitch * 0.85f + pitchChange * 0.15f;
+
+            // Hysteresis thresholds - tighter for more responsive straight flight
+            float enter = 2.0f;  // More sensitive than Lightning Dragon for glider behavior
+            float exit = 2.0f;
+
+            if (pitchSmoothedPitch > enter) desiredDir = 1;
+            else if (pitchSmoothedPitch < -enter) desiredDir = -1;
+            else if (Math.abs(pitchSmoothedPitch) < exit) desiredDir = 0;  // pitching_off when flying straight
         }
 
+        // Faster reset to off state (reduced hold time)
         if (desiredDir != pitchDir) {
+            // If transitioning to "off" (0), use shorter hold time for faster reset
             int holdTime = (desiredDir == 0) ? 1 : 2;
             if (pitchHoldTicks >= holdTime) {
                 pitchDir = desiredDir;
@@ -251,7 +268,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
                 pitchHoldTicks++;
             }
         } else {
-            pitchHoldTicks = Math.min(pitchHoldTicks + 1, 10);
+            pitchHoldTicks = Math.min(pitchHoldTicks + 1, 10);  // Reduced max from 20 to 10
         }
     }
 
@@ -261,6 +278,23 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     public int getPitchDirection() {
         return pitchDir;
+    }
+
+    // ===== Rider Control Methods =====
+    public boolean isGoingUp() { 
+        return this.entityData.get(DATA_GOING_UP); 
+    }
+    
+    public void setGoingUp(boolean goingUp) { 
+        this.entityData.set(DATA_GOING_UP, goingUp); 
+    }
+    
+    public boolean isGoingDown() { 
+        return this.entityData.get(DATA_GOING_DOWN); 
+    }
+    
+    public void setGoingDown(boolean goingDown) { 
+        this.entityData.set(DATA_GOING_DOWN, goingDown); 
     }
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
@@ -351,12 +385,12 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     @Override
-    public boolean isFood(@NotNull ItemStack stack) {
+    public boolean isFood(@Nonnull ItemStack stack) {
         return stack.is(Items.COD) || stack.is(Items.SALMON) || stack.is(Items.TROPICAL_FISH) || stack.is(Items.CHICKEN);
     }
 
     @Override
-    public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+    public @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
         return super.mobInteract(player, hand);
     }
 
@@ -373,6 +407,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         tag.putBoolean("Hovering", isHovering());
         tag.putBoolean("Landing", isLanding());
         tag.putBoolean("Takeoff", isTakeoff());
+        tag.putBoolean("GoingUp", isGoingUp());
+        tag.putBoolean("GoingDown", isGoingDown());
     }
 
     @Override
@@ -382,6 +418,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         if (tag.contains("Hovering")) setHovering(tag.getBoolean("Hovering"));
         if (tag.contains("Landing")) setLanding(tag.getBoolean("Landing"));
         if (tag.contains("Takeoff")) setTakeoff(tag.getBoolean("Takeoff"));
+        if (tag.contains("GoingUp")) setGoingUp(tag.getBoolean("GoingUp"));
+        if (tag.contains("GoingDown")) setGoingDown(tag.getBoolean("GoingDown"));
     }
 
     // ===== DragonFlightCapable =====
@@ -470,7 +508,3 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         return isFlying() && this.getDeltaMovement().y > -0.1D;
     }
 }
-
-
-
-
