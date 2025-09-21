@@ -93,6 +93,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     private float bankSmoothedYaw = 0f;
     private int bankHoldTicks = 0;
     private int bankDir = 0;
+    private float bankTransitionProgress = 0f; // 0.0 to 1.0 for smooth transitions
 
     private float pitchSmoothedPitch = 0f;
     private int pitchHoldTicks = 0;
@@ -128,7 +129,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
                 .add(Attributes.MAX_HEALTH, 60.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.45D)
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
-                .add(Attributes.FLYING_SPEED, 0.35D)
+                .add(Attributes.FLYING_SPEED, 0.20D) // Slower for glider behavior
                 .add(Attributes.ARMOR, 4.0D);
     }
 
@@ -213,28 +214,43 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             return;
         }
         
-        // Exponential smoothing to avoid jitter
+        // Exponential smoothing to avoid jitter - slower transitions for glider
         float yawChange = getYRot() - yRotO;
-        bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
-        float enter = 1.0f;  // Less sensitive than before for smoother banking
-        float exit = 5.0f;   // Larger exit threshold for more stable straight flight
+        bankSmoothedYaw = bankSmoothedYaw * 0.88f + yawChange * 0.12f; // Faster smoothing for AI responsiveness
+        float enter = 0.8f;  // More sensitive for AI intermittent turns
+        float exit = 2.0f;   // Much smaller exit threshold for sustained banking
 
         int desiredDir = bankDir;
         if (bankSmoothedYaw > enter) desiredDir = 1;
         else if (bankSmoothedYaw < -enter) desiredDir = -1;
         else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;  // banking_off when flying straight
         
+        // Debug output removed - banking is working properly now
+        
         if (desiredDir != bankDir) {
-            // If transitioning to "off" (0), use very short hold time for instant reset
-            int holdTime = (desiredDir == 0) ? 1 : 2;
+            // Smooth transition to new banking direction
+            int holdTime = (desiredDir == 0) ? 5 : 8; // Much longer hold for sustained banking
             if (bankHoldTicks >= holdTime) {
-                bankDir = desiredDir;
-                bankHoldTicks = 0;
+                // Start transition to new direction
+                bankTransitionProgress = Math.min(bankTransitionProgress + 0.08f, 1.0f); // Slower transition
+                if (bankTransitionProgress >= 1.0f) {
+                    bankDir = desiredDir;
+                    bankTransitionProgress = 0f;
+                    bankHoldTicks = 0;
+                }
             } else {
                 bankHoldTicks++;
             }
         } else {
-            bankHoldTicks = Math.min(bankHoldTicks + 1, 10);  // Reduced max from 20 to 10
+            // Smooth transition back to neutral - much slower for sustained banking
+            if (bankDir != 0) {
+                bankTransitionProgress = Math.min(bankTransitionProgress + 0.05f, 1.0f); // Much slower return to neutral
+                if (bankTransitionProgress >= 1.0f) {
+                    bankDir = 0;
+                    bankTransitionProgress = 0f;
+                }
+            }
+            bankHoldTicks = Math.min(bankHoldTicks + 1, 20); // Longer max hold
         }
     }
 
@@ -261,23 +277,23 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
                 desiredDir = 0;   // No pitching
             }
         } else {
-            // AI-controlled pitching based on movement
+            // AI-controlled pitching based on movement - slower for glider
             float pitchChange = getXRot() - xRotO;
-            pitchSmoothedPitch = pitchSmoothedPitch * 0.85f + pitchChange * 0.15f;
+            pitchSmoothedPitch = pitchSmoothedPitch * 0.90f + pitchChange * 0.10f; // Slower smoothing
 
-            // Hysteresis thresholds - tighter for more responsive straight flight
-            float enter = 2.0f;  // More sensitive than Lightning Dragon for glider behavior
-            float exit = 2.0f;
+            // Hysteresis thresholds - less sensitive for smoother glider behavior
+            float enter = 4.0f;  // Less sensitive for smoother pitching
+            float exit = 6.0f;   // Larger exit threshold for stability
 
             if (pitchSmoothedPitch > enter) desiredDir = 1;
             else if (pitchSmoothedPitch < -enter) desiredDir = -1;
             else if (Math.abs(pitchSmoothedPitch) < exit) desiredDir = 0;  // pitching_off when flying straight
         }
 
-        // Faster reset to off state (reduced hold time)
+        // Smoother transitions for glider behavior
         if (desiredDir != pitchDir) {
-            // If transitioning to "off" (0), use shorter hold time for faster reset
-            int holdTime = (desiredDir == 0) ? 1 : 2;
+            // Longer hold times for smoother pitching transitions
+            int holdTime = (desiredDir == 0) ? 4 : 6; // Longer hold for smoother pitching
             if (pitchHoldTicks >= holdTime) {
                 pitchDir = desiredDir;
                 pitchHoldTicks = 0;
@@ -285,12 +301,22 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
                 pitchHoldTicks++;
             }
         } else {
-            pitchHoldTicks = Math.min(pitchHoldTicks + 1, 10);  // Reduced max from 20 to 10
+            pitchHoldTicks = Math.min(pitchHoldTicks + 1, 15);  // Increased max for stability
         }
     }
 
     public int getBankDirection() {
         return bankDir;
+    }
+    
+    public float getBankTransitionProgress() {
+        return bankTransitionProgress;
+    }
+    
+    public float getSmoothBankDirection() {
+        // Return a smooth value between -1.0 and 1.0 for banking
+        if (bankDir == 0) return 0f;
+        return bankDir * bankTransitionProgress;
     }
 
     public int getPitchDirection() {
@@ -503,9 +529,22 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     public void switchToAirNavigation() {
         if (!usingAirNav) {
             this.navigation = this.airNav;
-            this.moveControl = new DragonFlightMoveHelper(this);
+            this.moveControl = new DragonFlightMoveHelper(this, getGliderFlightParameters());
             this.usingAirNav = true;
         }
+    }
+
+    // Amphithere-specific flight parameters for glider behavior
+    private DragonFlightMoveHelper.FlightParameters getGliderFlightParameters() {
+        return new DragonFlightMoveHelper.FlightParameters(
+            3.0F,    // maxYawChange - smoother turns for gradual banking
+            5.0F,    // maxPitchChange - slower pitching for glider
+            0.3F,    // speedFactorMin - lower minimum speed
+            2.0F,    // speedFactorMax - lower maximum speed for glider
+            0.08F,   // speedTransitionRate - slower transitions for glider
+            0.15D,   // accelerationCap - lower acceleration cap for glider
+            0.10D    // velocityBlendRate - gentler blend for glider
+        );
     }
 
     public void switchToGroundNavigation() {

@@ -6,7 +6,7 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class AmphithereModel extends DefaultedEntityGeoModel<AmphithereEntity> {
     public AmphithereModel() {
-        super(SaintsDragons.rl("amphithere"), "head");
+        super(SaintsDragons.rl("amphithere"));
     }
 }
 

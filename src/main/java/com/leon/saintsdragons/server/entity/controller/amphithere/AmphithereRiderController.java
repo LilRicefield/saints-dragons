@@ -31,18 +31,18 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
     private static final double ASCEND_RATE = 0.03D;  // Slower than Lightning Dragon (0.05D)
     private static final double DESCEND_RATE = 0.3D;  // Slower than Lightning Dragon (0.5D)
 
-    // ===== AIR SPRINT / ACCELERATION TUNING (SLOWER THAN LIGHTNING DRAGON) =====
+    // ===== AIR SPRINT / ACCELERATION TUNING (MUCH SLOWER FOR GLIDER) =====
     // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
     // Base cruise cap is intentionally lower; sprint raises cap and accel.
-    private static final double CRUISE_MAX_MULT = 8.0;    // Slower than Lightning Dragon (10.0)
-    private static final double AIR_ACCEL_MULT = 0.08;     // Slower than Lightning Dragon (0.10)
-    private static final double AIR_DRAG = 0.03;           // Less drag than Lightning Dragon (0.05)
+    private static final double CRUISE_MAX_MULT = 5.0;    // Much slower than Lightning Dragon (10.0)
+    private static final double AIR_ACCEL_MULT = 0.05;     // Much slower than Lightning Dragon (0.10)
+    private static final double AIR_DRAG = 0.05;           // More drag for glider behavior
     
     // ===== AMPHITHERE GLIDER MANEUVERABILITY =====
     // Gliders have different turning characteristics - more graceful, less sharp
-    private static final double TURN_ACCEL_MULT = 0.10;   // Less aggressive than Lightning Dragon (0.15)
-    private static final double MIN_TURN_SPEED = 0.2;     // Lower threshold than Lightning Dragon (0.3)
-    private static final double TURN_MOMENTUM_FACTOR = 0.9; // More momentum preservation than Lightning Dragon (0.8)
+    private static final double TURN_ACCEL_MULT = 0.06;   // Much less aggressive than Lightning Dragon (0.15)
+    private static final double MIN_TURN_SPEED = 0.15;     // Lower threshold than Lightning Dragon (0.3)
+    private static final double TURN_MOMENTUM_FACTOR = 0.95; // Much more momentum preservation than Lightning Dragon (0.8)
 
     // ===== RIDING UTILITIES =====
 
