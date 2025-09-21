@@ -35,7 +35,7 @@ public record LightningDragonRiderController(LightningDragonEntity dragon) {
     // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
     // Base cruise cap is intentionally lower; sprint raises cap and accel.
     private static final double CRUISE_MAX_MULT = 10.0;   // max horizontal blocks/tick relative to base speed
-    private static final double SPRINT_MAX_MULT = 40.0;   // top speed cap while accelerating
+    private static final double SPRINT_MAX_MULT = 50.0;   // top speed cap while accelerating
     private static final double AIR_ACCEL_MULT = 0.10;    // accel per tick toward forward while holding W
     private static final double SPRINT_ACCEL_MULT = 0.25; // accel per tick when accelerating
     private static final double AIR_DRAG = 0.05;          // per-tick horizontal damping

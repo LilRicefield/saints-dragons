@@ -143,7 +143,7 @@ public record MessageDragonRideInput(boolean goingUp,
             int moveState = 0;
             float mag = Math.abs(fwd) + Math.abs(str);
             if (mag > 0.05f) {
-                moveState = (msg.action() == DragonRiderAction.ACCELERATE) ? 2 : 1;
+                moveState = dragon.isAccelerating() ? 2 : 1;
             }
             dragon.setGroundMoveStateFromAI(moveState);
             dragon.setRunning(moveState == 2);
@@ -154,14 +154,10 @@ public record MessageDragonRideInput(boolean goingUp,
                 dragon.requestRiderTakeoff();
                 break;
             case ACCELERATE:
-                if (!dragon.isFlying()) {
-                    dragon.setRunning(true);
-                }
+                dragon.setAccelerating(true);
                 break;
             case STOP_ACCELERATE:
-                if (!dragon.isFlying()) {
-                    dragon.setRunning(false);
-                }
+                dragon.setAccelerating(false);
                 break;
             default:
                 break;

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.event;
 
 import com.leon.saintsdragons.SaintsDragons;
+import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import net.minecraft.client.Minecraft;
@@ -44,6 +45,10 @@ public class ClientEventHandler {
         if (player.isPassenger() && player.getVehicle() instanceof LightningDragonEntity && event.getCamera().isDetached()) {
             // Base zoom for dragon riding - adjusted distance for better dragon visibility
             event.getCamera().move(-event.getCamera().getMaxZoom(20F), 0, 0);
+        }
+
+        if (player.isPassenger() && player.getVehicle() instanceof AmphithereEntity && event.getCamera().isDetached()) {
+            event.getCamera().move(-event.getCamera().getMaxZoom(40F), 0, 0);
         }
         
         // Screen shake detection and application

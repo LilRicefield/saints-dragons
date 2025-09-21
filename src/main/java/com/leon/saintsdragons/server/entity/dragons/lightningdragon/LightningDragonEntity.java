@@ -319,9 +319,8 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                 .add(Attributes.MAX_HEALTH, 180.0D)
                 .add(Attributes.MOVEMENT_SPEED, WALK_SPEED)
                 .add(Attributes.FOLLOW_RANGE, 80.0D)
-                .add(Attributes.FLYING_SPEED, 0.9D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
-                .add(Attributes.ATTACK_DAMAGE, 8.0D);
+                .add(Attributes.FLYING_SPEED, 1.0D)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D);
     }
 
     // Cooldown to prevent hurt sound spam when ridden or under rapid hits
