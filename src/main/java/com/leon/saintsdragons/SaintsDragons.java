@@ -6,7 +6,6 @@ import com.leon.saintsdragons.client.renderer.lightningdragon.LightningChainRend
 import com.leon.saintsdragons.client.renderer.lightningdragon.LightningDragonRenderer;
 import com.leon.saintsdragons.client.renderer.primitivedrake.PrimitiveDrakeRenderer;
 import com.leon.saintsdragons.common.network.NetworkHandler;
-import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
@@ -55,7 +54,6 @@ public class SaintsDragons {
         ModSounds.REGISTER.register(modBus);
         ModParticles.REGISTER.register(modBus);
 
-        @SuppressWarnings("unused") var _forceInit = ModAbilities.BITE;
 
         modBus.addListener(this::onEntityAttributes);
         modBus.addListener(this::onRegisterRenderers);
