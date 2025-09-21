@@ -110,7 +110,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 100.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.35D)
+                .add(Attributes.MOVEMENT_SPEED, 0.40D)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.FOLLOW_RANGE, 16.0D);
     }
@@ -692,10 +692,10 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
      */
     public int getEffectiveGroundState() {
         if (level().isClientSide) {
-            // Client-side calculation based on movement with refined thresholds
+            // Client-side calculation based on movement with adjusted thresholds
             double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-            final double WALK_MIN = 0.0008;
-            final double RUN_MIN = 0.0200;
+            final double WALK_MIN = 0.0003; // Lower threshold to match actual movement (velSqr ≈ 5.34E-4)
+            final double RUN_MIN = 0.0020;  // Higher threshold for running
             
             if (velSqr > RUN_MIN) return 2; // running
             if (velSqr > WALK_MIN) return 1; // walking
@@ -715,9 +715,10 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             // Ground movement with refined thresholds
             double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
             
-            // Use similar thresholds to LightningDragonEntity for consistency
-            final double WALK_MIN = 0.0008;
-            final double RUN_MIN = 0.0200;
+            // Adjusted thresholds based on actual movement values observed in debug output
+            final double WALK_MIN = 0.0003; // Lower threshold to match actual movement (velSqr ≈ 5.34E-4)
+            final double RUN_MIN = 0.0020;  // Higher threshold for running
+            
             
             if (velSqr > RUN_MIN) {
                 moveState = 2; // running

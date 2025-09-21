@@ -40,6 +40,7 @@ public class PrimitiveDrakeAnimationHandler {
             return handleSleepAnimation(state);
         }
         
+        
         // Use the improved movement state detection
         if (drake.isRunning()) {
             // TODO: Add run animation when available
