@@ -35,7 +35,7 @@ public final class ModItems {
             REGISTER.register("amphithere_spawn_egg",
                     () -> new ForgeSpawnEggItem(
                             ModEntities.AMPHITHERE,
-                            0x4A9D8F, 0xE3D99F, // base=teal plume, spots=sandy underside
+                            0x5E5E5E, 0xA7490D, // base=teal plume, spots=sandy underside
                             new Item.Properties()
                     )
             );
