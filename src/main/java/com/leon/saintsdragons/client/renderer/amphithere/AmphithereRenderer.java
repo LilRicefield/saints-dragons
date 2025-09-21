@@ -26,7 +26,7 @@ public class AmphithereRenderer extends GeoEntityRenderer<AmphithereEntity> {
                           int packedOverlay,
                           float red, float green, float blue, float alpha) {
 
-        float scale = 6.5f;
+        float scale = 5.0f;
         poseStack.scale(scale, scale, scale);
         this.shadowRadius = 0.8f * scale;
 
