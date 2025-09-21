@@ -30,7 +30,16 @@ public final class ModItems {
                             new Item.Properties()
                     )
             );
-    
+
+    public static final RegistryObject<Item> AMPHITHERE_SPAWN_EGG =
+            REGISTER.register("amphithere_spawn_egg",
+                    () -> new ForgeSpawnEggItem(
+                            ModEntities.AMPHITHERE,
+                            0x4A9D8F, 0xE3D99F, // base=teal plume, spots=sandy underside
+                            new Item.Properties()
+                    )
+            );
+
     public static final RegistryObject<Item> DRAGON_ALLY_BOOK =
             REGISTER.register("dragon_ally_book",
                     () -> new DragonAllyBookItem(
@@ -39,7 +48,7 @@ public final class ModItems {
                                     .durability(0) // Unbreakable
                     )
             );
-    
+
     public static final RegistryObject<Item> DRAKE_BINDER =
             REGISTER.register("drake_binder",
                     () -> new DrakeBinderItem(
