@@ -137,9 +137,9 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
             float baseSpeed = (float) dragon.getAttributeValue(Attributes.MOVEMENT_SPEED);
 
             if (dragon.isAccelerating()) {
-                return baseSpeed * 1.5F; // Sprint speed boost
+                return baseSpeed * 0.60F; // Just a tad slower than Lightning Dragon (0.7F)
             } else {
-                return baseSpeed * 0.5F; // Normal speed
+                return baseSpeed * 0.5F; // Normal speed (same as Lightning Dragon)
             }
         }
     }
