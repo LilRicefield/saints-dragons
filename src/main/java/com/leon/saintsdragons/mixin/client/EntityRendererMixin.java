@@ -36,12 +36,13 @@ public class EntityRendererMixin {
                 isFlying = lightningDragon.isFlying();
                 
                 if (isAccelerating) {
-                    currentSpeed = lightningDragon.getDeltaMovement().horizontalDistance();
                     if (isFlying) {
                         // Flying sprint - use flying speed attributes
+                        currentSpeed = lightningDragon.getDeltaMovement().horizontalDistance();
                         maxSpeed = lightningDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 50.0; // SPRINT_MAX_MULT
                     } else {
                         // Ground sprint - use movement speed attributes
+                        currentSpeed = lightningDragon.getDeltaMovement().horizontalDistance();
                         maxSpeed = lightningDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7; // Ground sprint multiplier
                     }
                 }
@@ -50,12 +51,13 @@ public class EntityRendererMixin {
                 isFlying = amphithereDragon.isFlying();
                 
                 if (isAccelerating) {
-                    currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
                     if (isFlying) {
                         // Flying sprint - use flying speed attributes
+                        currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
                         maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.0; // SPRINT_MAX_MULT
                     } else {
                         // Ground sprint - use movement speed attributes
+                        currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
                         maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.6; // Ground sprint multiplier
                     }
                 }

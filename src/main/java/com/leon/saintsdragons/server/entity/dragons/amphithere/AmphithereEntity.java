@@ -310,9 +310,23 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             this.getNavigation().stop();
         }
 
+        if (!isFlying() && usingAirNav) {
+            switchToGroundNavigation();
+        }
+
+        this.entityData.set(DATA_GROUND_MOVE_STATE, 0);
+        this.entityData.set(DATA_FLIGHT_MODE, -1);
+        clientGroundOverride = Integer.MIN_VALUE;
+        clientFlightOverride = Integer.MIN_VALUE;
+        clientOverrideExpiry = 0;
+
+        com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
+                net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this),
+                new com.leon.saintsdragons.common.network.MessageDragonAnimState(this.getId(), (byte) 0, (byte) -1)
+        );
+
         this.setTarget(null);
     }
-
     private void tickRiderTakeoff() {
         if (!level().isClientSide && riderTakeoffTicks > 0) {
             riderTakeoffTicks--;
