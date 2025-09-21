@@ -1,5 +1,6 @@
-package com.leon.saintsdragons.common.registry;
+package com.leon.saintsdragons.common.registry.lightningdragon;
 
+import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.lightningdragon.LightningDragonBiteAbility;

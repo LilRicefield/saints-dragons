@@ -6,6 +6,7 @@ package com.leon.saintsdragons.server.entity.dragons.lightningdragon;
 //Custom stuff
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningArcData;
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData;
+import com.leon.saintsdragons.common.registry.lightningdragon.LightningDragonAbilities;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonDodgeGoal;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.lightningdragon.LightningDragonFollowOwnerGoal;
@@ -1238,7 +1239,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         }
         // Custom: activate one-shot hurt ability (plays sound + animation once)
         if (!level().isClientSide) {
-            this.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.HURT);
+            this.tryActivateAbility(LightningDragonAbilities.HURT);
         }
         // Short cooldown; extend slightly when being ridden
         this.hurtSoundCooldown = this.isVehicle() ? 15 : 8;
@@ -1528,7 +1529,7 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                     // If we can't use ability, there's an active one - interrupt it
                     this.setActiveAbility(null);
                 }
-                this.tryActivateAbility(com.leon.saintsdragons.common.registry.LightningDragonAbilities.DIE);
+                this.tryActivateAbility(LightningDragonAbilities.DIE);
                 return true; // handled
             }
         }
@@ -2018,18 +2019,18 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         // Use entity tick count to alternate between attacks (every 2 seconds)
         boolean useHornGore = (tickCount / 40) % 2 == 1; // Switch every 2 seconds
         return useHornGore ? 
-            com.leon.saintsdragons.common.registry.LightningDragonAbilities.HORN_GORE : 
-            com.leon.saintsdragons.common.registry.LightningDragonAbilities.BITE;
+            LightningDragonAbilities.HORN_GORE :
+            LightningDragonAbilities.BITE;
     }
 
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getRoarAbility() {
-        return com.leon.saintsdragons.common.registry.LightningDragonAbilities.ROAR;
+        return LightningDragonAbilities.ROAR;
     }
 
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getSummonStormAbility() {
-        return com.leon.saintsdragons.common.registry.LightningDragonAbilities.SUMMON_STORM;
+        return LightningDragonAbilities.SUMMON_STORM;
     }
 
     public void onAnimationSound(SoundKeyframeEvent<LightningDragonEntity> event) {
