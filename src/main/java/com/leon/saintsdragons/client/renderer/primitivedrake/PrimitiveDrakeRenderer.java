@@ -4,6 +4,7 @@ import com.leon.saintsdragons.client.model.primitivedrake.PrimitiveDrakeModel;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -44,8 +45,8 @@ public class PrimitiveDrakeRenderer extends GeoEntityRenderer<PrimitiveDrakeEnti
     }
     
     @Override
-    public void render(PrimitiveDrakeEntity entity, float entityYaw, float partialTick, 
-                      PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+    public void render(@NotNull PrimitiveDrakeEntity entity, float entityYaw, float partialTick,
+                       @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         // Store the current model for locator sampling
         this.lastBakedModel = this.getGeoModel().getBakedModel(this.getGeoModel().getModelResource(entity));
         
