@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonControl;
@@ -99,80 +100,14 @@ public class DragonRideKeybinds {
         if (player == null || player.getVehicle() == null) return;
         
         Entity vehicle = player.getVehicle();
-        if (!(vehicle instanceof LightningDragonEntity dragon)) return;
-        
-        if (!dragon.isTame() || !dragon.isOwnedBy(player)) return;
 
-        // Seat syncing disabled; use server-deterministic seat placement
-        
-        // Handle control state system (Ice & Fire style)
-        handleDragonControlState(dragon);
-        
-        // Handle ascend key both for flying and takeoff from ground
-        boolean currentAscend = DRAGON_ASCEND.isDown();
-        boolean currentDescend = DRAGON_DESCEND.isDown();
-        boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
-        boolean beamDown = DRAGON_BEAM.isDown();
-        boolean roarDown = DRAGON_ROAR.isDown();
-        boolean summonDown = DRAGON_SUMMON.isDown();
-        
-        // Sample rider movement inputs for server-side ground animation sync
-        float fwd = player.zza;
-        float str = player.xxa;
-        float yaw = player.getYRot();
-
-        if (dragon.isFlying()) {
-            // Flying controls - send every tick for responsive flight
-            DragonRiderAction action = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
-            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(currentAscend, currentDescend, action, null, fwd, str, yaw));
-        } else {
-            // Ground takeoff - only trigger once per key press
-            if (currentAscend && !wasAscendPressed) {
-                // Request takeoff from ground
-                NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                        new MessageDragonRideInput(false, false, DragonRiderAction.TAKEOFF_REQUEST, null, fwd, str, yaw));
-            }
-            // Ground acceleration - send every tick to handle both press and release
-            DragonRiderAction groundAction = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
-            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(false, false, groundAction, null, fwd, str, yaw));
-            // Also send a lightweight NONE action frame to ensure server always receives current inputs
-            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, fwd, str, yaw));
+        if (vehicle instanceof LightningDragonEntity lightning && lightning.isTame() && lightning.isOwnedBy(player)) {
+            handleLightningControls(player, lightning);
+        } else if (vehicle instanceof AmphithereEntity amphithere && amphithere.isTame() && amphithere.isOwnedBy(player)) {
+            handleAmphithereControls(player, amphithere);
         }
-
-        // Handle hold-to-fire beam start/stop (send transitions only)
-        // Start on press
-        if (beamDown && !wasBeamDown) {
-            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "lightning_beam", fwd, str, yaw));
-        }
-        // Stop on release
-        if (!beamDown && wasBeamDown) {
-            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_STOP, "lightning_beam", fwd, str, yaw));
-        }
-
-        // Handle roar as a one-shot on key press
-        if (roarDown && !wasRoarDown) {
-            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "roar", fwd, str, yaw));
-        }
-
-        // Handle summon storm as a one-shot on key press
-        if (summonDown && !wasSummonDown) {
-            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "summon_storm", fwd, str, yaw));
-        }
-
-        
-        wasAscendPressed = currentAscend;
-        wasBeamDown = beamDown;
-        wasRoarDown = roarDown;
-        wasSummonDown = summonDown;
     }
-    
+
     /**
      * Handle control state system like Ice & Fire dragons
      */
@@ -197,5 +132,91 @@ public class DragonRideKeybinds {
         if (DRAGON_SUMMON.isDown()) controlState |= 16;  // Bit 4: Summon Storm
         if (mc.options.keyShift.isDown()) controlState |= 32; // Bit 5: Dismount
         return controlState;
+    }
+
+    private static void handleLightningControls(LocalPlayer player, LightningDragonEntity dragon) {
+        handleDragonControlState(dragon);
+
+        boolean currentAscend = DRAGON_ASCEND.isDown();
+        boolean currentDescend = DRAGON_DESCEND.isDown();
+        boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
+        boolean beamDown = DRAGON_BEAM.isDown();
+        boolean roarDown = DRAGON_ROAR.isDown();
+        boolean summonDown = DRAGON_SUMMON.isDown();
+
+        float fwd = player.zza;
+        float str = player.xxa;
+        float yaw = player.getYRot();
+
+        if (dragon.isFlying()) {
+            DragonRiderAction action = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(currentAscend, currentDescend, action, null, fwd, str, yaw));
+        } else {
+            if (currentAscend && !wasAscendPressed) {
+                NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                        new MessageDragonRideInput(false, false, DragonRiderAction.TAKEOFF_REQUEST, null, fwd, str, yaw));
+            }
+            DragonRiderAction groundAction = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, groundAction, null, fwd, str, yaw));
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, fwd, str, yaw));
+        }
+
+        if (beamDown && !wasBeamDown) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "lightning_beam", fwd, str, yaw));
+        }
+        if (!beamDown && wasBeamDown) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_STOP, "lightning_beam", fwd, str, yaw));
+        }
+
+        if (roarDown && !wasRoarDown) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "roar", fwd, str, yaw));
+        }
+
+        if (summonDown && !wasSummonDown) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "summon_storm", fwd, str, yaw));
+        }
+
+        wasAscendPressed = currentAscend;
+        wasBeamDown = beamDown;
+        wasRoarDown = roarDown;
+        wasSummonDown = summonDown;
+    }
+
+    private static void handleAmphithereControls(LocalPlayer player, AmphithereEntity dragon) {
+        boolean currentAscend = DRAGON_ASCEND.isDown();
+        boolean currentDescend = DRAGON_DESCEND.isDown();
+        boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
+
+        float fwd = player.zza;
+        float str = player.xxa;
+        float yaw = player.getYRot();
+
+        if (dragon.isFlying()) {
+            DragonRiderAction action = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(currentAscend, currentDescend, action, null, fwd, str, yaw));
+        } else {
+            if (currentAscend && !wasAscendPressed) {
+                NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                        new MessageDragonRideInput(false, false, DragonRiderAction.TAKEOFF_REQUEST, null, fwd, str, yaw));
+            }
+            DragonRiderAction groundAction = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, groundAction, null, fwd, str, yaw));
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, fwd, str, yaw));
+        }
+
+        wasAscendPressed = currentAscend;
+        wasBeamDown = false;
+        wasRoarDown = false;
+        wasSummonDown = false;
     }
 }

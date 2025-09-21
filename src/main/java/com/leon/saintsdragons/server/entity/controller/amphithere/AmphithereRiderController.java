@@ -29,7 +29,7 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
     // ===== FLIGHT VERTICAL RATES (SLOWER THAN LIGHTNING DRAGON) =====
     // Up/down rates while flying controlled by keybinds - gliders are slower
     private static final double ASCEND_RATE = 0.03D;  // Slower than Lightning Dragon (0.05D)
-    private static final double DESCEND_RATE = 0.3D;  // Slower than Lightning Dragon (0.5D)
+    private static final double DESCEND_RATE = 0.08D;  // Much slower than Lightning Dragon (0.5D) for glider behavior
 
     // ===== AIR SPRINT / ACCELERATION TUNING (MUCH SLOWER FOR GLIDER) =====
     // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
@@ -317,11 +317,17 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
      */
     public void requestRiderTakeoff() {
         if (!dragon.isTame() || getRidingPlayer() == null || dragon.isFlying()) return;
-        
-        // Initiate takeoff sequence
+        if (!dragon.canTakeoff()) return;
+
+        dragon.getNavigation().stop();
         dragon.setFlying(true);
         dragon.setTakeoff(true);
         dragon.setHovering(false);
         dragon.setLanding(false);
+        dragon.setRiderTakeoffTicks(25);
+
+        Vec3 current = dragon.getDeltaMovement();
+        double upward = Math.max(current.y, 0.25D);
+        dragon.setDeltaMovement(current.x, upward, current.z);
     }
 }

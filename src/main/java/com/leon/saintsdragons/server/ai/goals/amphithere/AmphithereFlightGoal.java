@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.amphithere;
 
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -52,6 +53,14 @@ public class AmphithereFlightGoal extends Goal {
             return false;
         }
 
+        // Prevent autonomous flight when tamed and not in wander mode unless we're in danger
+        if (dragon.isTame() && dragon.getOwner() != null) {
+            int command = dragon.getCommand();
+            if (command != 2 && !isOverDanger()) {
+                return false;
+            }
+        }
+
         // Weather state snapshot for this decision
         boolean thundering = dragon.level().isThundering();
         boolean raining = !thundering && dragon.level().isRaining();
@@ -67,11 +76,8 @@ public class AmphithereFlightGoal extends Goal {
         // If tamed, gliders still want to soar but avoid storms
         if (dragon.isTame()) {
             var owner = dragon.getOwner();
-            if (owner != null && dragon.distanceToSqr(owner) < 8.0 * 8.0) {
-                // Only avoid takeoff in storms when over safe ground - gliders love soaring in clear weather
-                if (isOverDanger() && (thundering || raining)) {
-                    return false;
-                }
+            if (owner != null && dragon.getCommand() != 2 && !isOverDanger()) {
+                return false;
             }
         }
 
@@ -144,6 +150,19 @@ public class AmphithereFlightGoal extends Goal {
             return false;
         }
 
+        if (dragon.isTame() && dragon.getOwner() != null) {
+            int command = dragon.getCommand();
+            if (command != 2 && !isOverDanger()) {
+                dragon.setGoingUp(false);
+                dragon.setGoingDown(false);
+                dragon.setLanding(true);
+                dragon.setFlying(false);
+                dragon.setHovering(false);
+                dragon.setTakeoff(false);
+                return false;
+            }
+        }
+
         // Stop if combat starts
         var target = dragon.getTarget();
         if (target != null && target.isAlive()) {
@@ -163,13 +182,20 @@ public class AmphithereFlightGoal extends Goal {
         }
 
         // Continue if we're flying and have a target
+        // CRITICAL: Only continue if actually airborne (not on ground)
+        // Allow brief grace period for takeoff (5 ticks = 0.25 seconds)
+        if (dragon.isFlying() && dragon.onGround()) {
+            if (timeSinceTargetChange > 5) { // Grace period for takeoff
+                return false;
+            }
+        }
+        
         return dragon.isFlying() && targetPosition != null && dragon.distanceToSqr(targetPosition) > 9.0;
     }
 
     @Override
     public void start() {
         dragon.setFlying(true);
-        dragon.setTakeoff(false);
         dragon.setLanding(false);
         dragon.setHovering(false);
         if (targetPosition != null) {
@@ -180,9 +206,31 @@ public class AmphithereFlightGoal extends Goal {
     @Override
     public void tick() {
         timeSinceTargetChange++;
-
+        
         // If dragon wants to land, let it handle that
         if (dragon.isLanding()) {
+            return;
+        }
+
+        // CRITICAL: Handle stuck state where isFlying=true but onGround=true
+        // Allow brief grace period for takeoff (5 ticks = 0.25 seconds)
+        if (dragon.isFlying() && dragon.onGround()) {
+            if (timeSinceTargetChange > 5) { // Grace period for takeoff
+                // Properly land the dragon instead of just resetting states
+                dragon.setLanding(true);
+                dragon.setFlying(false);
+                dragon.setTakeoff(false);
+                dragon.setHovering(false);
+                dragon.markLandedNow();
+                return;
+            }
+        }
+
+        if (dragon.isTame() && dragon.getOwner() != null && dragon.getCommand() != 2 && !isOverDanger()) {
+            dragon.setLanding(true);
+            dragon.setFlying(false);
+            dragon.setHovering(false);
+            dragon.setTakeoff(false);
             return;
         }
 
@@ -253,43 +301,57 @@ public class AmphithereFlightGoal extends Goal {
 
     private Vec3 findFlightTarget() {
         Vec3 dragonPos = dragon.position();
+        Vec3 anchor = getFlightAnchor();
 
         // Try multiple attempts with progressively more desperate searching
         for (int attempts = 0; attempts < 16; attempts++) {
-            Vec3 candidate = generateFlightCandidate(dragonPos, attempts);
+            Vec3 candidate = generateFlightCandidate(anchor, dragonPos, attempts);
 
             if (isValidFlightTarget(candidate)) {
                 return candidate;
             }
         }
 
-        // Fallback: safe position above current location
-        return new Vec3(dragonPos.x, findSafeFlightHeight(dragonPos.x, dragonPos.z), dragonPos.z);
+        // Fallback: safe position above anchor
+        return new Vec3(anchor.x, findSafeFlightHeight(anchor.x, anchor.z, true), anchor.z);
     }
 
-    private Vec3 generateFlightCandidate(Vec3 dragonPos, int attempt) {
+    private Vec3 generateFlightCandidate(Vec3 anchor, Vec3 dragonPos, int attempt) {
         boolean isStuck = dragon.horizontalCollision || stuckCounter > 0;
 
-        float maxRot = isStuck ? 360 : 180;
-        // Large range for high-soaring glider behavior
-        float range = isStuck ? 40.0f + dragon.getRandom().nextFloat() * 60.0f :
-                80.0f + dragon.getRandom().nextFloat() * 120.0f; // 80-200 blocks for glider soaring
+        boolean tethered = isTamedWander();
+        float range;
+        Vec3 candidate;
 
-        float yRotOffset;
-        if (isStuck && attempt < 8) {
-            yRotOffset = (float) Math.toRadians(180 + dragon.getRandom().nextFloat() * 120 - 60);
+        if (tethered) {
+            double min = 10.0 + dragon.getRandom().nextDouble() * 6.0;
+            double max = 24.0 + dragon.getRandom().nextDouble() * 6.0;
+            double angle = dragon.getRandom().nextDouble() * Math.PI * 2.0;
+            double radius = min + dragon.getRandom().nextDouble() * (max - min);
+            double cx = anchor.x + Math.cos(angle) * radius;
+            double cz = anchor.z + Math.sin(angle) * radius;
+            double targetY = findSafeFlightHeight(cx, cz, true);
+            candidate = new Vec3(cx, targetY, cz);
         } else {
-            yRotOffset = (float) Math.toRadians(dragon.getRandom().nextFloat() * maxRot - (maxRot / 2));
+            float maxRot = isStuck ? 360 : 180;
+            range = isStuck ? 40.0f + dragon.getRandom().nextFloat() * 60.0f :
+                    80.0f + dragon.getRandom().nextFloat() * 120.0f;
+
+            float yRotOffset;
+            if (isStuck && attempt < 8) {
+                yRotOffset = (float) Math.toRadians(180 + dragon.getRandom().nextFloat() * 120 - 60);
+            } else {
+                yRotOffset = (float) Math.toRadians(dragon.getRandom().nextFloat() * maxRot - (maxRot / 2));
+            }
+
+            float xRotOffset = (float) Math.toRadians((dragon.getRandom().nextFloat() - 0.5f) * 20);
+
+            Vec3 lookVec = dragon.getLookAngle();
+            Vec3 targetVec = lookVec.scale(range).yRot(yRotOffset).xRot(xRotOffset);
+            Vec3 raw = dragonPos.add(targetVec);
+            double targetY = findSafeFlightHeight(raw.x, raw.z, false);
+            candidate = new Vec3(raw.x, targetY, raw.z);
         }
-
-        float xRotOffset = (float) Math.toRadians((dragon.getRandom().nextFloat() - 0.5f) * 20);
-
-        Vec3 lookVec = dragon.getLookAngle();
-        Vec3 targetVec = lookVec.scale(range).yRot(yRotOffset).xRot(xRotOffset);
-        Vec3 candidate = dragonPos.add(targetVec);
-
-        double targetY = findSafeFlightHeight(candidate.x, candidate.z);
-        candidate = new Vec3(candidate.x, targetY, candidate.z);
 
         if (!dragon.level().isLoaded(BlockPos.containing(candidate))) {
             return null;
@@ -298,24 +360,47 @@ public class AmphithereFlightGoal extends Goal {
         return candidate;
     }
 
-    private double findSafeFlightHeight(double x, double z) {
+    private double findSafeFlightHeight(double x, double z, boolean tethered) {
         int ix = (int) x;
         int iz = (int) z;
         int groundY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
 
-        // High soaring altitude for glider behavior
-        double base = 25.0 + dragon.getRandom().nextDouble() * 35.0; // 25..60 above surface for high soaring
+        double base;
+        if (tethered) {
+            base = 12.0 + dragon.getRandom().nextDouble() * 12.0;
+        } else {
+            base = 25.0 + dragon.getRandom().nextDouble() * 35.0;
+        }
 
         // Weather-based cap above ground - gliders avoid storms
         boolean thundering = dragon.level().isThundering();
         boolean raining = !thundering && dragon.level().isRaining();
-        double capAboveGround = thundering ? 20.0 : (raining ? 30.0 : 80.0); // Much lower in storms, very high in clear weather
+        double capAboveGround;
+        if (tethered) {
+            capAboveGround = thundering ? 12.0 : (raining ? 18.0 : 32.0);
+        } else {
+            capAboveGround = thundering ? 20.0 : (raining ? 30.0 : 80.0);
+        }
 
         double target = groundY + base;
         double cap = groundY + capAboveGround;
         double worldCap = dragon.level().getMaxBuildHeight() - 10.0;
 
         return Math.min(Math.min(target, cap), worldCap);
+    }
+
+    private Vec3 getFlightAnchor() {
+        if (isTamedWander()) {
+            LivingEntity owner = dragon.getOwner();
+            if (owner != null) {
+                return owner.position();
+            }
+        }
+        return dragon.position();
+    }
+
+    private boolean isTamedWander() {
+        return dragon.isTame() && dragon.getCommand() == 2 && dragon.getOwner() != null;
     }
 
     private boolean isValidFlightTarget(Vec3 target) {

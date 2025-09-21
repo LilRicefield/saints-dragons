@@ -81,6 +81,7 @@ public class AmphithereGroundWanderGoal extends RandomStrollGoal {
         return super.canContinueToUse();
     }
 
+
     @Nullable
     @Override
     protected Vec3 getPosition() {
@@ -96,6 +97,17 @@ public class AmphithereGroundWanderGoal extends RandomStrollGoal {
                         owner.position(),
                         (float) Math.PI / 3F // 60-degree cone towards owner
                 );
+            } else if (owner != null) {
+                Vec3 aroundOwner = DefaultRandomPos.getPosTowards(
+                        this.mob,
+                        12,
+                        6,
+                        owner.position(),
+                        (float) Math.PI
+                );
+                if (aroundOwner != null) {
+                    return aroundOwner;
+                }
             }
         }
 
