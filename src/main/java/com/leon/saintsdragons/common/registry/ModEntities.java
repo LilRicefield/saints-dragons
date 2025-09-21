@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.SaintsDragons;
+import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.server.entity.effect.lightningdragon.LightningChainEntity;
@@ -34,6 +35,14 @@ public class ModEntities {
                     .clientTrackingRange(32)
                     .updateInterval(1)
                     .build("primitive_drake"));
+
+    // ===== AMPHITHERE =====
+    public static final RegistryObject<EntityType<AmphithereEntity>> AMPHITHERE =
+            REGISTER.register("amphithere", () -> EntityType.Builder.of(AmphithereEntity::new, MobCategory.CREATURE)
+                    .sized(2.3F, 1.6F)
+                    .clientTrackingRange(48)
+                    .updateInterval(1)
+                    .build("amphithere"));
 
     // ===== EFFECT ENTITIES =====
     public static final RegistryObject<EntityType<LightningChainEntity>> LIGHTNING_CHAIN =

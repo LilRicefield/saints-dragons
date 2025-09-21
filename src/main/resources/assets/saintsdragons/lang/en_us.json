@@ -3,10 +3,12 @@
   "item.saintsdragons.drake_binder": "Drake Binder",
   "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
   "item.saintsdragons.primitive_drake_spawn_egg": "Primitive Drake Spawn Egg",
+  "item.saintsdragons.amphithere_spawn_egg": "Amphithere Spawn Egg",
   
   "entity.saintsdragons.lightning_dragon": "Lightning Dragon",
   "entity.saintsdragons.lightning_chain": "Lightning Chain",
   "entity.saintsdragons.primitive_drake": "Primitive Drake",
+  "entity.saintsdragons.amphithere": "Amphithere",
   
   "saintsdragons.gui.dragon_ally.title": "Dragon Ally Management",
   "saintsdragons.gui.dragon_ally.username_input": "Enter username...",
@@ -89,3 +91,4 @@
   "saintsdragons.message.easter_egg.grumm": "Another Minecraft developer! But he's not on this server.",
   "saintsdragons.message.easter_egg.herobrine": "Do not turn around. You're not supposed to be here."
 }
+
