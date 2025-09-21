@@ -19,16 +19,67 @@ public class DragonFlightMoveHelper extends MoveControl {
     private final net.minecraft.world.entity.Mob mob;
     private float speedFactor = 1.0F;
 
-    // Constants for smooth movement
-    private static final float MAX_YAW_CHANGE = 4.0F;
-    private static final float MAX_PITCH_CHANGE = 8.0F;
-    private static final float SPEED_FACTOR_MIN = 0.5F;
-    private static final float SPEED_FACTOR_MAX = 3.2F; // Higher ceiling for snappier flight
+    // Dragon-specific flight parameters
+    private final float maxYawChange;
+    private final float maxPitchChange;
+    private final float speedFactorMin;
+    private final float speedFactorMax;
+    private final float speedTransitionRate;
+    private final double accelerationCap;
+    private final double velocityBlendRate;
 
     public DragonFlightMoveHelper(DragonFlightCapable dragon) {
+        this(dragon, getDefaultParameters());
+    }
+
+    public DragonFlightMoveHelper(DragonFlightCapable dragon, FlightParameters params) {
         super((net.minecraft.world.entity.Mob) dragon);
         this.dragon = dragon;
         this.mob = (net.minecraft.world.entity.Mob) dragon;
+        
+        this.maxYawChange = params.maxYawChange;
+        this.maxPitchChange = params.maxPitchChange;
+        this.speedFactorMin = params.speedFactorMin;
+        this.speedFactorMax = params.speedFactorMax;
+        this.speedTransitionRate = params.speedTransitionRate;
+        this.accelerationCap = params.accelerationCap;
+        this.velocityBlendRate = params.velocityBlendRate;
+    }
+
+    // Default parameters for Lightning Dragon (fast, agile)
+    private static FlightParameters getDefaultParameters() {
+        return new FlightParameters(
+            4.0F,    // maxYawChange
+            8.0F,    // maxPitchChange
+            0.5F,    // speedFactorMin
+            3.2F,    // speedFactorMax
+            0.15F,   // speedTransitionRate
+            0.22D,   // accelerationCap
+            0.16D    // velocityBlendRate
+        );
+    }
+
+    // Flight parameters for different dragon types
+    public static class FlightParameters {
+        public final float maxYawChange;
+        public final float maxPitchChange;
+        public final float speedFactorMin;
+        public final float speedFactorMax;
+        public final float speedTransitionRate;
+        public final double accelerationCap;
+        public final double velocityBlendRate;
+
+        public FlightParameters(float maxYawChange, float maxPitchChange, float speedFactorMin, 
+                              float speedFactorMax, float speedTransitionRate, double accelerationCap, 
+                              double velocityBlendRate) {
+            this.maxYawChange = maxYawChange;
+            this.maxPitchChange = maxPitchChange;
+            this.speedFactorMin = speedFactorMin;
+            this.speedFactorMax = speedFactorMax;
+            this.speedTransitionRate = speedTransitionRate;
+            this.accelerationCap = accelerationCap;
+            this.velocityBlendRate = velocityBlendRate;
+        }
     }
 
     @Override
@@ -52,7 +103,7 @@ public class DragonFlightMoveHelper extends MoveControl {
         // Collision handling - simple 180 turn
         if (mob.horizontalCollision) {
             mob.setYRot(mob.getYRot() + 180.0F);
-            this.speedFactor = SPEED_FACTOR_MIN;
+            this.speedFactor = speedFactorMin;
             mob.getNavigation().stop();
             return;
         }
@@ -84,7 +135,7 @@ public class DragonFlightMoveHelper extends MoveControl {
         // Smooth yaw approach
         float wrappedCurrentYaw = Mth.wrapDegrees(currentYaw + 90.0F);
         float wrappedDesiredYaw = Mth.wrapDegrees(desiredYaw);
-        mob.setYRot(Mth.approachDegrees(wrappedCurrentYaw, wrappedDesiredYaw, MAX_YAW_CHANGE) - 90.0F);
+        mob.setYRot(Mth.approachDegrees(wrappedCurrentYaw, wrappedDesiredYaw, maxYawChange) - 90.0F);
 
         // Banking handled in animation/predicate; keep MoveHelper focused on movement
         // MoveHelper only handles movement - no banking calculation needed
@@ -94,7 +145,7 @@ public class DragonFlightMoveHelper extends MoveControl {
 
         // === PITCH CALCULATION ===
         float desiredPitch = (float) (-(Mth.atan2(-distY, horizontalDist) * 57.295776F));
-        mob.setXRot(Mth.approachDegrees(mob.getXRot(), desiredPitch, MAX_PITCH_CHANGE));
+        mob.setXRot(Mth.approachDegrees(mob.getXRot(), desiredPitch, maxPitchChange));
 
         // === ENHANCED SPEED MODULATION ===
         float yawDifference = Math.abs(Mth.wrapDegrees(mob.getYRot() - currentYaw));
@@ -103,11 +154,11 @@ public class DragonFlightMoveHelper extends MoveControl {
         float targetSpeedFactor;
         if (yawDifference < 3.0F) {
             // Facing right direction - speed up
-            targetSpeedFactor = SPEED_FACTOR_MAX;
+            targetSpeedFactor = speedFactorMax;
         } else {
             // Turning - slow down based on turn severity using yaw difference
             float turnSeverity = Mth.clamp(yawDifference / 15.0f, 0.0f, 1.0f); // Normalize to 0-1
-            targetSpeedFactor = DragonMathUtil.lerpSmooth(0.6f, SPEED_FACTOR_MAX, 1.0f - turnSeverity,
+            targetSpeedFactor = DragonMathUtil.lerpSmooth(0.6f, speedFactorMax, 1.0f - turnSeverity,
                     DragonMathUtil.EasingFunction.EASE_OUT_SINE);
         }
 
@@ -116,7 +167,8 @@ public class DragonFlightMoveHelper extends MoveControl {
         targetSpeedFactor *= distScale;
 
         // Combat bias: fly a bit faster when we have a live target and are airborne
-        if (dragon.isFlying() && mob.getTarget() != null && mob.getTarget().isAlive()) {
+        var target = mob.getTarget();
+        if (dragon.isFlying() && target != null && target.isAlive()) {
             targetSpeedFactor *= 1.12f; // modest global boost in combat
         }
 
@@ -125,16 +177,16 @@ public class DragonFlightMoveHelper extends MoveControl {
             targetSpeedFactor *= 0.5f;
         }
 
-        this.speedFactor = Mth.clamp(Mth.approach(this.speedFactor, targetSpeedFactor, 0.15F),
-                SPEED_FACTOR_MIN, SPEED_FACTOR_MAX); // Faster speed transitions with clamping
+        this.speedFactor = Mth.clamp(Mth.approach(this.speedFactor, targetSpeedFactor, speedTransitionRate),
+                speedFactorMin, speedFactorMax); // Dragon-specific speed transitions with clamping
 
         // === 3D MOVEMENT APPLICATION (robust, normalized toward target) ===
         Vec3 dir = new Vec3(distX, distY, distZ).scale(1.0 / totalDist); // normalized
         Vec3 motion = mob.getDeltaMovement();
         Vec3 targetVel = dir.scale(this.speedFactor);
         // Blend toward target velocity with per-axis acceleration cap to reduce twitch/overshoot
-        Vec3 delta = targetVel.subtract(motion).scale(0.16D); // stronger blend toward target velocity
-        double accelCap = 0.22D;
+        Vec3 delta = targetVel.subtract(motion).scale(velocityBlendRate); // dragon-specific blend rate
+        double accelCap = accelerationCap;
         // Additional dampening when obstructed
         if (isLineObstructed(mob.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ))) {
             accelCap *= 0.6D;
@@ -150,11 +202,11 @@ public class DragonFlightMoveHelper extends MoveControl {
      */
     private void handleHoveringMovement() {
         // Look at target if we have one - use smooth looking with deadzone to avoid jitter
-        if (mob.getTarget() != null && mob.distanceToSqr(mob.getTarget()) < 1600.0D) {
-            var tgt = mob.getTarget();
-            float yawErr = DragonMathUtil.yawErrorToTarget(mob, tgt);
+        var target = mob.getTarget();
+        if (target != null && mob.distanceToSqr(target) < 1600.0D) {
+            float yawErr = DragonMathUtil.yawErrorToTarget(mob, target);
             if (yawErr > 4.0f) {
-                DragonMathUtil.smoothLookAt(mob, tgt, 10.0f, 10.0f);
+                DragonMathUtil.smoothLookAt(mob, target, 10.0f, 10.0f);
             } // else: within deadzone, do not adjust this tick
         }
 

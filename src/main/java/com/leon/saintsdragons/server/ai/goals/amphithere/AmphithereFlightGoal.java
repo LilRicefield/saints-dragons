@@ -22,7 +22,7 @@ public class AmphithereFlightGoal extends Goal {
     private int timeSinceTargetChange = 0;
 
     // Landing cooldown to prevent immediate takeoff after landing
-    private static final int LANDING_COOLDOWN_TICKS = 120; // 6 seconds minimum on ground (slower than lightning dragon)
+    private static final int LANDING_COOLDOWN_TICKS = 40; // 2 seconds minimum on ground (gliders want to fly!)
     private long lastLandingTime = 0;
     
     // Flight decision cooldown (slower than lightning dragon)
@@ -64,12 +64,12 @@ public class AmphithereFlightGoal extends Goal {
         wasThundering = thundering;
         wasRaining = raining;
 
-        // If tamed, don't take off due to weather - only take off if in danger
+        // If tamed, gliders still want to soar but avoid storms
         if (dragon.isTame()) {
             var owner = dragon.getOwner();
-            if (owner != null && dragon.distanceToSqr(owner) < 15.0 * 15.0) {
-                // Only take off if over danger, not due to weather
-                if (!isOverDanger()) {
+            if (owner != null && dragon.distanceToSqr(owner) < 8.0 * 8.0) {
+                // Only avoid takeoff in storms when over safe ground - gliders love soaring in clear weather
+                if (isOverDanger() && (thundering || raining)) {
                     return false;
                 }
             }
@@ -79,7 +79,7 @@ public class AmphithereFlightGoal extends Goal {
         long currentTime = dragon.level().getGameTime();
         int cooldown = LANDING_COOLDOWN_TICKS; // fixed
         if (thundering) cooldown = 0;            // no cooldown in thunder - gliders avoid storms
-        else if (raining) cooldown = cooldown / 8; // much shorter cooldown in rain - gliders prefer clear weather
+        else if (raining) cooldown = cooldown / 4; // shorter cooldown in rain - gliders prefer clear weather
         
         // Override cooldown if weather just changed to storm conditions
         if (weatherChangedToStorm) {
@@ -348,7 +348,7 @@ public class AmphithereFlightGoal extends Goal {
         if (raining) {
             return 5; // Quick decisions in rain to land
         }
-        return 20; // Normal decisions in clear weather for long soaring
+        return 8; // Frequent decisions in clear weather - gliders want to soar!
     }
 
     private int nextDecisionCooldown(int baseInterval) {

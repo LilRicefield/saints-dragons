@@ -52,12 +52,12 @@ public class AmphithereAnimationHandler {
     }
 
     public PlayState bankingPredicate(AnimationState<AmphithereEntity> state) {
-        state.getController().transitionLength(4);
-        int dir = dragon.getBankDirection();
+        state.getController().transitionLength(8); // Longer transitions for smoother banking
+        float smoothDir = dragon.getSmoothBankDirection();
 
-        if (dir > 0) {
+        if (smoothDir > 0.2f) {
             state.setAndContinue(BANK_RIGHT);
-        } else if (dir < 0) {
+        } else if (smoothDir < -0.2f) {
             state.setAndContinue(BANK_LEFT);
         } else {
             state.setAndContinue(BANK_OFF);
