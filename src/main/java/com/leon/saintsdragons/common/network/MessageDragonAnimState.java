@@ -36,6 +36,8 @@ public record MessageDragonAnimState(int entityId, byte groundState, byte flight
                 Entity e = level.getEntity(msg.entityId());
                 if (e instanceof LightningDragonEntity dragon) {
                     dragon.applyClientAnimState(msg.groundState(), msg.flightMode());
+                } else if (e instanceof com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity amphithere) {
+                    amphithere.applyClientAnimState(msg.groundState(), msg.flightMode());
                 }
             }
         }));

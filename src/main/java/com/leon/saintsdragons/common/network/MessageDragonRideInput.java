@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.network;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,82 +56,115 @@ public record MessageDragonRideInput(boolean goingUp,
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
                 Entity vehicle = player.getVehicle();
-                if (vehicle instanceof LightningDragonEntity dragon && dragon.isTame() && dragon.isOwnedBy(player)) {
-                    // Always handle vertical movement commands when flying
-                    boolean locked = dragon.areRiderControlsLocked();
-                    if (dragon.isFlying()) {
-                        dragon.setGoingUp(msg.goingUp());
-                        dragon.setGoingDown(msg.goingDown());
-                    } else {
-                        // Clear vertical movement when not flying
-                        dragon.setGoingUp(false);
-                        dragon.setGoingDown(false);
-                    }
-
-                    // Update last ground movement inputs on the server for animation syncing
-                    // Store small values as zero to avoid drift
-                    float fwd = Math.abs(msg.forward()) > 0.02f ? msg.forward() : 0f;
-                    float str = Math.abs(msg.strafe()) > 0.02f ? msg.strafe() : 0f;
-                    dragon.setLastRiderForward(fwd);
-                    dragon.setLastRiderStrafe(str);
-
-                    // Immediate ground movement state update for robust observer sync
-                    if (!dragon.isFlying()) {
-                        int moveState = 0;
-                        float mag = Math.abs(fwd) + Math.abs(str);
-                        if (mag > 0.05f) {
-                            moveState = dragon.isAccelerating() ? 2 : 1;
-                        }
-                        if (dragon.getEntityData().get(DATA_GROUND_MOVE_STATE) != moveState) {
-                            dragon.getEntityData().set(DATA_GROUND_MOVE_STATE, moveState);
-                            // Also nudge observers immediately
-                            com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
-                                    net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> dragon),
-                                    new com.leon.saintsdragons.common.network.MessageDragonAnimState(dragon.getId(), (byte) moveState, (byte) dragon.getSyncedFlightMode())
-                            );
-                        }
-                    }
-
-                    // Handle actions using type-safe enum
-                    switch (msg.action()) {
-                        case TAKEOFF_REQUEST:
-                            // Block takeoff while locked (e.g., ground roar)
-                            if (!locked) {
-                                dragon.requestRiderTakeoff();
-                            }
-                            break;
-                        case ACCELERATE:
-                            // Handle acceleration input - L-Ctrl pressed
-                            if (!locked) dragon.setAccelerating(true);
-                            break;
-                        case STOP_ACCELERATE:
-                            // Handle acceleration stop - L-Ctrl released
-                            dragon.setAccelerating(false);
-                            break;
-                        case ABILITY_USE:
-                            if (msg.hasAbilityName()) {
-                                dragon.useRidingAbility(msg.abilityName());
-                            }
-                            break;
-                        case ABILITY_STOP:
-                            // Stop an active hold-to-use ability
-                            if (msg.hasAbilityName()) {
-                                var active = dragon.getActiveAbility();
-                                if (active != null) {
-                                    // Stop regardless of type when names match, to avoid tight coupling
-                                    // (Optional) could check registry name here if needed
-                                    dragon.forceEndActiveAbility();
-                                }
-                            }
-                            break;
-                        case NONE:
-                        default:
-                            // No special action to handle
-                            break;
-                    }
+                if (vehicle instanceof LightningDragonEntity lightning && lightning.isTame() && lightning.isOwnedBy(player)) {
+                    handleLightningInput(msg, lightning);
+                } else if (vehicle instanceof AmphithereEntity amphithere && amphithere.isTame() && amphithere.isOwnedBy(player)) {
+                    handleAmphithereInput(msg, amphithere);
                 }
             }
         });
         ctx.get().setPacketHandled(true);
+    }
+
+    private static void handleLightningInput(MessageDragonRideInput msg, LightningDragonEntity dragon) {
+        boolean locked = dragon.areRiderControlsLocked();
+        if (dragon.isFlying()) {
+            dragon.setGoingUp(msg.goingUp());
+            dragon.setGoingDown(msg.goingDown());
+        } else {
+            dragon.setGoingUp(false);
+            dragon.setGoingDown(false);
+        }
+
+        float fwd = Math.abs(msg.forward()) > 0.02f ? msg.forward() : 0f;
+        float str = Math.abs(msg.strafe()) > 0.02f ? msg.strafe() : 0f;
+        dragon.setLastRiderForward(fwd);
+        dragon.setLastRiderStrafe(str);
+
+        if (!dragon.isFlying()) {
+            int moveState = 0;
+            float mag = Math.abs(fwd) + Math.abs(str);
+            if (mag > 0.05f) {
+                moveState = dragon.isAccelerating() ? 2 : 1;
+            }
+            if (dragon.getEntityData().get(DATA_GROUND_MOVE_STATE) != moveState) {
+                dragon.getEntityData().set(DATA_GROUND_MOVE_STATE, moveState);
+                com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
+                        net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> dragon),
+                        new com.leon.saintsdragons.common.network.MessageDragonAnimState(dragon.getId(), (byte) moveState, (byte) dragon.getSyncedFlightMode())
+                );
+            }
+        }
+
+        switch (msg.action()) {
+            case TAKEOFF_REQUEST:
+                if (!locked) {
+                    dragon.requestRiderTakeoff();
+                }
+                break;
+            case ACCELERATE:
+                if (!locked) dragon.setAccelerating(true);
+                break;
+            case STOP_ACCELERATE:
+                dragon.setAccelerating(false);
+                break;
+            case ABILITY_USE:
+                if (msg.hasAbilityName()) {
+                    dragon.useRidingAbility(msg.abilityName());
+                }
+                break;
+            case ABILITY_STOP:
+                if (msg.hasAbilityName()) {
+                    var active = dragon.getActiveAbility();
+                    if (active != null) {
+                        dragon.forceEndActiveAbility();
+                    }
+                }
+                break;
+            case NONE:
+            default:
+                break;
+        }
+    }
+
+    private static void handleAmphithereInput(MessageDragonRideInput msg, AmphithereEntity dragon) {
+        if (dragon.isFlying()) {
+            dragon.setGoingUp(msg.goingUp());
+            dragon.setGoingDown(msg.goingDown());
+        } else {
+            dragon.setGoingUp(false);
+            dragon.setGoingDown(false);
+        }
+
+        float fwd = Math.abs(msg.forward()) > 0.02f ? msg.forward() : 0f;
+        float str = Math.abs(msg.strafe()) > 0.02f ? msg.strafe() : 0f;
+
+        if (!dragon.isFlying()) {
+            int moveState = 0;
+            float mag = Math.abs(fwd) + Math.abs(str);
+            if (mag > 0.05f) {
+                moveState = (msg.action() == DragonRiderAction.ACCELERATE) ? 2 : 1;
+            }
+            dragon.setGroundMoveStateFromAI(moveState);
+            dragon.setRunning(moveState == 2);
+        }
+
+        switch (msg.action()) {
+            case TAKEOFF_REQUEST:
+                dragon.requestRiderTakeoff();
+                break;
+            case ACCELERATE:
+                if (!dragon.isFlying()) {
+                    dragon.setRunning(true);
+                }
+                break;
+            case STOP_ACCELERATE:
+                if (!dragon.isFlying()) {
+                    dragon.setRunning(false);
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

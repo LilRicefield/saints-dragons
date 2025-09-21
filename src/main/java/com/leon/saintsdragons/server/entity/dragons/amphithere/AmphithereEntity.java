@@ -2,12 +2,14 @@ package com.leon.saintsdragons.server.entity.dragons.amphithere;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFlightGoal;
+import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.controller.amphithere.AmphithereRiderController;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereInteractionHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import net.minecraft.core.BlockPos;
@@ -18,17 +20,20 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
@@ -36,16 +41,17 @@ import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.damagesource.DamageSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -75,11 +81,14 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.INT);
+    private static final int LANDING_SETTLE_TICKS = 4;
+
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final AmphithereAnimationHandler animationHandler = new AmphithereAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final AmphithereRiderController riderController;
+    private final AmphithereInteractionHandler interactionHandler = new AmphithereInteractionHandler(this);
 
     private final GroundPathNavigation groundNav;
     private final FlyingPathNavigation airNav;
@@ -89,15 +98,21 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     private int targetCooldown;
     private int airTicks;
     private int groundTicks;
+    private int landingTicks;
+    private int riderTakeoffTicks;
 
     private float bankSmoothedYaw = 0f;
-    private int bankHoldTicks = 0;
     private int bankDir = 0;
     private float bankTransitionProgress = 0f; // 0.0 to 1.0 for smooth transitions
 
     private float pitchSmoothedPitch = 0f;
     private int pitchHoldTicks = 0;
     private int pitchDir = 0;
+
+    // ===== Client animation overrides (for robust observer sync) =====
+    private int clientGroundOverride = Integer.MIN_VALUE;
+    private int clientFlightOverride = Integer.MIN_VALUE;
+    private int clientOverrideExpiry = 0;
 
     public AmphithereEntity(EntityType<? extends AmphithereEntity> type, Level level) {
         super(type, level);
@@ -122,6 +137,20 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
+    }
+
+    @Override
+    public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level, @NotNull DifficultyInstance difficulty, @NotNull MobSpawnType spawnType,
+                                                 @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
+        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
+
+        if (!this.isTame()) {
+            this.setOwnerUUID(null);
+            this.setCommand(2);
+            this.setOrderedToSit(false);
+        }
+
+        return data;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -156,7 +185,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(2, new AmphithereFlightGoal(this));
-        this.goalSelector.addGoal(4, new FollowOwnerGoal(this, 1.1D, 10.0F, 3.0F, false));
+        this.goalSelector.addGoal(4, new AmphithereFollowOwnerGoal(this));
         this.goalSelector.addGoal(6, new AmphithereGroundWanderGoal(this, 0.6D, 160));
 
         this.targetSelector.addGoal(1, new OwnerHurtByTargetGoal(this));
@@ -169,20 +198,44 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         super.aiStep();
 
         if (!this.level().isClientSide) {
+            boolean onGroundNow = this.onGround() || this.isInWater();
+
             if (isFlying()) {
                 airTicks++;
                 groundTicks = 0;
                 this.fallDistance = 0.0F;
+
+                if (isTakeoff() && !onGroundNow && airTicks > 5) {
+                    setTakeoff(false);
+                }
+
+                if (onGroundNow && !isTakeoff()) {
+                    if (!isLanding()) {
+                        setLanding(true);
+                    }
+                    setFlying(false);
+                } else if (isLanding() && !onGroundNow) {
+                    setLanding(false);
+                }
             } else {
                 groundTicks++;
                 airTicks = 0;
             }
 
-            if (isFlying() && this.onGround()) {
-                setLanding(true);
-                setFlying(false);
+            if (isLanding()) {
+                // Hold landing state briefly so the landing animation can finish before ground loops resume
+                if (onGroundNow) {
+                    landingTicks++;
+                    if (landingTicks >= LANDING_SETTLE_TICKS) {
+                        markLandedNow();
+                    }
+                } else {
+                    landingTicks = 0;
+                }
+            } else {
+                landingTicks = 0;
             }
-            
+
             // Update animation states
             tickAnimationStates();
         }
@@ -192,14 +245,28 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             switchToGroundNavigation();
         }
     }
+
     public void tick() {
         super.tick();
 
         tickBankingLogic();
         tickPitchingLogic();
+        tickRiderTakeoff();
 
         if (!level().isClientSide && targetCooldown > 0) {
             targetCooldown--;
+        }
+    }
+
+    private void tickRiderTakeoff() {
+        if (!level().isClientSide && riderTakeoffTicks > 0) {
+            riderTakeoffTicks--;
+            Vec3 velocity = this.getDeltaMovement();
+            double boost = this.isFlying() ? 0.08D : 0.12D;
+            if (velocity.y < boost) {
+                this.setDeltaMovement(velocity.x, boost, velocity.z);
+            }
+            this.hasImpulse = true;
         }
     }
 
@@ -209,48 +276,31 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             if (bankDir != 0) {
                 bankDir = 0;
                 bankSmoothedYaw = 0f;
-                bankHoldTicks = 0;
             }
             return;
         }
-        
-        // Exponential smoothing to avoid jitter - slower transitions for glider
+
         float yawChange = getYRot() - yRotO;
-        bankSmoothedYaw = bankSmoothedYaw * 0.88f + yawChange * 0.12f; // Faster smoothing for AI responsiveness
-        float enter = 0.8f;  // More sensitive for AI intermittent turns
-        float exit = 2.0f;   // Much smaller exit threshold for sustained banking
+        bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
+        float enter = 0.9f;
+        float exit = 3.5f;
 
         int desiredDir = bankDir;
         if (bankSmoothedYaw > enter) desiredDir = 1;
         else if (bankSmoothedYaw < -enter) desiredDir = -1;
-        else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;  // banking_off when flying straight
-        
-        // Debug output removed - banking is working properly now
-        
+        else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;
+
         if (desiredDir != bankDir) {
-            // Smooth transition to new banking direction
-            int holdTime = (desiredDir == 0) ? 5 : 8; // Much longer hold for sustained banking
-            if (bankHoldTicks >= holdTime) {
-                // Start transition to new direction
-                bankTransitionProgress = Math.min(bankTransitionProgress + 0.08f, 1.0f); // Slower transition
-                if (bankTransitionProgress >= 1.0f) {
-                    bankDir = desiredDir;
-                    bankTransitionProgress = 0f;
-                    bankHoldTicks = 0;
-                }
-            } else {
-                bankHoldTicks++;
-            }
-        } else {
-            // Smooth transition back to neutral - much slower for sustained banking
+            bankDir = desiredDir;
             if (bankDir != 0) {
-                bankTransitionProgress = Math.min(bankTransitionProgress + 0.05f, 1.0f); // Much slower return to neutral
-                if (bankTransitionProgress >= 1.0f) {
-                    bankDir = 0;
-                    bankTransitionProgress = 0f;
-                }
+                bankTransitionProgress = Math.min(bankTransitionProgress, 0.25f);
             }
-            bankHoldTicks = Math.min(bankHoldTicks + 1, 20); // Longer max hold
+        }
+
+        if (bankDir != 0) {
+            bankTransitionProgress = Math.min(bankTransitionProgress + 0.18f, 1.0f);
+        } else {
+            bankTransitionProgress = Math.max(bankTransitionProgress - 0.20f, 0.0f);
         }
     }
 
@@ -364,15 +414,38 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         return s == 1; // walking state
     }
     
-    public int getGroundMoveState() { 
-        return this.entityData.get(DATA_GROUND_MOVE_STATE); 
+    public int getGroundMoveState() {
+        return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
-    
-    public int getSyncedFlightMode() { 
-        return this.entityData.get(DATA_FLIGHT_MODE); 
+
+    public void setGroundMoveStateFromAI(int state) {
+        if (!this.level().isClientSide) {
+            int s = Mth.clamp(state, 0, 2);
+            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
+                this.entityData.set(DATA_GROUND_MOVE_STATE, s);
+            }
+        }
+    }
+
+    public int getSyncedFlightMode() {
+        return this.entityData.get(DATA_FLIGHT_MODE);
+    }
+
+    // ===== Client animation overrides (for robust observer sync) =====
+    public void applyClientAnimState(int groundState, int flightMode) {
+        this.clientGroundOverride = groundState;
+        this.clientFlightOverride = flightMode;
+        this.clientOverrideExpiry = this.tickCount + 40; // Expire after 2 seconds
     }
     
     public int getEffectiveGroundState() {
+        if (level().isClientSide && clientGroundOverride != Integer.MIN_VALUE && tickCount < clientOverrideExpiry) {
+            return clientGroundOverride;
+        }
+        // Clear expired overrides
+        if (level().isClientSide && tickCount >= clientOverrideExpiry) {
+            clientGroundOverride = Integer.MIN_VALUE;
+        }
         if (level().isClientSide) {
             // Client-side calculation based on movement with refined thresholds
             double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
@@ -405,25 +478,41 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             }
         }
         
-        // Update flight mode
-        int flightMode = -1; // not flying
+        // Update flight mode - match Lightning Dragon's logic
+        int flightMode = -1; // not flying (ground state)
         if (isFlying()) {
-            if (isGoingDown()) {
+            if (isTakeoff()) {
+                flightMode = 3; // takeoff
+            } else if (isHovering()) {
+                flightMode = 2; // hover
+            } else if (isGoingDown()) {
                 flightMode = 0; // glide
             } else if (isGoingUp()) {
                 flightMode = 1; // flap
             } else {
+                // Default to glide for natural descent
                 flightMode = 0; // glide
             }
         }
         
-        // Update entity data
-        if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
+        // Update entity data and sync to clients
+        boolean groundStateChanged = this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState;
+        boolean flightModeChanged = this.entityData.get(DATA_FLIGHT_MODE) != flightMode;
+        
+        if (groundStateChanged) {
             this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
         }
         
-        if (this.entityData.get(DATA_FLIGHT_MODE) != flightMode) {
+        if (flightModeChanged) {
             this.entityData.set(DATA_FLIGHT_MODE, flightMode);
+        }
+        
+        // Send animation state sync to clients when states change
+        if (groundStateChanged || flightModeChanged) {
+            com.leon.saintsdragons.common.network.NetworkHandler.INSTANCE.send(
+                    net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this),
+                    new com.leon.saintsdragons.common.network.MessageDragonAnimState(this.getId(), (byte) moveState, (byte) flightMode)
+            );
         }
         
         // Stop running if not moving
@@ -608,8 +697,16 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     @Override
     public @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
+        // Use interaction handler for all interactions
+        InteractionResult handlerResult = interactionHandler.handleInteraction(player, hand);
+        if (handlerResult != InteractionResult.PASS) {
+            return handlerResult;
+        }
+
+        // Fall back to base implementation for any unhandled interactions
         return super.mobInteract(player, hand);
     }
+
 
     @Nullable
     @Override
@@ -697,6 +794,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     @Override
     public void setLanding(boolean landing) {
         this.entityData.set(DATA_LANDING, landing);
+        landingTicks = 0;
         if (landing) {
             setHovering(false);
             setTakeoff(false);
@@ -723,6 +821,23 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     public void markLandedNow() {
         setLanding(false);
         setTakeoff(false);
+        this.riderTakeoffTicks = 0;
+    }
+
+    public int getRiderTakeoffTicks() {
+        return riderTakeoffTicks;
+    }
+
+    public void setRiderTakeoffTicks(int ticks) {
+        this.riderTakeoffTicks = Math.max(0, ticks);
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float fallMultiplier, DamageSource source) {
+        if (this.isFlying() || this.isTakeoff() || this.isLanding()) {
+            return false;
+        }
+        return super.causeFallDamage(fallDistance, fallMultiplier, source);
     }
 
     // ===== FlyingAnimal =====

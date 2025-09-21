@@ -34,11 +34,19 @@ public class AmphithereAnimationHandler {
         if (dragon.isFlying()) {
             state.setAndContinue(GLIDE);
         } else if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isHovering()) {
-            // Use the improved movement state detection
-            if (dragon.isRunning()) {
-                // TODO: Add run animation when available
-                state.setAndContinue(WALK); // Fallback to walk for now
+            // Use the improved movement state detection - prioritize AI-set states for tamed dragons
+            int groundState = dragon.getGroundMoveState();
+            if (groundState == 2) {
+                // Running state
+                state.setAndContinue(WALK); // Fallback to walk for now (no run animation yet)
+            } else if (groundState == 1) {
+                // Walking state
+                state.setAndContinue(WALK);
+            } else if (dragon.isRunning()) {
+                // Fallback to running check
+                state.setAndContinue(WALK);
             } else if (dragon.isWalking()) {
+                // Fallback to walking check
                 state.setAndContinue(WALK);
             } else {
                 state.setAndContinue(IDLE);
