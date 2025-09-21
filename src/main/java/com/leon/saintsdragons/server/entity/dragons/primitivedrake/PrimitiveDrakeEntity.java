@@ -622,7 +622,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     // ===== PLAY DEAD BEHAVIOR SUPPORT =====
     
     // Reference to the play dead goal for easy access
-    private com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal playDeadGoal = null;
+    private com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal playDeadGoal;
     private boolean pendingRestorePlayDead = false;
     private int pendingRestorePlayDeadTicks = 0;
     private int pendingRestoreCooldownTicks = 0;
