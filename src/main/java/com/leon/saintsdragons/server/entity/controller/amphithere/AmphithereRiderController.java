@@ -34,8 +34,10 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
     // ===== AIR SPRINT / ACCELERATION TUNING (MUCH SLOWER FOR GLIDER) =====
     // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
     // Base cruise cap is intentionally lower; sprint raises cap and accel.
-    private static final double CRUISE_MAX_MULT = 5.0;    // Much slower than Lightning Dragon (10.0)
-    private static final double AIR_ACCEL_MULT = 0.05;     // Much slower than Lightning Dragon (0.10)
+    private static final double CRUISE_MAX_MULT = 10.0;
+    private static final double SPRINT_MAX_MULT = 20.0;    // Moderate sprint boost for glider (vs Lightning Dragon's 50.0)
+    private static final double AIR_ACCEL_MULT = 0.10;
+    private static final double SPRINT_ACCEL_MULT = 0.18;  // Moderate sprint acceleration (vs Lightning Dragon's 0.25)
     private static final double AIR_DRAG = 0.05;           // More drag for glider behavior
     
     // ===== AMPHITHERE GLIDER MANEUVERABILITY =====
@@ -134,8 +136,11 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
             // Ground speed - use movement speed attribute with acceleration multipliers
             float baseSpeed = (float) dragon.getAttributeValue(Attributes.MOVEMENT_SPEED);
 
-            // Amphithere doesn't have running state, so just use base speed
-            return baseSpeed * 0.5F;
+            if (dragon.isAccelerating()) {
+                return baseSpeed * 1.5F; // Sprint speed boost
+            } else {
+                return baseSpeed * 0.5F; // Normal speed
+            }
         }
     }
 
@@ -154,8 +159,9 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
             // Directional input comes in local space via `motion` (strafe X, forward Z)
             // We implement a throttle-based acceleration model with drag and speed caps.
             final double base = dragon.getAttributeValue(Attributes.FLYING_SPEED);
-            final double accel = AIR_ACCEL_MULT * base; // Always use normal acceleration
-            final double maxSpeed = CRUISE_MAX_MULT * base; // Always use cruise speed
+            final boolean sprinting = dragon.isAccelerating();
+            final double accel = (sprinting ? SPRINT_ACCEL_MULT : AIR_ACCEL_MULT) * base;
+            final double maxSpeed = (sprinting ? SPRINT_MAX_MULT : CRUISE_MAX_MULT) * base;
 
             // Current velocity split into horizontal and vertical
             Vec3 cur = dragon.getDeltaMovement();

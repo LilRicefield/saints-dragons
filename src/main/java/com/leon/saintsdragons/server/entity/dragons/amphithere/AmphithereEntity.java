@@ -81,6 +81,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
     private static final int LANDING_SETTLE_TICKS = 4;
 
 
@@ -100,6 +102,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     private int groundTicks;
     private int landingTicks;
     private int riderTakeoffTicks;
+    private boolean wasVehicleLastTick;
 
     private float bankSmoothedYaw = 0f;
     private int bankDir = 0;
@@ -158,7 +161,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
                 .add(Attributes.MAX_HEALTH, 60.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.45D)
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
-                .add(Attributes.FLYING_SPEED, 0.20D) // Slower for glider behavior
+                .add(Attributes.FLYING_SPEED, 0.60D) // Slower for glider behavior
                 .add(Attributes.ARMOR, 4.0D);
     }
 
@@ -178,6 +181,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         this.entityData.define(DATA_RUNNING, false);
         this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
         this.entityData.define(DATA_FLIGHT_MODE, -1);
+        this.entityData.define(DATA_ACCELERATING, false);
     }
 
     @Override
@@ -252,10 +256,61 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         tickBankingLogic();
         tickPitchingLogic();
         tickRiderTakeoff();
+        tickMountedState();
 
         if (!level().isClientSide && targetCooldown > 0) {
             targetCooldown--;
         }
+    }
+
+
+    private void tickMountedState() {
+        boolean mounted = this.isVehicle();
+
+        if (level().isClientSide) {
+            wasVehicleLastTick = mounted;
+            return;
+        }
+
+        if (mounted) {
+            if (!wasVehicleLastTick) {
+                clearStatesWhenMounted();
+            }
+
+            if (this.isOrderedToSit()) {
+                this.setOrderedToSit(false);
+                if (this.getCommand() == 1) {
+                    this.setCommand(0);
+                }
+            }
+        }
+
+        wasVehicleLastTick = mounted;
+    }
+
+    private void clearStatesWhenMounted() {
+        if (level().isClientSide || !this.isVehicle()) {
+            return;
+        }
+
+        setRunning(false);
+        setGoingUp(false);
+        setGoingDown(false);
+        setHovering(false);
+        setLanding(false);
+        setTakeoff(false);
+        setAccelerating(false);
+        this.riderTakeoffTicks = 0;
+
+        if (!isFlying()) {
+            airTicks = 0;
+        }
+
+        if (this.getNavigation().getPath() != null) {
+            this.getNavigation().stop();
+        }
+
+        this.setTarget(null);
     }
 
     private void tickRiderTakeoff() {
@@ -430,6 +485,9 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     public int getSyncedFlightMode() {
         return this.entityData.get(DATA_FLIGHT_MODE);
     }
+
+    public boolean isAccelerating() { return this.entityData.get(DATA_ACCELERATING); }
+    public void setAccelerating(boolean accelerating) { this.entityData.set(DATA_ACCELERATING, accelerating); }
 
     // ===== Client animation overrides (for robust observer sync) =====
     public void applyClientAnimState(int groundState, int flightMode) {
@@ -724,6 +782,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         tag.putBoolean("GoingUp", isGoingUp());
         tag.putBoolean("GoingDown", isGoingDown());
         tag.putBoolean("Running", isRunning());
+        tag.putBoolean("Accelerating", isAccelerating());
         tag.putInt("GroundMoveState", getGroundMoveState());
         tag.putInt("FlightMode", getSyncedFlightMode());
     }
@@ -731,15 +790,42 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("Flying")) setFlying(tag.getBoolean("Flying"));
-        if (tag.contains("Hovering")) setHovering(tag.getBoolean("Hovering"));
-        if (tag.contains("Landing")) setLanding(tag.getBoolean("Landing"));
-        if (tag.contains("Takeoff")) setTakeoff(tag.getBoolean("Takeoff"));
-        if (tag.contains("GoingUp")) setGoingUp(tag.getBoolean("GoingUp"));
-        if (tag.contains("GoingDown")) setGoingDown(tag.getBoolean("GoingDown"));
-        if (tag.contains("Running")) setRunning(tag.getBoolean("Running"));
-        if (tag.contains("GroundMoveState")) this.entityData.set(DATA_GROUND_MOVE_STATE, tag.getInt("GroundMoveState"));
-        if (tag.contains("FlightMode")) this.entityData.set(DATA_FLIGHT_MODE, tag.getInt("FlightMode"));
+
+        boolean savedFlying = tag.getBoolean("Flying");
+        boolean savedLanding = tag.getBoolean("Landing");
+        boolean savedTakeoff = tag.getBoolean("Takeoff");
+        boolean savedHovering = tag.getBoolean("Hovering");
+        boolean savedGoingUp = tag.getBoolean("GoingUp");
+        boolean savedGoingDown = tag.getBoolean("GoingDown");
+        boolean savedRunning = tag.getBoolean("Running");
+        boolean savedAccelerating = tag.getBoolean("Accelerating");
+        int savedGroundState = tag.contains("GroundMoveState") ? tag.getInt("GroundMoveState") : 0;
+        int savedFlightMode = tag.contains("FlightMode") ? tag.getInt("FlightMode") : -1;
+
+        setFlying(savedFlying);
+        setLanding(savedLanding);
+        setTakeoff(savedFlying && savedTakeoff && !savedLanding);
+        setHovering(savedFlying && savedHovering && !savedLanding);
+        setGoingUp(savedFlying && savedGoingUp);
+        setGoingDown(savedFlying && savedGoingDown);
+        setRunning(savedRunning);
+        setAccelerating(savedAccelerating);
+
+        this.entityData.set(DATA_GROUND_MOVE_STATE, Mth.clamp(savedGroundState, 0, 2));
+        this.entityData.set(DATA_FLIGHT_MODE, savedFlying ? Mth.clamp(savedFlightMode, -1, 3) : -1);
+
+        if (!savedFlying) {
+            landingTicks = 0;
+            airTicks = 0;
+        } else {
+            airTicks = Math.max(airTicks, 1);
+        }
+
+        clientGroundOverride = Integer.MIN_VALUE;
+        clientFlightOverride = Integer.MIN_VALUE;
+        clientOverrideExpiry = 0;
+
+        this.setNoGravity(isFlying() || isHovering());
     }
 
     // ===== DragonFlightCapable =====
