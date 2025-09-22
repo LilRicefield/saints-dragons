@@ -17,8 +17,6 @@ import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -63,22 +61,18 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
 public class AmphithereEntity extends RideableDragonBase implements FlyingAnimal, DragonFlightCapable {
-    private static final EntityDataAccessor<Boolean> DATA_FLYING =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_HOVERING =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_LANDING =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
     private static final int LANDING_SETTLE_TICKS = 4;
     
-    // RideableDragonBase data accessors (inherited but need local references)
-    private static final EntityDataAccessor<Boolean> DATA_GOING_UP = RideableDragonData.DATA_GOING_UP;
-    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = RideableDragonData.DATA_GOING_DOWN;
+    // Use shared RideableDragonData fields for consistency
+    private static final EntityDataAccessor<Boolean> DATA_FLYING = RideableDragonData.DATA_FLYING;
+    private static final EntityDataAccessor<Boolean> DATA_TAKEOFF = RideableDragonData.DATA_TAKEOFF;
+    private static final EntityDataAccessor<Boolean> DATA_HOVERING = RideableDragonData.DATA_HOVERING;
+    private static final EntityDataAccessor<Boolean> DATA_LANDING = RideableDragonData.DATA_LANDING;
     private static final EntityDataAccessor<Boolean> DATA_RUNNING = RideableDragonData.DATA_RUNNING;
     private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = RideableDragonData.DATA_GROUND_MOVE_STATE;
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = RideableDragonData.DATA_FLIGHT_MODE;
+    private static final EntityDataAccessor<Boolean> DATA_GOING_UP = RideableDragonData.DATA_GOING_UP;
+    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = RideableDragonData.DATA_GOING_DOWN;
     private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = RideableDragonData.DATA_ACCELERATING;
     private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = RideableDragonData.DATA_RIDER_FORWARD;
     private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = RideableDragonData.DATA_RIDER_STRAFE;
@@ -167,10 +161,19 @@ public class AmphithereEntity extends RideableDragonBase implements FlyingAnimal
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        // Define shared RideableDragonData fields
         this.entityData.define(DATA_FLYING, false);
         this.entityData.define(DATA_TAKEOFF, false);
         this.entityData.define(DATA_HOVERING, false);
         this.entityData.define(DATA_LANDING, false);
+        this.entityData.define(DATA_RUNNING, false);
+        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
+        this.entityData.define(DATA_FLIGHT_MODE, -1);
+        this.entityData.define(DATA_RIDER_FORWARD, 0f);
+        this.entityData.define(DATA_RIDER_STRAFE, 0f);
+        this.entityData.define(DATA_GOING_UP, false);
+        this.entityData.define(DATA_GOING_DOWN, false);
+        this.entityData.define(DATA_ACCELERATING, false);
     }
 
     @Override
