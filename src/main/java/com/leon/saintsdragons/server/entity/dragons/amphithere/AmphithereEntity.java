@@ -257,6 +257,11 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         if (!level().isClientSide && targetCooldown > 0) {
             targetCooldown--;
         }
+        
+        // Periodic animation state reset to prevent long-term thrashing
+        if (!level().isClientSide && this.tickCount % 200 == 0) { // Every 10 seconds
+            resetAnimationState();
+        }
     }
 
 
@@ -484,6 +489,19 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     public boolean isAccelerating() { return this.entityData.get(DATA_ACCELERATING); }
     public void setAccelerating(boolean accelerating) { this.entityData.set(DATA_ACCELERATING, accelerating); }
+    
+    /**
+     * Force reset animation state to prevent thrashing issues
+     */
+    public void resetAnimationState() {
+        if (!level().isClientSide) {
+            int currentGroundState = this.entityData.get(DATA_GROUND_MOVE_STATE);
+            int currentFlightMode = this.entityData.get(DATA_FLIGHT_MODE);
+            
+            // Force sync current state
+            this.syncAnimState(currentGroundState, currentFlightMode);
+        }
+    }
 
     // ===== Client animation overrides (for robust observer sync) =====
     
