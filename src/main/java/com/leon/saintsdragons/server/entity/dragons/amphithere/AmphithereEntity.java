@@ -6,7 +6,8 @@ import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFollowOwnerGo
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.controller.amphithere.AmphithereRiderController;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereInteractionHandler;
@@ -61,7 +62,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nonnull;
 
-public class AmphithereEntity extends DragonEntity implements FlyingAnimal, DragonFlightCapable {
+public class AmphithereEntity extends RideableDragonBase implements FlyingAnimal, DragonFlightCapable {
     private static final EntityDataAccessor<Boolean> DATA_FLYING =
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
@@ -70,23 +71,17 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_LANDING =
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_UP =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_RUNNING =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
-            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
     private static final int LANDING_SETTLE_TICKS = 4;
+    
+    // RideableDragonBase data accessors (inherited but need local references)
+    private static final EntityDataAccessor<Boolean> DATA_GOING_UP = RideableDragonData.DATA_GOING_UP;
+    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = RideableDragonData.DATA_GOING_DOWN;
+    private static final EntityDataAccessor<Boolean> DATA_RUNNING = RideableDragonData.DATA_RUNNING;
+    private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = RideableDragonData.DATA_GROUND_MOVE_STATE;
+    private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = RideableDragonData.DATA_FLIGHT_MODE;
+    private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = RideableDragonData.DATA_ACCELERATING;
+    private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = RideableDragonData.DATA_RIDER_FORWARD;
+    private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = RideableDragonData.DATA_RIDER_STRAFE;
 
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -176,14 +171,6 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         this.entityData.define(DATA_TAKEOFF, false);
         this.entityData.define(DATA_HOVERING, false);
         this.entityData.define(DATA_LANDING, false);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_ACCELERATING, false);
-        this.entityData.define(DATA_RIDER_FORWARD, 0f);
-        this.entityData.define(DATA_RIDER_STRAFE, 0f);
     }
 
     @Override
@@ -437,36 +424,9 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     // ===== Rider Control Methods =====
-    public boolean isGoingUp() { 
-        return this.entityData.get(DATA_GOING_UP); 
-    }
-    
-    public void setGoingUp(boolean goingUp) { 
-        this.entityData.set(DATA_GOING_UP, goingUp); 
-    }
-    
-    public boolean isGoingDown() { 
-        return this.entityData.get(DATA_GOING_DOWN); 
-    }
-    
-    public void setGoingDown(boolean goingDown) { 
-        this.entityData.set(DATA_GOING_DOWN, goingDown); 
-    }
 
     // ===== Animation State Methods =====
     
-    public boolean isRunning() { 
-        if (level().isClientSide) {
-            int s = getEffectiveGroundState();
-            return s == 2; // running state
-        }
-        int s = this.entityData.get(DATA_GROUND_MOVE_STATE);
-        return s == 2; // running state
-    }
-    
-    public void setRunning(boolean running) { 
-        this.entityData.set(DATA_RUNNING, running); 
-    }
     
     public boolean isWalking() {
         if (level().isClientSide) {
@@ -495,79 +455,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         return this.entityData.get(DATA_FLIGHT_MODE);
     }
 
-    public boolean isAccelerating() { return this.entityData.get(DATA_ACCELERATING); }
-    public void setAccelerating(boolean accelerating) { this.entityData.set(DATA_ACCELERATING, accelerating); }
     
-    // Rider input snapshots for server-side animation sync
-    public void setLastRiderForward(float forward) { this.entityData.set(DATA_RIDER_FORWARD, forward); }
-    public void setLastRiderStrafe(float strafe) { this.entityData.set(DATA_RIDER_STRAFE, strafe); }
-    
-    /**
-     * Initialize animation state after entity loading to prevent thrashing
-     */
-    public void initializeAnimationState() {
-        if (!level().isClientSide) {
-            // Reset all tick counters to ensure clean state
-            groundTicks = 0;
-            airTicks = 0;
-            landingTicks = 0;
-            
-            // Set initial state based on current entity state
-            int initialGroundState = 0; // Default to idle
-            int initialFlightMode = -1; // Default to ground state
-            
-            if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
-                // Check if entity is actually moving
-                double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                final double WALK_MIN = 0.0008;
-                final double RUN_MIN = 0.0200;
-                
-                if (velSqr > RUN_MIN) {
-                    initialGroundState = 2; // running
-                } else if (velSqr > WALK_MIN) {
-                    initialGroundState = 1; // walking
-                }
-            } else if (isFlying()) {
-                initialFlightMode = getFlightMode();
-            }
-            
-            // Set the initial state without triggering sync (to avoid thrashing)
-            this.entityData.set(DATA_GROUND_MOVE_STATE, initialGroundState);
-            this.entityData.set(DATA_FLIGHT_MODE, initialFlightMode);
-        }
-    }
-    
-    /**
-     * Force reset animation state to prevent thrashing issues
-     */
-    public void resetAnimationState() {
-        if (!level().isClientSide) {
-            // Recalculate current state based on actual entity state
-            int currentGroundState = 0; // Default to idle
-            
-            if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
-                // Recalculate ground movement state based on current velocity
-                double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                final double WALK_MIN = 0.0008;
-                final double RUN_MIN = 0.0200;
-                
-                if (velSqr > RUN_MIN) {
-                    currentGroundState = 2; // running
-                } else if (velSqr > WALK_MIN) {
-                    currentGroundState = 1; // walking
-                }
-            }
-            
-            int currentFlightMode = getFlightMode();
-            
-            // Update entity data to match calculated state
-            this.entityData.set(DATA_GROUND_MOVE_STATE, currentGroundState);
-            this.entityData.set(DATA_FLIGHT_MODE, currentFlightMode);
-            
-            // Force sync current state
-            this.syncAnimState(currentGroundState, currentFlightMode);
-        }
-    }
 
     // ===== Client animation overrides (for robust observer sync) =====
     
@@ -579,80 +467,16 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
     
-    private void tickAnimationStates() {
-        // Update ground movement state with more sophisticated detection
-        int moveState = 0; // idle
-        
-        if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
-            // If being ridden, prefer rider inputs for robust state selection
-            if (getControllingPassenger() != null) {
-                float fwd = this.entityData.get(DATA_RIDER_FORWARD);
-                float str = this.entityData.get(DATA_RIDER_STRAFE);
-                float mag = Math.abs(fwd) + Math.abs(str);
-                if (mag > 0.05f) {
-                    moveState = this.isAccelerating() ? 2 : 1;
-                } else {
-                    // Fallback while ridden: use actual velocity so observers still see walk/run
-                    double speedSqr = getDeltaMovement().horizontalDistanceSqr();
-                    if (speedSqr > 0.08) {
-                        moveState = 2; // running-level velocity
-                    } else if (speedSqr > 0.005) {
-                        moveState = 1; // walking-level velocity
-                    }
-                }
-            } else {
-                // Use horizontal velocity (matches HUD vel2) for AI classification to avoid position delta spikes
-                double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                
-                // Thresholds tuned so typical AI follow (≈0.0054) is walk, not run
-                final double WALK_MIN = 0.0008;
-                final double RUN_MIN = 0.0200;
-                
-                if (velSqr > RUN_MIN) {
-                    moveState = 2; // running
-                } else if (velSqr > WALK_MIN) {
-                    moveState = 1; // walking
-                }
-            }
-        }
-        
-        // Update flight mode - match Lightning Dragon's logic
-        int flightMode = getFlightMode();
-
-        // Update entity data and sync to clients
-        boolean groundStateChanged = this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState;
-        boolean flightModeChanged = this.entityData.get(DATA_FLIGHT_MODE) != flightMode;
-        
-        if (groundStateChanged) {
-            this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
-        }
-        
-        if (flightModeChanged) {
-            this.entityData.set(DATA_FLIGHT_MODE, flightMode);
-        }
-        
-        // Send animation state sync to clients when states change
-        if (groundStateChanged || flightModeChanged) {
-            this.syncAnimState(moveState, flightMode);
-        }
-        
-        // Decay rider inputs slightly each tick to avoid sticking when packets drop
-        if (this.entityData.get(DATA_RIDER_FORWARD) != 0f || this.entityData.get(DATA_RIDER_STRAFE) != 0f) {
-            float nf = this.entityData.get(DATA_RIDER_FORWARD) * 0.8f;
-            float ns = this.entityData.get(DATA_RIDER_STRAFE) * 0.8f;
-            if (Math.abs(nf) < 0.01f) nf = 0f;
-            if (Math.abs(ns) < 0.01f) ns = 0f;
-            this.entityData.set(DATA_RIDER_FORWARD, nf);
-            this.entityData.set(DATA_RIDER_STRAFE, ns);
-        }
-        
-        // Stop running if not moving
-        if (this.isRunning() && this.getDeltaMovement().horizontalDistanceSqr() < 0.01) {
-            this.setRunning(false);
-        }
+    @Override
+    public void tickAnimationStates() {
+        // Use RideableDragonBase animation state management
+        super.tickAnimationStates();
     }
-
-    private int getFlightMode() {
+    
+    // ===== RideableDragonBase Abstract Method Implementations =====
+    
+    @Override
+    protected int getFlightMode() {
         int flightMode = -1; // not flying (ground state)
         if (isFlying()) {
             if (isTakeoff()) {
@@ -664,12 +488,48 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             } else if (isGoingUp()) {
                 flightMode = 1; // flap
             } else {
-                // Default to glide for natural descent
-                flightMode = 0; // glide
+                // Default to flap for forward flight
+                flightMode = 1;
             }
         }
         return flightMode;
     }
+    
+    @Override
+    public boolean isFlying() {
+        return this.entityData.get(DATA_FLYING);
+    }
+    
+    @Override
+    public boolean isTakeoff() {
+        return this.entityData.get(DATA_TAKEOFF);
+    }
+    
+    @Override
+    public boolean isLanding() {
+        return this.entityData.get(DATA_LANDING);
+    }
+    
+    @Override
+    public boolean isHovering() {
+        return this.entityData.get(DATA_HOVERING);
+    }
+    
+    @Override
+    public boolean isRunning() {
+        if (level().isClientSide) {
+            int s = getEffectiveGroundState();
+            return s == 2; // running state
+        }
+        int s = this.entityData.get(DATA_GROUND_MOVE_STATE);
+        return s == 2; // running state
+    }
+    
+    @Override
+    public void setRunning(boolean running) {
+        this.entityData.set(DATA_RUNNING, running);
+    }
+
 
     // ===== Riding System Methods =====
     
@@ -708,7 +568,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
     
     @Override
-    protected @NotNull Vec3 getRiddenInput(@Nonnull Player player, @Nonnull Vec3 deltaIn) {
+    public @NotNull Vec3 getRiddenInput(@Nonnull Player player, @Nonnull Vec3 deltaIn) {
         Vec3 input = riderController.getRiddenInput(player, deltaIn);
         
         // Capture rider inputs for animation state (like Lightning Dragon)
@@ -914,10 +774,6 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     // ===== DragonFlightCapable =====
-    @Override
-    public boolean isFlying() {
-        return this.entityData.get(DATA_FLYING);
-    }
 
     @Override
     public void setFlying(boolean flying) {
@@ -938,28 +794,13 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     @Override
-    public boolean isTakeoff() {
-        return this.entityData.get(DATA_TAKEOFF);
-    }
-
-    @Override
     public void setTakeoff(boolean takeoff) {
         this.entityData.set(DATA_TAKEOFF, takeoff);
     }
 
     @Override
-    public boolean isHovering() {
-        return this.entityData.get(DATA_HOVERING);
-    }
-
-    @Override
     public void setHovering(boolean hovering) {
         this.entityData.set(DATA_HOVERING, hovering);
-    }
-
-    @Override
-    public boolean isLanding() {
-        return this.entityData.get(DATA_LANDING);
     }
 
     @Override
@@ -1000,7 +841,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     @Override
-    protected void removePassenger(@Nonnull Entity passenger) {
+    public void removePassenger(@Nonnull Entity passenger) {
         super.removePassenger(passenger);
         // Reset rider-driven movement states immediately on dismount
         if (!this.level().isClientSide) {
