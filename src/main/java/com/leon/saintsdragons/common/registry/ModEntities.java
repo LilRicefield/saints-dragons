@@ -51,11 +51,4 @@ public class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("lightning_chain"));
-
-    // ===== FUTURE DRAGON TYPES =====
-    // Add new dragon types here as they are implemented
-    // Example:
-    // public static final RegistryObject<EntityType<FireDragonEntity>> FIRE_DRAGON = ...
-    // public static final RegistryObject<EntityType<IceDragonEntity>> ICE_DRAGON = ...
-    // public static final RegistryObject<EntityType<EarthDragonEntity>> EARTH_DRAGON = ...
 }
