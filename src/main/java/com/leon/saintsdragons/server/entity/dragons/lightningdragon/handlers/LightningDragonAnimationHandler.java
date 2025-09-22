@@ -198,7 +198,12 @@ public record LightningDragonAnimationHandler(LightningDragonEntity dragon) {
         } else if (dragon.isAccelerating()) {
             state.setAndContinue(FLY_FORWARD);
         } else {
-            state.setAndContinue(FLY_GLIDE);
+            // Check if tamed dragon is pitching down - use GLIDE_DOWN animation
+            if (dragon.isTame() && dragon.getPitchDirection() > 0) {
+                state.setAndContinue(GLIDE_DOWN);
+            } else {
+                state.setAndContinue(FLY_GLIDE);
+            }
         }
         
         return PlayState.CONTINUE;

@@ -7208,7 +7208,6 @@
 			}
 		},
 		"animation.lightning_dragon.flap": {
-			"loop": true,
 			"animation_length": 1.25,
 			"bones": {
 				"heightController": {
@@ -7943,6 +7942,81 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				}
+			}
+		},
+		"animation.lightning_dragon.glide_down": {
+			"loop": true,
+			"bones": {
+				"leftleg": {
+					"rotation": {
+						"vector": [67.42266, -4.61854, 1.91757]
+					}
+				},
+				"leftknee": {
+					"rotation": {
+						"vector": [-35, 0, 0]
+					}
+				},
+				"leftankle": {
+					"rotation": {
+						"vector": [42.5, 0, 0]
+					}
+				},
+				"leftfeet": {
+					"rotation": {
+						"vector": [90, 0, 0]
+					}
+				},
+				"rightleg": {
+					"rotation": {
+						"vector": [74.9453, 4.82922, -1.29717]
+					}
+				},
+				"rightknee": {
+					"rotation": {
+						"vector": [-45, 0, 0]
+					}
+				},
+				"rightankle": {
+					"rotation": {
+						"vector": [47.5, 0, 0]
+					}
+				},
+				"rightfeet": {
+					"rotation": {
+						"vector": [87.5, 0, 0]
+					}
+				},
+				"leftshoulderController": {
+					"rotation": {
+						"vector": [0, 0, -30]
+					}
+				},
+				"lefthandController": {
+					"rotation": {
+						"vector": [0, 15, 0]
+					}
+				},
+				"leftfingerController": {
+					"rotation": {
+						"vector": [0, 37.5, 0]
+					}
+				},
+				"rightshoulderController": {
+					"rotation": {
+						"vector": [0, 0, 30]
+					}
+				},
+				"righthandController": {
+					"rotation": {
+						"vector": [0, -15, 0]
+					}
+				},
+				"rightfingerController": {
+					"rotation": {
+						"vector": [0, -37.5, 0]
 					}
 				}
 			}
