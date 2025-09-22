@@ -57,21 +57,21 @@ public class DragonControlGuide extends DragonUIElement {
         // Roar (R)
         controls.add(new ControlEntry(
             Component.literal("R"),
-            Component.literal("Thunderous Roar"),
+            Component.literal("Ability 1"),
             0xFFFF8000 // Orange
         ));
         
         // Lightning Beam (G)
         controls.add(new ControlEntry(
             Component.literal("G"),
-            Component.literal("Lightning Beam"),
+            Component.literal("Ability 2"),
             0xFFFFFF00 // Yellow
         ));
         
         // Summon Storm (H)
         controls.add(new ControlEntry(
             Component.literal("H"),
-            Component.literal("Summon Storm"),
+            Component.literal("Ability 3"),
             0xFF8000FF // Purple
         ));
     }
