@@ -27,6 +27,29 @@ public abstract class DragonUIElement {
      * Render this UI element
      */
     public abstract void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks);
+
+    /**
+     * Render the UI element with a temporary positional offset.
+     * The element state is restored after rendering so interactions keep using the base coordinates.
+     */
+    public void renderWithOffset(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks, int offsetX, int offsetY) {
+        if (offsetX == 0 && offsetY == 0) {
+            render(guiGraphics, mouseX, mouseY, partialTicks);
+            return;
+        }
+
+        int originalX = this.x;
+        int originalY = this.y;
+        this.x = originalX + offsetX;
+        this.y = originalY + offsetY;
+
+        try {
+            render(guiGraphics, mouseX, mouseY, partialTicks);
+        } finally {
+            this.x = originalX;
+            this.y = originalY;
+        }
+    }
     
     /**
      * Handle mouse click events

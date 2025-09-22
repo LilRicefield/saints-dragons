@@ -51,9 +51,9 @@
   "key.saintsdragons.ascend": "Dragon Ascend",
   "key.saintsdragons.descend": "Dragon Descend", 
   "key.saintsdragons.accelerate": "Dragon Accelerate",
-  "key.saintsdragons.ability3": "Dragon Lightning Beam",
-  "key.saintsdragons.roar": "Dragon Roar",
-  "key.saintsdragons.summon_storm": "Dragon Summon Storm",
+  "key.saintsdragons.ability3": "Dragon Ability 3",
+  "key.saintsdragons.roar": "Dragon Ability 1",
+  "key.saintsdragons.summon_storm": "Dragon Ability 2",
   "key.saintsdragons.toggle_dragon_ui": "Toggle Dragon UI",
   
   "commands.dragonally.description": "Manage dragon allies",
