@@ -45,7 +45,6 @@ public class SaintsDragons {
     }
 
     public SaintsDragons(IEventBus modBus) {
-        System.out.println("SaintsDragons: Mod constructor called");
 
         GeckoLib.initialize();
 
