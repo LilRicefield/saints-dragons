@@ -2189,8 +2189,6 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     }
     
     // ===== DRAGON FLIGHT CAPABLE INTERFACE =====
-    // Note: Most flight methods already exist in LightningDragonEntity
-    
     @Override
     public float getFlightSpeed() {
         return 1.0f; // Base flight speed
