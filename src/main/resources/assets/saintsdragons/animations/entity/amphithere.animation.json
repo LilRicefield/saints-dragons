@@ -231,6 +231,9 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					},
+					"scale": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail1rightwebbing": {
@@ -247,6 +250,9 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					},
+					"scale": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail2": {
