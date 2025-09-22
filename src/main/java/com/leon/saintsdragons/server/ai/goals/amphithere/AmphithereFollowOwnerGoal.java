@@ -178,11 +178,11 @@ public class AmphithereFollowOwnerGoal extends Goal {
             // Determine movement style based on distance
             boolean shouldRun = distance > RUN_DIST;
             dragon.setRunning(shouldRun);
-            
+
             // Set appropriate animation state (0=idle, 1=walking, 2=running)
             int moveState = shouldRun ? 2 : 1;
             dragon.setGroundMoveStateFromAI(moveState);
-            
+
             // Adjust speed based on movement style and distance
             double baseSpeed = shouldRun ? 1.1 : 0.7;
             // Increase speed slightly based on distance to catch up faster when far away
@@ -217,10 +217,6 @@ public class AmphithereFollowOwnerGoal extends Goal {
 
     private boolean shouldTriggerFlight(LivingEntity owner, double distance) {
         if (dragon.isFlying()) {
-            // Don't land if owner is flying (creative mode or riding another dragon)
-            if (isOwnerFlying(owner)) {
-                return true; // Stay airborne
-            }
             return !(distance < LANDING_DISTANCE && (owner.getY() - dragon.getY()) < FLIGHT_HEIGHT_DIFF);
         }
 
@@ -228,15 +224,13 @@ public class AmphithereFollowOwnerGoal extends Goal {
             return false;
         }
 
-        // Don't take off if we're very close to the owner (unless owner is flying)
-        if (distance < STOP_FOLLOW_DIST * 1.5 && !isOwnerFlying(owner)) {
+        if (distance < STOP_FOLLOW_DIST * 1.5) {
             return false;
         }
 
         boolean farAway = distance > FLIGHT_TRIGGER_DIST;
         boolean ownerAbove = (owner.getY() - dragon.getY()) > FLIGHT_HEIGHT_DIFF;
-        boolean ownerFlying = isOwnerFlying(owner);
-        return farAway || ownerAbove || ownerFlying;
+        return farAway || ownerAbove;
     }
 
     private boolean canTriggerFlight() {
@@ -246,27 +240,5 @@ public class AmphithereFollowOwnerGoal extends Goal {
                 && dragon.getPassengers().isEmpty()
                 && dragon.getControllingPassenger() == null
                 && !dragon.isPassenger();
-    }
-
-    /**
-     * Check if the owner is currently flying (creative mode or riding another dragon)
-     */
-    private boolean isOwnerFlying(LivingEntity owner) {
-        if (!(owner instanceof Player player)) {
-            return false;
-        }
-        
-        // Check if player is in creative mode and can fly
-        if (player.getAbilities().mayfly) {
-            return true;
-        }
-        
-        // Check if player is riding another dragon or flying entity
-        if (player.getVehicle() != null) {
-            // If riding a dragon or other flying entity, consider them "flying"
-            return player.getVehicle() instanceof com.leon.saintsdragons.server.entity.base.DragonEntity;
-        }
-        
-        return false;
     }
 }
