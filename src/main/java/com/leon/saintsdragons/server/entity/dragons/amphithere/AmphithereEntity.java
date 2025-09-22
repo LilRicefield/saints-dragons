@@ -162,18 +162,18 @@ public class AmphithereEntity extends RideableDragonBase implements FlyingAnimal
     protected void defineSynchedData() {
         super.defineSynchedData();
         // Define shared RideableDragonData fields
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_RIDER_FORWARD, 0f);
-        this.entityData.define(DATA_RIDER_STRAFE, 0f);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_ACCELERATING, false);
+        this.entityData.define(RideableDragonData.DATA_FLYING, false);
+        this.entityData.define(RideableDragonData.DATA_TAKEOFF, false);
+        this.entityData.define(RideableDragonData.DATA_HOVERING, false);
+        this.entityData.define(RideableDragonData.DATA_LANDING, false);
+        this.entityData.define(RideableDragonData.DATA_RUNNING, false);
+        this.entityData.define(RideableDragonData.DATA_GROUND_MOVE_STATE, 0);
+        this.entityData.define(RideableDragonData.DATA_FLIGHT_MODE, -1);
+        this.entityData.define(RideableDragonData.DATA_RIDER_FORWARD, 0f);
+        this.entityData.define(RideableDragonData.DATA_RIDER_STRAFE, 0f);
+        this.entityData.define(RideableDragonData.DATA_GOING_UP, false);
+        this.entityData.define(RideableDragonData.DATA_GOING_DOWN, false);
+        this.entityData.define(RideableDragonData.DATA_ACCELERATING, false);
     }
 
     @Override
@@ -500,22 +500,22 @@ public class AmphithereEntity extends RideableDragonBase implements FlyingAnimal
     
     @Override
     public boolean isFlying() {
-        return this.entityData.get(DATA_FLYING);
+        return this.entityData.get(RideableDragonData.DATA_FLYING);
     }
     
     @Override
     public boolean isTakeoff() {
-        return this.entityData.get(DATA_TAKEOFF);
+        return this.entityData.get(RideableDragonData.DATA_TAKEOFF);
     }
     
     @Override
     public boolean isLanding() {
-        return this.entityData.get(DATA_LANDING);
+        return this.entityData.get(RideableDragonData.DATA_LANDING);
     }
     
     @Override
     public boolean isHovering() {
-        return this.entityData.get(DATA_HOVERING);
+        return this.entityData.get(RideableDragonData.DATA_HOVERING);
     }
     
     @Override
@@ -524,13 +524,43 @@ public class AmphithereEntity extends RideableDragonBase implements FlyingAnimal
             int s = getEffectiveGroundState();
             return s == 2; // running state
         }
-        int s = this.entityData.get(DATA_GROUND_MOVE_STATE);
+        int s = this.entityData.get(RideableDragonData.DATA_GROUND_MOVE_STATE);
         return s == 2; // running state
     }
     
     @Override
     public void setRunning(boolean running) {
-        this.entityData.set(DATA_RUNNING, running);
+        this.entityData.set(RideableDragonData.DATA_RUNNING, running);
+    }
+    
+    @Override
+    public boolean isGoingUp() {
+        return this.entityData.get(RideableDragonData.DATA_GOING_UP);
+    }
+    
+    @Override
+    public void setGoingUp(boolean goingUp) {
+        this.entityData.set(RideableDragonData.DATA_GOING_UP, goingUp);
+    }
+    
+    @Override
+    public boolean isGoingDown() {
+        return this.entityData.get(RideableDragonData.DATA_GOING_DOWN);
+    }
+    
+    @Override
+    public void setGoingDown(boolean goingDown) {
+        this.entityData.set(RideableDragonData.DATA_GOING_DOWN, goingDown);
+    }
+    
+    @Override
+    public boolean isAccelerating() {
+        return this.entityData.get(RideableDragonData.DATA_ACCELERATING);
+    }
+    
+    @Override
+    public void setAccelerating(boolean accelerating) {
+        this.entityData.set(RideableDragonData.DATA_ACCELERATING, accelerating);
     }
 
 
