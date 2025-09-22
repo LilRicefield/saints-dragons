@@ -40,6 +40,9 @@ public class LightningDragonConstantsHandler {
     /** Flying glide animation */
     public static final RawAnimation FLY_GLIDE = RawAnimation.begin().thenLoop("animation.lightning_dragon.fly_gliding");
     
+    /** Flying glide down animation (for tamed dragons pitching down) */
+    public static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.lightning_dragon.glide_down");
+    
     /** Flying forward animation */
     public static final RawAnimation FLY_FORWARD = RawAnimation.begin().thenLoop("animation.lightning_dragon.fly_forward");
     

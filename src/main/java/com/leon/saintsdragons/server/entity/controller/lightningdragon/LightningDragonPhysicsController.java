@@ -170,9 +170,13 @@ public class LightningDragonPhysicsController {
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 0) {
-                // Server says GLIDE: render GLIDE unconditionally for consistency
+                // Server says GLIDE: check if tamed dragon is pitching down
                 state.getController().transitionLength(6);
-                state.setAndContinue(FLY_GLIDE);
+                if (dragon.isTame() && dragon.getPitchDirection() > 0) {
+                    state.setAndContinue(GLIDE_DOWN);
+                } else {
+                    state.setAndContinue(FLY_GLIDE);
+                }
                 return PlayState.CONTINUE;
             }
 
@@ -210,12 +214,14 @@ public class LightningDragonPhysicsController {
                     }
                     state.setAndContinue(desired);
                 } else {
-                    if (currentFlightAnimation != FLY_GLIDE) {
+                    // Check if tamed dragon is pitching down for glide animation
+                    RawAnimation glideAnimation = (dragon.isTame() && dragon.getPitchDirection() > 0) ? GLIDE_DOWN : FLY_GLIDE;
+                    if (currentFlightAnimation != glideAnimation) {
                         // Smooth but not too long blend out of flap
                         state.getController().transitionLength(6);
-                        currentFlightAnimation = FLY_GLIDE;
+                        currentFlightAnimation = glideAnimation;
                     }
-                    state.setAndContinue(FLY_GLIDE);
+                    state.setAndContinue(glideAnimation);
                 }
             }
         } else {
