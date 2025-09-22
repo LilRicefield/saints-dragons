@@ -29,13 +29,15 @@ public class AmphithereAnimationHandler {
     }
 
     public PlayState handleMovementAnimation(AnimationState<AmphithereEntity> state) {
-        state.getController().transitionLength(8);
+        state.getController().transitionLength(12); // Longer transitions for smoother animation
 
         if (dragon.isFlying()) {
             state.setAndContinue(GLIDE);
         } else if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isHovering()) {
             // Use the improved movement state detection - prioritize AI-set states for tamed dragons
-            int groundState = dragon.getGroundMoveState();
+            int groundState = dragon.getEffectiveGroundState(); // Use effective state for client-side consistency
+            
+            // Add hysteresis to prevent rapid animation changes
             if (groundState == 2) {
                 // Running state
                 state.setAndContinue(WALK); // Fallback to walk for now (no run animation yet)
