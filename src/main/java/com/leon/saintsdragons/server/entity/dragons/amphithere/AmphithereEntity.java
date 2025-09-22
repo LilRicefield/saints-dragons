@@ -415,14 +415,6 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         }
     }
 
-    public int getBankDirection() {
-        return bankDir;
-    }
-    
-    public float getBankTransitionProgress() {
-        return bankTransitionProgress;
-    }
-    
     public float getSmoothBankDirection() {
         // Return a smooth value between -1.0 and 1.0 for banking
         if (bankDir == 0) return 0f;
@@ -525,22 +517,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         }
         
         // Update flight mode - match Lightning Dragon's logic
-        int flightMode = -1; // not flying (ground state)
-        if (isFlying()) {
-            if (isTakeoff()) {
-                flightMode = 3; // takeoff
-            } else if (isHovering()) {
-                flightMode = 2; // hover
-            } else if (isGoingDown()) {
-                flightMode = 0; // glide
-            } else if (isGoingUp()) {
-                flightMode = 1; // flap
-            } else {
-                // Default to glide for natural descent
-                flightMode = 0; // glide
-            }
-        }
-        
+        int flightMode = getFlightMode();
+
         // Update entity data and sync to clients
         boolean groundStateChanged = this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState;
         boolean flightModeChanged = this.entityData.get(DATA_FLIGHT_MODE) != flightMode;
@@ -562,6 +540,25 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         if (this.isRunning() && this.getDeltaMovement().horizontalDistanceSqr() < 0.01) {
             this.setRunning(false);
         }
+    }
+
+    private int getFlightMode() {
+        int flightMode = -1; // not flying (ground state)
+        if (isFlying()) {
+            if (isTakeoff()) {
+                flightMode = 3; // takeoff
+            } else if (isHovering()) {
+                flightMode = 2; // hover
+            } else if (isGoingDown()) {
+                flightMode = 0; // glide
+            } else if (isGoingUp()) {
+                flightMode = 1; // flap
+            } else {
+                // Default to glide for natural descent
+                flightMode = 0; // glide
+            }
+        }
+        return flightMode;
     }
 
     // ===== Riding System Methods =====
@@ -606,7 +603,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
     
     @Override
-    public void travel(Vec3 motion) {
+    public void travel(@NotNull Vec3 motion) {
         // Riding logic
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
             // Clear any AI navigation when being ridden
@@ -623,39 +620,11 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             }
         } else {
             // Normal AI movement
-            if (isFlying()) {
-                // AI flight movement - use existing flight controller
-                super.travel(motion);
-            } else {
-                // AI ground movement
-                super.travel(motion);
-            }
+            super.travel(motion);
         }
     }
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
-    }
-
-    public boolean needsNewFlightTarget() {
-        return currentFlightTarget == null || targetCooldown <= 0;
-    }
-
-    public void assignFlightTarget(Vec3 target) {
-        this.currentFlightTarget = target;
-        this.targetCooldown = 50 + this.getRandom().nextInt(40);
-    }
-
-    @Nullable
-    public Vec3 getFlightTarget() {
-        return currentFlightTarget;
-    }
-
-    public int getAirTicks() {
-        return airTicks;
-    }
-
-    public int getGroundTicks() {
-        return groundTicks;
     }
 
     public void switchToAirNavigation() {
@@ -739,7 +708,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     @Override
-    public @NotNull InteractionResult mobInteract(Player player, InteractionHand hand) {
+    public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         // Use interaction handler for all interactions
         InteractionResult handlerResult = interactionHandler.handleInteraction(player, hand);
         if (handlerResult != InteractionResult.PASS) {
@@ -892,16 +861,12 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         this.riderTakeoffTicks = 0;
     }
 
-    public int getRiderTakeoffTicks() {
-        return riderTakeoffTicks;
-    }
-
     public void setRiderTakeoffTicks(int ticks) {
         this.riderTakeoffTicks = Math.max(0, ticks);
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float fallMultiplier, DamageSource source) {
+    public boolean causeFallDamage(float fallDistance, float fallMultiplier, @NotNull DamageSource source) {
         if (this.isFlying() || this.isTakeoff() || this.isLanding()) {
             return false;
         }
