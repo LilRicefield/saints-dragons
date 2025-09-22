@@ -104,7 +104,7 @@ public class AmphithereInteractionHandler {
                 food.shrink(1);
             }
 
-            float healAmount = 10.0F;
+            float healAmount = 5.0F;
             float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
             boolean fullyHealed = newHealth >= dragon.getMaxHealth();
 

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDra
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
@@ -237,6 +238,10 @@ public class LightningDragonFollowOwnerGoal extends Goal {
     private boolean shouldTriggerFlight(LivingEntity owner, double distance) {
         // If already flying, continue flying until we're close to landing
         if (dragon.isFlying()) {
+            // Don't land if owner is flying (creative mode or riding another dragon)
+            if (isOwnerFlying(owner)) {
+                return true; // Stay airborne
+            }
             // Only stop flying if we're close to the owner and not too high up
             return !(distance < LANDING_DISTANCE && (owner.getY() - dragon.getY()) < FLIGHT_HEIGHT_DIFF);
         }
@@ -246,17 +251,18 @@ public class LightningDragonFollowOwnerGoal extends Goal {
             return false;
         }
 
-        // Don't take off if we're very close to the owner
-        if (distance < STOP_FOLLOW_DIST * 1.5) {
+        // Don't take off if we're very close to the owner (unless owner is flying)
+        if (distance < STOP_FOLLOW_DIST * 1.5 && !isOwnerFlying(owner)) {
             return false;
         }
 
-        // Fly if owner is far away OR significantly higher up
+        // Fly if owner is far away OR significantly higher up OR owner is flying
         boolean farAway = distance > FLIGHT_TRIGGER_DIST;
         boolean ownerAbove = (owner.getY() - dragon.getY()) > FLIGHT_HEIGHT_DIFF;
+        boolean ownerFlying = isOwnerFlying(owner);
         
         // Check more frequently when we should be flying
-        return farAway || ownerAbove;
+        return farAway || ownerAbove || ownerFlying;
     }
 
     /**
@@ -271,6 +277,28 @@ public class LightningDragonFollowOwnerGoal extends Goal {
                 dragon.getControllingPassenger() == null &&
                 !dragon.isPassenger() &&
                 dragon.getActiveAbility() == null; // Don't interrupt abilities
+    }
+
+    /**
+     * Check if the owner is currently flying (creative mode or riding another dragon)
+     */
+    private boolean isOwnerFlying(LivingEntity owner) {
+        if (!(owner instanceof Player player)) {
+            return false;
+        }
+        
+        // Check if player is in creative mode and can fly
+        if (player.getAbilities().mayfly) {
+            return true;
+        }
+        
+        // Check if player is riding another dragon or flying entity
+        if (player.getVehicle() != null) {
+            // If riding a dragon or other flying entity, consider them "flying"
+            return player.getVehicle() instanceof com.leon.saintsdragons.server.entity.base.DragonEntity;
+        }
+        
+        return false;
     }
 
     @Override
