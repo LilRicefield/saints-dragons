@@ -13,6 +13,8 @@ import java.util.List;
  * Handles rendering and interaction for all dragon UI elements.
  */
 public class DragonStatusUI {
+    private static final long SLIDE_DURATION_MS = 250L;
+
     private final Minecraft minecraft;
     private final List<DragonUIElement> elements = new ArrayList<>();
     private final DragonHealthBar healthBar;
@@ -23,6 +25,13 @@ public class DragonStatusUI {
 
     private boolean visible = false;
     private DragonEntity currentDragon = null;
+
+    private boolean animationActive = false;
+    private boolean animatingIn = false;
+    private long animationStartTime = 0L;
+    private int healthBarSlideDistance = 0;
+    private int speedIndicatorSlideDistance = 0;
+    private int controlGuideSlideDistance = 0;
 
     public DragonStatusUI() {
         this.minecraft = Minecraft.getInstance();
@@ -66,8 +75,9 @@ public class DragonStatusUI {
         int rightMargin = Math.max(10, (int) (screenWidth * 0.02f));
         int topMargin = Math.max(10, (int) (screenHeight * 0.02f));
 
-        // Right aligned health bar using actual width
-        int healthBarX = screenWidth - rightMargin - healthBar.getWidth();
+        // Right aligned health bar with allowance for health text so it stays on-screen
+
+        int healthBarX = Math.max(leftMargin, screenWidth - rightMargin - healthBar.getWidth());
         int healthBarY = topMargin;
 
         // Left column placement with responsive spacing
@@ -82,12 +92,15 @@ public class DragonStatusUI {
         healthBar.setPosition(healthBarX, healthBarY);
         speedIndicator.setPosition(leftMargin, speedY);
         controlGuide.setPosition(leftMargin, controlsY);
+
+        updateSlideDistances();
     }
 
     private void applyFallbackLayout() {
-        healthBar.setPosition(380, 10);
+        healthBar.setPosition(320, 10);
         speedIndicator.setPosition(10, 130);
         controlGuide.setPosition(10, 160);
+        updateSlideDistances();
     }
 
     /**
@@ -117,9 +130,48 @@ public class DragonStatusUI {
             return;
         }
 
-        // Render all elements
+        boolean animating = animationActive && animatingIn;
+        float animationProgress = 1.0f;
+        if (animating) {
+            long elapsed = System.currentTimeMillis() - animationStartTime;
+            animationProgress = Math.min(1.0f, Math.max(0.0f, elapsed / (float) SLIDE_DURATION_MS));
+        }
+
+        float easedProgress = animating ? easeOutCubic(animationProgress) : 1.0f;
+        int screenWidth = getCurrentScreenWidth();
+        if (screenWidth <= 0) {
+            screenWidth = cachedScreenWidth > 0 ? cachedScreenWidth : 400;
+        }
+
+        int healthOffsetX = 0;
+        int speedOffsetX = 0;
+        int controlOffsetX = 0;
+
+        if (animating) {
+            int healthMagnitude = Math.round((1.0f - easedProgress) * healthBarSlideDistance);
+            int speedMagnitude = Math.round((1.0f - easedProgress) * speedIndicatorSlideDistance);
+            int controlMagnitude = Math.round((1.0f - easedProgress) * controlGuideSlideDistance);
+
+            healthOffsetX = drawsFromRight(healthBar, screenWidth) ? healthMagnitude : -healthMagnitude;
+            speedOffsetX = drawsFromRight(speedIndicator, screenWidth) ? speedMagnitude : -speedMagnitude;
+            controlOffsetX = drawsFromRight(controlGuide, screenWidth) ? controlMagnitude : -controlMagnitude;
+        }
+
         for (DragonUIElement element : elements) {
-            element.render(guiGraphics, mouseX, mouseY, partialTicks);
+            if (element == healthBar) {
+                healthBar.renderWithOffset(guiGraphics, mouseX, mouseY, partialTicks, healthOffsetX, 0);
+            } else if (element == speedIndicator) {
+                speedIndicator.renderWithOffset(guiGraphics, mouseX, mouseY, partialTicks, speedOffsetX, 0);
+            } else if (element == controlGuide) {
+                controlGuide.renderWithOffset(guiGraphics, mouseX, mouseY, partialTicks, controlOffsetX, 0);
+            } else {
+                element.render(guiGraphics, mouseX, mouseY, partialTicks);
+            }
+        }
+
+        if (animating && animationProgress >= 1.0f) {
+            animationActive = false;
+            animatingIn = false;
         }
     }
 
@@ -127,7 +179,7 @@ public class DragonStatusUI {
      * Handle mouse click events
      */
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (!visible) return false;
+        if (!visible || isAnimating()) return false;
 
         // Check elements in reverse order (top to bottom)
         for (int i = elements.size() - 1; i >= 0; i--) {
@@ -143,7 +195,7 @@ public class DragonStatusUI {
      * Handle mouse release events
      */
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (!visible) return false;
+        if (!visible || isAnimating()) return false;
 
         boolean handled = false;
         for (DragonUIElement element : elements) {
@@ -164,7 +216,7 @@ public class DragonStatusUI {
      * Handle mouse drag events
      */
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (!visible) return false;
+        if (!visible || isAnimating()) return false;
 
         boolean handled = false;
         for (DragonUIElement element : elements) {
@@ -179,22 +231,28 @@ public class DragonStatusUI {
      * Toggle UI visibility
      */
     public void toggleVisibility() {
-        visible = !visible;
-        if (visible) {
-            updateElementPositions();
-            // Update dragon when showing UI
-            updateDragon(currentDragon);
-        }
+        setVisible(!visible);
     }
 
     /**
      * Set UI visibility
      */
     public void setVisible(boolean visible) {
+        if (this.visible == visible) {
+            if (visible && !isAnimating()) {
+                startEnterAnimation();
+            }
+            return;
+        }
+
         this.visible = visible;
         if (visible) {
             updateElementPositions();
+            startEnterAnimation();
             updateDragon(currentDragon);
+        } else {
+            animationActive = false;
+            animatingIn = false;
         }
     }
 
@@ -246,4 +304,62 @@ public class DragonStatusUI {
             savePositions();
         }
     }
+
+    private boolean isAnimating() {
+        return animationActive && animatingIn;
+    }
+
+    private void startEnterAnimation() {
+        updateSlideDistances();
+        if (healthBarSlideDistance == 0 && speedIndicatorSlideDistance == 0 && controlGuideSlideDistance == 0) {
+            animationActive = false;
+            animatingIn = false;
+            return;
+        }
+
+        animationActive = true;
+        animatingIn = true;
+        animationStartTime = System.currentTimeMillis();
+    }
+
+    private void updateSlideDistances() {
+        int screenWidth = getCurrentScreenWidth();
+        if (screenWidth <= 0) {
+            screenWidth = cachedScreenWidth > 0 ? cachedScreenWidth : 400;
+        }
+
+        healthBarSlideDistance = computeSlideDistance(healthBar, screenWidth);
+        speedIndicatorSlideDistance = computeSlideDistance(speedIndicator, screenWidth);
+        controlGuideSlideDistance = computeSlideDistance(controlGuide, screenWidth);
+    }
+
+    private int computeSlideDistance(DragonUIElement element, int screenWidth) {
+        if (element == null) {
+            return 0;
+        }
+
+        if (drawsFromRight(element, screenWidth)) {
+            return Math.max(0, screenWidth - element.getX() + element.getWidth());
+        }
+        return Math.max(0, element.getX() + element.getWidth());
+    }
+
+    private boolean drawsFromRight(DragonUIElement element, int screenWidth) {
+        return element.getX() + (element.getWidth() / 2) >= screenWidth / 2;
+    }
+
+    private int getCurrentScreenWidth() {
+        if (minecraft != null && minecraft.getWindow() != null) {
+            return minecraft.getWindow().getGuiScaledWidth();
+        }
+        return cachedScreenWidth;
+    }
+
+    private static float easeOutCubic(float t) {
+        float inverted = 1.0f - t;
+        return 1.0f - inverted * inverted * inverted;
+    }
 }
+
+
+
