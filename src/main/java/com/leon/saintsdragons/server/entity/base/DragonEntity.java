@@ -374,6 +374,37 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         return false;
     }
+    
+    /**
+     * Check if an entity should be considered a valid target for this dragon.
+     * This prevents targeting allies even in retaliation scenarios.
+     */
+    public boolean canTarget(net.minecraft.world.entity.Entity entity) {
+        if (entity == null) return false;
+        
+        // Never target allies
+        if (isAlly(entity)) {
+            return false;
+        }
+        
+        // Additional check: Never target tamed animals owned by the same player
+        // This prevents targeting pets even if they're not explicitly marked as allies
+        if (entity instanceof net.minecraft.world.entity.TamableAnimal tamable && tamable.isTame()) {
+            net.minecraft.world.entity.LivingEntity owner = tamable.getOwner();
+            if (owner instanceof Player playerOwner && this.isTame() && this.isOwnedBy(playerOwner)) {
+                return false; // Never target pets owned by the same player
+            }
+        }
+        
+        if (entity instanceof OwnableEntity ownable) {
+            LivingEntity owner = ownable.getOwner();
+            if (owner instanceof Player playerOwner && this.isTame() && this.isOwnedBy(playerOwner)) {
+                return false; // Never target entities owned by the same player
+            }
+        }
+        
+        return true;
+    }
 
     /**
      * Default interaction handling for command cycling (Shift + empty hand).

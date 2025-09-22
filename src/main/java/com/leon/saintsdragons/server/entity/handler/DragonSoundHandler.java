@@ -133,7 +133,10 @@ public class DragonSoundHandler {
      */
     public void playVocal(String key) {
         if (key == null || key.isEmpty() || dragon.level().isClientSide) return;
-        if (dragon.isSleeping() || dragon.isSleepTransitioning()) return; // Gate vocals during sleep/transition
+        // Allow hurt and die sounds to play regardless of sleep state
+        if (!"hurt".equals(key) && !"die".equals(key) && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+            return; // Gate vocals during sleep/transition
+        }
         
         // Get mouth position for spatial audio - both entities use mouth_origin locator
         Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
@@ -330,8 +333,10 @@ public class DragonSoundHandler {
     }
 
     private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting) {
-        if (dragon.isSleeping()) return;
-        if (!allowWhenSitting && dragon.isStayOrSitMuted()) return;
+        // Allow hurt and die sounds to play regardless of sleep/sit state
+        boolean isHurtOrDieSound = sound == ModSounds.DRAGON_HURT.get() || sound == ModSounds.DRAGON_DIE.get();
+        if (!isHurtOrDieSound && dragon.isSleeping()) return;
+        if (!allowWhenSitting && !isHurtOrDieSound && dragon.isStayOrSitMuted()) return;
         if (level == null) return;
         double px = dragon.getX();
         double py = dragon.getY();
