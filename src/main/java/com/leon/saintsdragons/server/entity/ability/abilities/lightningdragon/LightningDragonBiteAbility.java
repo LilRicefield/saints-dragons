@@ -32,9 +32,9 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
     // More forgiving cone; widen to reduce whiffs while steering
     private static final double BITE_ANGLE_DEG = 120.0; // half-angle of cone
 
-    private static final float CHAIN_DAMAGE_BASE = 4.0f;
+    private static final float CHAIN_DAMAGE_BASE = 10.0f;
     private static final double CHAIN_RADIUS = 7.0;
-    private static final int CHAIN_JUMPS = 4;
+    private static final int CHAIN_JUMPS = 5;
     private static final float CHAIN_FALLOFF = 0.75f;
 
     // Sections: startup (windup), active (hit frame), recovery
