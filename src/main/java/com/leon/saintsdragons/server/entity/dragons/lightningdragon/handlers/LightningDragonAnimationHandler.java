@@ -5,8 +5,6 @@ import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.object.PlayState;
 
-import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
-
 /**
  * Handles all animation logic for the Lightning Dragon
  * Extracted from LightningDragonEntity to improve organization and maintainability
@@ -35,23 +33,8 @@ public record LightningDragonAnimationHandler(LightningDragonEntity dragon) {
     public void triggerSleepExit() {
         dragon.triggerAnim("action", "sleep_exit");
     }
-    
-    /**
-     * Triggers sleep animation loop
-     */
-    public void triggerSleepAnimation() {
-        dragon.triggerAnim("sleep_controller", "sleep");
-    }
-    
-    /**
-     * Triggers wake animation
-     */
-    public void triggerWakeAnimation() {
-        dragon.triggerAnim("sleep_controller", "wake");
-    }
-    
+
     // ===== GECKOLIB SETUP =====
-    
     /**
      * Sets up all GeckoLib animation triggers for the action controller
      */
@@ -171,41 +154,5 @@ public record LightningDragonAnimationHandler(LightningDragonEntity dragon) {
         
         return PlayState.STOP;
     }
-    
-    /**
-     * Handles movement animations based on dragon state
-     */
-    public PlayState movementPredicate(AnimationState<LightningDragonEntity> state) {
-        // Handle ground movement animations
-        if (!dragon.isFlying()) {
-            if (dragon.isRunning()) {
-                state.setAndContinue(GROUND_RUN);
-            } else if (dragon.isWalking()) {
-                state.setAndContinue(GROUND_WALK);
-            } else {
-                state.setAndContinue(GROUND_IDLE);
-            }
-            return PlayState.CONTINUE;
-        }
-        
-        // Handle flight animations
-        if (dragon.isTakeoff()) {
-            state.setAndContinue(TAKEOFF);
-        } else if (dragon.isLanding()) {
-            state.setAndContinue(LANDING);
-        } else if (dragon.isHovering()) {
-            state.setAndContinue(FLAP);
-        } else if (dragon.isAccelerating()) {
-            state.setAndContinue(FLY_FORWARD);
-        } else {
-            // Check if tamed dragon is pitching down - use GLIDE_DOWN animation
-            if (dragon.isTame() && dragon.getPitchDirection() > 0) {
-                state.setAndContinue(GLIDE_DOWN);
-            } else {
-                state.setAndContinue(FLY_GLIDE);
-            }
-        }
-        
-        return PlayState.CONTINUE;
-    }
+
 }
