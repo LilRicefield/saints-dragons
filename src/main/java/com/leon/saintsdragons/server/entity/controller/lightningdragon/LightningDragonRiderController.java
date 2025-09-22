@@ -34,17 +34,17 @@ public record LightningDragonRiderController(LightningDragonEntity dragon) {
     // ===== AIR SPRINT / ACCELERATION TUNING =====
     // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
     // Base cruise cap is intentionally lower; sprint raises cap and accel.
-    private static final double CRUISE_MAX_MULT = 15.0;   // max horizontal blocks/tick relative to base speed
-    private static final double SPRINT_MAX_MULT = 50.0;   // top speed cap while accelerating
-    private static final double AIR_ACCEL_MULT = 0.12;    // accel per tick toward forward while holding W
+    private static final double CRUISE_MAX_MULT = 11.5;   // max horizontal blocks/tick relative to base speed
+    private static final double SPRINT_MAX_MULT = 55.5;   // top speed cap while accelerating
+    private static final double AIR_ACCEL_MULT = 0.085;    // accel per tick toward forward while holding W
     private static final double SPRINT_ACCEL_MULT = 0.25; // accel per tick when accelerating
-    private static final double AIR_DRAG = 0.05;          // per-tick horizontal damping
+    private static final double AIR_DRAG = 0.03;          // per-tick horizontal damping
     
     // ===== LIGHTNING DRAGON MANEUVERABILITY =====
     // Enhanced turning capabilities for lightning dragon's agility
     private static final double TURN_ACCEL_MULT = 0.15;   // additional acceleration for direction changes
     private static final double MIN_TURN_SPEED = 0.3;     // minimum speed to enable enhanced turning
-    private static final double TURN_MOMENTUM_FACTOR = 0.8; // how much momentum to preserve during turns
+    private static final double TURN_MOMENTUM_FACTOR = 1.2; // how much momentum to preserve during turns
 
     // ===== RIDING UTILITIES =====
 
