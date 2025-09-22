@@ -18,11 +18,11 @@ import org.jetbrains.annotations.Nullable;
 public record AmphithereRiderController(AmphithereEntity dragon) {
     // ===== SEAT TUNING CONSTANTS =====
     // Baseline vertical offset relative to dragon height
-    private static final double SEAT_BASE_FACTOR = 0.50D; // 0.0..1.0 of bbHeight
+    private static final double SEAT_BASE_FACTOR = 0.05D; // 0.0..1.0 of bbHeight
     // Additional vertical lift to avoid clipping
-    private static final double SEAT_LIFT = 0.05D;
+    private static final double SEAT_LIFT = 0.70D;
     // Forward/back relative to body (blocks). +forward = toward head, - = toward tail
-    private static final double SEAT_FORWARD = 4.5D;
+    private static final double SEAT_FORWARD = 8.0D;
     // Sideways relative to body (blocks). +side = to the dragon's right, - = left
     private static final double SEAT_SIDE = 0.00D;
 
