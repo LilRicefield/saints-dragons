@@ -76,28 +76,11 @@ public class ClientEventHandler {
             event.getCamera().move(randomTremorOffsets[0] * 0.2F * intensity, 
                                   randomTremorOffsets[1] * 0.2F * intensity, 
                                   randomTremorOffsets[2] * 0.5F * intensity);
-            
-            
+
             // Update random offsets for next frame
             randomTremorOffsets[0] = (Math.random() - 0.5) * 2.0;
             randomTremorOffsets[1] = (Math.random() - 0.5) * 2.0;
             randomTremorOffsets[2] = (Math.random() - 0.5) * 2.0;
         }
-    }
-
-    @SubscribeEvent
-    public static void preRenderLiving(RenderLivingEvent.Pre<?, ?> event) {
-        if (blockedEntityRenders.contains(event.getEntity().getUUID())) {
-            if (!isFirstPersonPlayer(event.getEntity())) {
-                MinecraftForge.EVENT_BUS.post(new RenderLivingEvent.Post<>(event.getEntity(), event.getRenderer(), event.getPartialTick(), 
-                    event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight()));
-                event.setCanceled(true);
-            }
-            blockedEntityRenders.remove(event.getEntity().getUUID());
-        }
-    }
-
-    public static boolean isFirstPersonPlayer(Entity entity) {
-        return entity.equals(Minecraft.getInstance().cameraEntity) && Minecraft.getInstance().options.getCameraType().isFirstPerson();
     }
 }
