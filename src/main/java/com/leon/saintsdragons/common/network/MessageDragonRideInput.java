@@ -156,6 +156,16 @@ public record MessageDragonRideInput(boolean goingUp,
             case STOP_ACCELERATE:
                 dragon.setAccelerating(false);
                 break;
+            case ABILITY_USE:
+                if ("amphithere_fire_breath".equals(msg.abilityName())) {
+                    dragon.combatManager.tryUseAbility(com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities.FIRE_BREATH);
+                }
+                break;
+            case ABILITY_STOP:
+                if ("amphithere_fire_breath".equals(msg.abilityName())) {
+                    dragon.combatManager.forceEndActiveAbility();
+                }
+                break;
             default:
                 break;
         }
