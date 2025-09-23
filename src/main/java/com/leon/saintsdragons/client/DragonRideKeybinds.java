@@ -193,6 +193,7 @@ public class DragonRideKeybinds {
         boolean currentAscend = DRAGON_ASCEND.isDown();
         boolean currentDescend = DRAGON_DESCEND.isDown();
         boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
+        boolean fireBreathDown = DRAGON_BEAM.isDown(); // Use G key for fire breath
 
         float fwd = player.zza;
         float str = player.xxa;
@@ -214,8 +215,18 @@ public class DragonRideKeybinds {
                     new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, fwd, str, yaw));
         }
 
+        // Fire breath ability (hold-to-fire like Lightning Dragon beam)
+        if (fireBreathDown && !wasBeamDown) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "amphithere_fire_breath", fwd, str, yaw));
+        }
+        if (!fireBreathDown && wasBeamDown) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_STOP, "amphithere_fire_breath", fwd, str, yaw));
+        }
+
         wasAscendPressed = currentAscend;
-        wasBeamDown = false;
+        wasBeamDown = fireBreathDown;
         wasRoarDown = false;
         wasSummonDown = false;
     }

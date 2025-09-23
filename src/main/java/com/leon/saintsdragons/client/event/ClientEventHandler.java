@@ -48,7 +48,7 @@ public class ClientEventHandler {
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof AmphithereEntity && event.getCamera().isDetached()) {
-            event.getCamera().move(-event.getCamera().getMaxZoom(40F), 0, 0);
+            event.getCamera().move(-event.getCamera().getMaxZoom(25F), 0, 0);
         }
         
         // Screen shake detection and application

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.renderer.amphithere;
 
 import com.leon.saintsdragons.client.model.amphithere.AmphithereModel;
+import com.leon.saintsdragons.client.renderer.layer.amphithere.FireBreathLayer;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -13,6 +14,7 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 public class AmphithereRenderer extends GeoEntityRenderer<AmphithereEntity> {
     public AmphithereRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new AmphithereModel());
+        addRenderLayer(new FireBreathLayer());
     }
     @Override
     public void preRender(PoseStack poseStack,
@@ -26,7 +28,7 @@ public class AmphithereRenderer extends GeoEntityRenderer<AmphithereEntity> {
                           int packedOverlay,
                           float red, float green, float blue, float alpha) {
 
-        float scale = 5.0f;
+        float scale = 3.5f;
         poseStack.scale(scale, scale, scale);
         this.shadowRadius = 0.8f * scale;
 
