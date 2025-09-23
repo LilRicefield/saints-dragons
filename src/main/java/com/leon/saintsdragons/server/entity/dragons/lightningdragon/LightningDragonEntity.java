@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.ai.goals.lightningdragon.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonPhysicsController;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.DragonCombatCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
@@ -81,7 +82,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 //Just everything
-public class LightningDragonEntity extends DragonEntity implements FlyingAnimal, RangedAttackMob,
+public class LightningDragonEntity extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
         DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen {
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
@@ -189,9 +190,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         return lastLandingGameTime;
     }
 
-    // Last broadcasted animation state for observer pulse
-    private int lastBroadcastGroundState = Integer.MIN_VALUE;
-    private int lastBroadcastFlightMode = Integer.MIN_VALUE;
 
     public void markLandedNow() {
         if (!level().isClientSide) {
@@ -523,7 +521,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     // ===== STATE MANAGEMENT =====
-    public boolean isFlying() { return getBooleanData(DATA_FLYING); }
 
     public void setFlying(boolean flying) {
         if (flying && this.isBaby()) flying = false;
@@ -553,30 +550,18 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         }
     }
 
-    public boolean isTakeoff() { return getBooleanData(DATA_TAKEOFF); }
     public void setTakeoff(boolean takeoff) {
         if (takeoff && this.isBaby()) takeoff = false;
         this.entityData.set(DATA_TAKEOFF, takeoff);
     }
 
-    public boolean isHovering() { return getBooleanData(DATA_HOVERING); }
     public void setHovering(boolean hovering) {
         if (hovering && this.isBaby()) hovering = false;
         this.entityData.set(DATA_HOVERING, hovering);
     }
 
 
-    public boolean isRunning() { return getBooleanData(DATA_RUNNING); }
 
-    public void setRunning(boolean running) {
-        setBooleanData(DATA_RUNNING, running);
-        if (running) {
-            runningTicks = 0;
-            Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(RUN_SPEED);
-        } else {
-            Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(WALK_SPEED);
-        }
-    }
 
     public boolean isWalking() {
         if (isFlying()) return false;
@@ -599,7 +584,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         return getBooleanData(DATA_RUNNING);
     }
 
-    public boolean isLanding() { return getBooleanData(DATA_LANDING); }
 
     public void setLanding(boolean landing) {
         // Prevent forced landing when being ridden by a player
@@ -622,31 +606,84 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
         }
     }
 
-    // (Removed unused DATA_ATTACKING flag)
+    // DATA STUFF
 
     public void setAttackKind(int kind) { setIntegerData(DATA_ATTACK_KIND, kind); }
 
     public void setAttackPhase(int phase) { setIntegerData(DATA_ATTACK_PHASE, phase); }
 
-    // Riding control states
-    public boolean isGoingUp() { return getBooleanData(DATA_GOING_UP); }
-    public void setGoingUp(boolean goingUp) { setBooleanData(DATA_GOING_UP, goingUp); }
-
-    public boolean isGoingDown() { return getBooleanData(DATA_GOING_DOWN); }
-    public void setGoingDown(boolean goingDown) { setBooleanData(DATA_GOING_DOWN, goingDown); }
-
-    public boolean isAccelerating() { return getBooleanData(DATA_ACCELERATING); }
-    public void setAccelerating(boolean accelerating) { setBooleanData(DATA_ACCELERATING, accelerating); }
-
-    // Rider input snapshots for server-side animation sync
-    public void setLastRiderForward(float forward) { setFloatData(DATA_RIDER_FORWARD, forward); }
-    public void setLastRiderStrafe(float strafe) { setFloatData(DATA_RIDER_STRAFE, strafe); }
-
+    // ===== Lightning Dragon Specific Methods =====
+    
     // Flight mode accessor for controllers (avoids accessing protected entityData outside entity)
     public int getSyncedFlightMode() { return getIntegerData(DATA_FLIGHT_MODE); }
 
     // Debug/inspection helper: expose raw ground move state
     public int getGroundMoveState() { return getIntegerData(DATA_GROUND_MOVE_STATE); }
+    
+    // ===== RideableDragonBase Abstract Method Implementations =====
+    
+    @Override
+    protected int getFlightMode() {
+        if (!isFlying()) return -1; // Ground state
+        if (isTakeoff()) return 3;  // Takeoff
+        if (isHovering()) return 2; // Hover
+        if (isLanding()) return 2;  // Landing (treat as hover)
+        
+        // Check if gliding (moving horizontally without significant vertical movement)
+        double yDelta = this.getY() - this.yo;
+        double horizontalSpeed = getDeltaMovement().horizontalDistanceSqr();
+        if (Math.abs(yDelta) < 0.06 && horizontalSpeed > 0.01) {
+            return 0; // Glide
+        }
+        
+        return 1; // Forward flight
+    }
+    
+    @Override
+    public boolean isFlying() {
+        return getBooleanData(DATA_FLYING);
+    }
+    
+    @Override
+    public boolean isTakeoff() {
+        return getBooleanData(DATA_TAKEOFF);
+    }
+    
+    @Override
+    public boolean isLanding() {
+        return getBooleanData(DATA_LANDING);
+    }
+    
+    @Override
+    public boolean isHovering() {
+        return getBooleanData(DATA_HOVERING);
+    }
+    
+    @Override
+    public boolean isRunning() {
+        return getBooleanData(DATA_RUNNING);
+    }
+    
+    @Override
+    public void setRunning(boolean running) {
+        setBooleanData(DATA_RUNNING, running);
+        if (running) {
+            runningTicks = 0;
+            Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(RUN_SPEED);
+        } else {
+            Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(WALK_SPEED);
+        }
+    }
+    
+    
+    // ===== RideableDragonBase Override for Custom Logic =====
+    
+    @Override
+    public void tickAnimationStates() {
+        // Lightning Dragon already has this logic implemented in aiStep()
+        // This method is here to satisfy the interface contract
+        // The actual implementation is in the aiStep() method above
+    }
 
     // ===== Client animation overrides (for robust observer sync) =====
     public int getEffectiveGroundState() {
@@ -798,115 +835,13 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
                 suppressSleep(200);
             }
 
-            // Server-authoritative ground movement state sync for reliable client animation (runs while sleeping transitions)
-            // Only consider ground state when not flying
-            int moveState = 0; // idle
-            if (!isFlying()) {
-                // If being ridden, prefer rider inputs for robust state selection
-                if (getControllingPassenger() != null) {
-                    float fwd = this.entityData.get(DATA_RIDER_FORWARD);
-                    float str = this.entityData.get(DATA_RIDER_STRAFE);
-                    float mag = Math.abs(fwd) + Math.abs(str);
-                    if (mag > 0.05f) {
-                        moveState = this.isAccelerating() ? 2 : 1;
-                    } else {
-                        // Fallback while ridden: use actual velocity so observers still see walk/run
-                        double speedSqr = getDeltaMovement().horizontalDistanceSqr();
-                        if (speedSqr > 0.08) {
-                            moveState = 2; // running-level velocity
-                        } else if (speedSqr > 0.005) {
-                            moveState = 1; // walking-level velocity
-                        }
-                    }
-                } else {
-                    // Use horizontal velocity (matches HUD vel2) for AI classification to avoid position delta spikes
-                    double velSqr = getDeltaMovement().horizontalDistanceSqr();
-
-                    // Thresholds tuned so typical AI follow (≈0.0054) is walk, not run
-                    final double WALK_MIN = 0.0008;
-                    final double RUN_MIN  = 0.0200;
-
-                    if (velSqr > RUN_MIN) {
-                        moveState = 2; // run
-                    } else if (velSqr > WALK_MIN) {
-                        moveState = 1; // walk
-
-                    }
-                }
-            }
-            // Only write when changed to avoid excess sync traffic
-            boolean changed = false;
-            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
-                this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
-                changed = true;
-            }
-            // Flight mode sync for observers
-            int flightMode = getFlightMode();
-            if (this.entityData.get(DATA_FLIGHT_MODE) != flightMode) {
-                this.entityData.set(DATA_FLIGHT_MODE, flightMode);
-                changed = true;
-            }
-            // Pulse an S2C message on changes to nudge late observers
-            if (changed && (lastBroadcastGroundState != moveState || lastBroadcastFlightMode != flightMode)) {
-                lastBroadcastGroundState = moveState;
-                lastBroadcastFlightMode = flightMode;
-                this.syncAnimState(moveState, flightMode);
-            }
-            // Reduced frequency redundancy - only every 20 ticks (1 second) for critical states
-            boolean needsPulse = this.isVehicle() || flightMode >= 0 || moveState != 0;
-            if (needsPulse && (this.tickCount & 19) == 0) {
-                this.syncAnimState(moveState, flightMode);
-            }
-            // Decay rider inputs slightly each tick to avoid sticking when packets drop
-            if (this.entityData.get(DATA_RIDER_FORWARD) != 0f || this.entityData.get(DATA_RIDER_STRAFE) != 0f) {
-                float nf = this.entityData.get(DATA_RIDER_FORWARD) * 0.8f;
-                float ns = this.entityData.get(DATA_RIDER_STRAFE) * 0.8f;
-                if (Math.abs(nf) < 0.01f) nf = 0f;
-                if (Math.abs(ns) < 0.01f) ns = 0f;
-                this.entityData.set(DATA_RIDER_FORWARD, nf);
-                this.entityData.set(DATA_RIDER_STRAFE, ns);
-            }
+            // Use RideableDragonBase animation state management
+            super.tickAnimationStates();
         }
 
-        // Run the same movement/flight sync during normal ticks (not in sleep transitions)
+        // Use RideableDragonBase animation state management for normal ticks
         if (!level().isClientSide && !(isSleeping() || sleepingEntering || sleepingExiting)) {
-            int moveState = 0;
-            if (!isFlying()) {
-                if (getControllingPassenger() != null) {
-                    float fwd = this.entityData.get(DATA_RIDER_FORWARD);
-                    float str = this.entityData.get(DATA_RIDER_STRAFE);
-                    float mag = Math.abs(fwd) + Math.abs(str);
-                    if (mag > 0.05f) {
-                        moveState = this.isAccelerating() ? 2 : 1;
-                    } else {
-                        double velSqr = getDeltaMovement().horizontalDistanceSqr();
-                        final double WALK_MIN = 0.0008;
-                        final double RUN_MIN  = 0.0200;
-                        if (velSqr > RUN_MIN) moveState = 2; else if (velSqr > WALK_MIN) moveState = 1;
-                    }
-                } else {
-                    // Use horizontal velocity (matches HUD) for AI classification
-                    double velSqr = getDeltaMovement().horizontalDistanceSqr();
-                    final double WALK_MIN = 0.0008;
-                    final double RUN_MIN  = 0.0200;
-                    if (velSqr > RUN_MIN) moveState = 2; else if (velSqr > WALK_MIN) moveState = 1;
-                }
-            }
-            boolean changed = false;
-            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
-                this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
-                changed = true;
-            }
-            int flightMode = getFlightMode();
-            if (this.entityData.get(DATA_FLIGHT_MODE) != flightMode) {
-                this.entityData.set(DATA_FLIGHT_MODE, flightMode);
-                changed = true;
-            }
-            if (changed && (lastBroadcastGroundState != moveState || lastBroadcastFlightMode != flightMode)) {
-                lastBroadcastGroundState = moveState;
-                lastBroadcastFlightMode = flightMode;
-                this.syncAnimState(moveState, flightMode);
-            }
+            super.tickAnimationStates();
         }
 
         // Handle dodge movement first
@@ -917,38 +852,9 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
         tickRunningTime();
 
-
         tickClientSideUpdates();
-        if (this.isRunning() && this.getDeltaMovement().horizontalDistanceSqr() < 0.01) {
-            this.setRunning(false);
-        }
     }
 
-    private int getFlightMode() {
-        int flightMode = -1;
-        if (isFlying()) {
-            double yDelta = getYDelta();
-            if (isTakeoff()) {
-                flightMode = 3; // takeoff
-            } else if (getControllingPassenger() != null) {
-                // Ridden: always glide when rider holds descend; flap when holding ascend
-                if (isGoingDown()) flightMode = 0; // glide
-                else if (isGoingUp()) flightMode = 1; // flap
-                else if (yDelta < -0.005) flightMode = 0; // natural descent -> glide
-                else flightMode = 1; // otherwise flap
-            } else {
-                // AI: keep original behavior using fractions with small bias
-                float glide = getGlidingFraction();
-                float flap = getFlappingFraction();
-                float hover = getHoveringFraction();
-                if (yDelta > 0.02) flightMode = 1;
-                else if (yDelta < -0.02) flightMode = 0;
-                else if (isHovering() || hover > 0.55f) flightMode = 2;
-                else flightMode = (glide >= flap + 0.10f) ? 0 : 1;
-            }
-        }
-        return flightMode;
-    }
 
     // ===== TICK SUBMETHODS =====
     
@@ -2138,20 +2044,14 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
 
     // ===== RIDING INPUT IMPLEMENTATION =====
     @Override
-    protected @NotNull Vec3 getRiddenInput(@Nonnull Player player, @Nonnull Vec3 deltaIn) {
+    public @NotNull Vec3 getRiddenInput(@Nonnull Player player, @Nonnull Vec3 deltaIn) {
         if (areRiderControlsLocked()) {
             // Ignore rider strafe/forward while locked
             return net.minecraft.world.phys.Vec3.ZERO;
         }
         Vec3 input = riderController.getRiddenInput(player, deltaIn);
-        // On the server, mirror inputs into synced data so observers get correct walk/run
-        if (!level().isClientSide && !isFlying()) {
-            float fwd = (float) Mth.clamp(input.z, -1.0, 1.0);
-            float str = (float) Mth.clamp(input.x, -1.0, 1.0);
-            this.entityData.set(DATA_RIDER_FORWARD, Math.abs(fwd) > 0.02f ? fwd : 0f);
-            this.entityData.set(DATA_RIDER_STRAFE, Math.abs(str) > 0.02f ? str : 0f);
-        }
-        return input;
+        // Call parent implementation to handle standard rideable dragon input processing
+        return super.getRiddenInput(player, input);
     }
     @Override
     protected void tickRidden(@Nonnull Player player, @Nonnull Vec3 travelVector) {
@@ -2190,22 +2090,13 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
 
     @Override
-    protected void removePassenger(@Nonnull Entity passenger) {
+    public void removePassenger(@Nonnull Entity passenger) {
         // Prevent dismounting while rider controls are locked (e.g., Summon Storm windup)
         if (areRiderControlsLocked() && passenger == getControllingPassenger()) {
             return;
         }
+        // Call parent implementation to handle standard rideable dragon cleanup
         super.removePassenger(passenger);
-        // Reset rider-driven movement states immediately on dismount
-        if (!this.level().isClientSide) {
-            this.setAccelerating(false);
-            this.setRunning(false);
-            this.entityData.set(DATA_RIDER_FORWARD, 0f);
-            this.entityData.set(DATA_RIDER_STRAFE, 0f);
-            this.entityData.set(DATA_GROUND_MOVE_STATE, 0);
-            // Nudge observers so animation stops if we dismounted mid-run/walk
-            this.syncAnimState(0, getSyncedFlightMode());
-        }
     }
     // Cooldown for aggro growl to prevent spam while ridden or under repeated retargeting
     private int aggroGrowlCooldown = 0;
@@ -2298,8 +2189,6 @@ public class LightningDragonEntity extends DragonEntity implements FlyingAnimal,
     }
     
     // ===== DRAGON FLIGHT CAPABLE INTERFACE =====
-    // Note: Most flight methods already exist in LightningDragonEntity
-    
     @Override
     public float getFlightSpeed() {
         return 1.0f; // Base flight speed
