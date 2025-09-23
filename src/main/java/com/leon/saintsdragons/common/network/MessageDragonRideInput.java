@@ -107,6 +107,7 @@ public record MessageDragonRideInput(boolean goingUp,
                 break;
             case ABILITY_USE:
                 if (msg.hasAbilityName()) {
+                    // For Lightning Dragon, use the original system that calls useRidingAbility
                     dragon.useRidingAbility(msg.abilityName());
                 }
                 break;
@@ -157,12 +158,12 @@ public record MessageDragonRideInput(boolean goingUp,
                 dragon.setAccelerating(false);
                 break;
             case ABILITY_USE:
-                if ("amphithere_fire_breath".equals(msg.abilityName())) {
-                    dragon.combatManager.tryUseAbility(com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities.FIRE_BREATH);
+                if (msg.hasAbilityName()) {
+                    dragon.useRidingAbility(msg.abilityName());
                 }
                 break;
             case ABILITY_STOP:
-                if ("amphithere_fire_breath".equals(msg.abilityName())) {
+                if (msg.hasAbilityName()) {
                     dragon.combatManager.forceEndActiveAbility();
                 }
                 break;

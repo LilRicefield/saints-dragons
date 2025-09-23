@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningArcData;
 import com.leon.saintsdragons.common.particle.lightningdragon.LightningChainData;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -39,4 +40,11 @@ public class ModParticles {
                             return LightningChainData.CODEC(this);
                         }
                     });
+
+    // Fire breath particles for Amphithere
+    public static final RegistryObject<SimpleParticleType> FIRE_BREATH_FLAME =
+            REGISTER.register("fire_breath_flame", () -> new SimpleParticleType(false));
+    
+    public static final RegistryObject<SimpleParticleType> FIRE_BREATH_SMOKE =
+            REGISTER.register("fire_breath_smoke", () -> new SimpleParticleType(false));
 }

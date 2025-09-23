@@ -86,6 +86,27 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
+    
+    // Fire breath data accessors
+    private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATH_START_SET =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_FIRE_BREATH_START_X =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_BREATH_START_Y =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_BREATH_START_Z =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATH_DIR_SET =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_FIRE_BREATH_DIR_X =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_BREATH_DIR_Y =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_BREATH_DIR_Z =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
+    
     private static final int LANDING_SETTLE_TICKS = 4;
 
 
@@ -184,6 +205,17 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_RIDER_FORWARD, 0f);
         this.entityData.define(DATA_RIDER_STRAFE, 0f);
+        
+        // Fire breath data
+        this.entityData.define(DATA_FIRE_BREATHING, false);
+        this.entityData.define(DATA_FIRE_BREATH_START_SET, false);
+        this.entityData.define(DATA_FIRE_BREATH_START_X, 0f);
+        this.entityData.define(DATA_FIRE_BREATH_START_Y, 0f);
+        this.entityData.define(DATA_FIRE_BREATH_START_Z, 0f);
+        this.entityData.define(DATA_FIRE_BREATH_DIR_SET, false);
+        this.entityData.define(DATA_FIRE_BREATH_DIR_X, 0f);
+        this.entityData.define(DATA_FIRE_BREATH_DIR_Y, 0f);
+        this.entityData.define(DATA_FIRE_BREATH_DIR_Z, 0f);
     }
 
     @Override
@@ -809,7 +841,27 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return null;
+        return com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities.FIRE_BREATH;
+    }
+
+    /**
+     * Handle ability use from riding input (like Lightning Dragon)
+     */
+    public void useRidingAbility(String abilityName) {
+        if (abilityName == null || abilityName.isEmpty()) return;
+        // Only allow when actually being ridden by a living controller (owner ideally)
+        var cp = getControllingPassenger();
+        if (!(cp instanceof net.minecraft.world.entity.LivingEntity)) {
+            return;
+        }
+        if (this.isTame() && cp instanceof net.minecraft.world.entity.player.Player p && !this.isOwnedBy(p)) {
+            return; // owner-gate abilities on tamed dragons
+        }
+        var type = com.leon.saintsdragons.common.registry.AbilityRegistry.get(abilityName);
+        if (type != null) {
+            // Delegate to combat manager which handles proper generic casting
+            combatManager.tryUseAbility(type);
+        }
     }
 
     @Override
@@ -1026,5 +1078,55 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     @Override
     public boolean isFlapping() {
         return isFlying() && this.getDeltaMovement().y > -0.1D;
+    }
+
+    // ===== FIRE BREATH METHODS =====
+
+    public boolean isFireBreathing() {
+        return this.entityData.get(DATA_FIRE_BREATHING);
+    }
+
+    public void setFireBreathing(boolean fireBreathing) {
+        this.entityData.set(DATA_FIRE_BREATHING, fireBreathing);
+    }
+
+    public void setFireBreathStartPosition(@org.jetbrains.annotations.Nullable Vec3 pos) {
+        if (pos == null) {
+            this.entityData.set(DATA_FIRE_BREATH_START_SET, false);
+        } else {
+            this.entityData.set(DATA_FIRE_BREATH_START_SET, true);
+            this.entityData.set(DATA_FIRE_BREATH_START_X, (float) pos.x);
+            this.entityData.set(DATA_FIRE_BREATH_START_Y, (float) pos.y);
+            this.entityData.set(DATA_FIRE_BREATH_START_Z, (float) pos.z);
+        }
+    }
+
+    public Vec3 getFireBreathStartPosition() {
+        if (!this.entityData.get(DATA_FIRE_BREATH_START_SET)) return null;
+        return new Vec3(
+                this.entityData.get(DATA_FIRE_BREATH_START_X),
+                this.entityData.get(DATA_FIRE_BREATH_START_Y),
+                this.entityData.get(DATA_FIRE_BREATH_START_Z)
+        );
+    }
+
+    public void setFireBreathDirection(@org.jetbrains.annotations.Nullable Vec3 dir) {
+        if (dir == null) {
+            this.entityData.set(DATA_FIRE_BREATH_DIR_SET, false);
+        } else {
+            this.entityData.set(DATA_FIRE_BREATH_DIR_SET, true);
+            this.entityData.set(DATA_FIRE_BREATH_DIR_X, (float) dir.x);
+            this.entityData.set(DATA_FIRE_BREATH_DIR_Y, (float) dir.y);
+            this.entityData.set(DATA_FIRE_BREATH_DIR_Z, (float) dir.z);
+        }
+    }
+
+    public Vec3 getFireBreathDirection() {
+        if (!this.entityData.get(DATA_FIRE_BREATH_DIR_SET)) return null;
+        return new Vec3(
+                this.entityData.get(DATA_FIRE_BREATH_DIR_X),
+                this.entityData.get(DATA_FIRE_BREATH_DIR_Y),
+                this.entityData.get(DATA_FIRE_BREATH_DIR_Z)
+        );
     }
 }
