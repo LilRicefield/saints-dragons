@@ -13,13 +13,9 @@ import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-
 @Mod.EventBusSubscriber(modid = SaintsDragons.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ClientEventHandler {
-
     private static final double[] randomTremorOffsets = new double[3];
-
-
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
@@ -34,7 +30,7 @@ public class ClientEventHandler {
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof AmphithereEntity && event.getCamera().isDetached()) {
-            event.getCamera().move(-event.getCamera().getMaxZoom(26F), 0, 0);
+            event.getCamera().move(-event.getCamera().getMaxZoom(25F), 0, 0);
         }
         
         // Screen shake detection and application
