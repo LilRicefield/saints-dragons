@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers;
 
+import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -69,42 +70,34 @@ public class LightningDragonConstantsHandler {
     public static final double RUN_SPEED = 0.45D;
 
     // ===== ENTITY DATA ACCESSORS =====
+    // Use the collective DATA fields from RideableDragonData for consistency
     
     /** Entity data accessor for flying state */
-    public static final EntityDataAccessor<Boolean> DATA_FLYING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_FLYING = RideableDragonData.DATA_FLYING;
     
     /** Entity data accessor for takeoff state */
-    public static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_TAKEOFF = RideableDragonData.DATA_TAKEOFF;
     
     /** Entity data accessor for hovering state */
-    public static final EntityDataAccessor<Boolean> DATA_HOVERING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_HOVERING = RideableDragonData.DATA_HOVERING;
     
     /** Entity data accessor for landing state */
-    public static final EntityDataAccessor<Boolean> DATA_LANDING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_LANDING = RideableDragonData.DATA_LANDING;
     
     /** Entity data accessor for running state */
-    public static final EntityDataAccessor<Boolean> DATA_RUNNING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_RUNNING = RideableDragonData.DATA_RUNNING;
     
     /** Entity data accessor for ground move state (0=idle, 1=walk, 2=run) */
-    public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = RideableDragonData.DATA_GROUND_MOVE_STATE;
     
     /** Entity data accessor for flight mode (0=glide,1=forward,2=hover,3=takeoff,-1=ground) */
-    public static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = RideableDragonData.DATA_FLIGHT_MODE;
     
     /** Entity data accessor for rider forward input */
-    public static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = RideableDragonData.DATA_RIDER_FORWARD;
     
     /** Entity data accessor for rider strafe input */
-    public static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = RideableDragonData.DATA_RIDER_STRAFE;
     
     /** Entity data accessor for attack kind */
     public static final EntityDataAccessor<Integer> DATA_ATTACK_KIND =
@@ -155,16 +148,13 @@ public class LightningDragonConstantsHandler {
             SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.FLOAT);
     
     /** Entity data accessor for going up state */
-    public static final EntityDataAccessor<Boolean> DATA_GOING_UP =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_GOING_UP = RideableDragonData.DATA_GOING_UP;
     
     /** Entity data accessor for going down state */
-    public static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = RideableDragonData.DATA_GOING_DOWN;
     
     /** Entity data accessor for accelerating state */
-    public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_ACCELERATING = RideableDragonData.DATA_ACCELERATING;
     
     /** Entity data accessor for sleeping state */
     public static final EntityDataAccessor<Boolean> DATA_SLEEPING =

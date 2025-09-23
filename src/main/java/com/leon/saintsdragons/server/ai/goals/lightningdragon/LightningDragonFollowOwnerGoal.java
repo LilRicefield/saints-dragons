@@ -4,7 +4,6 @@ import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDra
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
@@ -146,27 +145,27 @@ public class LightningDragonFollowOwnerGoal extends Goal {
     private void handleFlightFollowing(LivingEntity owner) {
         // Calculate target position slightly above and behind owner
         double targetY = owner.getY() + owner.getBbHeight() + HOVER_HEIGHT;
-        
+
         // Get owner's look vector for positioning behind them
         Vec3 ownerLook = owner.getLookAngle();
         double offsetX = -ownerLook.x * 3.0; // Reduced from 4.0 for closer following
         double offsetZ = -ownerLook.z * 3.0;
-        
+
         // Add slight vertical movement for more natural flight
         double verticalOffset = Math.sin(dragon.tickCount * 0.2) * 0.3; // Subtle bobbing
-        
+
         // Calculate target position with smoothing
         double targetX = owner.getX() + offsetX;
         double targetZ = owner.getZ() + offsetZ;
-        
+
         // Only update position if we're not too close to prevent jitter
         double distanceToTarget = Math.sqrt(dragon.distanceToSqr(targetX, targetY, targetZ));
         if (distanceToTarget > 1.0) {
             dragon.getMoveControl().setWantedPosition(
-                targetX,
-                targetY + verticalOffset,
-                targetZ,
-                1.2 // Flight speed
+                    targetX,
+                    targetY + verticalOffset,
+                    targetZ,
+                    1.2 // Flight speed
             );
         } else {
             // Hover in place if we're close enough
@@ -194,11 +193,11 @@ public class LightningDragonFollowOwnerGoal extends Goal {
             // Determine movement style based on distance
             boolean shouldRun = distance > RUN_DIST;
             dragon.setRunning(shouldRun);
-            
+
             // Set appropriate animation state (0=idle, 1=walking, 2=running)
             int moveState = shouldRun ? 2 : 1;
             dragon.setGroundMoveStateFromAI(moveState);
-            
+
             // Adjust speed based on movement style and distance
             double baseSpeed = shouldRun ? 1.5 : 0.8;
             // Increase speed slightly based on distance to catch up faster when far away
@@ -222,7 +221,7 @@ public class LightningDragonFollowOwnerGoal extends Goal {
                 repathCooldown = 2; // More frequent updates for better following
             }
         }
-        
+
         // If stuck, try to jump or find alternative path
         if (dragon.getNavigation().isStuck()) {
             dragon.getJumpControl().jump();
@@ -238,31 +237,26 @@ public class LightningDragonFollowOwnerGoal extends Goal {
     private boolean shouldTriggerFlight(LivingEntity owner, double distance) {
         // If already flying, continue flying until we're close to landing
         if (dragon.isFlying()) {
-            // Don't land if owner is flying (creative mode or riding another dragon)
-            if (isOwnerFlying(owner)) {
-                return true; // Stay airborne
-            }
             // Only stop flying if we're close to the owner and not too high up
             return !(distance < LANDING_DISTANCE && (owner.getY() - dragon.getY()) < FLIGHT_HEIGHT_DIFF);
         }
-        
+
         // Don't take off if we can't fly or are already hovering
         if (dragon.isHovering() || !canTriggerFlight()) {
             return false;
         }
 
-        // Don't take off if we're very close to the owner (unless owner is flying)
-        if (distance < STOP_FOLLOW_DIST * 1.5 && !isOwnerFlying(owner)) {
+        // Don't take off if we're very close to the owner
+        if (distance < STOP_FOLLOW_DIST * 1.5) {
             return false;
         }
 
-        // Fly if owner is far away OR significantly higher up OR owner is flying
+        // Fly if owner is far away OR significantly higher up
         boolean farAway = distance > FLIGHT_TRIGGER_DIST;
         boolean ownerAbove = (owner.getY() - dragon.getY()) > FLIGHT_HEIGHT_DIFF;
-        boolean ownerFlying = isOwnerFlying(owner);
-        
+
         // Check more frequently when we should be flying
-        return farAway || ownerAbove || ownerFlying;
+        return farAway || ownerAbove;
     }
 
     /**
@@ -277,28 +271,6 @@ public class LightningDragonFollowOwnerGoal extends Goal {
                 dragon.getControllingPassenger() == null &&
                 !dragon.isPassenger() &&
                 dragon.getActiveAbility() == null; // Don't interrupt abilities
-    }
-
-    /**
-     * Check if the owner is currently flying (creative mode or riding another dragon)
-     */
-    private boolean isOwnerFlying(LivingEntity owner) {
-        if (!(owner instanceof Player player)) {
-            return false;
-        }
-        
-        // Check if player is in creative mode and can fly
-        if (player.getAbilities().mayfly) {
-            return true;
-        }
-        
-        // Check if player is riding another dragon or flying entity
-        if (player.getVehicle() != null) {
-            // If riding a dragon or other flying entity, consider them "flying"
-            return player.getVehicle() instanceof com.leon.saintsdragons.server.entity.base.DragonEntity;
-        }
-        
-        return false;
     }
 
     @Override
