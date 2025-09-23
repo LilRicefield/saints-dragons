@@ -10,30 +10,16 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.common.MinecraftForge;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = SaintsDragons.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ClientEventHandler {
-    
-    // Entity hiding mechanism for custom rider positioning
-    public static List<UUID> blockedEntityRenders = new ArrayList<>();
 
     private static final double[] randomTremorOffsets = new double[3];
 
-    public static void blockRenderingEntity(UUID id) {
-        blockedEntityRenders.add(id);
-    }
 
-    public static void releaseRenderingEntity(UUID id) {
-        blockedEntityRenders.remove(id);
-    }
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
