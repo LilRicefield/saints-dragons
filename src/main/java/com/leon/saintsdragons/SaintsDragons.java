@@ -91,6 +91,8 @@ public class SaintsDragons {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(ModItems.DRAGON_ALLY_BOOK);
             event.accept(ModItems.DRAKE_BINDER);
+            event.accept(ModItems.LIGHTNING_DRAGON_BINDER);
+            event.accept(ModItems.AMPHITHERE_BINDER);
         }
     }
 

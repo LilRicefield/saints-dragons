@@ -2260,6 +2260,13 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     }
     
     /**
+     * Check if this dragon can be bound (not playing dead, not sleeping, etc.)
+     */
+    public boolean canBeBound() {
+        return !isSleeping() && !isDying() && !isCharging() && !isBeaming();
+    }
+    
+    /**
      * Get water conductivity multiplier for lightning damage
      * Water conducts electricity better, so lightning is more effective underwater
      */
