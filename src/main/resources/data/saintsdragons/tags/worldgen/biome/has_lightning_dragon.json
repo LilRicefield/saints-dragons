@@ -2,7 +2,7 @@
   "replace": false,
   "values": [
     "minecraft:plains",
-    "minecraft:meadows",
+    "minecraft:meadow",
     "minecraft:windswept_hills",
     "minecraft:sunflower_plains",
     "minecraft:cherry_grove"
