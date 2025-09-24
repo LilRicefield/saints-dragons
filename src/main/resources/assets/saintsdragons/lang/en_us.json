@@ -1,6 +1,8 @@
 {
   "item.saintsdragons.dragon_ally_book": "Dragon Ally Book",
   "item.saintsdragons.drake_binder": "Drake Binder",
+  "item.saintsdragons.lightning_dragon_binder": "Lightning Dragon Binder",
+  "item.saintsdragons.amphithere_binder": "Amphithere Binder",
   "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
   "item.saintsdragons.primitive_drake_spawn_egg": "Primitive Drake Spawn Egg",
   "item.saintsdragons.amphithere_spawn_egg": "Amphithere Spawn Egg",
@@ -25,6 +27,16 @@
   "saintsdragons.tooltip.drake_binder.bound": "Contains: %s",
   "saintsdragons.tooltip.drake_binder.bound_desc": "Provides resistance buff while carried",
   
+  "saintsdragons.tooltip.lightning_dragon_binder.empty": "Right-click on a tamed Lightning Dragon to capture it",
+  "saintsdragons.tooltip.lightning_dragon_binder.right_click_dragon_to_bind": "Right-click on ground to release captured dragon",
+  "saintsdragons.tooltip.lightning_dragon_binder.bound": "Contains: %s",
+  "saintsdragons.tooltip.lightning_dragon_binder.right_click_to_release": "Right-click to release captured dragon",
+  
+  "saintsdragons.tooltip.amphithere_binder.empty": "Right-click on a tamed Amphithere to capture it",
+  "saintsdragons.tooltip.amphithere_binder.right_click_amphithere_to_bind": "Right-click on ground to release captured amphithere",
+  "saintsdragons.tooltip.amphithere_binder.bound": "Contains: %s",
+  "saintsdragons.tooltip.amphithere_binder.right_click_to_release": "Right-click to release captured amphithere",
+  
   "saintsdragons.message.dragon_not_found": "Dragon not found",
   "saintsdragons.message.not_dragon_owner": "You don't own this dragon",
   
@@ -33,6 +45,14 @@
   "saintsdragons.message.drake_cannot_be_captured": "This drake cannot be captured right now",
   "saintsdragons.message.binder_already_occupied": "This binder already contains a drake",
   "saintsdragons.message.binder_not_bound": "This binder is empty - capture a drake first",
+  
+  "saintsdragons.message.lightning_dragon_captured": "Captured %s in Lightning Dragon Binder!",
+  "saintsdragons.message.lightning_dragon_released": "Released %s from Lightning Dragon Binder!",
+  "saintsdragons.message.dragon_cannot_be_captured": "This dragon cannot be captured right now",
+  "saintsdragons.message.cannot_release_others_dragon": "You can only release dragons you own",
+  
+  "saintsdragons.message.amphithere_captured": "Captured %s in Amphithere Binder!",
+  "saintsdragons.message.amphithere_released": "Released %s from Amphithere Binder!",
   
   "saintsdragons.command.ally.add.result": "Dragon %s: %s - %s",
   "saintsdragons.command.ally.remove.result": "Dragon %s: %s - %s",
