@@ -5,6 +5,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * Usage: Extend this class in your dragon entity to get the standard rideable dragon behavior.
  */
-public abstract class RideableDragonBase extends DragonEntity implements RideableDragon {
+public abstract class RideableDragonBase extends DragonEntity implements RideableDragon, FlyingAnimal {
 
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -248,9 +249,17 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     protected abstract int getFlightMode();
 
     /**
-     * Check if the dragon is flying. Must be implemented by subclasses.
+     * Check if the dragon is flying. Final bridge delegates to subclass hook to avoid obfuscation mismatches.
      */
-    public abstract boolean isFlying();
+    @Override
+    public final boolean isFlying() {
+        return isDragonFlying();
+    }
+
+    /**
+     * Subclass hook to report actual flying state.
+     */
+    protected abstract boolean isDragonFlying();
 
     /**
      * Check if the dragon is taking off. Must be implemented by subclasses.
