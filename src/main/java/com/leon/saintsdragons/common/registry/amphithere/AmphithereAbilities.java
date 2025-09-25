@@ -2,26 +2,17 @@ package com.leon.saintsdragons.common.registry.amphithere;
 
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.ability.HurtAbility;
-import com.leon.saintsdragons.server.entity.ability.DieAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.amphithere.AmphithereFireBreathAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.amphithere.AmphithereFireBodyAbility;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 
 /**
- * Amphithere specific abilities.
- * Contains all abilities unique to the Amphithere type.
+ * Ability registry entries for the Amphithere.
  */
 public final class AmphithereAbilities {
     private AmphithereAbilities() {}
 
-    // Combat abilities
-    public static final DragonAbilityType<AmphithereEntity, AmphithereFireBreathAbility> FIRE_BREATH =
-            AbilityRegistry.register(new DragonAbilityType<>("amphithere_fire_breath", AmphithereFireBreathAbility::new));
+    public static final String FIRE_BODY_ID = "amphithere_fire_body";
 
-    // Generic abilities (can be used by any dragon)
-    public static final DragonAbilityType<AmphithereEntity, HurtAbility<AmphithereEntity>> HURT =
-            AbilityRegistry.register(new DragonAbilityType<>("hurt", HurtAbility::new));
-
-    public static final DragonAbilityType<AmphithereEntity, DieAbility<AmphithereEntity>> DIE =
-            AbilityRegistry.register(new DragonAbilityType<>("die", DieAbility::new));
+    public static final DragonAbilityType<AmphithereEntity, AmphithereFireBodyAbility> FIRE_BODY =
+            AbilityRegistry.register(new DragonAbilityType<>(FIRE_BODY_ID, AmphithereFireBodyAbility::new));
 }
