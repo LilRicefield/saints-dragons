@@ -145,10 +145,33 @@ public class LightningDragonPhysicsController {
             }
             // Prefer server-synced flight mode when available for observer consistency
             int syncedMode = dragon.getEffectiveFlightMode();
+            Vec3 vNow = dragon.getDeltaMovement();
             if (syncedMode == 3) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
+            }
+
+            boolean manualRiderControl = dragon.isTame() && dragon.isVehicle();
+            if (manualRiderControl) {
+                if (dragon.isGoingUp()) {
+                    RawAnimation upward = FLAP;
+                    if (currentFlightAnimation != upward) {
+                        state.getController().transitionLength(4);
+                        currentFlightAnimation = upward;
+                    }
+                    state.setAndContinue(upward);
+                    return PlayState.CONTINUE;
+                }
+                if (dragon.isGoingDown()) {
+                    RawAnimation descend = GLIDE_DOWN;
+                    if (currentFlightAnimation != descend) {
+                        state.getController().transitionLength(6);
+                        currentFlightAnimation = descend;
+                    }
+                    state.setAndContinue(descend);
+                    return PlayState.CONTINUE;
+                }
             }
             if (syncedMode == 2) {
                 // Stationary/hover: play dedicated air hover clip
@@ -158,7 +181,6 @@ public class LightningDragonPhysicsController {
             }
             if (syncedMode == 1) {
                 state.getController().transitionLength(4);
-                Vec3 vNow = dragon.getDeltaMovement();
                 boolean ascendingNow = dragon.isGoingUp() || vNow.y > 0.02;
                 boolean stationaryAir = (vNow.horizontalDistanceSqr() < 0.0025 && Math.abs(vNow.y) < 0.02)
                         || dragon.isHovering()
@@ -170,13 +192,9 @@ public class LightningDragonPhysicsController {
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 0) {
-                // Server says GLIDE: check if tamed dragon is pitching down
+                // Server says GLIDE: evaluate descend heuristics for tamed dragons
                 state.getController().transitionLength(6);
-                if (dragon.isTame() && dragon.getPitchDirection() > 0) {
-                    state.setAndContinue(GLIDE_DOWN);
-                } else {
-                    state.setAndContinue(FLY_GLIDE);
-                }
+                state.setAndContinue(resolveGlideAnimation(vNow));
                 return PlayState.CONTINUE;
             }
 
@@ -188,6 +206,13 @@ public class LightningDragonPhysicsController {
                 // HYSTERESIS - prevent rapid switching between animations
                 float hoverWeight = hoveringFraction;
                 float flapWeight = flappingFraction;
+
+                boolean descendingNow = vNow.y < -0.03;
+                if (dragon.isVehicle()) {
+                    descendingNow |= dragon.isGoingDown();
+                } else {
+                    descendingNow |= dragon.getPitchDirection() > 0;
+                }
 
                 // Base thresholds for entering/exiting flap (without locks)
                 boolean shouldFlapBase = (currentFlightAnimation == FLY_FORWARD)
@@ -202,8 +227,8 @@ public class LightningDragonPhysicsController {
                     return PlayState.CONTINUE;
                 }
 
-                if (shouldFlapBase || dragon.getDeltaMovement().y >= -0.005) {
-                    boolean ascendingNow = dragon.isGoingUp() || dragon.getDeltaMovement().y > 0.02;
+                if (!descendingNow && (shouldFlapBase || vNow.y >= -0.005)) {
+                    boolean ascendingNow = dragon.isGoingUp() || vNow.y > 0.02;
                     RawAnimation desired = ascendingNow
                             ? FLAP
                             : FLY_FORWARD;
@@ -214,8 +239,8 @@ public class LightningDragonPhysicsController {
                     }
                     state.setAndContinue(desired);
                 } else {
-                    // Check if tamed dragon is pitching down for glide animation
-                    RawAnimation glideAnimation = (dragon.isTame() && dragon.getPitchDirection() > 0) ? GLIDE_DOWN : FLY_GLIDE;
+                    // Check if ridden dragon is actively descending for glide animation
+                    RawAnimation glideAnimation = resolveGlideAnimation(vNow);
                     if (currentFlightAnimation != glideAnimation) {
                         // Smooth but not too long blend out of flap
                         state.getController().transitionLength(6);
@@ -469,8 +494,28 @@ public class LightningDragonPhysicsController {
         }
     }
 
+    private RawAnimation resolveGlideAnimation(Vec3 velocity) {
+        if (!dragon.isTame()) {
+            return FLY_GLIDE;
+        }
 
+        Vec3 motion = velocity == null ? Vec3.ZERO : velocity;
+        double verticalSpeed = motion.y;
+        double horizontalSpeedSqr = motion.horizontalDistanceSqr();
 
+        boolean riderDescending = dragon.isVehicle() && dragon.isGoingDown();
+        boolean pitchingDown = !dragon.isVehicle() && dragon.getPitchDirection() > 0;
+        boolean fallingFast = verticalSpeed < -0.06;
+        boolean moderateDescent = verticalSpeed < -0.025;
+        boolean sustainedGlide = glidingFraction > 0.18f || flapEnv.raw() < 0.35f;
+        boolean hasForwardSpeed = horizontalSpeedSqr > 0.0009;
+
+        if ((pitchingDown || riderDescending || fallingFast || moderateDescent) && sustainedGlide && hasForwardSpeed) {
+            return GLIDE_DOWN;
+        }
+
+        return FLY_GLIDE;
+    }
 
     // ===== SAVE/LOAD SUPPORT =====
     public void writeToNBT(net.minecraft.nbt.CompoundTag tag) {
