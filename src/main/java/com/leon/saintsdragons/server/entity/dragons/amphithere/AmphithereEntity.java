@@ -16,6 +16,14 @@ import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.Amphithe
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.ExplosionDamageCalculator;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.core.particles.ParticleTypes;
+import java.util.List;
+import java.util.ArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -111,6 +119,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     private int landingTicks;
     private int riderTakeoffTicks;
     private boolean wasVehicleLastTick;
+    private boolean fireBodyCrashArmed;
 
     private float bankSmoothedYaw = 0f;
     private int bankDir = 0;
@@ -268,10 +277,13 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         tickRiderTakeoff();
         tickMountedState();
 
-        if (!level().isClientSide && targetCooldown > 0) {
-            targetCooldown--;
+        if (!level().isClientSide) {
+            if (targetCooldown > 0) {
+                targetCooldown--;
+            }
+            handleFireBodyCrash();
         }
-        
+
         // Initialize animation state on first tick after loading to prevent thrashing
         if (!level().isClientSide && this.tickCount == 1) {
             initializeAnimationState();
@@ -779,6 +791,70 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         );
     }
 
+    private void handleFireBodyCrash() {
+        boolean fireActive = this.isBreathingFire();
+        boolean airborne = !this.onGround();
+        if (fireActive && this.getControllingPassenger() instanceof LivingEntity rider) {
+            rider.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 10, 0, true, false, false));
+        }
+        if (fireActive && airborne) {
+            fireBodyCrashArmed = true;
+        }
+        if (fireBodyCrashArmed && !airborne && fireActive) {
+            triggerFireBodyCrash();
+            fireBodyCrashArmed = false;
+        }
+        if (!fireActive && !airborne) {
+            fireBodyCrashArmed = false;
+        }
+    }
+
+    private void triggerFireBodyCrash() {
+        if (!(level() instanceof ServerLevel server)) {
+            return;
+        }
+        double x = this.getX();
+        double y = this.getY();
+        double z = this.getZ();
+        List<Entity> immune = new ArrayList<>(this.getPassengers());
+        ExplosionDamageCalculator calculator = new ExplosionDamageCalculator() {
+            @Override
+            public float getEntityDamageMultiplier(Explosion explosion, Entity entity) {
+                return immune.contains(entity) ? 0.0F : super.getEntityDamageMultiplier(explosion, entity);
+            }
+        };
+        Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), calculator,
+                x, y + 0.2D, z, 6.0F, true, Level.ExplosionInteraction.BLOCK);
+        explosion.explode();
+        explosion.finalizeExplosion(true);
+
+        server.sendParticles(ParticleTypes.FLAME, x, y + 0.8D, z, 150, 2.0D, 1.0D, 2.0D, 0.2D);
+        server.sendParticles(ParticleTypes.SMALL_FLAME, x, y + 0.5D, z, 120, 1.8D, 0.8D, 1.8D, 0.15D);
+        server.sendParticles(ParticleTypes.LAVA, x, y + 0.5D, z, 40, 1.3D, 0.6D, 1.3D, 0.12D);
+        server.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 0.5D, z, 80, 2.2D, 0.7D, 2.2D, 0.05D);
+
+        BlockPos.MutableBlockPos flamePos = new BlockPos.MutableBlockPos();
+        int baseY = this.getBlockY();
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dz = -3; dz <= 3; dz++) {
+                if (this.getRandom().nextFloat() > 0.45F) {
+                    continue;
+                }
+                flamePos.set(x + dx, baseY, z + dz);
+                if (!server.isLoaded(flamePos)) {
+                    continue;
+                }
+                if (!server.getBlockState(flamePos).isAir()) {
+                    continue;
+                }
+                BlockState belowState = server.getBlockState(flamePos.below());
+                if (!belowState.isAir() && Blocks.FIRE.defaultBlockState().canSurvive(server, flamePos)) {
+                    server.setBlock(flamePos, Blocks.FIRE.defaultBlockState(), 11);
+                }
+            }
+        }
+        this.forceEndActiveAbility();
+    }
     public void switchToGroundNavigation() {
         if (usingAirNav) {
             this.navigation = this.groundNav;
@@ -869,6 +945,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     public void forceEndActiveAbility() {
         combatManager.forceEndActiveAbility();
+        fireBodyCrashArmed = false;
         this.setBreathingFire(false);
     }
 
