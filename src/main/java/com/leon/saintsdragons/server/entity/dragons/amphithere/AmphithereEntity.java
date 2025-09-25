@@ -1,10 +1,13 @@
 package com.leon.saintsdragons.server.entity.dragons.amphithere;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.controller.amphithere.AmphithereRiderController;
@@ -19,17 +22,19 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -50,7 +55,6 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.damagesource.DamageSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -58,7 +62,6 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
-
 import javax.annotation.Nonnull;
 
 public class AmphithereEntity extends DragonEntity implements FlyingAnimal, DragonFlightCapable {
@@ -86,6 +89,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
             SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
+            SynchedEntityData.defineId(AmphithereEntity.class, EntityDataSerializers.BOOLEAN);
     private static final int LANDING_SETTLE_TICKS = 4;
 
 
@@ -184,6 +189,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_RIDER_FORWARD, 0f);
         this.entityData.define(DATA_RIDER_STRAFE, 0f);
+        this.entityData.define(DATA_FIRE_BREATHING, false);
     }
 
     @Override
@@ -255,6 +261,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     public void tick() {
         super.tick();
 
+        combatManager.tick();
+
         tickBankingLogic();
         tickPitchingLogic();
         tickRiderTakeoff();
@@ -290,6 +298,9 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
                     this.setCommand(0);
                 }
             }
+        } else if (wasVehicleLastTick) {
+            this.setBreathingFire(false);
+            combatManager.forceEndActiveAbility();
         }
 
         wasVehicleLastTick = mounted;
@@ -777,6 +788,27 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     @Override
+    public boolean fireImmune() {
+        return true;
+    }
+
+    @Override
+    public boolean isInvulnerableTo(@NotNull DamageSource source) {
+        if (source.is(DamageTypeTags.IS_FIRE)) {
+            return true;
+        }
+        return super.isInvulnerableTo(source);
+    }
+
+    public boolean isBreathingFire() {
+        return this.entityData.get(DATA_FIRE_BREATHING);
+    }
+
+    public void setBreathingFire(boolean breathing) {
+        this.entityData.set(DATA_FIRE_BREATHING, breathing);
+    }
+
+    @Override
     protected @NotNull PathNavigation createNavigation(@Nonnull Level level) {
         return new GroundPathNavigation(this, level);
     }
@@ -809,8 +841,37 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return null;
+        return AmphithereAbilities.FIRE_BODY;
     }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends DragonEntity> DragonAbility<T> getActiveAbility() {
+        return (DragonAbility<T>) combatManager.getActiveAbility();
+    }
+
+    public void useRidingAbility(String abilityName) {
+        if (abilityName == null || abilityName.isEmpty()) {
+            return;
+        }
+        Entity rider = this.getControllingPassenger();
+        if (!(rider instanceof LivingEntity)) {
+            return;
+        }
+        if (this.isTame() && rider instanceof Player player && !this.isOwnedBy(player)) {
+            return;
+        }
+        DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
+        if (type == AmphithereAbilities.FIRE_BODY) {
+            combatManager.tryUseAbility(AmphithereAbilities.FIRE_BODY);
+        }
+    }
+
+    public void forceEndActiveAbility() {
+        combatManager.forceEndActiveAbility();
+        this.setBreathingFire(false);
+    }
+
 
     @Override
     public Vec3 getHeadPosition() {
@@ -819,7 +880,9 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     @Override
     public Vec3 getMouthPosition() {
-        return this.position().add(0.0D, this.getBbHeight() * 0.8D, 0.0D);
+        Vec3 eye = this.getEyePosition();
+        Vec3 forward = Vec3.directionFromRotation(this.getXRot(), this.getYHeadRot()).normalize();
+        return eye.add(forward.scale(0.9D));
     }
 
     @Override

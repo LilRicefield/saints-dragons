@@ -107,7 +107,6 @@ public record MessageDragonRideInput(boolean goingUp,
                 break;
             case ABILITY_USE:
                 if (msg.hasAbilityName()) {
-                    // For Lightning Dragon, use the original system that calls useRidingAbility
                     dragon.useRidingAbility(msg.abilityName());
                 }
                 break;
@@ -164,7 +163,7 @@ public record MessageDragonRideInput(boolean goingUp,
                 break;
             case ABILITY_STOP:
                 if (msg.hasAbilityName()) {
-                    dragon.combatManager.forceEndActiveAbility();
+                    dragon.forceEndActiveAbility();
                 }
                 break;
             default:

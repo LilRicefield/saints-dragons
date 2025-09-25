@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonControl;
@@ -193,7 +194,7 @@ public class DragonRideKeybinds {
         boolean currentAscend = DRAGON_ASCEND.isDown();
         boolean currentDescend = DRAGON_DESCEND.isDown();
         boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
-        boolean fireBreathDown = DRAGON_BEAM.isDown(); // Use G key for fire breath
+        boolean beamDown = DRAGON_BEAM.isDown();
 
         float fwd = player.zza;
         float str = player.xxa;
@@ -215,18 +216,17 @@ public class DragonRideKeybinds {
                     new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, fwd, str, yaw));
         }
 
-        // Fire breath ability (hold-to-fire like Lightning Dragon beam)
-        if (fireBreathDown && !wasBeamDown) {
+        if (beamDown && !wasBeamDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "amphithere_fire_breath", fwd, str, yaw));
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, AmphithereAbilities.FIRE_BODY_ID, fwd, str, yaw));
         }
-        if (!fireBreathDown && wasBeamDown) {
+        if (!beamDown && wasBeamDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_STOP, "amphithere_fire_breath", fwd, str, yaw));
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_STOP, AmphithereAbilities.FIRE_BODY_ID, fwd, str, yaw));
         }
 
         wasAscendPressed = currentAscend;
-        wasBeamDown = fireBreathDown;
+        wasBeamDown = beamDown;
         wasRoarDown = false;
         wasSummonDown = false;
     }
