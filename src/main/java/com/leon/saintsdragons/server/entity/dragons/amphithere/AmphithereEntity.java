@@ -794,7 +794,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     private void handleFireBodyCrash() {
         boolean fireActive = this.isBreathingFire();
         boolean airborne = !this.onGround();
-        if (fireActive && this.getControllingPassenger() instanceof LivingEntity rider) {
+        LivingEntity rider = this.getControllingPassenger();
+        if (fireActive && rider != null) {
             rider.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 10, 0, true, false, false));
         }
         if (fireActive && airborne) {
@@ -817,14 +818,16 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         double y = this.getY();
         double z = this.getZ();
         List<Entity> immune = new ArrayList<>(this.getPassengers());
-        ExplosionDamageCalculator calculator = new ExplosionDamageCalculator() {
-            @Override
-            public float getEntityDamageMultiplier(Explosion explosion, Entity entity) {
-                return immune.contains(entity) ? 0.0F : super.getEntityDamageMultiplier(explosion, entity);
+        
+        // Give passengers explosion resistance before the explosion
+        for (Entity passenger : immune) {
+            if (passenger instanceof LivingEntity livingPassenger) {
+                livingPassenger.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20, 4, true, false, false));
             }
-        };
-        Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), calculator,
-                x, y + 0.2D, z, 6.0F, true, Level.ExplosionInteraction.BLOCK);
+        }
+        
+        Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), null,
+                x, y + 0.2D, z, 6.0F, true, Explosion.BlockInteraction.DESTROY);
         explosion.explode();
         explosion.finalizeExplosion(true);
 
