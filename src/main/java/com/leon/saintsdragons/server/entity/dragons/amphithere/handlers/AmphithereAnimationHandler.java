@@ -12,6 +12,7 @@ import software.bernie.geckolib.core.object.PlayState;
 public class AmphithereAnimationHandler {
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.amphithere.idle");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.amphithere.glide");
+    private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.amphithere.glide_down");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.amphithere.walk");
 
     private static final RawAnimation BANK_LEFT = RawAnimation.begin().thenLoop("animation.amphithere.banking_left");
@@ -32,7 +33,13 @@ public class AmphithereAnimationHandler {
         state.getController().transitionLength(12); // Longer transitions for smoother animation
 
         if (dragon.isFlying()) {
-            state.setAndContinue(GLIDE);
+            boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && dragon.isGoingDown();
+            if (riderDescending) {
+                state.getController().transitionLength(6);
+                state.setAndContinue(GLIDE_DOWN);
+            } else {
+                state.setAndContinue(GLIDE);
+            }
         } else if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isHovering()) {
             // Use the improved movement state detection - prioritize AI-set states for tamed dragons
             int groundState = dragon.getEffectiveGroundState(); // Use effective state for client-side consistency
