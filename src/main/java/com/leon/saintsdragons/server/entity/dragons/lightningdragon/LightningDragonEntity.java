@@ -640,7 +640,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     }
     
     @Override
-    public boolean isFlying() {
+    protected boolean isDragonFlying() {
         return getBooleanData(DATA_FLYING);
     }
     

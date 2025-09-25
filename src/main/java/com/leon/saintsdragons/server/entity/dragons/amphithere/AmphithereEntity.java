@@ -1058,7 +1058,11 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     // ===== DragonFlightCapable =====
     @Override
-    public boolean isFlying() {
+    public final boolean isFlying() {
+        return isDragonFlying();
+    }
+
+    protected boolean isDragonFlying() {
         return this.entityData.get(DATA_FLYING);
     }
 
