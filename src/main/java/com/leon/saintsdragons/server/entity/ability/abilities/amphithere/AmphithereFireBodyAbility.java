@@ -34,7 +34,7 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
 
     private static final double AURA_RADIUS = 3.5D;
     private static final double AURA_VERTICAL = 2.5D;
-    private static final float BASE_DAMAGE = 1.8F;
+    private static final float BASE_DAMAGE = 3.0F;
     private static final int FIRE_SECONDS = 4;
 
     private int activeTicks;
