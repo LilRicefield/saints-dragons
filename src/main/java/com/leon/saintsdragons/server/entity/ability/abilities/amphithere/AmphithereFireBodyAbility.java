@@ -9,9 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,7 +24,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 /**
- * Hold-to-cast fire breath ability for the Amphithere.
+ * Sustained fire aura ability for the Amphithere.
  */
 public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
@@ -34,15 +32,10 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
             new AbilitySectionDuration(ACTIVE, 1000)
     };
 
-    private static final double MAX_DISTANCE = 12.0D;
-    private static final double STEP = 1.0D;
-    private static final double BASE_RADIUS = 1.2D;
-    private static final double RADIUS_GROWTH = 0.35D;
-    private static final double MAX_SPREAD_RADIANS = Math.toRadians(40.0D);
+    private static final double AURA_RADIUS = 3.5D;
+    private static final double AURA_VERTICAL = 2.5D;
     private static final float BASE_DAMAGE = 1.8F;
-    private static final float EDGE_DAMAGE_FACTOR = 0.35F;
     private static final int FIRE_SECONDS = 4;
-    private static final float DISTANCE_DAMAGE_FACTOR = 0.45F;
 
     private int activeTicks;
 
@@ -95,88 +88,62 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
     public void tickUsing() {
         AmphithereEntity dragon = getUser();
         Level level = dragon.level();
-
-        if (dragon.getControllingPassenger() instanceof Player rider) {
-            alignToRider(dragon, rider);
-        }
-
         if (!level.isClientSide) {
             activeTicks++;
-            sprayCone((ServerLevel) level, dragon);
+            applyFireAura((ServerLevel) level, dragon);
             if (activeTicks % 20 == 0) {
                 level.playSound(null, dragon.blockPosition(), SoundEvents.BLAZE_SHOOT, dragon.getSoundSource(), 0.6F, 0.9F + dragon.getRandom().nextFloat() * 0.2F);
             }
         }
+
     }
 
-    private void alignToRider(AmphithereEntity dragon, Player rider) {
-        float clampPitch = Mth.clamp(rider.getXRot(), -50F, 35F);
-        dragon.setYRot(rider.getYRot());
-        dragon.yBodyRot = dragon.getYRot();
-        dragon.yHeadRot = rider.getYRot();
-        dragon.setXRot(clampPitch);
-    }
-
-    private void sprayCone(ServerLevel level, AmphithereEntity dragon) {
-        Vec3 mouth = dragon.getMouthPosition();
-        Vec3 forward = Vec3.directionFromRotation(dragon.getXRot(), dragon.getYHeadRot()).normalize();
-        mouth = mouth.add(forward.scale(0.6D));
+    private void applyFireAura(ServerLevel level, AmphithereEntity dragon) {
+        Vec3 center = dragon.position().add(0.0D, dragon.getBbHeight() * 0.5D, 0.0D);
+        AABB area = dragon.getBoundingBox().inflate(AURA_RADIUS, AURA_VERTICAL, AURA_RADIUS);
 
         Set<LivingEntity> hitThisTick = new HashSet<>();
-
-        for (double dist = 0.75D; dist <= MAX_DISTANCE; dist += STEP) {
-            double radius = BASE_RADIUS + dist * RADIUS_GROWTH;
-            Vec3 sample = mouth.add(forward.scale(dist));
-
-            spawnParticles(level, sample, radius);
-            maybeIgnite(level, sample, dragon);
-
-            AABB aabb = new AABB(sample, sample).inflate(radius);
-            for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, aabb,
-                    e -> e != dragon && e.isAlive() && e.attackable() && !dragon.isAlly(e))) {
-                if (!hitThisTick.add(target)) {
-                    continue;
-                }
-                Vec3 toTarget = target.getBoundingBox().getCenter().subtract(mouth);
-                double distance = toTarget.length();
-                if (distance > MAX_DISTANCE || distance < 0.01D) {
-                    continue;
-                }
-                Vec3 direction = toTarget.normalize();
-                double angle = Math.acos(Mth.clamp(forward.dot(direction), -1.0D, 1.0D));
-                if (angle > MAX_SPREAD_RADIANS) {
-                    continue;
-                }
-                float angleFactor = (float) (angle / MAX_SPREAD_RADIANS);
-                float damage = BASE_DAMAGE * Mth.lerp(angleFactor, 1.0F, EDGE_DAMAGE_FACTOR);
-                damage *= distanceFalloff(distance);
-                target.hurt(level.damageSources().dragonBreath(), damage);
-                target.setSecondsOnFire(FIRE_SECONDS);
-                Vec3 push = forward.scale(0.1D);
-                target.push(push.x, 0.02D, push.z);
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
+                e -> e != dragon && e.isAlive() && e.attackable() && !dragon.isAlly(e))) {
+            if (!hitThisTick.add(target)) {
+                continue;
             }
+            float damage = BASE_DAMAGE;
+            target.hurt(level.damageSources().dragonBreath(), damage);
+            target.setSecondsOnFire(FIRE_SECONDS);
+
+            Vec3 pushDir = target.position().subtract(center);
+            if (pushDir.lengthSqr() > 1.0E-4) {
+                pushDir = pushDir.normalize().scale(0.15D);
+                target.push(pushDir.x, 0.05D, pushDir.z);
+            }
+        }
+
+        var rng = dragon.getRandom();
+        for (int i = 0; i < 12; i++) {
+            double angle = rng.nextDouble() * (Math.PI * 2.0);
+            double radius = 0.5D + rng.nextDouble() * (AURA_RADIUS - 0.5D);
+            double height = rng.nextDouble() * AURA_VERTICAL;
+            Vec3 sample = center.add(Math.cos(angle) * radius, -AURA_VERTICAL * 0.5D + height, Math.sin(angle) * radius);
+            spawnParticles(level, sample);
+            maybeIgnite(level, sample, dragon);
         }
     }
 
-    private float distanceFalloff(double distance) {
-        double normalized = Mth.clamp(distance / MAX_DISTANCE, 0.0D, 1.0D);
-        return (float) Mth.lerp(normalized, 1.0D, DISTANCE_DAMAGE_FACTOR);
-    }
-
-    private void spawnParticles(ServerLevel level, Vec3 sample, double radius) {
-        double spread = Math.max(0.15D, radius * 0.35D);
-        int flameCount = Math.max(8, (int) Math.ceil(radius * 10.0D));
-        int emberCount = Math.max(6, (int) Math.ceil(radius * 7.0D));
-        int smokeCount = Math.max(4, (int) Math.ceil(radius * 5.0D));
+    private void spawnParticles(ServerLevel level, Vec3 sample) {
+        double spread = 0.6D;
+        int flameCount = 12;
+        int emberCount = 9;
+        int smokeCount = 6;
 
         level.sendParticles(ParticleTypes.FLAME, sample.x, sample.y, sample.z, flameCount,
-                spread, spread * 0.8D, spread, 0.05D);
+                spread, spread * 0.6D, spread, 0.05D);
         level.sendParticles(ParticleTypes.SMALL_FLAME, sample.x, sample.y, sample.z, emberCount,
-                spread * 0.6D, spread * 0.4D, spread * 0.6D, 0.025D);
-        level.sendParticles(ParticleTypes.LAVA, sample.x, sample.y, sample.z, Math.max(2, emberCount / 4),
-                spread * 0.25D, spread * 0.25D, spread * 0.25D, 0.08D);
+                spread * 0.4D, spread * 0.25D, spread * 0.4D, 0.02D);
+        level.sendParticles(ParticleTypes.LAVA, sample.x, sample.y, sample.z, 3,
+                spread * 0.2D, spread * 0.2D, spread * 0.2D, 0.07D);
         level.sendParticles(ParticleTypes.LARGE_SMOKE, sample.x, sample.y, sample.z, smokeCount,
-                spread, spread * 0.5D, spread, 0.0D);
+                spread * 0.8D, spread * 0.4D, spread * 0.8D, 0.0D);
     }
 
     private void maybeIgnite(ServerLevel level, Vec3 sample, AmphithereEntity dragon) {
@@ -197,3 +164,4 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
         }
     }
 }
+
