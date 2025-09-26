@@ -13,9 +13,12 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.controller.amphithere.AmphithereRiderController;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Explosion;
@@ -179,8 +182,25 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
                 .add(Attributes.ARMOR, 4.0D);
     }
 
-    public static boolean canSpawnHere(EntityType<? extends AmphithereEntity> type, LevelAccessor level, net.minecraft.world.entity.MobSpawnType spawnType, BlockPos pos, RandomSource rng) {
-        return net.minecraft.world.entity.animal.Animal.checkAnimalSpawnRules(type, level, spawnType, pos, rng);
+    public static boolean canSpawnHere(EntityType<? extends AmphithereEntity> type,
+                                       LevelAccessor level,
+                                       MobSpawnType spawnType,
+                                       BlockPos pos,
+                                       RandomSource random) {
+        if (!Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random)) {
+            return false;
+        }
+
+        // Reject waterlogged blocks or fluid directly around the spawn
+        if (!level.getFluidState(pos).isEmpty()) {
+            return false;
+        }
+        if (!level.getFluidState(pos.below()).isEmpty()) {
+            return false;
+        }
+
+        // Optional: enforce a sturdy block underneath
+        return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
     }
 
     @Override

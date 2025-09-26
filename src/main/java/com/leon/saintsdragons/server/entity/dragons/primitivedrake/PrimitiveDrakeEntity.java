@@ -6,11 +6,13 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -195,10 +197,26 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         // Simple breeding - just spawn a new Primitive Drake
         return ModEntities.PRIMITIVE_DRAKE.get().create(level);
     }
-    
-    public static boolean canSpawnHere(EntityType<? extends PrimitiveDrakeEntity> entityType, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
-        // Use vanilla animal spawn rules for better compatibility
-        return net.minecraft.world.entity.animal.Animal.checkAnimalSpawnRules(entityType, level, spawnType, pos, random);
+
+    public static boolean canSpawnHere(EntityType<? extends PrimitiveDrakeEntity> type,
+                                       LevelAccessor level,
+                                       MobSpawnType spawnType,
+                                       BlockPos pos,
+                                       RandomSource random) {
+        if (!Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random)) {
+            return false;
+        }
+
+        // Reject waterlogged blocks or fluid directly around the spawn
+        if (!level.getFluidState(pos).isEmpty()) {
+            return false;
+        }
+        if (!level.getFluidState(pos.below()).isEmpty()) {
+            return false;
+        }
+
+        // Optional: enforce a sturdy block underneath
+        return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
     }
     
     // ===== INTERACTION HANDLING =====

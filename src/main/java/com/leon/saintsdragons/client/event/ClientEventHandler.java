@@ -26,7 +26,7 @@ public class ClientEventHandler {
         // Dragon riding camera adjustments
         if (player.isPassenger() && player.getVehicle() instanceof LightningDragonEntity && event.getCamera().isDetached()) {
             // Base zoom for dragon riding - adjusted distance for better dragon visibility
-            event.getCamera().move(-event.getCamera().getMaxZoom(20F), 0, 0);
+            event.getCamera().move(-event.getCamera().getMaxZoom(10F), 0, 0);
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof AmphithereEntity && event.getCamera().isDetached()) {
