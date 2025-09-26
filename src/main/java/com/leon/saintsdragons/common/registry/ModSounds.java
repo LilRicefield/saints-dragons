@@ -45,6 +45,10 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> DRAGON_HORNGORE = registerSound("lightningdragon_horngore");
     public static final RegistryObject<SoundEvent> DRAGON_DIE = registerSound("lightningdragon_die");
 
+
+    // ===== AMPHITHERE SOUNDS =====
+    public static final RegistryObject<SoundEvent> AMPHITHERE_ROAR = registerSound("amphithere_roar");
+
     // ===== STEP SOUNDS =====
     public static final RegistryObject<SoundEvent> DRAGON_STEP = registerSound("dragon_step") ;
 

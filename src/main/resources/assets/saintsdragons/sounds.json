@@ -99,6 +99,16 @@
       }
     ]
   },
+  "amphithere_roar": {
+    "subtitle": "Amphithere roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/amphithere/amphithere_roar",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "lightningdragon_bite": {
     "subtitle": "Dragon bites",
     "sounds": [

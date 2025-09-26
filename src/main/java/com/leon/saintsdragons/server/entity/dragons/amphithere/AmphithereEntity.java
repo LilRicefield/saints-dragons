@@ -924,6 +924,11 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
     }
 
     @Override
+    public DragonAbilityType<?, ?> getRoarAbility() {
+        return AmphithereAbilities.ROAR;
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T extends DragonEntity> DragonAbility<T> getActiveAbility() {
         return (DragonAbility<T>) combatManager.getActiveAbility();
@@ -941,8 +946,8 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             return;
         }
         DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
-        if (type == AmphithereAbilities.FIRE_BODY) {
-            combatManager.tryUseAbility(AmphithereAbilities.FIRE_BODY);
+        if (type == AmphithereAbilities.FIRE_BODY || type == AmphithereAbilities.ROAR) {
+            combatManager.tryUseAbility(type);
         }
     }
 
