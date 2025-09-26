@@ -827,7 +827,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
         }
         
         Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), null,
-                x, y + 0.2D, z, 6.0F, true, Explosion.BlockInteraction.DESTROY);
+                x, y + 0.2D, z, 15.0F, true, Explosion.BlockInteraction.DESTROY);
         explosion.explode();
         explosion.finalizeExplosion(true);
 
