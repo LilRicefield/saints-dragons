@@ -30,7 +30,12 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
     // Extra range when ridden to be more forgiving for small mobs
     private static final double BITE_RANGE_RIDDEN = 8.0; // match horn gore forgiveness while ridden
     // More forgiving cone; widen to reduce whiffs while steering
-    private static final double BITE_ANGLE_DEG = 120.0; // half-angle of cone
+    private static final double BITE_ANGLE_DEG = 85.0; // half-angle of cone
+    // Forward bite sweep extents
+    private static final double BITE_SWIPE_HORIZONTAL = 2.5;
+    private static final double BITE_SWIPE_HORIZONTAL_RIDDEN = 2.5;
+    private static final double BITE_SWIPE_VERTICAL = 2.5;
+
 
     private static final float CHAIN_DAMAGE_BASE = 10.0f;
     private static final double CHAIN_RADIUS = 7.0;
@@ -97,10 +102,6 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
                 boolean ridden = getUser().getControllingPassenger() != null;
                 primary = raycastTargetAlongMouth(ridden ? 7.5 : 5.5, ridden ? 2.0 : 1.0);
             }
-            // Fallback 3: if ridden, pick nearest eligible in body range ignoring angle
-            if (primary == null && getUser().getControllingPassenger() != null) {
-                primary = findNearestInBodyRangeIgnoringAngle();
-            }
             if (primary != null) {
                 bitePrimary(primary);
                 chainFrom(primary);
@@ -120,9 +121,11 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
         boolean ridden = dragon.getControllingPassenger() != null;
         double effectiveRange = ridden ? BITE_RANGE_RIDDEN : BITE_RANGE;
 
-        // Broadphase: sphere/box around the mouth, not the entity center
-        AABB broadphase = dragon.getBoundingBox().inflate(effectiveRange, effectiveRange, effectiveRange);
-        List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, broadphase,
+        // Forward sweep out from the mouth so hits originate ahead of the head
+        double horizontalInflate = ridden ? BITE_SWIPE_HORIZONTAL_RIDDEN : BITE_SWIPE_HORIZONTAL;
+        AABB forwardSweep = new AABB(mouth, mouth.add(look.scale(effectiveRange)))
+                .inflate(horizontalInflate, BITE_SWIPE_VERTICAL, horizontalInflate);
+        List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, forwardSweep,
                 e -> e != dragon && e.isAlive() && e.attackable() && !isAllied(dragon, e));
 
         double cosLimit = Math.cos(Math.toRadians(BITE_ANGLE_DEG));
@@ -141,15 +144,15 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
             Vec3 dir = toward.scale(1.0 / len);
             double dot = dir.dot(look);
 
+            // Require the bite to project forward from the head
+            if (dot <= 0.0) continue;
+
             // Be forgiving with angle when very close; otherwise enforce cone
-            boolean veryClose = distToAabb < (effectiveRange * 0.6);
+            boolean veryClose = distToAabb < (effectiveRange * 0.35);
             boolean goodAngle = dot >= cosLimit;
-            // Accept within body range while ridden regardless of angle, to make clicks lenient
-            double distToDragon = distancePointToAABB(e.position(), dragon.getBoundingBox());
-            boolean inBodyRange = distToDragon <= effectiveRange;
             if (ridden) {
-                // Relax angle further when ridden or allow body-range hits
-                goodAngle = goodAngle || dot >= (cosLimit * 0.6) || inBodyRange;
+                // Slightly relax the cone while ridden but keep hits forward
+                goodAngle = goodAngle || dot >= (cosLimit * 0.75);
             }
             if (!(veryClose || goodAngle)) continue;
 
@@ -224,26 +227,6 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
             return le;
         }
         return null;
-    }
-
-    // Final fallback: when ridden, grab nearest valid entity within body range ignoring angle
-    private LivingEntity findNearestInBodyRangeIgnoringAngle() {
-        LightningDragonEntity dragon = getUser();
-        double range = BITE_RANGE_RIDDEN;
-        AABB broad = dragon.getBoundingBox().inflate(range, range, range);
-        List<LivingEntity> nearby = dragon.level().getEntitiesOfClass(LivingEntity.class, broad,
-                e -> e != dragon && e.isAlive() && e.attackable() && !isAllied(dragon, e));
-
-        LivingEntity best = null;
-        double bestDist = Double.MAX_VALUE;
-        for (LivingEntity e : nearby) {
-            double d = distancePointToAABB(e.position(), dragon.getBoundingBox());
-            if (d <= range + 0.6) {
-                if (!dragon.getSensing().hasLineOfSight(e)) continue;
-                if (d < bestDist) { bestDist = d; best = e; }
-            }
-        }
-        return best;
     }
 
     private LivingEntity findNearestChainTarget(LivingEntity origin, Set<LivingEntity> exclude) {
