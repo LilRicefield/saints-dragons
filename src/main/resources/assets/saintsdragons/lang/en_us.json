@@ -1,6 +1,6 @@
 {
   "item.saintsdragons.dragon_ally_book": "Dragon Ally Book",
-  "item.saintsdragons.drake_binder": "Drake Binder",
+  "item.saintsdragons.primitive_drake_binder": "Primitive Drake Binder",
   "item.saintsdragons.lightning_dragon_binder": "Lightning Dragon Binder",
   "item.saintsdragons.amphithere_binder": "Amphithere Binder",
   "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
@@ -21,37 +21,42 @@
   "saintsdragons.tooltip.dragon_ally_book.line1": "Right-click on your dragon to manage allies",
   "saintsdragons.tooltip.dragon_ally_book.line2": "Allies won't be hurt by dragon attacks",
   "saintsdragons.tooltip.dragon_ally_book.line3": "Supports up to 10 allies per dragon",
-  
-  "saintsdragons.tooltip.drake_binder.unbound": "Right-click on a tamed Primitive Drake to capture it",
-  "saintsdragons.tooltip.drake_binder.unbound_desc": "Right-click on ground to release captured drake",
-  "saintsdragons.tooltip.drake_binder.bound": "Contains: %s",
-  "saintsdragons.tooltip.drake_binder.bound_desc": "Provides resistance buff while carried",
-  
-  "saintsdragons.tooltip.lightning_dragon_binder.empty": "Right-click on a tamed Lightning Dragon to capture it",
-  "saintsdragons.tooltip.lightning_dragon_binder.right_click_dragon_to_bind": "Right-click on ground to release captured dragon",
+
+  "saintsdragons.tooltip.primitive_drake_binder.description": "§e§lA steadfast core. Strength radiates quietly within.§r§r",
+  "saintsdragons.tooltip.primitive_drake_binder.empty": "Right-click on a tamed Primitive Drake to bind it",
+  "saintsdragons.tooltip.primitive_drake_binder.right_click_to_release": "Right-click on ground to release bound drake",
+  "saintsdragons.tooltip.primitive_drake_binder.bound": "Contains: %s",
+  "saintsdragons.tooltip.primitive_drake_binder.bound_desc": "Provides resistance buff while carried",
+
+
+  "saintsdragons.tooltip.lightning_dragon_binder.description": "§4Holds the storm at bay. §r§4§l§oFor now.§r§r§r",
+  "saintsdragons.tooltip.lightning_dragon_binder.empty": "Right-click on a tamed Lightning Dragon to bind it",
+  "saintsdragons.tooltip.lightning_dragon_binder.right_click_dragon_to_bind": "Right-click on ground to release bound dragon",
   "saintsdragons.tooltip.lightning_dragon_binder.bound": "Contains: %s",
-  "saintsdragons.tooltip.lightning_dragon_binder.right_click_to_release": "Right-click to release captured dragon",
-  
-  "saintsdragons.tooltip.amphithere_binder.empty": "Right-click on a tamed Amphithere to capture it",
-  "saintsdragons.tooltip.amphithere_binder.right_click_amphithere_to_bind": "Right-click on ground to release captured amphithere",
+  "saintsdragons.tooltip.lightning_dragon_binder.right_click_to_release": "Right-click on ground to release bound dragon",
+
+
+  "saintsdragons.tooltip.amphithere_binder.description": "§6The wind hums within, restless yet graceful.§r",
+  "saintsdragons.tooltip.amphithere_binder.empty": "Right-click on a tamed Amphithere to bind it",
+  "saintsdragons.tooltip.amphithere_binder.right_click_amphithere_to_bind": "Right-click on ground to release bound amphithere",
   "saintsdragons.tooltip.amphithere_binder.bound": "Contains: %s",
-  "saintsdragons.tooltip.amphithere_binder.right_click_to_release": "Right-click to release captured amphithere",
+  "saintsdragons.tooltip.amphithere_binder.right_click_to_release": "Right-click on ground to release bound amphithere",
   
   "saintsdragons.message.dragon_not_found": "Dragon not found",
   "saintsdragons.message.not_dragon_owner": "You don't own this dragon",
   
-  "saintsdragons.message.drake_captured": "Captured %s in Drake Binder!",
-  "saintsdragons.message.drake_released": "Released %s from Drake Binder!",
-  "saintsdragons.message.drake_cannot_be_captured": "This drake cannot be captured right now",
+  "saintsdragons.message.primitive_drake_captured": "Bound %s in Primitive Drake Binder!",
+  "saintsdragons.message.primitive_drake_released": "Released %s from Primitive Drake Binder!",
+  "saintsdragons.message.primitive_drake_cannot_be_captured": "This drake cannot be bound right now",
   "saintsdragons.message.binder_already_occupied": "This binder already contains a drake",
-  "saintsdragons.message.binder_not_bound": "This binder is empty - capture a drake first",
+  "saintsdragons.message.binder_not_bound": "This binder is empty - bind a drake first",
   
-  "saintsdragons.message.lightning_dragon_captured": "Captured %s in Lightning Dragon Binder!",
+  "saintsdragons.message.lightning_dragon_captured": "Bound %s in Lightning Dragon Binder!",
   "saintsdragons.message.lightning_dragon_released": "Released %s from Lightning Dragon Binder!",
-  "saintsdragons.message.dragon_cannot_be_captured": "This dragon cannot be captured right now",
+  "saintsdragons.message.dragon_cannot_be_captured": "This dragon cannot be bound right now",
   "saintsdragons.message.cannot_release_others_dragon": "You can only release dragons you own",
   
-  "saintsdragons.message.amphithere_captured": "Captured %s in Amphithere Binder!",
+  "saintsdragons.message.amphithere_captured": "Bound %s in Amphithere Binder!",
   "saintsdragons.message.amphithere_released": "Released %s from Amphithere Binder!",
   
   "saintsdragons.command.ally.add.result": "Dragon %s: %s - %s",
