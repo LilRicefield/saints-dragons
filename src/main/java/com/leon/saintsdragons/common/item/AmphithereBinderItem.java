@@ -12,6 +12,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -87,14 +89,24 @@ public class AmphithereBinderItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         
         if (isBound(stack)) {
-            if (level instanceof ServerLevel serverLevel) {
-                if (releaseAmphithere(stack, serverLevel, player)) {
-                    return InteractionResultHolder.success(stack);
-                }
-            }
+            return InteractionResultHolder.pass(stack);
         }
         
-        return InteractionResultHolder.pass(stack);
+        return super.use(level, player, hand);
+    }
+
+    @Override
+    public @NotNull InteractionResult useOn(@NotNull UseOnContext context) {
+        Player player = context.getPlayer();
+        ItemStack stack = context.getItemInHand();
+        
+        if (player != null && isBound(stack)) {
+            return releaseAmphithere(stack, player, context.getClickedPos())
+                ? InteractionResult.SUCCESS
+                : InteractionResult.FAIL;
+        }
+
+        return super.useOn(context);
     }
     
     /**
@@ -164,43 +176,40 @@ public class AmphithereBinderItem extends Item {
     /**
      * Release the bound amphithere from this binder
      */
-    private boolean releaseAmphithere(ItemStack stack, ServerLevel serverLevel, Player player) {
+    private boolean releaseAmphithere(ItemStack stack, Player player, BlockPos pos) {
         CompoundTag tag = stack.getTag();
         if (tag == null || !tag.contains(BOUND_DRAGON_UUID)) {
             return false;
         }
-        
-        // Check if the player is the original owner of the bound amphithere
-        if (tag.contains(BOUND_OWNER_UUID)) {
-            UUID ownerUUID = tag.getUUID(BOUND_OWNER_UUID);
-            if (!player.getUUID().equals(ownerUUID)) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.cannot_release_others_dragon"), 
-                    true);
-                return false;
-            }
+
+        UUID ownerUUID = tag.contains(BOUND_OWNER_UUID) ? tag.getUUID(BOUND_OWNER_UUID) : null;
+        if (ownerUUID != null && !player.getUUID().equals(ownerUUID)) {
+            player.displayClientMessage(
+                Component.translatable("saintsdragons.message.cannot_release_others_dragon"),
+                true
+            );
+            return false;
         }
-        
+
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return true;
+        }
+
         String amphithereName = tag.getString(BOUND_DRAGON_NAME);
-        
-        // Create new amphithere entity
+
         AmphithereEntity newAmphithere = new AmphithereEntity(
-            com.leon.saintsdragons.common.registry.ModEntities.AMPHITHERE.get(), 
+            com.leon.saintsdragons.common.registry.ModEntities.AMPHITHERE.get(),
             serverLevel
         );
-        
-        // Restore amphithere data
+
         if (tag.contains("AmphithereData")) {
             CompoundTag amphithereData = tag.getCompound("AmphithereData");
             newAmphithere.readAdditionalSaveData(amphithereData);
         }
-        
-        // Set position near player
-        newAmphithere.moveTo(player.position().add(2.0, 0.0, 0.0));
-        
-        // Restore ownership
-        if (tag.contains(BOUND_OWNER_UUID)) {
-            UUID ownerUUID = tag.getUUID(BOUND_OWNER_UUID);
+
+        newAmphithere.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
+
+        if (ownerUUID != null) {
             Player owner = serverLevel.getPlayerByUUID(ownerUUID);
             if (owner != null) {
                 newAmphithere.tame(owner);
@@ -216,10 +225,8 @@ public class AmphithereBinderItem extends Item {
             }
         }
 
-        // Spawn the amphithere
         serverLevel.addFreshEntity(newAmphithere);
 
-        // Clear binder data
         tag.remove(BOUND_DRAGON_UUID);
         tag.remove(BOUND_DRAGON_NAME);
         tag.remove(BOUND_OWNER_UUID);
@@ -228,7 +235,6 @@ public class AmphithereBinderItem extends Item {
         tag.remove("AmphithereData");
         tag.putBoolean(IS_BOUND, false);
 
-        // Send success message
         player.displayClientMessage(
             Component.translatable("saintsdragons.message.amphithere_released", amphithereName),
             true
@@ -281,5 +287,10 @@ public class AmphithereBinderItem extends Item {
             tooltip.add(Component.translatable("saintsdragons.tooltip.amphithere_binder.empty"));
             tooltip.add(Component.translatable("saintsdragons.tooltip.amphithere_binder.right_click_amphithere_to_bind"));
         }
+    }
+
+    @Override
+    public boolean isFoil(@NotNull ItemStack stack) {
+        return isBound(stack);
     }
 }

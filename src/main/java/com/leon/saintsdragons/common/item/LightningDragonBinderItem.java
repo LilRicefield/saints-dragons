@@ -12,6 +12,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -87,14 +89,22 @@ public class LightningDragonBinderItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         
         if (isBound(stack)) {
-            if (level instanceof ServerLevel serverLevel) {
-                if (releaseDragon(stack, serverLevel, player)) {
-                    return InteractionResultHolder.success(stack);
-                }
-            }
+            return InteractionResultHolder.pass(stack);
         }
+        return super.use(level, player, hand);
+    }
+
+    @Override
+    public @NotNull InteractionResult useOn(@NotNull UseOnContext context) {
+        Player player = context.getPlayer();
+        ItemStack stack = context.getItemInHand();
         
-        return InteractionResultHolder.pass(stack);
+        if (player != null && isBound(stack)) {
+            return releaseDragon(stack, player, context.getClickedPos())
+                ? InteractionResult.SUCCESS
+                : InteractionResult.FAIL;
+        }
+        return super.useOn(context);
     }
     
     /**
@@ -164,43 +174,40 @@ public class LightningDragonBinderItem extends Item {
     /**
      * Release the bound dragon from this binder
      */
-    private boolean releaseDragon(ItemStack stack, ServerLevel serverLevel, Player player) {
+    private boolean releaseDragon(ItemStack stack, Player player, BlockPos pos) {
         CompoundTag tag = stack.getTag();
         if (tag == null || !tag.contains(BOUND_DRAGON_UUID)) {
             return false;
         }
-        
-        // Check if the player is the original owner of the bound dragon
-        if (tag.contains(BOUND_OWNER_UUID)) {
-            UUID ownerUUID = tag.getUUID(BOUND_OWNER_UUID);
-            if (!player.getUUID().equals(ownerUUID)) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.cannot_release_others_dragon"), 
-                    true);
-                return false;
-            }
+
+        UUID ownerUUID = tag.contains(BOUND_OWNER_UUID) ? tag.getUUID(BOUND_OWNER_UUID) : null;
+        if (ownerUUID != null && !player.getUUID().equals(ownerUUID)) {
+            player.displayClientMessage(
+                Component.translatable("saintsdragons.message.cannot_release_others_dragon"),
+                true
+            );
+            return false;
         }
-        
+
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return true;
+        }
+
         String dragonName = tag.getString(BOUND_DRAGON_NAME);
-        
-        // Create new dragon entity
+
         LightningDragonEntity newDragon = new LightningDragonEntity(
-            com.leon.saintsdragons.common.registry.ModEntities.LIGHTNING_DRAGON.get(), 
+            com.leon.saintsdragons.common.registry.ModEntities.LIGHTNING_DRAGON.get(),
             serverLevel
         );
-        
-        // Restore dragon data
+
         if (tag.contains("DragonData")) {
             CompoundTag dragonData = tag.getCompound("DragonData");
             newDragon.readAdditionalSaveData(dragonData);
         }
-        
-        // Set position near player
-        newDragon.moveTo(player.position().add(2.0, 0.0, 0.0));
-        
-        // Restore ownership
-        if (tag.contains(BOUND_OWNER_UUID)) {
-            UUID ownerUUID = tag.getUUID(BOUND_OWNER_UUID);
+
+        newDragon.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
+
+        if (ownerUUID != null) {
             Player owner = serverLevel.getPlayerByUUID(ownerUUID);
             if (owner != null) {
                 newDragon.tame(owner);
@@ -216,10 +223,8 @@ public class LightningDragonBinderItem extends Item {
             }
         }
 
-        // Spawn the dragon
         serverLevel.addFreshEntity(newDragon);
 
-        // Clear binder data
         tag.remove(BOUND_DRAGON_UUID);
         tag.remove(BOUND_DRAGON_NAME);
         tag.remove(BOUND_OWNER_UUID);
@@ -228,7 +233,6 @@ public class LightningDragonBinderItem extends Item {
         tag.remove("DragonData");
         tag.putBoolean(IS_BOUND, false);
 
-        // Send success message
         player.displayClientMessage(
             Component.translatable("saintsdragons.message.lightning_dragon_released", dragonName),
             true
@@ -282,4 +286,10 @@ public class LightningDragonBinderItem extends Item {
             tooltip.add(Component.translatable("saintsdragons.tooltip.lightning_dragon_binder.right_click_dragon_to_bind"));
         }
     }
+
+    @Override
+    public boolean isFoil(@NotNull ItemStack stack) {
+        return isBound(stack);
+    }
+
 }
