@@ -97,7 +97,12 @@ public class AmphithereAnimationHandler {
     }
 
     public void setupActionController(AnimationController<AmphithereEntity> controller) {
-        // Placeholder: actual triggers can be wired once animations exist.
+        controller.triggerableAnim("roar",
+                RawAnimation.begin().thenPlay("animation.amphithere.roar"));
+        controller.triggerableAnim("roar_ground",
+                RawAnimation.begin().thenPlay("animation.amphithere.roar_ground"));
+        controller.triggerableAnim("roar_air",
+                RawAnimation.begin().thenPlay("animation.amphithere.roar_air"));
     }
 
     public PlayState actionPredicate(AnimationState<AmphithereEntity> state) {

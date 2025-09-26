@@ -157,6 +157,7 @@ public class DragonSoundHandler {
             case "annoyed"   -> playRouted(dragon.level(), ModSounds.DRAGON_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
             case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
+            case "amphithere_roar" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_ROAR.get(), 1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             default -> {
@@ -195,7 +196,8 @@ public class DragonSoundHandler {
             case "purr"     -> 110;  // ~5.2s
             case "snort"    -> 24;   // ~0.9s
             case "chuff"    -> 28;   // ~1.2s
-            case "roar"     -> 69;   // ~3.45s (animation ~3.4167s)
+            case "roar"             -> 69;   // ~3.45s (animation ~3.4167s)
+            case "amphithere_roar" -> 45;   // ~2.25s (animation length 2.25s)
             case "hurt"     -> 20;   // ~1.0s one-shot
             case "die"      -> 62;   // ~3.071s one-shot
             // Fallback window for other simple one-shots
@@ -387,6 +389,10 @@ public class DragonSoundHandler {
                 lx = -2.2; ly = 0.05; lz = 2.85;
             }
             case "mouth_origin" -> {
+                Vec3 dynamic = dragon.getMouthPosition();
+                if (dynamic != null) {
+                    return dynamic;
+                }
                 // Lightning Dragon mouth position - fallback for both entities
                 // Primitive Drake will use renderer-sampled position when available
                 lx = 0.1; ly = 8.7; lz = -17.4;

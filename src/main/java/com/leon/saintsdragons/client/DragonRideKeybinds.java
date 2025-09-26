@@ -195,6 +195,7 @@ public class DragonRideKeybinds {
         boolean currentDescend = DRAGON_DESCEND.isDown();
         boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
         boolean beamDown = DRAGON_BEAM.isDown();
+        boolean roarDown = DRAGON_ROAR.isDown();
 
         float fwd = player.zza;
         float str = player.xxa;
@@ -224,10 +225,14 @@ public class DragonRideKeybinds {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_STOP, AmphithereAbilities.FIRE_BODY_ID, fwd, str, yaw));
         }
+        if (roarDown && !wasRoarDown) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, AmphithereAbilities.ROAR_ID, fwd, str, yaw));
+        }
 
         wasAscendPressed = currentAscend;
         wasBeamDown = beamDown;
-        wasRoarDown = false;
+        wasRoarDown = roarDown;
         wasSummonDown = false;
     }
 }
