@@ -164,4 +164,3 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
         }
     }
 }
-
