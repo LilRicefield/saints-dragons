@@ -920,7 +920,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return AmphithereAbilities.FIRE_BODY;
+        return AmphithereAbilities.BITE;
     }
 
     @Override
@@ -946,7 +946,7 @@ public class AmphithereEntity extends DragonEntity implements FlyingAnimal, Drag
             return;
         }
         DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
-        if (type == AmphithereAbilities.FIRE_BODY || type == AmphithereAbilities.ROAR) {
+        if (type == AmphithereAbilities.BITE || type == AmphithereAbilities.FIRE_BODY || type == AmphithereAbilities.ROAR) {
             combatManager.tryUseAbility(type);
         }
     }
