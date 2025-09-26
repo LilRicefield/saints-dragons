@@ -75,6 +75,7 @@ public class DragonRideKeybinds {
     private static boolean wasTertiaryAbilityDown = false;
     private static boolean wasPrimaryAbilityDown = false;
     private static boolean wasSecondaryAbilityDown = false;
+    private static boolean wasAttackDown = false;
     // (no debug anchor toggle)
     
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -98,7 +99,10 @@ public class DragonRideKeybinds {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         
-        if (player == null || player.getVehicle() == null) return;
+        if (player == null || player.getVehicle() == null) {
+            wasAttackDown = false;
+            return;
+        }
         
         Entity vehicle = player.getVehicle();
 
@@ -201,6 +205,9 @@ public class DragonRideKeybinds {
         float str = player.xxa;
         float yaw = player.getYRot();
 
+        Minecraft mc = Minecraft.getInstance();
+        boolean attackDown = mc.options.keyAttack.isDown();
+
         if (dragon.isFlying()) {
             DragonRiderAction action = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
@@ -215,6 +222,11 @@ public class DragonRideKeybinds {
                     new MessageDragonRideInput(false, false, groundAction, null, fwd, str, yaw));
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, fwd, str, yaw));
+        }
+
+        if (attackDown && !wasAttackDown) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, AmphithereAbilities.BITE_ID, fwd, str, yaw));
         }
 
         if (tertiaryDown && !wasTertiaryAbilityDown) {
@@ -234,5 +246,7 @@ public class DragonRideKeybinds {
         wasTertiaryAbilityDown = tertiaryDown;
         wasPrimaryAbilityDown = primaryDown;
         wasSecondaryAbilityDown = false;
+        wasAttackDown = attackDown;
     }
 }
+

@@ -103,10 +103,14 @@ public class AmphithereAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.amphithere.roar_ground"));
         controller.triggerableAnim("roar_air",
                 RawAnimation.begin().thenPlay("animation.amphithere.roar_air"));
+        controller.triggerableAnim("bite_ground",
+                RawAnimation.begin().thenPlay("animation.amphithere.bite_ground"));
+        controller.triggerableAnim("bite_air",
+                RawAnimation.begin().thenPlay("animation.amphithere.bite_air"));
     }
-
     public PlayState actionPredicate(AnimationState<AmphithereEntity> state) {
         state.getController().transitionLength(5);
         return PlayState.STOP;
     }
 }
+
