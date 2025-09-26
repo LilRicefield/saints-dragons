@@ -5,6 +5,7 @@
     "minecraft:meadow",
     "minecraft:windswept_hills",
     "minecraft:sunflower_plains",
-    "minecraft:cherry_grove"
+    "minecraft:cherry_grove",
+    {"id": "biomeswevegone:lush_stacks", "required":  false}
   ]
 }
