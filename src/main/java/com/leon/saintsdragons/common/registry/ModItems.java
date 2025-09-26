@@ -3,7 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.common.item.AmphithereBinderItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
-import com.leon.saintsdragons.common.item.DrakeBinderItem;
+import com.leon.saintsdragons.common.item.PrimitiveDrakeBinderItem;
 import com.leon.saintsdragons.common.item.LightningDragonBinderItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.ForgeSpawnEggItem;
@@ -51,9 +51,9 @@ public final class ModItems {
                     )
             );
 
-    public static final RegistryObject<Item> DRAKE_BINDER =
-            REGISTER.register("drake_binder",
-                    () -> new DrakeBinderItem(
+    public static final RegistryObject<Item> PRIMITIVE_DRAKE_BINDER =
+            REGISTER.register("primitive_drake_binder",
+                    () -> new PrimitiveDrakeBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0) // Unbreakable

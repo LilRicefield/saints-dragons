@@ -275,6 +275,7 @@ public class LightningDragonBinderItem extends Item {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+        tooltip.add(Component.translatable("saintsdragons.tooltip.lightning_dragon_binder.description"));
         if (isBound(stack)) {
             String dragonName = getBoundDragonName(stack);
             if (dragonName != null) {

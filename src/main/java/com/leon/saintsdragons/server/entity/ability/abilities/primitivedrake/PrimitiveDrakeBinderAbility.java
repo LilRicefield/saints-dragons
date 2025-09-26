@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake;
 
-import com.leon.saintsdragons.common.item.DrakeBinderItem;
+import com.leon.saintsdragons.common.item.PrimitiveDrakeBinderItem;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -24,18 +24,18 @@ import java.util.UUID;
  * When a player carries a bound Drake Binder anywhere in their inventory,
  * they and nearby allies get resistance buffs.
  */
-public final class DrakeBinderAbility {
+public final class PrimitiveDrakeBinderAbility {
 
     // Buff parameters
     private static final double BUFF_RANGE = 8.0; // Same range as the drake's original ability
     private static final int BUFF_DURATION_TICKS = 40; // Short duration so we can expire it when binder removed
-    private static final int BUFF_AMPLIFIER = 0; // Resistance I
-    private static final int ABSORPTION_AMPLIFIER = 0; // Absorption I
+    private static final int BUFF_AMPLIFIER = 2; // Resistance
+    private static final int ABSORPTION_AMPLIFIER = 1; // Absorption
 
     // Track which entities are currently buffed per dimension so effects can be cleaned up
     private static final Map<ResourceKey<Level>, Set<UUID>> ACTIVE_BUFF_TARGETS = new HashMap<>();
 
-    private DrakeBinderAbility() {
+    private PrimitiveDrakeBinderAbility() {
         // Utility class
     }
 
@@ -109,8 +109,8 @@ public final class DrakeBinderAbility {
             if (item.isEmpty()) {
                 continue;
             }
-            if (item.getItem() instanceof DrakeBinderItem && DrakeBinderItem.isBound(item)) {
-                return DrakeBinderItem.getBoundDrakeUUID(item) != null;
+            if (item.getItem() instanceof PrimitiveDrakeBinderItem && PrimitiveDrakeBinderItem.isBound(item)) {
+                return PrimitiveDrakeBinderItem.getBoundDrakeUUID(item) != null;
             }
         }
         return false;

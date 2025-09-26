@@ -25,7 +25,7 @@ import java.util.UUID;
  * Right-click on a tamed primitive drake to bind it to this item.
  * While carrying a bound drake binder, the player gets resistance buff.
  */
-public class DrakeBinderItem extends Item {
+public class PrimitiveDrakeBinderItem extends Item {
     
     // NBT keys for storing bound drake data
     private static final String BOUND_DRAGON_UUID = "BoundDragonUUID";
@@ -34,7 +34,7 @@ public class DrakeBinderItem extends Item {
     private static final String BOUND_OWNER_NAME = "BoundOwnerName";
     private static final String IS_BOUND = "IsBound";
     
-    public DrakeBinderItem(Properties properties) {
+    public PrimitiveDrakeBinderItem(Properties properties) {
         super(properties);
     }
     
@@ -52,7 +52,7 @@ public class DrakeBinderItem extends Item {
             // Check if drake can be captured (not playing dead, not sleeping, etc.)
             if (!drake.canBeBound()) {
                 player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.drake_cannot_be_captured"), 
+                    Component.translatable("saintsdragons.message.primitive_drake_cannot_be_captured"),
                     true);
                 return InteractionResult.FAIL;
             }
@@ -162,7 +162,7 @@ public class DrakeBinderItem extends Item {
         
         // Send success message
         player.displayClientMessage(
-            Component.translatable("saintsdragons.message.drake_captured", drake.getName().getString()),
+            Component.translatable("saintsdragons.message.primitive_drake_captured", drake.getName().getString()),
             true
         );
         
@@ -233,7 +233,7 @@ public class DrakeBinderItem extends Item {
 
         // Send success message
         player.displayClientMessage(
-            Component.translatable("saintsdragons.message.drake_released", drakeName),
+            Component.translatable("saintsdragons.message.primitive_drake_released", drakeName),
             true
         );
         return true;
@@ -275,15 +275,16 @@ public class DrakeBinderItem extends Item {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+        tooltip.add(Component.translatable("saintsdragons.tooltip.primitive_drake_binder.description"));
         if (isBound(stack)) {
             String drakeName = getBoundDrakeName(stack);
             if (drakeName != null) {
-                tooltip.add(Component.translatable("saintsdragons.tooltip.drake_binder.bound", drakeName));
-                tooltip.add(Component.translatable("saintsdragons.tooltip.drake_binder.bound_desc"));
+                tooltip.add(Component.translatable("saintsdragons.tooltip.primitive_drake_binder.bound", drakeName));
+                tooltip.add(Component.translatable("saintsdragons.tooltip.primitive_drake_binder.bound_desc"));
             }
         } else {
-            tooltip.add(Component.translatable("saintsdragons.tooltip.drake_binder.unbound"));
-            tooltip.add(Component.translatable("saintsdragons.tooltip.drake_binder.unbound_desc"));
+            tooltip.add(Component.translatable("saintsdragons.tooltip.primitive_drake_binder.empty"));
+            tooltip.add(Component.translatable("saintsdragons.tooltip.primitive_drake_binder.right_click_to_release"));
         }
     }
     
