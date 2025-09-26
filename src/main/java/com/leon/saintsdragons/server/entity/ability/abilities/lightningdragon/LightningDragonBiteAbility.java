@@ -39,15 +39,15 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
 
     // Sections: startup (windup), active (hit frame), recovery
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(AbilitySectionType.STARTUP, 6),
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, 3),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 2),
-            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 6)
+            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 3)
     };
 
     private boolean didHitThisActive = false;
 
     public LightningDragonBiteAbility(DragonAbilityType<LightningDragonEntity, LightningDragonBiteAbility> type, LightningDragonEntity user) {
-        super(type, user, TRACK, 24); // ~1.2s cooldown
+        super(type, user, TRACK, 3);
     }
 
     @Override
