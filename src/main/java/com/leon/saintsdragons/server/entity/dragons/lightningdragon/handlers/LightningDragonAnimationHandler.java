@@ -49,8 +49,12 @@ public record LightningDragonAnimationHandler(LightningDragonEntity dragon) {
                 RawAnimation.begin().thenPlay("animation.lightning_dragon.horn_gore"));
         actionController.triggerableAnim("dodge",
                 RawAnimation.begin().thenPlay("animation.lightning_dragon.dodge"));
-        actionController.triggerableAnim("lightning_beam",
-                RawAnimation.begin().thenPlay("animation.lightning_dragon.lightning_beam"));
+        actionController.triggerableAnim("lightning_beam_start",
+                RawAnimation.begin().thenPlay("animation.lightning_dragon.lightning_beam_start"));
+        actionController.triggerableAnim("lightning_beaming",
+                RawAnimation.begin().thenLoop("animation.lightning_dragon.lightning_beaming"));
+        actionController.triggerableAnim("lightning_beam_stop",
+                RawAnimation.begin().thenPlay("animation.lightning_dragon.lightning_beam_stop"));
         actionController.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.lightning_dragon.eat"));
         
