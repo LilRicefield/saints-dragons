@@ -45,25 +45,25 @@ public class DragonRideKeybinds {
             "key.categories.saintsdragons"
     );
 
-    // Hold-to-fire Lightning Beam (G)
-    public static final KeyMapping DRAGON_BEAM = new KeyMapping(
-            "key.saintsdragons.ability3",
+    // Channel ability slot (default G)
+    public static final KeyMapping DRAGON_TERTIARY_ABILITY = new KeyMapping(
+            "key.saintsdragons.ability_tertiary",
             InputConstants.Type.KEYSYM,
             InputConstants.KEY_G,
             "key.categories.saintsdragons"
     );
 
-    // One-shot Roar (R)
-    public static final KeyMapping DRAGON_ROAR = new KeyMapping(
-            "key.saintsdragons.roar",
+    // Primary ability slot (default R)
+    public static final KeyMapping DRAGON_PRIMARY_ABILITY = new KeyMapping(
+            "key.saintsdragons.ability_primary",
             InputConstants.Type.KEYSYM,
             InputConstants.KEY_R,
             "key.categories.saintsdragons"
     );
 
-    // One-shot Summon Storm (H)
-    public static final KeyMapping DRAGON_SUMMON = new KeyMapping(
-            "key.saintsdragons.summon_storm",
+    // Secondary ability slot (default H)
+    public static final KeyMapping DRAGON_SECONDARY_ABILITY = new KeyMapping(
+            "key.saintsdragons.ability_secondary",
             InputConstants.Type.KEYSYM,
             InputConstants.KEY_H,
             "key.categories.saintsdragons"
@@ -72,9 +72,9 @@ public class DragonRideKeybinds {
     
     // State tracking
     private static boolean wasAscendPressed = false;
-    private static boolean wasBeamDown = false;
-    private static boolean wasRoarDown = false;
-    private static boolean wasSummonDown = false;
+    private static boolean wasTertiaryAbilityDown = false;
+    private static boolean wasPrimaryAbilityDown = false;
+    private static boolean wasSecondaryAbilityDown = false;
     // (no debug anchor toggle)
     
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -84,9 +84,9 @@ public class DragonRideKeybinds {
             event.register(DRAGON_ASCEND);
             event.register(DRAGON_DESCEND);
             event.register(DRAGON_ACCELERATE);
-            event.register(DRAGON_BEAM);
-            event.register(DRAGON_ROAR);
-            event.register(DRAGON_SUMMON);
+            event.register(DRAGON_TERTIARY_ABILITY);
+            event.register(DRAGON_PRIMARY_ABILITY);
+            event.register(DRAGON_SECONDARY_ABILITY);
             // no debug key
         }
     }
@@ -129,8 +129,8 @@ public class DragonRideKeybinds {
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.options.keyAttack.isDown()) controlState |= 4; // Bit 2: Attack
-        if (DRAGON_ROAR.isDown()) controlState |= 8;     // Bit 3: Roar
-        if (DRAGON_SUMMON.isDown()) controlState |= 16;  // Bit 4: Summon Storm
+        if (DRAGON_PRIMARY_ABILITY.isDown()) controlState |= 8;     // Bit 3: Primary ability
+        if (DRAGON_SECONDARY_ABILITY.isDown()) controlState |= 16;  // Bit 4: Secondary ability
         if (mc.options.keyShift.isDown()) controlState |= 32; // Bit 5: Dismount
         return controlState;
     }
@@ -141,9 +141,9 @@ public class DragonRideKeybinds {
         boolean currentAscend = DRAGON_ASCEND.isDown();
         boolean currentDescend = DRAGON_DESCEND.isDown();
         boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
-        boolean beamDown = DRAGON_BEAM.isDown();
-        boolean roarDown = DRAGON_ROAR.isDown();
-        boolean summonDown = DRAGON_SUMMON.isDown();
+        boolean tertiaryDown = DRAGON_TERTIARY_ABILITY.isDown();
+        boolean primaryDown = DRAGON_PRIMARY_ABILITY.isDown();
+        boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
 
         float fwd = player.zza;
         float str = player.xxa;
@@ -165,37 +165,37 @@ public class DragonRideKeybinds {
                     new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, fwd, str, yaw));
         }
 
-        if (beamDown && !wasBeamDown) {
+        if (tertiaryDown && !wasTertiaryAbilityDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "lightning_beam", fwd, str, yaw));
         }
-        if (!beamDown && wasBeamDown) {
+        if (!tertiaryDown && wasTertiaryAbilityDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_STOP, "lightning_beam", fwd, str, yaw));
         }
 
-        if (roarDown && !wasRoarDown) {
+        if (primaryDown && !wasPrimaryAbilityDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "roar", fwd, str, yaw));
         }
 
-        if (summonDown && !wasSummonDown) {
+        if (secondaryDown && !wasSecondaryAbilityDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, "summon_storm", fwd, str, yaw));
         }
 
         wasAscendPressed = currentAscend;
-        wasBeamDown = beamDown;
-        wasRoarDown = roarDown;
-        wasSummonDown = summonDown;
+        wasTertiaryAbilityDown = tertiaryDown;
+        wasPrimaryAbilityDown = primaryDown;
+        wasSecondaryAbilityDown = secondaryDown;
     }
 
     private static void handleAmphithereControls(LocalPlayer player, AmphithereEntity dragon) {
         boolean currentAscend = DRAGON_ASCEND.isDown();
         boolean currentDescend = DRAGON_DESCEND.isDown();
         boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
-        boolean beamDown = DRAGON_BEAM.isDown();
-        boolean roarDown = DRAGON_ROAR.isDown();
+        boolean tertiaryDown = DRAGON_TERTIARY_ABILITY.isDown();
+        boolean primaryDown = DRAGON_PRIMARY_ABILITY.isDown();
 
         float fwd = player.zza;
         float str = player.xxa;
@@ -217,22 +217,22 @@ public class DragonRideKeybinds {
                     new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, fwd, str, yaw));
         }
 
-        if (beamDown && !wasBeamDown) {
+        if (tertiaryDown && !wasTertiaryAbilityDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, AmphithereAbilities.FIRE_BODY_ID, fwd, str, yaw));
         }
-        if (!beamDown && wasBeamDown) {
+        if (!tertiaryDown && wasTertiaryAbilityDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_STOP, AmphithereAbilities.FIRE_BODY_ID, fwd, str, yaw));
         }
-        if (roarDown && !wasRoarDown) {
+        if (primaryDown && !wasPrimaryAbilityDown) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.ABILITY_USE, AmphithereAbilities.ROAR_ID, fwd, str, yaw));
         }
 
         wasAscendPressed = currentAscend;
-        wasBeamDown = beamDown;
-        wasRoarDown = roarDown;
-        wasSummonDown = false;
+        wasTertiaryAbilityDown = tertiaryDown;
+        wasPrimaryAbilityDown = primaryDown;
+        wasSecondaryAbilityDown = false;
     }
 }
