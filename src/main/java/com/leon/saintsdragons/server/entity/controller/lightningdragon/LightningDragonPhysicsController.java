@@ -119,8 +119,6 @@ public class LightningDragonPhysicsController {
         return flap ? 1 : 0;
     }
     public PlayState handleMovementAnimation(AnimationState<LightningDragonEntity> state) {
-        // TODO: Handle new Dragon ability system animations
-
         // Default transition length (safe baseline); override per-branch below
         state.getController().transitionLength(6);
         // While dying or sleeping, suppress movement animations entirely; action controller plays die/sleep clips
