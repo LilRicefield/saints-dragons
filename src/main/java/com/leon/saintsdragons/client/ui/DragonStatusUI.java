@@ -71,9 +71,10 @@ public class DragonStatusUI {
         cachedScreenWidth = screenWidth;
         cachedScreenHeight = screenHeight;
 
-        int leftMargin = Math.max(10, (int) (screenWidth * 0.02f));
-        int rightMargin = Math.max(10, (int) (screenWidth * 0.02f));
-        int topMargin = Math.max(10, (int) (screenHeight * 0.02f));
+        int leftMargin = Math.max(12, (int) (screenWidth * 0.02f));
+        int rightMargin = Math.max(12, (int) (screenWidth * 0.02f));
+        int topMargin = Math.max(14, (int) (screenHeight * 0.025f));
+        int bottomMargin = Math.max(48, (int) (screenHeight * 0.06f));
 
         // Right aligned health bar with allowance for health text so it stays on-screen
 
@@ -81,13 +82,14 @@ public class DragonStatusUI {
         int healthBarY = topMargin;
 
         // Left column placement with responsive spacing
-        int baseSpacing = Math.max(12, (int) (screenHeight * 0.03f));
-        int columnSpacing = Math.max(6, (int) (screenHeight * 0.015f));
+        int baseSpacing = Math.max(14, (int) (screenHeight * 0.03f));
+        int columnSpacing = Math.max(8, (int) (screenHeight * 0.018f));
         int desiredSpeedY = topMargin + healthBar.getHeight() + baseSpacing;
 
-        int maxColumnStart = screenHeight - topMargin - speedIndicator.getHeight() - columnSpacing - controlGuide.getHeight();
-        int speedY = Math.min(desiredSpeedY, Math.max(topMargin, maxColumnStart));
-        int controlsY = speedY + speedIndicator.getHeight() + columnSpacing;
+        int maxColumnStart = Math.max(topMargin, screenHeight - bottomMargin - speedIndicator.getHeight() - columnSpacing - controlGuide.getHeight());
+        int speedY = Math.min(desiredSpeedY, maxColumnStart);
+        int controlsY = Math.min(speedY + speedIndicator.getHeight() + columnSpacing, screenHeight - bottomMargin - controlGuide.getHeight());
+        controlsY = Math.max(topMargin, controlsY);
 
         healthBar.setPosition(healthBarX, healthBarY);
         speedIndicator.setPosition(leftMargin, speedY);
@@ -114,6 +116,8 @@ public class DragonStatusUI {
             speedIndicator.setDragon(dragon);
             controlGuide.setDragon(dragon);
         }
+
+        updateElementPositions();
     }
 
     /**

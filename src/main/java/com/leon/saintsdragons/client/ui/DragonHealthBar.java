@@ -20,7 +20,7 @@ public class DragonHealthBar extends DragonUIElement {
     private long lastHealthUpdate = 0;
     
     public DragonHealthBar(int x, int y) {
-        super(x, y, 16, 100); // Smaller health bar
+        super(x, y, 18, 100); // Compact vertical health bar
     }
     
     public void setDragon(DragonEntity dragon) {
@@ -47,12 +47,14 @@ public class DragonHealthBar extends DragonUIElement {
             guiGraphics.fill(x + 2, fillY + 2, x + width - 2, y + height - 2, 0xFF800000); // Dark red fill
         }
         
-        // Render health text
-        String healthText = String.format("%.0f/%.0f", dragon.getHealth(), dragon.getMaxHealth());
-        int textX = x + (width - minecraft.font.width(healthText)) / 2;
-        int textY = y + height + 5;
-        guiGraphics.drawString(minecraft.font, healthText, textX, textY, 0xFFFFFF);
-        
+        // Render health text anchored to the left so longer values stay visible
+        String healthText = String.format("%.0f/%.0f", dragon.getHealth(), dragon.getMaxHealth());
+        int textWidth = minecraft.font.width(healthText);
+        int textX = Math.max(4, x - textWidth - 8);
+        int textY = y + (height - minecraft.font.lineHeight) / 2;
+        guiGraphics.fill(textX - 2, textY - 2, textX + textWidth + 2, textY + minecraft.font.lineHeight + 2, 0x80000000);
+        guiGraphics.drawString(minecraft.font, healthText, textX, textY, 0xFFFFFF);
+        
         // Render drag handle when hovering
         if (isMouseOver(mouseX, mouseY)) {
             renderDragHandle(guiGraphics);
