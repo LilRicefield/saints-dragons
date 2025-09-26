@@ -26,9 +26,9 @@ public class LightningDragonHornGoreAbility extends DragonAbility<LightningDrago
     private static final double GORE_ANGLE_DEG = 90.0; // half-angle, increased from 75
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(AbilitySectionType.STARTUP, 5),
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, 3),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 2),
-            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 8)
+            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 3)
     };
 
     // Track entities already hit during the ACTIVE window so we don't double hit in multi-tick ACTIVE
@@ -36,7 +36,7 @@ public class LightningDragonHornGoreAbility extends DragonAbility<LightningDrago
     private boolean playedSoundThisUse = false;
 
     public LightningDragonHornGoreAbility(DragonAbilityType<LightningDragonEntity, LightningDragonHornGoreAbility> type, LightningDragonEntity user) {
-        super(type, user, TRACK, 22);
+        super(type, user, TRACK, 3);
     }
 
     @Override
