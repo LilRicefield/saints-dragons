@@ -13,14 +13,16 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEntity> {
 
-    // Unified beam animation: 1s delay (startup), ~3.03s active beaming, no explicit recovery
-    // 1s  = 20 ticks; 3.03s ≈ 61 ticks
+    // Beam timeline: 1s startup (20 ticks) then 400 ticks of active beaming.
+    // Separate start/loop/stop animations handle the visuals.
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
-            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 61)
+            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 400)
     };
     
     private boolean hasBeamFired = false; // Track if beam has been fired this activation
+    private boolean beamStartPlayed = false;
+    private boolean beamLoopActive = false;
 
     public LightningDragonBeamAbility(DragonAbilityType<LightningDragonEntity, LightningDragonBeamAbility> type, LightningDragonEntity user) {
         super(type, user, TRACK, 0); // No cooldown; gated by input
@@ -29,14 +31,21 @@ public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEnt
     @Override
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
+
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            // Reset beam fired flag; play unified animation once at start
+            // Reset state and kick off the beam start animation
             hasBeamFired = false;
-            getUser().setBeaming(false);
-            getUser().triggerAnim("action", "lightning_beam");
+            beamLoopActive = false;
+            beamStartPlayed = true;
+            LightningDragonEntity dragon = getUser();
+            dragon.setBeaming(false);
+            dragon.triggerAnim("action", "lightning_beam_start");
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             // Enter beaming window; visuals/damage enabled during ACTIVE only
-            getUser().setBeaming(true);
+            LightningDragonEntity dragon = getUser();
+            dragon.setBeaming(true);
+            dragon.triggerAnim("action", "lightning_beaming");
+            beamLoopActive = true;
             // Initial tick damage alignment (optional single pulse at start)
             if (!hasBeamFired) {
                 fireBeamOnce();
@@ -47,16 +56,24 @@ public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEnt
 
     @Override
     protected void endSection(DragonAbilitySection section) {
-        // When leaving ACTIVE (by interrupt/complete), clear beaming; unified anim handles visuals
-        if (section != null && section.sectionType == AbilitySectionType.ACTIVE) {
-            getUser().setBeaming(false);
+        if (section == null) {
+            return;
+        }
+
+        if (section.sectionType == AbilitySectionType.ACTIVE) {
+            LightningDragonEntity dragon = getUser();
+            dragon.setBeaming(false);
+            triggerBeamStop(dragon);
+            hasBeamFired = false;
         }
     }
 
     @Override
     public void interrupt() {
-        // Ensure beaming flag cleared even if interrupted mid-active
-        getUser().setBeaming(false);
+        // Ensure beaming visuals stop even if interrupted mid-startup or active
+        LightningDragonEntity dragon = getUser();
+        dragon.setBeaming(false);
+        triggerBeamStop(dragon);
         hasBeamFired = false; // Reset for next use
         super.interrupt();
     }
@@ -98,6 +115,14 @@ public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEnt
         if (start != null && end != null) {
             damageAlongBeam(dragon, start, end);
         }
+    }
+
+    private void triggerBeamStop(LightningDragonEntity dragon) {
+        if (beamLoopActive || beamStartPlayed) {
+            dragon.triggerAnim("action", "lightning_beam_stop");
+        }
+        beamLoopActive = false;
+        beamStartPlayed = false;
     }
 
     private void fireBeamOnce() {

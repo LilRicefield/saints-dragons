@@ -31,7 +31,7 @@ public class AmphithereRoarAbility extends DragonAbility<AmphithereEntity> {
 
     public AmphithereRoarAbility(DragonAbilityType<AmphithereEntity, AmphithereRoarAbility> type,
                                  AmphithereEntity user) {
-        super(type, user, TRACK, 40);
+        super(type, user, TRACK, 20);
     }
 
     @Override
