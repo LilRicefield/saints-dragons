@@ -165,7 +165,7 @@ public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEnt
         aimDir = clampAimToNeck(dragon, aimDir);
 
         // Raycast along aim to determine endpoint
-        final double MAX_DISTANCE = 32.0; // blocks
+        final double MAX_DISTANCE = 128.0; // blocks
         var tentativeEnd = start.add(aimDir.scale(MAX_DISTANCE));
 
         var hit = dragon.level().clip(new net.minecraft.world.level.ClipContext(

@@ -25,7 +25,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * based on flight state and applies reliable melee damage in front of the snout.
  */
 public class AmphithereBiteAbility extends DragonAbility<AmphithereEntity> {
-    private static final float BASE_DAMAGE = 8.0f;
+    private static final float BASE_DAMAGE = 12.0f;
     private static final double BASE_RANGE = 10.0;
     private static final double RIDDEN_RANGE_BONUS = 10.0;
     private static final double AIR_RANGE_BONUS = 0.6;

@@ -20,7 +20,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Simple horn gore melee: modest damage + strong knockback in front of head.
  */
 public class LightningDragonHornGoreAbility extends DragonAbility<LightningDragonEntity> {
-    private static final float GORE_DAMAGE = 12.0f;
+    private static final float GORE_DAMAGE = 15.0f;
     private static final double GORE_RANGE = 6.5; // Increased from 3.8
     private static final double GORE_RANGE_RIDDEN = 8.0; // Increased from 5.2
     private static final double GORE_ANGLE_DEG = 90.0; // half-angle, increased from 75

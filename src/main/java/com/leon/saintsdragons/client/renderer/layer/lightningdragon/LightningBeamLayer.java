@@ -50,7 +50,7 @@ public class LightningBeamLayer extends GeoRenderLayer<LightningDragonEntity> {
     // Positive X = beam's right, Positive Y = up, Positive Z = forward along the beam
     private static final float LOCAL_OFFSET_LEFT = 0.05F;  // nudge left a touch
     private static final float LOCAL_OFFSET_UP    =  0.00F;
-    private static final float LOCAL_OFFSET_FWD   =  0.00F;  // small forward bias if z-fighting occurs (e.g., 0.01F)
+    private static final float LOCAL_OFFSET_FWD   =  0.2F;  // small forward bias if z-fighting occurs (e.g., 0.01F)
 
     public LightningBeamLayer() { super(null); }
 
