@@ -48,10 +48,16 @@ public class LightningDragonAttackGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity target = dragon.getTarget();
-        return target != null && target.isAlive() && 
-               this.dragon.distanceTo(target) < attackRange && 
-               this.dragon.getAttackState() == getAttackState &&
-               dragon.canAttack();
+        if (target == null || !target.isAlive()) {
+            return false;
+        }
+
+        if (this.dragon.getAttackState() != getAttackState) {
+            return false;
+        }
+
+        double distanceSq = this.dragon.distanceToSqr(target);
+        return distanceSq <= getAttackReachSqr(target);
     }
 
     @Override
@@ -62,7 +68,9 @@ public class LightningDragonAttackGoal extends Goal {
 
     @Override
     public void stop() {
-        this.dragon.setAttackState(attackEndState);
+        if (this.dragon.getAttackState() == attackState) {
+            this.dragon.setAttackState(attackEndState);
+        }
         LivingEntity target = dragon.getTarget();
         if (!EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(target)) {
             this.dragon.setTarget((LivingEntity)null);
@@ -103,9 +111,17 @@ public class LightningDragonAttackGoal extends Goal {
         return true;
     }
 
+
+    private double getAttackReachSqr(LivingEntity target) {
+        double combinedRadii = (this.dragon.getBbWidth() + target.getBbWidth()) * 0.5;
+        double reach = this.attackRange + combinedRadii;
+        return reach * reach;
+    }
+
     /**
      * Execute the specific attack based on the attack state
      */
+
     private void executeAttack(LivingEntity target) {
         if (target == null) return;
         
