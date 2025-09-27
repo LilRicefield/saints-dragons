@@ -108,10 +108,10 @@ public class LightningDragonStateGoal extends Goal {
                 }
                 break;
             case ATTACK_STATE_HORN_ACTIVE:
-                if (dragon.attackTicks >= 2) { // Active phase complete
+                if (dragon.attackTicks >= 3) { // Active phase complete
                     dragon.tryActivateAbility(LightningDragonAbilities.HORN_GORE);
                     dragon.setAttackState(ATTACK_STATE_RECOVERY);
-                    dragon.attackCooldown = 3; // Set cooldown
+                    dragon.attackCooldown = 4; // Set cooldown
                 }
                 break;
             case ATTACK_STATE_BITE_WINDUP:
@@ -120,10 +120,10 @@ public class LightningDragonStateGoal extends Goal {
                 }
                 break;
             case ATTACK_STATE_BITE_ACTIVE:
-                if (dragon.attackTicks >= 2) { // Active phase complete
+                if (dragon.attackTicks >= 3) { // Active phase complete
                     dragon.tryActivateAbility(LightningDragonAbilities.BITE);
                     dragon.setAttackState(ATTACK_STATE_RECOVERY);
-                    dragon.attackCooldown = 3; // Set cooldown
+                    dragon.attackCooldown = 4; // Set cooldown
                 }
                 break;
             case ATTACK_STATE_SUMMON_STORM_WINDUP:
