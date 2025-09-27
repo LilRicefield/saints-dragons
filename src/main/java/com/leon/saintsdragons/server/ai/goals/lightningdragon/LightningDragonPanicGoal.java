@@ -7,6 +7,8 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
+import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
+
 /**
  * Panic goal for Lightning Dragon - moved out of main entity class
  */
@@ -23,6 +25,11 @@ public class LightningDragonPanicGoal extends Goal {
     public boolean canUse() {
         // Do not panic if commanded to sit or being ridden
         if (dragon.isOrderedToSit() || dragon.isVehicle() || dragon.isPassenger()) {
+            return false;
+        }
+
+        // Give Summon Storm phase priority over panic
+        if (dragon.shouldEnterPhaseTwo() || dragon.getAttackState() == ATTACK_STATE_SUMMON_STORM_WINDUP || dragon.getAttackState() == ATTACK_STATE_SUMMON_STORM_ACTIVE) {
             return false;
         }
 
@@ -62,6 +69,10 @@ public class LightningDragonPanicGoal extends Goal {
         }
 
         // Continue while still moving and health remains under threshold
+        if (dragon.shouldEnterPhaseTwo() || dragon.getAttackState() == ATTACK_STATE_SUMMON_STORM_WINDUP || dragon.getAttackState() == ATTACK_STATE_SUMMON_STORM_ACTIVE) {
+            return false;
+        }
+
         return !dragon.getNavigation().isDone() && dragon.getHealth() < dragon.getMaxHealth() * 0.5f;
     }
 

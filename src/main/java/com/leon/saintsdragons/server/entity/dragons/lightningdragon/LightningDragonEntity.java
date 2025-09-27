@@ -172,6 +172,9 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     
     /** Attack cooldown timer */
     public int attackCooldown = 0;
+    private boolean phaseTwoTriggered = false;
+    private int phaseTwoCooldown = 0;
+    private boolean allowGroundBeamDuringStorm = false;
     // Sleep transition state
     public boolean sleepingEntering = false;
     public boolean sleepingExiting = false;
@@ -755,6 +758,60 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         }
     }
     
+    public boolean shouldEnterPhaseTwo() {
+        if (this.phaseTwoTriggered || this.phaseTwoCooldown > 0) {
+            return false;
+        }
+        if (!this.canUseAbility() || this.getSummonStormAbility() == null) {
+            return false;
+        }
+        if (this.getHealth() > this.getMaxHealth() * 0.5f) {
+            return false;
+        }
+        return true;
+    }
+
+    public void flagPhaseTwoTriggered() {
+        this.phaseTwoTriggered = true;
+        this.phaseTwoCooldown = 20 * 240; // keep aligned with ability cooldown (~4 minutes)
+        this.allowGroundBeamDuringStorm = true;
+        this.lockRiderControls(60);
+        this.lockTakeoff(60);
+        this.startTemporaryInvuln(60);
+        LivingEntity target = getTarget();
+        if (target != null) {
+            double dx = target.getX() - this.getX();
+            double dz = target.getZ() - this.getZ();
+            this.setYRot((float)(Math.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F);
+            this.yBodyRot = this.getYRot();
+        }
+    }
+
+    public void resetPhaseTwo() {
+        this.phaseTwoTriggered = false;
+        this.allowGroundBeamDuringStorm = false;
+        // Give a short breather before another melee selection, but do not freeze combat for minutes
+        this.attackCooldown = Math.max(this.attackCooldown, 60); // ~3 seconds
+
+        if ((this.getTarget() == null || !this.getTarget().isAlive())) {
+            LivingEntity nearest = null;
+            double bestDist = Double.MAX_VALUE;
+            for (LivingEntity candidate : getRecentAggro()) {
+                if (candidate == null || !candidate.isAlive()) continue;
+                if (!EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(candidate)) continue;
+                double dist = this.distanceToSqr(candidate);
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    nearest = candidate;
+                }
+            }
+            if (nearest != null) {
+                this.setTarget(nearest);
+                this.setAggressive(true);
+            }
+        }
+    }
+
     
     // ===== RideableDragonBase Override for Custom Logic =====
     
@@ -891,6 +948,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             tickSuperchargeTimer();
             tickTempInvulnTimer();
             tickSuperchargeVfx();
+            tickPhaseTwoCooldown();
             tickSleepTransition();
             tickSleepCooldowns();
             tickMountingState();
@@ -1097,7 +1155,14 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
                 if (this.getHealth() > this.getMaxHealth()) {
                     this.setHealth(this.getMaxHealth());
                 }
+                allowGroundBeamDuringStorm = false;
             }
+        }
+    }
+
+    private void tickPhaseTwoCooldown() {
+        if (phaseTwoCooldown > 0) {
+            phaseTwoCooldown--;
         }
     }
     
@@ -1472,6 +1537,9 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, 5, 5, 4.0f));
         this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, 3, 3, 3.0f));
         this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, 5, 5, 4.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_SUMMON_STORM_WINDUP, ATTACK_STATE_SUMMON_STORM_WINDUP, 140, 60, 10.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_SUMMON_STORM_ACTIVE, ATTACK_STATE_SUMMON_STORM_ACTIVE, 80, 0, 10.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_SUMMON_STORM_RECOVERY, ATTACK_STATE_SUMMON_STORM_RECOVERY, 80, 0, 10.0f));
         
         // State transition goals
         this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_ACTIVE, 10, 10));
@@ -1479,6 +1547,9 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_RECOVERY, 5, 5));
         this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_RECOVERY, 3, 3));
         this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, ATTACK_STATE_IDLE, 5, 5));
+        this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_SUMMON_STORM_WINDUP, ATTACK_STATE_SUMMON_STORM_WINDUP, ATTACK_STATE_SUMMON_STORM_ACTIVE, 120, 60));
+        this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_SUMMON_STORM_ACTIVE, ATTACK_STATE_SUMMON_STORM_ACTIVE, ATTACK_STATE_SUMMON_STORM_RECOVERY, 40, 0));
+        this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_SUMMON_STORM_RECOVERY, ATTACK_STATE_SUMMON_STORM_RECOVERY, ATTACK_STATE_IDLE, 60, 0));
 
         // Movement/idle
         // Unified sleep goal: high priority to preempt follow/wander, but calm() prevents overriding combat/aggro
@@ -1636,6 +1707,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(360.0D);
             // Heal to full health
             this.setHealth(this.getMaxHealth());
+            this.allowGroundBeamDuringStorm = true;
         }
     }
     
@@ -1856,6 +1928,9 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
         // Persist temporary invulnerability timer (e.g., during Summon Storm windup)
         tag.putInt("TempInvulnTicks", Math.max(0, this.tempInvulnTicks));
+        tag.putBoolean("PhaseTwoTriggered", this.phaseTwoTriggered);
+        tag.putInt("PhaseTwoCooldown", Math.max(0, this.phaseTwoCooldown));
+        tag.putBoolean("AllowGroundBeamStorm", this.allowGroundBeamDuringStorm);
 
         // Persist sleep state and transition timers
         tag.putBoolean("Sleeping", this.isSleeping());
@@ -1907,6 +1982,16 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             if (this.tempInvulnTicks > 0) {
                 this.setInvulnerable(true);
             }
+        }
+
+        if (tag.contains("PhaseTwoTriggered")) {
+            this.phaseTwoTriggered = tag.getBoolean("PhaseTwoTriggered");
+        }
+        if (tag.contains("PhaseTwoCooldown")) {
+            this.phaseTwoCooldown = Math.max(0, tag.getInt("PhaseTwoCooldown"));
+        }
+        if (tag.contains("AllowGroundBeamStorm")) {
+            this.allowGroundBeamDuringStorm = tag.getBoolean("AllowGroundBeamStorm");
         }
 
         // Restore sleep state and transition timers

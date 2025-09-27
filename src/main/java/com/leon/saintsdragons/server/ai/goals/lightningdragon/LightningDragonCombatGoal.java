@@ -24,12 +24,18 @@ public class LightningDragonCombatGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity target = dragon.getTarget();
-        if (target == null || !target.isAlive()) {
-            return false;
-        }
+        boolean hasTarget = target != null && target.isAlive();
         
         // Only use when not already attacking and not on cooldown
         if (dragon.isInAttackState() || !dragon.canAttack()) {
+            return false;
+        }
+
+        if (dragon.shouldEnterPhaseTwo()) {
+            return true;
+        }
+
+        if (!hasTarget) {
             return false;
         }
         
@@ -50,6 +56,13 @@ public class LightningDragonCombatGoal extends Goal {
     @Override
     public void start() {
         LivingEntity target = dragon.getTarget();
+        if (dragon.shouldEnterPhaseTwo()) {
+            dragon.setAttackState(ATTACK_STATE_SUMMON_STORM_WINDUP);
+            dragon.flagPhaseTwoTriggered();
+            dragon.setTarget(target);
+            return;
+        }
+
         if (target == null) return;
         
         // Choose attack based on distance and availability
@@ -78,8 +91,7 @@ public class LightningDragonCombatGoal extends Goal {
             // Close range - use bite attack
             dragon.setAttackState(ATTACK_STATE_BITE_WINDUP);
             dragon.attackCooldown = 40; // 2 second cooldown
-            dragon.attackCooldown = 40; // 2 second cooldown
-        } else if (gap <= 4.0) {
+        } else if (gap <= 5.0) {
             // Medium range - use horn gore attack
             dragon.setAttackState(ATTACK_STATE_HORN_WINDUP);
             dragon.attackCooldown = 40; // 2 second cooldown
