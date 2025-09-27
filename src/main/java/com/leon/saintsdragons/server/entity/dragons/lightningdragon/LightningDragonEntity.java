@@ -326,15 +326,8 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_RIDER_FORWARD, 0f);
-        this.entityData.define(DATA_RIDER_STRAFE, 0f);
+        defineRideableDragonData();
+        // Define Lightning Dragon specific data
         this.entityData.define(DATA_ATTACK_KIND, 0);
         this.entityData.define(DATA_ATTACK_PHASE, 0);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
@@ -347,10 +340,60 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.entityData.define(DATA_BEAM_START_X, 0f);
         this.entityData.define(DATA_BEAM_START_Y, 0f);
         this.entityData.define(DATA_BEAM_START_Z, 0f);
+        this.entityData.define(DATA_SLEEPING, false);
+    }
+
+    @Override
+    protected void defineRideableDragonData() {
+        // Define all rideable dragon data keys for LightningDragonEntity
+        this.entityData.define(DATA_FLYING, false);
+        this.entityData.define(DATA_TAKEOFF, false);
+        this.entityData.define(DATA_HOVERING, false);
+        this.entityData.define(DATA_LANDING, false);
+        this.entityData.define(DATA_RUNNING, false);
+        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
+        this.entityData.define(DATA_FLIGHT_MODE, -1);
+        this.entityData.define(DATA_RIDER_FORWARD, 0f);
+        this.entityData.define(DATA_RIDER_STRAFE, 0f);
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
-        this.entityData.define(DATA_SLEEPING, false);
+    }
+
+    // Implementation of abstract accessor methods
+    @Override
+    protected EntityDataAccessor<Float> getRiderForwardAccessor() {
+        return DATA_RIDER_FORWARD;
+    }
+
+    @Override
+    protected EntityDataAccessor<Float> getRiderStrafeAccessor() {
+        return DATA_RIDER_STRAFE;
+    }
+
+    @Override
+    protected EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
+        return DATA_GROUND_MOVE_STATE;
+    }
+
+    @Override
+    protected EntityDataAccessor<Integer> getFlightModeAccessor() {
+        return DATA_FLIGHT_MODE;
+    }
+
+    @Override
+    protected EntityDataAccessor<Boolean> getGoingUpAccessor() {
+        return DATA_GOING_UP;
+    }
+
+    @Override
+    protected EntityDataAccessor<Boolean> getGoingDownAccessor() {
+        return DATA_GOING_DOWN;
+    }
+
+    @Override
+    protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
+        return DATA_ACCELERATING;
     }
 
     @Override

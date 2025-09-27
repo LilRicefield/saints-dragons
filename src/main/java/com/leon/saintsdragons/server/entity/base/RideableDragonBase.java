@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -23,28 +24,40 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         super(entityType, level);
     }
 
+    // This method should be overridden by subclasses to define their own entity data keys
+    protected abstract void defineRideableDragonData();
+
     // ===== RIDER INPUT IMPLEMENTATION =====
+
+    // Abstract methods for entity-specific data accessors
+    protected abstract EntityDataAccessor<Float> getRiderForwardAccessor();
+    protected abstract EntityDataAccessor<Float> getRiderStrafeAccessor();
+    protected abstract EntityDataAccessor<Integer> getGroundMoveStateAccessor();
+    protected abstract EntityDataAccessor<Integer> getFlightModeAccessor();
+    protected abstract EntityDataAccessor<Boolean> getGoingUpAccessor();
+    protected abstract EntityDataAccessor<Boolean> getGoingDownAccessor();
+    protected abstract EntityDataAccessor<Boolean> getAcceleratingAccessor();
 
     @Override
     public void setLastRiderForward(float forward) {
-        this.entityData.set(RideableDragonData.DATA_RIDER_FORWARD, forward);
+        this.entityData.set(getRiderForwardAccessor(), forward);
     }
 
     @Override
     public void setLastRiderStrafe(float strafe) {
-        this.entityData.set(RideableDragonData.DATA_RIDER_STRAFE, strafe);
+        this.entityData.set(getRiderStrafeAccessor(), strafe);
     }
 
     // ===== MOVEMENT STATE IMPLEMENTATION =====
 
     @Override
     public int getGroundMoveState() {
-        return this.entityData.get(RideableDragonData.DATA_GROUND_MOVE_STATE);
+        return this.entityData.get(getGroundMoveStateAccessor());
     }
 
     @Override
     public int getSyncedFlightMode() {
-        return this.entityData.get(RideableDragonData.DATA_FLIGHT_MODE);
+        return this.entityData.get(getFlightModeAccessor());
     }
 
     @Override
@@ -53,39 +66,39 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         if (state != null) {
             return state;
         }
-        return this.entityData.get(RideableDragonData.DATA_GROUND_MOVE_STATE);
+        return this.entityData.get(getGroundMoveStateAccessor());
     }
 
     // ===== RIDER CONTROL IMPLEMENTATION =====
 
     @Override
     public boolean isGoingUp() {
-        return this.entityData.get(RideableDragonData.DATA_GOING_UP);
+        return this.entityData.get(getGoingUpAccessor());
     }
 
     @Override
     public void setGoingUp(boolean goingUp) {
-        this.entityData.set(RideableDragonData.DATA_GOING_UP, goingUp);
+        this.entityData.set(getGoingUpAccessor(), goingUp);
     }
 
     @Override
     public boolean isGoingDown() {
-        return this.entityData.get(RideableDragonData.DATA_GOING_DOWN);
+        return this.entityData.get(getGoingDownAccessor());
     }
 
     @Override
     public void setGoingDown(boolean goingDown) {
-        this.entityData.set(RideableDragonData.DATA_GOING_DOWN, goingDown);
+        this.entityData.set(getGoingDownAccessor(), goingDown);
     }
 
     @Override
     public boolean isAccelerating() {
-        return this.entityData.get(RideableDragonData.DATA_ACCELERATING);
+        return this.entityData.get(getAcceleratingAccessor());
     }
 
     @Override
     public void setAccelerating(boolean accelerating) {
-        this.entityData.set(RideableDragonData.DATA_ACCELERATING, accelerating);
+        this.entityData.set(getAcceleratingAccessor(), accelerating);
     }
 
     // ===== ANIMATION SYNC IMPLEMENTATION =====
@@ -115,8 +128,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             }
 
             // Set the initial state without triggering sync (to avoid thrashing)
-            this.entityData.set(RideableDragonData.DATA_GROUND_MOVE_STATE, initialGroundState);
-            this.entityData.set(RideableDragonData.DATA_FLIGHT_MODE, initialFlightMode);
+            this.entityData.set(getGroundMoveStateAccessor(), initialGroundState);
+            this.entityData.set(getFlightModeAccessor(), initialFlightMode);
         }
     }
 
@@ -135,8 +148,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             int currentFlightMode = getFlightMode();
 
             // Update entity data to match calculated state
-            this.entityData.set(RideableDragonData.DATA_GROUND_MOVE_STATE, currentGroundState);
-            this.entityData.set(RideableDragonData.DATA_FLIGHT_MODE, currentFlightMode);
+            this.entityData.set(getGroundMoveStateAccessor(), currentGroundState);
+            this.entityData.set(getFlightModeAccessor(), currentFlightMode);
 
             // Force sync current state
             this.syncAnimState(currentGroundState, currentFlightMode);
@@ -169,7 +182,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             this.setRunning(false);
             this.setLastRiderForward(0f);
             this.setLastRiderStrafe(0f);
-            this.entityData.set(RideableDragonData.DATA_GROUND_MOVE_STATE, 0);
+            this.entityData.set(getGroundMoveStateAccessor(), 0);
             // Nudge observers so animation stops if we dismounted mid-run/walk
             this.syncAnimState(0, getSyncedFlightMode());
         }
@@ -185,8 +198,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
             // If being ridden, prefer rider inputs for robust state selection
             if (getControllingPassenger() != null) {
-                float fwd = this.entityData.get(RideableDragonData.DATA_RIDER_FORWARD);
-                float str = this.entityData.get(RideableDragonData.DATA_RIDER_STRAFE);
+                float fwd = this.entityData.get(getRiderForwardAccessor());
+                float str = this.entityData.get(getRiderStrafeAccessor());
 
                 if (RideableDragonData.isSignificantRiderInput(fwd, str)) {
                     moveState = this.isAccelerating() ? 2 : 1;
@@ -206,15 +219,15 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         int flightMode = getFlightMode();
 
         // Update entity data and sync to clients
-        boolean groundStateChanged = this.entityData.get(RideableDragonData.DATA_GROUND_MOVE_STATE) != moveState;
-        boolean flightModeChanged = this.entityData.get(RideableDragonData.DATA_FLIGHT_MODE) != flightMode;
+        boolean groundStateChanged = this.entityData.get(getGroundMoveStateAccessor()) != moveState;
+        boolean flightModeChanged = this.entityData.get(getFlightModeAccessor()) != flightMode;
 
         if (groundStateChanged) {
-            this.entityData.set(RideableDragonData.DATA_GROUND_MOVE_STATE, moveState);
+            this.entityData.set(getGroundMoveStateAccessor(), moveState);
         }
 
         if (flightModeChanged) {
-            this.entityData.set(RideableDragonData.DATA_FLIGHT_MODE, flightMode);
+            this.entityData.set(getFlightModeAccessor(), flightMode);
         }
 
         // Send animation state sync to clients when states change
@@ -223,14 +236,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
 
         // Decay rider inputs slightly each tick to avoid sticking when packets drop
-        if (this.entityData.get(RideableDragonData.DATA_RIDER_FORWARD) != 0f ||
-                this.entityData.get(RideableDragonData.DATA_RIDER_STRAFE) != 0f) {
+        if (this.entityData.get(getRiderForwardAccessor()) != 0f ||
+                this.entityData.get(getRiderStrafeAccessor()) != 0f) {
 
-            float nf = RideableDragonData.decayRiderInput(this.entityData.get(RideableDragonData.DATA_RIDER_FORWARD));
-            float ns = RideableDragonData.decayRiderInput(this.entityData.get(RideableDragonData.DATA_RIDER_STRAFE));
+            float nf = RideableDragonData.decayRiderInput(this.entityData.get(getRiderForwardAccessor()));
+            float ns = RideableDragonData.decayRiderInput(this.entityData.get(getRiderStrafeAccessor()));
 
-            this.entityData.set(RideableDragonData.DATA_RIDER_FORWARD, nf);
-            this.entityData.set(RideableDragonData.DATA_RIDER_STRAFE, ns);
+            this.entityData.set(getRiderForwardAccessor(), nf);
+            this.entityData.set(getRiderStrafeAccessor(), ns);
         }
 
         // Stop running if not moving
