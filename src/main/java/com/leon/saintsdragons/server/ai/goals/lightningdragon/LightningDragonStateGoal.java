@@ -103,31 +103,31 @@ public class LightningDragonStateGoal extends Goal {
     private void handleStateTransition() {
         switch (attackState) {
             case ATTACK_STATE_HORN_WINDUP:
-                if (dragon.attackTicks >= 10) { // Windup complete
+                if (dragon.attackTicks >= 3) { // Windup complete
                     dragon.setAttackState(ATTACK_STATE_HORN_ACTIVE);
                 }
                 break;
             case ATTACK_STATE_HORN_ACTIVE:
-                if (dragon.attackTicks >= 5) { // Active phase complete
+                if (dragon.attackTicks >= 2) { // Active phase complete
                     dragon.tryActivateAbility(LightningDragonAbilities.HORN_GORE);
                     dragon.setAttackState(ATTACK_STATE_RECOVERY);
-                    dragon.attackCooldown = 40; // Set cooldown
+                    dragon.attackCooldown = 3; // Set cooldown
                 }
                 break;
             case ATTACK_STATE_BITE_WINDUP:
-                if (dragon.attackTicks >= 8) { // Windup complete
+                if (dragon.attackTicks >= 3) { // Windup complete
                     dragon.setAttackState(ATTACK_STATE_BITE_ACTIVE);
                 }
                 break;
             case ATTACK_STATE_BITE_ACTIVE:
-                if (dragon.attackTicks >= 3) { // Active phase complete
+                if (dragon.attackTicks >= 2) { // Active phase complete
                     dragon.tryActivateAbility(LightningDragonAbilities.BITE);
                     dragon.setAttackState(ATTACK_STATE_RECOVERY);
-                    dragon.attackCooldown = 25; // Set cooldown
+                    dragon.attackCooldown = 3; // Set cooldown
                 }
                 break;
             case ATTACK_STATE_RECOVERY:
-                if (dragon.attackTicks >= 5) { // Recovery complete
+                if (dragon.attackTicks >= 3) { // Recovery complete
                     dragon.setAttackState(ATTACK_STATE_IDLE);
                 }
                 break;
