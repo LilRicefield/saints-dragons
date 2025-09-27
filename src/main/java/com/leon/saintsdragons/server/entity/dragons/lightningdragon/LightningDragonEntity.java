@@ -773,6 +773,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
     public void flagPhaseTwoTriggered() {
         this.phaseTwoTriggered = true;
+        this.suppressAmbientSounds(200);
         this.phaseTwoCooldown = 20 * 240; // keep aligned with ability cooldown (~4 minutes)
         this.allowGroundBeamDuringStorm = true;
         this.lockRiderControls(60);
@@ -790,25 +791,13 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     public void resetPhaseTwo() {
         this.phaseTwoTriggered = false;
         this.allowGroundBeamDuringStorm = false;
-        // Give a short breather before another melee selection, but do not freeze combat for minutes
-        this.attackCooldown = Math.max(this.attackCooldown, 60); // ~3 seconds
-
-        if ((this.getTarget() == null || !this.getTarget().isAlive())) {
-            LivingEntity nearest = null;
-            double bestDist = Double.MAX_VALUE;
-            for (LivingEntity candidate : getRecentAggro()) {
-                if (candidate == null || !candidate.isAlive()) continue;
-                if (!EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(candidate)) continue;
-                double dist = this.distanceToSqr(candidate);
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    nearest = candidate;
-                }
-            }
-            if (nearest != null) {
-                this.setTarget(nearest);
-                this.setAggressive(true);
-            }
+        this.attackCooldown = Math.max(this.attackCooldown, 60); // short breather
+        this.suppressAmbientSounds(100);
+        this.setAggressive(false);
+        this.setRunning(false);
+        LivingEntity target = this.getTarget();
+        if (target == null || !target.isAlive()) {
+            this.setTarget(null);
         }
     }
 
@@ -1361,6 +1350,12 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             playCustomAmbientSound(); // Renamed to avoid conflict with Mob.playAmbientSound()
             resetAmbientSoundTimer();
         }
+    }
+
+    private void suppressAmbientSounds(int ticks) {
+        this.sleepAmbientCooldownTicks = Math.max(this.sleepAmbientCooldownTicks, ticks);
+        this.ambientSoundTimer = 0;
+        this.nextAmbientSoundDelay = Math.max(this.nextAmbientSoundDelay, ticks);
     }
     /**
      * Resets the ambient sound timer with some randomness
