@@ -44,17 +44,18 @@ public class LightningDragonAttackGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        LivingEntity target = dragon.getTarget();
-        if (target == null || !target.isAlive()) {
-            return false;
-        }
-
         if (this.dragon.getAttackState() != getAttackState) {
             return false;
         }
 
-        double distanceSq = this.dragon.distanceToSqr(target);
-        return distanceSq <= getAttackReachSqr(target);
+        LivingEntity target = dragon.getTarget();
+        if (target != null && target.isAlive()) {
+            double distanceSq = this.dragon.distanceToSqr(target);
+            return distanceSq <= getAttackReachSqr(target);
+        }
+
+        // Allow phase-two states even without an active target
+        return attackState == ATTACK_STATE_SUMMON_STORM_WINDUP || attackState == ATTACK_STATE_SUMMON_STORM_ACTIVE || attackState == ATTACK_STATE_SUMMON_STORM_RECOVERY;
     }
 
     @Override
@@ -70,7 +71,7 @@ public class LightningDragonAttackGoal extends Goal {
             this.dragon.setTarget((LivingEntity)null);
         }
         this.dragon.getNavigation().stop();
-        if (this.dragon.getTarget() == null) {
+        if (this.dragon.getTarget() == null && attackState < ATTACK_STATE_SUMMON_STORM_WINDUP) {
             this.dragon.setAggressive(false);
         }
     }
@@ -129,6 +130,11 @@ public class LightningDragonAttackGoal extends Goal {
             case ATTACK_STATE_BITE_ACTIVE:
                 if (dragon.attackTicks == 1) { // Execute once at start of active phase
                     dragon.tryActivateAbility(LightningDragonAbilities.BITE);
+                }
+                break;
+            case ATTACK_STATE_SUMMON_STORM_ACTIVE:
+                if (dragon.attackTicks == 1) {
+                    dragon.tryActivateAbility(LightningDragonAbilities.SUMMON_STORM);
                 }
                 break;
         }

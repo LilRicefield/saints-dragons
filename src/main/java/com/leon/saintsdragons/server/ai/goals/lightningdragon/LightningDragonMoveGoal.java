@@ -29,7 +29,9 @@ public class LightningDragonMoveGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity target = this.dragon.getTarget();
-        return target != null && target.isAlive() && !dragon.isInAttackState();
+        if (target == null || !target.isAlive()) return false;
+        if (dragon.isInAttackState()) return false;
+        return true;
     }
 
     @Override
