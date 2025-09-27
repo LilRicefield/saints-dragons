@@ -18,7 +18,7 @@ public class LightningDragonCombatGoal extends Goal {
     
     public LightningDragonCombatGoal(LightningDragonEntity dragon) {
         this.dragon = dragon;
-        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        this.setFlags(EnumSet.of(Flag.LOOK));
     }
 
     @Override
@@ -44,13 +44,7 @@ public class LightningDragonCombatGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        LivingEntity target = dragon.getTarget();
-        if (target == null || !target.isAlive()) {
-            return false;
-        }
-        
-        // Continue only if we're in an attack state
-        return dragon.isInAttackState();
+        return false; // fire-and-forget: once we choose an attack, hand off to state/attack goals
     }
 
     @Override
@@ -64,8 +58,7 @@ public class LightningDragonCombatGoal extends Goal {
 
     @Override
     public void stop() {
-        // Reset to idle state
-        dragon.setAttackState(ATTACK_STATE_IDLE);
+        // No-op: state/attack goals own cleanup once an attack starts
     }
 
     @Override
@@ -84,6 +77,7 @@ public class LightningDragonCombatGoal extends Goal {
         if (gap <= 3.0) {
             // Close range - use bite attack
             dragon.setAttackState(ATTACK_STATE_BITE_WINDUP);
+            dragon.attackCooldown = 40; // 2 second cooldown
             dragon.attackCooldown = 40; // 2 second cooldown
         } else if (gap <= 4.0) {
             // Medium range - use horn gore attack

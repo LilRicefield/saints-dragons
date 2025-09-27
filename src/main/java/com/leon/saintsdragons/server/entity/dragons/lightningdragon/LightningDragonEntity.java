@@ -1462,16 +1462,16 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         // Using new Cataclysm-style separated goal system
         this.goalSelector.addGoal(7, new LightningDragonAirCombatGoal(this));      // Air combat + flight decision
         
-        // New separated combat system (high priority for combat)
-        this.goalSelector.addGoal(3, new LightningDragonMoveGoal(this, true, 1.4)); // Pure movement - high priority for combat
-        this.goalSelector.addGoal(4, new LightningDragonCombatGoal(this));          // Attack coordination
+        // New separated combat system (ensure combat decision outranks chase)
+        this.goalSelector.addGoal(3, new LightningDragonCombatGoal(this));          // Attack coordination
+        this.goalSelector.addGoal(4, new LightningDragonMoveGoal(this, true, 1.4)); // Pure movement - yields when attacking
         
         // Attack execution goals (high priority, interrupt movement)
-        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_IDLE, 15, 10, 4.0f));
-        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_IDLE, 11, 8, 3.0f));
-        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_IDLE, 5, 5, 4.0f));
-        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_IDLE, 3, 3, 3.0f));
-        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, ATTACK_STATE_IDLE, 5, 5, 4.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, 15, 10, 4.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_WINDUP, 11, 8, 3.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, 5, 5, 4.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, 3, 3, 3.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, 5, 5, 4.0f));
         
         // State transition goals
         this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_ACTIVE, 10, 10));

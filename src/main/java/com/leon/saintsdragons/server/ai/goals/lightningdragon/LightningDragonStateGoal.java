@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.lightningdragon;
 
+import com.leon.saintsdragons.common.registry.lightningdragon.LightningDragonAbilities;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -22,7 +23,7 @@ public class LightningDragonStateGoal extends Goal {
 
     public LightningDragonStateGoal(LightningDragonEntity dragon, int getAttackState, int attackState, int attackEndState, int attackFinalTick, int attackSeeTick) {
         this.dragon = dragon;
-        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
+        this.setFlags(EnumSet.noneOf(Flag.class));
         this.getAttackState = getAttackState;
         this.attackState = attackState;
         this.attackEndState = attackEndState;
@@ -32,7 +33,7 @@ public class LightningDragonStateGoal extends Goal {
 
     public LightningDragonStateGoal(LightningDragonEntity dragon, int getAttackState, int attackState, int attackEndState, int attackFinalTick, int attackSeeTick, boolean interruptsAI) {
         this.dragon = dragon;
-        if (interruptsAI) this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
+        this.setFlags(interruptsAI ? EnumSet.of(Flag.LOOK) : EnumSet.noneOf(Flag.class));
         this.getAttackState = getAttackState;
         this.attackState = attackState;
         this.attackEndState = attackEndState;
@@ -42,7 +43,7 @@ public class LightningDragonStateGoal extends Goal {
 
     public LightningDragonStateGoal(LightningDragonEntity dragon, int getAttackState, int attackState, int attackEndState, int attackFinalTick, int attackSeeTick, EnumSet<Flag> interruptFlagTypes) {
         this.dragon = dragon;
-        setFlags(interruptFlagTypes);
+        setFlags(interruptFlagTypes.isEmpty() ? EnumSet.noneOf(Flag.class) : interruptFlagTypes);
         this.getAttackState = getAttackState;
         this.attackState = attackState;
         this.attackEndState = attackEndState;
@@ -108,6 +109,7 @@ public class LightningDragonStateGoal extends Goal {
                 break;
             case ATTACK_STATE_HORN_ACTIVE:
                 if (dragon.attackTicks >= 5) { // Active phase complete
+                    dragon.tryActivateAbility(LightningDragonAbilities.HORN_GORE);
                     dragon.setAttackState(ATTACK_STATE_RECOVERY);
                     dragon.attackCooldown = 40; // Set cooldown
                 }
@@ -119,6 +121,7 @@ public class LightningDragonStateGoal extends Goal {
                 break;
             case ATTACK_STATE_BITE_ACTIVE:
                 if (dragon.attackTicks >= 3) { // Active phase complete
+                    dragon.tryActivateAbility(LightningDragonAbilities.BITE);
                     dragon.setAttackState(ATTACK_STATE_RECOVERY);
                     dragon.attackCooldown = 25; // Set cooldown
                 }
