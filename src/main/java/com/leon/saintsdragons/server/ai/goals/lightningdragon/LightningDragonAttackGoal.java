@@ -18,28 +18,25 @@ public class LightningDragonAttackGoal extends Goal {
     protected final LightningDragonEntity dragon;
     protected final int getAttackState;
     protected final int attackState;
-    protected final int attackEndState;
     protected final int attackMaxTick;
     protected final int attackSeeTick;
     protected final float attackRange;
 
-    public LightningDragonAttackGoal(LightningDragonEntity dragon, int getAttackState, int attackState, int attackEndState, int attackMaxTick, int attackSeeTick, float attackRange) {
+    public LightningDragonAttackGoal(LightningDragonEntity dragon, int getAttackState, int attackState, int attackMaxTick, int attackSeeTick, float attackRange) {
         this.dragon = dragon;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
         this.getAttackState = getAttackState;
         this.attackState = attackState;
-        this.attackEndState = attackEndState;
         this.attackMaxTick = attackMaxTick;
         this.attackSeeTick = attackSeeTick;
         this.attackRange = attackRange;
     }
 
-    public LightningDragonAttackGoal(LightningDragonEntity dragon, int getAttackState, int attackState, int attackEndState, int attackMaxTick, int attackSeeTick, float attackRange, EnumSet<Flag> interruptFlagTypes) {
+    public LightningDragonAttackGoal(LightningDragonEntity dragon, int getAttackState, int attackState, int attackMaxTick, int attackSeeTick, float attackRange, EnumSet<Flag> interruptFlagTypes) {
         this.dragon = dragon;
         setFlags(interruptFlagTypes);
         this.getAttackState = getAttackState;
         this.attackState = attackState;
-        this.attackEndState = attackEndState;
         this.attackMaxTick = attackMaxTick;
         this.attackSeeTick = attackSeeTick;
         this.attackRange = attackRange;
@@ -68,9 +65,6 @@ public class LightningDragonAttackGoal extends Goal {
 
     @Override
     public void stop() {
-        if (this.dragon.getAttackState() == attackState) {
-            this.dragon.setAttackState(attackEndState);
-        }
         LivingEntity target = dragon.getTarget();
         if (!EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(target)) {
             this.dragon.setTarget((LivingEntity)null);
