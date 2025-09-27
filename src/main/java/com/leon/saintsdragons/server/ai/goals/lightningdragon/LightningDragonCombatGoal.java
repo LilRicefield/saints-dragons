@@ -34,8 +34,8 @@ public class LightningDragonCombatGoal extends Goal {
         }
         
         // Check if we're in range and have line of sight
-        double distance = dragon.distanceTo(target);
-        if (distance > attackRange || !dragon.getSensing().hasLineOfSight(target)) {
+        double distanceSq = dragon.distanceToSqr(target);
+        if (distanceSq > getAttackReachSqr(target) || !dragon.getSensing().hasLineOfSight(target)) {
             return false;
         }
         
@@ -78,18 +78,30 @@ public class LightningDragonCombatGoal extends Goal {
      * Choose which attack to use based on distance and cooldowns
      */
     private void chooseAttack(LivingEntity target) {
-        double distance = dragon.distanceTo(target);
+        double gap = getGapToTarget(target);
         
         // Simple attack selection logic
-        if (distance <= 3.0) {
+        if (gap <= 3.0) {
             // Close range - use bite attack
             dragon.setAttackState(ATTACK_STATE_BITE_WINDUP);
             dragon.attackCooldown = 40; // 2 second cooldown
-        } else if (distance <= 4.0) {
+        } else if (gap <= 4.0) {
             // Medium range - use horn gore attack
             dragon.setAttackState(ATTACK_STATE_HORN_WINDUP);
             dragon.attackCooldown = 40; // 2 second cooldown
         }
         // If too far, don't attack (let movement goal handle getting closer)
+    }
+
+    private double getAttackReachSqr(LivingEntity target) {
+        double combinedRadii = (this.dragon.getBbWidth() + target.getBbWidth()) * 0.5;
+        double reach = this.attackRange + combinedRadii;
+        return reach * reach;
+    }
+
+    private double getGapToTarget(LivingEntity target) {
+        double centerDistance = this.dragon.distanceTo(target);
+        double combinedRadii = (this.dragon.getBbWidth() + target.getBbWidth()) * 0.5;
+        return Math.max(0.0, centerDistance - combinedRadii);
     }
 }
