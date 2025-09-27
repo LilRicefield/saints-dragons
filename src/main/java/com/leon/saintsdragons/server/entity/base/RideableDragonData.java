@@ -77,6 +77,11 @@ public class RideableDragonData {
     public static <T extends Entity> EntityDataAccessor<Boolean> createAcceleratingAccessor(Class<T> entityClass) {
         return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
     }
+
+    /** Helper method to create sleeping state accessor for a specific entity class */
+    public static <T extends Entity> EntityDataAccessor<Boolean> createSleepingAccessor(Class<T> entityClass) {
+        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
+    }
     
     // ===== ANIMATION THRESHOLDS (Standardized for consistent behavior) =====
     

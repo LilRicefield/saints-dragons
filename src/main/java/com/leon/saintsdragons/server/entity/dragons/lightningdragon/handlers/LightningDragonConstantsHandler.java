@@ -170,7 +170,7 @@ public class LightningDragonConstantsHandler {
     
     /** Entity data accessor for sleeping state */
     public static final EntityDataAccessor<Boolean> DATA_SLEEPING =
-            SynchedEntityData.defineId(LightningDragonEntity.class, EntityDataSerializers.BOOLEAN);
+            RideableDragonData.createSleepingAccessor(LightningDragonEntity.class);
 
     // ===== AI CONSTANTS =====
     
