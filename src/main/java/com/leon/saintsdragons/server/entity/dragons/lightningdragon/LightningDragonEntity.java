@@ -165,6 +165,13 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
     // Dying gate to coordinate custom death ability/timing
     private boolean dying = false;
+    
+    // ===== NEW ATTACK STATE SYSTEM (Cataclysm-style) =====
+    /** Attack state timing counter */
+    public int attackTicks = 0;
+    
+    /** Attack cooldown timer */
+    public int attackCooldown = 0;
     // Sleep transition state
     public boolean sleepingEntering = false;
     public boolean sleepingExiting = false;
@@ -246,8 +253,8 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         super(type, level);
         this.setMaxUpStep(1.25F);
 
-        // Initialize both navigators
-        this.groundNav = new GroundPathNavigation(this, level);
+        // Initialize both navigators with custom pathfinding
+        this.groundNav = new com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround(this, level);
         this.airNav = new FlyingPathNavigation(this, level) {
             @Override
             public boolean isStableDestination(@Nonnull BlockPos pos) {
@@ -328,8 +335,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         super.defineSynchedData();
         defineRideableDragonData();
         // Define Lightning Dragon specific data
-        this.entityData.define(DATA_ATTACK_KIND, 0);
-        this.entityData.define(DATA_ATTACK_PHASE, 0);
+        this.entityData.define(DATA_ATTACK_STATE, ATTACK_STATE_IDLE);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_BEAM_END_SET, false);
@@ -560,7 +566,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
     @Override
     protected @NotNull PathNavigation createNavigation(@Nonnull Level level) {
-        return new GroundPathNavigation(this, level);
+        return new com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround(this, level);
     }
 
     // ===== STATE MANAGEMENT =====
@@ -651,9 +657,40 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
     // DATA STUFF
 
-    public void setAttackKind(int kind) { setIntegerData(DATA_ATTACK_KIND, kind); }
-
-    public void setAttackPhase(int phase) { setIntegerData(DATA_ATTACK_PHASE, phase); }
+    // Old attack system methods removed - using new state system instead
+    
+    // ===== NEW ATTACK STATE SYSTEM METHODS =====
+    
+    /**
+     * Get the current attack state (Cataclysm-style simple state system)
+     */
+    public int getAttackState() {
+        return getIntegerData(DATA_ATTACK_STATE);
+    }
+    
+    /**
+     * Set the attack state and reset attack ticks
+     */
+    public void setAttackState(int state) {
+        this.attackTicks = 0;
+        setIntegerData(DATA_ATTACK_STATE, state);
+        // Broadcast entity event for animation triggers
+        this.level().broadcastEntityEvent(this, (byte) -state);
+    }
+    
+    /**
+     * Check if the dragon is currently in an attack state (Cataclysm-style)
+     */
+    public boolean isInAttackState() {
+        return getAttackState() != ATTACK_STATE_IDLE;
+    }
+    
+    /**
+     * Check if the dragon can start a new attack (not on cooldown)
+     */
+    public boolean canAttack() {
+        return attackCooldown <= 0 && !isInAttackState();
+    }
 
     // ===== Lightning Dragon Specific Methods =====
     
@@ -838,6 +875,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         tickRiderTakeoff();
         tickControllers();
         tickHurtSoundCooldown();
+        tickAttackState();
         if (!level().isClientSide) {
             // When ridden and flying, never stay in 'hovering' unless explicitly landing or beaming or taking off
             if (isFlying() && getControllingPassenger() != null) {
@@ -913,6 +951,18 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     private void tickHurtSoundCooldown() {
         // Cool down hurt sound throttle
         if (hurtSoundCooldown > 0) hurtSoundCooldown--;
+    }
+    
+    private void tickAttackState() {
+        // Handle attack state timing (Cataclysm-style)
+        if (this.getAttackState() > ATTACK_STATE_IDLE) {
+            ++this.attackTicks;
+        }
+        
+        // Handle attack cooldown
+        if (attackCooldown > 0) {
+            --attackCooldown;
+        }
     }
     
     private void tickSound() {
@@ -1403,32 +1453,49 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     // ===== AI GOALS =====
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(3, new LightningDragonPanicGoal(this));
+        this.goalSelector.addGoal(1, new LightningDragonPanicGoal(this));
         this.goalSelector.addGoal(2, new LightningDragonDodgeGoal(this));
-        this.goalSelector.addGoal(4, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(5, new FloatGoal(this));
+        this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(6, new FloatGoal(this));
 
         // Combat goals (prioritized to avoid conflicts)
-        // Using new extensible goal system
-        this.goalSelector.addGoal(6, new LightningDragonAirCombatGoal(this));      // Air combat + flight decision
-        this.goalSelector.addGoal(8, new LightningDragonMeleeAttackGoal(this));     // Ground melee combat
+        // Using new Cataclysm-style separated goal system
+        this.goalSelector.addGoal(7, new LightningDragonAirCombatGoal(this));      // Air combat + flight decision
+        
+        // New separated combat system (high priority for combat)
+        this.goalSelector.addGoal(3, new LightningDragonMoveGoal(this, true, 1.4)); // Pure movement - high priority for combat
+        this.goalSelector.addGoal(4, new LightningDragonCombatGoal(this));          // Attack coordination
+        
+        // Attack execution goals (high priority, interrupt movement)
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_IDLE, 15, 10, 4.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_IDLE, 11, 8, 3.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_IDLE, 5, 5, 4.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_IDLE, 3, 3, 3.0f));
+        this.goalSelector.addGoal(10, new LightningDragonAttackGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, ATTACK_STATE_IDLE, 5, 5, 4.0f));
+        
+        // State transition goals
+        this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_ACTIVE, 10, 10));
+        this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_ACTIVE, 8, 8));
+        this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_RECOVERY, 5, 5));
+        this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_RECOVERY, 3, 3));
+        this.goalSelector.addGoal(11, new LightningDragonStateGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, ATTACK_STATE_IDLE, 5, 5));
 
         // Movement/idle
         // Unified sleep goal: high priority to preempt follow/wander, but calm() prevents overriding combat/aggro
         this.goalSelector.addGoal(0, new LightningDragonSleepGoal(this));         // Higher priority than follow
-        this.goalSelector.addGoal(1, new LightningDragonFollowOwnerGoal(this));
-        this.goalSelector.addGoal(2, new LightningDragonGroundWanderGoal(this, 1.0, 60));
+        this.goalSelector.addGoal(8, new LightningDragonFollowOwnerGoal(this));   // Lower priority than combat
+        this.goalSelector.addGoal(9, new LightningDragonGroundWanderGoal(this, 1.0, 60)); // Lower priority than combat
         
         // Item pickup behavior (like foxes eating berries) + ground fish taming
-        this.goalSelector.addGoal(7, new LightningDragonTemptGoal(this, 1.2, 
+        this.goalSelector.addGoal(10, new LightningDragonTemptGoal(this, 1.2, 
                 net.minecraft.world.item.crafting.Ingredient.of(net.minecraft.world.item.Items.SALMON, 
                                                                net.minecraft.world.item.Items.COD, 
                                                                net.minecraft.world.item.Items.TROPICAL_FISH, 
                                                                net.minecraft.world.item.Items.PUFFERFISH), false));
         
-        this.goalSelector.addGoal(9, new LightningDragonFlightGoal(this));
-        this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(11, new LightningDragonFlightGoal(this));
+        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         // Target selection - use custom goals that respect ally system
         this.targetSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal(this));
@@ -1713,6 +1780,13 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
     @Override
     public void handleEntityEvent(byte eventId) {
+        // Handle attack state events (Cataclysm-style)
+        if (eventId <= 0) {
+            // Attack state change event (negative values)
+            this.attackTicks = 0;
+            return;
+        }
+        
         if (eventId == 6) {
             // Failed taming - show smoke particles ONLY, no sitting behavior at all
             if (level().isClientSide) {
@@ -2360,5 +2434,4 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.screenShakeAmount = Math.max(this.screenShakeAmount, intensity);
         this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
     }
-
 }
