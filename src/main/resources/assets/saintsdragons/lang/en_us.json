@@ -109,6 +109,7 @@
   
   "entity.saintsdragons.lightning_dragon.fed": "%s is fully healed!",
   "entity.saintsdragons.lightning_dragon.fed_partial": "%s is being healed...",
+  "entity.saintsdragons.lightning_dragon.sleeping": "The dragon is sleeping.",
   "entity.saintsdragons.primitive_drake.tamed": "%s has been tamed!",
   "entity.saintsdragons.primitive_drake.fed": "%s is fully healed!",
   "entity.saintsdragons.primitive_drake.fed_partial": "%s is being healed... (you must love this thing to even heal it)",

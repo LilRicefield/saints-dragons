@@ -77,8 +77,18 @@ public record LightningDragonInteractionHandler(LightningDragonEntity dragon) {
         
         // Handle owner commands and mounting
         if (player.equals(dragon.getOwner())) {
+            boolean isSleeping = dragon.isSleeping() || dragon.isSleepTransitioning();
             // Command cycling - Shift+Right-click cycles through commands
             if (canOwnerCommand(player) && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND) {
+                if (isSleeping) {
+                    if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.displayClientMessage(
+                            Component.translatable("entity.saintsdragons.lightning_dragon.sleeping", dragon.getName()),
+                            true
+                        );
+                    }
+                    return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+                }
                 return handleCommandCycling(player);
             }
             // Mounting - Right-click without shift
@@ -181,6 +191,7 @@ public record LightningDragonInteractionHandler(LightningDragonEntity dragon) {
         // Wake up immediately when mounting (bypass transitions/animations)
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
             dragon.wakeUpImmediately();
+            dragon.suppressSleep(300);
         }
         
         // Clear all combat and AI states when mounting

@@ -38,7 +38,7 @@ public class LightningDragonFollowOwnerGoal extends Goal {
     public boolean canUse() {
         // Basic requirements
 
-        if (!dragon.isTame() || dragon.isOrderedToSit()) {
+        if (!dragon.isTame() || dragon.isOrderedToSit() || dragon.isSleepLocked()) {
             return false;
         }
 
@@ -65,7 +65,7 @@ public class LightningDragonFollowOwnerGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         LivingEntity owner = dragon.getOwner();
-        if (owner == null || !owner.isAlive() || dragon.isOrderedToSit()) {
+        if (owner == null || !owner.isAlive() || dragon.isOrderedToSit() || dragon.isSleepLocked()) {
             return false;
         }
 

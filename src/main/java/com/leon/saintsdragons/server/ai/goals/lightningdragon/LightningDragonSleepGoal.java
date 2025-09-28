@@ -1,80 +1,96 @@
 package com.leon.saintsdragons.server.ai.goals.lightningdragon;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonSleepGoalBase;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.player.Player;
+
+import java.util.EnumSet;
 
 /**
- * Lightning Dragon specific sleep goal.
- * 
- * Lightning Dragons have unique sleep patterns:
- * - Highly energized by storms and rain (less likely to sleep)
- * - Prefer to sleep during the day in sheltered areas
- * - Can sleep at night but are more active during storms
- * - Won't sleep while charging or during severe weather
- * 
- * Sleep Probability:
- * - Clear weather: Normal sleep patterns
- * - Rain: 40% chance to stay awake
- * - Storms: Only 15% chance to sleep (they're too excited!)
+ * Fresh sleep goal for Lightning Dragons.
  */
-public class LightningDragonSleepGoal extends DragonSleepGoalBase {
-    
+public class LightningDragonSleepGoal extends Goal {
+
+    private final LightningDragonEntity dragon;
+    private int retryCooldown;
+
     public LightningDragonSleepGoal(LightningDragonEntity dragon) {
-        super(dragon);
+        this.dragon = dragon;
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
-    
+
     @Override
     public boolean canUse() {
-        LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        
-        // Lightning Dragons have special sleep conditions
-        if (lightningDragon.isCharging()) {
-            return false; // Don't sleep while charging
-        }
-        
-        // Additional check: Never sleep during thunderstorms (double-check)
-        if (lightningDragon.level().isThundering()) {
-            return false; // Absolutely no sleeping during thunderstorms
-        }
-        
-        // Weather conditions are now handled by the base class based on sleep preferences
-        // Lightning Dragons will not sleep during thunderstorms (avoidsThunderstorms = true)
-        
-        return super.canUse();
+        if (retryCooldown > 0) retryCooldown--;
+        if (retryCooldown > 0) return false;
+        if (dragon.isSleepLocked()) return false;
+        if (!dragon.canSleepNow() || dragon.isSleepSuppressed()) return false;
+        if (dragon.isInWaterOrBubble() || dragon.isInLava()) return false;
+        if (dragon.isDying() || dragon.isVehicle() || dragon.getTarget() != null || dragon.isAggressive()) return false;
+        if (dragon.level().isThundering()) return false;
+
+        return dragon.isTame() ? ownerAsleepNearby() : wildShouldSleep();
     }
-    
+
     @Override
     public boolean canContinueToUse() {
-        LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        
-        // Additional check: Stop sleeping immediately if thunderstorm starts
-        if (lightningDragon.level().isThundering()) {
-            return false; // Immediately stop sleeping during thunderstorms
-        }
-        
-        return super.canContinueToUse();
+        return dragon.isSleepLocked();
     }
-    
-    @Override
-    protected boolean canWildDragonSleep() {
-        // Use the base class implementation which properly handles weather conditions
-        // based on the sleep preferences (avoidsThunderstorms = true)
-        return super.canWildDragonSleep();
-    }
-    
+
     @Override
     public void start() {
-        LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        
-        // Use the proper sleep transition system instead of bypassing it
-        lightningDragon.startSleepEnter();
+        dragon.startSleepEnter();
     }
-    
+
+    @Override
+    public void tick() {
+        if (dragon.level().isClientSide) return;
+        if (dragon.isSleepLocked() && !shouldRemainAsleep()) {
+            if (!dragon.isSleepTransitioning()) {
+                dragon.startSleepExit();
+            }
+        }
+    }
+
     @Override
     public void stop() {
-        LightningDragonEntity lightningDragon = (LightningDragonEntity) dragon;
-        
-        // Use the proper sleep transition system instead of bypassing it
-        lightningDragon.startSleepExit();
+        if (!dragon.isSleepLocked()) {
+            retryCooldown = 100;
+        }
+    }
+
+    @Override
+    public boolean isInterruptable() {
+        return false;
+    }
+
+    private boolean ownerAsleepNearby() {
+        LivingEntity owner = dragon.getOwner();
+        if (!(owner instanceof Player player)) {
+            return false;
+        }
+        if (!player.isSleeping() || !player.isAlive()) {
+            return false;
+        }
+        if (player.level() != dragon.level()) {
+            return false;
+        }
+        return dragon.distanceToSqr(owner) <= 14 * 14;
+    }
+
+    private boolean wildShouldSleep() {
+        // Wild lightning dragons nap during the day when sheltered.
+        if (!dragon.level().isDay()) return false;
+        var pos = dragon.blockPosition();
+        var level = dragon.level();
+        return !level.canSeeSky(pos) || level.getMaxLocalRawBrightness(pos) < 7;
+    }
+
+    private boolean shouldRemainAsleep() {
+        if (dragon.isTame()) {
+            return ownerAsleepNearby();
+        }
+        return wildShouldSleep();
     }
 }
