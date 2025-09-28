@@ -28,7 +28,7 @@ public class LightningDragonGroundWanderGoal extends RandomStrollGoal {
         }
 
         // Don't interfere with important behaviors
-        if (dragon.isOrderedToSit() || dragon.isVehicle() || dragon.isPassenger()) {
+        if (dragon.isOrderedToSit() || dragon.isVehicle() || dragon.isPassenger() || dragon.isSleepLocked()) {
             return false;
         }
 
@@ -61,7 +61,7 @@ public class LightningDragonGroundWanderGoal extends RandomStrollGoal {
         }
 
         // Stop if ordered to sit
-        if (dragon.isOrderedToSit()) {
+        if (dragon.isOrderedToSit() || dragon.isSleepLocked()) {
             return false;
         }
 

@@ -185,6 +185,8 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     private int sleepReentryCooldownTicks = 0;
     // Hard-stop flag to kill sleep clips immediately across ticks
     private int sleepCancelTicks = 0;
+    private boolean sleepLocked = false;
+    private int sleepCommandSnapshot = -1;
 
     // Post-load stabilization to preserve midair riding state across save/load
     private int postLoadAirStabilizeTicks = 0; // counts down after world load if we saved while flying
@@ -1779,29 +1781,79 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     public boolean isSleepTransitioning() {
         return sleepingEntering || sleepingExiting;
     }
+    public boolean isSleepLocked() {
+        return sleepLocked || isSleeping() || sleepingEntering || sleepingExiting;
+    }
+
+    private void enterSleepLock() {
+        if (!sleepLocked) {
+            sleepLocked = true;
+            sleepCommandSnapshot = this.getCommand();
+        }
+        this.setCommand(1);
+        this.setOrderedToSit(true);
+        this.getNavigation().stop();
+        this.setTarget(null);
+        this.setRunning(false);
+        this.setGroundMoveStateFromAI(0);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.setFlying(false);
+        this.setLanding(false);
+        this.setTakeoff(false);
+        this.setHovering(false);
+    }
+
+    private void releaseSleepLock() {
+        if (sleepLocked) {
+            int desired = sleepCommandSnapshot;
+            sleepCommandSnapshot = -1;
+            sleepLocked = false;
+            if (desired == 1) {
+                this.setCommand(1);
+                this.setOrderedToSit(true);
+            } else {
+                this.setCommand(desired);
+                this.setOrderedToSit(false);
+            }
+        }
+        this.getNavigation().stop();
+        this.setRunning(false);
+        this.setGroundMoveStateFromAI(0);
+    }
+
     public void startSleepEnter() {
         if (isSleeping() || sleepingEntering || sleepingExiting) return;
         sleepingEntering = true;
-        sleepTransitionTicks = 81; // ~4.021s (enter)
+        sleepTransitionTicks = 81;
         animationHandler.triggerSleepEnter();
+        if (!level().isClientSide) {
+            enterSleepLock();
+        }
     }
+
     public void startSleepExit() {
         if ((!isSleeping() && !sleepingEntering) || sleepingExiting) return;
-        // stop sleep loop and transition out
         this.entityData.set(DATA_SLEEPING, false);
         sleepingEntering = false;
         sleepingExiting = true;
-        sleepTransitionTicks = 122; // ~6.075s (exit)
+        sleepTransitionTicks = 122;
         animationHandler.triggerSleepExit();
+        if (!level().isClientSide) {
+            suppressSleep(20);
+            releaseSleepLock();
+        }
     }
 
-    /** Immediately cancel any sleep state/transition without playing animations. */
     public void wakeUpImmediately() {
         this.entityData.set(DATA_SLEEPING, false);
         sleepingEntering = false;
         sleepingExiting = false;
         sleepTransitionTicks = 0;
-        sleepCancelTicks = 2; // ensure controllers STOP for a couple ticks to flush animation
+        sleepCancelTicks = 2;
+        if (!level().isClientSide) {
+            suppressSleep(20);
+            releaseSleepLock();
+        }
     }
 
     public void suppressSleep(int ticks) {
@@ -1935,6 +1987,8 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         tag.putInt("SleepAmbientCooldownTicks", Math.max(0, this.sleepAmbientCooldownTicks));
         tag.putInt("SleepReentryCooldownTicks", Math.max(0, this.sleepReentryCooldownTicks));
         tag.putInt("SleepCancelTicks", Math.max(0, this.sleepCancelTicks));
+        tag.putBoolean("SleepLock", this.sleepLocked);
+        tag.putInt("SleepCommandSnapshot", this.sleepCommandSnapshot);
 
         animationController.writeToNBT(tag);
     }
@@ -1997,6 +2051,8 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.sleepAmbientCooldownTicks = Math.max(0, tag.getInt("SleepAmbientCooldownTicks"));
         this.sleepReentryCooldownTicks = Math.max(0, tag.getInt("SleepReentryCooldownTicks"));
         this.sleepCancelTicks = Math.max(0, tag.getInt("SleepCancelTicks"));
+        this.sleepLocked = tag.getBoolean("SleepLock");
+        this.sleepCommandSnapshot = tag.getInt("SleepCommandSnapshot");
 
         animationController.readFromNBT(tag);
 
