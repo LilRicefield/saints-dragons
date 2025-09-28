@@ -1,11 +1,12 @@
 package com.leon.saintsdragons.server.entity.dragons.riftdrake;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeWaterWanderGoal;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
 import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeAnimationHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -33,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class RiftDrakeEntity extends DragonEntity implements RideableDragon, AquaticDragon {
@@ -48,11 +47,16 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     private final DragonKeybindHandler keybindHandler = new DragonKeybindHandler(this);
     private final RiftDrakeAnimationHandler animationHandler = new RiftDrakeAnimationHandler(this);
     private final WaterBoundPathNavigation waterNavigation;
+    private final PathNavigation groundNavigation;
+    private RiftDrakeWaterWanderGoal waterWanderGoal;
+    private boolean swimming;
+    private int swimTicks;
 
     public RiftDrakeEntity(EntityType<? extends RiftDrakeEntity> type, Level level) {
         super(type, level);
         this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
+        this.groundNavigation = super.getNavigation();
         this.waterNavigation = new WaterBoundPathNavigation(this, level);
         this.moveControl = new RiftDrakeMoveControl(this);
         this.setRideable(true);
@@ -77,7 +81,9 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        // TODO: add aquatic follow / wander goals
+        this.waterWanderGoal = new RiftDrakeWaterWanderGoal(this, 1.0D, 120);
+        this.waterWanderGoal.setActive(false);
+        this.goalSelector.addGoal(3, waterWanderGoal);
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
     }
@@ -85,10 +91,6 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate));
-    }
-
-    private <E extends RiftDrakeEntity> PlayState movementPredicate(AnimationState<E> state) {
-        return PlayState.CONTINUE;
     }
 
     @Override
@@ -117,17 +119,30 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     @Override
     public void tick() {
         super.tick();
-        if (!level().isClientSide && this.isInWater()) {
-            this.setAirSupply(this.getMaxAirSupply());
+        if (!level().isClientSide) {
+            boolean inWater = this.isInWater();
+            if (inWater) {
+                this.setAirSupply(this.getMaxAirSupply());
+                swimTicks = Math.min(swimTicks + 1, 200);
+            } else {
+                swimTicks = Math.max(swimTicks - 1, 0);
+            }
+            if (inWater && !swimming) {
+                enterSwimState();
+            } else if (!inWater && swimming) {
+                exitSwimState();
+            }
         }
     }
 
     @Override
     public void travel(@NotNull Vec3 motion) {
         if (this.isInWater()) {
-            this.moveRelative(0.1F, motion);
+            Vec3 adjusted = new Vec3(motion.x, motion.y * 0.5, motion.z);
+            this.moveRelative(0.08F, adjusted);
             this.move(MoverType.SELF, this.getDeltaMovement());
-            this.setDeltaMovement(this.getDeltaMovement().scale(0.91D).add(getBuoyancyVector()));
+            Vec3 delta = this.getDeltaMovement().scale(0.9D).add(getBuoyancyVector().scale(0.5D));
+            this.setDeltaMovement(delta);
         } else {
             super.travel(motion);
         }
@@ -265,6 +280,28 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
 
     public static boolean canSpawn(EntityType<RiftDrakeEntity> type, LevelAccessor level, MobSpawnType reason, BlockPos pos, net.minecraft.util.RandomSource random) {
         return level.getFluidState(pos).isSource() || level.getFluidState(pos.below()).isSource();
+    }
+
+    private void enterSwimState() {
+        swimming = true;
+        this.navigation = waterNavigation;
+        if (waterWanderGoal != null) {
+            waterWanderGoal.setActive(true);
+        }
+    }
+
+    private void exitSwimState() {
+        swimming = false;
+        this.navigation = groundNavigation;
+        if (waterWanderGoal != null) {
+            waterWanderGoal.setActive(false);
+        }
+        Vec3 delta = this.getDeltaMovement();
+        this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
+    }
+
+    public boolean isSwimming() {
+        return swimming;
     }
 
     private static class RiftDrakeMoveControl extends MoveControl {
