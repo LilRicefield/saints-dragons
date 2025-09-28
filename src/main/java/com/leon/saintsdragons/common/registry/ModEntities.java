@@ -32,7 +32,7 @@ public class ModEntities {
     // ===== PRIMITIVE DRAKE =====
     public static final RegistryObject<EntityType<PrimitiveDrakeEntity>> PRIMITIVE_DRAKE =
             REGISTER.register("primitive_drake", () -> EntityType.Builder.of(PrimitiveDrakeEntity::new, MobCategory.CREATURE)
-                    .sized(1.5F, 1.0F)  // Smaller than lightning dragon - cute little drake!
+                    .sized(1.5F, 1.0F)  // Smaller than lightning dragon, cute little drake!
                     .clientTrackingRange(32)
                     .updateInterval(1)
                     .build("primitive_drake"));
@@ -48,7 +48,7 @@ public class ModEntities {
     // ===== RIFT DRAKE =====
     public static final RegistryObject<EntityType<RiftDrakeEntity>> RIFT_DRAKE =
             REGISTER.register("rift_drake", () -> EntityType.Builder.of(RiftDrakeEntity::new, MobCategory.CREATURE)
-                    .sized(2.2F, 1.8F)
+                    .sized(4.5F, 5.0F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("rift_drake"));
