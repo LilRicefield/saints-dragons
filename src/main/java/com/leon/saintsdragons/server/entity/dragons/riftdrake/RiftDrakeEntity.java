@@ -7,11 +7,11 @@ import com.leon.saintsdragons.server.ai.navigation.DragonSwimNavigate;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeLeaveWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeRandomSwimGoal;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.*;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
-import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
 import com.leon.saintsdragons.server.entity.controller.riftdrake.RiftDrakeRiderController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -48,13 +48,18 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 
-public class RiftDrakeEntity extends DragonEntity implements RideableDragon, AquaticDragon {
+public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon {
 
     private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
+    
+    // Flight mode data accessor (not used for ground dragon but required by interface)
+    private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_GOING_UP = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final AnimatableInstanceCache animCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
@@ -107,6 +112,51 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_SWIMMING, false);
+        this.entityData.define(DATA_FLIGHT_MODE, -1);
+        this.entityData.define(DATA_GOING_UP, false);
+        this.entityData.define(DATA_GOING_DOWN, false);
+    }
+    
+    @Override
+    protected void defineRideableDragonData() {
+        // Data accessors are already defined in defineSynchedData()
+    }
+    
+    // ===== REQUIRED ABSTRACT METHODS FROM RIDEABLEDRAGONBASE =====
+    
+    @Override
+    protected EntityDataAccessor<Float> getRiderForwardAccessor() {
+        return DATA_RIDER_FORWARD;
+    }
+    
+    @Override
+    protected EntityDataAccessor<Float> getRiderStrafeAccessor() {
+        return DATA_RIDER_STRAFE;
+    }
+    
+    @Override
+    protected EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
+        return DATA_GROUND_MOVE_STATE;
+    }
+    
+    @Override
+    protected EntityDataAccessor<Integer> getFlightModeAccessor() {
+        return DATA_FLIGHT_MODE;
+    }
+    
+    @Override
+    protected EntityDataAccessor<Boolean> getGoingUpAccessor() {
+        return DATA_GOING_UP;
+    }
+    
+    @Override
+    protected EntityDataAccessor<Boolean> getGoingDownAccessor() {
+        return DATA_GOING_DOWN;
+    }
+    
+    @Override
+    protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
+        return DATA_ACCELERATING;
     }
 
     @Override
@@ -304,6 +354,43 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
             this.syncAnimState(s, getSyncedFlightMode());
         }
     }
+    
+    // ===== REQUIRED METHODS FROM RIDEABLEDRAGONBASE =====
+    
+    @Override
+    public boolean isRunning() {
+        return false; // Rift Drake doesn't have running state
+    }
+    
+    @Override
+    public void setRunning(boolean running) {
+        // Rift Drake doesn't have running state
+    }
+    
+    @Override
+    public boolean isDragonFlying() {
+        return false; // Rift Drake doesn't fly
+    }
+    
+    @Override
+    public boolean isHovering() {
+        return false; // Rift Drake doesn't hover
+    }
+    
+    @Override
+    public boolean isTakeoff() {
+        return false; // Rift Drake doesn't take off
+    }
+    
+    @Override
+    public boolean isLanding() {
+        return false; // Rift Drake doesn't land
+    }
+    
+    @Override
+    public int getFlightMode() {
+        return -1; // Ground mode
+    }
 
 
     public void handleJumpRequest() {
@@ -350,49 +437,7 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         }
     }
 
-    @Override
-    public void tickAnimationStates() {
-        if (level().isClientSide) {
-            return;
-        }
-
-        boolean ridden = this.getControllingPassenger() instanceof Player;
-        int moveState = 0;
-
-        if (this.isSwimming()) {
-            double speed = this.getDeltaMovement().horizontalDistanceSqr();
-            moveState = speed > 0.01D ? (this.isAccelerating() ? 2 : 1) : 0;
-        } else if (ridden) {
-            float fwd = this.entityData.get(DATA_RIDER_FORWARD);
-            float str = this.entityData.get(DATA_RIDER_STRAFE);
-
-            if (RideableDragonData.isSignificantRiderInput(fwd, str)) {
-                moveState = this.isAccelerating() ? 2 : 1;
-            } else {
-                double vel = this.getDeltaMovement().horizontalDistanceSqr();
-                moveState = RideableDragonData.getRiddenGroundStateFromVelocity(vel);
-            }
-        } else {
-            double vel = this.getDeltaMovement().horizontalDistanceSqr();
-            moveState = RideableDragonData.getGroundStateFromVelocity(vel);
-        }
-
-        if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
-            this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
-            this.syncAnimState(moveState, getSyncedFlightMode());
-        }
-
-        float forward = this.entityData.get(DATA_RIDER_FORWARD);
-        float strafe = this.entityData.get(DATA_RIDER_STRAFE);
-        if (forward != 0.0F || strafe != 0.0F) {
-            this.entityData.set(DATA_RIDER_FORWARD, RideableDragonData.decayRiderInput(forward));
-            this.entityData.set(DATA_RIDER_STRAFE, RideableDragonData.decayRiderInput(strafe));
-        }
-
-        if (this.isAccelerating() && moveState == 0) {
-            this.setAccelerating(false);
-        }
-    }
+    // Let RideableDragonBase handle tickAnimationStates() for proper networking
 
     @Override
     public void jumpFromGround() {
