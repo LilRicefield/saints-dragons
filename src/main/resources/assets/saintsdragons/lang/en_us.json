@@ -6,11 +6,13 @@
   "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
   "item.saintsdragons.primitive_drake_spawn_egg": "Primitive Drake Spawn Egg",
   "item.saintsdragons.amphithere_spawn_egg": "Amphithere Spawn Egg",
+  "item.saintsdragons.rift_drake_spawn_egg": "Rift Drake Spawn Egg",
   
   "entity.saintsdragons.lightning_dragon": "Lightning Dragon",
   "entity.saintsdragons.lightning_chain": "Lightning Chain",
   "entity.saintsdragons.primitive_drake": "Primitive Drake",
   "entity.saintsdragons.amphithere": "Amphithere",
+  "entity.saintsdragons.rift_drake": "Rift Drake",
   
   "saintsdragons.gui.dragon_ally.title": "Dragon Ally Management",
   "saintsdragons.gui.dragon_ally.username_input": "Enter username...",

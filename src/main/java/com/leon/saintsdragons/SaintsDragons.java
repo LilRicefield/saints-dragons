@@ -5,6 +5,7 @@ import com.leon.saintsdragons.client.renderer.amphithere.AmphithereRenderer;
 import com.leon.saintsdragons.client.renderer.lightningdragon.LightningChainRenderer;
 import com.leon.saintsdragons.client.renderer.lightningdragon.LightningDragonRenderer;
 import com.leon.saintsdragons.client.renderer.primitivedrake.PrimitiveDrakeRenderer;
+import com.leon.saintsdragons.client.renderer.riftdrake.RiftDrakeRenderer;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
@@ -14,6 +15,7 @@ import com.leon.saintsdragons.server.command.DragonAllyCommand;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -73,6 +75,7 @@ public class SaintsDragons {
         event.put(ModEntities.LIGHTNING_DRAGON.get(), LightningDragonEntity.createAttributes().build());
         event.put(ModEntities.PRIMITIVE_DRAKE.get(), PrimitiveDrakeEntity.createAttributes().build());
         event.put(ModEntities.AMPHITHERE.get(), AmphithereEntity.createAttributes().build());
+        event.put(ModEntities.RIFT_DRAKE.get(), RiftDrakeEntity.createAttributes().build());
     }
 
     private void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -80,6 +83,7 @@ public class SaintsDragons {
         event.registerEntityRenderer(ModEntities.LIGHTNING_CHAIN.get(), LightningChainRenderer::new);
         event.registerEntityRenderer(ModEntities.PRIMITIVE_DRAKE.get(), PrimitiveDrakeRenderer::new);
         event.registerEntityRenderer(ModEntities.AMPHITHERE.get(), AmphithereRenderer::new);
+        event.registerEntityRenderer(ModEntities.RIFT_DRAKE.get(), RiftDrakeRenderer::new);
     }
 
     private void onBuildCreativeTabContents(BuildCreativeModeTabContentsEvent event) {
@@ -87,6 +91,7 @@ public class SaintsDragons {
             event.accept(ModItems.LIGHTNING_DRAGON_SPAWN_EGG);
             event.accept(ModItems.PRIMITIVE_DRAKE_SPAWN_EGG);
             event.accept(ModItems.AMPHITHERE_SPAWN_EGG);
+            event.accept(ModItems.RIFT_DRAKE_SPAWN_EGG);
         }
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(ModItems.DRAGON_ALLY_BOOK);
@@ -118,6 +123,14 @@ public class SaintsDragons {
                 SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 AmphithereEntity::canSpawnHere,
+                SpawnPlacementRegisterEvent.Operation.AND
+        );
+
+        event.register(
+                ModEntities.RIFT_DRAKE.get(),
+                SpawnPlacements.Type.IN_WATER,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                RiftDrakeEntity::canSpawn,
                 SpawnPlacementRegisterEvent.Operation.AND
         );
     }
