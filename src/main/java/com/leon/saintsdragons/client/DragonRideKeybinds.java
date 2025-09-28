@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -110,6 +111,8 @@ public class DragonRideKeybinds {
             handleLightningControls(player, lightning);
         } else if (vehicle instanceof AmphithereEntity amphithere && amphithere.isTame() && amphithere.isOwnedBy(player)) {
             handleAmphithereControls(player, amphithere);
+        } else if (vehicle instanceof RiftDrakeEntity drake && drake.isTame() && drake.isOwnedBy(player)) {
+            handleRiftDrakeControls(player, drake);
         }
     }
 
@@ -247,6 +250,28 @@ public class DragonRideKeybinds {
         wasPrimaryAbilityDown = primaryDown;
         wasSecondaryAbilityDown = false;
         wasAttackDown = attackDown;
+    }
+
+    private static void handleRiftDrakeControls(LocalPlayer player, RiftDrakeEntity drake) {
+        boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
+        float forward = player.zza;
+        float strafe = player.xxa;
+        float yaw = player.getYRot();
+
+        DragonRiderAction accelerateAction = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
+        NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                new MessageDragonRideInput(false, false, accelerateAction, null, forward, strafe, yaw));
+
+        NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, forward, strafe, yaw));
+
+        boolean spaceDown = DRAGON_ASCEND.isDown();
+        if (spaceDown && !wasAscendPressed) {
+            NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
+                    new MessageDragonRideInput(false, false, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw));
+        }
+
+        wasAscendPressed = spaceDown;
     }
 }
 

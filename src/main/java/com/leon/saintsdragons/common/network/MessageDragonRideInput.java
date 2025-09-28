@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.network;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -60,6 +61,8 @@ public record MessageDragonRideInput(boolean goingUp,
                     handleLightningInput(msg, lightning);
                 } else if (vehicle instanceof AmphithereEntity amphithere && amphithere.isTame() && amphithere.isOwnedBy(player)) {
                     handleAmphithereInput(msg, amphithere);
+                } else if (vehicle instanceof RiftDrakeEntity drake && drake.isTame() && drake.isOwnedBy(player)) {
+                    handleRiftDrakeInput(msg, drake);
                 }
             }
         });
@@ -168,6 +171,31 @@ public record MessageDragonRideInput(boolean goingUp,
                 break;
             default:
                 break;
+        }
+    }
+
+    private static void handleRiftDrakeInput(MessageDragonRideInput msg, RiftDrakeEntity drake) {
+        drake.setGoingUp(false);
+        drake.setGoingDown(false);
+
+        float forward = Math.abs(msg.forward()) > 0.02f ? msg.forward() : 0f;
+        float strafe = Math.abs(msg.strafe()) > 0.02f ? msg.strafe() : 0f;
+        drake.setLastRiderForward(forward);
+        drake.setLastRiderStrafe(strafe);
+
+        int moveState = 0;
+        float magnitude = Math.abs(forward) + Math.abs(strafe);
+        if (magnitude > 0.05f) {
+            moveState = drake.isAccelerating() ? 2 : 1;
+        }
+        drake.setGroundMoveStateFromRider(moveState);
+
+        switch (msg.action()) {
+            case ACCELERATE -> drake.setAccelerating(true);
+            case STOP_ACCELERATE -> drake.setAccelerating(false);
+            case TAKEOFF_REQUEST -> drake.handleJumpRequest();
+            default -> {
+            }
         }
     }
 }
