@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.server.entity.effect.lightningdragon.LightningChainEntity;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -43,6 +44,14 @@ public class ModEntities {
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("amphithere"));
+
+    // ===== RIFT DRAKE =====
+    public static final RegistryObject<EntityType<RiftDrakeEntity>> RIFT_DRAKE =
+            REGISTER.register("rift_drake", () -> EntityType.Builder.of(RiftDrakeEntity::new, MobCategory.CREATURE)
+                    .sized(2.2F, 1.8F)
+                    .clientTrackingRange(48)
+                    .updateInterval(1)
+                    .build("rift_drake"));
 
     // ===== EFFECT ENTITIES =====
     public static final RegistryObject<EntityType<LightningChainEntity>> LIGHTNING_CHAIN =

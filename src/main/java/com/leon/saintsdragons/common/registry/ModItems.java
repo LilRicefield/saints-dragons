@@ -42,6 +42,15 @@ public final class ModItems {
                     )
             );
 
+    public static final RegistryObject<Item> RIFT_DRAKE_SPAWN_EGG =
+            REGISTER.register("rift_drake_spawn_egg",
+                    () -> new ForgeSpawnEggItem(
+                            ModEntities.RIFT_DRAKE,
+                            0x2C3E50, 0x16A085,
+                            new Item.Properties()
+                    )
+            );
+
     public static final RegistryObject<Item> DRAGON_ALLY_BOOK =
             REGISTER.register("dragon_ally_book",
                     () -> new DragonAllyBookItem(
