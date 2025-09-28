@@ -19,10 +19,13 @@ public class RiftDrakeAnimationHandler {
     }
 
     public PlayState movementPredicate(AnimationState<RiftDrakeEntity> state) {
-        if (drake.isSwimming()) {
-            state.setAnimation(state.isMoving() ? SWIM_MOVE : SWIM_IDLE);
+        boolean isSwimming = drake.isSwimming();
+        boolean isMoving = state.isMoving() || drake.getDeltaMovement().lengthSqr() > 0.001D;
+        
+        if (isSwimming) {
+            state.setAnimation(isMoving ? SWIM_MOVE : SWIM_IDLE);
         } else {
-            state.setAnimation(state.isMoving() ? WALK : IDLE);
+            state.setAnimation(isMoving ? WALK : IDLE);
         }
         return PlayState.CONTINUE;
     }
