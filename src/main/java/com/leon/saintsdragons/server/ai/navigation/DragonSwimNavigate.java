@@ -29,7 +29,10 @@ public class DragonSwimNavigate extends net.minecraft.world.entity.ai.navigation
 
     @Override
     public boolean isStableDestination(net.minecraft.core.BlockPos pos) {
-        return !this.level.getBlockState(pos.below()).isAir();
+        // For swimming dragons, only consider positions underwater as stable
+        // This prevents them from trying to surface and bob up and down
+        return this.level.getFluidState(pos).isSource() || 
+               this.level.getFluidState(pos.below()).isSource();
     }
 }
 

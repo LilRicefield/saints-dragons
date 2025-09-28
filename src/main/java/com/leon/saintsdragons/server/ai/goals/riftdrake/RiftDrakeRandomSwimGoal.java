@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers;
+package com.leon.saintsdragons.server.ai.goals.riftdrake;
 
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import net.minecraft.tags.FluidTags;
@@ -23,10 +23,26 @@ public class RiftDrakeRandomSwimGoal extends RandomStrollGoal {
 
     @Override
     public boolean canUse() {
-        if (!drake.isSwimming() || drake.isPassenger() || drake.getTarget() != null) {
+        if (this.drake.isVehicle() || this.drake.isPassenger() || this.drake.getTarget() != null || 
+            !this.drake.isInWater() && !this.drake.shouldEnterWater()) {
             return false;
+        } else {
+            if (!this.forceTrigger) {
+                if (this.drake.getRandom().nextInt(this.interval) != 0) {
+                    return false;
+                }
+            }
+            Vec3 vector3d = this.getPosition();
+            if (vector3d == null) {
+                return false;
+            } else {
+                this.wantedX = vector3d.x;
+                this.wantedY = vector3d.y;
+                this.wantedZ = vector3d.z;
+                this.forceTrigger = false;
+                return true;
+            }
         }
-        return super.canUse();
     }
 
     @Nullable
