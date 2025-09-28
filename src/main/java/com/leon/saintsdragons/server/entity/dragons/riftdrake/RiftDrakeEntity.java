@@ -4,10 +4,10 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimNavigate;
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeAnimationHandler;
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeFindWaterGoal;
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeLeaveWaterGoal;
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeRandomSwimGoal;
+import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeFindWaterGoal;
+import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeLeaveWaterGoal;
+import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeRandomSwimGoal;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.*;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
@@ -18,7 +18,6 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MoverType;
@@ -44,9 +43,11 @@ import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
+import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 
 public class RiftDrakeEntity extends DragonEntity implements RideableDragon, AquaticDragon {
 
+    private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
@@ -95,6 +96,7 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
         this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
         this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
         this.entityData.define(DATA_ACCELERATING, false);
@@ -162,11 +164,54 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
             } else if (!inWater && swimming) {
                 exitSwimState();
             }
+
+            this.tickAnimationStates();
         }
     }
 
     @Override
     public void travel(@NotNull Vec3 motion) {
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player rider) {
+            if (this.getNavigation().getPath() != null) {
+                this.getNavigation().stop();
+            }
+
+            Vec3 input = this.getRiddenInput(rider, motion);
+            double forward = input.z;
+            double strafe = input.x;
+            float speed = this.getRiddenSpeed(rider);
+
+            float yaw = rider.getYRot();
+            this.setYRot(yaw);
+            this.yBodyRot = yaw;
+            this.yHeadRot = yaw;
+            if (!this.isInWater()) {
+                this.setXRot(0.0F);
+            }
+
+            if (this.isInWater()) {
+                Vec3 delta = this.getDeltaMovement();
+                Vec3 thrust = new Vec3(strafe * speed, 0.0D, forward * speed);
+
+                Vec3 rotated = Vec3.directionFromRotation(0.0F, this.getYRot());
+                Vec3 right = new Vec3(rotated.z, 0.0D, -rotated.x);
+                Vec3 forwardVec = new Vec3(rotated.x, 0.0D, rotated.z).normalize();
+                Vec3 desired = forwardVec.scale(thrust.z).add(right.scale(thrust.x));
+
+                Vec3 next = delta.add(desired).add(0.0D, 0, 0.0D);
+                double max = this.getSwimSpeed();
+                if (next.lengthSqr() > max * max) {
+                    next = next.normalize().scale(max);
+                }
+                this.setDeltaMovement(next);
+                this.move(MoverType.SELF, this.getDeltaMovement());
+                this.setDeltaMovement(this.getDeltaMovement().scale(0.91D));
+            } else {
+                this.setSpeed(speed);
+                super.travel(new Vec3(strafe, motion.y, forward));
+            }
+            return;
+        }
         if (this.isInWater()) {
             this.moveRelative(this.getSpeed(), motion);
             this.move(MoverType.SELF, this.getDeltaMovement());
@@ -193,12 +238,14 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
 
     @Override
     public void onEnterWater() {
-        this.setDeltaMovement(this.getDeltaMovement().add(getBuoyancyVector()));
+        this.setDeltaMovement(this.getDeltaMovement());
+        this.tickAnimationStates();
     }
 
     @Override
     public void onExitWater() {
         this.setDeltaMovement(this.getDeltaMovement().multiply(1.0D, 0.6D, 1.0D));
+        this.tickAnimationStates();
     }
 
     @Override
@@ -216,14 +263,21 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         this.entityData.set(DATA_RIDER_STRAFE, strafe);
     }
 
+    public float getLastRiderForward() {
+        return this.entityData.get(DATA_RIDER_FORWARD);
+    }
+
+    public float getLastRiderStrafe() {
+        return this.entityData.get(DATA_RIDER_STRAFE);
+    }
+
     @Override
     public boolean isAccelerating() {
         return this.entityData.get(DATA_ACCELERATING);
     }
 
-    @Override
     public int getGroundMoveState() {
-        return 0;
+        return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
 
     @Override
@@ -231,9 +285,8 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         return -1;
     }
 
-    @Override
     public int getEffectiveGroundState() {
-        return 0;
+        return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
 
     @Override
@@ -241,54 +294,125 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         this.entityData.set(DATA_ACCELERATING, accelerating);
     }
 
-    @Override
-    public int getMaxAirSupply() {
-        return 600;
-    }
-
-    @Override
-    public boolean canBreatheUnderwater() {
-        return true;
-    }
-
-    @Override
-    public double getSwimSpeed() {
-        return 0.28D;
-    }
-
-    @Override
-    public Vec3 getBuoyancyVector() {
-        return new Vec3(0.0D, 0.03D, 0.0D);
-    }
-
-    @Override
-    public boolean hurt(@NotNull DamageSource source, float amount) {
-        return super.hurt(source, amount);
-    }
-
-    @Nullable
-    @Override
-    public Vec3 getDismountLocationForPassenger(@NotNull net.minecraft.world.entity.LivingEntity passenger) {
-        Vec3 dismount = super.getDismountLocationForPassenger(passenger);
-        if (dismount != null) {
-            return dismount;
+    public void setGroundMoveStateFromRider(int state) {
+        int s = Mth.clamp(state, 0, 2);
+        if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
+            this.entityData.set(DATA_GROUND_MOVE_STATE, s);
+            this.syncAnimState(s, getSyncedFlightMode());
         }
-        return this.position().add(1.0D, 0.0D, 0.0D);
+    }
+
+    public void handleJumpRequest() {
+        if (this.isInWater()) {
+            Vec3 jump = new Vec3(0.0D, 0.42D, 0.0D);
+            this.setDeltaMovement(this.getDeltaMovement().add(jump));
+            this.hasImpulse = true;
+        } else if (this.onGround()) {
+            Vec3 movement = this.getDeltaMovement();
+            this.setDeltaMovement(movement.x, 0.42D, movement.z);
+            this.hasImpulse = true;
+        }
     }
 
     @Override
     public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
-        return super.getRiddenInput(player, deltaIn);
+        Vec3 input = super.getRiddenInput(player, deltaIn);
+        if (!level().isClientSide) {
+            float fwd = (float) Mth.clamp(input.z, -1.0D, 1.0D);
+            float str = (float) Mth.clamp(input.x, -1.0D, 1.0D);
+            setLastRiderForward(RideableDragonData.applyInputThreshold(fwd));
+            setLastRiderStrafe(RideableDragonData.applyInputThreshold(str));
+        }
+        return input;
+    }
+
+    @Override
+    protected float getRiddenSpeed(@NotNull Player rider) {
+        float base = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
+        float swim = (float) this.getSwimSpeed();
+        if (this.isInWater()) {
+            return this.isAccelerating() ? swim * 1.2F : swim;
+        }
+        return this.isAccelerating() ? base * 1.4F : base * 0.75F;
     }
 
     @Override
     public void removePassenger(@NotNull net.minecraft.world.entity.Entity passenger) {
         super.removePassenger(passenger);
+        if (!this.level().isClientSide) {
+            this.setAccelerating(false);
+            this.setLastRiderForward(0.0F);
+            this.setLastRiderStrafe(0.0F);
+            this.setGroundMoveStateFromRider(0);
+        }
     }
 
     @Override
     public void tickAnimationStates() {
-        // TODO: implement animation states
+        if (level().isClientSide) {
+            return;
+        }
+
+        boolean ridden = this.getControllingPassenger() instanceof Player;
+        int moveState = 0;
+
+        if (this.isSwimming()) {
+            double speed = this.getDeltaMovement().horizontalDistanceSqr();
+            moveState = speed > 0.01D ? (this.isAccelerating() ? 2 : 1) : 0;
+        } else if (ridden) {
+            float fwd = this.entityData.get(DATA_RIDER_FORWARD);
+            float str = this.entityData.get(DATA_RIDER_STRAFE);
+
+            if (RideableDragonData.isSignificantRiderInput(fwd, str)) {
+                moveState = this.isAccelerating() ? 2 : 1;
+            } else {
+                double vel = this.getDeltaMovement().horizontalDistanceSqr();
+                moveState = RideableDragonData.getRiddenGroundStateFromVelocity(vel);
+            }
+        } else {
+            double vel = this.getDeltaMovement().horizontalDistanceSqr();
+            moveState = RideableDragonData.getGroundStateFromVelocity(vel);
+        }
+
+        if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
+            this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
+            this.syncAnimState(moveState, getSyncedFlightMode());
+        }
+
+        float forward = this.entityData.get(DATA_RIDER_FORWARD);
+        float strafe = this.entityData.get(DATA_RIDER_STRAFE);
+        if (forward != 0.0F || strafe != 0.0F) {
+            this.entityData.set(DATA_RIDER_FORWARD, RideableDragonData.decayRiderInput(forward));
+            this.entityData.set(DATA_RIDER_STRAFE, RideableDragonData.decayRiderInput(strafe));
+        }
+
+        if (this.isAccelerating() && moveState == 0) {
+            this.setAccelerating(false);
+        }
+    }
+
+    @Override
+    public void jumpFromGround() {
+        super.jumpFromGround();
+        this.setGroundMoveStateFromRider(1);
+    }
+
+    @Override
+    public void syncAnimState(int groundState, int flightMode) {
+        if (level().isClientSide) {
+            return;
+        }
+        this.setAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.GROUND_STATE, groundState);
+        this.setAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.FLIGHT_MODE, flightMode);
+    }
+
+    public void initializeRiderState() {
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_GROUND_MOVE_STATE, 0);
+            this.entityData.set(DATA_RIDER_FORWARD, 0.0F);
+            this.entityData.set(DATA_RIDER_STRAFE, 0.0F);
+            this.setAccelerating(false);
+        }
     }
 
     @Override

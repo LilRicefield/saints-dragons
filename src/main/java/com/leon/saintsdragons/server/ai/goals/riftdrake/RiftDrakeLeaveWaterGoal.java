@@ -1,12 +1,12 @@
-package com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers;
+package com.leon.saintsdragons.server.ai.goals.riftdrake;
 
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
-import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 
 import java.util.EnumSet;
 
@@ -14,6 +14,7 @@ public class RiftDrakeLeaveWaterGoal extends Goal {
 
     private final RiftDrakeEntity drake;
     private Vec3 targetPos;
+    private final int executionChance = 30;
 
     public RiftDrakeLeaveWaterGoal(RiftDrakeEntity drake) {
         this.drake = drake;
@@ -22,11 +23,15 @@ public class RiftDrakeLeaveWaterGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!drake.isInWater() || drake.getAirSupply() > drake.getMaxAirSupply() - 40) {
-            return false;
+        // Only leave water when in water and should leave
+        if (this.drake.level().getFluidState(this.drake.blockPosition()).is(FluidTags.WATER) && 
+            (this.drake.getTarget() != null || this.drake.getRandom().nextInt(executionChance) == 0)) {
+            if (this.drake.shouldLeaveWater()) {
+                targetPos = generateTarget();
+                return targetPos != null;
+            }
         }
-        targetPos = generateTarget();
-        return targetPos != null;
+        return false;
     }
 
     @Override
@@ -41,15 +46,21 @@ public class RiftDrakeLeaveWaterGoal extends Goal {
         if (targetPos != null) {
             drake.getNavigation().moveTo(targetPos.x, targetPos.y, targetPos.z, 1.0D);
         }
+        // Help with getting out of water when hitting walls
+        if (this.drake.horizontalCollision && this.drake.isInWater()) {
+            final float f1 = drake.getYRot() * Mth.DEG_TO_RAD;
+            drake.setDeltaMovement(drake.getDeltaMovement().add(-Mth.sin(f1) * 0.2F, 0.1D, Mth.cos(f1) * 0.2F));
+        }
     }
 
     @Override
     public boolean canContinueToUse() {
-        if (drake.getAirSupply() > drake.getMaxAirSupply() - 40) {
-            drake.getNavigation().stop();
+        // Stop if we no longer should leave water
+        if (!this.drake.shouldLeaveWater()) {
+            this.drake.getNavigation().stop();
             return false;
         }
-        return targetPos != null && drake.isInWater() && !drake.getNavigation().isDone();
+        return !this.drake.getNavigation().isDone() && targetPos != null && !this.drake.level().getFluidState(BlockPos.containing(targetPos)).is(FluidTags.WATER);
     }
 
     private Vec3 generateTarget() {
