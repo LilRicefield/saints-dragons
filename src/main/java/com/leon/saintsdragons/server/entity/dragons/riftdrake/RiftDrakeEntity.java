@@ -1,6 +1,9 @@
 package com.leon.saintsdragons.server.entity.dragons.riftdrake;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.DragonSwimMoveControl;
+import com.leon.saintsdragons.server.ai.navigation.DragonSwimNavigate;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeWaterWanderGoal;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
@@ -19,12 +22,14 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.control.LookControl;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.ai.control.SmoothSwimmingLookControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -46,19 +51,31 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final DragonKeybindHandler keybindHandler = new DragonKeybindHandler(this);
     private final RiftDrakeAnimationHandler animationHandler = new RiftDrakeAnimationHandler(this);
-    private final WaterBoundPathNavigation waterNavigation;
     private final PathNavigation groundNavigation;
+    private final DragonSwimNavigate waterNavigation;
+    private final MoveControl landMoveControl;
+    private final DragonSwimMoveControl swimMoveControl;
+    private final LookControl landLookControl;
+    private final SmoothSwimmingLookControl swimLookControl;
     private RiftDrakeWaterWanderGoal waterWanderGoal;
     private boolean swimming;
     private int swimTicks;
+    @Nullable
+    private Vec3 activeSwimTarget;
 
     public RiftDrakeEntity(EntityType<? extends RiftDrakeEntity> type, Level level) {
         super(type, level);
         this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
-        this.groundNavigation = super.getNavigation();
-        this.waterNavigation = new WaterBoundPathNavigation(this, level);
-        this.moveControl = new RiftDrakeMoveControl(this);
+        this.groundNavigation = new DragonPathNavigateGround(this, level);
+        this.waterNavigation = new DragonSwimNavigate(this, level);
+        this.landMoveControl = new RiftDrakeMoveControl(this);
+        this.swimMoveControl = new DragonSwimMoveControl(this, 6.0F, 0.08D, 0.12D);
+        this.landLookControl = new LookControl(this);
+        this.swimLookControl = new SmoothSwimmingLookControl(this, 10);
+        this.navigation = this.groundNavigation;
+        this.moveControl = this.landMoveControl;
+        this.lookControl = this.landLookControl;
         this.setRideable(true);
     }
 
@@ -127,9 +144,12 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
             } else {
                 swimTicks = Math.max(swimTicks - 1, 0);
             }
-            if (inWater && !swimming) {
+            
+            // More sophisticated swimming detection
+            boolean shouldBeSwimming = inWater && swimTicks > 10; // Need to be in water for a bit
+            if (shouldBeSwimming && !swimming) {
                 enterSwimState();
-            } else if (!inWater && swimming) {
+            } else if (!shouldBeSwimming && swimming) {
                 exitSwimState();
             }
         }
@@ -138,11 +158,30 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     @Override
     public void travel(@NotNull Vec3 motion) {
         if (this.isInWater()) {
-            Vec3 adjusted = new Vec3(motion.x, motion.y * 0.5, motion.z);
-            this.moveRelative(0.08F, adjusted);
-            this.move(MoverType.SELF, this.getDeltaMovement());
-            Vec3 delta = this.getDeltaMovement().scale(0.9D).add(getBuoyancyVector().scale(0.5D));
+            boolean controlled = this.isControlledByLocalInstance();
+            Vec3 adjusted = new Vec3(motion.x, motion.y * 0.5D, motion.z);
+            if (controlled) {
+                this.moveRelative(0.05F, adjusted);
+            }
+
+            Vec3 delta = this.getDeltaMovement();
+            Vec3 target = activeSwimTarget;
+            if (target != null) {
+                double verticalDiff = target.y - this.getY();
+                double clamp = Mth.clamp(verticalDiff * 0.04D, -0.06D, 0.06D);
+                delta = delta.add(0.0D, clamp, 0.0D);
+            }
+
+            Vec3 buoyancy = getBuoyancyVector();
+            if (delta.lengthSqr() < 0.004D) {
+                delta = delta.add(buoyancy.scale(0.6D));
+            } else {
+                delta = delta.add(buoyancy.scale(0.2D));
+            }
+
             this.setDeltaMovement(delta);
+            this.move(MoverType.SELF, this.getDeltaMovement());
+            this.setDeltaMovement(this.getDeltaMovement().scale(controlled ? 0.9D : 0.92D));
         } else {
             super.travel(motion);
         }
@@ -150,7 +189,7 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
 
     @Override
     public PathNavigation getNavigation() {
-        return this.isInWater() ? waterNavigation : super.getNavigation();
+        return swimming ? waterNavigation : groundNavigation;
     }
 
     @Override
@@ -285,6 +324,8 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     private void enterSwimState() {
         swimming = true;
         this.navigation = waterNavigation;
+        this.moveControl = swimMoveControl;
+        this.lookControl = swimLookControl;
         if (waterWanderGoal != null) {
             waterWanderGoal.setActive(true);
         }
@@ -293,15 +334,32 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     private void exitSwimState() {
         swimming = false;
         this.navigation = groundNavigation;
+        this.moveControl = landMoveControl;
+        this.lookControl = landLookControl;
+        this.waterNavigation.stop();
         if (waterWanderGoal != null) {
             waterWanderGoal.setActive(false);
         }
+        clearSwimmingTarget();
         Vec3 delta = this.getDeltaMovement();
         this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
     }
 
     public boolean isSwimming() {
         return swimming;
+    }
+
+    public void setSwimmingTarget(@Nullable Vec3 target) {
+        this.activeSwimTarget = target;
+    }
+
+    public void clearSwimmingTarget() {
+        this.activeSwimTarget = null;
+    }
+
+    @Nullable
+    public Vec3 getSwimmingTarget() {
+        return activeSwimTarget;
     }
 
     private static class RiftDrakeMoveControl extends MoveControl {
@@ -314,9 +372,6 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
 
         @Override
         public void tick() {
-            if (drake.isInWater()) {
-                drake.setDeltaMovement(drake.getDeltaMovement().add(drake.getBuoyancyVector().scale(0.2D)));
-            }
             super.tick();
         }
     }

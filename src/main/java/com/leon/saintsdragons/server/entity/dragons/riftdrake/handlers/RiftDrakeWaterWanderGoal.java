@@ -12,6 +12,8 @@ public class RiftDrakeWaterWanderGoal extends Goal {
     private final double speedModifier;
     private final int interval;
     private boolean active;
+    private Vec3 targetPosition;
+    private int cooldown;
 
     public RiftDrakeWaterWanderGoal(RiftDrakeEntity drake, double speedModifier, int interval) {
         this.drake = drake;
@@ -27,16 +29,46 @@ public class RiftDrakeWaterWanderGoal extends Goal {
     @Override
     public boolean canUse() {
         if (!active || !drake.isInWater()) return false;
+        if (cooldown > 0) {
+            cooldown--;
+            return false;
+        }
         if (drake.getRandom().nextInt(interval) != 0) return false;
         Vec3 target = findSwimTarget();
         if (target == null) return false;
-        drake.getNavigation().moveTo(target.x, target.y, target.z, speedModifier);
+        this.targetPosition = target;
         return true;
     }
 
     @Override
     public boolean canContinueToUse() {
-        return drake.isInWater() && !drake.getNavigation().isDone();
+        return active && drake.isInWater() && targetPosition != null &&
+               !drake.getNavigation().isDone();
+    }
+
+    @Override
+    public void start() {
+        if (targetPosition != null) {
+            drake.getNavigation().moveTo(targetPosition.x, targetPosition.y, targetPosition.z, speedModifier);
+            drake.setSwimmingTarget(targetPosition);
+        }
+    }
+
+    @Override
+    public void tick() {
+        if (targetPosition != null && drake.isInWater()) {
+            drake.getNavigation().moveTo(targetPosition.x, targetPosition.y, targetPosition.z, speedModifier);
+            drake.setSwimmingTarget(targetPosition);
+            drake.getLookControl().setLookAt(targetPosition.x, targetPosition.y, targetPosition.z, 10.0F, drake.getMaxHeadXRot());
+        }
+    }
+
+    @Override
+    public void stop() {
+        targetPosition = null;
+        cooldown = drake.getRandom().nextInt(40) + 20; // 1-3 second cooldown
+        drake.getNavigation().stop();
+        drake.clearSwimmingTarget();
     }
 
     private Vec3 findSwimTarget() {
