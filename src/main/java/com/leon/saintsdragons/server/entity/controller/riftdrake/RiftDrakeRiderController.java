@@ -65,20 +65,26 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
         
         // Clear target when being ridden to prevent AI interference
         dragon.setTarget(null);
-
-        // Make dragon responsive to player look direction
-        float targetYaw = player.getYRot();
-        float currentYaw = dragon.getYRot();
-        float yawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-        float newYaw = currentYaw + (yawDiff * 0.9f); // 90% instant response for ground movement
-        dragon.setYRot(newYaw);
-
-        // Reset pitch for ground-based dragon
-        dragon.setXRot(0.0F);
-
-        // Update body and head rotation
-        dragon.yBodyRot = newYaw;
-        dragon.yHeadRot = newYaw;
+        
+        // Make dragon responsive to player look direction - use conditional like other dragons
+        float yawDiff = Math.abs(player.getYRot() - dragon.getYRot());
+        if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
+            float currentYaw = dragon.getYRot();
+            float targetYaw = player.getYRot();
+            float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
+            float newYaw = currentYaw + (rawDiff * 0.9f); // 90% instant response for ground movement
+            
+            // Set rotation
+            dragon.setYRot(newYaw);
+            dragon.setXRot(0.0F);
+            
+            // Force entity to be dirty for network sync
+            dragon.setDeltaMovement(dragon.getDeltaMovement());
+            
+            // Update body and head rotation
+            dragon.yBodyRot = newYaw;
+            dragon.yHeadRot = newYaw;
+        }
     }
 
     /**
