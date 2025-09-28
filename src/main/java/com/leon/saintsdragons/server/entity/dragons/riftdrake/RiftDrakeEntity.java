@@ -31,7 +31,6 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
-import net.minecraft.world.entity.ai.control.SmoothSwimmingLookControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
@@ -71,8 +70,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private final DragonSwimNavigate waterNavigation;
     private final MoveControl landMoveControl;
     private final DragonSwimMoveControl swimMoveControl;
-    private final LookControl landLookControl;
-    private final SmoothSwimmingLookControl swimLookControl;
+    private final RiftDrakeLookController landLookControl;
     private RiftDrakeRandomSwimGoal waterSwimGoal;
     private boolean swimming;
     private int swimTicks;
@@ -87,8 +85,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.waterNavigation = new DragonSwimNavigate(this, level);
         this.landMoveControl = new RiftDrakeMoveControl(this);
         this.swimMoveControl = new DragonSwimMoveControl(this, 6.0F, 0.08D, 0.12D);
-        this.landLookControl = new LookControl(this);
-        this.swimLookControl = new SmoothSwimmingLookControl(this, 10);
+        this.landLookControl = new RiftDrakeLookController(this);
         this.navigation = this.groundNavigation;
         this.moveControl = this.landMoveControl;
         this.lookControl = this.landLookControl;
@@ -219,6 +216,11 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                 enterSwimState();
             } else if (!inWater && swimming) {
                 exitSwimState();
+            }
+
+            // Ensure proper look control when being ridden
+            if (this.getControllingPassenger() != null && this.lookControl != landLookControl) {
+                this.lookControl = landLookControl;
             }
 
             this.tickAnimationStates();
@@ -509,7 +511,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         swimming = true;
         this.navigation = waterNavigation;
         this.moveControl = swimMoveControl;
-        this.lookControl = swimLookControl;
+        
         this.entityData.set(DATA_SWIMMING, true);
         if (waterSwimGoal != null) {
             waterSwimGoal.forceTrigger();
@@ -520,7 +522,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         swimming = false;
         this.navigation = groundNavigation;
         this.moveControl = landMoveControl;
-        this.lookControl = landLookControl;
+        this.lookControl = landLookControl; // Always use land look control when exiting water
         this.waterNavigation.stop();
         Vec3 delta = this.getDeltaMovement();
         this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
@@ -571,6 +573,23 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         @Override
         public void tick() {
             super.tick();
+        }
+    }
+
+    // ===== LOOK CONTROLLER =====
+    public static class RiftDrakeLookController extends LookControl {
+        private final RiftDrakeEntity dragon;
+
+        public RiftDrakeLookController(RiftDrakeEntity dragon) {
+            super(dragon);
+            this.dragon = dragon;
+        }
+
+        @Override
+        public void tick() {
+            if (this.dragon.isAlive()) {
+                super.tick();
+            }
         }
     }
 }
