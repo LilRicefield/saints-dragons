@@ -321,7 +321,7 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     }
 
     @Override
-    public @NotNull Vec3 getRiddenInput(Player player, Vec3 deltaIn) {
+    public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
         Vec3 input = riderController.getRiddenInput(player, deltaIn);
         
         // Capture rider inputs for animation state
@@ -340,7 +340,7 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     }
 
     @Override
-    public void removePassenger(Entity passenger) {
+    public void removePassenger(@NotNull Entity passenger) {
         super.removePassenger(passenger);
         if (!this.level().isClientSide) {
             this.setAccelerating(false);
