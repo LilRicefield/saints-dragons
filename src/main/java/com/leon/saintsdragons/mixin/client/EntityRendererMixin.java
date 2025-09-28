@@ -2,6 +2,7 @@ package com.leon.saintsdragons.mixin.client;
 
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -24,7 +25,7 @@ public class EntityRendererMixin {
     private void modifyFOV(Camera camera, float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Double> cir) {
         Minecraft mc = Minecraft.getInstance();
         double targetFOVMultiplier = 1.0;
-        if (mc.player != null && (mc.player.getVehicle() instanceof LightningDragonEntity dragon || mc.player.getVehicle() instanceof AmphithereEntity amphithere)) {
+        if (mc.player != null && (mc.player.getVehicle() instanceof LightningDragonEntity dragon || mc.player.getVehicle() instanceof AmphithereEntity amphithere || mc.player.getVehicle() instanceof RiftDrakeEntity riftDrake)) {
             // Calculate target FOV multiplier based on dragon sprint state
             boolean isAccelerating = false;
             boolean isFlying = false;
@@ -60,6 +61,15 @@ public class EntityRendererMixin {
                         currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
                         maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.6; // Ground sprint multiplier
                     }
+                }
+            } else if (mc.player.getVehicle() instanceof RiftDrakeEntity riftDrakeDragon) {
+                isAccelerating = riftDrakeDragon.isAccelerating();
+                isFlying = false; // Rift Drake doesn't fly
+                
+                if (isAccelerating) {
+                    // Ground sprint - use movement speed attributes
+                    currentSpeed = riftDrakeDragon.getDeltaMovement().horizontalDistance();
+                    maxSpeed = riftDrakeDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 1.0; // Ground sprint multiplier
                 }
             }
             

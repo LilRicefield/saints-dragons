@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.event;
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -31,6 +32,10 @@ public class ClientEventHandler {
 
         if (player.isPassenger() && player.getVehicle() instanceof AmphithereEntity && event.getCamera().isDetached()) {
             event.getCamera().move(-event.getCamera().getMaxZoom(25F), 0, 0);
+        }
+
+        if (player.isPassenger() && player.getVehicle() instanceof RiftDrakeEntity && event.getCamera().isDetached()) {
+            event.getCamera().move(-event.getCamera().getMaxZoom(15F), 0, 0);
         }
         
         // Screen shake detection and application

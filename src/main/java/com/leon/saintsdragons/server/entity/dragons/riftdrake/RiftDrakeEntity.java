@@ -12,15 +12,18 @@ import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
 import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
+import com.leon.saintsdragons.server.entity.controller.riftdrake.RiftDrakeRiderController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.BreathAirGoal;
@@ -31,7 +34,6 @@ import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.control.SmoothSwimmingLookControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -39,6 +41,7 @@ import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
@@ -57,6 +60,8 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final DragonKeybindHandler keybindHandler = new DragonKeybindHandler(this);
     private final RiftDrakeAnimationHandler animationHandler = new RiftDrakeAnimationHandler(this);
+    private final RiftDrakeInteractionHandler interactionHandler = new RiftDrakeInteractionHandler(this);
+    private final RiftDrakeRiderController riderController;
     private final PathNavigation groundNavigation;
     private final DragonSwimNavigate waterNavigation;
     private final MoveControl landMoveControl;
@@ -82,11 +87,12 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         this.navigation = this.groundNavigation;
         this.moveControl = this.landMoveControl;
         this.lookControl = this.landLookControl;
+        this.riderController = new RiftDrakeRiderController(this);
         this.setRideable(true);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return DragonEntity.createDragonAttributes()
+        return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 140.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.28D)
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
@@ -171,63 +177,37 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
 
     @Override
     public void travel(@NotNull Vec3 motion) {
-        if (this.isVehicle() && this.getControllingPassenger() instanceof Player rider) {
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            // Clear any AI navigation when being ridden
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
             }
 
-            Vec3 input = this.getRiddenInput(rider, motion);
-            double forward = input.z;
-            double strafe = input.x;
-            float speed = this.getRiddenSpeed(rider);
+            // Update rider tick state (rotation, etc.)
+            this.riderController.tickRidden(player, motion);
 
-            float yaw = rider.getYRot();
-            this.setYRot(yaw);
-            this.yBodyRot = yaw;
-            this.yHeadRot = yaw;
-            if (!this.isInWater()) {
-                this.setXRot(0.0F);
-            }
-
-            if (this.isInWater()) {
-                Vec3 delta = this.getDeltaMovement();
-                Vec3 thrust = new Vec3(strafe * speed, 0.0D, forward * speed);
-
-                Vec3 rotated = Vec3.directionFromRotation(0.0F, this.getYRot());
-                Vec3 right = new Vec3(rotated.z, 0.0D, -rotated.x);
-                Vec3 forwardVec = new Vec3(rotated.x, 0.0D, rotated.z).normalize();
-                Vec3 desired = forwardVec.scale(thrust.z).add(right.scale(thrust.x));
-
-                Vec3 next = delta.add(desired).add(0.0D, 0, 0.0D);
-                double max = this.getSwimSpeed();
-                if (next.lengthSqr() > max * max) {
-                    next = next.normalize().scale(max);
-                }
-                this.setDeltaMovement(next);
-                this.move(MoverType.SELF, this.getDeltaMovement());
-                this.setDeltaMovement(this.getDeltaMovement().scale(0.91D));
-            } else {
-                this.setSpeed(speed);
-                super.travel(new Vec3(strafe, motion.y, forward));
-            }
-            return;
-        }
-        if (this.isInWater()) {
-            this.moveRelative(this.getSpeed(), motion);
-            this.move(MoverType.SELF, this.getDeltaMovement());
-            Vec3 delta = this.getDeltaMovement();
-            float drag = this.isControlledByLocalInstance() ? 0.9F : 0.92F;
-            this.setDeltaMovement(delta.multiply(drag, 0.9D, drag));
-            if (this.getTarget() == null) {
-                this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.005D, 0.0D));
-            }
-        } else {
+            // Use vanilla movement system for proper camera-relative movement
+            // This will call getRiddenInput() and getRiddenSpeed() properly
             super.travel(motion);
+        } else {
+            // Normal AI movement
+            if (this.isInWater()) {
+                this.moveRelative(this.getSpeed(), motion);
+                this.move(MoverType.SELF, this.getDeltaMovement());
+                Vec3 delta = this.getDeltaMovement();
+                float drag = this.isControlledByLocalInstance() ? 0.9F : 0.92F;
+                this.setDeltaMovement(delta.multiply(drag, 0.9D, drag));
+                if (this.getTarget() == null) {
+                    this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.005D, 0.0D));
+                }
+            } else {
+                super.travel(motion);
+            }
         }
     }
 
     @Override
-    public PathNavigation getNavigation() {
+    public @NotNull PathNavigation getNavigation() {
         return swimming ? waterNavigation : groundNavigation;
     }
 
@@ -249,8 +229,31 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     }
 
     @Override
-    public InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+    public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+
+        // Use interaction handler for all interactions
+        InteractionResult handlerResult = interactionHandler.handleInteraction(player, hand);
+        if (handlerResult != InteractionResult.PASS) {
+            return handlerResult;
+        }
+
+        // Fall back to base implementation for any unhandled interactions
         return super.mobInteract(player, hand);
+    }
+    
+    /**
+     * Allow interaction handler to call super.mobInteract
+     */
+    public InteractionResult superMobInteract(Player player, InteractionHand hand) {
+        return super.mobInteract(player, hand);
+    }
+    
+    @Override
+    public boolean isFood(@Nonnull net.minecraft.world.item.ItemStack stack) {
+        // Rift Drakes prefer fish like other dragons
+        return stack.is(net.minecraft.world.item.Items.COD) || 
+               stack.is(net.minecraft.world.item.Items.SALMON) || 
+               stack.is(net.minecraft.world.item.Items.TROPICAL_FISH);
     }
 
     @Override
@@ -302,12 +305,15 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         }
     }
 
+
     public void handleJumpRequest() {
         if (this.isInWater()) {
-            Vec3 jump = new Vec3(0.0D, 0.42D, 0.0D);
+            // Enhanced water jump - more powerful for aquatic creature
+            Vec3 jump = new Vec3(0.0D, 0.6D, 0.0D);
             this.setDeltaMovement(this.getDeltaMovement().add(jump));
             this.hasImpulse = true;
         } else if (this.onGround()) {
+            // Ground jump - standard jump height
             Vec3 movement = this.getDeltaMovement();
             this.setDeltaMovement(movement.x, 0.42D, movement.z);
             this.hasImpulse = true;
@@ -315,8 +321,10 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     }
 
     @Override
-    public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
-        Vec3 input = super.getRiddenInput(player, deltaIn);
+    public @NotNull Vec3 getRiddenInput(Player player, Vec3 deltaIn) {
+        Vec3 input = riderController.getRiddenInput(player, deltaIn);
+        
+        // Capture rider inputs for animation state
         if (!level().isClientSide) {
             float fwd = (float) Mth.clamp(input.z, -1.0D, 1.0D);
             float str = (float) Mth.clamp(input.x, -1.0D, 1.0D);
@@ -327,17 +335,12 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     }
 
     @Override
-    protected float getRiddenSpeed(@NotNull Player rider) {
-        float base = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
-        float swim = (float) this.getSwimSpeed();
-        if (this.isInWater()) {
-            return this.isAccelerating() ? swim * 1.2F : swim;
-        }
-        return this.isAccelerating() ? base * 1.4F : base * 0.75F;
+    protected float getRiddenSpeed(@Nonnull @NotNull Player rider) {
+        return riderController.getRiddenSpeed(rider);
     }
 
     @Override
-    public void removePassenger(@NotNull net.minecraft.world.entity.Entity passenger) {
+    public void removePassenger(Entity passenger) {
         super.removePassenger(passenger);
         if (!this.level().isClientSide) {
             this.setAccelerating(false);
@@ -425,8 +428,26 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         return this.position().add(0, this.getBbHeight() * 0.8, 0);
     }
 
+    // ===== RIDING METHODS =====
+    
     @Override
-    public net.minecraft.world.entity.AgeableMob getBreedOffspring(@NotNull net.minecraft.server.level.ServerLevel level, @NotNull net.minecraft.world.entity.AgeableMob other) {
+    public double getPassengersRidingOffset() {
+        return riderController.getPassengersRidingOffset();
+    }
+
+    @Override
+    protected void positionRider(@Nonnull @NotNull Entity passenger, @Nonnull @NotNull Entity.MoveFunction moveFunction) {
+        riderController.positionRider(passenger, moveFunction);
+    }
+
+    @Override
+    public @Nullable net.minecraft.world.entity.LivingEntity getControllingPassenger() {
+        return riderController.getControllingPassenger();
+    }
+
+
+    @Override
+    public net.minecraft.world.entity.AgeableMob getBreedOffspring(@Nonnull net.minecraft.server.level.ServerLevel level, @Nonnull net.minecraft.world.entity.AgeableMob other) {
         return null;
     }
 
@@ -467,18 +488,39 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         }
         return swimming;
     }
-
-    @Nullable
-    public Vec3 pickSwimTarget(double radius, double verticalRange) {
-        return LandRandomPos.getPos(this, (int) radius, (int) verticalRange);
+    
+    /**
+     * Check if the dragon is dying (health below 10%)
+     */
+    public boolean isDying() {
+        return this.getHealth() < this.getMaxHealth() * 0.1f;
+    }
+    
+    // Required methods for RideableDragon interface
+    @Override
+    public boolean isGoingUp() {
+        return false; // RiftDrake doesn't fly
+    }
+    
+    @Override
+    public void setGoingUp(boolean goingUp) {
+        // RiftDrake doesn't fly, so this is a no-op
+    }
+    
+    @Override
+    public boolean isGoingDown() {
+        return false; // RiftDrake doesn't fly
+    }
+    
+    @Override
+    public void setGoingDown(boolean goingDown) {
+        // RiftDrake doesn't fly, so this is a no-op
     }
 
     private static class RiftDrakeMoveControl extends MoveControl {
-        private final RiftDrakeEntity drake;
 
         public RiftDrakeMoveControl(RiftDrakeEntity drake) {
             super(drake);
-            this.drake = drake;
         }
 
         @Override

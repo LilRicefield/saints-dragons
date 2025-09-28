@@ -71,13 +71,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     private boolean isRideable = false;
 
-    public static AttributeSupplier.Builder createDragonAttributes() {
-        return TamableAnimal.createMobAttributes()
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH, 100.0D)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED, 0.3D)
-                .add(net.minecraft.world.entity.ai.attributes.Attributes.FOLLOW_RANGE, 32.0D);
-    }
-
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
