@@ -45,4 +45,32 @@ public interface AquaticDragon {
      */
     default void onExitWater() {
     }
+
+    /**
+     * @return true when the entity should actively seek a water source.
+     */
+    default boolean shouldEnterWater() {
+        return false;
+    }
+
+    /**
+     * @return true when the entity should move back onto land or to the surface.
+     */
+    default boolean shouldLeaveWater() {
+        return false;
+    }
+
+    /**
+     * @return true if the entity should halt locomotion (e.g., basking or sitting states).
+     */
+    default boolean shouldStopMoving() {
+        return false;
+    }
+
+    /**
+     * @return range in blocks when searching for nearby water targets.
+     */
+    default int getWaterSearchRange() {
+        return 12;
+    }
 }
