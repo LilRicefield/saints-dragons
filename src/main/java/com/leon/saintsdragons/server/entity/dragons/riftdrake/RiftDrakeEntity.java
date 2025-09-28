@@ -5,7 +5,9 @@ import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimNavigate;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeAnimationHandler;
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeWaterWanderGoal;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeFindWaterGoal;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeLeaveWaterGoal;
+import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.RiftDrakeRandomSwimGoal;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
@@ -22,6 +24,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreathAirGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
@@ -29,6 +32,7 @@ import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.control.SmoothSwimmingLookControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -46,6 +50,7 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final AnimatableInstanceCache animCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
@@ -57,11 +62,11 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     private final DragonSwimMoveControl swimMoveControl;
     private final LookControl landLookControl;
     private final SmoothSwimmingLookControl swimLookControl;
-    private RiftDrakeWaterWanderGoal waterWanderGoal;
+    private RiftDrakeRandomSwimGoal waterSwimGoal;
     private boolean swimming;
     private int swimTicks;
-    @Nullable
-    private Vec3 activeSwimTarget;
+    private int ticksInWater;
+    private int ticksOutOfWater;
 
     public RiftDrakeEntity(EntityType<? extends RiftDrakeEntity> type, Level level) {
         super(type, level);
@@ -93,16 +98,19 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
         this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
         this.entityData.define(DATA_ACCELERATING, false);
+        this.entityData.define(DATA_SWIMMING, false);
     }
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.waterWanderGoal = new RiftDrakeWaterWanderGoal(this, 1.0D, 120);
-        this.waterWanderGoal.setActive(false);
-        this.goalSelector.addGoal(3, waterWanderGoal);
-        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0D));
-        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(1, new BreathAirGoal(this));
+        this.goalSelector.addGoal(2, new RiftDrakeLeaveWaterGoal(this));
+        this.goalSelector.addGoal(3, new RiftDrakeFindWaterGoal(this));
+        this.waterSwimGoal = new RiftDrakeRandomSwimGoal(this, 1.0D, 30);
+        this.goalSelector.addGoal(4, waterSwimGoal);
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
     }
 
     @Override
@@ -141,15 +149,17 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
             if (inWater) {
                 this.setAirSupply(this.getMaxAirSupply());
                 swimTicks = Math.min(swimTicks + 1, 200);
+                ticksInWater = Math.min(ticksInWater + 1, 1200);
+                ticksOutOfWater = 0;
             } else {
                 swimTicks = Math.max(swimTicks - 1, 0);
+                ticksOutOfWater = Math.min(ticksOutOfWater + 1, 1200);
+                ticksInWater = 0;
             }
-            
-            // More sophisticated swimming detection
-            boolean shouldBeSwimming = inWater && swimTicks > 10; // Need to be in water for a bit
-            if (shouldBeSwimming && !swimming) {
+
+            if (inWater && !swimming) {
                 enterSwimState();
-            } else if (!shouldBeSwimming && swimming) {
+            } else if (!inWater && swimming) {
                 exitSwimState();
             }
         }
@@ -158,30 +168,14 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
     @Override
     public void travel(@NotNull Vec3 motion) {
         if (this.isInWater()) {
-            boolean controlled = this.isControlledByLocalInstance();
-            Vec3 adjusted = new Vec3(motion.x, motion.y * 0.5D, motion.z);
-            if (controlled) {
-                this.moveRelative(0.05F, adjusted);
-            }
-
-            Vec3 delta = this.getDeltaMovement();
-            Vec3 target = activeSwimTarget;
-            if (target != null) {
-                double verticalDiff = target.y - this.getY();
-                double clamp = Mth.clamp(verticalDiff * 0.04D, -0.06D, 0.06D);
-                delta = delta.add(0.0D, clamp, 0.0D);
-            }
-
-            Vec3 buoyancy = getBuoyancyVector();
-            if (delta.lengthSqr() < 0.004D) {
-                delta = delta.add(buoyancy.scale(0.6D));
-            } else {
-                delta = delta.add(buoyancy.scale(0.2D));
-            }
-
-            this.setDeltaMovement(delta);
+            this.moveRelative(this.getSpeed(), motion);
             this.move(MoverType.SELF, this.getDeltaMovement());
-            this.setDeltaMovement(this.getDeltaMovement().scale(controlled ? 0.9D : 0.92D));
+            Vec3 delta = this.getDeltaMovement();
+            float drag = this.isControlledByLocalInstance() ? 0.9F : 0.92F;
+            this.setDeltaMovement(delta.multiply(drag, 0.9D, drag));
+            if (this.getTarget() == null) {
+                this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.005D, 0.0D));
+            }
         } else {
             super.travel(motion);
         }
@@ -326,8 +320,9 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         this.navigation = waterNavigation;
         this.moveControl = swimMoveControl;
         this.lookControl = swimLookControl;
-        if (waterWanderGoal != null) {
-            waterWanderGoal.setActive(true);
+        this.entityData.set(DATA_SWIMMING, true);
+        if (waterSwimGoal != null) {
+            waterSwimGoal.forceTrigger();
         }
     }
 
@@ -337,29 +332,21 @@ public class RiftDrakeEntity extends DragonEntity implements RideableDragon, Aqu
         this.moveControl = landMoveControl;
         this.lookControl = landLookControl;
         this.waterNavigation.stop();
-        if (waterWanderGoal != null) {
-            waterWanderGoal.setActive(false);
-        }
-        clearSwimmingTarget();
         Vec3 delta = this.getDeltaMovement();
         this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
+        this.entityData.set(DATA_SWIMMING, false);
     }
 
     public boolean isSwimming() {
+        if (level().isClientSide) {
+            return this.entityData.get(DATA_SWIMMING);
+        }
         return swimming;
     }
 
-    public void setSwimmingTarget(@Nullable Vec3 target) {
-        this.activeSwimTarget = target;
-    }
-
-    public void clearSwimmingTarget() {
-        this.activeSwimTarget = null;
-    }
-
     @Nullable
-    public Vec3 getSwimmingTarget() {
-        return activeSwimTarget;
+    public Vec3 pickSwimTarget(double radius, double verticalRange) {
+        return LandRandomPos.getPos(this, (int) radius, (int) verticalRange);
     }
 
     private static class RiftDrakeMoveControl extends MoveControl {

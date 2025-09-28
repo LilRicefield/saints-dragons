@@ -20,13 +20,19 @@ public class RiftDrakeAnimationHandler {
 
     public PlayState movementPredicate(AnimationState<RiftDrakeEntity> state) {
         boolean isSwimming = drake.isSwimming();
-        boolean isMoving = state.isMoving() || drake.getDeltaMovement().lengthSqr() > 0.001D;
-        
-        if (isSwimming) {
-            state.setAnimation(isMoving ? SWIM_MOVE : SWIM_IDLE);
+        boolean isInWaterColumn = drake.isInWaterOrBubble() || drake.getFluidTypeHeight(net.minecraft.world.level.material.Fluids.WATER.getFluidType()) > 0.1F;
+        boolean swimmingContext = isSwimming || isInWaterColumn;
+        boolean isNavigating = drake.getNavigation().isInProgress() && drake.getNavigation().getPath() != null;
+        double horizontalSpeedSq = drake.getDeltaMovement().horizontalDistanceSqr();
+        boolean isMovingLand = state.isMoving() || horizontalSpeedSq > 0.008D;
+        boolean isMovingWater = horizontalSpeedSq > 0.004D || isNavigating;
+
+        if (swimmingContext) {
+            state.setAnimation(isMovingWater ? SWIM_MOVE : SWIM_IDLE);
         } else {
-            state.setAnimation(isMoving ? WALK : IDLE);
+            state.setAnimation(isMovingLand ? WALK : IDLE);
         }
+        state.getController().setAnimationSpeed(swimmingContext ? 1.0F : 1.0F);
         return PlayState.CONTINUE;
     }
 }
