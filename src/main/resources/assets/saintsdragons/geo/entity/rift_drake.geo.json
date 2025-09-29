@@ -13,12 +13,17 @@
 			"bones": [
 				{
 					"name": "root",
-					"pivot": [0, 0, 0]
+					"pivot": [0, 10, 0]
+				},
+				{
+					"name": "bodyController",
+					"parent": "root",
+					"pivot": [0, 10, 0]
 				},
 				{
 					"name": "body",
-					"parent": "root",
-					"pivot": [0, 6, 0],
+					"parent": "bodyController",
+					"pivot": [0, 10, 0],
 					"cubes": [
 						{
 							"origin": [-3.5, 5.6, -6],
