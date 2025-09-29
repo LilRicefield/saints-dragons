@@ -142,7 +142,7 @@ public class LightningDragonPhysicsController {
                 return PlayState.CONTINUE;
             }
             // Prefer server-synced flight mode when available for observer consistency
-            int syncedMode = dragon.getEffectiveFlightMode();
+            int syncedMode = dragon.getSyncedFlightMode();
             Vec3 vNow = dragon.getDeltaMovement();
             if (syncedMode == 3) {
                 state.getController().transitionLength(4);

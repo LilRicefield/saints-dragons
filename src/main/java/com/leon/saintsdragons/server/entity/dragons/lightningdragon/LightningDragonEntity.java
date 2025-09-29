@@ -34,7 +34,6 @@ import com.leon.saintsdragons.util.DragonMathUtil;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
-import com.leon.saintsdragons.common.network.DragonAnimTickets;
 
 //Minecraft
 import net.minecraft.util.RandomSource;
@@ -620,7 +619,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         int s = level().isClientSide ? getEffectiveGroundState() : this.entityData.get(DATA_GROUND_MOVE_STATE);
         if (s == 1) return true;
         if (s == 2) return false;
-        if (level().isClientSide && this.getAnimData(DragonAnimTickets.GROUND_STATE) == null) {
+        if (level().isClientSide && super.getEffectiveGroundState() < 0) {
             double speed = getDeltaMovement().horizontalDistanceSqr();
             return speed > 0.004 && speed <= 0.10;
         }
@@ -768,29 +767,9 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     }
 
     // ===== Client animation overrides (for robust observer sync) =====
+    @Override
     public int getEffectiveGroundState() {
-        Integer state = this.getAnimData(DragonAnimTickets.GROUND_STATE);
-        if (state != null) {
-            return state;
-        }
-        return this.entityData.get(DATA_GROUND_MOVE_STATE);
-    }
-    public int getEffectiveFlightMode() {
-        Integer mode = this.getAnimData(DragonAnimTickets.FLIGHT_MODE);
-        if (mode != null) {
-            return mode;
-        }
-        int v = this.entityData.get(DATA_FLIGHT_MODE);
-        if (v < 0 && isFlying()) {
-            // Derive from flags if missing
-            if (isTakeoff()) return 3;
-            if (isHovering()) return 2;
-            double yDelta = this.getY() - this.yo;
-            double vh2 = getDeltaMovement().horizontalDistanceSqr();
-            if (Math.abs(yDelta) < 0.06 && vh2 > 0.01) return 0; // clear glide
-            return 1;
-        }
-        return v;
+        return super.getEffectiveGroundState();
     }
 
     // Expose last-tick vertical delta for robust flight-mode decisions
@@ -802,7 +781,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             int s = Math.max(0, Math.min(2, state));
             if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
                 this.entityData.set(DATA_GROUND_MOVE_STATE, s);
-                this.syncAnimState(s, getEffectiveFlightMode());
+                this.syncAnimState(s, getSyncedFlightMode());
             }
         }
     }
