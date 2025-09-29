@@ -235,9 +235,6 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                 this.getNavigation().stop();
             }
 
-            // Update rider tick state (rotation, etc.)
-            this.riderController.tickRidden(player, motion);
-
             // Use vanilla movement system for proper camera-relative movement
             // This will call getRiddenInput() and getRiddenSpeed() properly
             super.travel(motion);
@@ -331,19 +328,6 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         return this.entityData.get(DATA_ACCELERATING);
     }
 
-    public int getGroundMoveState() {
-        return this.entityData.get(DATA_GROUND_MOVE_STATE);
-    }
-
-    @Override
-    public int getSyncedFlightMode() {
-        return -1;
-    }
-
-    public int getEffectiveGroundState() {
-        return this.entityData.get(DATA_GROUND_MOVE_STATE);
-    }
-
     @Override
     public void setAccelerating(boolean accelerating) {
         this.entityData.set(DATA_ACCELERATING, accelerating);
@@ -353,8 +337,8 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         int s = Mth.clamp(state, 0, 2);
         if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
             this.entityData.set(DATA_GROUND_MOVE_STATE, s);
-            this.syncAnimState(s, getSyncedFlightMode());
         }
+        this.syncAnimState(s, getSyncedFlightMode());
     }
     
     // ===== REQUIRED METHODS FROM RIDEABLEDRAGONBASE =====
@@ -429,6 +413,12 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     }
 
     @Override
+    protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        riderController.tickRidden(player, travelVector);
+    }
+
+    @Override
     public void removePassenger(@NotNull Entity passenger) {
         super.removePassenger(passenger);
         if (!this.level().isClientSide) {
@@ -445,15 +435,6 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     public void jumpFromGround() {
         super.jumpFromGround();
         this.setGroundMoveStateFromRider(1);
-    }
-
-    @Override
-    public void syncAnimState(int groundState, int flightMode) {
-        if (level().isClientSide) {
-            return;
-        }
-        this.setAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.GROUND_STATE, groundState);
-        this.setAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.FLIGHT_MODE, flightMode);
     }
 
     public void initializeRiderState() {
