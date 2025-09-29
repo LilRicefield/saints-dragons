@@ -31,10 +31,6 @@ public class LightningDragonCombatGoal extends Goal {
             return false;
         }
 
-        if (dragon.shouldEnterPhaseTwo()) {
-            return true;
-        }
-
         if (!hasTarget) {
             return false;
         }
@@ -56,13 +52,6 @@ public class LightningDragonCombatGoal extends Goal {
     @Override
     public void start() {
         LivingEntity target = dragon.getTarget();
-        if (dragon.shouldEnterPhaseTwo()) {
-            dragon.setAttackState(ATTACK_STATE_SUMMON_STORM_WINDUP);
-            dragon.flagPhaseTwoTriggered();
-            dragon.setTarget(target);
-            return;
-        }
-
         if (target == null) return;
         
         // Choose attack based on distance and availability

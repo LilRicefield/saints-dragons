@@ -201,15 +201,6 @@ public class LightningDragonConstantsHandler {
     /** Attack state: Recovery cooldown */
     public static final int ATTACK_STATE_RECOVERY = 5;
 
-    /** Attack state: Summon Storm windup */
-    public static final int ATTACK_STATE_SUMMON_STORM_WINDUP = 6;
-
-    /** Attack state: Summon Storm active */
-    public static final int ATTACK_STATE_SUMMON_STORM_ACTIVE = 7;
-
-    /** Attack state: Summon Storm recovery */
-    public static final int ATTACK_STATE_SUMMON_STORM_RECOVERY = 8;
-
     // Private constructor to prevent instantiation
     private LightningDragonConstantsHandler() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
