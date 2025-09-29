@@ -235,20 +235,19 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                 this.getNavigation().stop();
             }
 
-            // Use vanilla movement system for proper camera-relative movement
-            // This will call getRiddenInput() and getRiddenSpeed() properly
-            super.travel(motion);
+            if (this.isInWaterOrBubble()) {
+                handleRiddenSwimming(motion);
+            } else {
+                setGoingUp(false);
+                setGoingDown(false);
+                // Use vanilla movement system for proper camera-relative movement
+                // This will call getRiddenInput() and getRiddenSpeed() properly
+                super.travel(motion);
+            }
         } else {
             // Normal AI movement
             if (this.isInWater()) {
-                this.moveRelative(this.getSpeed(), motion);
-                this.move(MoverType.SELF, this.getDeltaMovement());
-                Vec3 delta = this.getDeltaMovement();
-                float drag = this.isControlledByLocalInstance() ? 0.9F : 0.92F;
-                this.setDeltaMovement(delta.multiply(drag, 0.9D, drag));
-                if (this.getTarget() == null) {
-                    this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.005D, 0.0D));
-                }
+                handleRiddenSwimming(motion);
             } else {
                 super.travel(motion);
             }
@@ -516,6 +515,50 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         }
         return swimming;
     }
+
+    private void handleRiddenSwimming(Vec3 input) {
+        Vec3 velocity = this.getDeltaMovement();
+        Vec3 wishDir = input;
+
+        double swimSpeed = getSwimSpeed();
+        if (isAccelerating()) {
+            swimSpeed *= 1.6D;
+        }
+
+        double strafe = wishDir.x;
+        double forward = wishDir.z;
+        float yawRad = this.getYRot() * ((float)Math.PI / 180F);
+        double sin = Math.sin(yawRad);
+        double cos = Math.cos(yawRad);
+
+        double worldX = strafe * cos - forward * sin;
+        double worldZ = forward * cos + strafe * sin;
+
+        double dx = worldX * 0.85D * swimSpeed;
+        double dz = worldZ * 0.85D * swimSpeed;
+
+        double dy = velocity.y;
+        if (isGoingUp()) {
+            dy = Math.min(swimSpeed, dy + 0.12D * swimSpeed);
+        } else if (isGoingDown()) {
+            dy = Math.max(-swimSpeed, dy - 0.12D * swimSpeed);
+        } else {
+            dy *= 0.90D;
+        }
+
+        Vec3 desired = new Vec3(dx, dy, dz);
+        Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.28D));
+
+        double dragFactor = this.isControlledByLocalInstance() ? 0.92D : 0.94D;
+        blended = blended.multiply(dragFactor, 0.92D, dragFactor);
+
+        if (!isGoingUp() && !isGoingDown() && getTarget() == null) {
+            blended = blended.add(0.0D, -0.01D, 0.0D);
+        }
+
+        this.setDeltaMovement(blended);
+        this.move(MoverType.SELF, this.getDeltaMovement());
+    }
     
     /**
      * Check if the dragon is dying (health below 10%)
@@ -527,22 +570,22 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     // Required methods for RideableDragon interface
     @Override
     public boolean isGoingUp() {
-        return false; // RiftDrake doesn't fly
+        return this.entityData.get(DATA_GOING_UP);
     }
     
     @Override
     public void setGoingUp(boolean goingUp) {
-        // RiftDrake doesn't fly, so this is a no-op
+        this.entityData.set(DATA_GOING_UP, goingUp);
     }
     
     @Override
     public boolean isGoingDown() {
-        return false; // RiftDrake doesn't fly
+        return this.entityData.get(DATA_GOING_DOWN);
     }
     
     @Override
     public void setGoingDown(boolean goingDown) {
-        // RiftDrake doesn't fly, so this is a no-op
+        this.entityData.set(DATA_GOING_DOWN, goingDown);
     }
 
     private static class RiftDrakeMoveControl extends MoveControl {

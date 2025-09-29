@@ -254,20 +254,25 @@ public class DragonRideKeybinds {
 
 
     private static void handleRiftDrakeControls(LocalPlayer player, RiftDrakeEntity drake) {
+        boolean inWater = drake.isSwimming() || drake.isInWaterOrBubble();
+
         boolean currentAccelerate = DRAGON_ACCELERATE.isDown();
+        boolean currentAscend = inWater && DRAGON_ASCEND.isDown();
+        boolean currentDescend = inWater && DRAGON_DESCEND.isDown();
+
         float forward = player.zza;
         float strafe = player.xxa;
         float yaw = player.getYRot();
 
         DragonRiderAction accelerateAction = currentAccelerate ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
         NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                new MessageDragonRideInput(false, false, accelerateAction, null, forward, strafe, yaw));
+                new MessageDragonRideInput(currentAscend, currentDescend, accelerateAction, null, forward, strafe, yaw));
 
         NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
-                new MessageDragonRideInput(false, false, DragonRiderAction.NONE, null, forward, strafe, yaw));
+                new MessageDragonRideInput(currentAscend, currentDescend, DragonRiderAction.NONE, null, forward, strafe, yaw));
 
         boolean spaceDown = DRAGON_ASCEND.isDown();
-        if (spaceDown && !wasAscendPressed) {
+        if (!inWater && spaceDown && !wasAscendPressed) {
             NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(),
                     new MessageDragonRideInput(false, false, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw));
         }

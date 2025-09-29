@@ -176,8 +176,8 @@ public record MessageDragonRideInput(boolean goingUp,
 
 
     private static void handleRiftDrakeInput(MessageDragonRideInput msg, RiftDrakeEntity drake) {
-        drake.setGoingUp(false);
-        drake.setGoingDown(false);
+        drake.setGoingUp(msg.goingUp());
+        drake.setGoingDown(msg.goingDown());
 
         float forward = Math.abs(msg.forward()) > 0.02f ? msg.forward() : 0f;
         float strafe = Math.abs(msg.strafe()) > 0.02f ? msg.strafe() : 0f;
