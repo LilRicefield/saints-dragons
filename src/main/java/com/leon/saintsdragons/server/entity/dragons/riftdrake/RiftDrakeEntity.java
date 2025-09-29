@@ -528,16 +528,16 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             return;
         }
 
-        int desiredTurn = 0;
+        int desiredTurn = this.entityData.get(DATA_SWIM_TURN);
         int desiredPitchState = this.entityData.get(DATA_SWIM_PITCH);
 
-        boolean shouldTrack = this.isTame()
+        boolean riderControlled = this.isTame()
                 && this.isVehicle()
                 && this.getControllingPassenger() instanceof Player player
                 && this.isOwnedBy(player)
                 && this.isInWaterOrBubble();
 
-        if (shouldTrack) {
+        if (riderControlled) {
             float yawDelta = Mth.wrapDegrees(this.getYRot() - this.yRotO);
             swimTurnSmoothedYaw = swimTurnSmoothedYaw * 0.6F + yawDelta * 0.4F;
             float enter = 0.35F;
@@ -552,9 +552,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                 targetState = 0;
             }
 
-            if (targetState != swimTurnState) {
-                swimTurnState = targetState;
-            }
+            swimTurnState = targetState;
             desiredTurn = swimTurnState;
 
             if (this.isGoingUp()) {
@@ -563,21 +561,19 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             } else if (this.isGoingDown()) {
                 desiredPitchState = 1;
                 swimPitchStateTicks = 6;
-            } else {
-                if (desiredPitchState != 0) {
-                    if (swimPitchStateTicks > 0) {
-                        swimPitchStateTicks--;
-                    } else {
-                        desiredPitchState = 0;
-                    }
+            } else if (desiredPitchState != 0) {
+                if (swimPitchStateTicks > 0) {
+                    swimPitchStateTicks--;
+                } else {
+                    desiredPitchState = 0;
                 }
             }
         } else {
             swimTurnSmoothedYaw *= 0.5F;
-            if (swimTurnState != 0 && Math.abs(swimTurnSmoothedYaw) < 0.05F) {
+            if (Math.abs(swimTurnSmoothedYaw) < 0.05F) {
                 swimTurnState = 0;
             }
-            this.entityData.get(DATA_SWIM_TURN);
+            desiredTurn = swimTurnState;
 
             if (desiredPitchState != 0) {
                 if (++swimPitchStateTicks > 4) {
@@ -615,6 +611,26 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     public boolean isSwimmingUp() {
         return this.isSwimming() && this.entityData.get(DATA_SWIM_PITCH) < 0;
+    }
+
+    public boolean isSwimmingMoving() {
+        if (!isSwimming()) {
+            return false;
+        }
+
+        if (this.getNavigation().isInProgress() && this.getNavigation().getPath() != null) {
+            return true;
+        }
+
+        if (this.isVehicle()) {
+            float fwd = Math.abs(this.entityData.get(DATA_RIDER_FORWARD));
+            float str = Math.abs(this.entityData.get(DATA_RIDER_STRAFE));
+            if (fwd > 0.03F || str > 0.03F) {
+                return true;
+            }
+        }
+
+        return this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D;
     }
 
     private void handleRiddenSwimming(Vec3 input) {
@@ -722,14 +738,21 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
             LivingEntity rider = this.dragon.getControllingPassenger();
             if (this.dragon.isVehicle() && rider != null) {
-                float bodyYaw = this.dragon.getYRot();
-                this.dragon.setYHeadRot(bodyYaw);
-                this.dragon.yHeadRotO = bodyYaw;
-                this.dragon.yBodyRot = bodyYaw;
-                this.dragon.yBodyRotO = bodyYaw;
-                float clampedPitch = Mth.clamp(rider.getXRot(), -45.0F, 45.0F);
-                this.dragon.setXRot(clampedPitch);
-                this.dragon.xRotO = clampedPitch;
+                if (this.dragon.isControlledByLocalInstance()) {
+                    float bodyYaw = rider.getYRot();
+                    this.dragon.setYRot(bodyYaw);
+                    this.dragon.setYHeadRot(bodyYaw);
+                    this.dragon.yHeadRotO = bodyYaw;
+                    this.dragon.yBodyRot = bodyYaw;
+                    this.dragon.yBodyRotO = bodyYaw;
+
+                    float pitch = Mth.clamp(rider.getXRot(), -45.0F, 45.0F);
+                    this.dragon.setXRot(pitch);
+                    this.dragon.xRotO = pitch;
+                } else {
+                    float serverPitch = this.dragon.getXRot();
+                    this.dragon.xRotO = serverPitch;
+                }
                 return;
             }
 
