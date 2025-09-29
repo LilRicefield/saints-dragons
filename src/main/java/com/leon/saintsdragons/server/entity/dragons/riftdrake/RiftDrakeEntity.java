@@ -54,6 +54,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     
     // Flight mode data accessor (not used for ground dragon but required by interface)
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
@@ -109,6 +110,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_SWIMMING, false);
+        this.entityData.define(DATA_SWIM_TURN, 0);
         this.entityData.define(DATA_FLIGHT_MODE, -1);
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
@@ -171,6 +173,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate));
+        controllers.add(new AnimationController<>(this, "swim_direction", 5, animationHandler::swimDirectionPredicate));
     }
 
     @Override
@@ -224,6 +227,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             }
 
             this.tickAnimationStates();
+            this.updateSwimOrientationState();
         }
     }
 
@@ -507,6 +511,34 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         Vec3 delta = this.getDeltaMovement();
         this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
         this.entityData.set(DATA_SWIMMING, false);
+        this.entityData.set(DATA_SWIM_TURN, 0);
+    }
+
+    private void updateSwimOrientationState() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        int desiredTurn = 0;
+        boolean shouldTrack = this.isTame()
+                && this.isVehicle()
+                && this.getControllingPassenger() instanceof Player player
+                && this.isOwnedBy(player)
+                && this.isInWaterOrBubble();
+
+        if (shouldTrack) {
+            float yawChange = Mth.wrapDegrees(this.getYRot() - this.yRotO);
+            float threshold = 1.2F;
+            if (yawChange > threshold) {
+                desiredTurn = -1;
+            } else if (yawChange < -threshold) {
+                desiredTurn = 1;
+            }
+        }
+
+        if (this.entityData.get(DATA_SWIM_TURN) != desiredTurn) {
+            this.entityData.set(DATA_SWIM_TURN, desiredTurn);
+        }
     }
 
     public boolean isSwimming() {
@@ -514,6 +546,18 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             return this.entityData.get(DATA_SWIMMING);
         }
         return swimming;
+    }
+
+    public int getSwimTurnDirection() {
+        return Mth.clamp(this.entityData.get(DATA_SWIM_TURN), -1, 1);
+    }
+
+    public boolean isSwimmingUp() {
+        return this.isSwimming() && this.isGoingUp();
+    }
+
+    public boolean isSwimmingDown() {
+        return this.isSwimming() && this.isGoingDown();
     }
 
     private void handleRiddenSwimming(Vec3 input) {
