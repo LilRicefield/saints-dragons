@@ -28,11 +28,6 @@ public class LightningDragonPanicGoal extends Goal {
             return false;
         }
 
-        // Give Summon Storm phase priority over panic
-        if (dragon.shouldEnterPhaseTwo() || dragon.getAttackState() == ATTACK_STATE_SUMMON_STORM_WINDUP || dragon.getAttackState() == ATTACK_STATE_SUMMON_STORM_ACTIVE) {
-            return false;
-        }
-
         // Tamed dragons only panic in Wander mode (command == 2)
         if (dragon.isTame() && dragon.getCommand() != 2) {
             return false;
@@ -69,10 +64,6 @@ public class LightningDragonPanicGoal extends Goal {
         }
 
         // Continue while still moving and health remains under threshold
-        if (dragon.shouldEnterPhaseTwo() || dragon.getAttackState() == ATTACK_STATE_SUMMON_STORM_WINDUP || dragon.getAttackState() == ATTACK_STATE_SUMMON_STORM_ACTIVE) {
-            return false;
-        }
-
         return !dragon.getNavigation().isDone() && dragon.getHealth() < dragon.getMaxHealth() * 0.5f;
     }
 

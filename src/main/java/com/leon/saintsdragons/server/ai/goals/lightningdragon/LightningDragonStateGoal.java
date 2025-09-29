@@ -126,30 +126,6 @@ public class LightningDragonStateGoal extends Goal {
                     dragon.attackCooldown = 4; // Set cooldown
                 }
                 break;
-            case ATTACK_STATE_SUMMON_STORM_WINDUP:
-                if (dragon.attackTicks >= 10) {
-                    dragon.setAttackState(ATTACK_STATE_SUMMON_STORM_ACTIVE);
-                } else if (dragon.attackTicks == 1) {
-                    // Refresh protective locks if we transitioned here outside the ability path
-                    dragon.startTemporaryInvuln(20);
-                    dragon.lockRiderControls(40);
-                    dragon.lockTakeoff(40);
-                }
-                break;
-            case ATTACK_STATE_SUMMON_STORM_ACTIVE:
-                if (dragon.attackTicks == 1) {
-                    dragon.tryActivateAbility(LightningDragonAbilities.SUMMON_STORM);
-                }
-                if (dragon.attackTicks >= 60) {
-                    dragon.setAttackState(ATTACK_STATE_SUMMON_STORM_RECOVERY);
-                }
-                break;
-            case ATTACK_STATE_SUMMON_STORM_RECOVERY:
-                if (dragon.attackTicks >= 60) {
-                    dragon.resetPhaseTwo();
-                    dragon.setAttackState(ATTACK_STATE_IDLE);
-                }
-                break;
             case ATTACK_STATE_RECOVERY:
                 if (dragon.attackTicks >= 3) { // Recovery complete
                     dragon.setAttackState(ATTACK_STATE_IDLE);

@@ -127,15 +127,6 @@ public record LightningDragonAnimationHandler(LightningDragonEntity dragon) {
         // Native GeckoLib: controller idles until triggerAnim is fired
         state.getController().transitionLength(5);
         
-        // If summoning (controls locked), force the summon clip variant to prevent bleed
-        if (dragon.isSummoning()) {
-            String clip = dragon.isFlying() ?
-                    "animation.lightning_dragon.summon_storm_air" :
-                    "animation.lightning_dragon.summon_storm_ground";
-            state.setAndContinue(RawAnimation.begin().thenPlay(clip));
-            return PlayState.CONTINUE;
-        }
-        
         // If dying, force the death clip to hold until completion
         if (dragon.isDying()) {
             state.setAndContinue(RawAnimation.begin().thenPlay("animation.lightning_dragon.die"));
