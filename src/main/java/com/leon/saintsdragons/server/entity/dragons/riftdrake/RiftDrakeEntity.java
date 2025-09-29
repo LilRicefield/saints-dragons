@@ -55,6 +55,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     
     // Flight mode data accessor (not used for ground dragon but required by interface)
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
@@ -77,6 +78,9 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private int swimTicks;
     private int ticksInWater;
     private int ticksOutOfWater;
+    private float swimTurnSmoothedYaw;
+    private int swimTurnState;
+    private int swimPitchStateTicks;
 
     public RiftDrakeEntity(EntityType<? extends RiftDrakeEntity> type, Level level) {
         super(type, level);
@@ -111,6 +115,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_SWIMMING, false);
         this.entityData.define(DATA_SWIM_TURN, 0);
+        this.entityData.define(DATA_SWIM_PITCH, 0);
         this.entityData.define(DATA_FLIGHT_MODE, -1);
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
@@ -173,7 +178,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate));
-        controllers.add(new AnimationController<>(this, "swim_direction", 5, animationHandler::swimDirectionPredicate));
+        controllers.add(new AnimationController<>(this, "swim_direction", 4, animationHandler::swimDirectionPredicate));
     }
 
     @Override
@@ -512,6 +517,10 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
         this.entityData.set(DATA_SWIMMING, false);
         this.entityData.set(DATA_SWIM_TURN, 0);
+        this.entityData.set(DATA_SWIM_PITCH, 0);
+        this.swimTurnSmoothedYaw = 0.0F;
+        this.swimTurnState = 0;
+        this.swimPitchStateTicks = 0;
     }
 
     private void updateSwimOrientationState() {
@@ -520,6 +529,8 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         }
 
         int desiredTurn = 0;
+        int desiredPitchState = this.entityData.get(DATA_SWIM_PITCH);
+
         boolean shouldTrack = this.isTame()
                 && this.isVehicle()
                 && this.getControllingPassenger() instanceof Player player
@@ -527,17 +538,65 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                 && this.isInWaterOrBubble();
 
         if (shouldTrack) {
-            float yawChange = Mth.wrapDegrees(this.getYRot() - this.yRotO);
-            float threshold = 1.2F;
-            if (yawChange > threshold) {
-                desiredTurn = -1;
-            } else if (yawChange < -threshold) {
-                desiredTurn = 1;
+            float yawDelta = Mth.wrapDegrees(this.getYRot() - this.yRotO);
+            swimTurnSmoothedYaw = swimTurnSmoothedYaw * 0.6F + yawDelta * 0.4F;
+            float enter = 0.35F;
+            float exit = 0.12F;
+
+            int targetState = swimTurnState;
+            if (swimTurnSmoothedYaw > enter) {
+                targetState = -1;
+            } else if (swimTurnSmoothedYaw < -enter) {
+                targetState = 1;
+            } else if (Math.abs(swimTurnSmoothedYaw) < exit) {
+                targetState = 0;
+            }
+
+            if (targetState != swimTurnState) {
+                swimTurnState = targetState;
+            }
+            desiredTurn = swimTurnState;
+
+            if (this.isGoingUp()) {
+                desiredPitchState = -1;
+                swimPitchStateTicks = 6;
+            } else if (this.isGoingDown()) {
+                desiredPitchState = 1;
+                swimPitchStateTicks = 6;
+            } else {
+                if (desiredPitchState != 0) {
+                    if (swimPitchStateTicks > 0) {
+                        swimPitchStateTicks--;
+                    } else {
+                        desiredPitchState = 0;
+                    }
+                }
+            }
+        } else {
+            swimTurnSmoothedYaw *= 0.5F;
+            if (swimTurnState != 0 && Math.abs(swimTurnSmoothedYaw) < 0.05F) {
+                swimTurnState = 0;
+            }
+            if (this.entityData.get(DATA_SWIM_TURN) != 0) {
+                desiredTurn = 0;
+            }
+
+            if (desiredPitchState != 0) {
+                if (++swimPitchStateTicks > 4) {
+                    desiredPitchState = 0;
+                    swimPitchStateTicks = 0;
+                }
+            } else {
+                swimPitchStateTicks = 0;
             }
         }
 
         if (this.entityData.get(DATA_SWIM_TURN) != desiredTurn) {
             this.entityData.set(DATA_SWIM_TURN, desiredTurn);
+        }
+
+        if (this.entityData.get(DATA_SWIM_PITCH) != desiredPitchState) {
+            this.entityData.set(DATA_SWIM_PITCH, desiredPitchState);
         }
     }
 
@@ -552,12 +611,12 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         return Mth.clamp(this.entityData.get(DATA_SWIM_TURN), -1, 1);
     }
 
-    public boolean isSwimmingUp() {
-        return this.isSwimming() && this.isGoingUp();
+    public boolean isSwimmingDown() {
+        return this.isSwimming() && this.entityData.get(DATA_SWIM_PITCH) > 0;
     }
 
-    public boolean isSwimmingDown() {
-        return this.isSwimming() && this.isGoingDown();
+    public boolean isSwimmingUp() {
+        return this.isSwimming() && this.entityData.get(DATA_SWIM_PITCH) < 0;
     }
 
     private void handleRiddenSwimming(Vec3 input) {

@@ -16,7 +16,7 @@ public class RiftDrakeAnimationHandler {
     private static final RawAnimation SWIM_DOWN = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_down");
     private static final RawAnimation SWIM_LEFT = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_left");
     private static final RawAnimation SWIM_RIGHT = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_right");
-    private static final RawAnimation SWIM_OFF = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_off");
+    private static final RawAnimation SWIM_NEUTRAL = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_off");
 
     private final RiftDrakeEntity drake;
 
@@ -61,29 +61,35 @@ public class RiftDrakeAnimationHandler {
 
     private RawAnimation selectSwimBodyAnimation(boolean moving) {
         if (!drake.isSwimming()) {
-            return SWIM_OFF;
+            return SWIM_NEUTRAL;
         }
         return moving ? SWIM_CRUISE : SWIM_IDLE;
     }
 
     public PlayState swimDirectionPredicate(AnimationState<RiftDrakeEntity> state) {
+        var controller = state.getController();
+        controller.transitionLength(6);
+
         if (!drake.isSwimming()) {
-            state.setAnimation(SWIM_OFF);
+            controller.setAnimation(SWIM_NEUTRAL);
             return PlayState.CONTINUE;
         }
 
-        if (drake.isSwimmingUp()) {
-            state.setAnimation(SWIM_UP);
-        } else if (drake.isSwimmingDown()) {
-            state.setAnimation(SWIM_DOWN);
+        boolean pitchingUp = drake.isSwimmingUp();
+        boolean pitchingDown = drake.isSwimmingDown();
+        int yawDir = drake.getSwimTurnDirection();
+
+        if (pitchingUp) {
+            controller.setAnimation(SWIM_UP);
+        } else if (pitchingDown) {
+            controller.setAnimation(SWIM_DOWN);
         } else {
-            int turn = drake.getSwimTurnDirection();
-            if (turn < 0) {
-                state.setAnimation(SWIM_LEFT);
-            } else if (turn > 0) {
-                state.setAnimation(SWIM_RIGHT);
+            if (yawDir < 0) {
+                controller.setAnimation(SWIM_LEFT);
+            } else if (yawDir > 0) {
+                controller.setAnimation(SWIM_RIGHT);
             } else {
-                state.setAnimation(SWIM_OFF);
+                controller.setAnimation(SWIM_NEUTRAL);
             }
         }
         return PlayState.CONTINUE;
