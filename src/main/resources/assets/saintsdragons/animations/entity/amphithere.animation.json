@@ -3589,52 +3589,6 @@
 			"loop": true,
 			"animation_length": 5,
 			"bones": {
-				"root": {
-					"rotation": {
-						"0.0": {
-							"post": {
-								"vector": [-90, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"5.0": {
-							"post": {
-								"vector": [-90, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
-						}
-					},
-					"position": {
-						"0.0": {
-							"post": {
-								"vector": [0, 45, 0]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"5.0": {
-							"post": {
-								"vector": [0, 45, 0]
-							},
-							"lerp_mode": "catmullrom"
-						}
-					}
-				},
-				"heightController": {
-					"position": {
-						"0.0": {
-							"post": {
-								"vector": [0, 11, 14]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"5.0": {
-							"post": {
-								"vector": [0, 11, 14]
-							},
-							"lerp_mode": "catmullrom"
-						}
-					}
-				},
 				"neck1Controller": {
 					"rotation": {
 						"0.0": {
@@ -4052,6 +4006,36 @@
 						"5.0": {
 							"post": {
 								"vector": [0, 0, -87.5]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"bodysegment3": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": [-90, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"5.0": {
+							"post": {
+								"vector": [-90, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": {
+								"vector": [0, 50, 32]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"5.0": {
+							"post": {
+								"vector": [0, 50, 32]
 							},
 							"lerp_mode": "catmullrom"
 						}

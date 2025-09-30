@@ -14,6 +14,7 @@ public class AmphithereAnimationHandler {
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.amphithere.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.amphithere.glide_down");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.amphithere.walk");
+    private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.amphithere.sit");
 
     private static final RawAnimation BANK_LEFT = RawAnimation.begin().thenLoop("animation.amphithere.banking_left");
     private static final RawAnimation BANK_RIGHT = RawAnimation.begin().thenLoop("animation.amphithere.banking_right");
@@ -32,6 +33,19 @@ public class AmphithereAnimationHandler {
     public PlayState handleMovementAnimation(AnimationState<AmphithereEntity> state) {
         state.getController().transitionLength(12); // Longer transitions for smoother animation
 
+        float sitProgress = dragon.getSitProgress();
+        boolean shouldRenderSit = dragon.isOrderedToSit() || sitProgress > 0.5f;
+
+        if (shouldRenderSit) {
+            float normalized = Math.min(1.0f, sitProgress / Math.max(1.0f, dragon.maxSitTicks()));
+            state.getController().transitionLength(6);
+            state.setAndContinue(SIT);
+            state.getController().setAnimationSpeed(Math.max(0.35f, normalized));
+            return PlayState.CONTINUE;
+        }
+
+        state.getController().setAnimationSpeed(1.0f);
+
         if (dragon.isFlying()) {
             boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && dragon.isGoingDown();
             if (riderDescending) {
@@ -40,7 +54,10 @@ public class AmphithereAnimationHandler {
             } else {
                 state.setAndContinue(GLIDE);
             }
-        } else if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isHovering()) {
+            return PlayState.CONTINUE;
+        }
+
+        if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isHovering()) {
             // Use the improved movement state detection - prioritize AI-set states for tamed dragons
             int groundState = dragon.getEffectiveGroundState(); // Use effective state for client-side consistency
             
