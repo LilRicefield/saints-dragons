@@ -211,6 +211,10 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     public void tick() {
         super.tick();
+        tickSittingState();
+        updateSittingProgress();
+        tickClientSideUpdates();
+        
         if (!level().isClientSide) {
             boolean inWater = this.isInWater();
             if (inWater) {
@@ -759,6 +763,80 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             }
 
             super.tick();
+        }
+    }
+
+    private void tickSittingState() {
+        // Clear sitting state if the dragon is being ridden
+        if (!this.level().isClientSide && this.isVehicle() && this.isOrderedToSit()) {
+            this.setOrderedToSit(false);
+        }
+    }
+
+    private void updateSittingProgress() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        if (this.isOrderedToSit()) {
+            if (sitProgress < maxSitTicks()) {
+                sitProgress++;
+                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+            }
+        } else {
+            if (isVehicle()) {
+                if (sitProgress != 0f) {
+                    sitProgress = 0f;
+                    prevSitProgress = 0f;
+                    this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                }
+            } else if (sitProgress > 0f) {
+                sitProgress--;
+                if (sitProgress < 0f) sitProgress = 0f;
+                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+            }
+        }
+    }
+
+    private void tickClientSideUpdates() {
+        // Update client-side sit progress from synchronized data
+        if (level().isClientSide) {
+            prevSitProgress = sitProgress;
+            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
+        }
+    }
+
+    @Override
+    public void handleEntityEvent(byte eventId) {
+        if (eventId == 6) {
+            // Failed taming - show smoke particles ONLY, no sitting behavior at all
+            if (level().isClientSide) {
+                // Show smoke particles for failed taming
+                for (int i = 0; i < 7; ++i) {
+                    double d0 = this.random.nextGaussian() * 0.02D;
+                    double d1 = this.random.nextGaussian() * 0.02D;
+                    double d2 = this.random.nextGaussian() * 0.02D;
+                    this.level().addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                            this.getRandomX(1.0D), this.getRandomY() + 0.5D, this.getRandomZ(1.0D), d0, d1, d2);
+                }
+            }
+            // IMPORTANT: Don't call super for event 6 - it might trigger sitting behavior
+        } else if (eventId == 7) {
+            // Successful taming - show hearts only, sitting is handled separately
+            if (level().isClientSide) {
+                // Show heart particles for successful taming
+                for (int i = 0; i < 7; ++i) {
+                    double d0 = this.random.nextGaussian() * 0.02D;
+                    double d1 = this.random.nextGaussian() * 0.02D;
+                    double d2 = this.random.nextGaussian() * 0.02D;
+                    this.level().addParticle(net.minecraft.core.particles.ParticleTypes.HEART,
+                            this.getRandomX(1.0D), this.getRandomY() + 0.5D, this.getRandomZ(1.0D), d0, d1, d2);
+                }
+            }
+            // IMPORTANT: Don't call super for event 7 either - sitting is explicitly handled in mobInteract
+        } else {
+            // Call super for all other entity events (NOT 6 or 7)
+            super.handleEntityEvent(eventId);
         }
     }
 }
