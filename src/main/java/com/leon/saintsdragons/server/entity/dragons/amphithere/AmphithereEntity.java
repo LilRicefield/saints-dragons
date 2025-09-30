@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.amphithere.AmphithereRiderController;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereInteractionHandler;
+import com.leon.saintsdragons.server.entity.handler.DragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -95,8 +96,9 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final AmphithereAnimationHandler animationHandler = new AmphithereAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
-    private final AmphithereRiderController riderController;
     private final AmphithereInteractionHandler interactionHandler = new AmphithereInteractionHandler(this);
+    private final AmphithereRiderController riderController;
+    private final DragonInteractionHandler sittingHandler;
 
     private final GroundPathNavigation groundNav;
     private final FlyingPathNavigation airNav;
@@ -143,6 +145,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         this.moveControl = new MoveControl(this);
         this.usingAirNav = false;
         this.riderController = new AmphithereRiderController(this);
+        this.sittingHandler = new DragonInteractionHandler(this);
 
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
@@ -221,7 +224,6 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             RideableDragonData.createGoingDownAccessor(AmphithereEntity.class);
     private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = 
             RideableDragonData.createAcceleratingAccessor(AmphithereEntity.class);
-
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -302,7 +304,15 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     public void aiStep() {
         super.aiStep();
 
+        if (level().isClientSide) {
+            prevSitProgress = sitProgress;
+            sitProgress = isOrderedToSit() ? this.entityData.get(DATA_SIT_PROGRESS) : 0f;
+        }
+
         if (!this.level().isClientSide) {
+            if (!this.isOrderedToSit() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
+                this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            }
             boolean onGroundNow = this.onGround() || this.isInWater();
 
             if (isFlying()) {
@@ -360,6 +370,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         tickPitchingLogic();
         tickRiderTakeoff();
         tickMountedState();
+        sittingHandler.updateSittingProgress();
 
         if (!level().isClientSide) {
             if (targetCooldown > 0) {
@@ -379,6 +390,9 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         boolean mounted = this.isVehicle();
 
         if (level().isClientSide) {
+            if (mounted && !wasVehicleLastTick) {
+                resetLocalSitState();
+            }
             wasVehicleLastTick = mounted;
             return;
         }
@@ -435,6 +449,9 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         this.syncAnimState(0, -1);
 
         this.setTarget(null);
+        this.setOrderedToSit(false);
+        resetLocalSitState();
+        this.setNoGravity(isFlying() || isHovering());
     }
     private void tickRiderTakeoff() {
         if (!level().isClientSide && riderTakeoffTicks > 0) {
@@ -673,6 +690,26 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         }
         
         return input;
+    }
+
+    @Override
+    public void setOrderedToSit(boolean sitting) {
+        super.setOrderedToSit(sitting);
+
+        if (sitting) {
+            if (isFlying()) {
+                this.setLanding(true);
+            }
+            this.setRunning(false);
+            this.getNavigation().stop();
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
+            }
+        } else if (!level().isClientSide) {
+            this.sitProgress = 0f;
+            this.prevSitProgress = 0f;
+            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+        }
     }
     
     @Override
@@ -1070,6 +1107,8 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         tag.putInt("FlightMode", getSyncedFlightMode());
         tag.putFloat("RiderForward", this.entityData.get(DATA_RIDER_FORWARD));
         tag.putFloat("RiderStrafe", this.entityData.get(DATA_RIDER_STRAFE));
+        tag.putBoolean("IsSitting", this.isOrderedToSit());
+        tag.putFloat("SitProgress", this.sitProgress);
     }
 
     @Override
@@ -1088,6 +1127,8 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         int savedFlightMode = tag.contains("FlightMode") ? tag.getInt("FlightMode") : -1;
         float savedRiderForward = tag.contains("RiderForward") ? tag.getFloat("RiderForward") : 0f;
         float savedRiderStrafe = tag.contains("RiderStrafe") ? tag.getFloat("RiderStrafe") : 0f;
+        boolean savedSitting = tag.getBoolean("IsSitting");
+        float savedSitProgress = tag.contains("SitProgress") ? tag.getFloat("SitProgress") : (savedSitting ? this.maxSitTicks() : 0f);
 
         setFlying(savedFlying);
         setLanding(savedLanding);
@@ -1097,11 +1138,15 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         setGoingDown(savedFlying && savedGoingDown);
         setRunning(savedRunning);
         setAccelerating(savedAccelerating);
-
+ 
         this.entityData.set(DATA_GROUND_MOVE_STATE, Mth.clamp(savedGroundState, 0, 2));
         this.entityData.set(DATA_FLIGHT_MODE, savedFlying ? Mth.clamp(savedFlightMode, -1, 3) : -1);
         this.entityData.set(DATA_RIDER_FORWARD, savedRiderForward);
         this.entityData.set(DATA_RIDER_STRAFE, savedRiderStrafe);
+        this.sitProgress = Mth.clamp(savedSitProgress, 0f, this.maxSitTicks());
+        this.prevSitProgress = this.sitProgress;
+        this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
+        this.setOrderedToSit(savedSitting);
 
         // Reset all tick counters to prevent state inconsistencies
         // Reset ground ticks when flying
@@ -1120,6 +1165,27 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             // Delay the sync slightly to ensure all systems are initialized
             this.tickCount = 0; // Reset tick counter to ensure proper initialization
         }
+    }
+
+    public void prepareForMounting() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        this.setOrderedToSit(false);
+        if (this.getCommand() == 1) {
+            this.setCommand(0);
+        }
+        this.sitProgress = 0f;
+        this.prevSitProgress = 0f;
+        this.entityData.set(DATA_SIT_PROGRESS, 0f);
+        this.setTarget(null);
+
+        if (this.getNavigation().getPath() != null) {
+            this.getNavigation().stop();
+        }
+
+        clearStatesWhenMounted();
     }
 
     // ===== DragonFlightCapable =====
@@ -1234,5 +1300,11 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     @Override
     public DragonAbilityType<?, ?> getSummonStormAbility() {
         return AmphithereAbilities.FIRE_BREATH_VOLLEY;
+    }
+
+    private void resetLocalSitState() {
+        this.sitProgress = 0f;
+        this.prevSitProgress = 0f;
+        this.entityData.set(DATA_SIT_PROGRESS, 0f);
     }
 }

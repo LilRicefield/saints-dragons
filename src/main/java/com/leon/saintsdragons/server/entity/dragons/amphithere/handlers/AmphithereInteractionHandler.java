@@ -82,10 +82,7 @@ public class AmphithereInteractionHandler {
         if (hand == InteractionHand.MAIN_HAND && heldItem.isEmpty() && !player.isCrouching()) {
             if (dragon.canOwnerMount(player) && !dragon.isVehicle()) {
                 if (!dragon.level().isClientSide) {
-                    if (dragon.isOrderedToSit()) {
-                        dragon.setOrderedToSit(false);
-                    }
-                    dragon.setTarget(null);
+                    dragon.prepareForMounting();
                     player.startRiding(dragon);
                 }
                 return InteractionResult.sidedSuccess(dragon.level().isClientSide);

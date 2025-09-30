@@ -7,12 +7,9 @@ import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.effect.amphithere.AmphithereMagmaBlockEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
