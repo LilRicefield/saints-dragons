@@ -23,7 +23,6 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonFlightController;
-import com.leon.saintsdragons.server.entity.handler.DragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonAnimationHandler;
@@ -214,7 +213,6 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
     // ===== CONTROLLER INSTANCES =====
     public final LightningDragonFlightController flightController;
-    public final DragonInteractionHandler interactionHandler;
     private final LightningDragonInteractionHandler lightningInteractionHandler;
     private final LightningDragonAnimationHandler animationHandler;
 
@@ -280,7 +278,6 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
         // Initialize controllers
         this.flightController = new LightningDragonFlightController(this);
-        this.interactionHandler = new DragonInteractionHandler(this);
         this.lightningInteractionHandler = new LightningDragonInteractionHandler(this);
         this.animationHandler = new LightningDragonAnimationHandler(this);
 
@@ -1055,7 +1052,34 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             flightController.handleFlightLogic();
             combatManager.tick();
         }
-        interactionHandler.updateSittingProgress();
+        updateSittingProgress();
+    }
+
+    private void updateSittingProgress() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        if (this.isOrderedToSit()) {
+            if (sitProgress < maxSitTicks()) {
+                sitProgress++;
+                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+            }
+        } else {
+            if (this.isVehicle()) {
+                if (sitProgress != 0f) {
+                    sitProgress = 0f;
+                    prevSitProgress = 0f;
+                    this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                }
+            } else if (sitProgress > 0f) {
+                sitProgress--;
+                if (sitProgress < 0f) {
+                    sitProgress = 0f;
+                }
+                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+            }
+        }
     }
     
     private void tickRiderControlLockMovement() {
