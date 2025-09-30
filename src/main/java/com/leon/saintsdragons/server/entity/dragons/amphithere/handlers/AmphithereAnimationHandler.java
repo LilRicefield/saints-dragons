@@ -33,10 +33,20 @@ public class AmphithereAnimationHandler {
     public PlayState handleMovementAnimation(AnimationState<AmphithereEntity> state) {
         state.getController().transitionLength(12); // Longer transitions for smoother animation
 
-        float sitProgress = dragon.getSitProgress();
-        boolean shouldRenderSit = dragon.isOrderedToSit() || sitProgress > 0.5f;
+        if (dragon.isVehicle()) {
+            state.getController().transitionLength(4);
+            if (dragon.isFlying()) {
+                state.setAndContinue(GLIDE);
+            } else {
+                int groundState = dragon.getEffectiveGroundState();
+                state.setAndContinue(groundState >= 1 ? WALK : IDLE);
+            }
+            state.getController().setAnimationSpeed(1.0f);
+            return PlayState.CONTINUE;
+        }
 
-        if (shouldRenderSit) {
+        float sitProgress = dragon.getSitProgress();
+        if (dragon.isOrderedToSit()) {
             float normalized = Math.min(1.0f, sitProgress / Math.max(1.0f, dragon.maxSitTicks()));
             state.getController().transitionLength(6);
             state.setAndContinue(SIT);
