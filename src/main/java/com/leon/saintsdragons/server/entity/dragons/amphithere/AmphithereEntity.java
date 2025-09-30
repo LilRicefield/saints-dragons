@@ -301,11 +301,6 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     public void aiStep() {
         super.aiStep();
 
-        if (level().isClientSide) {
-            prevSitProgress = sitProgress;
-            sitProgress = isOrderedToSit() ? this.entityData.get(DATA_SIT_PROGRESS) : 0f;
-        }
-
         if (!this.level().isClientSide) {
             if (!this.isOrderedToSit() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
                 this.entityData.set(DATA_SIT_PROGRESS, 0f);
@@ -362,7 +357,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         super.tick();
 
         combatManager.tick();
-
+        tickSittingState();
         tickBankingLogic();
         tickPitchingLogic();
         tickRiderTakeoff();
@@ -384,8 +379,16 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         if (!level().isClientSide && this.tickCount == 1) {
             initializeAnimationState();
         }
+
+        tickClientSideUpdates();
     }
 
+    private void tickSittingState() {
+        // Clear sitting state if the dragon is being ridden
+        if (!this.level().isClientSide && this.isVehicle() && this.isOrderedToSit()) {
+            this.setOrderedToSit(false);
+        }
+    }
 
     private void tickMountedState() {
         boolean mounted = this.isVehicle();
@@ -442,6 +445,14 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
                 if (sitProgress < 0f) sitProgress = 0f;
                 this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
             }
+        }
+    }
+
+    private void tickClientSideUpdates() {
+        // Update client-side sit progress from synchronized data
+        if (level().isClientSide) {
+            prevSitProgress = sitProgress;
+            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
         }
     }
 
@@ -1328,6 +1339,40 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     @Override
     public DragonAbilityType<?, ?> getSummonStormAbility() {
         return AmphithereAbilities.FIRE_BREATH_VOLLEY;
+    }
+
+    @Override
+    public void handleEntityEvent(byte eventId) {
+        if (eventId == 6) {
+            // Failed taming - show smoke particles ONLY, no sitting behavior at all
+            if (level().isClientSide) {
+                // Show smoke particles for failed taming
+                for (int i = 0; i < 7; ++i) {
+                    double d0 = this.random.nextGaussian() * 0.02D;
+                    double d1 = this.random.nextGaussian() * 0.02D;
+                    double d2 = this.random.nextGaussian() * 0.02D;
+                    this.level().addParticle(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                            this.getRandomX(1.0D), this.getRandomY() + 0.5D, this.getRandomZ(1.0D), d0, d1, d2);
+                }
+            }
+            // IMPORTANT: Don't call super for event 6 - it might trigger sitting behavior
+        } else if (eventId == 7) {
+            // Successful taming - show hearts only, sitting is handled separately
+            if (level().isClientSide) {
+                // Show heart particles for successful taming
+                for (int i = 0; i < 7; ++i) {
+                    double d0 = this.random.nextGaussian() * 0.02D;
+                    double d1 = this.random.nextGaussian() * 0.02D;
+                    double d2 = this.random.nextGaussian() * 0.02D;
+                    this.level().addParticle(net.minecraft.core.particles.ParticleTypes.HEART,
+                            this.getRandomX(1.0D), this.getRandomY() + 0.5D, this.getRandomZ(1.0D), d0, d1, d2);
+                }
+            }
+            // IMPORTANT: Don't call super for event 7 either - sitting is explicitly handled in mobInteract
+        } else {
+            // Call super for all other entity events (NOT 6 or 7)
+            super.handleEntityEvent(eventId);
+        }
     }
 
 }

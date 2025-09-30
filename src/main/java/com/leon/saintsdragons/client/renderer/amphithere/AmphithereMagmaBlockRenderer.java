@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.client.render.amphithere;
+package com.leon.saintsdragons.client.renderer.amphithere;
 
 import com.leon.saintsdragons.server.entity.effect.amphithere.AmphithereMagmaBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;

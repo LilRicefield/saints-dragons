@@ -45,12 +45,9 @@ public class AmphithereAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        float sitProgress = dragon.getSitProgress();
-        if (dragon.isOrderedToSit()) {
-            float normalized = Math.min(1.0f, sitProgress / Math.max(1.0f, dragon.maxSitTicks()));
-            state.getController().transitionLength(6);
+        // Drive SIT from our custom progress system only to avoid desync
+        if (dragon.getSitProgress() > 0.5f) {
             state.setAndContinue(SIT);
-            state.getController().setAnimationSpeed(Math.max(0.35f, normalized));
             return PlayState.CONTINUE;
         }
 
