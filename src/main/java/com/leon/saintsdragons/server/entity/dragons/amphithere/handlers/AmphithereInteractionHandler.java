@@ -48,16 +48,17 @@ public class AmphithereInteractionHandler {
             if (dragon.getRandom().nextInt(5) == 0) {
                 dragon.tame(player);
                 dragon.getNavigation().stop();
-                dragon.setCommand(1); // Sit by default on taming
                 dragon.setOrderedToSit(true);
+                dragon.setCommand(1); // Set command to Sit (1) to match the sitting state
                 dragon.setTarget(null);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
             } else {
                 dragon.level().broadcastEntityEvent(dragon, (byte) 6);
             }
+            return InteractionResult.sidedSuccess(false);
         }
 
-        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     /**
@@ -120,9 +121,10 @@ public class AmphithereInteractionHandler {
                     true
                 );
             }
+            return InteractionResult.CONSUME;
         }
 
-        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        return InteractionResult.sidedSuccess(true);
     }
 
     /**
@@ -132,11 +134,11 @@ public class AmphithereInteractionHandler {
         // Get current command and cycle to next
         int currentCommand = dragon.getCommand();
         int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
-        
+
         // Apply the new command
         dragon.setCommand(nextCommand);
         applyCommandState(nextCommand);
-        
+
         // Send feedback message to player (action bar), server-side only to avoid duplicates
         if (!dragon.level().isClientSide) {
             player.displayClientMessage(
@@ -147,7 +149,7 @@ public class AmphithereInteractionHandler {
                 true
             );
         }
-        
+
         return InteractionResult.SUCCESS;
     }
     
