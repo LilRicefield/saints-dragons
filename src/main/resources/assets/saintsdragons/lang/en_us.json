@@ -98,6 +98,8 @@
   "saintsdragons.ability.lightning_beam": "Lightning Beam",
   "saintsdragons.ability.amphithere_roar": "Roar",
   "saintsdragons.ability.amphithere_fire_body": "Fire Body",
+  "saintsdragons.ability.amphithere_fire_breath_volley": "Magma Volley",
+  "entity.saintsdragons.amphithere_magma_block": "Magma Burst",
   
   "commands.dragonally.description": "Manage allies",
   "commands.dragonally.add.description": "Add a player as an ally to a dragon",
