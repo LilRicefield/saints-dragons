@@ -102,7 +102,6 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     private final FlyingPathNavigation airNav;
     private boolean usingAirNav;
 
-    private Vec3 currentFlightTarget;
     private int targetCooldown;
     private int airTicks;
     public int groundTicks;
@@ -119,6 +118,8 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     private float pitchSmoothedPitch = 0f;
     private int pitchHoldTicks = 0;
     private int pitchDir = 0;
+
+    private static final double MODEL_SCALE = 1.0D;
 
     // ===== Client animation overrides (for robust observer sync) =====
 
@@ -982,7 +983,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             return;
         }
         DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
-        if (type == AmphithereAbilities.BITE || type == AmphithereAbilities.FIRE_BODY || type == AmphithereAbilities.ROAR) {
+        if (type == AmphithereAbilities.BITE || type == AmphithereAbilities.FIRE_BODY || type == AmphithereAbilities.ROAR || type == AmphithereAbilities.FIRE_BREATH_VOLLEY) {
             combatManager.tryUseAbility(type);
         }
     }
@@ -1001,9 +1002,33 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
 
     @Override
     public Vec3 getMouthPosition() {
-        Vec3 eye = this.getEyePosition();
-        Vec3 forward = Vec3.directionFromRotation(this.getXRot(), this.getYHeadRot()).normalize();
-        return eye.add(forward.scale(0.9D));
+        return computeMouthOrigin(1.0f);
+    }
+
+    public Vec3 computeMouthOrigin(float partialTicks) {
+        double x = Mth.lerp(partialTicks, this.xo, this.getX());
+        double y = Mth.lerp(partialTicks, this.yo, this.getY());
+        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
+
+        float yawDeg = Mth.lerp(partialTicks, this.yHeadRotO, this.yHeadRot);
+        float pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
+
+        double yaw = Math.toRadians(yawDeg);
+        double pitch = Math.toRadians(pitchDeg);
+
+        double R = (-0.4 / 16.0) * MODEL_SCALE;
+        double U = (5.2 / 16.0) * MODEL_SCALE;
+        double F = (12.5 / 16.0) * MODEL_SCALE;
+
+        double cp = Math.cos(pitch), sp = Math.sin(pitch);
+        double up = U * cp - F * sp;
+        double fwd = U * sp + F * cp;
+
+        double cy = Math.cos(yaw), sy = Math.sin(yaw);
+        double offX = R * cy - fwd * sy;
+        double offZ = R * sy + fwd * cy;
+
+        return new Vec3(x + offX, y + up, z + offZ);
     }
 
     @Override
@@ -1204,5 +1229,10 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
      */
     public boolean canBeBound() {
         return !isFlying() && !isDying() && !isAccelerating();
+    }
+
+    @Override
+    public DragonAbilityType<?, ?> getSummonStormAbility() {
+        return AmphithereAbilities.FIRE_BREATH_VOLLEY;
     }
 }

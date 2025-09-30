@@ -16,6 +16,7 @@ import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
+import com.leon.saintsdragons.client.render.amphithere.AmphithereMagmaBlockRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -84,6 +85,7 @@ public class SaintsDragons {
         event.registerEntityRenderer(ModEntities.PRIMITIVE_DRAKE.get(), PrimitiveDrakeRenderer::new);
         event.registerEntityRenderer(ModEntities.AMPHITHERE.get(), AmphithereRenderer::new);
         event.registerEntityRenderer(ModEntities.RIFT_DRAKE.get(), RiftDrakeRenderer::new);
+        event.registerEntityRenderer(ModEntities.AMPHITHERE_MAGMA_BLOCK.get(), AmphithereMagmaBlockRenderer::new);
     }
 
     private void onBuildCreativeTabContents(BuildCreativeModeTabContentsEvent event) {

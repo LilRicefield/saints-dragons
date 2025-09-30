@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDra
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.server.entity.effect.lightningdragon.LightningChainEntity;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
+import com.leon.saintsdragons.server.entity.effect.amphithere.AmphithereMagmaBlockEntity;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -60,4 +61,13 @@ public class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("lightning_chain"));
+
+    public static final RegistryObject<EntityType<AmphithereMagmaBlockEntity>> AMPHITHERE_MAGMA_BLOCK =
+            REGISTER.register("amphithere_magma_block", () -> EntityType.Builder.<AmphithereMagmaBlockEntity>of(AmphithereMagmaBlockEntity::new, MobCategory.MISC)
+                    .sized(0.98F, 0.98F)
+                    .clientTrackingRange(32)
+                    .updateInterval(10)
+                    .fireImmune()
+                    .noSummon()
+                    .build("amphithere_magma_block"));
 }
