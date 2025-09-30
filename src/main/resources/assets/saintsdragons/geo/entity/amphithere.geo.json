@@ -169,13 +169,13 @@
 					"parent": "neck3Controller",
 					"pivot": [0.8, 2.8718, -62.2843],
 					"locators": {
-						"mouth_origin": [0.8, 17.8718, -58.7843]
+						"mouth_origin": [0.05, 2.1218, -65.7843]
 					}
 				},
 				{
 					"name": "headController",
 					"parent": "head",
-					"pivot": [0.8, 2.8718, -62.2843],
+					"pivot": [0.8, 2.8718, -62.7843],
 					"cubes": [
 						{
 							"origin": [-0.8, 0.40221, -65.48948],

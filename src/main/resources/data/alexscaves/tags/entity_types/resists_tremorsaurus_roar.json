@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "__comment": "Dragons that aren't phased from TremorsaurusEntity's roaring.",
+  "values": [
+    "saintsdragons:lightning_dragon",
+    "saintsdragons:amphithere",
+    "saintsdragons:rift_drake"
+  ]
+}
