@@ -10,7 +10,6 @@ import java.util.EnumSet;
 import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 
 /**
- * State management goal for Lightning Dragon based on Cataclysm's InternalStateGoal.
  * Handles clean state transitions between attack phases.
  */
 public class LightningDragonStateGoal extends Goal {

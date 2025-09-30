@@ -10,6 +10,8 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,6 +38,8 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
     private static final double AURA_VERTICAL = 2.5D;
     private static final float BASE_DAMAGE = 3.0F;
     private static final int FIRE_SECONDS = 4;
+    private static final int ALLY_FIRE_RESIST_TICKS = 60;
+    private static final int ALLY_DAMAGE_RESIST_TICKS = 40;
 
     private int activeTicks;
 
@@ -102,6 +106,8 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
         Vec3 center = dragon.position().add(0.0D, dragon.getBbHeight() * 0.5D, 0.0D);
         AABB area = dragon.getBoundingBox().inflate(AURA_RADIUS, AURA_VERTICAL, AURA_RADIUS);
 
+        protectAllies(level, dragon, area);
+
         Set<LivingEntity> hitThisTick = new HashSet<>();
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
                 e -> e != dragon && e.isAlive() && e.attackable() && !dragon.isAlly(e))) {
@@ -161,6 +167,16 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
         }
         if (Blocks.FIRE.defaultBlockState().canSurvive(level, pos) && belowState.isFaceSturdy(level, below, Direction.UP)) {
             level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 11);
+        }
+    }
+
+    private void protectAllies(ServerLevel level, AmphithereEntity dragon, AABB area) {
+        AABB expanded = area.inflate(1.5D, 0.75D, 1.5D);
+        for (LivingEntity ally : level.getEntitiesOfClass(LivingEntity.class, expanded,
+                entity -> entity != dragon && entity.isAlive() && dragon.isAlly(entity))) {
+            ally.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, ALLY_FIRE_RESIST_TICKS, 0, true, false, false));
+            ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, ALLY_DAMAGE_RESIST_TICKS, 4, true, false, false));
+            ally.setRemainingFireTicks(0);
         }
     }
 }

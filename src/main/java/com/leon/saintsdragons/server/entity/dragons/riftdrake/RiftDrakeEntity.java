@@ -27,6 +27,8 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.BreathAirGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
@@ -173,6 +175,8 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.waterSwimGoal = new RiftDrakeRandomSwimGoal(this, 1.0D, 30);
         this.goalSelector.addGoal(5, waterSwimGoal);
         this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F));
     }
 
     @Override
@@ -287,8 +291,6 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
-
-        // Use interaction handler for all interactions
         InteractionResult handlerResult = interactionHandler.handleInteraction(player, hand);
         if (handlerResult != InteractionResult.PASS) {
             return handlerResult;
