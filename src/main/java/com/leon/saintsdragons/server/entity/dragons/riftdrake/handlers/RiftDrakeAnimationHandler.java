@@ -17,6 +17,7 @@ public class RiftDrakeAnimationHandler {
     private static final RawAnimation SWIM_LEFT = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_left");
     private static final RawAnimation SWIM_RIGHT = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_right");
     private static final RawAnimation SWIM_NEUTRAL = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_off");
+    private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.rift_drake.sit");
 
     private final RiftDrakeEntity drake;
 
@@ -33,6 +34,8 @@ public class RiftDrakeAnimationHandler {
         if (isSwimming) {
             RawAnimation swimAnim = drake.isSwimmingMoving() || isNavigating ? SWIM_CRUISE : SWIM_IDLE;
             state.setAnimation(swimAnim);
+        } else if (drake.isOrderedToSit()) {
+            state.setAnimation(SIT);
         } else {
             // Ground movement transitions - use synced state for proper networking
             int groundState = drake.getEffectiveGroundState();

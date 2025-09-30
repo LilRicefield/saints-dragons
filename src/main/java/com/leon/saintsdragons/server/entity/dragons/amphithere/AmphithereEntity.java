@@ -18,14 +18,20 @@ import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import net.minecraft.core.Direction;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.core.particles.ParticleTypes;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -58,11 +64,14 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +85,11 @@ import javax.annotation.Nonnull;
 public class AmphithereEntity extends RideableDragonBase implements DragonFlightCapable {
     // Note: DATA_FIRE_BREATHING will be defined in defineSynchedData() using a unique ID
     private static final int LANDING_SETTLE_TICKS = 4;
+    private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
+    private static final float FIRE_BODY_EXPLOSION_RADIUS = 15.0F;
+    private static final double FIRE_BODY_IMPRINT_RADIUS = 9.0D;
+    private static final double FIRE_BODY_IMPRINT_DEPTH_FACTOR = 0.6D;
+    private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
 
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -96,6 +110,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     private int riderTakeoffTicks;
     private boolean wasVehicleLastTick;
     private boolean fireBodyCrashArmed;
+    private double fireBodyCrashMaxHeight;
 
     private float bankSmoothedYaw = 0f;
     private int bankDir = 0;
@@ -278,6 +293,8 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         this.targetSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F));
     }
 
     @Override
@@ -708,14 +725,24 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             rider.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 10, 0, true, false, false));
         }
         if (fireActive && airborne) {
+            if (!fireBodyCrashArmed) {
+                fireBodyCrashMaxHeight = this.getY();
+            } else if (this.getY() > fireBodyCrashMaxHeight) {
+                fireBodyCrashMaxHeight = this.getY();
+            }
             fireBodyCrashArmed = true;
         }
         if (fireBodyCrashArmed && !airborne && fireActive) {
-            triggerFireBodyCrash();
+            double dropDistance = fireBodyCrashMaxHeight - this.getY();
+            if (dropDistance >= FIRE_BODY_CRASH_MIN_DROP) {
+                triggerFireBodyCrash();
+            }
             fireBodyCrashArmed = false;
+            fireBodyCrashMaxHeight = 0.0D;
         }
         if (!fireActive && !airborne) {
             fireBodyCrashArmed = false;
+            fireBodyCrashMaxHeight = 0.0D;
         }
     }
 
@@ -735,10 +762,32 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             }
         }
         
-        Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), null,
-                x, y + 0.2D, z, 15.0F, true, Explosion.BlockInteraction.DESTROY);
+        ExplosionDamageCalculator calculator = new ExplosionDamageCalculator() {
+            @Override
+            public Optional<Float> getBlockExplosionResistance(Explosion explosion, BlockGetter level, BlockPos pos, BlockState state, FluidState fluid) {
+                if (isFireBodyImmuneBlock(state)) {
+                    return Optional.of(Float.MAX_VALUE);
+                }
+                return Optional.of(0.0F);
+            }
+
+            @Override
+            public boolean shouldBlockExplode(Explosion explosion, BlockGetter level, BlockPos pos, BlockState state, float exposure) {
+                return !isFireBodyImmuneBlock(state);
+            }
+        };
+
+        Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), calculator,
+                x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, true, Explosion.BlockInteraction.DESTROY);
+
+        grantAlliesExplosionImmunity(server, x, y, z);
+
         explosion.explode();
         explosion.finalizeExplosion(true);
+
+        applyFireBodyBlastDamage(server, x, y, z, immune);
+
+        carveFireBodyImprint(server, BlockPos.containing(x, y, z));
 
         server.sendParticles(ParticleTypes.FLAME, x, y + 0.8D, z, 150, 2.0D, 1.0D, 2.0D, 0.2D);
         server.sendParticles(ParticleTypes.SMALL_FLAME, x, y + 0.5D, z, 120, 1.8D, 0.8D, 1.8D, 0.15D);
@@ -766,6 +815,84 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             }
         }
         this.forceEndActiveAbility();
+    }
+
+    private boolean isFireBodyImmuneBlock(BlockState state) {
+        return state.is(Blocks.BEDROCK) || state.is(Blocks.OBSIDIAN);
+    }
+
+    private void grantAlliesExplosionImmunity(ServerLevel server, double x, double y, double z) {
+        double radius = FIRE_BODY_EXPLOSION_RADIUS + 4.0D;
+        AABB area = new AABB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
+        List<LivingEntity> allies = server.getEntitiesOfClass(LivingEntity.class, area,
+                entity -> entity.isAlive() && entity != this && this.isAlly(entity));
+
+        if (allies.isEmpty()) {
+            return;
+        }
+
+        for (LivingEntity ally : allies) {
+            ally.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 4, true, false, false));
+            ally.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 200, 0, true, false, false));
+            ally.setRemainingFireTicks(0);
+        }
+    }
+
+    private void applyFireBodyBlastDamage(ServerLevel server, double x, double y, double z, List<Entity> immune) {
+        double radius = FIRE_BODY_EXPLOSION_RADIUS + 2.5D;
+        AABB area = new AABB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
+
+        Set<Integer> immuneIds = new HashSet<>();
+        for (Entity entity : immune) {
+            immuneIds.add(entity.getId());
+        }
+        immuneIds.add(this.getId());
+
+        List<LivingEntity> targets = server.getEntitiesOfClass(LivingEntity.class, area,
+                living -> living.isAlive() && !immuneIds.contains(living.getId()) && !this.isAlly(living));
+
+        if (targets.isEmpty()) {
+            return;
+        }
+
+        for (LivingEntity target : targets) {
+            if (target.hurt(server.damageSources().explosion(this, this), FIRE_BODY_EXPLOSION_DAMAGE)) {
+                target.setSecondsOnFire(8);
+            }
+        }
+    }
+
+    private void carveFireBodyImprint(ServerLevel server, BlockPos center) {
+        int radius = Mth.ceil(FIRE_BODY_IMPRINT_RADIUS);
+        double radiusSq = FIRE_BODY_IMPRINT_RADIUS * FIRE_BODY_IMPRINT_RADIUS;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                double horizontalSq = dx * dx + dz * dz;
+                if (horizontalSq > radiusSq) {
+                    continue;
+                }
+
+                double normalized = Math.sqrt(horizontalSq) / FIRE_BODY_IMPRINT_RADIUS;
+                double depth = (1.0D - normalized * normalized) * (FIRE_BODY_IMPRINT_RADIUS * FIRE_BODY_IMPRINT_DEPTH_FACTOR);
+                int maxDepth = Mth.floor(depth);
+
+                for (int dy = 0; dy <= maxDepth; dy++) {
+                    cursor.set(center.getX() + dx, center.getY() - dy, center.getZ() + dz);
+                    if (!server.isLoaded(cursor)) {
+                        continue;
+                    }
+
+                    BlockState state = server.getBlockState(cursor);
+                    if (state.isAir() || isFireBodyImmuneBlock(state)) {
+                        continue;
+                    }
+
+                    server.destroyBlock(cursor, true, this);
+                }
+            }
+        }
     }
     public void switchToGroundNavigation() {
         if (usingAirNav) {
