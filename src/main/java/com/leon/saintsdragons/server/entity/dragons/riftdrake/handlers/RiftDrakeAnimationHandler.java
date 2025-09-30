@@ -34,7 +34,8 @@ public class RiftDrakeAnimationHandler {
         if (isSwimming) {
             RawAnimation swimAnim = drake.isSwimmingMoving() || isNavigating ? SWIM_CRUISE : SWIM_IDLE;
             state.setAnimation(swimAnim);
-        } else if (drake.isOrderedToSit()) {
+        } else if (drake.getSitProgress() > 0.5f) {
+            // Drive SIT from our custom progress system only to avoid desync
             state.setAnimation(SIT);
         } else {
             // Ground movement transitions - use synced state for proper networking
