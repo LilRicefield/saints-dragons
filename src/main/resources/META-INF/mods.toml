@@ -1,6 +1,7 @@
 modLoader="javafml"
 loaderVersion="[47,)"
 license="MIT"
+logoFile="assets/saintsdragons/saintsdragons.png"
 
 [[mods]]
 modId="saintsdragons"
