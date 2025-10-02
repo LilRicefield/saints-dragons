@@ -49,6 +49,11 @@ public class AmphithereFireBodyAbility extends DragonAbility<AmphithereEntity> {
     }
 
     @Override
+    public boolean isOverlayAbility() {
+        return true;
+    }
+
+    @Override
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) {
             return;

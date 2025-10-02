@@ -1049,6 +1049,14 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         return (DragonAbility<T>) combatManager.getActiveAbility();
     }
 
+    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
+        return combatManager.isAbilityActive(abilityType);
+    }
+
+    public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
+        combatManager.forceEndAbility(abilityType);
+    }
+
     public void useRidingAbility(String abilityName) {
         if (abilityName == null || abilityName.isEmpty()) {
             return;
