@@ -136,6 +136,14 @@ public abstract class DragonAbility<T extends LivingEntity> {
 
     // ===== OVERRIDE POINTS =====
 
+    /**
+     * Whether this ability should be treated as an overlay that can run alongside other abilities.
+     * Overlay abilities stay active without blocking primary attacks.
+     */
+    public boolean isOverlayAbility() {
+        return false;
+    }
+
     public void tickUsing() {
         // Override for ability-specific behavior during use
     }

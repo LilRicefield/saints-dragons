@@ -121,9 +121,7 @@ public class AmphithereCombatGoal extends Goal {
     }
 
     private boolean isCurrentlyBiting() {
-        return amphithere.getActiveAbility() != null &&
-               AmphithereAbilities.BITE_ID.equals(amphithere.getActiveAbility().getAbilityType().getName()) &&
-               amphithere.getActiveAbility().isUsing();
+        return amphithere.isAbilityActive(AmphithereAbilities.BITE);
     }
 
     private void tryPerformBite(LivingEntity target) {
@@ -158,26 +156,18 @@ public class AmphithereCombatGoal extends Goal {
             return;
         }
 
-        // Check if FireBody is already active
-        boolean fireBodyActive = amphithere.getActiveAbility() != null &&
-                                 AmphithereAbilities.FIRE_BODY_ID.equals(amphithere.getActiveAbility().getAbilityType().getName()) &&
-                                 amphithere.getActiveAbility().isUsing();
-
+        boolean fireBodyActive = amphithere.isAbilityActive(AmphithereAbilities.FIRE_BODY);
         double distanceToTarget = amphithere.distanceTo(target);
 
-        // Activate FireBody when enemy gets close
         if (!fireBodyActive && distanceToTarget < fireBodyActivationRange) {
             amphithere.combatManager.tryUseAbility(AmphithereAbilities.FIRE_BODY);
             fireBodyCheckCooldown = 40; // 2 second cooldown before checking again
-        }
-        // Deactivate FireBody when target is far away
-        else if (fireBodyActive && distanceToTarget > fireBodyActivationRange * 1.5) {
-            if (amphithere.getActiveAbility() != null) {
-                amphithere.getActiveAbility().interrupt();
-            }
+        } else if (fireBodyActive && distanceToTarget > fireBodyActivationRange * 1.5) {
+            amphithere.forceEndAbility(AmphithereAbilities.FIRE_BODY);
             fireBodyCheckCooldown = 40;
         }
     }
+
 
     /**
      * Deactivates FireBody when there's no target (enemy killed or lost)
@@ -188,14 +178,11 @@ public class AmphithereCombatGoal extends Goal {
             return;
         }
 
-        // Check if FireBody is active
-        if (amphithere.getActiveAbility() != null &&
-            AmphithereAbilities.FIRE_BODY_ID.equals(amphithere.getActiveAbility().getAbilityType().getName()) &&
-            amphithere.getActiveAbility().isUsing()) {
-            // Interrupt/stop the ability
-            amphithere.getActiveAbility().interrupt();
+        if (amphithere.isAbilityActive(AmphithereAbilities.FIRE_BODY)) {
+            amphithere.forceEndAbility(AmphithereAbilities.FIRE_BODY);
         }
     }
+
 
     private double getAttackReachSqr(LivingEntity target) {
         double combinedRadii = (this.amphithere.getBbWidth() + target.getBbWidth()) * 0.5;

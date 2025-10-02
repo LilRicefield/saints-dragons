@@ -14,11 +14,13 @@ public class DragonCombatHandler {
     private final DragonEntity dragon;
     
     private DragonAbility<?> activeAbility;
+    private DragonAbility<?> overlayAbility;
     private int globalCooldown = 0; // Global cooldown between any abilities
     private boolean processingAbility = false; // Prevent re-entry during ability start
     
     // Per-ability cooldown tracking
     private final Map<DragonAbilityType<?, ?>, Integer> abilityCooldowns = new HashMap<>();
+    private final Map<DragonAbilityType<?, ?>, Boolean> overlayAbilityCache = new HashMap<>();
 
     // ===== PERSISTENCE =====
     // Persist global + per-ability cooldowns across save/load
@@ -75,10 +77,20 @@ public class DragonCombatHandler {
      * Check if a specific ability type can be started (includes per-ability cooldown)
      */
     public boolean canStart(DragonAbilityType<?, ?> abilityType) {
+        if (processingAbility) {
+            return false;
+        }
+
+        if (!isAbilityCooldownReady(abilityType)) {
+            return false;
+        }
+
+        if (isOverlayAbilityType(abilityType)) {
+            return overlayAbility == null || !overlayAbility.isUsing();
+        }
+
         return globalCooldown == 0
-            && activeAbility == null
-            && !processingAbility
-            && isAbilityCooldownReady(abilityType);
+            && (activeAbility == null || !activeAbility.isUsing());
     }
     
     /**
@@ -103,19 +115,27 @@ public class DragonCombatHandler {
     }
 
     public void tryUseAbility(DragonAbilityType<?, ?> abilityType) {
-        // Enforce global and per-ability cooldowns
-        if (!canStart(abilityType)) return;
-        
+        if (!canStart(abilityType)) {
+            return;
+        }
+
+        boolean overlay = isOverlayAbilityType(abilityType);
+
         processingAbility = true; // Guard against re-entry
         try {
             @SuppressWarnings("unchecked")
             var ability = ((DragonAbilityType<DragonEntity, ?>) abilityType).makeInstance(dragon);
-            
-            if (ability.tryAbility()) {
-                // Set ability active IMMEDIATELY to prevent race conditions
-                setActiveAbility(ability);
-                ability.start();
+
+            if (!ability.tryAbility()) {
+                return;
             }
+
+            if (overlay) {
+                overlayAbility = ability;
+            } else {
+                setActiveAbility(ability);
+            }
+            ability.start();
         } finally {
             processingAbility = false;
         }
@@ -126,7 +146,30 @@ public class DragonCombatHandler {
             activeAbility.interrupt();
             activeAbility = null;
         }
+        if (overlayAbility != null) {
+            overlayAbility.interrupt();
+            overlayAbility = null;
+        }
     }
+
+    public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
+        if (activeAbility != null && activeAbility.getAbilityType() == abilityType) {
+            activeAbility.interrupt();
+            activeAbility = null;
+        }
+        if (overlayAbility != null && overlayAbility.getAbilityType() == abilityType) {
+            overlayAbility.interrupt();
+            overlayAbility = null;
+        }
+    }
+
+    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
+        if (activeAbility != null && activeAbility.getAbilityType() == abilityType && activeAbility.isUsing()) {
+            return true;
+        }
+        return overlayAbility != null && overlayAbility.getAbilityType() == abilityType && overlayAbility.isUsing();
+    }
+
     
     /**
      * Clears all combat states - used when mounting or transitioning states
@@ -139,6 +182,14 @@ public class DragonCombatHandler {
         globalCooldown = 0;
         abilityCooldowns.clear();
         processingAbility = false;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private boolean isOverlayAbilityType(DragonAbilityType<?, ?> abilityType) {
+        return overlayAbilityCache.computeIfAbsent(abilityType, type -> {
+            DragonAbility ability = ((DragonAbilityType) type).makeInstance(dragon);
+            return ability.isOverlayAbility();
+        });
     }
 
     // Removed unused target validation stub
@@ -159,6 +210,18 @@ public class DragonCombatHandler {
             }
         });
         
+        if (overlayAbility != null) {
+            if (overlayAbility.isUsing()) {
+                overlayAbility.tick();
+            } else {
+                DragonAbilityType<?, ?> overlayType = overlayAbility.getAbilityType();
+                if (overlayType != null) {
+                    setAbilityCooldown(overlayType, overlayAbility.getCooldownTimer());
+                }
+                overlayAbility = null;
+            }
+        }
+
         if (activeAbility != null) {
             if (activeAbility.isUsing()) {
                 activeAbility.tick();
