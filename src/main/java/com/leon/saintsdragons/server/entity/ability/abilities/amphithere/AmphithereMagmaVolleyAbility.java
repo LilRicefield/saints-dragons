@@ -18,22 +18,22 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class AmphithereMagmaVolleyAbility extends DragonAbility<AmphithereEntity> {
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(STARTUP, 10),
-            new AbilitySectionDuration(ACTIVE, 40),
-            new AbilitySectionDuration(RECOVERY, 10)
+            new AbilitySectionDuration(STARTUP, 3),
+            new AbilitySectionDuration(ACTIVE, 20),
+            new AbilitySectionDuration(RECOVERY, 3)
     };
 
     private static final int MAX_VOLLEYS = 3;
     private static final int BLOCKS_PER_VOLLEY = 3;
     private static final int VOLLEY_INTERVAL_TICKS = 10;
-    private static final int COOLDOWN_TICKS = 5;
+    private static final int COOLDOWN_TICKS = 1;
     private static final int MAGMA_BLOCK_LIFETIME = 200;
 
     private static final double SPAWN_FORWARD_OFFSET = 13.0D;
     private static final double SPAWN_VERTICAL_OFFSET = 0.4D;
     private static final double VELOCITY_DOWN = -0.35D;
     private static final double VELOCITY_FORWARD = 0.55D;
-    private static final double MAGMA_IMPACT_RADIUS = 3.0D;
+    private static final double MAGMA_IMPACT_RADIUS = 7.0D;
     private static final float IMPACT_DAMAGE = 18.0F;
 
     private int ticksSinceVolley;
