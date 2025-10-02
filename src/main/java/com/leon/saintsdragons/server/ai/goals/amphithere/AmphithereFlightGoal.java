@@ -53,10 +53,10 @@ public class AmphithereFlightGoal extends Goal {
             return false;
         }
 
-        // Prevent autonomous flight when tamed and not in wander mode unless we're in danger
+        // Prevent autonomous flight when tamed - amphitheres should stay grounded
         if (dragon.isTame() && dragon.getOwner() != null) {
-            int command = dragon.getCommand();
-            if (command != 2 && !isOverDanger()) {
+            // Only allow flight when over danger (void, lava, water)
+            if (!isOverDanger()) {
                 return false;
             }
         }
@@ -73,13 +73,8 @@ public class AmphithereFlightGoal extends Goal {
         wasThundering = thundering;
         wasRaining = raining;
 
-        // If tamed, gliders still want to soar but avoid storms
-        if (dragon.isTame()) {
-            var owner = dragon.getOwner();
-            if (owner != null && dragon.getCommand() != 2 && !isOverDanger()) {
-                return false;
-            }
-        }
+        // Tamed amphitheres stay grounded (already handled above)
+        // This check is redundant but kept for clarity
 
         // Use server game time for landing cooldown checks
         long currentTime = dragon.level().getGameTime();
@@ -150,9 +145,9 @@ public class AmphithereFlightGoal extends Goal {
             return false;
         }
 
+        // Tamed amphitheres only fly autonomously when over danger
         if (dragon.isTame() && dragon.getOwner() != null) {
-            int command = dragon.getCommand();
-            if (command != 2 && !isOverDanger()) {
+            if (!isOverDanger()) {
                 dragon.setGoingUp(false);
                 dragon.setGoingDown(false);
                 dragon.setLanding(true);
@@ -169,16 +164,18 @@ public class AmphithereFlightGoal extends Goal {
             return false;
         }
 
-        // NEW: Check if dragon wants to land naturally
-        boolean thundering = dragon.level().isThundering();
-        boolean raining = !thundering && dragon.level().isRaining();
-        if (dragon.isFlying() && !shouldKeepFlying(thundering, raining)) {
-            // Dragon wants to land - trigger landing sequence
-            dragon.setLanding(true);
-            dragon.setFlying(false);
-            dragon.setTakeoff(false);
-            dragon.setHovering(false);
-            return false;
+        // Check if dragon wants to land naturally (only for wild/untamed dragons)
+        if (!dragon.isTame()) {
+            boolean thundering = dragon.level().isThundering();
+            boolean raining = !thundering && dragon.level().isRaining();
+            if (dragon.isFlying() && !shouldKeepFlying(thundering, raining)) {
+                // Dragon wants to land - trigger landing sequence
+                dragon.setLanding(true);
+                dragon.setFlying(false);
+                dragon.setTakeoff(false);
+                dragon.setHovering(false);
+                return false;
+            }
         }
 
         // Continue if we're flying and have a target
@@ -226,7 +223,7 @@ public class AmphithereFlightGoal extends Goal {
             }
         }
 
-        if (dragon.isTame() && dragon.getOwner() != null && dragon.getCommand() != 2 && !isOverDanger()) {
+        if (dragon.isTame() && dragon.getOwner() != null && !isOverDanger()) {
             dragon.setLanding(true);
             dragon.setFlying(false);
             dragon.setHovering(false);

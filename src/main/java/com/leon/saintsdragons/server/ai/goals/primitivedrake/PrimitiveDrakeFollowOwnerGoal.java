@@ -18,7 +18,6 @@ public class PrimitiveDrakeFollowOwnerGoal extends Goal {
     private static final double START_FOLLOW_DIST = 12.0;
     private static final double STOP_FOLLOW_DIST = 8.0;
     private static final double TELEPORT_DIST = 2000.0;
-    private static final double RUN_DIST = 20.0;
 
     // Performance optimization - don't re-path constantly
     private BlockPos previousOwnerPos;
@@ -128,14 +127,11 @@ public class PrimitiveDrakeFollowOwnerGoal extends Goal {
 
         // Only update movement state if we're not currently moving or need to repath
         if (drake.getNavigation().isDone() || !drake.getNavigation().isInProgress()) {
-            // Determine movement style based on distance
-            boolean shouldRun = distance > RUN_DIST;
-            
-            // Adjust speed based on movement style and distance
-            double baseSpeed = shouldRun ? 1.2 : 0.8;
-            // Increase speed slightly based on distance to catch up faster when far away
-            double speed = baseSpeed * (1.0 + (distance / 50.0));
-            speed = Math.min(speed, shouldRun ? 2.0 : 1.0); // Cap max speed
+            // Primitive Drake always walks - never runs (lore-appropriate)
+            double baseSpeed = 0.8;
+            // Slightly increase speed when farther away to help catch up
+            double speed = baseSpeed * (1.0 + (distance / 100.0));
+            speed = Math.min(speed, 1.0); // Cap at walking speed
 
             // Check if we need to recalculate the path
             boolean navDone = drake.getNavigation().isDone();
