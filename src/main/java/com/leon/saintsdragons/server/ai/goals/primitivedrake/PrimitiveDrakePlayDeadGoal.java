@@ -126,14 +126,17 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
             }
             // Wild drakes continue playing dead around ANY lightning dragon (wild or tamed)
             
-            // Check if lightning dragon is still nearby - if not, continue playing dead for a bit longer
+            // Check if lightning dragon is still nearby
             if (nearbyLightningDragon != null && !nearbyLightningDragon.isRemoved()) {
                 double distance = drake.distanceToSqr(nearbyLightningDragon);
                 if (distance <= DETECTION_RANGE_SQR) {
                     return true; // Lightning dragon still nearby, keep playing dead
                 }
             }
-            // Lightning dragon moved away, but continue playing dead for a bit longer (realistic behavior)
+            // Lightning dragon moved away - stop playing dead soon (give it a few seconds to be safe)
+            if (playDeadTicks > 60) { // If more than 3 seconds left, reduce it
+                playDeadTicks = 40 + drake.getRandom().nextInt(40); // 2-4 seconds to "wake up"
+            }
             return true;
         }
         
@@ -175,27 +178,43 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
     @Override
     public void tick() {
         if (isPlayingDead) {
-            // Decrease play dead timer
-            playDeadTicks--;
-            
+            // Check if lightning dragon is still nearby
+            boolean threatNearby = false;
+            if (nearbyLightningDragon != null && !nearbyLightningDragon.isRemoved()) {
+                double distance = drake.distanceToSqr(nearbyLightningDragon);
+                if (distance <= DETECTION_RANGE_SQR) {
+                    threatNearby = true;
+                }
+            }
+
+            // Only decrease timer if threat is gone - play dead indefinitely while threat is nearby
+            if (!threatNearby) {
+                playDeadTicks--;
+            } else {
+                // Keep timer from running out while threat is present
+                if (playDeadTicks < 100) {
+                    playDeadTicks = 100; // Maintain minimum time
+                }
+            }
+
             // Keep the drake completely still - stop all movement
             drake.getNavigation().stop();
             drake.getMoveControl().setWantedPosition(drake.getX(), drake.getY(), drake.getZ(), 0.0);
-            
+
             // Stop any other movement goals from interfering
             drake.setDeltaMovement(0, drake.getDeltaMovement().y, 0); // Keep vertical movement for gravity
-            
+
             // Ensure the drake stays in sitting pose
             if (!drake.isInSittingPose()) {
                 drake.setOrderedToSit(true);
             }
-            
+
             // Occasionally play scared sounds while playing dead
-            if (playDeadTicks % 100 == 0 && drake.getRandom().nextFloat() < 0.3f) {
+            if (drake.tickCount % 100 == 0 && drake.getRandom().nextFloat() < 0.3f) {
                 drake.getSoundHandler().playVocal("primitivedrake_scared");
             }
         }
-        
+
         // Decrease cooldown timer
         if (cooldownTicks > 0) {
             cooldownTicks--;
