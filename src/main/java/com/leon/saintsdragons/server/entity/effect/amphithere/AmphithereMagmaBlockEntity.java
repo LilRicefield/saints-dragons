@@ -80,31 +80,46 @@ public class AmphithereMagmaBlockEntity extends Entity {
 
     @Override
     public void tick() {
+        // Don't call super.tick() - handle movement manually like FallingBlockEntity does
+
         if (this.getBlockState().isAir()) {
             discard();
             return;
         }
 
-        if (livedTicks++ > lifetimeTicks) {
-            explode();
-            return;
-        }
+        livedTicks++;
 
+        // Apply gravity (on both sides for smooth client prediction)
         if (!this.isNoGravity()) {
-            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.02D, 0.0D));
+            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.04D, 0.0D));
         }
 
+        // Move (on both sides)
         this.move(MoverType.SELF, this.getDeltaMovement());
-        this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
 
-        if (this.onGround()) {
-            Vec3 motion = this.getDeltaMovement();
-            this.setDeltaMovement(motion.x * 0.7D, -motion.y * 0.5D, motion.z * 0.7D);
-            explode();
-            return;
-        }
+        // Server-side logic only
+        if (!level().isClientSide) {
+            // Apply air resistance
+            this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
 
-        if (level().isClientSide) {
+            // Check lifetime
+            if (livedTicks > lifetimeTicks) {
+                explode();
+                return;
+            }
+
+            // Check for ground impact
+            if (this.onGround()) {
+                Vec3 motion = this.getDeltaMovement();
+                this.setDeltaMovement(motion.x * 0.7D, -motion.y * 0.5D, motion.z * 0.7D);
+                explode();
+                return;
+            }
+        } else {
+            // Client-side: apply same air resistance for prediction
+            this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
+
+            // Spawn trail particles
             spawnTrailParticles();
         }
     }
@@ -185,8 +200,31 @@ public class AmphithereMagmaBlockEntity extends Entity {
     }
 
     @Override
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        // Restore velocity from packet
+        this.setDeltaMovement(packet.getXa(), packet.getYa(), packet.getZa());
+    }
+
+    @Override
     public boolean isPickable() {
         return true;
+    }
+
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        // Render up to 64 blocks away
+        return distance < 4096.0D;
+    }
+
+    @Override
+    protected boolean canAddPassenger(Entity passenger) {
+        return false;
+    }
+
+    @Override
+    public boolean displayFireAnimation() {
+        return false;
     }
 
     @Override
@@ -222,4 +260,3 @@ public class AmphithereMagmaBlockEntity extends Entity {
         return owner;
     }
 }
-

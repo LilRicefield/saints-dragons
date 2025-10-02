@@ -66,7 +66,7 @@ public class ModEntities {
             REGISTER.register("amphithere_magma_block", () -> EntityType.Builder.<AmphithereMagmaBlockEntity>of(AmphithereMagmaBlockEntity::new, MobCategory.MISC)
                     .sized(0.98F, 0.98F)
                     .clientTrackingRange(32)
-                    .updateInterval(10)
+                    .updateInterval(1)
                     .fireImmune()
                     .noSummon()
                     .build("amphithere_magma_block"));
