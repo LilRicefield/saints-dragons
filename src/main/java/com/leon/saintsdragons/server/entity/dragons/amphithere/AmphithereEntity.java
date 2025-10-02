@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.amphithere;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities;
+import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereGroundWanderGoal;
@@ -287,6 +288,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(2, new AmphithereFlightGoal(this));
+        this.goalSelector.addGoal(3, new AmphithereCombatGoal(this));
         this.goalSelector.addGoal(4, new AmphithereFollowOwnerGoal(this));
         this.goalSelector.addGoal(6, new AmphithereGroundWanderGoal(this, 0.6D, 160));
 
@@ -1070,6 +1072,15 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         this.setBreathingFire(false);
     }
 
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        // Use bite ability for melee attacks
+        if (!this.isVehicle() && !this.isOrderedToSit()) {
+            combatManager.tryUseAbility(AmphithereAbilities.BITE);
+        }
+        // Return true to indicate we handled the attack
+        return true;
+    }
 
     @Override
     public Vec3 getHeadPosition() {
