@@ -135,8 +135,11 @@ public record LightningDragonRiderController(LightningDragonEntity dragon) {
             // Ground speed - use movement speed attribute with acceleration multipliers
             float baseSpeed = (float) dragon.getAttributeValue(Attributes.MOVEMENT_SPEED);
 
-            if (dragon.isAccelerating()) {
-                // L-Ctrl pressed - trigger run animation and boost speed
+            // Check if actually moving to prevent sprint animation when standing still
+            boolean isMoving = dragon.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
+
+            if (dragon.isAccelerating() && isMoving) {
+                // L-Ctrl pressed AND moving - trigger run animation and boost speed
                 dragon.setRunning(true);
                 return baseSpeed * 0.7F;
             } else {
