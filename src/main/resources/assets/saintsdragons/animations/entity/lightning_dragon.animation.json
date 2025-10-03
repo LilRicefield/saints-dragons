@@ -18920,6 +18920,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "lightningdragon_hurt",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.lightning_dragon.die": {
