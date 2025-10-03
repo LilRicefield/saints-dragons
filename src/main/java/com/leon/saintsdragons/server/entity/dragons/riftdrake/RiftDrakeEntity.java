@@ -12,6 +12,8 @@ import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.*;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
+import com.leon.saintsdragons.common.network.DragonRiderAction;
+import net.minecraft.server.level.ServerPlayer;
 import com.leon.saintsdragons.server.entity.controller.riftdrake.RiftDrakeRiderController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -468,6 +470,40 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     public Vec3 getMouthPosition() {
         return this.position().add(0, this.getBbHeight() * 0.8, 0);
+    }
+
+    @Override
+    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        boolean inWater = this.isSwimming() || this.isInWaterOrBubble();
+        setGoingUp(inWater && goingUp);
+        setGoingDown(inWater && goingDown);
+    }
+
+    @Override
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
+        float fwd = applyInputDeadzone(forward);
+        float str = applyInputDeadzone(strafe);
+        setLastRiderForward(fwd);
+        setLastRiderStrafe(str);
+        int moveState = 0;
+        float magnitude = Math.abs(fwd) + Math.abs(str);
+        if (magnitude > 0.05f) {
+            moveState = isAccelerating() ? 2 : 1;
+        }
+        setGroundMoveStateFromRider(moveState);
+    }
+
+    @Override
+    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
+        if (action == null) {
+            return;
+        }
+        switch (action) {
+            case TAKEOFF_REQUEST -> handleJumpRequest();
+            case ACCELERATE -> setAccelerating(true);
+            case STOP_ACCELERATE -> setAccelerating(false);
+            default -> { }
+        }
     }
 
     // ===== RIDING METHODS =====

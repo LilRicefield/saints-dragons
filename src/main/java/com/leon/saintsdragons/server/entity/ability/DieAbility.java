@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 
 /**
  * Generic death ability for all dragons.
@@ -23,20 +24,15 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         
-        // Set dying flag to prevent further damage/interactions
-        if (getUser() instanceof com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity lightningDragon) {
-            lightningDragon.setDying(true);
-        }
-        
+        // Allow dragons to update custom death state
+        getUser().onDeathAbilityStarted();
+
         // Trigger death animation
         getUser().triggerAnim("action", "die");
-        
+
         // Play death sound manually since keyframes are empty
-        if (!getLevel().isClientSide) {
-            // Cast to LightningDragonEntity to access sound handler
-            if (getUser() instanceof com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity lightningDragon) {
-                lightningDragon.getSoundHandler().playVocal("die");
-            }
+        if (!getLevel().isClientSide && getUser() instanceof SoundHandledDragon soundDragon) {
+            soundDragon.getSoundHandler().playVocal("die");
         }
     }
 

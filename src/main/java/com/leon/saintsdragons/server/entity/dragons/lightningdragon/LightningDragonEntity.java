@@ -18,11 +18,7 @@ import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonPhysicsController;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.interfaces.DragonCombatCapable;
-import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
-import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
-import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
-import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
+import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonFlightController;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonInteractionHandler;
@@ -35,6 +31,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.common.network.DragonRiderAction;
 import java.util.Map;
 
 //Minecraft
@@ -61,6 +58,7 @@ import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.item.ItemStack;
@@ -84,7 +82,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //Just everything
 public class LightningDragonEntity extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
-        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon {
+        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, DragonControlStateHolder {
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
     private int ownerDistanceCacheTime = -1;
@@ -450,6 +448,77 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         }
     }
 
+
+    @Override
+    protected boolean isRiderInputLocked(Player player) {
+        return areRiderControlsLocked();
+    }
+
+    @Override
+    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        if (this.isFlying()) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+        } else {
+            setGoingUp(false);
+            setGoingDown(false);
+        }
+    }
+
+    @Override
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
+        float fwd = applyInputDeadzone(forward);
+        float str = applyInputDeadzone(strafe);
+        setLastRiderForward(fwd);
+        setLastRiderStrafe(str);
+        if (!isFlying()) {
+            int moveState = 0;
+            float magnitude = Math.abs(fwd) + Math.abs(str);
+            if (magnitude > 0.05f) {
+                moveState = this.isAccelerating() ? 2 : 1;
+            }
+            if (this.getEntityData().get(DATA_GROUND_MOVE_STATE) != moveState) {
+                this.getEntityData().set(DATA_GROUND_MOVE_STATE, moveState);
+                this.syncAnimState(moveState, this.getSyncedFlightMode());
+            }
+        }
+    }
+
+    @Override
+    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
+        if (action == null) {
+            return;
+        }
+        switch (action) {
+            case TAKEOFF_REQUEST -> {
+                if (!locked) {
+                    requestRiderTakeoff();
+                }
+            }
+            case ACCELERATE -> {
+                if (!locked) {
+                    setAccelerating(true);
+                }
+            }
+            case STOP_ACCELERATE -> setAccelerating(false);
+            case ABILITY_USE -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    useRidingAbility(abilityName);
+                }
+            }
+            case ABILITY_STOP -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    var active = getActiveAbility();
+                    if (active != null) {
+                        forceEndActiveAbility();
+                    }
+                }
+            }
+            default -> { }
+        }
+    }
+
+
     /**
      * Forces the dragon to take off when being ridden. Called when player presses Space while on ground.
      */
@@ -807,16 +876,23 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     // Control state system
     private byte controlState = 0;
 
+    @Override
     public byte getControlState() {
         return controlState;
     }
 
+    @Override
     public void setControlState(byte controlState) {
         this.controlState = controlState;  // Update local cached control state
         // Only process keybind logic on the server
         if (!level().isClientSide) {
             keybindHandler.setControlState(controlState);
         }
+    }
+
+    @Override
+    public boolean canPlayerModifyControlState(Player player) {
+        return player != null && this.isOwnedBy(player);
     }
 
     // Riding utilities
@@ -833,6 +909,34 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     public boolean canOwnerCommand(Player ownerPlayer) {
         return ownerPlayer.isCrouching(); // Shift key pressed
     }
+
+    @Override
+    public RiderAbilityBinding getTertiaryRiderAbility() {
+        return new RiderAbilityBinding(LightningDragonAbilities.LIGHTNING_BEAM.getName(), RiderAbilityBinding.Activation.HOLD);
+    }
+
+    @Override
+    public RiderAbilityBinding getPrimaryRiderAbility() {
+        return new RiderAbilityBinding(LightningDragonAbilities.ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return new RiderAbilityBinding(LightningDragonAbilities.SUMMON_STORM.getName(), RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public byte buildClientControlState(boolean ascendDown, boolean descendDown, boolean attackDown, boolean primaryDown, boolean secondaryDown, boolean sneakDown) {
+        byte state = 0;
+        if (ascendDown) state |= 1;
+        if (descendDown) state |= 2;
+        if (attackDown) state |= 4;
+        if (primaryDown) state |= 8;
+        if (secondaryDown) state |= 16;
+        if (sneakDown) state |= 32;
+        return state;
+    }
+
 
     // ===== RIDING SUPPORT =====
     @Override
@@ -1665,6 +1769,11 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     public boolean isSummoning() {
         return false;
     }
+    @Override
+    public void onDeathAbilityStarted() {
+        this.setDying(true);
+    }
+
     public void setDying(boolean dying) {
         this.dying = dying;
     }

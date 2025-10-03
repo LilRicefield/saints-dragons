@@ -1,12 +1,10 @@
 package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.client.DragonRideKeybinds;
-import com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities;
-import com.leon.saintsdragons.common.registry.lightningdragon.LightningDragonAbilities;
+import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -55,36 +53,24 @@ public class DragonControlGuide extends DragonUIElement {
         Options options = mc.options;
         Font font = mc.font;
 
-        controls.add(ControlEntry.forKey(options.keyAttack, Component.translatable("saintsdragons.ui.control.attack"), COLOR_ATTACK));
+        RideableDragonBase rideable = dragon instanceof RideableDragonBase base ? base : null;
+        boolean attackHandledByAbility = false;
+
+        if (rideable != null) {
+            attackHandledByAbility = addAbilityEntry(rideable.getAttackRiderAbility(), options.keyAttack, "saintsdragons.ui.control.attack", COLOR_ATTACK);
+        }
+        if (!attackHandledByAbility) {
+            controls.add(ControlEntry.forKey(options.keyAttack, Component.translatable("saintsdragons.ui.control.attack"), COLOR_ATTACK));
+        }
+
         controls.add(ControlEntry.forKey(DragonRideKeybinds.DRAGON_ASCEND, Component.translatable("saintsdragons.ui.control.ascend"), COLOR_MOVEMENT));
         controls.add(ControlEntry.forKey(DragonRideKeybinds.DRAGON_DESCEND, Component.translatable("saintsdragons.ui.control.descend"), COLOR_MOVEMENT));
         controls.add(ControlEntry.forKey(DragonRideKeybinds.DRAGON_ACCELERATE, Component.translatable("saintsdragons.ui.control.accelerate"), COLOR_MOVEMENT));
 
-        DragonAbilityType<?, ?> primaryAbility = dragon.getRoaringAbility();
-        if (primaryAbility != null) {
-            controls.add(ControlEntry.forKey(
-                DragonRideKeybinds.DRAGON_PRIMARY_ABILITY,
-                buildAbilityLabel("saintsdragons.ui.control.ability_primary", primaryAbility),
-                COLOR_ABILITY
-            ));
-        }
-
-        DragonAbilityType<?, ?> secondaryAbility = dragon.getChannelingAbility();
-        if (secondaryAbility != null) {
-            controls.add(ControlEntry.forKey(
-                DragonRideKeybinds.DRAGON_SECONDARY_ABILITY,
-                buildAbilityLabel("saintsdragons.ui.control.ability_secondary", secondaryAbility),
-                COLOR_ABILITY
-            ));
-        }
-
-        DragonAbilityType<?, ?> tertiaryAbility = getTertiaryAbility(dragon);
-        if (tertiaryAbility != null) {
-            controls.add(ControlEntry.forKey(
-                DragonRideKeybinds.DRAGON_TERTIARY_ABILITY,
-                buildAbilityLabel("saintsdragons.ui.control.ability_tertiary", tertiaryAbility),
-                COLOR_ABILITY
-            ));
+        if (rideable != null) {
+            addAbilityEntry(rideable.getPrimaryRiderAbility(), DragonRideKeybinds.DRAGON_PRIMARY_ABILITY, "saintsdragons.ui.control.ability_primary", COLOR_ABILITY);
+            addAbilityEntry(rideable.getSecondaryRiderAbility(), DragonRideKeybinds.DRAGON_SECONDARY_ABILITY, "saintsdragons.ui.control.ability_secondary", COLOR_ABILITY);
+            addAbilityEntry(rideable.getTertiaryRiderAbility(), DragonRideKeybinds.DRAGON_TERTIARY_ABILITY, "saintsdragons.ui.control.ability_tertiary", COLOR_ABILITY);
         }
 
         int lineSpacing = font.lineHeight + 2;
@@ -104,24 +90,25 @@ public class DragonControlGuide extends DragonUIElement {
         this.width = maxWidth;
     }
 
-    private Component buildAbilityLabel(String slotTranslationKey, @Nullable DragonAbilityType<?, ?> abilityType) {
-        Component slot = Component.translatable(slotTranslationKey);
-        if (abilityType == null) {
-            return slot;
+    private boolean addAbilityEntry(@Nullable RideableDragonBase.RiderAbilityBinding binding,
+                                    KeyMapping keyMapping,
+                                    String slotTranslationKey,
+                                    int color) {
+        if (binding == null || binding.abilityId() == null || binding.abilityId().isEmpty()) {
+            return false;
         }
-        Component abilityName = Component.translatable("saintsdragons.ability." + abilityType.getName());
-        return Component.translatable("saintsdragons.ui.control.ability_with_name", slot, abilityName);
+        Component label = buildAbilityLabel(slotTranslationKey, binding.abilityId());
+        controls.add(ControlEntry.forKey(keyMapping, label, color));
+        return true;
     }
 
-    @Nullable
-    private DragonAbilityType<?, ?> getTertiaryAbility(DragonEntity dragon) {
-        if (dragon instanceof LightningDragonEntity) {
-            return LightningDragonAbilities.LIGHTNING_BEAM;
-        }
-        if (dragon instanceof AmphithereEntity) {
-            return AmphithereAbilities.FIRE_BODY;
-        }
-        return null;
+    private Component buildAbilityLabel(String slotTranslationKey, String abilityId) {
+        Component slot = Component.translatable(slotTranslationKey);
+        DragonAbilityType<?, ?> abilityType = AbilityRegistry.get(abilityId);
+        Component abilityName = abilityType != null
+                ? Component.translatable("saintsdragons.ability." + abilityType.getName())
+                : Component.translatable("saintsdragons.ability." + abilityId);
+        return Component.translatable("saintsdragons.ui.control.ability_with_name", slot, abilityName);
     }
 
     @Override
