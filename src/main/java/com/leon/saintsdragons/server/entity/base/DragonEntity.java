@@ -30,7 +30,6 @@ import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
-import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 
 /**
  * Base class for all dragon entities in the Lightning Dragon mod.
@@ -66,8 +65,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.allyManager = new DragonAllyManager(this);
     }
 
-    protected void setRideable(boolean rideable) {
-        this.isRideable = rideable;
+    protected void setRideable() {
+        this.isRideable = true;
     }
 
     public boolean isRideableDragon() {
@@ -156,7 +155,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     @Override
-    public boolean hurt(DamageSource source, float amount) {
+    public boolean hurt(@NotNull DamageSource source, float amount) {
         boolean result = super.hurt(source, amount);
         if (result) {
             onSuccessfulDamage(source, amount);
