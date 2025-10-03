@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.interfaces.DragonControlStateHolder;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -28,10 +28,8 @@ public record MessageDragonControl(int dragonId, byte controlState) {
             Player player = context.getSender();
             if (player != null) {
                 Entity entity = player.level().getEntity(message.dragonId());
-                if (entity instanceof LightningDragonEntity dragon) {
-                    if (dragon.isOwnedBy(player)) {
-                        dragon.setControlState(message.controlState());
-                    }
+                if (entity instanceof DragonControlStateHolder holder && holder.canPlayerModifyControlState(player)) {
+                    holder.setControlState(message.controlState());
                 }
             }
         });

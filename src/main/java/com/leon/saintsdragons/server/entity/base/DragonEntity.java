@@ -195,6 +195,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     /**
+     * Hook invoked when the shared death ability starts playing.
+     * Subclasses can override to update custom state.
+     */
+    public void onDeathAbilityStarted() {
+        // Default no-op
+    }
+
+
+    /**
      * Check if the dragon is in a muted state (sitting/staying)
      */
     public boolean isStayOrSitMuted() {

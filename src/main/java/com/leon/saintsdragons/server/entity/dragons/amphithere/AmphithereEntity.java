@@ -21,6 +21,8 @@ import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
+import com.leon.saintsdragons.common.network.DragonRiderAction;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -693,6 +695,78 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         }
         return flightMode;
     }
+
+    @Override
+    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        if (this.isFlying()) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+        } else {
+            setGoingUp(false);
+            setGoingDown(false);
+        }
+    }
+
+    @Override
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
+        float fwd = applyInputDeadzone(forward);
+        float str = applyInputDeadzone(strafe);
+        setLastRiderForward(fwd);
+        setLastRiderStrafe(str);
+        if (!isFlying()) {
+            int moveState = 0;
+            float magnitude = Math.abs(fwd) + Math.abs(str);
+            if (magnitude > 0.05f) {
+                moveState = isAccelerating() ? 2 : 1;
+            }
+            setGroundMoveStateFromAI(moveState);
+            setRunning(moveState == 2);
+        }
+    }
+
+    @Override
+    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
+        if (action == null) {
+            return;
+        }
+        switch (action) {
+            case TAKEOFF_REQUEST -> requestRiderTakeoff();
+            case ACCELERATE -> setAccelerating(true);
+            case STOP_ACCELERATE -> setAccelerating(false);
+            case ABILITY_USE -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    useRidingAbility(abilityName);
+                }
+            }
+            case ABILITY_STOP -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    forceEndActiveAbility();
+                }
+            }
+            default -> { }
+        }
+    }
+
+    @Override
+    public RiderAbilityBinding getTertiaryRiderAbility() {
+        return new RiderAbilityBinding(AmphithereAbilities.FIRE_BODY_ID, RiderAbilityBinding.Activation.HOLD);
+    }
+
+    @Override
+    public RiderAbilityBinding getPrimaryRiderAbility() {
+        return new RiderAbilityBinding(AmphithereAbilities.ROAR_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return new RiderAbilityBinding(AmphithereAbilities.FIRE_BREATH_VOLLEY_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public RiderAbilityBinding getAttackRiderAbility() {
+        return new RiderAbilityBinding(AmphithereAbilities.BITE_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
 
     // ===== Riding System Methods =====
     

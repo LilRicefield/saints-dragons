@@ -1,6 +1,9 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
+import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.network.MessageDragonRideInput;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -11,6 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Base implementation for rideable dragons.
@@ -26,6 +30,112 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     // This method should be overridden by subclasses to define their own entity data keys
     protected abstract void defineRideableDragonData();
+
+
+    public boolean canBeControlledBy(Player player) {
+        if (player == null) {
+            return false;
+        }
+        if (this.isTame()) {
+            return this.isOwnedBy(player);
+        }
+        return player.isCreative() || player.isSpectator();
+    }
+
+    public void handleRiderNetworkInput(ServerPlayer player, MessageDragonRideInput msg) {
+        boolean locked = isRiderInputLocked(player);
+        applyRiderVerticalInput(player, msg.goingUp(), msg.goingDown(), locked);
+        applyRiderMovementInput(player, msg.forward(), msg.strafe(), msg.yaw(), locked);
+        handleRiderAction(player, msg.action(), msg.abilityName(), locked);
+    }
+
+    protected boolean isRiderInputLocked(Player player) {
+        return false;
+    }
+
+    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        if (locked) {
+            setGoingUp(false);
+            setGoingDown(false);
+            return;
+        }
+        setGoingUp(goingUp);
+        setGoingDown(goingDown);
+    }
+
+    protected float applyInputDeadzone(float value) {
+        return Math.abs(value) > 0.02f ? value : 0f;
+    }
+
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
+        float clampedForward = locked ? 0f : applyInputDeadzone(forward);
+        float clampedStrafe = locked ? 0f : applyInputDeadzone(strafe);
+        setLastRiderForward(clampedForward);
+        setLastRiderStrafe(clampedStrafe);
+    }
+
+    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
+        if (action == null) {
+            return;
+        }
+        switch (action) {
+            case TAKEOFF_REQUEST -> { if (!locked) onRiderTakeoffRequest(player); }
+            case ACCELERATE -> { if (!locked) onRiderAccelerationStart(player); }
+            case STOP_ACCELERATE -> onRiderAccelerationStop(player);
+            case ABILITY_USE -> onRiderAbilityUse(player, abilityName);
+            case ABILITY_STOP -> onRiderAbilityStop(player, abilityName);
+            default -> { }
+        }
+    }
+
+    protected void onRiderTakeoffRequest(Player player) {
+    }
+
+    protected void onRiderAccelerationStart(Player player) {
+        setAccelerating(true);
+    }
+
+    protected void onRiderAccelerationStop(Player player) {
+        setAccelerating(false);
+    }
+
+    protected void onRiderAbilityUse(Player player, String abilityName) {
+    }
+
+    protected void onRiderAbilityStop(Player player, String abilityName) {
+    }
+
+
+    @Nullable
+    public RiderAbilityBinding getPrimaryRiderAbility() {
+        return null;
+    }
+
+    @Nullable
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return null;
+    }
+
+    @Nullable
+    public RiderAbilityBinding getTertiaryRiderAbility() {
+        return null;
+    }
+
+    @Nullable
+    public RiderAbilityBinding getAttackRiderAbility() {
+        return null;
+    }
+
+    public byte buildClientControlState(boolean ascendDown, boolean descendDown, boolean attackDown, boolean primaryDown, boolean secondaryDown, boolean sneakDown) {
+        return (byte) -1;
+    }
+
+    public record RiderAbilityBinding(String abilityId, Activation activation) {
+        public enum Activation {
+            PRESS,
+            HOLD
+        }
+    }
 
     // ===== RIDER INPUT IMPLEMENTATION =====
 
