@@ -881,6 +881,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
                     setHovering(false);
                 }
             }
+            tickRiderControlLock();
             tickRiderControlLockMovement();
             handleAmbientSounds();
             // no-op
@@ -1103,11 +1104,19 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     
     private void tickRiderControlLockMovement() {
         // While rider controls are locked (e.g., Summon Storm windup), freeze movement and AI
-        if (areRiderControlsLocked()) {
-            this.getNavigation().stop();
-            this.setTarget(null);
-            this.setDeltaMovement(0, 0, 0);
+        if (!areRiderControlsLocked()) {
+            return;
         }
+
+        // If there's no rider anymore, release the lock so AI can resume
+        if (getControllingPassenger() == null) {
+            riderControlLockTicks = 0;
+            return;
+        }
+
+        this.getNavigation().stop();
+        this.setTarget(null);
+        this.setDeltaMovement(0, 0, 0);
     }
     
     private void tickSuperchargeTimer() {
@@ -1931,9 +1940,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         tag.putBoolean("LandingFlag", landingFlag);
         tag.putInt("LandingTimer", landingTimer);
 
-        // Save lock states
-        tag.putInt("RiderControlLockTicks", riderControlLockTicks);
-        tag.putInt("TakeoffLockTicks", takeoffLockTicks);
+        // Save lock states (transient rider/takeoff locks intentionally omitted)
 
         // Persist combat cooldowns
         this.combatManager.saveToNBT(tag);
@@ -1980,9 +1987,9 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.landingFlag = tag.contains("LandingFlag") && tag.getBoolean("LandingFlag");
         this.landingTimer = tag.contains("LandingTimer") ? tag.getInt("LandingTimer") : 0;
 
-        // Restore lock states
-        this.riderControlLockTicks = tag.contains("RiderControlLockTicks") ? tag.getInt("RiderControlLockTicks") : 0;
-        this.takeoffLockTicks = tag.contains("TakeoffLockTicks") ? tag.getInt("TakeoffLockTicks") : 0;
+        // Restore lock states (transient rider/takeoff locks reset on load)
+        this.riderControlLockTicks = 0;
+        this.takeoffLockTicks = 0;
 
         // Restore combat cooldowns
         this.combatManager.loadFromNBT(tag);
@@ -2032,7 +2039,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             if (!level().isClientSide) {
                 // For all dragons, restart flight controller to prevent drifting
                 this.flightController.shouldTakeoff();
-                
+
                 // Force proper flight state restoration
                 this.setFlying(true);
                 this.setTakeoff(true);
@@ -2040,6 +2047,13 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
                 this.setLanding(false);
                 this.switchToAirNavigation();
             }
+        }
+
+        // Clear navigation and target if dragon is sitting to prevent AI goal issues on world reload
+        if (this.isOrderedToSit()) {
+            this.getNavigation().stop();
+            this.setTarget(null);
+            this.setAggressive(false);
         }
     }
 
@@ -2276,7 +2290,6 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         super.tickRidden(player, travelVector);
         // Decrement locks on server authority
         if (!this.level().isClientSide) {
-            tickRiderControlLock();
             tickTakeoffLock();
         }
         if (!areRiderControlsLocked()) {
