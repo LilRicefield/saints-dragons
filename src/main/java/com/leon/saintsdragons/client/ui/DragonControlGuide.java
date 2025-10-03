@@ -60,7 +60,7 @@ public class DragonControlGuide extends DragonUIElement {
         controls.add(ControlEntry.forKey(DragonRideKeybinds.DRAGON_DESCEND, Component.translatable("saintsdragons.ui.control.descend"), COLOR_MOVEMENT));
         controls.add(ControlEntry.forKey(DragonRideKeybinds.DRAGON_ACCELERATE, Component.translatable("saintsdragons.ui.control.accelerate"), COLOR_MOVEMENT));
 
-        DragonAbilityType<?, ?> primaryAbility = dragon.getRoarAbility();
+        DragonAbilityType<?, ?> primaryAbility = dragon.getRoaringAbility();
         if (primaryAbility != null) {
             controls.add(ControlEntry.forKey(
                 DragonRideKeybinds.DRAGON_PRIMARY_ABILITY,
@@ -69,7 +69,7 @@ public class DragonControlGuide extends DragonUIElement {
             ));
         }
 
-        DragonAbilityType<?, ?> secondaryAbility = dragon.getSummonStormAbility();
+        DragonAbilityType<?, ?> secondaryAbility = dragon.getChannelingAbility();
         if (secondaryAbility != null) {
             controls.add(ControlEntry.forKey(
                 DragonRideKeybinds.DRAGON_SECONDARY_ABILITY,

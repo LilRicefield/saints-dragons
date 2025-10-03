@@ -173,15 +173,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     /**
      * Get the roar ability for this dragon type (if any)
      */
-    public DragonAbilityType<?, ?> getRoarAbility() {
+    public DragonAbilityType<?, ?> getRoaringAbility() {
         return null; // Default: no roar ability
     }
 
     /**
      * Get the summon storm ability for this dragon type (if any)
      */
-    public DragonAbilityType<?, ?> getSummonStormAbility() {
-        return null; // Default: no summon storm ability
+    public DragonAbilityType<?, ?> getChannelingAbility() {
+        return null;
     }
 
     // ===== DRAGON STATE METHODS =====
