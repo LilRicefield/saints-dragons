@@ -109,6 +109,16 @@
       }
     ]
   },
+  "amphithere_hurt": {
+    "subtitle": "Amphithere screeches in pain",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/amphithere/amphithere_hurt",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
   "lightningdragon_bite": {
     "subtitle": "Dragon bites",
     "sounds": [

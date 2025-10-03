@@ -21,6 +21,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.DragonCombatCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
+import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonFlightController;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
@@ -31,6 +32,7 @@ import com.leon.saintsdragons.server.entity.controller.lightningdragon.Lightning
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.util.DragonMathUtil;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 
@@ -81,7 +83,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //Just everything
 public class LightningDragonEntity extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
-        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen {
+        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon {
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
     private int ownerDistanceCacheTime = -1;
@@ -1050,7 +1052,6 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         // Delegate to controllers (disabled while dying)
         if (!isDying()) {
             flightController.handleFlightLogic();
-            combatManager.tick();
         }
         updateSittingProgress();
     }
@@ -1232,19 +1233,24 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     }
 
     @Override
-    protected void playHurtSound(@Nonnull net.minecraft.world.damagesource.DamageSource source) {
+    protected void playHurtSound(@Nonnull DamageSource source) {
+        // Hurt ability pipeline plays custom audio.
+    }
+
+    @Override
+    protected DragonAbilityType<?, ?> getHurtAbilityType() {
+        return LightningDragonAbilities.HURT;
+    }
+
+    @Override
+    protected void onSuccessfulDamage(DamageSource source, float amount) {
         if (isDying()) {
             return;
         }
-        // Throttle hurt sound to avoid spam while ridden or under rapid damage
         if (hurtSoundCooldown > 0) {
             return;
         }
-        // Custom: activate one-shot hurt ability (plays sound + animation once)
-        if (!level().isClientSide) {
-            this.tryActivateAbility(LightningDragonAbilities.HURT);
-        }
-        // Short cooldown; extend slightly when being ridden
+        super.onSuccessfulDamage(source, amount);
         this.hurtSoundCooldown = this.isVehicle() ? 15 : 8;
     }
     /**
@@ -1553,7 +1559,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
                 // Force interrupt any active ability and start death ability
                 if (!this.canUseAbility()) {
                     // If we can't use ability, there's an active one - interrupt it
-                    this.setActiveAbility(null);
+                    this.combatManager.forceEndActiveAbility();
                 }
                 this.tryActivateAbility(LightningDragonAbilities.DIE);
                 return true; // handled
@@ -2507,3 +2513,4 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
     }
 }
+

@@ -18,6 +18,7 @@ import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.Amphithe
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -83,7 +84,7 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
-public class AmphithereEntity extends RideableDragonBase implements DragonFlightCapable {
+public class AmphithereEntity extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon {
     // Note: DATA_FIRE_BREATHING will be defined in defineSynchedData() using a unique ID
     private static final int LANDING_SETTLE_TICKS = 4;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
@@ -358,7 +359,6 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     public void tick() {
         super.tick();
 
-        combatManager.tick();
         tickSittingState();
         tickBankingLogic();
         tickPitchingLogic();
@@ -1028,6 +1028,10 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         soundHandler.handleAnimationSound(this, event.getKeyframeData(), event.getController());
     }
 
+    public DragonSoundHandler getSoundHandler() {
+        return soundHandler;
+    }
+
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
@@ -1041,6 +1045,11 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     @Override
     public DragonAbilityType<?, ?> getRoarAbility() {
         return AmphithereAbilities.ROAR;
+    }
+
+    @Override
+    protected DragonAbilityType<?, ?> getHurtAbilityType() {
+        return AmphithereAbilities.HURT;
     }
 
     @Override
@@ -1395,3 +1404,4 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
 }
+
