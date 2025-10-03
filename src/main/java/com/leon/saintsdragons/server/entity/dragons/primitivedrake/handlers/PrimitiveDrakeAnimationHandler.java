@@ -50,7 +50,6 @@ public class PrimitiveDrakeAnimationHandler {
         // Use the improved movement state detection
         int groundState = drake.getEffectiveGroundState();
         if (groundState == 2 || drake.isRunning()) {
-            // TODO: Add run animation when available
             state.setAndContinue(WALK_ANIM); // Fallback to walk for now
         } else if (groundState == 1 || drake.isWalking()) {
             state.setAndContinue(WALK_ANIM);
