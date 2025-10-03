@@ -1,9 +1,8 @@
 Saint's Dragons - Dual License
 Copyright (c) 2025 Leon Saint
 
-================================================================================
 PART 1: SOURCE CODE LICENSE (GNU LGPL v3.0)
-================================================================================
+
 
 The source code of Saint's Dragons is licensed under the GNU Lesser General
 Public License v3.0 (LGPL-3.0).
@@ -189,9 +188,7 @@ whether future versions of the GNU Lesser General Public License shall
 apply, that proxy's public statement of acceptance of any version is
 permanent authorization for you to choose that version for the Library.
 
-================================================================================
 PART 2: ART & AUDIO ASSETS LICENSE
-================================================================================
 
 Copyright (c) 2025 Leon Saint
 
