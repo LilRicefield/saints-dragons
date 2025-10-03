@@ -80,6 +80,12 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     
     // Binding state for Drake Binder
     private boolean boundToBinder = false;
+
+    // Client-side smoothing for ground movement states to avoid animation flicker when idle
+    private static final int CLIENT_GROUND_STATE_STABLE_TICKS = 3;
+    private int clientGroundMoveState = 0;
+    private int clientGroundMoveTarget = 0;
+    private int clientGroundMoveHold = 0;
     
     public PrimitiveDrakeEntity(EntityType<? extends PrimitiveDrakeEntity> entityType, Level level) {
         super(entityType, level);
@@ -710,14 +716,28 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
      */
     public int getEffectiveGroundState() {
         if (level().isClientSide) {
-            // Client-side calculation based on movement with adjusted thresholds
-            double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-            final double WALK_MIN = 0.0003; // Lower threshold to match actual movement (velSqr ≈ 5.34E-4)
-            final double RUN_MIN = 0.0020;  // Higher threshold for running
-            
-            if (velSqr > RUN_MIN) return 2; // running
-            if (velSqr > WALK_MIN) return 1; // walking
-            return 0; // idle
+            int syncedState = this.entityData.get(DATA_GROUND_MOVE_STATE);
+
+            if (clientGroundMoveTarget != syncedState) {
+                clientGroundMoveTarget = syncedState;
+                clientGroundMoveHold = 0;
+            } else if (clientGroundMoveState != clientGroundMoveTarget) {
+                clientGroundMoveHold++;
+                if (clientGroundMoveHold >= CLIENT_GROUND_STATE_STABLE_TICKS) {
+                    clientGroundMoveState = clientGroundMoveTarget;
+                    clientGroundMoveHold = 0;
+                }
+            } else {
+                clientGroundMoveHold = 0;
+            }
+
+            if (isSleeping() || isPlayingDead() || isOrderedToSit()) {
+                clientGroundMoveState = 0;
+                clientGroundMoveTarget = 0;
+                clientGroundMoveHold = 0;
+            }
+
+            return clientGroundMoveState;
         }
         return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
@@ -729,7 +749,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         // Update ground movement state with more sophisticated detection
         int moveState = 0; // idle
         
-        if (!isSleeping() && !isPlayingDead()) {
+        if (!isSleeping() && !isPlayingDead() && !isOrderedToSit()) {
             // Ground movement with refined thresholds
             double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
             
