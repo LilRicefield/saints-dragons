@@ -97,7 +97,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.moveControl = this.landMoveControl;
         this.lookControl = this.landLookControl;
         this.riderController = new RiftDrakeRiderController(this);
-        this.setRideable(true);
+        this.setRideable();
     }
 
     public static AttributeSupplier.Builder createAttributes() {

@@ -17,7 +17,6 @@ import com.leon.saintsdragons.server.entity.controller.amphithere.AmphithereRide
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereInteractionHandler;
 import java.util.Map;
-import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -82,7 +81,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
-import java.util.Map;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
@@ -99,10 +97,10 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
 
 
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = Map.ofEntries(
-            Map.entry("roar", new VocalEntry("actions", "animation.amphithere.roar", ModSounds.AMPHITHERE_ROAR::get, 1.5f, 0.95f, 0.1f, false, false)),
-            Map.entry("roar_ground", new VocalEntry("actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR::get, 1.5f, 0.95f, 0.1f, false, false)),
-            Map.entry("roar_air", new VocalEntry("actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR::get, 1.5f, 0.95f, 0.1f, false, false)),
-            Map.entry("amphithere_hurt", new VocalEntry("actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT::get, 1.2f, 0.95f, 0.1f, false, true))
+            Map.entry("roar", new VocalEntry("actions", "animation.amphithere.roar", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false)),
+            Map.entry("roar_ground", new VocalEntry("actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false)),
+            Map.entry("roar_air", new VocalEntry("actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false)),
+            Map.entry("amphithere_hurt", new VocalEntry("actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT, 1.2f, 0.95f, 0.1f, false, true))
     );
 
 
@@ -857,7 +855,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         
         ExplosionDamageCalculator calculator = new ExplosionDamageCalculator() {
             @Override
-            public Optional<Float> getBlockExplosionResistance(Explosion explosion, BlockGetter level, BlockPos pos, BlockState state, FluidState fluid) {
+            public @NotNull Optional<Float> getBlockExplosionResistance(@NotNull Explosion explosion, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull FluidState fluid) {
                 if (isFireBodyImmuneBlock(state)) {
                     return Optional.of(Float.MAX_VALUE);
                 }
@@ -865,7 +863,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             }
 
             @Override
-            public boolean shouldBlockExplode(Explosion explosion, BlockGetter level, BlockPos pos, BlockState state, float exposure) {
+            public boolean shouldBlockExplode(@NotNull Explosion explosion, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state, float exposure) {
                 return !isFireBodyImmuneBlock(state);
             }
         };
@@ -873,10 +871,20 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), calculator,
                 x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, true, Explosion.BlockInteraction.DESTROY);
 
-        grantAlliesExplosionImmunity(server, x, y, z);
+        List<LivingEntity> allies = grantAlliesExplosionImmunity(server, x, y, z);
+
+        // Make allies temporarily invulnerable to prevent armor damage
+        for (LivingEntity ally : allies) {
+            ally.setInvulnerable(true);
+        }
 
         explosion.explode();
         explosion.finalizeExplosion(true);
+
+        // Restore vulnerability
+        for (LivingEntity ally : allies) {
+            ally.setInvulnerable(false);
+        }
 
         applyFireBodyBlastDamage(server, x, y, z, immune);
 
@@ -914,14 +922,14 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         return state.is(Blocks.BEDROCK) || state.is(Blocks.OBSIDIAN);
     }
 
-    private void grantAlliesExplosionImmunity(ServerLevel server, double x, double y, double z) {
+    private List<LivingEntity> grantAlliesExplosionImmunity(ServerLevel server, double x, double y, double z) {
         double radius = FIRE_BODY_EXPLOSION_RADIUS + 4.0D;
         AABB area = new AABB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
         List<LivingEntity> allies = server.getEntitiesOfClass(LivingEntity.class, area,
                 entity -> entity.isAlive() && entity != this && this.isAlly(entity));
 
         if (allies.isEmpty()) {
-            return;
+            return allies;
         }
 
         for (LivingEntity ally : allies) {
@@ -929,6 +937,8 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             ally.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 200, 0, true, false, false));
             ally.setRemainingFireTicks(0);
         }
+
+        return allies;
     }
 
     private void applyFireBodyBlastDamage(ServerLevel server, double x, double y, double z, List<Entity> immune) {
@@ -1109,7 +1119,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
     @Override
-    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+    public boolean doHurtTarget(net.minecraft.world.entity.@NotNull Entity target) {
         // Use bite ability for melee attacks
         if (!this.isVehicle() && !this.isOrderedToSit()) {
             combatManager.tryUseAbility(AmphithereAbilities.BITE);

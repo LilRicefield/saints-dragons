@@ -95,20 +95,20 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     private double cachedHorizontalSpeed = 0.0;
     private int horizontalSpeedCacheTime = -1;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = Map.ofEntries(
-            Map.entry("grumble1", new VocalEntry("action", "animation.lightning_dragon.grumble1", ModSounds.DRAGON_GRUMBLE_1::get, 0.8f, 0.95f, 0.1f, false, false)),
-            Map.entry("grumble2", new VocalEntry("action", "animation.lightning_dragon.grumble2", ModSounds.DRAGON_GRUMBLE_2::get, 0.8f, 0.95f, 0.1f, false, false)),
-            Map.entry("grumble3", new VocalEntry("action", "animation.lightning_dragon.grumble3", ModSounds.DRAGON_GRUMBLE_3::get, 0.8f, 0.95f, 0.1f, false, false)),
-            Map.entry("purr", new VocalEntry("action", "animation.lightning_dragon.purr", ModSounds.DRAGON_PURR::get, 0.8f, 1.05f, 0.05f, true, false)),
-            Map.entry("snort", new VocalEntry("action", "animation.lightning_dragon.snort", ModSounds.DRAGON_SNORT::get, 0.9f, 0.9f, 0.2f, false, false)),
-            Map.entry("chuff", new VocalEntry("action", "animation.lightning_dragon.chuff", ModSounds.DRAGON_CHUFF::get, 0.9f, 0.9f, 0.2f, false, false)),
-            Map.entry("content", new VocalEntry("action", "animation.lightning_dragon.content", ModSounds.DRAGON_CONTENT::get, 0.8f, 1.0f, 0.1f, true, false)),
-            Map.entry("annoyed", new VocalEntry("action", "animation.lightning_dragon.annoyed", ModSounds.DRAGON_ANNOYED::get, 1.0f, 0.9f, 0.2f, false, false)),
-            Map.entry("growl_warning", new VocalEntry("action", "animation.lightning_dragon.growl_warning", ModSounds.DRAGON_GROWL_WARNING::get, 1.2f, 0.8f, 0.4f, false, false)),
-            Map.entry("roar", new VocalEntry("action", "animation.lightning_dragon.roar", ModSounds.DRAGON_ROAR::get, 1.4f, 0.9f, 0.15f, false, false)),
-            Map.entry("roar_ground", new VocalEntry("action", "animation.lightning_dragon.roar_ground", ModSounds.DRAGON_ROAR::get, 1.4f, 0.9f, 0.15f, false, false)),
-            Map.entry("roar_air", new VocalEntry("action", "animation.lightning_dragon.roar_air", ModSounds.DRAGON_ROAR::get, 1.4f, 0.9f, 0.15f, false, false)),
-            Map.entry("hurt", new VocalEntry("action", "animation.lightning_dragon.hurt", ModSounds.DRAGON_HURT::get, 1.2f, 0.95f, 0.1f, false, true)),
-            Map.entry("die", new VocalEntry("action", "animation.lightning_dragon.die", ModSounds.DRAGON_DIE::get, 1.5f, 0.95f, 0.1f, false, true))
+            Map.entry("grumble1", new VocalEntry("action", "animation.lightning_dragon.grumble1", ModSounds.DRAGON_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false)),
+            Map.entry("grumble2", new VocalEntry("action", "animation.lightning_dragon.grumble2", ModSounds.DRAGON_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false)),
+            Map.entry("grumble3", new VocalEntry("action", "animation.lightning_dragon.grumble3", ModSounds.DRAGON_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false)),
+            Map.entry("purr", new VocalEntry("action", "animation.lightning_dragon.purr", ModSounds.DRAGON_PURR, 0.8f, 1.05f, 0.05f, true, false)),
+            Map.entry("snort", new VocalEntry("action", "animation.lightning_dragon.snort", ModSounds.DRAGON_SNORT, 0.9f, 0.9f, 0.2f, false, false)),
+            Map.entry("chuff", new VocalEntry("action", "animation.lightning_dragon.chuff", ModSounds.DRAGON_CHUFF, 0.9f, 0.9f, 0.2f, false, false)),
+            Map.entry("content", new VocalEntry("action", "animation.lightning_dragon.content", ModSounds.DRAGON_CONTENT, 0.8f, 1.0f, 0.1f, true, false)),
+            Map.entry("annoyed", new VocalEntry("action", "animation.lightning_dragon.annoyed", ModSounds.DRAGON_ANNOYED, 1.0f, 0.9f, 0.2f, false, false)),
+            Map.entry("growl_warning", new VocalEntry("action", "animation.lightning_dragon.growl_warning", ModSounds.DRAGON_GROWL_WARNING, 1.2f, 0.8f, 0.4f, false, false)),
+            Map.entry("roar", new VocalEntry("action", "animation.lightning_dragon.roar", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false)),
+            Map.entry("roar_ground", new VocalEntry("action", "animation.lightning_dragon.roar_ground", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false)),
+            Map.entry("roar_air", new VocalEntry("action", "animation.lightning_dragon.roar_air", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false)),
+            Map.entry("hurt", new VocalEntry("action", "animation.lightning_dragon.hurt", ModSounds.DRAGON_HURT, 1.2f, 0.95f, 0.1f, false, true)),
+            Map.entry("die", new VocalEntry("action", "animation.lightning_dragon.die", ModSounds.DRAGON_DIE, 1.5f, 0.95f, 0.1f, false, true))
     );
 
     // ===== AMBIENT SOUND SYSTEM =====
@@ -152,7 +152,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     private float getFloatData(EntityDataAccessor<Float> accessor) {
         return this.entityData.get(accessor);
     }
-    
+
     /**
      * Helper method for float entity data setting
      */
@@ -1648,7 +1648,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     public int getPitchDirection() {
         return pitchDir;
     }
-    
+
     /**
      * Checks if the dragon is currently summoning (controls locked for ability)
      * @return true if summoning
