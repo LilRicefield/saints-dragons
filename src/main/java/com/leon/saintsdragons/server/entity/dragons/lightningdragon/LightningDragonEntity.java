@@ -35,6 +35,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import java.util.Map;
 
 //Minecraft
 import net.minecraft.util.RandomSource;
@@ -93,6 +94,26 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     private int emptyProjectileScans = 0;
     private double cachedHorizontalSpeed = 0.0;
     private int horizontalSpeedCacheTime = -1;
+    private static final Map<String, String> VOCAL_ANIMATIONS = Map.ofEntries(
+            Map.entry("grumble1", "animation.lightning_dragon.grumble1"),
+            Map.entry("grumble2", "animation.lightning_dragon.grumble2"),
+            Map.entry("grumble3", "animation.lightning_dragon.grumble3"),
+            Map.entry("purr", "animation.lightning_dragon.purr"),
+            Map.entry("snort", "animation.lightning_dragon.snort"),
+            Map.entry("chuff", "animation.lightning_dragon.chuff"),
+            Map.entry("content", "animation.lightning_dragon.content"),
+            Map.entry("annoyed", "animation.lightning_dragon.annoyed"),
+            Map.entry("excited", "animation.lightning_dragon.excited"),
+            Map.entry("roar", "animation.lightning_dragon.roar"),
+            Map.entry("roar_ground", "animation.lightning_dragon.roar_ground"),
+            Map.entry("roar_air", "animation.lightning_dragon.roar_air"),
+            Map.entry("growl_warning", "animation.lightning_dragon.growl_warning"),
+            Map.entry("lightning_bite", "animation.lightning_dragon.lightning_bite"),
+            Map.entry("horn_gore", "animation.lightning_dragon.horn_gore"),
+            Map.entry("hurt", "animation.lightning_dragon.hurt"),
+            Map.entry("die", "animation.lightning_dragon.die")
+    );
+
     // ===== AMBIENT SOUND SYSTEM =====
     private int ambientSoundTimer;
     private int nextAmbientSoundDelay;
@@ -2110,6 +2131,11 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         controllers.add(pitchingController);
         controllers.add(movementController);
         controllers.add(actionController);
+    }
+
+    @Override
+    public Map<String, String> getVocalAnimationMap() {
+        return VOCAL_ANIMATIONS;
     }
 
     @Override

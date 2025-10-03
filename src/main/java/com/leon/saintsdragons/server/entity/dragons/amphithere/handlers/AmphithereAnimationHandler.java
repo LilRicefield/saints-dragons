@@ -121,20 +121,12 @@ public class AmphithereAnimationHandler {
     }
 
     public void setupActionController(AnimationController<AmphithereEntity> controller) {
-        controller.triggerableAnim("roar",
-                RawAnimation.begin().thenPlay("animation.amphithere.roar"));
-        controller.triggerableAnim("roar_ground",
-                RawAnimation.begin().thenPlay("animation.amphithere.roar_ground"));
-        controller.triggerableAnim("roar_air",
-                RawAnimation.begin().thenPlay("animation.amphithere.roar_air"));
         controller.triggerableAnim("bite_ground",
                 RawAnimation.begin().thenPlay("animation.amphithere.bite_ground"));
         controller.triggerableAnim("bite_air",
                 RawAnimation.begin().thenPlay("animation.amphithere.bite_air"));
-        controller.triggerableAnim("hurt",
-                RawAnimation.begin().thenPlay("animation.amphithere.hurt"));
-        controller.triggerableAnim("amphithere_hurt",
-                RawAnimation.begin().thenPlay("animation.amphithere.hurt"));
+        dragon.getVocalAnimationMap().forEach((key, animation) ->
+                controller.triggerableAnim(key, RawAnimation.begin().thenPlay(animation)));
     }
 
     public PlayState actionPredicate(AnimationState<AmphithereEntity> state) {
