@@ -63,6 +63,7 @@ public class DragonCombatHandler {
     
     public void setActiveAbility(DragonAbility<?> ability) {
         this.activeAbility = ability;
+        dragon.setActiveAbility(ability);
     }
 
     public DragonAbilityType<?, ?> getActiveAbilityType() {
@@ -115,6 +116,9 @@ public class DragonCombatHandler {
     }
 
     public void tryUseAbility(DragonAbilityType<?, ?> abilityType) {
+        if (abilityType == null || dragon.level().isClientSide) {
+            return;
+        }
         if (!canStart(abilityType)) {
             return;
         }
@@ -144,7 +148,7 @@ public class DragonCombatHandler {
     public void forceEndActiveAbility() {
         if (activeAbility != null) {
             activeAbility.interrupt();
-            activeAbility = null;
+            setActiveAbility(null);
         }
         if (overlayAbility != null) {
             overlayAbility.interrupt();
@@ -155,7 +159,7 @@ public class DragonCombatHandler {
     public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
         if (activeAbility != null && activeAbility.getAbilityType() == abilityType) {
             activeAbility.interrupt();
-            activeAbility = null;
+            setActiveAbility(null);
         }
         if (overlayAbility != null && overlayAbility.getAbilityType() == abilityType) {
             overlayAbility.interrupt();
@@ -195,6 +199,9 @@ public class DragonCombatHandler {
     // Removed unused target validation stub
 
     public void tick() {
+        if (dragon.level().isClientSide) {
+            return;
+        }
         if (globalCooldown > 0) {
             globalCooldown--;
         }
@@ -234,7 +241,7 @@ public class DragonCombatHandler {
                 if (finishedType != null) {
                     setAbilityCooldown(finishedType, activeAbility.getCooldownTimer());
                 }
-                activeAbility = null;
+                setActiveAbility(null);
             }
         }
     }

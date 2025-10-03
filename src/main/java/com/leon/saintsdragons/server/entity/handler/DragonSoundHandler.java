@@ -134,7 +134,7 @@ public class DragonSoundHandler {
     public void playVocal(String key) {
         if (key == null || key.isEmpty() || dragon.level().isClientSide) return;
         // Allow hurt and die sounds to play regardless of sleep state
-        if (!"hurt".equals(key) && !"die".equals(key) && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+        if (!"hurt".equals(key) && !"amphithere_hurt".equals(key) && !"die".equals(key) && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
             return; // Gate vocals during sleep/transition
         }
         
@@ -145,8 +145,6 @@ public class DragonSoundHandler {
             case "grumble1" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "grumble2" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "grumble3" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            
-            // Primitive Drake grumbles - smaller, cuter sounds
             case "primitivedrake_grumble1" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_1.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             case "primitivedrake_grumble2" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_2.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             case "primitivedrake_grumble3" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_3.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
@@ -158,6 +156,7 @@ public class DragonSoundHandler {
             case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
             case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
             case "amphithere_roar" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_ROAR.get(), 1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "amphithere_hurt" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_HURT.get(), 1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             default -> {
@@ -443,3 +442,4 @@ public class DragonSoundHandler {
         dragon.playSound(SoundEvents.GENERIC_EXPLODE, volume * 0.6f, pitch);
     }
 }
+

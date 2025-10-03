@@ -13,6 +13,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
@@ -114,23 +115,40 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Check if dragon can use abilities (not on cooldown, not already using one)
      */
     public boolean canUseAbility() {
-        return activeAbility == null || !activeAbility.isUsing();
+        return combatManager.canUseAbility();
     }
 
     /**
      * Try to activate a Dragon ability
      */
     public <T extends DragonEntity> void tryActivateAbility(DragonAbilityType<T, ?> abilityType) {
-        if (!canUseAbility()) return;
-        
-        @SuppressWarnings("unchecked")
-        T castedThis = (T) this;
-        DragonAbility<T> ability = abilityType.makeInstance(castedThis);
-        
-        if (ability.tryAbility()) {
-            setActiveAbility(ability);
-            ability.start();
+        if (abilityType == null || level().isClientSide) {
+            return;
         }
+        combatManager.tryUseAbility(abilityType);
+    }
+
+    protected DragonAbilityType<?, ?> getHurtAbilityType() {
+        return null;
+    }
+
+    protected void onSuccessfulDamage(DamageSource source, float amount) {
+        if (level().isClientSide || isDying()) {
+            return;
+        }
+        DragonAbilityType<?, ?> hurtAbility = getHurtAbilityType();
+        if (hurtAbility != null) {
+            combatManager.tryUseAbility(hurtAbility);
+        }
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        boolean result = super.hurt(source, amount);
+        if (result) {
+            onSuccessfulDamage(source, amount);
+        }
+        return result;
     }
 
     /**
@@ -282,14 +300,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Tick Dragon ability system
      */
     protected void tickAbilities() {
-        // Tick active ability
-        if (activeAbility != null) {
-            activeAbility.tick();
-            
-            // Check if ability finished
-            if (!activeAbility.isUsing()) {
-                activeAbility = null;
-            }
+        if (!level().isClientSide) {
+            combatManager.tick();
         }
     }
 
@@ -481,3 +493,4 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     public abstract Vec3 getMouthPosition();
 }
+
