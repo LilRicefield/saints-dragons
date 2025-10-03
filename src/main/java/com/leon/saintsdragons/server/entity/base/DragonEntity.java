@@ -7,6 +7,8 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
+import java.util.Collections;
+import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -126,6 +128,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return;
         }
         combatManager.tryUseAbility(abilityType);
+    }
+
+    protected Map<String, String> getVocalAnimationMap() {
+        return Collections.emptyMap();
     }
 
     protected DragonAbilityType<?, ?> getHurtAbilityType() {

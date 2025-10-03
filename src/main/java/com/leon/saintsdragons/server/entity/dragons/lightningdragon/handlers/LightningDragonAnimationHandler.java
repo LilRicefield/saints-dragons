@@ -76,14 +76,8 @@ public record LightningDragonAnimationHandler(LightningDragonEntity dragon) {
      */
     private void registerVocalTriggers(AnimationController<LightningDragonEntity> action) {
         // Only register sounds that actually exist in sounds.json + required ability animations
-        String[] keys = {
-            "grumble1", "grumble2", "grumble3", "purr", "snort", "chuff", "content", "annoyed",
-            "excited", "roar", "roar_ground", "roar_air", "growl_warning", "lightning_bite", "horn_gore", "hurt", "die"
-        };
-        
-        for (String key : keys) {
-            action.triggerableAnim(key, RawAnimation.begin().thenPlay("animation.lightning_dragon." + key));
-        }
+        dragon.getVocalAnimationMap().forEach((key, animation) ->
+                action.triggerableAnim(key, RawAnimation.begin().thenPlay(animation)));
     }
     
     // ===== ANIMATION PREDICATES =====

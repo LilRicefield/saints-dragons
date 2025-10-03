@@ -79,6 +79,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
+import java.util.Map;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
@@ -93,6 +94,14 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     private static final double FIRE_BODY_IMPRINT_DEPTH_FACTOR = 0.6D;
     private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
 
+
+    private static final Map<String, String> VOCAL_ANIMATIONS = Map.ofEntries(
+            Map.entry("roar", "animation.amphithere.roar"),
+            Map.entry("roar_ground", "animation.amphithere.roar_ground"),
+            Map.entry("roar_air", "animation.amphithere.roar_air"),
+            Map.entry("hurt", "animation.amphithere.hurt"),
+            Map.entry("amphithere_hurt", "animation.amphithere.hurt")
+    );
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final AmphithereAnimationHandler animationHandler = new AmphithereAnimationHandler(this);
@@ -1035,6 +1044,11 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
+    }
+
+    @Override
+    public Map<String, String> getVocalAnimationMap() {
+        return VOCAL_ANIMATIONS;
     }
 
     @Override
