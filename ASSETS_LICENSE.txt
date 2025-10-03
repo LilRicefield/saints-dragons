@@ -1,0 +1,15 @@
+Saint’s Dragons – Art & Audio License
+Copyright (c) 2025 Leon Saint
+
+This applies to all non-code assets bundled with the mod, including but not limited to textures, models, animations, sounds, and marketing art.
+
+You may:
+- Use these assets as part of the unmodified Saint’s Dragons distribution.
+- Include Saint’s Dragons in public or private modpacks, provided the assets remain unaltered and the mod is credited to Leon Saint.
+
+You may not:
+- Extract, modify, reuse, or redistribute the assets outside Saint’s Dragons without explicit written permission.
+- Sell, reupload, or otherwise monetize the assets on their own or as part of another project.
+- Claim authorship of the assets.
+
+To request additional usage rights, contact: lilricefield@gmail.com
