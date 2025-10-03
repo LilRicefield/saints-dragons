@@ -66,7 +66,7 @@ public class DragonKeybindHandler {
 
             // Handle roar keybind (R)
             if (!prevRoar && roar) {
-                var roarAbility = dragon.getRoarAbility();
+                var roarAbility = dragon.getRoaringAbility();
                 if (roarAbility != null && dragon.combatManager.canStart(roarAbility)) {
                     dragon.combatManager.tryUseAbility(roarAbility);
                 }
@@ -74,7 +74,7 @@ public class DragonKeybindHandler {
 
             // Handle summon storm keybind (H)
             if (!prevSummon && summon) {
-                var summonAbility = dragon.getSummonStormAbility();
+                var summonAbility = dragon.getChannelingAbility();
                 if (summonAbility != null && dragon.combatManager.canStart(summonAbility)) {
                     dragon.combatManager.tryUseAbility(summonAbility);
                 }

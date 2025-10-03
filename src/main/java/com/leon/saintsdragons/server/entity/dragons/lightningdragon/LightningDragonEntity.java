@@ -2146,12 +2146,12 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getRoarAbility() {
+    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getRoaringAbility() {
         return LightningDragonAbilities.ROAR;
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getSummonStormAbility() {
+    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getChannelingAbility() {
         return LightningDragonAbilities.SUMMON_STORM;
     }
 

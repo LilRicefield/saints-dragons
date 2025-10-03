@@ -1062,7 +1062,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
     @Override
-    public DragonAbilityType<?, ?> getRoarAbility() {
+    public DragonAbilityType<?, ?> getRoaringAbility() {
         return AmphithereAbilities.ROAR;
     }
 
@@ -1384,7 +1384,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
     @Override
-    public DragonAbilityType<?, ?> getSummonStormAbility() {
+    public DragonAbilityType<?, ?> getChannelingAbility() {
         return AmphithereAbilities.FIRE_BREATH_VOLLEY;
     }
 
