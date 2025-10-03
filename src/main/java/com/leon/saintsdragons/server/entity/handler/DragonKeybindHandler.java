@@ -48,8 +48,7 @@ public class DragonKeybindHandler {
                     // Use the dragon's primary attack ability
                     var chosen = dragon.getPrimaryAttackAbility();
 
-                    // Only align + trigger when the ability can actually start (cooldowns ready)
-                    if (dragon.combatManager.canStart(chosen)) {
+                    if (chosen != null && dragon.combatManager.canStart(chosen)) {
                         // Align dragon to rider's current view just before triggering the animation
                         float yaw = rider.getYRot();
                         float pitch = rider.getXRot();
