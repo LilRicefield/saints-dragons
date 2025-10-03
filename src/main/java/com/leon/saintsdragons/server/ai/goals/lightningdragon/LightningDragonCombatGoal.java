@@ -79,11 +79,11 @@ public class LightningDragonCombatGoal extends Goal {
         if (gap <= 3.0) {
             // Close range - use bite attack
             dragon.setAttackState(ATTACK_STATE_BITE_WINDUP);
-            dragon.attackCooldown = 40; // 2 second cooldown
+            dragon.attackCooldown = 3; // 2 second cooldown
         } else if (gap <= 5.0) {
             // Medium range - use horn gore attack
             dragon.setAttackState(ATTACK_STATE_HORN_WINDUP);
-            dragon.attackCooldown = 40; // 2 second cooldown
+            dragon.attackCooldown = 3; // 2 second cooldown
         }
         // If too far, don't attack (let movement goal handle getting closer)
     }
