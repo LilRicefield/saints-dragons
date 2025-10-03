@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.amphithere;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFlightGoal;
@@ -15,6 +16,8 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.amphithere.AmphithereRiderController;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereInteractionHandler;
+import java.util.Map;
+import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -95,13 +98,15 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
 
 
-    private static final Map<String, String> VOCAL_ANIMATIONS = Map.ofEntries(
-            Map.entry("roar", "animation.amphithere.roar"),
-            Map.entry("roar_ground", "animation.amphithere.roar_ground"),
-            Map.entry("roar_air", "animation.amphithere.roar_air"),
-            Map.entry("hurt", "animation.amphithere.hurt"),
-            Map.entry("amphithere_hurt", "animation.amphithere.hurt")
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES = Map.ofEntries(
+            Map.entry("roar", new VocalEntry("actions", "animation.amphithere.roar", ModSounds.AMPHITHERE_ROAR::get, 1.5f, 0.95f, 0.1f, false, false)),
+            Map.entry("roar_ground", new VocalEntry("actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR::get, 1.5f, 0.95f, 0.1f, false, false)),
+            Map.entry("roar_air", new VocalEntry("actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR::get, 1.5f, 0.95f, 0.1f, false, false)),
+            Map.entry("amphithere_hurt", new VocalEntry("actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT::get, 1.2f, 0.95f, 0.1f, false, true))
     );
+
+
+
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final AmphithereAnimationHandler animationHandler = new AmphithereAnimationHandler(this);
@@ -1047,8 +1052,8 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
     @Override
-    public Map<String, String> getVocalAnimationMap() {
-        return VOCAL_ANIMATIONS;
+    public Map<String, VocalEntry> getVocalEntries() {
+        return VOCAL_ENTRIES;
     }
 
     @Override

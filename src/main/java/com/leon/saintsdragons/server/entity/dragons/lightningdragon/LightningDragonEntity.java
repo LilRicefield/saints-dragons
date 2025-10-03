@@ -94,24 +94,21 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     private int emptyProjectileScans = 0;
     private double cachedHorizontalSpeed = 0.0;
     private int horizontalSpeedCacheTime = -1;
-    private static final Map<String, String> VOCAL_ANIMATIONS = Map.ofEntries(
-            Map.entry("grumble1", "animation.lightning_dragon.grumble1"),
-            Map.entry("grumble2", "animation.lightning_dragon.grumble2"),
-            Map.entry("grumble3", "animation.lightning_dragon.grumble3"),
-            Map.entry("purr", "animation.lightning_dragon.purr"),
-            Map.entry("snort", "animation.lightning_dragon.snort"),
-            Map.entry("chuff", "animation.lightning_dragon.chuff"),
-            Map.entry("content", "animation.lightning_dragon.content"),
-            Map.entry("annoyed", "animation.lightning_dragon.annoyed"),
-            Map.entry("excited", "animation.lightning_dragon.excited"),
-            Map.entry("roar", "animation.lightning_dragon.roar"),
-            Map.entry("roar_ground", "animation.lightning_dragon.roar_ground"),
-            Map.entry("roar_air", "animation.lightning_dragon.roar_air"),
-            Map.entry("growl_warning", "animation.lightning_dragon.growl_warning"),
-            Map.entry("lightning_bite", "animation.lightning_dragon.lightning_bite"),
-            Map.entry("horn_gore", "animation.lightning_dragon.horn_gore"),
-            Map.entry("hurt", "animation.lightning_dragon.hurt"),
-            Map.entry("die", "animation.lightning_dragon.die")
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES = Map.ofEntries(
+            Map.entry("grumble1", new VocalEntry("action", "animation.lightning_dragon.grumble1", ModSounds.DRAGON_GRUMBLE_1::get, 0.8f, 0.95f, 0.1f, false, false)),
+            Map.entry("grumble2", new VocalEntry("action", "animation.lightning_dragon.grumble2", ModSounds.DRAGON_GRUMBLE_2::get, 0.8f, 0.95f, 0.1f, false, false)),
+            Map.entry("grumble3", new VocalEntry("action", "animation.lightning_dragon.grumble3", ModSounds.DRAGON_GRUMBLE_3::get, 0.8f, 0.95f, 0.1f, false, false)),
+            Map.entry("purr", new VocalEntry("action", "animation.lightning_dragon.purr", ModSounds.DRAGON_PURR::get, 0.8f, 1.05f, 0.05f, true, false)),
+            Map.entry("snort", new VocalEntry("action", "animation.lightning_dragon.snort", ModSounds.DRAGON_SNORT::get, 0.9f, 0.9f, 0.2f, false, false)),
+            Map.entry("chuff", new VocalEntry("action", "animation.lightning_dragon.chuff", ModSounds.DRAGON_CHUFF::get, 0.9f, 0.9f, 0.2f, false, false)),
+            Map.entry("content", new VocalEntry("action", "animation.lightning_dragon.content", ModSounds.DRAGON_CONTENT::get, 0.8f, 1.0f, 0.1f, true, false)),
+            Map.entry("annoyed", new VocalEntry("action", "animation.lightning_dragon.annoyed", ModSounds.DRAGON_ANNOYED::get, 1.0f, 0.9f, 0.2f, false, false)),
+            Map.entry("growl_warning", new VocalEntry("action", "animation.lightning_dragon.growl_warning", ModSounds.DRAGON_GROWL_WARNING::get, 1.2f, 0.8f, 0.4f, false, false)),
+            Map.entry("roar", new VocalEntry("action", "animation.lightning_dragon.roar", ModSounds.DRAGON_ROAR::get, 1.4f, 0.9f, 0.15f, false, false)),
+            Map.entry("roar_ground", new VocalEntry("action", "animation.lightning_dragon.roar_ground", ModSounds.DRAGON_ROAR::get, 1.4f, 0.9f, 0.15f, false, false)),
+            Map.entry("roar_air", new VocalEntry("action", "animation.lightning_dragon.roar_air", ModSounds.DRAGON_ROAR::get, 1.4f, 0.9f, 0.15f, false, false)),
+            Map.entry("hurt", new VocalEntry("action", "animation.lightning_dragon.hurt", ModSounds.DRAGON_HURT::get, 1.2f, 0.95f, 0.1f, false, true)),
+            Map.entry("die", new VocalEntry("action", "animation.lightning_dragon.die", ModSounds.DRAGON_DIE::get, 1.5f, 0.95f, 0.1f, false, true))
     );
 
     // ===== AMBIENT SOUND SYSTEM =====
@@ -2134,8 +2131,8 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     }
 
     @Override
-    public Map<String, String> getVocalAnimationMap() {
-        return VOCAL_ANIMATIONS;
+    public Map<String, VocalEntry> getVocalEntries() {
+        return VOCAL_ENTRIES;
     }
 
     @Override

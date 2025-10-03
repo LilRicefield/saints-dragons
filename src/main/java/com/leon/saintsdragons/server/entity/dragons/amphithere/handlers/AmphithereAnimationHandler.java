@@ -125,8 +125,8 @@ public class AmphithereAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.amphithere.bite_ground"));
         controller.triggerableAnim("bite_air",
                 RawAnimation.begin().thenPlay("animation.amphithere.bite_air"));
-        dragon.getVocalAnimationMap().forEach((key, animation) ->
-                controller.triggerableAnim(key, RawAnimation.begin().thenPlay(animation)));
+        dragon.getVocalEntries().forEach((key, entry) ->
+                controller.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId())));
     }
 
     public PlayState actionPredicate(AnimationState<AmphithereEntity> state) {
