@@ -5,7 +5,7 @@ logoFile="assets/saintsdragons/saintsdragons.png"
 
 [[mods]]
 modId="saintsdragons"
-version="1.1.0"
+version="0.0.5"
 displayName="Saint's Dragons"
 description='''
 Adds animated, AI-driven dragons or wyverns or whatever the heck you wanna call them flying reptiles to Minecraft.
