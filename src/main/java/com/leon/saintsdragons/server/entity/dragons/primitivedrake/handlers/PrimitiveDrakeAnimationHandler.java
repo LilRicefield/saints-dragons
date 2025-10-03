@@ -18,6 +18,7 @@ public class PrimitiveDrakeAnimationHandler {
     private static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("animation.primitive_drake.idle");
     private static final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("animation.primitive_drake.walk");
     private static final RawAnimation SLEEP_ANIM = RawAnimation.begin().thenLoop("animation.primitive_drake.sleep");
+    private static final RawAnimation SIT_ANIM = RawAnimation.begin().thenLoop("animation.primitive_drake.sit");
     
     public PrimitiveDrakeAnimationHandler(PrimitiveDrakeEntity drake) {
         this.drake = drake;
@@ -29,28 +30,34 @@ public class PrimitiveDrakeAnimationHandler {
     public PlayState handleMovementAnimation(AnimationState<PrimitiveDrakeEntity> state) {
         // Set default transition length for smooth blending
         state.getController().transitionLength(8); // Smooth but not too slow
-        
+
         // Check if playing dead first - play dead animation takes highest priority
         if (drake.isPlayingDead()) {
             return handlePlayDeadAnimation(state);
         }
-        
+
         // Check if sleeping - sleep animation takes priority
         if (drake.isSleeping()) {
             return handleSleepAnimation(state);
         }
-        
-        
+
+        // Check for sitting - use sit progress system to avoid desync
+        if (drake.isOrderedToSit() || drake.getSitProgress() > 0.5f) {
+            state.setAndContinue(SIT_ANIM);
+            return PlayState.CONTINUE;
+        }
+
         // Use the improved movement state detection
-        if (drake.isRunning()) {
+        int groundState = drake.getEffectiveGroundState();
+        if (groundState == 2 || drake.isRunning()) {
             // TODO: Add run animation when available
             state.setAndContinue(WALK_ANIM); // Fallback to walk for now
-        } else if (drake.isWalking()) {
+        } else if (groundState == 1 || drake.isWalking()) {
             state.setAndContinue(WALK_ANIM);
         } else {
             state.setAndContinue(IDLE_ANIM);
         }
-        
+
         return PlayState.CONTINUE;
     }
     
@@ -127,3 +134,4 @@ public class PrimitiveDrakeAnimationHandler {
         return PlayState.STOP;
     }
 }
+
