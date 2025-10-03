@@ -36,9 +36,9 @@ public class PrimitiveDrakeRenderer extends GeoEntityRenderer<PrimitiveDrakeEnti
                           int packedOverlay,
                           float red, float green, float blue, float alpha) {
 
-        float scale = 1.5f;
+        float scale = 3.0f;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 0.8f * scale;
+        this.shadowRadius = 0.5f * scale;
 
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
