@@ -168,11 +168,7 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
         
         // Play a scared sound
         drake.getSoundHandler().playVocal("primitivedrake_scared");
-        
-        // Debug message (can be removed in production)
-        if (level.isClientSide) {
-            System.out.println("Primitive Drake " + drake.getUUID() + " is playing dead!");
-        }
+
     }
     
     @Override
@@ -248,11 +244,7 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
         
         // Play a relieved sound
         drake.getSoundHandler().playVocal("primitivedrake_relieved");
-        
-        // Debug message (can be removed in production)
-        if (level.isClientSide) {
-            System.out.println("Primitive Drake " + drake.getUUID() + " stopped playing dead");
-        }
+
     }
     
     /**
