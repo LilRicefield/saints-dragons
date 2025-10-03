@@ -27,4 +27,7 @@ Next up: finish Amphithere sleep/ambient set, add Rift Drake animations.
 - Amphithere sleeps/ambience are placeholder.
 
 ## Contributing
-Pull requests are welcome! Please be mindful that the codebase is AI-assisted and still stabilizing.
+Pull requests are welcome! Please be mindful that the codebase is AI-assisted and still stabilizing. Call it AI-slop or whatever you like...
+
+## License
+Code under LGPL-3.0. Art and audio under the asset license (see LICENSE.md or License on CurseForge)
