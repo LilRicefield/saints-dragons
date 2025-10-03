@@ -51,7 +51,7 @@ public class DragonStatusUI {
      * Update UI element positions based on screen size and scaling
      */
     private void updateElementPositions() {
-        if (minecraft == null || minecraft.getWindow() == null) {
+        if (minecraft == null) {
             applyFallbackLayout();
             return;
         }
@@ -270,34 +270,12 @@ public class DragonStatusUI {
     /**
      * Save UI element positions to config
      */
-    public void savePositions() {
-        // TODO: Implement config saving
-        // For now, we'll use a simple approach
-        System.out.println("Saving UI positions:");
-        for (DragonUIElement element : elements) {
-            System.out.println(element.getClass().getSimpleName() + ": " + element.getPositionString());
-        }
-    }
+    public void savePositions() {}
 
     /**
      * Load UI element positions from config
      */
-    private void loadPositions() {
-        // TODO: Implement config loading
-        // For now, use default positions
-        System.out.println("Loading UI positions (using defaults)");
-    }
-
-    /**
-     * Reset all UI elements to default positions
-     */
-    public void resetPositions() {
-        // Update positions based on current screen size
-        cachedScreenWidth = -1;
-        cachedScreenHeight = -1;
-        updateElementPositions();
-        savePositions();
-    }
+    private void loadPositions() {}
 
     /**
      * Handle window resize - recalculate positions for new screen size
@@ -353,7 +331,7 @@ public class DragonStatusUI {
     }
 
     private int getCurrentScreenWidth() {
-        if (minecraft != null && minecraft.getWindow() != null) {
+        if (minecraft != null) {
             return minecraft.getWindow().getGuiScaledWidth();
         }
         return cachedScreenWidth;
