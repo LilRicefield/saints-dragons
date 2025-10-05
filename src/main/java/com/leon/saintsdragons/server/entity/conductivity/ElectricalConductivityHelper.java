@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.conductivity;
 
+import com.leon.saintsdragons.server.entity.interfaces.ElectricalConductivityCapable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;

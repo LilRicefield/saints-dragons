@@ -24,7 +24,7 @@ import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonAnimationHandler;
 import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
-import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityCapable;
+import com.leon.saintsdragons.server.entity.interfaces.ElectricalConductivityCapable;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonRiderController;

@@ -1,5 +1,8 @@
-package com.leon.saintsdragons.server.entity.conductivity;
+package com.leon.saintsdragons.server.entity.interfaces;
 
+import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityHelper;
+import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
+import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
