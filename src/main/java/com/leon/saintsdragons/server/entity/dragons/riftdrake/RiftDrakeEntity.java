@@ -12,6 +12,7 @@ import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.*;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
+import com.leon.saintsdragons.server.entity.interfaces.DragonControlStateHolder;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.server.level.ServerPlayer;
 import com.leon.saintsdragons.server.entity.controller.riftdrake.RiftDrakeRiderController;
@@ -51,7 +52,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import net.minecraft.world.entity.LivingEntity;
 
-public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon {
+public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon, DragonControlStateHolder {
 
     private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
@@ -60,7 +61,8 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
-    
+    private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
+
     // Flight mode data accessor (not used for ground dragon but required by interface)
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_GOING_UP = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
@@ -85,6 +87,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private float swimTurnSmoothedYaw;
     private int swimTurnState;
     private int swimPitchStateTicks;
+    private byte controlState = 0;
 
     public RiftDrakeEntity(EntityType<? extends RiftDrakeEntity> type, Level level) {
         super(type, level);
@@ -120,6 +123,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.entityData.define(DATA_SWIMMING, false);
         this.entityData.define(DATA_SWIM_TURN, 0);
         this.entityData.define(DATA_SWIM_PITCH, 0);
+        this.entityData.define(DATA_PHASE_TWO, false);
         this.entityData.define(DATA_FLIGHT_MODE, -1);
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
@@ -183,8 +187,24 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate));
-        controllers.add(new AnimationController<>(this, "swim_direction", 4, animationHandler::swimDirectionPredicate));
+        AnimationController<RiftDrakeEntity> movementController =
+                new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        AnimationController<RiftDrakeEntity> swimController =
+                new AnimationController<>(this, "swim_direction", 4, animationHandler::swimDirectionPredicate);
+        AnimationController<RiftDrakeEntity> actionController =
+                new AnimationController<>(this, "action", 0, animationHandler::actionPredicate);
+
+        // Sound keyframes
+        movementController.setSoundKeyframeHandler(this::onAnimationSound);
+        swimController.setSoundKeyframeHandler(this::onAnimationSound);
+        actionController.setSoundKeyframeHandler(this::onAnimationSound);
+
+        // Setup animation triggers
+        animationHandler.setupActionController(actionController);
+
+        controllers.add(movementController);
+        controllers.add(swimController);
+        controllers.add(actionController);
     }
 
     @Override
@@ -675,6 +695,64 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         return this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D;
     }
 
+    public boolean isPhaseTwoActive() {
+        return this.entityData.get(DATA_PHASE_TWO);
+    }
+
+    public void setPhaseTwoActive(boolean active, boolean syncAnim) {
+        this.entityData.set(DATA_PHASE_TWO, active);
+        if (syncAnim) {
+            this.syncAnimState(this.entityData.get(DATA_GROUND_MOVE_STATE), this.getSyncedFlightMode());
+        }
+    }
+
+    // ===== CONTROL STATE SYSTEM =====
+
+    @Override
+    public byte getControlState() {
+        return controlState;
+    }
+
+    @Override
+    public void setControlState(byte controlState) {
+        this.controlState = controlState;
+        if (!level().isClientSide) {
+            keybindHandler.setControlState(controlState);
+        }
+    }
+
+    @Override
+    public boolean canPlayerModifyControlState(Player player) {
+        return player != null && this.isOwnedBy(player);
+    }
+
+    @Override
+    public byte buildClientControlState(boolean ascendDown, boolean descendDown, boolean attackDown, boolean primaryDown, boolean secondaryDown, boolean sneakDown) {
+        byte state = 0;
+        if (ascendDown) state |= 1;
+        if (descendDown) state |= 2;
+        if (attackDown) state |= 4;
+        if (primaryDown) state |= 8;
+        if (secondaryDown) state |= 16;
+        if (sneakDown) state |= 32;
+        return state;
+    }
+
+    @Override
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return new RiderAbilityBinding(com.leon.saintsdragons.common.registry.riftdrake.RiftDrakeAbilities.PHASE_SHIFT.getName(), RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getChannelingAbility() {
+        return com.leon.saintsdragons.common.registry.riftdrake.RiftDrakeAbilities.PHASE_SHIFT;
+    }
+
+    public void onAnimationSound(software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent<RiftDrakeEntity> event) {
+        // Delegate all keyframed sounds to the sound handler
+        this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
+    }
+
     private void handleRiddenSwimming(Vec3 input) {
         Vec3 velocity = this.getDeltaMovement();
 
@@ -839,6 +917,20 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         if (level().isClientSide) {
             prevSitProgress = sitProgress;
             sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
+        }
+    }
+
+    @Override
+    public void addAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putBoolean("PhaseTwo", isPhaseTwoActive());
+    }
+
+    @Override
+    public void readAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("PhaseTwo")) {
+            setPhaseTwoActive(tag.getBoolean("PhaseTwo"), false);
         }
     }
 

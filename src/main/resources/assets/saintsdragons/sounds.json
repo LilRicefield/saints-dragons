@@ -325,5 +325,25 @@
         "pitch": 1.0
       }
     ]
+  },
+  "riftdrake_phase1": {
+    "subtitle": "Rift Drake reverts phase",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/riftdrake/riftdrake_phase1",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "riftdrake_phase2": {
+    "subtitle": "Rift Drake switches phase",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/riftdrake/riftdrake_phase2",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
   }
 }
