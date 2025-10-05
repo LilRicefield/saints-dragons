@@ -109,6 +109,10 @@ public class DragonSoundHandler {
         switch (sound) {
             case "wing_flap" -> handleWingFlapSound(sound);
             case "dragon_step" -> handleStepSound(sound, null);
+            case "amphithere_bite" -> {
+                Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
+                playRouted(dragon.level(), ModSounds.AMPHITHERE_BITE.get(), 1.0f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            }
             case "takeoff_whoosh" -> handleTakeoffSound();
             case "landing_thud" -> handleLandingSound();
             default -> handleSoundByName(sound);
@@ -206,6 +210,7 @@ public class DragonSoundHandler {
             case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
             case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
             case "amphithere_roar" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_ROAR.get(), 1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "amphithere_bite" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_BITE.get(), 1.0f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "amphithere_hurt" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_HURT.get(), 1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);

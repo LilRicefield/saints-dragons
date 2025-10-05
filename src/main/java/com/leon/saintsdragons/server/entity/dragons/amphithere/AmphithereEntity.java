@@ -102,10 +102,11 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             Map.entry("roar", new VocalEntry("actions", "animation.amphithere.roar", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)),
             Map.entry("roar_ground", new VocalEntry("actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)),
             Map.entry("roar_air", new VocalEntry("actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)),
-            Map.entry("amphithere_hurt", new VocalEntry("actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT, 1.2f, 0.95f, 0.1f, false, true, true))
+            Map.entry("amphithere_hurt", new VocalEntry("actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT, 1.2f, 0.95f, 0.1f, false, true, true)),
+            Map.entry("die", new VocalEntry("actions", "animation.amphithere.die", ModSounds.AMPHITHERE_DIE, 1.5f, 1.0f, 0.0f, false, true, true))
     );
 
-
+    private boolean dying = false;
 
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -1156,6 +1157,42 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
     @Override
+    public boolean isDying() {
+        return dying;
+    }
+
+    private void setDying(boolean dying) {
+        this.dying = dying;
+    }
+
+    @Override
+    public void onDeathAbilityStarted() {
+        setDying(true);
+    }
+
+    @Override
+    public boolean hurt(@Nonnull DamageSource source, float amount) {
+        if (!level().isClientSide && !dying) {
+            float remaining = this.getHealth() - amount;
+            if (remaining <= 0.0F) {
+                this.setInvulnerable(true);
+                setDying(true);
+                if (!this.canUseAbility()) {
+                    this.combatManager.forceEndActiveAbility();
+                }
+                this.tryActivateAbility(AmphithereAbilities.DIE);
+                if (!this.combatManager.isAbilityActive(AmphithereAbilities.DIE)) {
+                    setDying(false);
+                    this.setInvulnerable(false);
+                    return super.hurt(source, amount);
+                }
+                return true;
+            }
+        }
+        return super.hurt(source, amount);
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T extends DragonEntity> DragonAbility<T> getActiveAbility() {
         return (DragonAbility<T>) combatManager.getActiveAbility();
@@ -1507,4 +1544,6 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
 }
+
+
 
