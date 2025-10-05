@@ -1,15 +1,23 @@
 package com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
-import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
 public class RiftDrakeAnimationHandler {
 
+    // Phase 1 animations
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.rift_drake.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.rift_drake.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.rift_drake.run");
+
+    // Phase 2 animations
+    private static final RawAnimation IDLE2 = RawAnimation.begin().thenLoop("animation.rift_drake.idle2");
+    private static final RawAnimation WALK2 = RawAnimation.begin().thenLoop("animation.rift_drake.walk2");
+    private static final RawAnimation RUN2 = RawAnimation.begin().thenLoop("animation.rift_drake.run2");
+
+    // Swim animations (shared between phases)
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.rift_drake.swim_idle");
     private static final RawAnimation SWIM_CRUISE = RawAnimation.begin().thenLoop("animation.rift_drake.swim_move");
     private static final RawAnimation SWIM_UP = RawAnimation.begin().thenLoop("animation.rift_drake.swimming_up");
@@ -25,6 +33,17 @@ public class RiftDrakeAnimationHandler {
         this.drake = drake;
     }
 
+    /**
+     * Sets up all GeckoLib animation triggers for the action controller
+     */
+    public void setupActionController(AnimationController<RiftDrakeEntity> actionController) {
+        // Register phase 2 transition animation
+        actionController.triggerableAnim("phase2",
+                RawAnimation.begin().thenPlay("animation.rift_drake.phase2"));
+
+        // Future-proofing: placeholders for upcoming bite/claw animations
+    }
+
     public PlayState movementPredicate(AnimationState<RiftDrakeEntity> state) {
         boolean isSwimming = drake.isSwimming();
         boolean isNavigating = drake.getNavigation().isInProgress() && drake.getNavigation().getPath() != null;
@@ -35,35 +54,29 @@ public class RiftDrakeAnimationHandler {
             RawAnimation swimAnim = drake.isSwimmingMoving() || isNavigating ? SWIM_CRUISE : SWIM_IDLE;
             state.setAnimation(swimAnim);
         } else if (drake.getSitProgress() > 0.5f) {
-            // Drive SIT from our custom progress system only to avoid desync
+            // Drive SIT from our custom progress system only to avoid de-sync
             state.setAnimation(SIT);
         } else {
             // Ground movement transitions - use synced state for proper networking
             int groundState = drake.getEffectiveGroundState();
-            
+            boolean phaseTwo = drake.isPhaseTwoActive();
+
             if (groundState == 2) {
                 // Running state
                 state.getController().transitionLength(3); // Fast transition into run
-                state.setAnimation(RUN);
+                state.setAnimation(phaseTwo ? RUN2 : RUN);
             } else if (groundState == 1 || isMovingLand) {
                 // Walking state or moving
                 state.getController().transitionLength(3); // Quick walk engage
-                state.setAnimation(WALK);
+                state.setAnimation(phaseTwo ? WALK2 : WALK);
             } else {
                 // Idle state
                 state.getController().transitionLength(4); // Soft transition to idle
-                state.setAnimation(IDLE);
+                state.setAnimation(phaseTwo ? IDLE2 : IDLE);
             }
         }
         state.getController().setAnimationSpeed(1.0F);
         return PlayState.CONTINUE;
-    }
-
-    private RawAnimation selectSwimBodyAnimation(boolean moving) {
-        if (!drake.isSwimming()) {
-            return SWIM_NEUTRAL;
-        }
-        return moving ? SWIM_CRUISE : SWIM_IDLE;
     }
 
     public PlayState swimDirectionPredicate(AnimationState<RiftDrakeEntity> state) {
@@ -90,6 +103,13 @@ public class RiftDrakeAnimationHandler {
         } else {
             state.setAndContinue(SWIM_NEUTRAL);
         }
+        return PlayState.CONTINUE;
+    }
+
+    public PlayState actionPredicate(AnimationState<RiftDrakeEntity> state) {
+        // Action controller handles one-shot animations triggered via triggerAnim()
+        state.getController().transitionLength(5);
+        // GeckoLib automatically handles triggered animations
         return PlayState.CONTINUE;
     }
 }

@@ -54,6 +54,10 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> AMPHITHERE_BITE = registerSound("amphithere_bite");
     public static final RegistryObject<SoundEvent> AMPHITHERE_DIE = registerSound("amphithere_die");
 
+    // ===== RIFT DRAKE SOUNDS =====
+    public static final RegistryObject<SoundEvent> RIFTDRAKE_PHASE1 = registerSound("riftdrake_phase1");
+    public static final RegistryObject<SoundEvent> RIFTDRAKE_PHASE2 = registerSound("riftdrake_phase2");
+
     // ===== STEP SOUNDS =====
     public static final RegistryObject<SoundEvent> DRAGON_STEP = registerSound("dragon_step") ;
 
