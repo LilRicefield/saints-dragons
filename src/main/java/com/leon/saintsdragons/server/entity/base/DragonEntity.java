@@ -137,7 +137,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     public record VocalEntry(String controllerId, String animationId, Supplier<SoundEvent> soundSupplier,
                                  float volume, float basePitch, float pitchVariance, boolean allowWhenSitting,
-                                 boolean allowDuringSleep) {
+                                 boolean allowDuringSleep, boolean preventOverlap) {
     }
 
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
