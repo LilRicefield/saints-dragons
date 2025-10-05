@@ -8,12 +8,19 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Handles all sound effects for dragons
  * Separates sound logic from entity class for cleaner organization
  */
 public class DragonSoundHandler {
     private final DragonEntity dragon;
+    private static final int MIN_OVERLAP_GUARD_TICKS = 5;
+    private static final Set<String> DEFAULT_NON_OVERLAPPING_KEYS = Set.of("hurt", "amphithere_hurt", "die");
+    private final Map<String, Integer> vocalCooldowns = new HashMap<>();
     // Step timing control for walk animation to match Blockbench keyframes precisely
     private static final int WALK_STEP_SEPARATION_TICKS = 12; // 0.6s @ 20 TPS
     private static final int RUN_STEP_SEPARATION_TICKS  = 10; // ~0.476s @ 20 TPS (0.5 of 0.9524s)
@@ -133,70 +140,89 @@ public class DragonSoundHandler {
      * growl_warning, roar, hurt
      */
 
-public void playVocal(String key) {
-    if (key == null || key.isEmpty() || dragon.level().isClientSide) {
-        return;
-    }
-
-    // Try dragon-specific vocal metadata first
-    VocalEntry entry = dragon.getVocalEntries().get(key);
-    if (entry != null) {
-        if (!entry.allowDuringSleep() && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+    public void playVocal(String key) {
+        if (key == null || key.isEmpty() || dragon.level().isClientSide) {
             return;
         }
-        if (!entry.allowWhenSitting() && dragon.isStayOrSitMuted()) {
+
+        int currentTick = dragon.tickCount;
+        if (!vocalCooldowns.isEmpty()) {
+            vocalCooldowns.entrySet().removeIf(entry -> entry.getValue() <= currentTick);
+        }
+
+        VocalEntry entry = dragon.getVocalEntries().get(key);
+        boolean suppressOverlap = entry != null ? entry.preventOverlap() : DEFAULT_NON_OVERLAPPING_KEYS.contains(key);
+        if (suppressOverlap) {
+            Integer guard = vocalCooldowns.get(key);
+            if (guard != null && guard > currentTick) {
+                return;
+            }
+        }
+
+        if (entry != null) {
+            if (!entry.allowDuringSleep() && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+                return;
+            }
+            if (!entry.allowWhenSitting() && dragon.isStayOrSitMuted()) {
+                return;
+            }
+
+            Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
+            float pitch = entry.basePitch();
+            if (entry.pitchVariance() != 0f) {
+                pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+            }
+            playRouted(dragon.level(), entry.soundSupplier().get(), entry.volume(), pitch, mouthPos, entry.allowWhenSitting(), entry.allowDuringSleep());
+
+            int window = getVocalAnimationWindowTicks(key);
+            if (suppressOverlap) {
+                vocalCooldowns.put(key, currentTick + Math.max(window, MIN_OVERLAP_GUARD_TICKS));
+            }
+            if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
+                dragon.triggerAnim(entry.controllerId(), key);
+            }
             return;
+        }
+
+        // Fallback: legacy handling for dragons without metadata
+        if (!"hurt".equals(key) && !"amphithere_hurt".equals(key) && !"die".equals(key) && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+            return; // Gate vocals during sleep/transition
         }
 
         Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-        float pitch = entry.basePitch();
-        if (entry.pitchVariance() != 0f) {
-            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+
+        switch (key) {
+            case "grumble1" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "grumble2" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "grumble3" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "primitivedrake_grumble1" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_1.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "primitivedrake_grumble2" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_2.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "primitivedrake_grumble3" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_3.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "purr"      -> playRouted(dragon.level(), ModSounds.DRAGON_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos, true);
+            case "snort"     -> playRouted(dragon.level(), ModSounds.DRAGON_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "chuff"     -> playRouted(dragon.level(), ModSounds.DRAGON_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "content"   -> playRouted(dragon.level(), ModSounds.DRAGON_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, true);
+            case "annoyed"   -> playRouted(dragon.level(), ModSounds.DRAGON_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
+            case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
+            case "amphithere_roar" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_ROAR.get(), 1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "amphithere_hurt" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_HURT.get(), 1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            default -> {
+                return;
+            }
         }
-        playRouted(dragon.level(), entry.soundSupplier().get(), entry.volume(), pitch, mouthPos, entry.allowWhenSitting(), entry.allowDuringSleep());
 
         int window = getVocalAnimationWindowTicks(key);
+        if (suppressOverlap) {
+            vocalCooldowns.put(key, currentTick + Math.max(window, MIN_OVERLAP_GUARD_TICKS));
+        }
         if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
-            dragon.triggerAnim(entry.controllerId(), key);
-        }
-        return;
-    }
-
-    // Fallback: legacy handling for dragons without metadata
-    if (!"hurt".equals(key) && !"amphithere_hurt".equals(key) && !"die".equals(key) && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
-        return; // Gate vocals during sleep/transition
-    }
-
-    Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-
-    switch (key) {
-        case "grumble1" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-        case "grumble2" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-        case "grumble3" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-        case "primitivedrake_grumble1" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_1.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-        case "primitivedrake_grumble2" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_2.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-        case "primitivedrake_grumble3" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_3.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-        case "purr"      -> playRouted(dragon.level(), ModSounds.DRAGON_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos, true);
-        case "snort"     -> playRouted(dragon.level(), ModSounds.DRAGON_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-        case "chuff"     -> playRouted(dragon.level(), ModSounds.DRAGON_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-        case "content"   -> playRouted(dragon.level(), ModSounds.DRAGON_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, true);
-        case "annoyed"   -> playRouted(dragon.level(), ModSounds.DRAGON_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-        case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
-        case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
-        case "amphithere_roar" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_ROAR.get(), 1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-        case "amphithere_hurt" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_HURT.get(), 1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-        case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-        case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-        default -> {
-            return;
+            dragon.triggerAnim("action", key);
         }
     }
 
-    int window = getVocalAnimationWindowTicks(key);
-    if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
-        dragon.triggerAnim("action", key);
-    }
-}
     /**
      * Returns an appropriate action-controller window length (in ticks) for a vocal animation key.
      * Values mirror the animation lengths defined in lightning_dragon.animation.json (rounded up).
