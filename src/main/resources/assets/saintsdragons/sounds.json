@@ -124,7 +124,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/amphithere/amphithere_bite",
-        "volume": 1.0,
+        "volume": 2.0,
         "pitch": 1.0
       }
     ]
@@ -301,6 +301,26 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/primitivedrake/primitivedrake_relieved",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "primitivedrake_die": {
+    "subtitle": "Primitive Drake dies",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/primitivedrake/primitivedrake_die",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "primitivedrake_hurt": {
+    "subtitle": "Primitive Drake hurts",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/primitivedrake/primitivedrake_hurt",
         "volume": 0.8,
         "pitch": 1.0
       }

@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
+import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -26,6 +27,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.primitivedrake.PrimitiveDrakeAbilities;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
@@ -47,7 +51,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * - Protective aura: Grants resistance and absorption to nearby players and allies
  * - NOT rideable: Too small and simple to be a mount
  */
-public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCapable {
+public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCapable, SoundHandledDragon {
     
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final PrimitiveDrakeAnimationHandler animationController = new PrimitiveDrakeAnimationHandler(this);
@@ -58,7 +62,18 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
-    
+
+    // ===== VOCAL ENTRIES =====
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
+            .add("primitive_drake_hurt", "action", "animation.primitive_drake.hurt", ModSounds.PRIMITIVE_DRAKE_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
+            .add("die", "action", "animation.primitive_drake.die", ModSounds.PRIMITIVE_DRAKE_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
+            .build();
+
+    @Override
+    public Map<String, VocalEntry> getVocalEntries() {
+        return VOCAL_ENTRIES;
+    }
+
     // Sleep system fields
     private boolean sleeping = false;
     private boolean sleepTransitioning = false;
@@ -178,7 +193,21 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         // Simple drake has no abilities - just runs away!
         return null;
     }
-    
+
+    @Override
+    protected DragonAbilityType<?, ?> getHurtAbilityType() {
+        return PrimitiveDrakeAbilities.HURT;
+    }
+
+    @Override
+    public boolean hurt(@NotNull DamageSource source, float amount) {
+        // Intercept lethal damage to play death ability
+        if (handleLethalDamage(source, amount, PrimitiveDrakeAbilities.DIE)) {
+            return true;
+        }
+        return super.hurt(source, amount);
+    }
+
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         // Use the new smooth animation controller

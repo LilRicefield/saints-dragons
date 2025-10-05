@@ -26,6 +26,8 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_GRUMBLE_3 = registerSound("primitivedrake_grumble3");
     public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_SCARED = registerSound("primitivedrake_scared");
     public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_RELIEVED = registerSound("primitivedrake_relieved");
+    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_HURT = registerSound("primitivedrake_hurt");
+    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_DIE = registerSound("primitivedrake_die");
 
     public static final RegistryObject<SoundEvent> DRAGON_PURR = registerSound("lightningdragon_purr");
     public static final RegistryObject<SoundEvent> DRAGON_SNORT = registerSound("lightningdragon_snort");

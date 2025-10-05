@@ -24,22 +24,25 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
     @Override
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
-        
+
         // Allow dragons to update custom death state
         T dragon = getUser();
         dragon.onDeathAbilityStarted();
 
+        // Use ability ID to look up vocal entry (matches the pattern)
+        String abilityId = this.getAbilityType().getName();
+
         // Trigger death animation using dragon-specific metadata when available
         String controllerId = "action";
-        VocalEntry deathEntry = dragon.getVocalEntries().get("die");
+        VocalEntry deathEntry = dragon.getVocalEntries().get(abilityId);
         if (deathEntry != null && deathEntry.controllerId() != null) {
             controllerId = deathEntry.controllerId();
         }
         dragon.triggerAnim(controllerId, "die");
 
-        // Play death sound manually since keyframes are empty
+        // Play death sound manually using ability ID as vocal key
         if (!getLevel().isClientSide && dragon instanceof SoundHandledDragon soundDragon) {
-            soundDragon.getSoundHandler().playVocal("die");
+            soundDragon.getSoundHandler().playVocal(abilityId);
         }
     }
 
