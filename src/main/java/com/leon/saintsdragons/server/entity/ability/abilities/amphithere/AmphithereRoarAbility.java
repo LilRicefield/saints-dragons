@@ -66,7 +66,9 @@ public class AmphithereRoarAbility extends DragonAbility<AmphithereEntity> {
             AmphithereEntity dragon = getUser();
             if (!dragon.level().isClientSide) {
                 Vec3 mouth = dragon.getMouthPosition();
-                float pitch = 0.95f + dragon.getRandom().nextFloat() * 0.1f;
+                boolean flying = dragon.isFlying();
+                float basePitch = flying ? 1.05f : 0.9f;
+                float pitch = basePitch + dragon.getRandom().nextFloat() * 0.05f;
                 dragon.level().playSound(null,
                         mouth.x, mouth.y, mouth.z,
                         ModSounds.AMPHITHERE_ROAR.get(),
