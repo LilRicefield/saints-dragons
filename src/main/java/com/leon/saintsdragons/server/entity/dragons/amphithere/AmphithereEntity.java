@@ -98,16 +98,14 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
 
 
-    private static final Map<String, VocalEntry> VOCAL_ENTRIES = Map.ofEntries(
-            Map.entry("roar", new VocalEntry("actions", "animation.amphithere.roar", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)),
-            Map.entry("roar_ground", new VocalEntry("actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)),
-            Map.entry("roar_air", new VocalEntry("actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)),
-            Map.entry("amphithere_hurt", new VocalEntry("actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT, 1.2f, 0.95f, 0.1f, false, true, true)),
-            Map.entry("die", new VocalEntry("actions", "animation.amphithere.die", ModSounds.AMPHITHERE_DIE, 1.5f, 1.0f, 0.0f, false, true, true))
-    );
-
-    private boolean dying = false;
-
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES =
+        new VocalEntryBuilder()
+            .add("roar", "actions", "animation.amphithere.roar", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
+            .add("roar_ground", "actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)
+            .add("roar_air", "actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)
+            .add("amphithere_hurt", "actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT, 1.2f, 0.95f, 0.1f, false, true, true)
+            .add("die", "actions", "animation.amphithere.die", ModSounds.AMPHITHERE_DIE, 1.5f, 1.0f, 0.0f, false, true, true)
+            .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final AmphithereAnimationHandler animationHandler = new AmphithereAnimationHandler(this);
@@ -1156,38 +1154,12 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         return AmphithereAbilities.HURT;
     }
 
-    @Override
-    public boolean isDying() {
-        return dying;
-    }
-
-    private void setDying(boolean dying) {
-        this.dying = dying;
-    }
-
-    @Override
-    public void onDeathAbilityStarted() {
-        setDying(true);
-    }
+    // Death handling now uses base class helpers
 
     @Override
     public boolean hurt(@Nonnull DamageSource source, float amount) {
-        if (!level().isClientSide && !dying) {
-            float remaining = this.getHealth() - amount;
-            if (remaining <= 0.0F) {
-                this.setInvulnerable(true);
-                setDying(true);
-                if (!this.canUseAbility()) {
-                    this.combatManager.forceEndActiveAbility();
-                }
-                this.tryActivateAbility(AmphithereAbilities.DIE);
-                if (!this.combatManager.isAbilityActive(AmphithereAbilities.DIE)) {
-                    setDying(false);
-                    this.setInvulnerable(false);
-                    return super.hurt(source, amount);
-                }
-                return true;
-            }
+        if (handleLethalDamage(source, amount, AmphithereAbilities.DIE)) {
+            return true;
         }
         return super.hurt(source, amount);
     }
