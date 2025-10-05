@@ -24,6 +24,9 @@ import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonAnimationHandler;
 import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
+import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityCapable;
+import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
+import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.LightningDragonRiderController;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.util.DragonMathUtil;
@@ -82,7 +85,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //Just everything
 public class LightningDragonEntity extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
-        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, DragonControlStateHolder {
+        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, DragonControlStateHolder, ElectricalConductivityCapable {
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
     private int ownerDistanceCacheTime = -1;
@@ -2590,42 +2593,31 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         return false; // Implement based on your charging logic
     }
 
-    // ===== WATER CONDUCTIVITY SYSTEM =====
-    
-    /**
-     * Check if the dragon is currently underwater or in water
-     */
-    public boolean isInWater() {
-        return super.isInWater() || this.level().getBlockState(this.blockPosition()).getFluidState().is(net.minecraft.world.level.material.Fluids.WATER);
+    // ===== ELECTRICAL CONDUCTIVITY =====
+
+    private static final ElectricalConductivityProfile CONDUCTIVITY_PROFILE =
+            new ElectricalConductivityProfile(1.0f, 0.5f, 0.0f, 1.0, 0.3, 0.0);
+
+    @Override
+    public ElectricalConductivityProfile getConductivityProfile() {
+        return CONDUCTIVITY_PROFILE;
     }
-    
+
+    @Override
+    public ElectricalConductivityState getConductivityState() {
+        return ElectricalConductivityCapable.super.getConductivityState();
+    }
+
+    @Override
+    public LightningDragonEntity asConductiveEntity() {
+        return this;
+    }
+
     /**
      * Check if this dragon can be bound (not playing dead, not sleeping, etc.)
      */
     public boolean canBeBound() {
         return !isSleeping() && !isDying() && !isCharging() && !isBeaming();
-    }
-    
-    /**
-     * Get water conductivity multiplier for lightning damage
-     * Water conducts electricity better, so lightning is more effective underwater
-     */
-    public float getWaterConductivityMultiplier() {
-        if (isInWater()) {
-            return 1.5f; // 50% damage boost underwater
-        }
-        return 1.0f; // Normal damage on land/air
-    }
-    
-    /**
-     * Get water conductivity multiplier for lightning range/radius
-     * Water allows lightning to spread further
-     */
-    public double getWaterRangeMultiplier() {
-        if (isInWater()) {
-            return 1.3; // 30% range boost underwater
-        }
-        return 1.0; // Normal range on land/air
     }
 
     // ===== SCREEN SHAKE INTERFACE IMPLEMENTATION =====
