@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDra
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import com.leon.saintsdragons.util.DragonMathUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -174,6 +175,7 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
 
     private void chainFrom(LivingEntity start) {
         LightningDragonEntity dragon = getUser();
+        ElectricalConductivityState conductivity = dragon.getConductivityState();
         Set<LivingEntity> hit = new HashSet<>();
         hit.add(start);
 
@@ -181,16 +183,15 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
         float damage = CHAIN_DAMAGE_BASE;
 
         for (int i = 0; i < CHAIN_JUMPS; i++) {
-            LivingEntity next = findNearestChainTarget(current, hit);
+            LivingEntity next = findNearestChainTarget(current, hit, conductivity);
             if (next == null) break;
 
             // Damage and VFX
             float mult = dragon.getDamageMultiplier();
-            float waterMult = dragon.getWaterConductivityMultiplier();
-            next.hurt(dragon.level().damageSources().lightningBolt(), damage * mult * waterMult);
+            next.hurt(dragon.level().damageSources().lightningBolt(), damage * mult * conductivity.damageMultiplier());
             dragon.noteAggroFrom(next);
             spawnArc(current.position().add(0, current.getBbHeight() * 0.5, 0),
-                    next.position().add(0, next.getBbHeight() * 0.5, 0));
+                    next.position().add(0, next.getBbHeight() * 0.5, 0), conductivity);
 
             hit.add(next);
             current = next;
@@ -229,10 +230,10 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
         return null;
     }
 
-    private LivingEntity findNearestChainTarget(LivingEntity origin, Set<LivingEntity> exclude) {
+    private LivingEntity findNearestChainTarget(LivingEntity origin, Set<LivingEntity> exclude, ElectricalConductivityState conductivity) {
         LightningDragonEntity dragon = getUser();
-        double waterRangeMult = dragon.getWaterRangeMultiplier();
-        List<LivingEntity> nearby = DragonMathUtil.getEntitiesNearby(origin, LivingEntity.class, CHAIN_RADIUS * waterRangeMult);
+        double rangeMult = conductivity.rangeMultiplier();
+        List<LivingEntity> nearby = DragonMathUtil.getEntitiesNearby(origin, LivingEntity.class, CHAIN_RADIUS * rangeMult);
         LivingEntity best = null;
         double bestDist = Double.MAX_VALUE;
         for (LivingEntity e : nearby) {
@@ -253,12 +254,12 @@ public class LightningDragonBiteAbility extends DragonAbility<LightningDragonEnt
         return dragon.isAlly(other);
     }
 
-    private void spawnArc(Vec3 from, Vec3 to) {
+    private void spawnArc(Vec3 from, Vec3 to, ElectricalConductivityState conductivity) {
         if (!(getLevel() instanceof ServerLevel server)) return;
         
         // Create a single lightning chain entity instead of multiple particles
         LightningDragonEntity dragon = getUser();
-        float damage = CHAIN_DAMAGE_BASE * dragon.getDamageMultiplier() * dragon.getWaterConductivityMultiplier();
+        float damage = CHAIN_DAMAGE_BASE * dragon.getDamageMultiplier() * conductivity.damageMultiplier();
         
         LightningChainEntity lightningEntity = new LightningChainEntity(
             server, from, to, 

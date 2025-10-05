@@ -211,8 +211,9 @@ public class LightningDragonBeamAbility extends DragonAbility<LightningDragonEnt
         final float BASE_DAMAGE = 35.0f;  // base per-tick damage
         
         // Apply water conductivity bonuses
-        final double RADIUS = BASE_RADIUS * dragon.getWaterRangeMultiplier();
-        final float DAMAGE = BASE_DAMAGE * dragon.getWaterConductivityMultiplier() * dragon.getDamageMultiplier();
+        var conductivity = dragon.getConductivityState();
+        final double RADIUS = BASE_RADIUS * conductivity.rangeMultiplier();
+        final float DAMAGE = BASE_DAMAGE * conductivity.damageMultiplier() * dragon.getDamageMultiplier();
 
         var delta = end.subtract(start);
         double len = delta.length();
