@@ -95,22 +95,22 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     private int emptyProjectileScans = 0;
     private double cachedHorizontalSpeed = 0.0;
     private int horizontalSpeedCacheTime = -1;
-    private static final Map<String, VocalEntry> VOCAL_ENTRIES = Map.ofEntries(
-            Map.entry("grumble1", new VocalEntry("action", "animation.lightning_dragon.grumble1", ModSounds.DRAGON_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)),
-            Map.entry("grumble2", new VocalEntry("action", "animation.lightning_dragon.grumble2", ModSounds.DRAGON_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)),
-            Map.entry("grumble3", new VocalEntry("action", "animation.lightning_dragon.grumble3", ModSounds.DRAGON_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)),
-            Map.entry("purr", new VocalEntry("action", "animation.lightning_dragon.purr", ModSounds.DRAGON_PURR, 0.8f, 1.05f, 0.05f, true, false, false)),
-            Map.entry("snort", new VocalEntry("action", "animation.lightning_dragon.snort", ModSounds.DRAGON_SNORT, 0.9f, 0.9f, 0.2f, false, false, false)),
-            Map.entry("chuff", new VocalEntry("action", "animation.lightning_dragon.chuff", ModSounds.DRAGON_CHUFF, 0.9f, 0.9f, 0.2f, false, false, false)),
-            Map.entry("content", new VocalEntry("action", "animation.lightning_dragon.content", ModSounds.DRAGON_CONTENT, 0.8f, 1.0f, 0.1f, true, false, false)),
-            Map.entry("annoyed", new VocalEntry("action", "animation.lightning_dragon.annoyed", ModSounds.DRAGON_ANNOYED, 1.0f, 0.9f, 0.2f, false, false, false)),
-            Map.entry("growl_warning", new VocalEntry("action", "animation.lightning_dragon.growl_warning", ModSounds.DRAGON_GROWL_WARNING, 1.2f, 0.8f, 0.4f, false, false, false)),
-            Map.entry("roar", new VocalEntry("action", "animation.lightning_dragon.roar", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)),
-            Map.entry("roar_ground", new VocalEntry("action", "animation.lightning_dragon.roar_ground", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)),
-            Map.entry("roar_air", new VocalEntry("action", "animation.lightning_dragon.roar_air", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)),
-            Map.entry("hurt", new VocalEntry("action", "animation.lightning_dragon.hurt", ModSounds.DRAGON_HURT, 1.2f, 0.95f, 0.1f, false, true, true)),
-            Map.entry("die", new VocalEntry("action", "animation.lightning_dragon.die", ModSounds.DRAGON_DIE, 1.5f, 0.95f, 0.1f, false, true, true))
-    );
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
+            .add("grumble1", "action", "animation.lightning_dragon.grumble1", ModSounds.DRAGON_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble2", "action", "animation.lightning_dragon.grumble2", ModSounds.DRAGON_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble3", "action", "animation.lightning_dragon.grumble3", ModSounds.DRAGON_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("purr", "action", "animation.lightning_dragon.purr", ModSounds.DRAGON_PURR, 0.8f, 1.05f, 0.05f, true, false, false)
+            .add("snort", "action", "animation.lightning_dragon.snort", ModSounds.DRAGON_SNORT, 0.9f, 0.9f, 0.2f, false, false, false)
+            .add("chuff", "action", "animation.lightning_dragon.chuff", ModSounds.DRAGON_CHUFF, 0.9f, 0.9f, 0.2f, false, false, false)
+            .add("content", "action", "animation.lightning_dragon.content", ModSounds.DRAGON_CONTENT, 0.8f, 1.0f, 0.1f, true, false, false)
+            .add("annoyed", "action", "animation.lightning_dragon.annoyed", ModSounds.DRAGON_ANNOYED, 1.0f, 0.9f, 0.2f, false, false, false)
+            .add("growl_warning", "action", "animation.lightning_dragon.growl_warning", ModSounds.DRAGON_GROWL_WARNING, 1.2f, 0.8f, 0.4f, false, false, false)
+            .add("roar", "action", "animation.lightning_dragon.roar", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
+            .add("roar_ground", "action", "animation.lightning_dragon.roar_ground", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
+            .add("roar_air", "action", "animation.lightning_dragon.roar_air", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
+            .add("hurt", "action", "animation.lightning_dragon.hurt", ModSounds.DRAGON_HURT, 1.2f, 0.95f, 0.1f, false, true, true)
+            .add("die", "action", "animation.lightning_dragon.die", ModSounds.DRAGON_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
+            .build();
 
     // ===== AMBIENT SOUND SYSTEM =====
     private int ambientSoundTimer;
@@ -181,10 +181,6 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     boolean dodging = false;
     int dodgeTicksLeft = 0;
     Vec3 dodgeVec = Vec3.ZERO;
-
-    // Dying gate to coordinate custom death ability/timing
-    private boolean dying = false;
-    
     // ===== NEW ATTACK STATE SYSTEM (Cataclysm-style) =====
     /** Attack state timing counter */
     public int attackTicks = 0;
@@ -1678,27 +1674,14 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             return false;
         }
 
+        // Intercept lethal damage to play custom death ability first
+        if (handleLethalDamage(damageSource, amount, LightningDragonAbilities.DIE)) {
+            return true;
+        }
+
         // Store previous flying state to restore if being ridden
         boolean wasFlying = isFlying();
         boolean wasRidden = isVehicle();
-
-        // Intercept lethal damage to play custom death ability first
-        if (!level().isClientSide && !dying) {
-            float remaining = this.getHealth() - amount;
-            if (remaining <= 0.0f) {
-                // Start death sequence; make dragon briefly invulnerable to suppress further deaths
-                this.setInvulnerable(true);
-                this.setDying(true);
-                
-                // Force interrupt any active ability and start death ability
-                if (!this.canUseAbility()) {
-                    // If we can't use ability, there's an active one - interrupt it
-                    this.combatManager.forceEndActiveAbility();
-                }
-                this.tryActivateAbility(LightningDragonAbilities.DIE);
-                return true; // handled
-            }
-        }
 
         boolean result = super.hurt(damageSource, amount);
 
@@ -1742,11 +1725,6 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         // Do not call super; ignore ignition and effects
         if (this.isOnFire()) this.clearFire();
     }
-
-    public boolean isDying() {
-        return dying;
-    }
-    
     // ===== ANIMATION HELPER METHODS =====
     
     /**
@@ -1771,14 +1749,6 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
      */
     public boolean isSummoning() {
         return false;
-    }
-    @Override
-    public void onDeathAbilityStarted() {
-        this.setDying(true);
-    }
-
-    public void setDying(boolean dying) {
-        this.dying = dying;
     }
 
     // ===== SUPERCHARGE (Summon Storm) =====
