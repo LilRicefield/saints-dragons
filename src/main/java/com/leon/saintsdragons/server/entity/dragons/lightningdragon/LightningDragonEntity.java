@@ -108,7 +108,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             .add("roar", "action", "animation.lightning_dragon.roar", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.lightning_dragon.roar_ground", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", "action", "animation.lightning_dragon.roar_air", ModSounds.DRAGON_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("hurt", "action", "animation.lightning_dragon.hurt", ModSounds.DRAGON_HURT, 1.2f, 0.95f, 0.1f, false, true, true)
+            .add("hurt", "action", "animation.lightning_dragon.hurt", ModSounds.DRAGON_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
             .add("die", "action", "animation.lightning_dragon.die", ModSounds.DRAGON_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
 
