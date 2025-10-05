@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 
 /**
@@ -25,13 +26,19 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         if (section == null) return;
         
         // Allow dragons to update custom death state
-        getUser().onDeathAbilityStarted();
+        T dragon = getUser();
+        dragon.onDeathAbilityStarted();
 
-        // Trigger death animation
-        getUser().triggerAnim("action", "die");
+        // Trigger death animation using dragon-specific metadata when available
+        String controllerId = "action";
+        VocalEntry deathEntry = dragon.getVocalEntries().get("die");
+        if (deathEntry != null && deathEntry.controllerId() != null) {
+            controllerId = deathEntry.controllerId();
+        }
+        dragon.triggerAnim(controllerId, "die");
 
         // Play death sound manually since keyframes are empty
-        if (!getLevel().isClientSide && getUser() instanceof SoundHandledDragon soundDragon) {
+        if (!getLevel().isClientSide && dragon instanceof SoundHandledDragon soundDragon) {
             soundDragon.getSoundHandler().playVocal("die");
         }
     }

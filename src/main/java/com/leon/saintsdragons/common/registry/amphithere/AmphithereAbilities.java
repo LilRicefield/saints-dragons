@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry.amphithere;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
+import com.leon.saintsdragons.server.entity.ability.DieAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.amphithere.AmphithereBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.amphithere.AmphithereFireBodyAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.amphithere.AmphithereMagmaVolleyAbility;
@@ -20,6 +21,7 @@ public final class AmphithereAbilities {
     public static final String ROAR_ID = "amphithere_roar";
     public static final String FIRE_BREATH_VOLLEY_ID = "amphithere_fire_breath_volley";
     public static final String HURT_ID = "amphithere_hurt";
+    public static final String DIE_ID = "amphithere_die";
 
 
     public static final DragonAbilityType<AmphithereEntity, AmphithereBiteAbility> BITE =
@@ -36,4 +38,8 @@ public final class AmphithereAbilities {
 
     public static final DragonAbilityType<AmphithereEntity, HurtAbility<AmphithereEntity>> HURT =
             AbilityRegistry.register(new DragonAbilityType<>(HURT_ID, HurtAbility::new));
+
+    public static final DragonAbilityType<AmphithereEntity, DieAbility<AmphithereEntity>> DIE =
+            AbilityRegistry.register(new DragonAbilityType<>(DIE_ID, DieAbility::new));
 }
+
