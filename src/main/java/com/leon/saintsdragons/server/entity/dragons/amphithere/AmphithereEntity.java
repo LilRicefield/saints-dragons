@@ -100,8 +100,8 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
 
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = Map.ofEntries(
             Map.entry("roar", new VocalEntry("actions", "animation.amphithere.roar", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false)),
-            Map.entry("roar_ground", new VocalEntry("actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false)),
-            Map.entry("roar_air", new VocalEntry("actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false)),
+            Map.entry("roar_ground", new VocalEntry("actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.9f, 0.05f, false, false)),
+            Map.entry("roar_air", new VocalEntry("actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR, 1.5f, 1.05f, 0.05f, false, false)),
             Map.entry("amphithere_hurt", new VocalEntry("actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT, 1.2f, 0.95f, 0.1f, false, true))
     );
 
