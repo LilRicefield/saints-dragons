@@ -59,6 +59,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public float sitProgress = 0f;
     public float prevSitProgress = 0f;
     
+    // Death sequence management
+    private boolean dying = false;
+
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
@@ -140,6 +143,45 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                                  boolean allowDuringSleep, boolean preventOverlap) {
     }
 
+
+    /**
+     * Builder for creating VocalEntry maps with less boilerplate.
+     * Use this to define dragon vocals instead of manual Map.ofEntries bookkeeping.
+     */
+    public static final class VocalEntryBuilder {
+        private final Map<String, VocalEntry> entries = new java.util.HashMap<>();
+
+        /**
+         * Add a vocal entry with full control over all parameters.
+         */
+        public VocalEntryBuilder add(String key, String controller, String animation,
+                                     Supplier<SoundEvent> sound, float volume,
+                                     float basePitch, float variance,
+                                     boolean allowWhenSitting, boolean allowDuringSleep,
+                                     boolean preventOverlap) {
+            entries.put(key, new VocalEntry(controller, animation, sound,
+                    volume, basePitch, variance, allowWhenSitting,
+                    allowDuringSleep, preventOverlap));
+            return this;
+        }
+
+        /**
+         * Convenience overload for common case: no variance, trigger ok everywhere.
+         */
+        public VocalEntryBuilder add(String key, String controller, String animation,
+                                     Supplier<SoundEvent> sound) {
+            return add(key, controller, animation, sound,
+                    1.0f, 1.0f, 0.0f, false, false, false);
+        }
+
+        /**
+         * Build the immutable map of vocal entries.
+         */
+        public Map<String, VocalEntry> build() {
+            return Map.copyOf(entries);
+        }
+    }
+
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
         return null;
     }
@@ -191,7 +233,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Check if the dragon is currently dying
      */
     public boolean isDying() {
-        return false;
+        return dying;
     }
 
     /**
@@ -200,6 +242,82 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     public void onDeathAbilityStarted() {
         // Default no-op
+    }
+
+
+    // ===== DEATH SEQUENCE HELPERS =====
+
+    /**
+     * Begin the standard death sequence for this dragon.
+     * Sets the dragon invulnerable, marks it as dying, and starts the death ability.
+     * 
+     * @param deathAbility The death ability type to activate
+     */
+    protected final void beginStandardDeathSequence(DragonAbilityType<?, ?> deathAbility) {
+        if (level().isClientSide || dying) {
+            return;
+        }
+
+        setInvulnerable(true);
+        dying = true;
+
+        if (!canUseAbility()) {
+            combatManager.forceEndActiveAbility();
+        }
+
+        tryActivateAbilityUnchecked(deathAbility);
+    }
+
+    /**
+     * Complete the standard death sequence.
+     * Resets the dying flag and invulnerability.
+     * Call this when the death ability finishes if you need cleanup.
+     */
+    protected final void completeStandardDeathSequence() {
+        dying = false;
+        setInvulnerable(false);
+    }
+
+    /**
+     * Helper to activate an ability without type-checking (used internally for death abilities).
+     */
+    @SuppressWarnings("unchecked")
+    private void tryActivateAbilityUnchecked(DragonAbilityType<?, ?> type) {
+        combatManager.tryUseAbility((DragonAbilityType<DragonEntity, ?>) type);
+    }
+
+    /**
+     * Handle lethal damage by starting the death sequence.
+     * Call this from your dragon's hurt() override to intercept lethal damage.
+     * 
+     * @param source The damage source
+     * @param amount The damage amount
+     * @param deathAbility The death ability to play
+     * @return true if lethal damage was intercepted and death sequence started
+     */
+    protected final boolean handleLethalDamage(DamageSource source, float amount,
+                                               DragonAbilityType<?, ?> deathAbility) {
+        if (level().isClientSide || dying) {
+            return false;
+        }
+
+        if (getHealth() - amount > 0.0f) {
+            return false;
+        }
+
+        beginStandardDeathSequence(deathAbility);
+        // If the death ability actually started, swallow the damage event.
+        return combatManager.isAbilityActive(deathAbility);
+    }
+
+    /**
+     * Register a bite sound key for animation controllers.
+     * Convenience method to avoid repeating the same pattern in every dragon.
+     * 
+     * @param controller The animation controller to register the sound key with
+     */
+    protected final void registerBiteSoundKey(software.bernie.geckolib.core.animation.AnimationController<?> controller, String speciesId) {
+        controller.triggerableAnim("bite", software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation." + speciesId + ".bite"));
     }
 
 
