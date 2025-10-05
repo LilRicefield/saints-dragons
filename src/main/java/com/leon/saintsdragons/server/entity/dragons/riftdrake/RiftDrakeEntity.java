@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.riftdrake;
 
+import com.leon.saintsdragons.common.registry.riftdrake.RiftDrakeAbilities;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimNavigate;
@@ -7,6 +8,7 @@ import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeLeaveWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeRandomSwimGoal;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers.*;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
@@ -48,6 +50,7 @@ import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import net.minecraft.world.entity.LivingEntity;
@@ -88,6 +91,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private int swimTurnState;
     private int swimPitchStateTicks;
     private byte controlState = 0;
+    private boolean useLeftClawNext = true; // Toggles between left/right claw attacks
 
     public RiftDrakeEntity(EntityType<? extends RiftDrakeEntity> type, Level level) {
         super(type, level);
@@ -110,7 +114,8 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                 .add(Attributes.MAX_HEALTH, 140.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.28D)
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.5D);
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.5D)
+                .add(Attributes.ATTACK_DAMAGE, 10.0D);
     }
 
     @Override
@@ -191,20 +196,20 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                 new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
         AnimationController<RiftDrakeEntity> swimController =
                 new AnimationController<>(this, "swim_direction", 4, animationHandler::swimDirectionPredicate);
-        AnimationController<RiftDrakeEntity> actionController =
-                new AnimationController<>(this, "action", 0, animationHandler::actionPredicate);
+        AnimationController<RiftDrakeEntity> actions =
+                new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
 
         // Sound keyframes
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         swimController.setSoundKeyframeHandler(this::onAnimationSound);
-        actionController.setSoundKeyframeHandler(this::onAnimationSound);
+        actions.setSoundKeyframeHandler(this::onAnimationSound);
 
         // Setup animation triggers
-        animationHandler.setupActionController(actionController);
+        animationHandler.setupActionController(actions);
 
         controllers.add(movementController);
         controllers.add(swimController);
-        controllers.add(actionController);
+        controllers.add(actions);
     }
 
     @Override
@@ -522,8 +527,40 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             case TAKEOFF_REQUEST -> handleJumpRequest();
             case ACCELERATE -> setAccelerating(true);
             case STOP_ACCELERATE -> setAccelerating(false);
+            case ABILITY_USE -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    useRidingAbility(abilityName);
+                }
+            }
+            case ABILITY_STOP -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    forceEndActiveAbility();
+                }
+            }
             default -> { }
         }
+    }
+
+    public void useRidingAbility(String abilityName) {
+        if (abilityName == null || abilityName.isEmpty()) {
+            return;
+        }
+        Entity rider = this.getControllingPassenger();
+        if (!(rider instanceof LivingEntity)) {
+            return;
+        }
+        if (this.isTame() && rider instanceof Player player && !this.isOwnedBy(player)) {
+            return;
+        }
+
+        DragonAbilityType<?, ?> type = com.leon.saintsdragons.common.registry.AbilityRegistry.get(abilityName);
+        if (type != null) {
+            combatManager.tryUseAbility(type);
+        }
+    }
+
+    public void forceEndActiveAbility() {
+        combatManager.forceEndActiveAbility();
     }
 
     // ===== RIDING METHODS =====
@@ -551,7 +588,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return null;
+        return com.leon.saintsdragons.common.registry.riftdrake.RiftDrakeAbilities.BITE;
     }
 
     public static boolean canSpawn(EntityType<RiftDrakeEntity> type, LevelAccessor level, MobSpawnType reason, BlockPos pos, net.minecraft.util.RandomSource random) {
@@ -706,6 +743,16 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         }
     }
 
+    // ===== CLAW ALTERNATION SYSTEM =====
+
+    public boolean shouldUseLeftClaw() {
+        return useLeftClawNext;
+    }
+
+    public void toggleClawSide() {
+        useLeftClawNext = !useLeftClawNext;
+    }
+
     // ===== CONTROL STATE SYSTEM =====
 
     @Override
@@ -739,16 +786,34 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     }
 
     @Override
-    public RiderAbilityBinding getSecondaryRiderAbility() {
-        return new RiderAbilityBinding(com.leon.saintsdragons.common.registry.riftdrake.RiftDrakeAbilities.PHASE_SHIFT.getName(), RiderAbilityBinding.Activation.PRESS);
+    public RiderAbilityBinding getAttackRiderAbility() {
+        // Phase 2 uses fast bite2, Phase 1 uses normal bite
+        if (isPhaseTwoActive()) {
+            return new RiderAbilityBinding(RiftDrakeAbilities.BITE2_ID, RiderAbilityBinding.Activation.PRESS);
+        }
+        return new RiderAbilityBinding(RiftDrakeAbilities.BITE_ID, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getChannelingAbility() {
-        return com.leon.saintsdragons.common.registry.riftdrake.RiftDrakeAbilities.PHASE_SHIFT;
+    public RiderAbilityBinding getPrimaryRiderAbility() {
+        // Phase 2 gets claw attacks on G key
+        if (isPhaseTwoActive()) {
+            return new RiderAbilityBinding(RiftDrakeAbilities.CLAW_ID, RiderAbilityBinding.Activation.PRESS);
+        }
+        return null; // G key - not used in phase 1
     }
 
-    public void onAnimationSound(software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent<RiftDrakeEntity> event) {
+    @Override
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return new RiderAbilityBinding(RiftDrakeAbilities.PHASE_SHIFT_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public DragonAbilityType<?, ?> getChannelingAbility() {
+        return RiftDrakeAbilities.PHASE_SHIFT;
+    }
+
+    public void onAnimationSound(SoundKeyframeEvent<RiftDrakeEntity> event) {
         // Delegate all keyframed sounds to the sound handler
         this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
     }

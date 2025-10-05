@@ -66,5 +66,4 @@ public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
         }
     }
 
-    // Sound is now handled by GeckoLib keyframe in the animation JSON
 }

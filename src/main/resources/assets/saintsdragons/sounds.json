@@ -341,7 +341,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/riftdrake/riftdrake_phase2",
-        "volume": 0.8,
+        "volume": 4.0,
         "pitch": 1.0
       }
     ]

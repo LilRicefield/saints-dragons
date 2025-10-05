@@ -115,7 +115,7 @@ public class DragonSoundHandler {
             }
             case "riftdrake_phase2" -> {
                 Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.RIFTDRAKE_PHASE2.get(), 1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+                playRouted(dragon.level(), ModSounds.RIFTDRAKE_PHASE2.get(), 2.5f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             }
             case "riftdrake_phase1" -> {
                 Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");

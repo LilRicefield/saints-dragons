@@ -41,7 +41,19 @@ public class RiftDrakeAnimationHandler {
         actionController.triggerableAnim("phase2",
                 RawAnimation.begin().thenPlay("animation.rift_drake.phase2"));
 
-        // Future-proofing: placeholders for upcoming bite/claw animations
+        // Phase 1 melee attack (works both on ground and underwater)
+        actionController.triggerableAnim("bite",
+                RawAnimation.begin().thenPlay("animation.rift_drake.bite"));
+
+        // Phase 2 rage mode bite - faster
+        actionController.triggerableAnim("bite2",
+                RawAnimation.begin().thenPlay("animation.rift_drake.bite2"));
+
+        // Phase 2 claw attacks (bipedal melee)
+        actionController.triggerableAnim("claw_left",
+                RawAnimation.begin().thenPlay("animation.rift_drake.claw_left"));
+        actionController.triggerableAnim("claw_right",
+                RawAnimation.begin().thenPlay("animation.rift_drake.claw_right"));
     }
 
     public PlayState movementPredicate(AnimationState<RiftDrakeEntity> state) {
@@ -109,7 +121,7 @@ public class RiftDrakeAnimationHandler {
     public PlayState actionPredicate(AnimationState<RiftDrakeEntity> state) {
         // Action controller handles one-shot animations triggered via triggerAnim()
         state.getController().transitionLength(5);
-        // GeckoLib automatically handles triggered animations
-        return PlayState.CONTINUE;
+        // Return STOP so this controller doesn't compete with movement controller when idle
+        return PlayState.STOP;
     }
 }
