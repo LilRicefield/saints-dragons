@@ -307,7 +307,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
         beginStandardDeathSequence(deathAbility);
         // If the death ability actually started, swallow the damage event.
-        return combatManager.isAbilityActive(deathAbility);
+        boolean abilityStarted = combatManager.isAbilityActive(deathAbility);
+        if (!abilityStarted) {
+            // Ability failed to start - unwind the invulnerable and dying flags
+            completeStandardDeathSequence();
+            return false;
+        }
+        return true;
     }
 
     /**
