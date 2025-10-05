@@ -114,7 +114,13 @@ public class PrimitiveDrakeAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.primitive_drake.grumble2"));
         actionController.triggerableAnim("grumble3",
                 RawAnimation.begin().thenPlay("animation.primitive_drake.grumble3"));
-        
+
+        // Register hurt and die animations
+        actionController.triggerableAnim("hurt",
+                RawAnimation.begin().thenPlay("animation.primitive_drake.hurt"));
+        actionController.triggerableAnim("die",
+                RawAnimation.begin().thenPlay("animation.primitive_drake.die"));
+
         // Register fake death animation for lightning dragon interaction
         actionController.triggerableAnim("fake_death",
                 RawAnimation.begin().thenLoop("animation.primitive_drake.fake_death"));
