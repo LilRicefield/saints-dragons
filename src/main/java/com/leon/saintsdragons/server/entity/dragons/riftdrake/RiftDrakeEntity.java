@@ -65,6 +65,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
 
     // Flight mode data accessor (not used for ground dragon but required by interface)
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
@@ -82,6 +83,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private final MoveControl landMoveControl;
     private final DragonSwimMoveControl swimMoveControl;
     private final RiftDrakeLookController landLookControl;
+    private int riderControlLockTicks = 0;
     private RiftDrakeRandomSwimGoal waterSwimGoal;
     private boolean swimming;
     private int swimTicks;
@@ -109,6 +111,93 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.setRideable();
     }
 
+    private void tickRiderControlLock() {
+        if (riderControlLockTicks > 0) {
+            riderControlLockTicks--;
+            if (riderControlLockTicks <= 0) {
+                this.entityData.set(DATA_RIDER_LOCKED, false);
+            }
+        }
+    }
+
+    public boolean areRiderControlsLocked() {
+        return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
+    }
+
+    public void lockRiderControls(int ticks) {
+        riderControlLockTicks = Math.max(riderControlLockTicks, Math.max(0, ticks));
+        this.entityData.set(DATA_RIDER_LOCKED, true);
+        this.setAccelerating(false);
+        this.setLastRiderForward(0.0F);
+        this.setLastRiderStrafe(0.0F);
+        this.setGroundMoveStateFromRider(0);
+        this.setGoingUp(false);
+        this.setGoingDown(false);
+        this.setDeltaMovement(Vec3.ZERO);
+        if (!this.level().isClientSide) {
+            this.getNavigation().stop();
+            this.setTarget(null);
+        }
+    }
+
+    public void lockAbilities(int ticks) {
+        combatManager.lockGlobalCooldown(ticks);
+    }
+
+    @Override
+    protected boolean isRiderInputLocked(Player player) {
+        return areRiderControlsLocked();
+    }
+
+    @Override
+    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        if (locked) {
+            setGoingUp(false);
+            setGoingDown(false);
+            return;
+        }
+        boolean inWater = this.isSwimming() || this.isInWaterOrBubble();
+        setGoingUp(inWater && goingUp);
+        setGoingDown(inWater && goingDown);
+    }
+
+    @Override
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
+        float fwd = locked ? 0f : applyInputDeadzone(forward);
+        float str = locked ? 0f : applyInputDeadzone(strafe);
+        setLastRiderForward(fwd);
+        setLastRiderStrafe(str);
+        int moveState = 0;
+        float magnitude = Math.abs(fwd) + Math.abs(str);
+        if (magnitude > 0.05f) {
+            moveState = isAccelerating() ? 2 : 1;
+        }
+        setGroundMoveStateFromRider(moveState);
+    }
+
+    @Override
+    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
+        if (locked || action == null) {
+            return;
+        }
+        switch (action) {
+            case TAKEOFF_REQUEST -> handleJumpRequest();
+            case ACCELERATE -> setAccelerating(true);
+            case STOP_ACCELERATE -> setAccelerating(false);
+            case ABILITY_USE -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    useRidingAbility(abilityName);
+                }
+            }
+            case ABILITY_STOP -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    forceEndActiveAbility();
+                }
+            }
+            default -> { }
+        }
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, 140.0D)
@@ -132,6 +221,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.entityData.define(DATA_FLIGHT_MODE, -1);
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
+        this.entityData.define(DATA_RIDER_LOCKED, false);
     }
     
     @Override
@@ -243,6 +333,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         tickClientSideUpdates();
         
         if (!level().isClientSide) {
+            tickRiderControlLock();
             boolean inWater = this.isInWater();
             if (inWater) {
                 this.setAirSupply(this.getMaxAirSupply());
@@ -274,6 +365,10 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     public void travel(@NotNull Vec3 motion) {
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            if (areRiderControlsLocked()) {
+                this.setDeltaMovement(Vec3.ZERO);
+                return;
+            }
             // Clear any AI navigation when being ridden
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
@@ -421,6 +516,9 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
 
     public void handleJumpRequest() {
+        if (areRiderControlsLocked()) {
+            return;
+        }
         if (this.isInWater()) {
             // Enhanced water jump - more powerful for aquatic creature
             Vec3 jump = new Vec3(0.0D, 0.6D, 0.0D);
@@ -436,8 +534,11 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     @Override
     public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
+        if (areRiderControlsLocked()) {
+            return Vec3.ZERO;
+        }
         Vec3 input = riderController.getRiddenInput(player, deltaIn);
-        
+
         // Capture rider inputs for animation state
         if (!level().isClientSide) {
             float fwd = (float) Mth.clamp(input.z, -1.0D, 1.0D);
@@ -450,12 +551,27 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     @Override
     protected float getRiddenSpeed(@Nonnull @NotNull Player rider) {
+        if (areRiderControlsLocked()) {
+            return 0.0F;
+        }
         return riderController.getRiddenSpeed(rider);
     }
 
     @Override
     protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
         super.tickRidden(player, travelVector);
+        if (areRiderControlsLocked()) {
+            player.fallDistance = 0.0F;
+            this.fallDistance = 0.0F;
+            this.setTarget(null);
+            this.yBodyRot = this.getYRot();
+            this.yHeadRot = this.getYRot();
+            this.setAccelerating(false);
+            this.setGoingUp(false);
+            this.setGoingDown(false);
+            this.setDeltaMovement(Vec3.ZERO);
+            return;
+        }
         riderController.tickRidden(player, travelVector);
     }
 
@@ -497,52 +613,11 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         return this.position().add(0, this.getBbHeight() * 0.8, 0);
     }
 
-    @Override
-    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
-        boolean inWater = this.isSwimming() || this.isInWaterOrBubble();
-        setGoingUp(inWater && goingUp);
-        setGoingDown(inWater && goingDown);
-    }
-
-    @Override
-    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
-        float fwd = applyInputDeadzone(forward);
-        float str = applyInputDeadzone(strafe);
-        setLastRiderForward(fwd);
-        setLastRiderStrafe(str);
-        int moveState = 0;
-        float magnitude = Math.abs(fwd) + Math.abs(str);
-        if (magnitude > 0.05f) {
-            moveState = isAccelerating() ? 2 : 1;
-        }
-        setGroundMoveStateFromRider(moveState);
-    }
-
-    @Override
-    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
-        if (action == null) {
-            return;
-        }
-        switch (action) {
-            case TAKEOFF_REQUEST -> handleJumpRequest();
-            case ACCELERATE -> setAccelerating(true);
-            case STOP_ACCELERATE -> setAccelerating(false);
-            case ABILITY_USE -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    useRidingAbility(abilityName);
-                }
-            }
-            case ABILITY_STOP -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    forceEndActiveAbility();
-                }
-            }
-            default -> { }
-        }
-    }
-
     public void useRidingAbility(String abilityName) {
         if (abilityName == null || abilityName.isEmpty()) {
+            return;
+        }
+        if (areRiderControlsLocked()) {
             return;
         }
         Entity rider = this.getControllingPassenger();
