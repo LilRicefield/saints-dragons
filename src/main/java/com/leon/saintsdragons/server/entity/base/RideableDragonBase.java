@@ -105,6 +105,22 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     protected void onRiderAbilityStop(Player player, String abilityName) {
     }
 
+    protected float getRiderLockYawBlend() {
+        return 0.18F;
+    }
+
+    protected float getRiderLockPitchBlend() {
+        return 0.18F;
+    }
+
+    protected float getRiderLockPitchMin() {
+        return -45.0F;
+    }
+
+    protected float getRiderLockPitchMax() {
+        return 45.0F;
+    }
+
 
     @Nullable
     public RiderAbilityBinding getPrimaryRiderAbility() {
@@ -209,6 +225,29 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     @Override
     public void setAccelerating(boolean accelerating) {
         this.entityData.set(getAcceleratingAccessor(), accelerating);
+    }
+
+    protected void copyRiderLook(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        float currentYaw = this.getYRot();
+        float targetYaw = player.getYRot();
+        float yawDelta = Mth.wrapDegrees(targetYaw - currentYaw);
+        float yawBlend = getRiderLockYawBlend();
+        float blendedYaw = currentYaw + yawDelta * yawBlend;
+
+        this.setYRot(blendedYaw);
+        this.yBodyRotO = this.yBodyRot;
+        this.yBodyRot = blendedYaw;
+        this.yHeadRotO = this.yHeadRot;
+        this.setYHeadRot(blendedYaw);
+
+        float targetPitch = Mth.clamp(player.getXRot(), getRiderLockPitchMin(), getRiderLockPitchMax());
+        float blendedPitch = Mth.lerp(getRiderLockPitchBlend(), this.getXRot(), targetPitch);
+        this.xRotO = this.getXRot();
+        this.setXRot(blendedPitch);
     }
 
     // ===== ANIMATION SYNC IMPLEMENTATION =====

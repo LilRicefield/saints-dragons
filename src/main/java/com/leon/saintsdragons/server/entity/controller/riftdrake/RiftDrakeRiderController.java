@@ -73,7 +73,8 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
             float currentYaw = dragon.getYRot();
             float targetYaw = player.getYRot();
             float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-            float newYaw = currentYaw + (rawDiff * 0.9f); // 90% instant response for ground movement
+            float blend = dragon.isPhaseTwoActive() ? 0.28f : 0.9f;
+            float newYaw = currentYaw + (rawDiff * blend);
             
             // Set rotation
             dragon.setYRot(newYaw);

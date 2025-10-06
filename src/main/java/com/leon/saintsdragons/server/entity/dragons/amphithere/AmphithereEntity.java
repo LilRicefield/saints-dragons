@@ -801,6 +801,9 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     protected void tickRidden(@Nonnull Player player, @Nonnull Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         riderController.tickRidden(player, travelVector);
+        if (areRiderControlsLocked()) {
+            copyRiderLook(player);
+        }
     }
     
     @Override

@@ -120,20 +120,14 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         }
     }
 
-    private void copyRiderLook(Player player) {
-        if (player == null) {
-            return;
-        }
-        float bodyYaw = player.getYRot();
-        this.setYRot(bodyYaw);
-        this.setYHeadRot(bodyYaw);
-        this.yHeadRotO = bodyYaw;
-        this.yBodyRot = bodyYaw;
-        this.yBodyRotO = bodyYaw;
+    @Override
+    protected float getRiderLockYawBlend() {
+        return this.isPhaseTwoActive() ? 0.25F : 0.18F;
+    }
 
-        float pitch = Mth.clamp(player.getXRot(), -45.0F, 45.0F);
-        this.setXRot(pitch);
-        this.xRotO = pitch;
+    @Override
+    protected float getRiderLockPitchBlend() {
+        return this.isPhaseTwoActive() ? 0.25F : 0.18F;
     }
 
     public boolean areRiderControlsLocked() {
