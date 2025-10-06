@@ -101,7 +101,11 @@
   "saintsdragons.ability.amphithere_fire_body": "Fire Body",
   "saintsdragons.ability.amphithere_fire_breath_volley": "Magma Volley",
   "entity.saintsdragons.amphithere_magma_block": "Magma Burst",
-  
+
+  "saintsdragons.ability.riftdrake_bite": "Bite",
+  "saintsdragons.ability.riftdrake_claw": "Claw (Phase 2 only)",
+  "saintsdragons.ability.riftdrake_phase_change": "Phase 2",
+
   "commands.dragonally.description": "Manage allies",
   "commands.dragonally.add.description": "Add a player as an ally to a dragon",
   "commands.dragonally.remove.description": "Remove a player as an ally from a dragon", 

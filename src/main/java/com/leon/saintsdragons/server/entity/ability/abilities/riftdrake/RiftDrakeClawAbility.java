@@ -56,6 +56,12 @@ public class RiftDrakeClawAbility extends DragonAbility<RiftDrakeEntity> {
     }
 
     @Override
+    public boolean isOverlayAbility() {
+        // Claw can run concurrently with bite2 for aggressive combos
+        return true;
+    }
+
+    @Override
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) {
             return;

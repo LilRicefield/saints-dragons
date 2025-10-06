@@ -54,6 +54,12 @@ public class RiftDrakeAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.rift_drake.claw_left"));
         actionController.triggerableAnim("claw_right",
                 RawAnimation.begin().thenPlay("animation.rift_drake.claw_right"));
+
+        // Roar animations (different for each phase)
+        actionController.triggerableAnim("roar",
+                RawAnimation.begin().thenPlay("animation.rift_drake.roar"));
+        actionController.triggerableAnim("roar2",
+                RawAnimation.begin().thenPlay("animation.rift_drake.roar2"));
     }
 
     public PlayState movementPredicate(AnimationState<RiftDrakeEntity> state) {

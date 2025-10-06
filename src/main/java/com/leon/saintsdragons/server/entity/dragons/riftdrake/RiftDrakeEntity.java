@@ -796,16 +796,22 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
-        // Phase 2 gets claw attacks on G key
-        if (isPhaseTwoActive()) {
-            return new RiderAbilityBinding(RiftDrakeAbilities.CLAW_ID, RiderAbilityBinding.Activation.PRESS);
-        }
-        return null; // G key - not used in phase 1
+        // R key: Universal roar ability for all dragons (PRESS)
+        return new RiderAbilityBinding(RiftDrakeAbilities.ROAR_ID, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
         return new RiderAbilityBinding(RiftDrakeAbilities.PHASE_SHIFT_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public RiderAbilityBinding getTertiaryRiderAbility() {
+        // G key: Phase 2 gets claw attacks (PRESS, not HOLD like other dragons)
+        if (isPhaseTwoActive()) {
+            return new RiderAbilityBinding(RiftDrakeAbilities.CLAW_ID, RiderAbilityBinding.Activation.PRESS);
+        }
+        return null; // G key - not used in phase 1
     }
 
     @Override

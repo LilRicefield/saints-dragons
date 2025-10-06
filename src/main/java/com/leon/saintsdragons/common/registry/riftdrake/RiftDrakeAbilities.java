@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrak
 import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrakeBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrakeBite2Ability;
 import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrakeClawAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrakeRoarAbility;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
 import com.leon.saintsdragons.server.entity.ability.DieAbility;
 
@@ -21,6 +22,7 @@ public final class RiftDrakeAbilities {
     public static final String BITE_ID = "riftdrake_bite";
     public static final String BITE2_ID = "riftdrake_bite2";
     public static final String CLAW_ID = "riftdrake_claw";
+    public static final String ROAR_ID = "riftdrake_roar";
     public static final String PHASE_SHIFT_ID = "phase_shift";
     public static final String HURT_ID = "riftdrake_hurt";
     public static final String DIE_ID = "riftdrake_die";
@@ -36,6 +38,10 @@ public final class RiftDrakeAbilities {
     // Phase 2 melee attack
     public static final DragonAbilityType<RiftDrakeEntity, RiftDrakeClawAbility> CLAW =
             AbilityRegistry.register(new DragonAbilityType<>(CLAW_ID, RiftDrakeClawAbility::new));
+
+    // Roar - cosmetic ability
+    public static final DragonAbilityType<RiftDrakeEntity, RiftDrakeRoarAbility> ROAR =
+            AbilityRegistry.register(new DragonAbilityType<>(ROAR_ID, RiftDrakeRoarAbility::new));
 
     // Ultimate ability
     public static final DragonAbilityType<RiftDrakeEntity, RiftDrakePhaseShiftAbility> PHASE_SHIFT =
