@@ -2381,9 +2381,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             player.fallDistance = 0.0F;
             this.fallDistance = 0.0F;
             this.setTarget(null);
-            // Keep body/head coherent
-            this.yBodyRot = this.getYRot();
-            this.yHeadRot = this.getYRot();
+            copyRiderLook(player);
             // Stop acceleration & vertical intents during lock
             this.setAccelerating(false);
             if (!this.isFlying()) {
