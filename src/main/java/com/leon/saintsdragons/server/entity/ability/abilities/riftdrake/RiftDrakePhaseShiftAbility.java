@@ -15,6 +15,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
     private static final int TRANSITION_DURATION = 40; // 2 seconds for phase 2 transition animation
+    private static final int LOCK_DURATION = 140; // 7 seconds of rider/control lock for safety
+
+    private final boolean enteringPhaseTwo;
 
     private static final DragonAbilitySection[] TRACK_ENTER_PHASE2 = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, TRANSITION_DURATION), // Transition animation
@@ -28,18 +31,18 @@ public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
 
     public RiftDrakePhaseShiftAbility(DragonAbilityType<RiftDrakeEntity, RiftDrakePhaseShiftAbility> type, RiftDrakeEntity user) {
         super(type, user, user.isPhaseTwoActive() ? TRACK_EXIT_PHASE2 : TRACK_ENTER_PHASE2, 0); // No cooldown
+        this.enteringPhaseTwo = !user.isPhaseTwoActive();
     }
 
     @Override
     public boolean isOverlayAbility() {
-        return true; // Never blocks other abilities during instant revert, but locks during transition
+        return !enteringPhaseTwo;
     }
 
     @Override
     public boolean canUse() {
-        // Can only activate phase 2 for the first time on ground
-        if (!getUser().isPhaseTwoActive() && getUser().isInWater()) {
-            return false; // Must be on ground to activate phase 2
+        if (!getUser().onGround() || getUser().isInWater()) {
+            return false; // Phase shift requires firm footing
         }
         return super.canUse();
     }
@@ -49,7 +52,11 @@ public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
         if (section == null) return;
 
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            // Entering phase 2 - play transition animation
+            if (enteringPhaseTwo) {
+                // Fully lock controls and main abilities during transition
+                getUser().lockRiderControls(LOCK_DURATION);
+                getUser().lockAbilities(LOCK_DURATION);
+            }
             getUser().triggerAnim("action", "phase2");
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             // Actually toggle phase state

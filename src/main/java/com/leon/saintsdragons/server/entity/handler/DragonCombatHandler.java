@@ -71,7 +71,21 @@ public class DragonCombatHandler {
     }
 
     public boolean canUseAbility() {
-        return globalCooldown == 0 && (activeAbility == null || !activeAbility.isUsing()) && !processingAbility;
+        return globalCooldown == 0
+                && (activeAbility == null || !activeAbility.isUsing())
+                && !processingAbility
+                && !dragon.areRiderControlsLocked();
+    }
+
+    public void lockGlobalCooldown(int ticks) {
+        if (ticks <= 0) {
+            return;
+        }
+        globalCooldown = Math.max(globalCooldown, ticks);
+    }
+
+    public boolean isGlobalCooldownActive() {
+        return globalCooldown > 0;
     }
     
     /**
@@ -79,6 +93,10 @@ public class DragonCombatHandler {
      */
     public boolean canStart(DragonAbilityType<?, ?> abilityType) {
         if (processingAbility) {
+            return false;
+        }
+
+        if (globalCooldown > 0 || dragon.areRiderControlsLocked()) {
             return false;
         }
 
@@ -117,6 +135,9 @@ public class DragonCombatHandler {
 
     public void tryUseAbility(DragonAbilityType<?, ?> abilityType) {
         if (abilityType == null || dragon.level().isClientSide) {
+            return;
+        }
+        if (dragon.areRiderControlsLocked()) {
             return;
         }
         if (!canStart(abilityType)) {

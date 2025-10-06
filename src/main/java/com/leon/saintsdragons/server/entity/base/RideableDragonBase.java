@@ -82,8 +82,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             case TAKEOFF_REQUEST -> { if (!locked) onRiderTakeoffRequest(player); }
             case ACCELERATE -> { if (!locked) onRiderAccelerationStart(player); }
             case STOP_ACCELERATE -> onRiderAccelerationStop(player);
-            case ABILITY_USE -> onRiderAbilityUse(player, abilityName);
-            case ABILITY_STOP -> onRiderAbilityStop(player, abilityName);
+            case ABILITY_USE -> { if (!locked) onRiderAbilityUse(player, abilityName); }
+            case ABILITY_STOP -> { if (!locked) onRiderAbilityStop(player, abilityName); }
             default -> { }
         }
     }

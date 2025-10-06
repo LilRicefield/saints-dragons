@@ -124,6 +124,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return combatManager.canUseAbility();
     }
 
+    public boolean areAbilitiesLocked() {
+        return combatManager.isGlobalCooldownActive();
+    }
+
+    public void lockAbilities(int ticks) {
+        combatManager.lockGlobalCooldown(ticks);
+    }
+
     /**
      * Try to activate a Dragon ability
      */
