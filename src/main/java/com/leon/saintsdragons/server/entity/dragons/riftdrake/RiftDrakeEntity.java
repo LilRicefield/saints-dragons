@@ -120,6 +120,22 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         }
     }
 
+    private void copyRiderLook(Player player) {
+        if (player == null) {
+            return;
+        }
+        float bodyYaw = player.getYRot();
+        this.setYRot(bodyYaw);
+        this.setYHeadRot(bodyYaw);
+        this.yHeadRotO = bodyYaw;
+        this.yBodyRot = bodyYaw;
+        this.yBodyRotO = bodyYaw;
+
+        float pitch = Mth.clamp(player.getXRot(), -45.0F, 45.0F);
+        this.setXRot(pitch);
+        this.xRotO = pitch;
+    }
+
     public boolean areRiderControlsLocked() {
         return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
     }
@@ -564,8 +580,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             player.fallDistance = 0.0F;
             this.fallDistance = 0.0F;
             this.setTarget(null);
-            this.yBodyRot = this.getYRot();
-            this.yHeadRot = this.getYRot();
+            copyRiderLook(player);
             this.setAccelerating(false);
             this.setGoingUp(false);
             this.setGoingDown(false);
