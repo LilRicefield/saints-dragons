@@ -18,7 +18,8 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
     // Baseline vertical offset relative to dragon height
     private static final double SEAT_BASE_FACTOR = 0.45D; // 0.0..1.0 of bbHeight
     // Additional vertical lift to avoid clipping
-    private static final double SEAT_LIFT = 0.25D;
+    private static final double SEAT_LIFT = 0.75D;
+    private static final double PHASE_TWO_LIFT = 3.5D;
     // Forward/back relative to body (blocks). +forward = toward head, - = toward tail
     private static final double SEAT_FORWARD = 3.0D;
     // Sideways relative to body (blocks). +side = to the dragon's right, - = left
@@ -116,8 +117,16 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
     /**
      * Get the riding offset for passengers
      */
+    private double computeSeatY() {
+        double seat = (dragon.getBbHeight() * SEAT_BASE_FACTOR) + SEAT_LIFT;
+        if (dragon.isPhaseTwoActive()) {
+            seat += PHASE_TWO_LIFT;
+        }
+        return seat;
+    }
+
     public double getPassengersRidingOffset() {
-        return (dragon.getBbHeight() * SEAT_BASE_FACTOR) + SEAT_LIFT;
+        return computeSeatY();
     }
 
     /**
@@ -126,7 +135,7 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
         if (passenger == null) return;
 
-        double seatY = (dragon.getBbHeight() * SEAT_BASE_FACTOR) + SEAT_LIFT;
+        double seatY = computeSeatY();
         double seatForward = SEAT_FORWARD;
         double seatSide = SEAT_SIDE;
 
