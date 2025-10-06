@@ -15,7 +15,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
     private static final int TRANSITION_DURATION = 40; // 2 seconds for phase 2 transition animation
-    private static final int LOCK_DURATION = 140; // 7 seconds of rider/control lock for safety
+    private static final int LOCK_DURATION = 135;
 
     private final boolean enteringPhaseTwo;
 
