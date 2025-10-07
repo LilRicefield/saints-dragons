@@ -55,6 +55,9 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon, DragonControlStateHolder {
 
     private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
@@ -1121,5 +1124,18 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             // Call super for all other entity events (NOT 6 or 7)
             super.handleEntityEvent(eventId);
         }
+    }
+
+    //LOCATOR
+    private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
+
+    public void setClientLocatorPosition(String name, Vec3 pos) {
+        if (name == null || pos == null) return;
+        this.clientLocatorCache.put(name, pos);
+    }
+
+    public Vec3 getClientLocatorPosition(String name) {
+        if (name == null) return null;
+        return this.clientLocatorCache.get(name);
     }
 }

@@ -15,16 +15,19 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 /**
  * Cosmetic roar for the Rift Drake. Plays roar animation and sound.
+ * Locks abilities for the full animation duration (~5s) but allows movement.
  */
 public class RiftDrakeRoarAbility extends DragonAbility<RiftDrakeEntity> {
 
+    // Animation length: ~4.75s = 95 ticks. Round up to 100 ticks for 5 seconds.
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(STARTUP, 5),
-            new AbilitySectionDuration(ACTIVE, 25),
-            new AbilitySectionDuration(RECOVERY, 8)
+            new AbilitySectionDuration(STARTUP, 6),
+            new AbilitySectionDuration(ACTIVE, 85),
+            new AbilitySectionDuration(RECOVERY, 9)
     };
 
     private static final int SOUND_DELAY_TICKS = 3;
+    private static final int ROAR_TOTAL_TICKS = 100; // 5 seconds @ 20 TPS
 
     private boolean soundQueued = false;
 
@@ -44,6 +47,9 @@ public class RiftDrakeRoarAbility extends DragonAbility<RiftDrakeEntity> {
             String trigger = dragon.isPhaseTwoActive() ? "roar2" : "roar";
             dragon.triggerAnim("action", trigger);
             soundQueued = true;
+
+            // Lock abilities for full animation duration but allow walking/running
+            dragon.lockAbilities(ROAR_TOTAL_TICKS);
         }
     }
 

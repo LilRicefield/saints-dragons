@@ -341,7 +341,37 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/riftdrake/riftdrake_phase2",
-        "volume": 4.0,
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "riftdrake_roar": {
+    "subtitle": "Rift Drake roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/riftdrake/riftdrake_roar",
+        "volume": 1.6,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "riftdrake_step": {
+    "subtitle": "Rift Drake steps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/riftdrake/riftdrake_step",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "riftdrake_claw": {
+    "subtitle": "Rift Drake slashes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/riftdrake/riftdrake_claw",
+        "volume": 1.2,
         "pitch": 1.0
       }
     ]
