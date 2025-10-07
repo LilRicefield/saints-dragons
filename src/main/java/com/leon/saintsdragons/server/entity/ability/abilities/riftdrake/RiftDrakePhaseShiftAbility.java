@@ -64,11 +64,15 @@ public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
             getUser().setPhaseTwoActive(newPhase, true);
 
             // Play phase 1 sound only when reverting (instant case)
-            if (!newPhase && !getLevel().isClientSide) {
-                getLevel().playSound(null, getUser().getX(), getUser().getY(), getUser().getZ(),
-                        com.leon.saintsdragons.common.registry.ModSounds.RIFTDRAKE_PHASE1.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 1.4f,
-                        0.9f + getUser().getRandom().nextFloat() * 0.2f);
+            if (!newPhase) {
+                getUser().triggerAnim("action", "phase1");
+                getUser().lockRiderControls(60);
+                if (!getLevel().isClientSide) {
+                    getLevel().playSound(null, getUser().getX(), getUser().getY(), getUser().getZ(),
+                            com.leon.saintsdragons.common.registry.ModSounds.RIFTDRAKE_PHASE1.get(),
+                            net.minecraft.sounds.SoundSource.NEUTRAL, 1.4f,
+                            0.9f + getUser().getRandom().nextFloat() * 0.2f);
+                }
             }
         }
     }
