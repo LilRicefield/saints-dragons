@@ -78,7 +78,8 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private final AnimatableInstanceCache animCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final DragonKeybindHandler keybindHandler = new DragonKeybindHandler(this);
-    private final RiftDrakeAnimationHandler animationHandler = new RiftDrakeAnimationHandler(this);
+    private final RiftDrakeAnimationState animationState = new RiftDrakeAnimationState();
+    private final RiftDrakeAnimationHandler animationHandler = new RiftDrakeAnimationHandler(this, animationState);
     private final RiftDrakeInteractionHandler interactionHandler = new RiftDrakeInteractionHandler(this);
     private final RiftDrakeRiderController riderController;
     private final PathNavigation groundNavigation;
@@ -112,6 +113,9 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.lookControl = this.landLookControl;
         this.riderController = new RiftDrakeRiderController(this);
         this.setRideable();
+        if (level.isClientSide) {
+            animationState.resetImmediate(this);
+        }
     }
 
     private void tickRiderControlLock() {
@@ -302,6 +306,9 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         AnimationController<RiftDrakeEntity> actions =
                 new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
 
+        animationHandler.configureMovementBlend(movementController);
+        animationHandler.configureSwimBlend(swimController);
+
         // Sound keyframes
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         swimController.setSoundKeyframeHandler(this::onAnimationSound);
@@ -322,12 +329,16 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     @Override
     public void initializeAnimationState() {
-        // TODO: derive initial animation state for Rift Drake
+        if (level().isClientSide) {
+            animationState.resetImmediate(this);
+        }
     }
 
     @Override
     public void resetAnimationState() {
-        // TODO: recalculate animation state when needed
+        if (level().isClientSide) {
+            animationState.resetImmediate(this);
+        }
     }
 
     public DragonSoundHandler getSoundHandler() {
@@ -344,6 +355,10 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         tickSittingState();
         updateSittingProgress();
         tickClientSideUpdates();
+
+        if (level().isClientSide) {
+            animationState.tick(this);
+        }
         
         if (!level().isClientSide) {
             tickRiderControlLock();
@@ -985,6 +1000,10 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     public void setGoingDown(boolean goingDown) {
         this.entityData.set(DATA_GOING_DOWN, goingDown);
+    }
+
+    public RiftDrakeAnimationState getAnimationState() {
+        return animationState;
     }
 
     private static class RiftDrakeMoveControl extends MoveControl {

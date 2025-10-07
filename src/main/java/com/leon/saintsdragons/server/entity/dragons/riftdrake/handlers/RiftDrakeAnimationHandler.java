@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers;
 
+import com.leon.saintsdragons.common.animation.AnimationBlendConfig;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -28,9 +29,14 @@ public class RiftDrakeAnimationHandler {
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.rift_drake.sit");
 
     private final RiftDrakeEntity drake;
+    private final RiftDrakeAnimationState stateCache;
 
-    public RiftDrakeAnimationHandler(RiftDrakeEntity drake) {
+    private static final AnimationBlendConfig MOVEMENT_BLEND = AnimationBlendConfig.smooth(5);
+    private static final AnimationBlendConfig SWIM_BLEND = AnimationBlendConfig.smooth(6);
+
+    public RiftDrakeAnimationHandler(RiftDrakeEntity drake, RiftDrakeAnimationState stateCache) {
         this.drake = drake;
+        this.stateCache = stateCache;
     }
 
     /**
@@ -76,21 +82,29 @@ public class RiftDrakeAnimationHandler {
             state.setAnimation(SIT);
         } else {
             // Ground movement transitions - use synced state for proper networking
-            int groundState = drake.getEffectiveGroundState();
+            float partialTick = state.getPartialTick();
+            float groundBlend = stateCache.getGroundBlend(partialTick);
+            int groundState = Math.round(groundBlend);
             boolean phaseTwo = drake.isPhaseTwoActive();
+            float actionWeight = stateCache.getActionBlend(partialTick);
+            float phaseBlend = stateCache.getPhaseBlend(partialTick);
 
             if (groundState == 2) {
                 // Running state
-                state.getController().transitionLength(3); // Fast transition into run
+                state.getController().transitionLength(Math.max(2, MOVEMENT_BLEND.transitionTicks() - (int)(actionWeight * 2)));
                 state.setAnimation(phaseTwo ? RUN2 : RUN);
             } else if (groundState == 1 || isMovingLand) {
                 // Walking state or moving
-                state.getController().transitionLength(3); // Quick walk engage
+                state.getController().transitionLength(Math.max(3, MOVEMENT_BLEND.transitionTicks()));
                 state.setAnimation(phaseTwo ? WALK2 : WALK);
             } else {
                 // Idle state
-                state.getController().transitionLength(4); // Soft transition to idle
+                state.getController().transitionLength(MOVEMENT_BLEND.transitionTicks() + (int)(actionWeight * 2));
                 state.setAnimation(phaseTwo ? IDLE2 : IDLE);
+            }
+
+            if (phaseBlend > 0.0f) {
+                state.getController().transitionLength(Math.max(1, MOVEMENT_BLEND.transitionTicks() - 2));
             }
         }
         state.getController().setAnimationSpeed(1.0F);
@@ -99,24 +113,25 @@ public class RiftDrakeAnimationHandler {
 
     public PlayState swimDirectionPredicate(AnimationState<RiftDrakeEntity> state) {
         var controller = state.getController();
-        controller.transitionLength(6);
+        controller.transitionLength(SWIM_BLEND.transitionTicks());
 
         if (!drake.isSwimming()) {
             state.setAndContinue(SWIM_NEUTRAL);
             return PlayState.CONTINUE;
         }
 
-        boolean pitchingUp = drake.isSwimmingUp();
-        boolean pitchingDown = drake.isSwimmingDown();
-        int yawDir = drake.getSwimTurnDirection();
+        float partialTick = state.getPartialTick();
+        boolean pitchingUp = stateCache.getSwimPitch(partialTick) < -0.5f;
+        boolean pitchingDown = stateCache.getSwimPitch(partialTick) > 0.5f;
+        float yaw = stateCache.getSwimYaw(partialTick);
 
         if (pitchingUp) {
             state.setAndContinue(SWIM_UP);
         } else if (pitchingDown) {
             state.setAndContinue(SWIM_DOWN);
-        } else if (yawDir < 0) {
+        } else if (yaw < -0.2f) {
             state.setAndContinue(SWIM_LEFT);
-        } else if (yawDir > 0) {
+        } else if (yaw > 0.2f) {
             state.setAndContinue(SWIM_RIGHT);
         } else {
             state.setAndContinue(SWIM_NEUTRAL);
@@ -129,5 +144,13 @@ public class RiftDrakeAnimationHandler {
         state.getController().transitionLength(5);
         // Return STOP so this controller doesn't compete with movement controller when idle
         return PlayState.STOP;
+    }
+
+    public void configureMovementBlend(AnimationController<RiftDrakeEntity> controller) {
+        controller.transitionLength(MOVEMENT_BLEND.transitionTicks());
+    }
+
+    public void configureSwimBlend(AnimationController<RiftDrakeEntity> controller) {
+        controller.transitionLength(SWIM_BLEND.transitionTicks());
     }
 }
