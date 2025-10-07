@@ -20,6 +20,7 @@ import com.leon.saintsdragons.client.renderer.layer.lightningdragon.LightningBea
 @OnlyIn(Dist.CLIENT)
 public class LightningDragonRenderer extends GeoEntityRenderer<LightningDragonEntity> {
     private BakedGeoModel lastBakedModel;
+
     public LightningDragonRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new LightningDragonModel());
         // Attach beam render layer

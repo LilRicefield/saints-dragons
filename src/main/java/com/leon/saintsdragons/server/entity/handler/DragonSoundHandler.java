@@ -76,10 +76,17 @@ public class DragonSoundHandler {
         if (dragon.isStayOrSitMuted()) return;
         if (dragon.isSleeping()) return;
         if (dragon.isSleepTransitioning() && (!"action".equals(controllerName))) return;
-        String raw = null;
+        String raw;
+        String locator = null;
         try {
             // Use reflection to call getSound() method on the keyframe data
             raw = (String) keyframeData.getClass().getMethod("getSound").invoke(keyframeData);
+            // Try to get locator if available
+            try {
+                locator = (String) keyframeData.getClass().getMethod("getLocator").invoke(keyframeData);
+            } catch (Exception ignored) {
+                // Locator might not be present in all sound keyframes
+            }
         } catch (Exception e) {
             return; // If we can't get the sound data, skip
         }
@@ -102,8 +109,8 @@ public class DragonSoundHandler {
                 }
             } catch (Throwable ignored) {}
             // Use locator position if provided by the keyframe
-            String locator = mapStepKeyToLocator(sound);
-            handleStepSound(sound, locator);
+            String stepLocator = (locator != null && !locator.isEmpty()) ? locator : mapStepKeyToLocator(sound);
+            handleStepSound(sound, stepLocator);
             return;
         }
         switch (sound) {
@@ -115,11 +122,19 @@ public class DragonSoundHandler {
             }
             case "riftdrake_phase2" -> {
                 Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.RIFTDRAKE_PHASE2.get(), 2.5f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+                playRouted(dragon.level(), ModSounds.RIFTDRAKE_PHASE2.get(), 2.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             }
             case "riftdrake_phase1" -> {
                 Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
                 playRouted(dragon.level(), ModSounds.RIFTDRAKE_PHASE1.get(), 1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            }
+            case "riftdrake_step" -> {
+                Vec3 locPos = resolveLocatorWorldPos(locator);
+                playRouted(dragon.level(), ModSounds.RIFTDRAKE_STEP.get(), 0.8f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
+            }
+            case "riftdrake_claw" -> {
+                Vec3 locPos = resolveLocatorWorldPos(locator);
+                playRouted(dragon.level(), ModSounds.RIFTDRAKE_CLAW.get(), 1.2f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
             }
             case "takeoff_whoosh" -> handleTakeoffSound();
             case "landing_thud" -> handleLandingSound();
