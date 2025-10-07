@@ -341,7 +341,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/riftdrake/riftdrake_phase2",
-        "volume": 2.0,
+        "volume": 3.5,
         "pitch": 1.0
       }
     ]
@@ -351,7 +351,17 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/riftdrake/riftdrake_roar",
-        "volume": 1.6,
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "riftdrake_roarclaw": {
+    "subtitle": "Rift Drake slashes while roaring",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/riftdrake/riftdrake_roarclaw",
+        "volume": 1.4,
         "pitch": 1.0
       }
     ]
@@ -361,7 +371,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/riftdrake/riftdrake_step",
-        "volume": 0.8,
+        "volume": 1.0,
         "pitch": 1.0
       }
     ]
@@ -371,7 +381,17 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/riftdrake/riftdrake_claw",
-        "volume": 1.2,
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "riftdrake_bite": {
+    "subtitle": "Rift Drake bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/riftdrake/riftdrake_bite",
+        "volume": 1.0,
         "pitch": 1.0
       }
     ]

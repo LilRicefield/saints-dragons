@@ -136,6 +136,17 @@ public class DragonSoundHandler {
                 Vec3 locPos = resolveLocatorWorldPos(locator);
                 playRouted(dragon.level(), ModSounds.RIFTDRAKE_CLAW.get(), 1.2f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
             }
+            case "riftdrake_bite" -> {
+                Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
+                playRouted(dragon.level(), ModSounds.RIFTDRAKE_BITE.get(), 1.1f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            }
+            case "riftdrake_roarclaw" -> {
+                Vec3 clawPos = resolveLocatorWorldPos(locator);
+                if (clawPos == null) {
+                    clawPos = resolveLocatorWorldPos("frontLocator");
+                }
+                playRouted(dragon.level(), ModSounds.RIFTDRAKE_ROARCLAW.get(), 1.3f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, clawPos, false);
+            }
             case "takeoff_whoosh" -> handleTakeoffSound();
             case "landing_thud" -> handleLandingSound();
             default -> handleSoundByName(sound);

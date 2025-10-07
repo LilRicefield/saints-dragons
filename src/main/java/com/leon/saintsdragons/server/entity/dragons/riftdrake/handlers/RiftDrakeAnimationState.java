@@ -30,12 +30,13 @@ public class RiftDrakeAnimationState {
 
     public void tick(RiftDrakeEntity drake) {
         float targetGround = drake.getEffectiveGroundState();
+        boolean riderControlled = drake.isVehicle() && drake.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player;
         if (drake.isSwimming()) {
             // Treat swimming as idle for movement loops; swim controller handles motion.
             targetGround = 0.0f;
         }
         groundBlend.setTo(targetGround);
-        groundBlend.update(0.35f);
+        groundBlend.update(riderControlled ? 0.6f : 0.35f);
 
         float targetSwimYaw = drake.isSwimming() ? drake.getSwimTurnDirection() : 0.0f;
         swimYaw.setTo(targetSwimYaw);
