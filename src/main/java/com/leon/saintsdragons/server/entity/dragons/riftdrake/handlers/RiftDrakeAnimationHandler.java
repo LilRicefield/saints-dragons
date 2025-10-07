@@ -43,7 +43,9 @@ public class RiftDrakeAnimationHandler {
      * Sets up all GeckoLib animation triggers for the action controller
      */
     public void setupActionController(AnimationController<RiftDrakeEntity> actionController) {
-        // Register phase 2 transition animation
+        // Register phase transitions
+        actionController.triggerableAnim("phase1",
+                RawAnimation.begin().thenPlay("animation.rift_drake.phase1"));
         actionController.triggerableAnim("phase2",
                 RawAnimation.begin().thenPlay("animation.rift_drake.phase2"));
 
