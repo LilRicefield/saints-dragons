@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.riftdrake.handlers;
 
 import com.leon.saintsdragons.common.animation.AnimationBlendConfig;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
+import net.minecraft.world.entity.player.Player;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
@@ -91,17 +92,31 @@ public class RiftDrakeAnimationHandler {
             float actionWeight = stateCache.getActionBlend(partialTick);
             float phaseBlend = stateCache.getPhaseBlend(partialTick);
 
+            boolean riderControlled = drake.isVehicle() && drake.getControllingPassenger() instanceof Player;
+
             if (groundState == 2) {
                 // Running state
-                state.getController().transitionLength(Math.max(2, MOVEMENT_BLEND.transitionTicks() - (int)(actionWeight * 2)));
+                int base = MOVEMENT_BLEND.transitionTicks() - (int)(actionWeight * 2);
+                if (riderControlled) {
+                    base = Math.max(1, base - 2);
+                }
+                state.getController().transitionLength(Math.max(2, base));
                 state.setAnimation(phaseTwo ? RUN2 : RUN);
             } else if (groundState == 1 || isMovingLand) {
                 // Walking state or moving
-                state.getController().transitionLength(Math.max(3, MOVEMENT_BLEND.transitionTicks()));
+                int base = MOVEMENT_BLEND.transitionTicks();
+                if (riderControlled) {
+                    base = Math.max(2, base - 2);
+                }
+                state.getController().transitionLength(Math.max(3, base));
                 state.setAnimation(phaseTwo ? WALK2 : WALK);
             } else {
                 // Idle state
-                state.getController().transitionLength(MOVEMENT_BLEND.transitionTicks() + (int)(actionWeight * 2));
+                int base = MOVEMENT_BLEND.transitionTicks() + (int)(actionWeight * 2);
+                if (riderControlled) {
+                    base = Math.max(3, base - 1);
+                }
+                state.getController().transitionLength(base);
                 state.setAnimation(phaseTwo ? IDLE2 : IDLE);
             }
 

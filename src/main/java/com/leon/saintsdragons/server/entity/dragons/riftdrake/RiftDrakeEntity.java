@@ -42,6 +42,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -343,6 +344,11 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
 
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
+    }
+
+    @Override
+    protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
+        // Mute vanilla footsteps; custom sounds handled via GeckoLib keyframes
     }
 
     public DragonKeybindHandler getKeybindHandler() {
