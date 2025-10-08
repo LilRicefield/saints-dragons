@@ -64,6 +64,10 @@ public class RiftDrakeAnimationHandler {
         actionController.triggerableAnim("claw_right",
                 RawAnimation.begin().thenPlay("animation.rift_drake.claw_right"));
 
+        // Horn gore attack (works in both phases)
+        actionController.triggerableAnim("horn_gore",
+                RawAnimation.begin().thenPlay("animation.rift_drake.horn_gore"));
+
         // Roar animations (different for each phase)
         actionController.triggerableAnim("roar",
                 RawAnimation.begin().thenPlay("animation.rift_drake.roar"));

@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrak
 import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrakeBite2Ability;
 import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrakeClawAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrakeRoarAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.riftdrake.RiftDrakeHornGoreAbility;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
 import com.leon.saintsdragons.server.entity.ability.DieAbility;
 
@@ -22,6 +23,7 @@ public final class RiftDrakeAbilities {
     public static final String BITE_ID = "riftdrake_bite";
     public static final String BITE2_ID = "riftdrake_bite2";
     public static final String CLAW_ID = "riftdrake_claw";
+    public static final String HORN_GORE_ID = "riftdrake_horn_gore";
     public static final String ROAR_ID = "riftdrake_roar";
     public static final String PHASE_SHIFT_ID = "phase_shift";
     public static final String HURT_ID = "riftdrake_hurt";
@@ -38,6 +40,10 @@ public final class RiftDrakeAbilities {
     // Phase 2 melee attack
     public static final DragonAbilityType<RiftDrakeEntity, RiftDrakeClawAbility> CLAW =
             AbilityRegistry.register(new DragonAbilityType<>(CLAW_ID, RiftDrakeClawAbility::new));
+
+    // Horn gore - strong knockback melee (works in both phases)
+    public static final DragonAbilityType<RiftDrakeEntity, RiftDrakeHornGoreAbility> HORN_GORE =
+            AbilityRegistry.register(new DragonAbilityType<>(HORN_GORE_ID, RiftDrakeHornGoreAbility::new));
 
     // Roar - cosmetic ability
     public static final DragonAbilityType<RiftDrakeEntity, RiftDrakeRoarAbility> ROAR =
