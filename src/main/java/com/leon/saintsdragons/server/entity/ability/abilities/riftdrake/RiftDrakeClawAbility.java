@@ -38,7 +38,7 @@ public class RiftDrakeClawAbility extends DragonAbility<RiftDrakeEntity> {
     };
 
     private boolean appliedHit;
-    private boolean useLeftClaw;
+    private final boolean useLeftClaw;
 
     public RiftDrakeClawAbility(DragonAbilityType<RiftDrakeEntity, RiftDrakeClawAbility> type,
                                 RiftDrakeEntity user) {

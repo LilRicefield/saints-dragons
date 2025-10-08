@@ -38,9 +38,15 @@ public class RiftDrakeRoarAbility extends DragonAbility<RiftDrakeEntity> {
     private static final int SOUND_DELAY_TICKS = 3;
     private static final int ROAR_TOTAL_TICKS = 100; // 5 seconds @ 20 TPS
 
-    private static final int FIRST_SWIPE_TICK = 6;
-    private static final int SECOND_SWIPE_TICK = 22;
-    private static final float CLAW_DAMAGE_MULTIPLIER = 2.0f;
+    // Swipe timing in ticks (based on animation keyframes)
+    private static final int FIRST_SWIPE_TICK = 16;   // 0.80s
+    private static final int SECOND_SWIPE_TICK = 26;  // 1.32s
+    private static final int THIRD_SWIPE_TICK = 33;   // 1.67s
+    private static final int FOURTH_SWIPE_TICK = 43;  // 2.13s
+    private static final int FIFTH_SWIPE_TICK = 49;   // 2.45s
+    private static final int SIXTH_SWIPE_TICK = 60;   // 3.00s
+    private static final int SEVENTH_SWIPE_TICK = 89; // 4.47s
+
     private static final float BASE_CLAW_DAMAGE = 12.0f;
     private static final double CLAW_RANGE = 5.0;
     private static final double CLAW_RANGE_RIDDEN_BONUS = 1.5;
@@ -50,8 +56,7 @@ public class RiftDrakeRoarAbility extends DragonAbility<RiftDrakeEntity> {
     private static final double CLAW_ANGLE_DEG = 100.0;
 
     private boolean soundQueued = false;
-    private boolean firstSwipeApplied = false;
-    private boolean secondSwipeApplied = false;
+    private boolean[] swipesApplied = new boolean[7];
 
     public RiftDrakeRoarAbility(DragonAbilityType<RiftDrakeEntity, RiftDrakeRoarAbility> type,
                                 RiftDrakeEntity user) {
@@ -113,25 +118,49 @@ public class RiftDrakeRoarAbility extends DragonAbility<RiftDrakeEntity> {
             RiftDrakeEntity dragon = getUser();
             if (!dragon.level().isClientSide && dragon.isPhaseTwoActive()) {
                 int ticks = getTicksInSection();
-                if (!firstSwipeApplied && ticks >= FIRST_SWIPE_TICK) {
-                    applyRoarSwipe(dragon);
-                    firstSwipeApplied = true;
+
+                // Check all 7 swipes
+                if (!swipesApplied[0] && ticks >= FIRST_SWIPE_TICK) {
+                    applyRoarSwipe(dragon, 1);
+                    swipesApplied[0] = true;
                 }
-                if (!secondSwipeApplied && ticks >= SECOND_SWIPE_TICK) {
-                    applyRoarSwipe(dragon);
-                    secondSwipeApplied = true;
+                if (!swipesApplied[1] && ticks >= SECOND_SWIPE_TICK) {
+                    applyRoarSwipe(dragon, 2);
+                    swipesApplied[1] = true;
+                }
+                if (!swipesApplied[2] && ticks >= THIRD_SWIPE_TICK) {
+                    applyRoarSwipe(dragon, 3);
+                    swipesApplied[2] = true;
+                }
+                if (!swipesApplied[3] && ticks >= FOURTH_SWIPE_TICK) {
+                    applyRoarSwipe(dragon, 4);
+                    swipesApplied[3] = true;
+                }
+                if (!swipesApplied[4] && ticks >= FIFTH_SWIPE_TICK) {
+                    applyRoarSwipe(dragon, 5);
+                    swipesApplied[4] = true;
+                }
+                if (!swipesApplied[5] && ticks >= SIXTH_SWIPE_TICK) {
+                    applyRoarSwipe(dragon, 6);
+                    swipesApplied[5] = true;
+                }
+                if (!swipesApplied[6] && ticks >= SEVENTH_SWIPE_TICK) {
+                    applyRoarSwipe(dragon, 7);
+                    swipesApplied[6] = true;
                 }
             }
         }
     }
 
-    private void applyRoarSwipe(RiftDrakeEntity dragon) {
+    private void applyRoarSwipe(RiftDrakeEntity dragon, int swipeNumber) {
         List<LivingEntity> targets = findClawTargets(dragon);
         if (targets.isEmpty()) {
             return;
         }
 
-        float damage = computeClawDamage(dragon) * CLAW_DAMAGE_MULTIPLIER;
+        // 7th swipe deals double damage
+        float damageMultiplier = (swipeNumber == 7) ? 2.0f : 1.0f;
+        float damage = computeClawDamage(dragon) * damageMultiplier;
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
         Vec3 push = dragon.getLookAngle().scale(0.5);
 
