@@ -699,9 +699,12 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         // Rift Drake alternates between bite and horn gore attacks
         // Use entity tick count to alternate between attacks (every 2 seconds)
         boolean useHornGore = (tickCount / 40) % 2 == 1; // Switch every 2 seconds
-        return useHornGore ?
-            RiftDrakeAbilities.HORN_GORE :
-            RiftDrakeAbilities.BITE;
+
+        // Phase 2 uses bite2 (faster bite) instead of normal bite
+        if (isPhaseTwoActive()) {
+            return useHornGore ? RiftDrakeAbilities.HORN_GORE : RiftDrakeAbilities.BITE2;
+        }
+        return useHornGore ? RiftDrakeAbilities.HORN_GORE : RiftDrakeAbilities.BITE;
     }
 
     public static boolean canSpawn(EntityType<RiftDrakeEntity> type, LevelAccessor level, MobSpawnType reason, BlockPos pos, net.minecraft.util.RandomSource random) {

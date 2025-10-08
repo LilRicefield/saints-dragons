@@ -28,9 +28,9 @@ public class RiftDrakeHornGoreAbility extends DragonAbility<RiftDrakeEntity> {
     private static final double GORE_ANGLE_DEG = 90.0; // half-angle
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(AbilitySectionType.STARTUP, 3),
-            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 2),
-            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 3)
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, 5),
+            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 4),
+            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 5)
     };
 
     // Track entities already hit during the ACTIVE window so we don't double hit in multi-tick ACTIVE
