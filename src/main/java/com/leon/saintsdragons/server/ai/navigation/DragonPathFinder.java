@@ -10,6 +10,7 @@ import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -18,7 +19,6 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Custom pathfinder for dragons based on Cataclysm's CMPathFinder.
  * Fixes vanilla Minecraft pathfinding issues and provides smoother movement.
  */
 public class DragonPathFinder extends PathFinder {
@@ -43,7 +43,7 @@ public class DragonPathFinder extends PathFinder {
         }
 
         @Override
-        public Vec3 getEntityPosAtNode(@Nonnull Entity entity, int index) {
+        public @NotNull Vec3 getEntityPosAtNode(@Nonnull Entity entity, int index) {
             Node point = this.getNode(index);
             // Properly center the entity based on its actual bounding box width
             double d0 = point.x + Mth.floor(entity.getBbWidth() + 1.0F) * 0.5D;

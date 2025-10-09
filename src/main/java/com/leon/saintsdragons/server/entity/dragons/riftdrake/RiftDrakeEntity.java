@@ -4,6 +4,10 @@ import com.leon.saintsdragons.common.registry.riftdrake.RiftDrakeAbilities;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimNavigate;
+import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeAttackGoal;
+import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeLeaveWaterGoal;
@@ -35,6 +39,7 @@ import net.minecraft.world.entity.ai.goal.BreathAirGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -288,14 +293,20 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new BreathAirGoal(this));
-        this.goalSelector.addGoal(2, new RiftDrakeLeaveWaterGoal(this));
-        this.goalSelector.addGoal(3, new RiftDrakeFindWaterGoal(this));
-        this.goalSelector.addGoal(4, new RiftDrakeFollowOwnerGoal(this));
+        this.goalSelector.addGoal(2, new RiftDrakeAttackGoal(this));
+        this.goalSelector.addGoal(3, new RiftDrakeLeaveWaterGoal(this));
+        this.goalSelector.addGoal(4, new RiftDrakeCombatGoal(this));
+        this.goalSelector.addGoal(5, new RiftDrakeFindWaterGoal(this));
+        this.goalSelector.addGoal(6, new RiftDrakeFollowOwnerGoal(this));
         this.waterSwimGoal = new RiftDrakeRandomSwimGoal(this, 1.0D, 30);
-        this.goalSelector.addGoal(5, waterSwimGoal);
-        this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(7, waterSwimGoal);
+        this.goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F));
+
+        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
+        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
     }
 
     @Override
@@ -707,6 +718,14 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         return useHornGore ? RiftDrakeAbilities.HORN_GORE : RiftDrakeAbilities.BITE;
     }
 
+    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
+        return combatManager.isAbilityActive(abilityType);
+    }
+
+    public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
+        combatManager.forceEndAbility(abilityType);
+    }
+
     public static boolean canSpawn(EntityType<RiftDrakeEntity> type, LevelAccessor level, MobSpawnType reason, BlockPos pos, net.minecraft.util.RandomSource random) {
         return level.getFluidState(pos).isSource() || level.getFluidState(pos.below()).isSource();
     }
@@ -1057,9 +1076,16 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                     this.dragon.yBodyRot = bodyYaw;
                     this.dragon.yBodyRotO = bodyYaw;
 
-                    float pitch = Mth.clamp(rider.getXRot(), -45.0F, 45.0F);
-                    this.dragon.setXRot(pitch);
-                    this.dragon.xRotO = pitch;
+                    boolean allowRiderPitch = !(this.dragon.isPhaseTwoActive() && this.dragon.areRiderControlsLocked());
+                    if (allowRiderPitch) {
+                        float pitch = Mth.clamp(rider.getXRot(), -45.0F, 45.0F);
+                        this.dragon.setXRot(pitch);
+                        this.dragon.xRotO = pitch;
+                    } else {
+                        float eased = Mth.approachDegrees(this.dragon.getXRot(), 0.0F, 6.0F);
+                        this.dragon.setXRot(eased);
+                        this.dragon.xRotO = eased;
+                    }
                 } else {
                     float serverPitch = this.dragon.getXRot();
                     this.dragon.xRotO = serverPitch;
