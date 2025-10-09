@@ -1607,9 +1607,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.goalSelector.addGoal(6, new FloatGoal(this));
 
         // Combat goals (prioritized to avoid conflicts)
-        // Using new Cataclysm-style separated goal system
-        this.goalSelector.addGoal(7, new LightningDragonAirCombatGoal(this));      // Air combat + flight decision
-        
+        // Using new Cataclysm-style separated goal system focused on ground combat
         // New separated combat system (ensure combat decision outranks chase)
         this.goalSelector.addGoal(3, new LightningDragonCombatGoal(this));          // Attack coordination
         this.goalSelector.addGoal(4, new LightningDragonMoveGoal(this, true, 1.4)); // Pure movement - yields when attacking

@@ -59,8 +59,10 @@ public class RiftDrakeAnimationState {
         headYaw.setTo(yawDelta);
         headYaw.update(0.45f);
 
-        headPitch.setTo(drake.getXRot());
-        headPitch.update(0.4f);
+        boolean riderLockedPhaseTwo = drake.isPhaseTwoActive() && drake.areRiderControlsLocked();
+        float targetHeadPitch = riderLockedPhaseTwo ? 0.0f : drake.getXRot();
+        headPitch.setTo(targetHeadPitch);
+        headPitch.update(riderLockedPhaseTwo ? 0.18f : 0.4f);
 
         float targetSpeed;
         if (drake.getNavigation().isInProgress()) {
@@ -150,7 +152,8 @@ public class RiftDrakeAnimationState {
             swimPitch.force(0.0f);
         }
         headYaw.force(yawDelta);
-        headPitch.force(drake.getXRot());
+        boolean riderLockedPhaseTwo = drake.isPhaseTwoActive() && drake.areRiderControlsLocked();
+        headPitch.force(riderLockedPhaseTwo ? 0.0f : drake.getXRot());
         if (drake.getNavigation().isInProgress()) {
             travelSpeed.force(0.4f);
         } else {

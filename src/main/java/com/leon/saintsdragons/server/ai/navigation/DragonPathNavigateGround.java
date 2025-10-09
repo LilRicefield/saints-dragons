@@ -9,12 +9,12 @@ import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import javax.annotation.Nonnull;
 
 /**
- * Custom ground path navigation for dragons based on Cataclysm's CMPathNavigateGround.
  * Provides intelligent path following with shortcutting and better collision detection.
  */
 public class DragonPathNavigateGround extends GroundPathNavigation {
@@ -23,7 +23,7 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
     }
 
     @Override
-    protected PathFinder createPathFinder(int maxVisitedNodes) {
+    protected @NotNull PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new WalkNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
         return new DragonPathFinder(this.nodeEvaluator, maxVisitedNodes);
