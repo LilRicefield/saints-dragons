@@ -1178,6 +1178,17 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
     @Override
+    protected void tickDeath() {
+        // Override vanilla death animation to prevent rotation/flop
+        // Just increment death time without the rotation animation
+        ++this.deathTime;
+        if (this.deathTime >= 20) {
+            this.remove(RemovalReason.KILLED);
+            this.dropExperience();
+        }
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T extends DragonEntity> DragonAbility<T> getActiveAbility() {
         return (DragonAbility<T>) combatManager.getActiveAbility();

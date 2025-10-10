@@ -24,6 +24,13 @@ public class PrimitiveDrakeRenderer extends GeoEntityRenderer<PrimitiveDrakeEnti
     public PrimitiveDrakeRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new PrimitiveDrakeModel());
     }
+
+    @Override
+    protected float getDeathMaxRotation(PrimitiveDrakeEntity entity) {
+        // Prevent vanilla renderer from rotating the body sideways during the death sequence
+        return 0.0F;
+    }
+
     @Override
     public void preRender(PoseStack poseStack,
                           PrimitiveDrakeEntity entity,
