@@ -191,7 +191,8 @@ public class LightningDragonPhysicsController {
             }
             if (syncedMode == 0) {
                 // Server says GLIDE: evaluate descend heuristics for tamed dragons
-                state.getController().transitionLength(6);
+                // Longer transition for smoother high-altitude gliding feel
+                state.getController().transitionLength(12);
                 state.setAndContinue(resolveGlideAnimation(vNow));
                 return PlayState.CONTINUE;
             }
@@ -240,8 +241,8 @@ public class LightningDragonPhysicsController {
                     // Check if ridden dragon is actively descending for glide animation
                     RawAnimation glideAnimation = resolveGlideAnimation(vNow);
                     if (currentFlightAnimation != glideAnimation) {
-                        // Smooth but not too long blend out of flap
-                        state.getController().transitionLength(6);
+                        // Smooth blend out of flap - longer for gradual feel
+                        state.getController().transitionLength(12);
                         currentFlightAnimation = glideAnimation;
                     }
                     state.setAndContinue(glideAnimation);

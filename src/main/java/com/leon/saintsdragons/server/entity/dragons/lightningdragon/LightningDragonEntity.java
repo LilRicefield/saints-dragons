@@ -69,6 +69,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
@@ -96,6 +97,9 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     private int emptyProjectileScans = 0;
     private double cachedHorizontalSpeed = 0.0;
     private int horizontalSpeedCacheTime = -1;
+    private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
+    private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
+    private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", "action", "animation.lightning_dragon.grumble1", ModSounds.DRAGON_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble2", "action", "animation.lightning_dragon.grumble2", ModSounds.DRAGON_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
@@ -819,18 +823,62 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     
     @Override
     protected int getFlightMode() {
-        if (!isFlying()) return -1; // Ground state
+        if (!isFlying()) {
+            inHighAltitudeGlide = false; // Reset when not flying
+            return -1; // Ground state
+        }
         if (isTakeoff()) return 3;  // Takeoff
         if (isHovering()) return 2; // Hover
         if (isLanding()) return 2;  // Landing (treat as hover)
-        
+
+        // High-altitude gliding check for tamed, owner-ridden dragons
+        // Note: Check rider input instead of velocity because getFlightMode() is called
+        // before travel() updates the velocity, so getDeltaMovement() shows stale data
+        if (this.isTame() && this.isVehicle()) {
+            Entity rider = this.getControllingPassenger();
+            if (rider instanceof Player player && this.isOwnedBy(player)) {
+                // Check if rider is actively moving forward (use rider input, not velocity)
+                float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+                boolean movingForward = Math.abs(riderForward) > 0.02f;
+
+                if (movingForward) {
+                    int groundY = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                            Mth.floor(this.getX()), Mth.floor(this.getZ()));
+                    double altitudeAboveTerrain = this.getY() - groundY;
+
+                    // Hysteresis: Enter glide at 40 blocks, exit at 30 blocks
+                    // This prevents rapid flickering between animations
+                    if (inHighAltitudeGlide) {
+                        // Already gliding - stay in glide until we drop below exit threshold
+                        if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_EXIT) {
+                            return 0; // High-altitude glide
+                        } else {
+                            inHighAltitudeGlide = false;
+                        }
+                    } else {
+                        // Not gliding yet - enter glide if above entry threshold
+                        if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
+                            inHighAltitudeGlide = true;
+                            return 0; // High-altitude glide
+                        }
+                    }
+                } else {
+                    // Not moving forward - exit high altitude glide
+                    inHighAltitudeGlide = false;
+                }
+            }
+        } else {
+            // Not being ridden by owner - reset flag
+            inHighAltitudeGlide = false;
+        }
+
         // Check if gliding (moving horizontally without significant vertical movement)
+        double horizontalSpeedSqr = getDeltaMovement().horizontalDistanceSqr();
         double yDelta = this.getY() - this.yo;
-        double horizontalSpeed = getDeltaMovement().horizontalDistanceSqr();
-        if (Math.abs(yDelta) < 0.06 && horizontalSpeed > 0.01) {
+        if (Math.abs(yDelta) < 0.06 && horizontalSpeedSqr > 0.01) {
             return 0; // Glide
         }
-        
+
         return 1; // Forward flight
     }
     
@@ -1678,6 +1726,12 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
                                        BlockPos pos,
                                        net.minecraft.util.RandomSource random) {
         BlockPos below = pos.below();
+        if (!level.getFluidState(pos).isEmpty()) {
+            return false;
+        }
+        if (!level.getFluidState(below).isEmpty()) {
+            return false;
+        }
         boolean solidGround = level.getBlockState(below).isFaceSturdy(level, below, net.minecraft.core.Direction.UP);
         boolean feetFree = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
         boolean headFree = level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
