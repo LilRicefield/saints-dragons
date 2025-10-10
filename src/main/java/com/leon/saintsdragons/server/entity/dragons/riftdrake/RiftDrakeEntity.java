@@ -107,7 +107,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private byte controlState = 0;
     private boolean useLeftClawNext = true; // Toggles between left/right claw attacks
     // ===== SCREEN SHAKE SYSTEM =====
-    private static final float SHAKE_DECAY_PER_TICK = 0.04F;
+    private static final float SHAKE_DECAY_PER_TICK = 0.02F;
     private float prevScreenShakeAmount = 0.0F;
     private float screenShakeAmount = 0.0F;
 
