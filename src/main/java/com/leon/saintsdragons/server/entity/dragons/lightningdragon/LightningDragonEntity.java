@@ -1268,7 +1268,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             return;
         }
 
-        if (getCommand() != 0 && !isOrderedToSit()) {
+        if (getCommand() == 1 && !isOrderedToSit()) {
             setCommandAuto(0);
         }
 
