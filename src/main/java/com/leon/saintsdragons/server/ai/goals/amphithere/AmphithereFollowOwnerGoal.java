@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.amphithere;
 
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
@@ -24,8 +24,10 @@ public class AmphithereFollowOwnerGoal extends Goal {
     private static final double LANDING_DISTANCE = 10.0;
     private static final double HOVER_HEIGHT = 2.5;
 
-    private BlockPos previousOwnerPos;
-    private int repathCooldown;
+    private int pathRecalcCooldown;
+    private double lastOwnerX = Double.NaN;
+    private double lastOwnerY = Double.NaN;
+    private double lastOwnerZ = Double.NaN;
 
     public AmphithereFollowOwnerGoal(AmphithereEntity dragon) {
         this.dragon = dragon;
@@ -84,8 +86,7 @@ public class AmphithereFollowOwnerGoal extends Goal {
 
     @Override
     public void start() {
-        previousOwnerPos = null;
-        repathCooldown = 0;
+        resetPathTracking();
     }
 
     @Override
@@ -93,7 +94,7 @@ public class AmphithereFollowOwnerGoal extends Goal {
         dragon.setRunning(false);
         dragon.getNavigation().stop();
         dragon.setGroundMoveStateFromAI(0);
-        previousOwnerPos = null;
+        resetPathTracking();
     }
 
     @Override
@@ -111,6 +112,7 @@ public class AmphithereFollowOwnerGoal extends Goal {
             dragon.setTakeoff(false);
             dragon.setLanding(false);
             dragon.setHovering(false);
+            resetPathTracking();
             return;
         }
 
@@ -122,12 +124,14 @@ public class AmphithereFollowOwnerGoal extends Goal {
             dragon.setTakeoff(true);
             dragon.setLanding(false);
             dragon.setHovering(false);
+            resetPathTracking();
         } else if (dragon.isFlying() && distance < STOP_FOLLOW_DIST * 1.5) {
             // Properly land the dragon instead of making it hover in mid-air
             dragon.setLanding(true);
             dragon.setFlying(false);
             dragon.setHovering(false);
             dragon.setTakeoff(false);
+            pathRecalcCooldown = 0;
         }
 
         if (dragon.isFlying()) {
@@ -169,48 +173,29 @@ public class AmphithereFollowOwnerGoal extends Goal {
                 dragon.setRunning(false);
                 dragon.setGroundMoveStateFromAI(0);
             }
+            pathRecalcCooldown = 0;
             return;
         }
 
-        // Only update movement state if we're not currently moving or need to repath
-        if (dragon.getNavigation().isDone() || !dragon.getNavigation().isInProgress()) {
-            // Determine movement style based on distance
-            boolean shouldRun = distance > RUN_DIST;
-            dragon.setRunning(shouldRun);
+        boolean shouldRun = distance > RUN_DIST;
+        dragon.setRunning(shouldRun);
 
-            // Set appropriate animation state (0=idle, 1=walking, 2=running)
-            int moveState = shouldRun ? 2 : 1;
-            dragon.setGroundMoveStateFromAI(moveState);
+        // Set appropriate animation state (0=idle, 1=walking, 2=running)
+        int moveState = shouldRun ? 2 : 1;
+        dragon.setGroundMoveStateFromAI(moveState);
 
-            // Adjust speed based on movement style and distance
-            double baseSpeed = shouldRun ? 1.1 : 0.7;
-            // Increase speed slightly based on distance to catch up faster when far away
-            double speed = baseSpeed * (1.0 + (distance / 40.0));
-            speed = Math.min(speed, shouldRun ? 1.6 : 1.0); // Cap max speed
+        // Adjust speed based on movement style and distance
+        double baseSpeed = shouldRun ? 1.1 : 0.7;
+        double speed = baseSpeed * (1.0 + (distance / 40.0));
+        speed = Math.min(speed, shouldRun ? 1.6 : 1.0); // Cap max speed
 
-            // Check if we need to recalculate the path
-            boolean navDone = dragon.getNavigation().isDone();
-            boolean ownerMoved = previousOwnerPos == null || previousOwnerPos.distSqr(owner.blockPosition()) > 1;
-            boolean cooldownExpired = (repathCooldown-- <= 0);
-
-            if (navDone || ownerMoved || cooldownExpired) {
-                // Try to move directly to the owner if path is clear
-                if (distance < 16.0 && dragon.getNavigation().createPath(owner, 0) != null) {
-                    dragon.getNavigation().moveTo(owner, speed);
-                } else {
-                    // If path is blocked or far away, try to get closer first
-                    dragon.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), speed);
-                }
-                previousOwnerPos = owner.blockPosition();
-                repathCooldown = 2; // More frequent updates for better following
-            }
-        }
+        updateGroundPath(owner, speed, distance, shouldRun);
 
         // Handle getting stuck
         if (dragon.getNavigation().isStuck()) {
             dragon.getJumpControl().jump();
             dragon.getNavigation().stop();
-            repathCooldown = 0;
+            pathRecalcCooldown = 0;
         }
     }
 
@@ -239,5 +224,50 @@ public class AmphithereFollowOwnerGoal extends Goal {
                 && dragon.getPassengers().isEmpty()
                 && dragon.getControllingPassenger() == null
                 && !dragon.isPassenger();
+    }
+
+    private void updateGroundPath(LivingEntity owner, double speed, double distance, boolean running) {
+        if (pathRecalcCooldown > 0) {
+            pathRecalcCooldown--;
+        }
+
+        boolean ownerMoved = ownerMovedSignificantly(owner);
+        boolean navIdle = dragon.getNavigation().isDone() || !dragon.getNavigation().isInProgress();
+
+        if (navIdle || ownerMoved || pathRecalcCooldown <= 0) {
+            if (!dragon.getNavigation().moveTo(owner, speed)) {
+                dragon.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), speed);
+            }
+            rememberOwnerPosition(owner);
+            pathRecalcCooldown = computeRepathCooldown(distance, running);
+        }
+    }
+
+    private int computeRepathCooldown(double distance, boolean running) {
+        int base = (int) Math.ceil(distance * (running ? 0.35 : 0.45));
+        return Mth.clamp(base, running ? 4 : 6, running ? 16 : 22);
+    }
+
+    private void rememberOwnerPosition(LivingEntity owner) {
+        this.lastOwnerX = owner.getX();
+        this.lastOwnerY = owner.getY();
+        this.lastOwnerZ = owner.getZ();
+    }
+
+    private boolean ownerMovedSignificantly(LivingEntity owner) {
+        if (Double.isNaN(lastOwnerX)) {
+            return true;
+        }
+        double dx = owner.getX() - this.lastOwnerX;
+        double dy = owner.getY() - this.lastOwnerY;
+        double dz = owner.getZ() - this.lastOwnerZ;
+        return dx * dx + dy * dy + dz * dz > 1.2D;
+    }
+
+    private void resetPathTracking() {
+        this.pathRecalcCooldown = 0;
+        this.lastOwnerX = Double.NaN;
+        this.lastOwnerY = Double.NaN;
+        this.lastOwnerZ = Double.NaN;
     }
 }
