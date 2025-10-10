@@ -252,6 +252,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // Default no-op
     }
 
+    /**
+     * Duration (in ticks) that the shared death ability should run before the kill pulse.
+     * Subclasses override to match their custom death animation length.
+     */
+    public int getDeathAnimationDurationTicks() {
+        return 62;
+    }
+
 
     // ===== DEATH SEQUENCE HELPERS =====
 

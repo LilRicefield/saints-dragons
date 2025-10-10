@@ -1158,6 +1158,11 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         return AmphithereAbilities.HURT;
     }
 
+    @Override
+    public int getDeathAnimationDurationTicks() {
+        return 95; // 4.75s - matches amphithere death animation length
+    }
+
     // Death handling now uses base class helpers
 
     @Override
@@ -1540,5 +1545,4 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
 }
-
 

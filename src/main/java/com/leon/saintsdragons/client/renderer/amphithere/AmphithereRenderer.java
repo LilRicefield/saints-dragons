@@ -14,6 +14,13 @@ public class AmphithereRenderer extends GeoEntityRenderer<AmphithereEntity> {
     public AmphithereRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new AmphithereModel());
     }
+
+    @Override
+    protected float getDeathMaxRotation(AmphithereEntity entity) {
+        // Keep Amphithere upright so custom death animation plays without vanilla flop
+        return 0.0F;
+    }
+
     @Override
     public void preRender(PoseStack poseStack,
                           AmphithereEntity entity,

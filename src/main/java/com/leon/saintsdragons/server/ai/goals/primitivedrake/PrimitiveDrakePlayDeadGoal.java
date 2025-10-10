@@ -233,11 +233,9 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
         }
         skipCooldownOnStop = false;
         
-        // Stand up
-        drake.setOrderedToSit(false);
+        // Restore commanded pose
+        drake.refreshCommandState();
         drake.triggerAnim("action", "clear_fake_death");
-        drake.sitProgress = 0f;
-        drake.getEntityData().set(com.leon.saintsdragons.server.entity.base.DragonEntity.DATA_SIT_PROGRESS, 0f);
         
         // Sync state to client
         drake.getEntityData().set(com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity.DATA_PLAYING_DEAD, false);
