@@ -90,6 +90,9 @@ public class LightningDragonFollowOwnerGoal extends Goal {
         repathCooldown = 0;
 
         // Don't immediately fly - let tick() decide based on conditions
+        LivingEntity owner = dragon.getOwner();
+        double dist = owner != null ? Math.sqrt(dragon.distanceToSqr(owner)) : -1;
+        
     }
 
     @Override
@@ -107,6 +110,7 @@ public class LightningDragonFollowOwnerGoal extends Goal {
             dragon.setTakeoff(false);
             dragon.setLanding(false);
             dragon.setHovering(false);
+            
 
             return;
         }
@@ -124,11 +128,13 @@ public class LightningDragonFollowOwnerGoal extends Goal {
             dragon.setTakeoff(true);
             dragon.setLanding(false);
             dragon.setHovering(false);
+            
         } else if (dragon.isFlying() && distance < STOP_FOLLOW_DIST * 1.5) {
             // Start landing sequence when close enough to owner
             dragon.setLanding(true);
             dragon.setFlying(false);
             dragon.setHovering(true);
+            
         }
 
         // Movement logic
@@ -184,6 +190,7 @@ public class LightningDragonFollowOwnerGoal extends Goal {
                 dragon.getNavigation().stop();
                 dragon.setRunning(false);
                 dragon.setGroundMoveStateFromAI(0);
+                
             }
             return;
         }
@@ -213,9 +220,11 @@ public class LightningDragonFollowOwnerGoal extends Goal {
                 // Try to move directly to the owner if path is clear
                 if (distance < 16.0 && dragon.getNavigation().createPath(owner, 0) != null) {
                     dragon.getNavigation().moveTo(owner, speed);
+                    
                 } else {
                     // If path is blocked or far away, try to get closer first
                     dragon.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), speed);
+                    
                 }
                 previousOwnerPos = owner.blockPosition();
                 repathCooldown = 2; // More frequent updates for better following
@@ -279,5 +288,6 @@ public class LightningDragonFollowOwnerGoal extends Goal {
         dragon.getNavigation().stop();
         dragon.setGroundMoveStateFromAI(0);
         previousOwnerPos = null;
+        
     }
 }
