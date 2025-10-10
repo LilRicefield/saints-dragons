@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.amphithere;
 
 import com.leon.saintsdragons.common.registry.amphithere.AmphithereAbilities;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -18,6 +19,10 @@ public class AmphithereCombatGoal extends Goal {
     private final double chaseSpeed = 1.2D;
     private int attackCooldown = 0;
     private int fireBodyCheckCooldown = 0;
+    private int pathRecalcCooldown = 0;
+    private double lastTargetX;
+    private double lastTargetY;
+    private double lastTargetZ;
 
     public AmphithereCombatGoal(AmphithereEntity amphithere) {
         this.amphithere = amphithere;
@@ -71,6 +76,7 @@ public class AmphithereCombatGoal extends Goal {
     public void stop() {
         amphithere.getNavigation().stop();
         deactivateFireBodyIfActive();
+        pathRecalcCooldown = 0;
     }
 
     @Override
@@ -79,6 +85,7 @@ public class AmphithereCombatGoal extends Goal {
         if (target != null) {
             amphithere.getLookControl().setLookAt(target, 30.0F, 30.0F);
             amphithere.getNavigation().moveTo(target, chaseSpeed);
+            rememberTargetPosition(target);
 
             double distanceSq = amphithere.distanceToSqr(target);
             if (distanceSq <= getAttackReachSqr(target)) {
@@ -107,10 +114,11 @@ public class AmphithereCombatGoal extends Goal {
 
             if (!inAttackRange || !hasLineOfSight) {
                 if (!isCurrentlyBiting()) {
-                    amphithere.getNavigation().moveTo(target, chaseSpeed);
+                    updateChasePath(target);
                 }
             } else {
                 amphithere.getNavigation().stop();
+                pathRecalcCooldown = 0;
                 tryPerformBite(target);
             }
 
@@ -196,5 +204,27 @@ public class AmphithereCombatGoal extends Goal {
             followRange = 16.0D;
         }
         return followRange * followRange;
+    }
+
+    private void updateChasePath(LivingEntity target) {
+        if (--pathRecalcCooldown <= 0 || targetMovedSignificantly(target)) {
+            rememberTargetPosition(target);
+            double distance = amphithere.distanceTo(target);
+            pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
+            amphithere.getNavigation().moveTo(target, chaseSpeed);
+        }
+    }
+
+    private void rememberTargetPosition(LivingEntity target) {
+        this.lastTargetX = target.getX();
+        this.lastTargetY = target.getY();
+        this.lastTargetZ = target.getZ();
+    }
+
+    private boolean targetMovedSignificantly(LivingEntity target) {
+        double dx = target.getX() - this.lastTargetX;
+        double dy = target.getY() - this.lastTargetY;
+        double dz = target.getZ() - this.lastTargetZ;
+        return dx * dx + dy * dy + dz * dz > 4.0D;
     }
 }
