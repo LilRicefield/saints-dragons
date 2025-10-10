@@ -11,6 +11,7 @@ import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeLeaveWaterGoal;
+import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeMoveGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeRandomSwimGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -303,11 +304,12 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.goalSelector.addGoal(2, new RiftDrakeAttackGoal(this));
         this.goalSelector.addGoal(3, new RiftDrakeLeaveWaterGoal(this));
         this.goalSelector.addGoal(4, new RiftDrakeCombatGoal(this));
-        this.goalSelector.addGoal(5, new RiftDrakeFindWaterGoal(this));
-        this.goalSelector.addGoal(6, new RiftDrakeFollowOwnerGoal(this));
+        this.goalSelector.addGoal(5, new RiftDrakeMoveGoal(this, true, 1.3D));
+        this.goalSelector.addGoal(6, new RiftDrakeFindWaterGoal(this));
+        this.goalSelector.addGoal(7, new RiftDrakeFollowOwnerGoal(this));
         this.waterSwimGoal = new RiftDrakeRandomSwimGoal(this, 1.0D, 30);
-        this.goalSelector.addGoal(7, waterSwimGoal);
-        this.goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(8, waterSwimGoal);
+        this.goalSelector.addGoal(9, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
