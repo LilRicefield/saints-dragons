@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.riftdrake;
 
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 
@@ -17,8 +17,10 @@ public class RiftDrakeFollowOwnerGoal extends Goal {
     private static final double TELEPORT_DISTANCE = 32.0D;
 
     private final RiftDrakeEntity drake;
-    private int repathCooldown;
-    private BlockPos lastOwnerPos;
+    private int pathRecalcCooldown;
+    private double lastOwnerX = Double.NaN;
+    private double lastOwnerY = Double.NaN;
+    private double lastOwnerZ = Double.NaN;
 
     public RiftDrakeFollowOwnerGoal(RiftDrakeEntity drake) {
         this.drake = drake;
@@ -64,8 +66,7 @@ public class RiftDrakeFollowOwnerGoal extends Goal {
 
     @Override
     public void start() {
-        repathCooldown = 0;
-        lastOwnerPos = null;
+        resetPathTracking();
         drake.setAccelerating(false);
     }
 
@@ -73,6 +74,7 @@ public class RiftDrakeFollowOwnerGoal extends Goal {
     public void stop() {
         drake.getNavigation().stop();
         drake.setAccelerating(false);
+        resetPathTracking();
     }
 
     @Override
@@ -89,6 +91,7 @@ public class RiftDrakeFollowOwnerGoal extends Goal {
             drake.teleportTo(owner.getX(), owner.getY(), owner.getZ());
             drake.getNavigation().stop();
             drake.setAccelerating(false);
+            resetPathTracking();
             return;
         }
 
@@ -104,18 +107,52 @@ public class RiftDrakeFollowOwnerGoal extends Goal {
         boolean shouldRun = distance > RUN_DISTANCE;
         drake.setAccelerating(shouldRun);
 
-        if (repathCooldown > 0) {
-            repathCooldown--;
+        double speed = shouldRun ? 1.35D : 0.85D;
+        updateGroundPath(owner, speed, distance, shouldRun);
+    }
+
+    private void updateGroundPath(LivingEntity owner, double speed, double distance, boolean running) {
+        if (pathRecalcCooldown > 0) {
+            pathRecalcCooldown--;
         }
 
-        boolean ownerMoved = lastOwnerPos == null || lastOwnerPos.distSqr(owner.blockPosition()) > 1;
-        boolean navigatorIdle = drake.getNavigation().isDone() || !drake.getNavigation().isInProgress();
+        boolean ownerMoved = ownerMovedSignificantly(owner);
+        boolean navIdle = drake.getNavigation().isDone() || !drake.getNavigation().isInProgress();
 
-        if (navigatorIdle || ownerMoved || repathCooldown <= 0) {
-            double speed = shouldRun ? 1.35D : 0.85D;
-            drake.getNavigation().moveTo(owner, speed);
-            lastOwnerPos = owner.blockPosition();
-            repathCooldown = shouldRun ? 2 : 4;
+        if (navIdle || ownerMoved || pathRecalcCooldown <= 0) {
+            if (!drake.getNavigation().moveTo(owner, speed)) {
+                drake.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), speed);
+            }
+            rememberOwnerPosition(owner);
+            pathRecalcCooldown = computeRepathCooldown(distance, running);
         }
+    }
+
+    private int computeRepathCooldown(double distance, boolean running) {
+        int base = (int) Math.ceil(distance * (running ? 0.4 : 0.55));
+        return Mth.clamp(base, running ? 4 : 6, running ? 16 : 24);
+    }
+
+    private void rememberOwnerPosition(LivingEntity owner) {
+        this.lastOwnerX = owner.getX();
+        this.lastOwnerY = owner.getY();
+        this.lastOwnerZ = owner.getZ();
+    }
+
+    private boolean ownerMovedSignificantly(LivingEntity owner) {
+        if (Double.isNaN(lastOwnerX)) {
+            return true;
+        }
+        double dx = owner.getX() - this.lastOwnerX;
+        double dy = owner.getY() - this.lastOwnerY;
+        double dz = owner.getZ() - this.lastOwnerZ;
+        return dx * dx + dy * dy + dz * dz > 1.0D;
+    }
+
+    private void resetPathTracking() {
+        this.pathRecalcCooldown = 0;
+        this.lastOwnerX = Double.NaN;
+        this.lastOwnerY = Double.NaN;
+        this.lastOwnerZ = Double.NaN;
     }
 }

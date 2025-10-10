@@ -11,7 +11,7 @@ import java.util.EnumSet;
 import static com.leon.saintsdragons.server.entity.dragons.lightningdragon.handlers.LightningDragonConstantsHandler.*;
 
 /**
- * Pure attack goal for Lightning Dragon based on Cataclysm's InternalAttackGoal.
+ * Pure attack goal for Lightning Dragon.
  * Handles ONLY attack execution - movement is completely stopped during attacks.
  */
 public class LightningDragonAttackGoal extends Goal {

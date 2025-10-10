@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.primitivedrake;
 
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 
@@ -20,8 +20,10 @@ public class PrimitiveDrakeFollowOwnerGoal extends Goal {
     private static final double TELEPORT_DIST = 2000.0;
 
     // Performance optimization - don't re-path constantly
-    private BlockPos previousOwnerPos;
-    private int repathCooldown = 0;
+    private int pathRecalcCooldown = 0;
+    private double lastOwnerX = Double.NaN;
+    private double lastOwnerY = Double.NaN;
+    private double lastOwnerZ = Double.NaN;
 
     public PrimitiveDrakeFollowOwnerGoal(PrimitiveDrakeEntity drake) {
         this.drake = drake;
@@ -91,8 +93,7 @@ public class PrimitiveDrakeFollowOwnerGoal extends Goal {
     @Override
     public void start() {
         // Reset tracking
-        previousOwnerPos = null;
-        repathCooldown = 0;
+        resetPathTracking();
     }
 
     @Override
@@ -105,6 +106,7 @@ public class PrimitiveDrakeFollowOwnerGoal extends Goal {
         // Emergency teleport if owner gets stupidly far away
         if (distance > TELEPORT_DIST) {
             drake.teleportTo(owner.getX(), owner.getY() + 1, owner.getZ());
+            resetPathTracking();
             return;
         }
 
@@ -122,46 +124,72 @@ public class PrimitiveDrakeFollowOwnerGoal extends Goal {
         // Check if we should stop moving
         if (distance <= STOP_FOLLOW_DIST) {
             drake.getNavigation().stop();
+            pathRecalcCooldown = 0;
             return;
         }
 
-        // Only update movement state if we're not currently moving or need to repath
-        if (drake.getNavigation().isDone() || !drake.getNavigation().isInProgress()) {
-            // Primitive Drake always walks - never runs (lore-appropriate)
-            double baseSpeed = 0.8;
-            // Slightly increase speed when farther away to help catch up
-            double speed = baseSpeed * (1.0 + (distance / 100.0));
-            speed = Math.min(speed, 1.0); // Cap at walking speed
+        double baseSpeed = 0.8;
+        double speed = baseSpeed * (1.0 + (distance / 100.0));
+        speed = Math.min(speed, 1.0); // Cap at walking speed
 
-            // Check if we need to recalculate the path
-            boolean navDone = drake.getNavigation().isDone();
-            boolean ownerMoved = previousOwnerPos == null || previousOwnerPos.distSqr(owner.blockPosition()) > 1;
-            boolean cooldownExpired = (repathCooldown-- <= 0);
-
-            if (navDone || ownerMoved || cooldownExpired) {
-                // Try to move directly to the owner if path is clear
-                if (distance < 16.0 && drake.getNavigation().createPath(owner, 0) != null) {
-                    drake.getNavigation().moveTo(owner, speed);
-                } else {
-                    // If path is blocked or far away, try to get closer first
-                    drake.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), speed);
-                }
-                previousOwnerPos = owner.blockPosition();
-                repathCooldown = 2; // More frequent updates for better following
-            }
-        }
+        updateGroundPath(owner, speed, distance);
         
         // If stuck, try to jump or find alternative path
         if (drake.getNavigation().isStuck()) {
             drake.getJumpControl().jump();
             drake.getNavigation().stop();
-            repathCooldown = 0; // Force repath next tick
+            pathRecalcCooldown = 0; // Force repath next tick
         }
     }
 
     @Override
     public void stop() {
         drake.getNavigation().stop();
-        previousOwnerPos = null;
+        resetPathTracking();
+    }
+
+    private void updateGroundPath(LivingEntity owner, double speed, double distance) {
+        if (pathRecalcCooldown > 0) {
+            pathRecalcCooldown--;
+        }
+
+        boolean ownerMoved = ownerMovedSignificantly(owner);
+        boolean navIdle = drake.getNavigation().isDone() || !drake.getNavigation().isInProgress();
+
+        if (navIdle || ownerMoved || pathRecalcCooldown <= 0) {
+            if (!drake.getNavigation().moveTo(owner, speed)) {
+                drake.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), speed);
+            }
+            rememberOwnerPosition(owner);
+            pathRecalcCooldown = computeRepathCooldown(distance);
+        }
+    }
+
+    private int computeRepathCooldown(double distance) {
+        int base = (int) Math.ceil(distance * 0.45);
+        return Mth.clamp(base, 6, 24);
+    }
+
+    private boolean ownerMovedSignificantly(LivingEntity owner) {
+        if (Double.isNaN(lastOwnerX)) {
+            return true;
+        }
+        double dx = owner.getX() - this.lastOwnerX;
+        double dy = owner.getY() - this.lastOwnerY;
+        double dz = owner.getZ() - this.lastOwnerZ;
+        return dx * dx + dy * dy + dz * dz > 1.0D;
+    }
+
+    private void rememberOwnerPosition(LivingEntity owner) {
+        this.lastOwnerX = owner.getX();
+        this.lastOwnerY = owner.getY();
+        this.lastOwnerZ = owner.getZ();
+    }
+
+    private void resetPathTracking() {
+        this.pathRecalcCooldown = 0;
+        this.lastOwnerX = Double.NaN;
+        this.lastOwnerY = Double.NaN;
+        this.lastOwnerZ = Double.NaN;
     }
 }
