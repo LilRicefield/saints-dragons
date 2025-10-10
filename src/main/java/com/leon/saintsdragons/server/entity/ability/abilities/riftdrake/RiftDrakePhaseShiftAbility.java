@@ -16,15 +16,12 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
     private static final int TRANSITION_DURATION = 127; // ~6.3 seconds for phase 2 transition animation
     private static final int LOCK_DURATION = 150;
-    private static final int ROAR_SHAKE_TICK = 55; // ~2.75 seconds into the animation
-    private static final int FINAL_SHAKE_TICK = 110; // Late surge to cover the tail of the animation
-    private static final float ROAR_SHAKE_INTENSITY = 0.95F;
-    private static final float FINAL_SHAKE_INTENSITY = 0.75F;
+    private static final int[] SHAKE_TICKS = {43, 63, 83}; // Matches keyframed phase roar + follow-up impacts
+    private static final float[] SHAKE_INTENSITIES = {0.95F, 0.85F, 0.75F};
 
     private final boolean enteringPhaseTwo;
     private boolean phaseToggleApplied;
-    private boolean roarShakeApplied;
-    private boolean finalShakeApplied;
+    private int nextShakeIndex;
 
     private static final DragonAbilitySection[] TRACK_ENTER_PHASE2 = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, TRANSITION_DURATION), // Transition animation
@@ -40,8 +37,7 @@ public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
         super(type, user, user.isPhaseTwoActive() ? TRACK_EXIT_PHASE2 : TRACK_ENTER_PHASE2, 0); // No cooldown
         this.enteringPhaseTwo = !user.isPhaseTwoActive();
         this.phaseToggleApplied = false;
-        this.roarShakeApplied = false;
-        this.finalShakeApplied = false;
+        this.nextShakeIndex = 0;
     }
 
     @Override
@@ -68,8 +64,7 @@ public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
                 getUser().lockAbilities(LOCK_DURATION);
             }
             phaseToggleApplied = false;
-            roarShakeApplied = false;
-            finalShakeApplied = false;
+            nextShakeIndex = 0;
             getUser().triggerAnim("action", "phase2");
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (enteringPhaseTwo) {
@@ -106,20 +101,16 @@ public class RiftDrakePhaseShiftAbility extends DragonAbility<RiftDrakeEntity> {
         if (enteringPhaseTwo && section.sectionType == AbilitySectionType.STARTUP) {
             int ticks = getTicksInSection();
 
-            if (!roarShakeApplied && ticks >= ROAR_SHAKE_TICK) {
+            while (nextShakeIndex < SHAKE_TICKS.length && ticks >= SHAKE_TICKS[nextShakeIndex]) {
                 if (!getUser().level().isClientSide) {
-                    getUser().triggerScreenShake(ROAR_SHAKE_INTENSITY);
+                    float intensity = SHAKE_INTENSITIES[nextShakeIndex];
+                    getUser().triggerScreenShake(intensity);
                 }
-                getUser().setPhaseTwoActive(true, true);
-                phaseToggleApplied = true;
-                roarShakeApplied = true;
-            }
-
-            if (!finalShakeApplied && ticks >= FINAL_SHAKE_TICK) {
-                if (!getUser().level().isClientSide) {
-                    getUser().triggerScreenShake(FINAL_SHAKE_INTENSITY);
+                if (!phaseToggleApplied) {
+                    getUser().setPhaseTwoActive(true, true);
+                    phaseToggleApplied = true;
                 }
-                finalShakeApplied = true;
+                nextShakeIndex++;
             }
         }
     }
