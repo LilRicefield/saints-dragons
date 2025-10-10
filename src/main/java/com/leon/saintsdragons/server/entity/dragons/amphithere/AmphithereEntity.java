@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.amphithere.AmphithereGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
+import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -65,7 +66,6 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -113,7 +113,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     private final AmphithereInteractionHandler interactionHandler = new AmphithereInteractionHandler(this);
     private final AmphithereRiderController riderController;
 
-    private final GroundPathNavigation groundNav;
+    private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
     private boolean usingAirNav;
 
@@ -142,7 +142,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
         super(type, level);
         this.setMaxUpStep(1.1F);
 
-        this.groundNav = new GroundPathNavigation(this, level);
+        this.groundNav = new DragonPathNavigateGround(this, level);
         this.airNav = new FlyingPathNavigation(this, level) {
             @Override
             public boolean isStableDestination(@Nonnull BlockPos pos) {
@@ -1104,7 +1104,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
 
     @Override
     protected @NotNull PathNavigation createNavigation(@Nonnull Level level) {
-        return new GroundPathNavigation(this, level);
+        return new DragonPathNavigateGround(this, level);
     }
 
     @Override
@@ -1519,6 +1519,5 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     }
 
 }
-
 
 

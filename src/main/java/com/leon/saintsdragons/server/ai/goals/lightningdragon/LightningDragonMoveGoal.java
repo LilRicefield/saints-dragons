@@ -10,7 +10,6 @@ import java.util.EnumSet;
 
 
 /**
- * Pure movement goal for Lightning Dragon based on Cataclysm's InternalMoveGoal.
  * Handles ALL pathfinding and movement without any attack logic interference.
  */
 public class LightningDragonMoveGoal extends Goal {
@@ -94,7 +93,7 @@ public class LightningDragonMoveGoal extends Goal {
                         }
                     }
                 } else {
-                    // Use the dragon's current navigation (ground or air)
+                    // Use the dragon's current navigation
                     if (this.dragon.isFlying()) {
                         this.dragon.getNavigation().moveTo(target, this.moveSpeed * 1.5); // Faster when flying
                     } else {
