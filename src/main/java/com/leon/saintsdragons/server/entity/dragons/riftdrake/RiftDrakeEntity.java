@@ -19,6 +19,7 @@ import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonControlStateHolder;
+import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.server.level.ServerPlayer;
 import com.leon.saintsdragons.server.entity.controller.riftdrake.RiftDrakeRiderController;
@@ -64,7 +65,7 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon, DragonControlStateHolder {
+public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon, DragonControlStateHolder, ShakesScreen {
 
     private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
@@ -75,6 +76,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.FLOAT);
 
     // Flight mode data accessor (not used for ground dragon but required by interface)
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(RiftDrakeEntity.class, EntityDataSerializers.INT);
@@ -104,6 +106,10 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private int swimPitchStateTicks;
     private byte controlState = 0;
     private boolean useLeftClawNext = true; // Toggles between left/right claw attacks
+    // ===== SCREEN SHAKE SYSTEM =====
+    private static final float SHAKE_DECAY_PER_TICK = 0.04F;
+    private float prevScreenShakeAmount = 0.0F;
+    private float screenShakeAmount = 0.0F;
 
     public RiftDrakeEntity(EntityType<? extends RiftDrakeEntity> type, Level level) {
         super(type, level);
@@ -245,6 +251,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_RIDER_LOCKED, false);
+        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
     }
     
     @Override
@@ -369,6 +376,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     public void tick() {
         super.tick();
+        tickScreenShake();
         tickSittingState();
         updateSittingProgress();
         tickClientSideUpdates();
@@ -1137,6 +1145,23 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         }
     }
 
+    private void tickScreenShake() {
+        if (level().isClientSide) {
+            prevScreenShakeAmount = screenShakeAmount;
+            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+            return;
+        }
+
+        prevScreenShakeAmount = screenShakeAmount;
+        if (screenShakeAmount > 0.0F) {
+            float newAmount = Math.max(0.0F, screenShakeAmount - SHAKE_DECAY_PER_TICK);
+            screenShakeAmount = newAmount;
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, newAmount);
+        } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        }
+    }
+
     @Override
     public void addAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
@@ -1196,5 +1221,33 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     public Vec3 getClientLocatorPosition(String name) {
         if (name == null) return null;
         return this.clientLocatorCache.get(name);
+    }
+
+    @Override
+    public float getScreenShakeAmount(float partialTicks) {
+        float currentAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+        return prevScreenShakeAmount + (currentAmount - prevScreenShakeAmount) * partialTicks;
+    }
+
+    @Override
+    public double getShakeDistance() {
+        return 18.0;
+    }
+
+    @Override
+    public boolean canFeelShake(Entity player) {
+        return true;
+    }
+
+    public void triggerScreenShake(float intensity) {
+        float clamped = Math.max(0.0F, intensity);
+        if (clamped <= 0.0F) {
+            return;
+        }
+        if (level().isClientSide) {
+            return;
+        }
+        screenShakeAmount = Math.max(screenShakeAmount, clamped);
+        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
     }
 }

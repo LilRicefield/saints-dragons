@@ -110,6 +110,8 @@ public class RiftDrakeRoarAbility extends DragonAbility<RiftDrakeEntity> {
                         SoundSource.NEUTRAL,
                         volume,
                         pitch);
+
+                dragon.triggerScreenShake(0.8F);
             }
             soundQueued = false;
         }
@@ -146,6 +148,9 @@ public class RiftDrakeRoarAbility extends DragonAbility<RiftDrakeEntity> {
                 }
                 if (!swipesApplied[6] && ticks >= SEVENTH_SWIPE_TICK) {
                     applyRoarSwipe(dragon, 7);
+                    if (!dragon.level().isClientSide) {
+                        dragon.triggerScreenShake(0.9F);
+                    }
                     swipesApplied[6] = true;
                 }
             }
@@ -153,6 +158,11 @@ public class RiftDrakeRoarAbility extends DragonAbility<RiftDrakeEntity> {
     }
 
     private void applyRoarSwipe(RiftDrakeEntity dragon, int swipeNumber) {
+        float swipeIntensity = 0.65F;
+        if (!dragon.level().isClientSide) {
+            dragon.triggerScreenShake(swipeIntensity);
+        }
+
         List<LivingEntity> targets = findClawTargets(dragon);
         if (targets.isEmpty()) {
             return;
