@@ -70,6 +70,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
 //GeckoLib
@@ -111,6 +112,31 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             .add("hurt", "action", "animation.lightning_dragon.hurt", ModSounds.DRAGON_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
             .add("die", "action", "animation.lightning_dragon.die", ModSounds.DRAGON_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
+
+    private boolean manualSitCommand = false;
+    private boolean commandChangeManual = false;
+
+    @Override
+    public void setCommand(int command) {
+        int previous = super.getCommand();
+        super.setCommand(command);
+        if (command == 1) {
+            this.manualSitCommand = this.commandChangeManual || this.manualSitCommand;
+        } else {
+            this.manualSitCommand = false;
+        }
+        this.commandChangeManual = false;
+    }
+
+    public void setCommandManual(int command) {
+        this.commandChangeManual = true;
+        this.setCommand(command);
+    }
+
+    public void setCommandAuto(int command) {
+        this.commandChangeManual = false;
+        this.setCommand(command);
+    }
 
     // ===== AMBIENT SOUND SYSTEM =====
     private int ambientSoundTimer;
@@ -203,6 +229,8 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
     // Post-load stabilization to preserve midair riding state across save/load
     private int postLoadAirStabilizeTicks = 0; // counts down after world load if we saved while flying
+    private int followFailsafeCooldown = 0;
+    private int postStandUnlockTicks = 0;
 
     // Rider takeoff request timer: while > 0, flight controller treats state as takeoff
     private int riderTakeoffTicks = 0;
@@ -996,6 +1024,10 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             tickSleepTransition();
             tickSleepCooldowns();
             tickMountingState();
+            tickFollowFailsafe();
+            if (postStandUnlockTicks > 0) {
+                postStandUnlockTicks--;
+            }
         }
         
         // Update banking and pitching logic every tick
@@ -1102,7 +1134,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
                 this.setOrderedToSit(false);
                 // If dragon was sitting, set command to Follow (0) when mounted
                 if (this.getCommand() == 1) {
-                    this.setCommand(0);
+                    this.setCommandAuto(0);
                 }
             }
             
@@ -1189,6 +1221,9 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
                 this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
             }
         } else {
+            if (!this.level().isClientSide && super.isInSittingPose()) {
+                this.setInSittingPose(false);
+            }
             if (this.isVehicle()) {
                 if (sitProgress != 0f) {
                     sitProgress = 0f;
@@ -1220,6 +1255,90 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         this.getNavigation().stop();
         this.setTarget(null);
         this.setDeltaMovement(0, 0, 0);
+    }
+    
+    private void tickFollowFailsafe() {
+        if (followFailsafeCooldown > 0) {
+            followFailsafeCooldown--;
+            return;
+        }
+        followFailsafeCooldown = 20; // roughly once per second
+
+        if (isSleepLocked() || isOrderedToSit() || isPassenger() || isVehicle() || isDying()) {
+            return;
+        }
+
+        if (getCommand() != 0 && !isOrderedToSit()) {
+            setCommandAuto(0);
+        }
+
+        LivingEntity owner = getOwner();
+        if (owner == null || !owner.isAlive()) {
+            return;
+        }
+        if (owner.level() != level()) {
+            return;
+        }
+
+        if (getTarget() != null && getTarget().isAlive()) {
+            return; // combat movement handles this case
+        }
+
+        if (isFlying()) {
+            return; // airborne logic handled elsewhere
+        }
+
+        double distSq = this.distanceToSqr(owner);
+        if (distSq < (18.0 * 18.0)) {
+            /*
+             * If we're in follow mode but not actively pathing, we'll keep nudging the navigation
+             * so standing dragons don't sit idly in wander command after reloads.
+             */
+            if (!this.getNavigation().isInProgress() && this.getCommand() == 0 && !this.isOrderedToSit()) {
+                this.getNavigation().moveTo(owner, 0.8);
+            }
+            return;
+        }
+
+        boolean moveGoalActive = this.goalSelector.getRunningGoals().anyMatch(wrapped -> {
+            Goal goal = wrapped.getGoal();
+            return goal instanceof LightningDragonFollowOwnerGoal || goal instanceof LightningDragonMoveGoal;
+        });
+        if (moveGoalActive) {
+            return;
+        }
+
+        switchToGroundNavigation();
+        boolean shouldRun = distSq > (25.0 * 25.0);
+        setRunning(shouldRun);
+        setGroundMoveStateFromAI(shouldRun ? 2 : 1);
+        double speed = shouldRun ? 1.35 : 0.9;
+        if (!this.getNavigation().moveTo(owner, speed)) {
+            this.getNavigation().stop();
+            attemptOwnerTeleport(owner);
+        }
+    }
+
+    private void attemptOwnerTeleport(LivingEntity owner) {
+        BlockPos ownerPos = owner.blockPosition();
+        for (int i = 0; i < 8; i++) {
+            int dx = this.random.nextInt(7) - 3;
+            int dz = this.random.nextInt(7) - 3;
+            BlockPos candidate = ownerPos.offset(dx, 0, dz);
+            if (isTeleportFriendlyBlock(candidate)) {
+                this.teleportTo(candidate.getX() + 0.5, candidate.getY(), candidate.getZ() + 0.5);
+                this.getNavigation().stop();
+                return;
+            }
+        }
+    }
+
+    private boolean isTeleportFriendlyBlock(BlockPos pos) {
+        BlockPos below = pos.below();
+        BlockState floor = level().getBlockState(below);
+        BlockState body = level().getBlockState(pos);
+        BlockState above = level().getBlockState(pos.above());
+        return floor.isSolidRender(level(), below) && body.isAir() && above.isAir();
     }
     
     private void tickSuperchargeTimer() {
@@ -1487,7 +1606,8 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     @Override
     public void travel(@NotNull Vec3 motion) {
         // Handle sitting/dodging/dying states first
-        if (this.isInSittingPose() || this.isDodging() || this.isDying() || this.isSleeping() || this.isSleepTransitioning()) {
+        boolean sittingLocked = (this.isOrderedToSit() || this.isInSittingPose()) && postStandUnlockTicks <= 0;
+        if (sittingLocked || this.isDodging() || this.isDying() || this.isSleeping() || this.isSleepTransitioning()) {
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
             }
@@ -1528,6 +1648,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
                 super.travel(motion);
             }
         }
+
     }
 
     // ===== RANGED ATTACK IMPLEMENTATION =====
@@ -1843,11 +1964,16 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
     }
 
     private void enterSleepLock() {
+        int snapshot = this.getCommand();
         if (!sleepLocked) {
             sleepLocked = true;
-            sleepCommandSnapshot = this.getCommand();
+            sleepCommandSnapshot = snapshot;
         }
-        this.setCommand(1);
+        if (snapshot == 1) {
+            this.setCommandManual(1);
+        } else {
+            this.setCommandAuto(1);
+        }
         this.setOrderedToSit(true);
         this.getNavigation().stop();
         this.setTarget(null);
@@ -1866,10 +1992,10 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             sleepCommandSnapshot = -1;
             sleepLocked = false;
             if (desired == 1) {
-                this.setCommand(1);
+                this.setCommandManual(1);
                 this.setOrderedToSit(true);
             } else {
-                this.setCommand(desired);
+                this.setCommandAuto(desired);
                 this.setOrderedToSit(false);
             }
         }
@@ -1950,6 +2076,24 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             if (!level().isClientSide) {
                 sitProgress = 0;
                 this.entityData.set(DATA_SIT_PROGRESS, 0.0f);
+                // Ensure we are in ground navigation mode and not stuck in legacy flight flags
+                switchToGroundNavigation();
+                if (isFlying()) {
+                    setFlying(false);
+                }
+                setTakeoff(false);
+                setLanding(false);
+                setHovering(false);
+                this.usingAirNav = false;
+                postStandUnlockTicks = Math.max(postStandUnlockTicks, 20);
+            }
+            if (this.getCommand() == 1) {
+                this.setCommandAuto(0);
+            }
+            if (!level().isClientSide) {
+                this.followFailsafeCooldown = 0;
+                this.getNavigation().stop();
+                this.tickFollowFailsafe();
             }
         }
     }
@@ -2042,6 +2186,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
         tag.putInt("SleepCancelTicks", Math.max(0, this.sleepCancelTicks));
         tag.putBoolean("SleepLock", this.sleepLocked);
         tag.putInt("SleepCommandSnapshot", this.sleepCommandSnapshot);
+        tag.putBoolean("ManualSitCommand", this.manualSitCommand);
 
         animationController.writeToNBT(tag);
     }
@@ -2103,11 +2248,32 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
 
         animationController.readFromNBT(tag);
 
+        this.manualSitCommand = tag.contains("ManualSitCommand") && tag.getBoolean("ManualSitCommand");
+
         if (this.usingAirNav) {
             switchToAirNavigation();
         } else {
             switchToGroundNavigation();
         }
+
+        // Safety: if we reloaded while flagged as sitting but owner command isn't "sit",
+        // clear the stuck sitting state so pathfinding goals can resume.
+        if (this.getCommand() != 1 && this.isOrderedToSit()) {
+            this.setOrderedToSit(false);
+        }
+
+        // If we reload while sleep-locked (or mid-transition), immediately wake and clear the lock so AI goals resume.
+        if (this.sleepLocked || this.sleepingEntering || this.sleepingExiting || this.entityData.get(DATA_SLEEPING)) {
+            this.releaseSleepLock();
+            this.wakeUpImmediately();
+            this.suppressSleep(200);
+        }
+        this.sleepingEntering = false;
+        this.sleepingExiting = false;
+        this.sleepTransitionTicks = 0;
+        this.entityData.set(DATA_SLEEPING, false);
+        this.sleepCommandSnapshot = -1;
+        this.followFailsafeCooldown = 0;
 
         // If we saved while flying, keep the dragon in the air briefly after load
         if (tag.getBoolean("Flying")) {
@@ -2134,6 +2300,11 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             this.getNavigation().stop();
             this.setTarget(null);
             this.setAggressive(false);
+        }
+
+        if (this.getCommand() == 1 && !this.manualSitCommand) {
+            this.setCommandAuto(0);
+            this.setOrderedToSit(false);
         }
     }
 
@@ -2164,7 +2335,7 @@ public class LightningDragonEntity extends RideableDragonBase implements FlyingA
             this.setOrderedToSit(false);
             // If dragon was sitting, set command to Follow (0) when mounted
             if (this.getCommand() == 1) {
-                this.setCommand(0);
+                this.setCommandAuto(0);
             }
         }
         

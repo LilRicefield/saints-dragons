@@ -52,7 +52,7 @@ public record LightningDragonInteractionHandler(LightningDragonEntity dragon) {
                 // Successful taming
                 dragon.tame(player);
                 dragon.setOrderedToSit(true);
-                dragon.setCommand(1); // Set command to Sit (1) to match the sitting state
+                dragon.setCommandManual(1); // Set command to Sit (1) to match the sitting state
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
                 
                 // Trigger advancement for taming Lightning Dragon
@@ -133,9 +133,9 @@ public record LightningDragonInteractionHandler(LightningDragonEntity dragon) {
         // Get current command and cycle to next
         int currentCommand = dragon.getCommand();
         int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
-        
+
         // Apply the new command
-        dragon.setCommand(nextCommand);
+        dragon.setCommandManual(nextCommand);
         applyCommandState(nextCommand);
         
         // Send feedback message to player (action bar), server-side only to avoid duplicates

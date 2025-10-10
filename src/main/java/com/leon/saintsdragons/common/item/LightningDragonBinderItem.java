@@ -205,6 +205,7 @@ public class LightningDragonBinderItem extends Item {
             newDragon.readAdditionalSaveData(dragonData);
         }
 
+        // Ensure newly released dragons default to follow command so they don't stay in previous wander state
         newDragon.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
         if (ownerUUID != null) {

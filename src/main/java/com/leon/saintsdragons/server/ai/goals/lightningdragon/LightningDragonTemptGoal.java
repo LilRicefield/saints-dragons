@@ -153,7 +153,7 @@ public class LightningDragonTemptGoal extends Goal {
                     // Successful taming!
                     dragon.tame(feedingPlayer);
                     dragon.setOrderedToSit(true);
-                    dragon.setCommand(1); // Set command to Sit (1)
+                    dragon.setCommandManual(1); // Set command to Sit (1)
                     dragon.level().broadcastEntityEvent(dragon, (byte) 7); // Success particles
                     
                     // Trigger taming advancement
