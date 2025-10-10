@@ -981,9 +981,11 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.28D));
 
         double dragFactor = this.isControlledByLocalInstance() ? 0.92D : 0.94D;
-        blended = blended.multiply(dragFactor, 0.92D, dragFactor);
+        blended = blended.multiply(dragFactor, 0.96D, dragFactor);
 
-        if (!isGoingUp() && !isGoingDown() && getTarget() == null) {
+        if (!isGoingUp() && !isGoingDown() && getControllingPassenger() != null) {
+            blended = blended.multiply(1.0D, 0.0D, 1.0D);
+        } else if (!isGoingUp() && !isGoingDown() && getTarget() == null) {
             blended = blended.add(0.0D, -0.01D, 0.0D);
         }
 
