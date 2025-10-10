@@ -10,15 +10,16 @@ import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
  */
 public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
-    // Death animation duration: ~3.071s (62 ticks)
-    private static final int DURATION_TICKS = 62;
-    private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new DragonAbilitySection.AbilitySectionDuration(DragonAbilitySection.AbilitySectionType.ACTIVE, DURATION_TICKS)
-    };
-
     public DieAbility(DragonAbilityType<T, ? extends DragonAbility<T>> type,
                       T user) {
-        super(type, user, TRACK, 0);
+        super(type, user, buildTrack(user), 0);
+    }
+
+    private static <E extends DragonEntity> DragonAbilitySection[] buildTrack(E dragon) {
+        int duration = Math.max(1, dragon.getDeathAnimationDurationTicks());
+        return new DragonAbilitySection[] {
+                new DragonAbilitySection.AbilitySectionDuration(DragonAbilitySection.AbilitySectionType.ACTIVE, duration)
+        };
     }
 
     @Override

@@ -201,6 +201,11 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     }
 
     @Override
+    public int getDeathAnimationDurationTicks() {
+        return 75; // 3.75s - matches primitive drake death animation length
+    }
+
+    @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
         // During dying sequence, ignore all damage except the final generic kill used by DieAbility
         if (isDying()) {
@@ -473,6 +478,10 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
                 break;
         }
     }
+
+    public void refreshCommandState() {
+        applyCommandState(this.getCommand());
+    }
     
     // ===== SOUND SYSTEM =====
     
@@ -568,10 +577,8 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             sleeping = false;
             // Sync sleep state to client
             this.entityData.set(DATA_SLEEPING, false);
-            // Wake up - stand up
-            setOrderedToSit(false);
-            sitProgress = 0f;
-            getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+            // Wake up - restore pose based on current command
+            refreshCommandState();
         }
     }
     
@@ -860,6 +867,9 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     public void addAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
 
+        tag.putInt("PrimitiveCommand", this.getCommand());
+        tag.putBoolean("PrimitiveOrderedSit", this.isOrderedToSit());
+
         // Save sleep state
         tag.putBoolean("Sleeping", sleeping);
         tag.putBoolean("SleepTransitioning", sleepTransitioning);
@@ -886,6 +896,15 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     @Override
     public void readAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+
+        int restoredCommand = this.getCommand();
+        if (tag.contains("PrimitiveCommand")) {
+            restoredCommand = tag.getInt("PrimitiveCommand");
+            this.setCommand(restoredCommand);
+        }
+        boolean restoredOrderedSit = tag.contains("PrimitiveOrderedSit")
+                ? tag.getBoolean("PrimitiveOrderedSit")
+                : restoredCommand == 1;
 
         // Load sleep state
         sleeping = tag.getBoolean("Sleeping");
@@ -932,18 +951,11 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
 
         // Apply the loaded command state to ensure sit progress and other state is properly restored
         // This ensures consistency between command state and actual entity behavior
-        applyCommandState(this.getCommand());
+        refreshCommandState();
 
         // Explicitly enforce the sit state based on command to ensure it persists
         // This bypasses any potential timing issues with the base class
-        int loadedCommand = this.getCommand();
-        if (loadedCommand == 1) {
-            // Command is Sit - explicitly set ordered to sit
-            this.setOrderedToSit(true);
-        } else {
-            // Command is Follow (0) or Wander (2) - explicitly set not sitting
-            this.setOrderedToSit(false);
-        }
+        this.setOrderedToSit(restoredOrderedSit);
     }
     
     // ===== DRAKE BINDER FUNCTIONALITY =====
