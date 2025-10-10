@@ -1254,4 +1254,11 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         screenShakeAmount = Math.max(screenShakeAmount, clamped);
         this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
     }
+
+    public boolean canBeBound() {
+        return !isDying()
+                && !isAccelerating()
+                && !areRiderControlsLocked()
+                && !isAbilityActive(RiftDrakeAbilities.PHASE_SHIFT);
+    }
 }

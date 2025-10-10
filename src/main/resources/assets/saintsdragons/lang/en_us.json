@@ -3,6 +3,7 @@
   "item.saintsdragons.primitive_drake_binder": "Primitive Drake Binder",
   "item.saintsdragons.lightning_dragon_binder": "Lightning Dragon Binder",
   "item.saintsdragons.amphithere_binder": "Amphithere Binder",
+  "item.saintsdragons.rift_drake_binder": "Rift Drake Binder",
   "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
   "item.saintsdragons.primitive_drake_spawn_egg": "Primitive Drake Spawn Egg",
   "item.saintsdragons.amphithere_spawn_egg": "Amphithere Spawn Egg",
@@ -43,6 +44,11 @@
   "saintsdragons.tooltip.amphithere_binder.right_click_amphithere_to_bind": "Right-click on ground to release bound amphithere",
   "saintsdragons.tooltip.amphithere_binder.bound": "Contains: %s",
   "saintsdragons.tooltip.amphithere_binder.right_click_to_release": "Right-click on ground to release bound amphithere",
+  "saintsdragons.tooltip.rift_drake_binder.description": "§lA shard of the abyss hums quietly inside.§r",
+  "saintsdragons.tooltip.rift_drake_binder.empty": "Right-click on a tamed Rift Drake to bind it",
+  "saintsdragons.tooltip.rift_drake_binder.right_click_rift_drake_to_bind": "Right-click on ground to release bound Rift Drake",
+  "saintsdragons.tooltip.rift_drake_binder.bound": "Contains: %s",
+  "saintsdragons.tooltip.rift_drake_binder.right_click_to_release": "Right-click on ground to release bound Rift Drake",
   
   "saintsdragons.message.dragon_not_found": "Dragon not found",
   "saintsdragons.message.not_dragon_owner": "You don't own this dragon",
@@ -60,6 +66,9 @@
   
   "saintsdragons.message.amphithere_captured": "Bound %s in Amphithere Binder!",
   "saintsdragons.message.amphithere_released": "Released %s from Amphithere Binder!",
+  "saintsdragons.message.rift_drake_captured": "Bound %s in Rift Drake Binder!",
+  "saintsdragons.message.rift_drake_released": "Released %s from Rift Drake Binder!",
+  "saintsdragons.message.rift_drake_cannot_be_captured": "This Rift Drake cannot be bound right now",
   
   "saintsdragons.command.ally.add.result": "Dragon %s: %s - %s",
   "saintsdragons.command.ally.remove.result": "Dragon %s: %s - %s",

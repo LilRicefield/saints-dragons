@@ -100,6 +100,7 @@ public class SaintsDragons {
             event.accept(ModItems.PRIMITIVE_DRAKE_BINDER);
             event.accept(ModItems.LIGHTNING_DRAGON_BINDER);
             event.accept(ModItems.AMPHITHERE_BINDER);
+            event.accept(ModItems.RIFT_DRAKE_BINDER);
         }
     }
 
