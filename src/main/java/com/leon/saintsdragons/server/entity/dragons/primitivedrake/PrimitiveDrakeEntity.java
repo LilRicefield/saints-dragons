@@ -30,6 +30,7 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.primitivedrake.PrimitiveDrakeAbilities;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
@@ -66,7 +67,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     // ===== VOCAL ENTRIES =====
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("primitive_drake_hurt", "action", "animation.primitive_drake.hurt", ModSounds.PRIMITIVE_DRAKE_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
-            .add("die", "action", "animation.primitive_drake.die", ModSounds.PRIMITIVE_DRAKE_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
+            .add("primitive_drake_die", "action", "animation.primitive_drake.die", ModSounds.PRIMITIVE_DRAKE_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
             .build();
 
     @Override
@@ -201,7 +202,15 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
-        // Intercept lethal damage to play death ability
+        // During dying sequence, ignore all damage except the final generic kill used by DieAbility
+        if (isDying()) {
+            if (source.is(DamageTypes.GENERIC_KILL)) {
+                return super.hurt(source, amount);
+            }
+            return false;
+        }
+
+        // Intercept lethal damage to play custom death ability first
         if (handleLethalDamage(source, amount, PrimitiveDrakeAbilities.DIE)) {
             return true;
         }

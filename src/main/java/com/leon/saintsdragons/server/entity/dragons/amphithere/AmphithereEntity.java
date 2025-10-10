@@ -52,6 +52,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -104,7 +105,7 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
             .add("roar_ground", "actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)
             .add("roar_air", "actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)
             .add("amphithere_hurt", "actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT, 1.2f, 0.95f, 0.1f, false, true, true)
-            .add("die", "actions", "animation.amphithere.die", ModSounds.AMPHITHERE_DIE, 1.5f, 1.0f, 0.0f, false, true, true)
+            .add("amphithere_die", "actions", "animation.amphithere.die", ModSounds.AMPHITHERE_DIE, 1.5f, 1.0f, 0.0f, false, true, true)
             .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -1161,6 +1162,15 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
 
     @Override
     public boolean hurt(@Nonnull DamageSource source, float amount) {
+        // During dying sequence, ignore all damage except the final generic kill used by DieAbility
+        if (isDying()) {
+            if (source.is(DamageTypes.GENERIC_KILL)) {
+                return super.hurt(source, amount);
+            }
+            return false;
+        }
+
+        // Intercept lethal damage to play custom death ability first
         if (handleLethalDamage(source, amount, AmphithereAbilities.DIE)) {
             return true;
         }
