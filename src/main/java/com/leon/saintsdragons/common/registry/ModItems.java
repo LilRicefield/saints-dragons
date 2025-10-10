@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.item.AmphithereBinderItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.PrimitiveDrakeBinderItem;
 import com.leon.saintsdragons.common.item.LightningDragonBinderItem;
+import com.leon.saintsdragons.common.item.RiftDrakeBinderItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.registries.DeferredRegister;
@@ -81,6 +82,15 @@ public final class ModItems {
     public static final RegistryObject<Item> AMPHITHERE_BINDER =
             REGISTER.register("amphithere_binder",
                     () -> new AmphithereBinderItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(0) // Unbreakable
+                    )
+            );
+
+    public static final RegistryObject<Item> RIFT_DRAKE_BINDER =
+            REGISTER.register("rift_drake_binder",
+                    () -> new RiftDrakeBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0) // Unbreakable
