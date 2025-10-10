@@ -218,6 +218,17 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     }
 
     @Override
+    protected void tickDeath() {
+        // Override vanilla death animation to prevent rotation/flop
+        // Just increment death time without the rotation animation
+        ++this.deathTime;
+        if (this.deathTime >= 20) {
+            this.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+            this.dropExperience();
+        }
+    }
+
+    @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         // Use the new smooth animation controller
         AnimationController<PrimitiveDrakeEntity> movementController = new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
