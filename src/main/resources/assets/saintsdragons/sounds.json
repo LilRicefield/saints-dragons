@@ -124,7 +124,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/amphithere/amphithere_bite",
-        "volume": 2.0,
+        "volume": 1.0,
         "pitch": 1.0
       }
     ]

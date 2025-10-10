@@ -632,6 +632,26 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
                 grumbleCooldown = 200 + getRandom().nextInt(400); // 10-30 second cooldown
             }
         }
+
+        // Handle sit progress animation
+        if (!level().isClientSide) {
+            if (this.isOrderedToSit()) {
+                if (sitProgress < maxSitTicks()) {
+                    sitProgress++;
+                    this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                }
+            } else if (sitProgress > 0f) {
+                sitProgress--;
+                if (sitProgress < 0f) sitProgress = 0f;
+                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+            }
+        }
+
+        // Update client-side sit progress from synchronized data
+        if (level().isClientSide) {
+            prevSitProgress = sitProgress;
+            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
+        }
     }
     
     /**
@@ -819,51 +839,54 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     @Override
     public void addAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        
+
         // Save sleep state
         tag.putBoolean("Sleeping", sleeping);
         tag.putBoolean("SleepTransitioning", sleepTransitioning);
         tag.putInt("NapTicks", napTicks);
         tag.putInt("NapCooldown", napCooldown);
-        
+
         // Save grumble cooldown
         tag.putInt("GrumbleCooldown", grumbleCooldown);
-        
+
         // Save play dead state
         tag.putBoolean("PlayingDead", isPlayingDead());
         if (playDeadGoal != null) {
             tag.putInt("PlayDeadTicks", playDeadGoal.getRemainingPlayDeadTicks());
             tag.putInt("PlayDeadCooldown", playDeadGoal.getRemainingCooldownTicks());
         }
-        
+
         // Save binding state
         tag.putBoolean("BoundToBinder", boundToBinder);
+
+        // Save sit progress for animation state
+        tag.putFloat("SitProgress", sitProgress);
     }
     
     @Override
     public void readAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        
+
         // Load sleep state
         sleeping = tag.getBoolean("Sleeping");
         sleepTransitioning = tag.getBoolean("SleepTransitioning");
         napTicks = tag.getInt("NapTicks");
         napCooldown = tag.getInt("NapCooldown");
-        
+
         // Load grumble cooldown
         grumbleCooldown = tag.getInt("GrumbleCooldown");
-        
+
         // Load binding state
         boundToBinder = tag.getBoolean("BoundToBinder");
-        
+
         // Sync sleep state to client
         this.entityData.set(DATA_SLEEPING, sleeping);
-        
+
         // Load play dead state
         boolean wasPlayingDead = tag.getBoolean("PlayingDead");
         int savedPlayDeadTicks = tag.getInt("PlayDeadTicks");
         int savedCooldownTicks = tag.getInt("PlayDeadCooldown");
-        
+
         // If we were playing dead when saved, restore that state
         if (wasPlayingDead && savedPlayDeadTicks > 0) {
             if (this.playDeadGoal != null) {
@@ -879,6 +902,27 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             this.pendingRestorePlayDeadTicks = 0;
             this.pendingRestoreCooldownTicks = 0;
             this.entityData.set(DATA_PLAYING_DEAD, false);
+        }
+
+        // Load sit progress for animation state
+        if (tag.contains("SitProgress")) {
+            sitProgress = tag.getFloat("SitProgress");
+            this.entityData.set(DragonEntity.DATA_SIT_PROGRESS, sitProgress);
+        }
+
+        // Apply the loaded command state to ensure sit progress and other state is properly restored
+        // This ensures consistency between command state and actual entity behavior
+        applyCommandState(this.getCommand());
+
+        // Explicitly enforce the sit state based on command to ensure it persists
+        // This bypasses any potential timing issues with the base class
+        int loadedCommand = this.getCommand();
+        if (loadedCommand == 1) {
+            // Command is Sit - explicitly set ordered to sit
+            this.setOrderedToSit(true);
+        } else {
+            // Command is Follow (0) or Wander (2) - explicitly set not sitting
+            this.setOrderedToSit(false);
         }
     }
     
