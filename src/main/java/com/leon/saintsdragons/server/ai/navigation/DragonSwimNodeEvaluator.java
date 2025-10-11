@@ -10,6 +10,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.SwimNodeEvaluator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Swim node evaluator that is a little more permissive for large semi-aquatic dragons.
@@ -29,7 +30,7 @@ public class DragonSwimNodeEvaluator extends SwimNodeEvaluator {
     }
 
     @Override
-    public Node getStart() {
+    public @NotNull Node getStart() {
         // Bias start position toward the entity's mid-body rather than feet to reduce
         // thrashing when entering deep water.
         int y = Mth.floor(this.mob.getBoundingBox().minY + (this.mob.getBbHeight() * 0.5D));

@@ -2,8 +2,8 @@ package com.leon.saintsdragons.server.entity.dragons.riftdrake;
 
 import com.leon.saintsdragons.common.registry.riftdrake.RiftDrakeAbilities;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.DragonAmphibiousNavigation;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimMoveControl;
-import com.leon.saintsdragons.server.ai.navigation.DragonSwimNavigate;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.riftdrake.RiftDrakeAttackGoal;
@@ -87,12 +87,11 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     private final AnimatableInstanceCache animCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final DragonKeybindHandler keybindHandler = new DragonKeybindHandler(this);
-    private final RiftDrakeAnimationState animationState = new RiftDrakeAnimationState();
-    private final RiftDrakeAnimationHandler animationHandler = new RiftDrakeAnimationHandler(this, animationState);
+    private final RiftDrakeAnimationHandler animationHandler = new RiftDrakeAnimationHandler(this);
     private final RiftDrakeInteractionHandler interactionHandler = new RiftDrakeInteractionHandler(this);
     private final RiftDrakeRiderController riderController;
     private final PathNavigation groundNavigation;
-    private final DragonSwimNavigate waterNavigation;
+    private final DragonAmphibiousNavigation waterNavigation;
     private final MoveControl landMoveControl;
     private final DragonSwimMoveControl swimMoveControl;
     private final RiftDrakeLookController landLookControl;
@@ -117,7 +116,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
         this.groundNavigation = new DragonPathNavigateGround(this, level);
-        this.waterNavigation = new DragonSwimNavigate(this, level);
+        this.waterNavigation = new DragonAmphibiousNavigation(this, level);
         this.landMoveControl = new RiftDrakeMoveControl(this);
         this.swimMoveControl = new DragonSwimMoveControl(this, 6.0F, 0.08D, 0.12D);
         this.landLookControl = new RiftDrakeLookController(this);
@@ -126,9 +125,6 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.lookControl = this.landLookControl;
         this.riderController = new RiftDrakeRiderController(this);
         this.setRideable();
-        if (level.isClientSide) {
-            animationState.resetImmediate(this);
-        }
     }
 
     private void tickRiderControlLock() {
@@ -348,20 +344,6 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         return animCache;
     }
 
-    @Override
-    public void initializeAnimationState() {
-        if (level().isClientSide) {
-            animationState.resetImmediate(this);
-        }
-    }
-
-    @Override
-    public void resetAnimationState() {
-        if (level().isClientSide) {
-            animationState.resetImmediate(this);
-        }
-    }
-
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
     }
@@ -383,10 +365,6 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         updateSittingProgress();
         tickClientSideUpdates();
 
-        if (level().isClientSide) {
-            animationState.tick(this);
-        }
-        
         if (!level().isClientSide) {
             tickRiderControlLock();
             boolean inWater = this.isInWater();
@@ -440,11 +418,7 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
             }
         } else {
             // Normal AI movement
-            if (this.isInWater()) {
-                handleRiddenSwimming(motion);
-            } else {
-                super.travel(motion);
-            }
+            super.travel(motion);
         }
     }
 
@@ -1045,10 +1019,6 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     public void setGoingDown(boolean goingDown) {
         this.entityData.set(DATA_GOING_DOWN, goingDown);
-    }
-
-    public RiftDrakeAnimationState getAnimationState() {
-        return animationState;
     }
 
     private static class RiftDrakeMoveControl extends MoveControl {
