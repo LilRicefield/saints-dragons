@@ -296,20 +296,32 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(1, new BreathAirGoal(this));
-        this.goalSelector.addGoal(2, new RiftDrakeAttackGoal(this));
-        this.goalSelector.addGoal(3, new RiftDrakeLeaveWaterGoal(this));
-        this.goalSelector.addGoal(4, new RiftDrakeCombatGoal(this));
-        this.goalSelector.addGoal(5, new RiftDrakeMoveGoal(this, true, 1.3D));
-        this.goalSelector.addGoal(6, new RiftDrakeFindWaterGoal(this));
-        this.goalSelector.addGoal(7, new RiftDrakeFollowOwnerGoal(this));
-        this.waterSwimGoal = new RiftDrakeRandomSwimGoal(this, 1.2D, 30);  // Increased from 1.0D for better swim speed
-        this.goalSelector.addGoal(8, waterSwimGoal);
-        // Removed WaterAvoidingRandomStrollGoal - it conflicts with aquatic behavior
-        // Rift Drakes are amphibious and should not avoid water
-        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        // Priority 0: Critical survival - air management
+        this.goalSelector.addGoal(0, new BreathAirGoal(this));
 
+        // Priority 1-2: Combat abilities
+        this.goalSelector.addGoal(1, new RiftDrakeAttackGoal(this));
+        this.goalSelector.addGoal(2, new RiftDrakeCombatGoal(this));
+
+        // Priority 3: Combat movement (chasing targets/fleeing)
+        this.goalSelector.addGoal(3, new RiftDrakeMoveGoal(this, true, 1.3D));
+
+        // Priority 4-5: Amphibious behavior (semi-aquatic patrol pattern)
+        this.goalSelector.addGoal(4, new RiftDrakeLeaveWaterGoal(this));
+        this.goalSelector.addGoal(5, new RiftDrakeFindWaterGoal(this));
+
+        // Priority 6: Social behavior (follow owner)
+        this.goalSelector.addGoal(6, new RiftDrakeFollowOwnerGoal(this));
+
+        // Priority 7: Idle swimming
+        this.waterSwimGoal = new RiftDrakeRandomSwimGoal(this, 1.2D, 30);
+        this.goalSelector.addGoal(7, waterSwimGoal);
+
+        // Priority 10: Ambient behaviors
+        this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F));
+
+        // Target selectors (threat detection)
         this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
@@ -1231,5 +1243,47 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
                 && !isAccelerating()
                 && !areRiderControlsLocked()
                 && !isAbilityActive(RiftDrakeAbilities.PHASE_SHIFT);
+    }
+
+    // ===== AMPHIBIOUS BEHAVIOR =====
+
+    @Override
+    public boolean shouldEnterWater() {
+        // Don't enter water if sitting or being ridden
+        if (this.isOrderedToSit() || this.isVehicle()) {
+            return false;
+        }
+
+        // Emergency: Seek water when on fire or low health with a target
+        if (this.isOnFire()) {
+            return true;
+        }
+        if (this.getHealth() < this.getMaxHealth() * 0.5F && this.getTarget() != null) {
+            return true;
+        }
+
+        // Natural patrol behavior - semi-aquatic predator rotates between environments
+        // After ~50 seconds on land (1000 ticks), has 8% chance per check to enter water
+        return ticksOutOfWater > 1000 && this.getRandom().nextFloat() < 0.08F;
+    }
+
+    @Override
+    public boolean shouldLeaveWater() {
+        // Don't leave water if sitting
+        if (this.isOrderedToSit()) {
+            return false;
+        }
+
+        // Follow tamed owner onto land if they're far away
+        if (this.isTame() && this.getOwner() != null) {
+            LivingEntity owner = this.getOwner();
+            if (!owner.isInWater() && this.distanceToSqr(owner) > 100.0D) { // 10 blocks
+                return true;
+            }
+        }
+
+        // Natural patrol behavior - after ~60 seconds in water (1200 ticks),
+        // has 8% chance per check to leave for land patrol
+        return ticksInWater > 1200 && this.getRandom().nextFloat() < 0.08F;
     }
 }
