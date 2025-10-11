@@ -75,15 +75,38 @@ public class RiftDrakeAnimationHandler {
 
     public PlayState movementPredicate(AnimationState<RiftDrakeEntity> state) {
         boolean isSwimming = drake.isSwimming();
+        boolean isInWater = drake.isInWater();
         boolean isNavigating = drake.getNavigation().isInProgress() && drake.getNavigation().getPath() != null;
         double horizontalSpeedSq = drake.getDeltaMovement().horizontalDistanceSqr();
+        double totalSpeedSq = drake.getDeltaMovement().lengthSqr();
         boolean isMovingLand = state.isMoving() || horizontalSpeedSq > 0.008D;
         var controller = state.getController();
         controller.setAnimationSpeed(1.0F);
 
-        if (isSwimming) {
+        // Check swimming state - use isInWater as a fallback if isSwimming isn't synced yet
+        if (isSwimming || isInWater) {
             controller.transitionLength(SWIM_TRANSITION_TICKS);
-            RawAnimation swimAnim = (drake.isSwimmingMoving() || isNavigating) ? SWIM_CRUISE : SWIM_IDLE;
+
+            // Determine if swimming and moving
+            boolean isSwimmingMoving;
+
+            // When being ridden, use rider input values instead of entity zza/yya
+            if (drake.isVehicle() && drake.getControllingPassenger() != null) {
+                // Check rider forward/strafe inputs
+                float riderFwd = Math.abs(drake.getLastRiderForward());
+                float riderStr = Math.abs(drake.getLastRiderStrafe());
+                boolean riderMoving = riderFwd > 0.05F || riderStr > 0.05F;
+                // Also check velocity as fallback
+                isSwimmingMoving = riderMoving || totalSpeedSq > 0.004D;
+            } else {
+                // AI-controlled: use navigation, velocity, and movement intention
+                isSwimmingMoving = drake.isSwimmingMoving() || isNavigating ||
+                                    totalSpeedSq > 0.002D ||
+                                    Math.abs(drake.zza) > 0.01F ||
+                                    Math.abs(drake.yya) > 0.01F;
+            }
+
+            RawAnimation swimAnim = isSwimmingMoving ? SWIM_CRUISE : SWIM_IDLE;
             state.setAnimation(swimAnim);
         } else if (drake.getSitProgress() > 0.5f) {
             // Drive SIT from our custom progress system only to avoid de-sync

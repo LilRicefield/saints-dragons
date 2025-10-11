@@ -23,26 +23,47 @@ public class RiftDrakeRandomSwimGoal extends RandomStrollGoal {
 
     @Override
     public boolean canUse() {
-        if (this.drake.isVehicle() || this.drake.isPassenger() || this.drake.getTarget() != null || 
-            !this.drake.isInWater() && !this.drake.shouldEnterWater()) {
+        // Don't use if being ridden, is a passenger, has a target, or is sitting
+        if (this.drake.isVehicle() || this.drake.isPassenger() ||
+            this.drake.getTarget() != null || this.drake.isOrderedToSit()) {
             return false;
-        } else {
-            if (!this.forceTrigger) {
-                if (this.drake.getRandom().nextInt(this.interval) != 0) {
-                    return false;
-                }
-            }
-            Vec3 vector3d = this.getPosition();
-            if (vector3d == null) {
+        }
+
+        // Only use when actually in water and swimming
+        if (!this.drake.isInWater() || !this.drake.isSwimming()) {
+            return false;
+        }
+
+        // Random chance check (unless force triggered)
+        if (!this.forceTrigger) {
+            if (this.drake.getRandom().nextInt(this.interval) != 0) {
                 return false;
-            } else {
-                this.wantedX = vector3d.x;
-                this.wantedY = vector3d.y;
-                this.wantedZ = vector3d.z;
-                this.forceTrigger = false;
-                return true;
             }
         }
+
+        // Try to find a valid position to swim to
+        Vec3 vector3d = this.getPosition();
+        if (vector3d == null) {
+            return false;
+        }
+
+        this.wantedX = vector3d.x;
+        this.wantedY = vector3d.y;
+        this.wantedZ = vector3d.z;
+        this.forceTrigger = false;
+        return true;
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        // Stop if no longer in water or being controlled
+        if (!this.drake.isInWater() || this.drake.isVehicle() ||
+            this.drake.getTarget() != null || this.drake.isOrderedToSit()) {
+            return false;
+        }
+
+        // Continue if navigation is still in progress
+        return !this.drake.getNavigation().isDone();
     }
 
     @Nullable

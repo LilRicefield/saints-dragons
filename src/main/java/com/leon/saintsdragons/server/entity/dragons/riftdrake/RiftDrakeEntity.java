@@ -303,9 +303,10 @@ public class RiftDrakeEntity extends RideableDragonBase implements AquaticDragon
         this.goalSelector.addGoal(5, new RiftDrakeMoveGoal(this, true, 1.3D));
         this.goalSelector.addGoal(6, new RiftDrakeFindWaterGoal(this));
         this.goalSelector.addGoal(7, new RiftDrakeFollowOwnerGoal(this));
-        this.waterSwimGoal = new RiftDrakeRandomSwimGoal(this, 1.0D, 30);
+        this.waterSwimGoal = new RiftDrakeRandomSwimGoal(this, 1.2D, 30);  // Increased from 1.0D for better swim speed
         this.goalSelector.addGoal(8, waterSwimGoal);
-        this.goalSelector.addGoal(9, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        // Removed WaterAvoidingRandomStrollGoal - it conflicts with aquatic behavior
+        // Rift Drakes are amphibious and should not avoid water
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
