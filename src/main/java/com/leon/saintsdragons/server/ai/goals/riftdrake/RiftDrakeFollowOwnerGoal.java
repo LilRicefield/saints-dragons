@@ -120,8 +120,10 @@ public class RiftDrakeFollowOwnerGoal extends Goal {
         boolean navIdle = drake.getNavigation().isDone() || !drake.getNavigation().isInProgress();
 
         if (navIdle || ownerMoved || pathRecalcCooldown <= 0) {
-            if (!drake.getNavigation().moveTo(owner, speed)) {
-                drake.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), speed);
+            // Boost speed in water for amphibious movement
+            double effectiveSpeed = drake.isInWater() ? speed * 1.3D : speed;
+            if (!drake.getNavigation().moveTo(owner, effectiveSpeed)) {
+                drake.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), effectiveSpeed);
             }
             rememberOwnerPosition(owner);
             pathRecalcCooldown = computeRepathCooldown(distance, running);

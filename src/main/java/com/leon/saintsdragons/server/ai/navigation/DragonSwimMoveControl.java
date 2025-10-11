@@ -3,13 +3,14 @@ package com.leon.saintsdragons.server.ai.navigation;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * Smooth aquatic movement controller used while a dragon relies on {@link DragonAmphibiousNavigation}.
- * It accelerates toward the navigation's wanted position and dampens sideways drift to keep
- * the body aligned with the current swim direction.
+ * Based on Critters & Companions' Otter movement system - uses movement intention values (zza/yya)
+ * instead of direct velocity manipulation to prevent jittering.
  */
 public class DragonSwimMoveControl extends MoveControl {
 
@@ -28,39 +29,63 @@ public class DragonSwimMoveControl extends MoveControl {
 
     @Override
     public void tick() {
-        if (this.operation != Operation.MOVE_TO || this.mob.isPassenger()) {
+        // Only control movement when in water and not being ridden
+        if (this.operation != Operation.MOVE_TO || this.mob.isPassenger() || !this.mob.isInWater()) {
+            this.operation = Operation.WAIT;
+            this.mob.setZza(0.0F);
+            this.mob.setYya(0.0F);
+            this.mob.setXxa(0.0F);
+            return;
+        }
+
+        // Calculate direction to target
+        double dx = this.wantedX - this.mob.getX();
+        double dy = this.wantedY - this.mob.getY();
+        double dz = this.wantedZ - this.mob.getZ();
+        double distanceSqr = dx * dx + dy * dy + dz * dz;
+
+        // If very close to target, stop moving
+        if (distanceSqr < 2.5000003E-7F) {
+            this.mob.setZza(0.0F);
+            this.mob.setYya(0.0F);
             this.operation = Operation.WAIT;
             return;
         }
 
-        Vec3 toTarget = new Vec3(this.wantedX - mob.getX(), this.wantedY - mob.getY(), this.wantedZ - mob.getZ());
-        double distance = toTarget.length();
-        if (distance < 1.0E-4D) {
-            this.operation = Operation.WAIT;
-            mob.setDeltaMovement(mob.getDeltaMovement().scale(0.8D));
-            return;
+        // Calculate target yaw (horizontal rotation)
+        float targetYaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
+        this.mob.setYRot(rotlerp(this.mob.getYRot(), targetYaw, yawLimit));
+        this.mob.yBodyRot = this.mob.getYRot();
+        this.mob.yHeadRot = this.mob.getYRot();
+
+        // Calculate speed - amplify for swimming (dragons are large and need more power)
+        float baseSpeed = (float) (this.speedModifier * this.mob.getAttributeValue(Attributes.MOVEMENT_SPEED));
+        this.mob.setSpeed(baseSpeed * 0.2F);  // Entity speed (for physics)
+
+        // Calculate pitch (vertical rotation) - angle from horizontal to target
+        double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+        if (Math.abs(dy) > 1.0E-5F || Math.abs(horizontalDistance) > 1.0E-5F) {
+            float targetPitch = -((float) (Mth.atan2(dy, horizontalDistance) * Mth.RAD_TO_DEG));
+            targetPitch = Mth.clamp(Mth.wrapDegrees(targetPitch), -85.0F, 85.0F);
+            this.mob.setXRot(rotlerp(this.mob.getXRot(), targetPitch, yawLimit * 0.5F));
         }
 
-        Vec3 direction = toTarget.scale(1.0D / distance);
-        Vec3 velocity = mob.getDeltaMovement();
-        double baseSpeed = getNaturalSwimSpeed(mob);
-        double speedModifier = Math.max(0.15D, this.speedModifier);
+        // Set movement intention values using pitch
+        // BOOST the intention values significantly for large aquatic creatures
+        // Otters are small, dragons are MASSIVE and need more power to move through water
+        float pitchRad = this.mob.getXRot() * Mth.DEG_TO_RAD;
+        float cosXRot = Mth.cos(pitchRad);
+        float sinXRot = Mth.sin(pitchRad);
 
-        double targetSpeed = clampSpeed(baseSpeed * speedModifier);
-        Vec3 desired = velocity.add(direction.scale(accelerationScale * baseSpeed * speedModifier));
+        // Apply significant boost to movement intention (5x multiplier for large creature)
+        float amplifiedSpeed = baseSpeed * 5.0F;
+        this.mob.zza = cosXRot * amplifiedSpeed;      // Horizontal forward component
+        this.mob.yya = -sinXRot * amplifiedSpeed;     // Vertical component
 
-        if (desired.lengthSqr() > targetSpeed * targetSpeed) {
-            desired = desired.normalize().scale(targetSpeed);
+        // Add small upward push when target is above to help fight gravity
+        if (dy > 0.5D && horizontalDistance < 2.0D) {
+            this.mob.setDeltaMovement(this.mob.getDeltaMovement().add(0.0D, 0.015D, 0.0D));
         }
-
-        mob.setDeltaMovement(desired);
-
-        float yaw = (float) (Mth.atan2(desired.z, desired.x) * Mth.RAD_TO_DEG) - 90.0F;
-        mob.setYRot(Mth.approachDegrees(mob.getYRot(), yaw, yawLimit));
-        mob.yBodyRot = mob.getYRot();
-
-        float pitch = (float) -(Mth.atan2(desired.y, Math.sqrt(desired.x * desired.x + desired.z * desired.z)) * Mth.RAD_TO_DEG);
-        mob.setXRot(Mth.approachDegrees(mob.getXRot(), pitch, yawLimit));
     }
 
     private double getNaturalSwimSpeed(Mob mob) {
@@ -70,10 +95,11 @@ public class DragonSwimMoveControl extends MoveControl {
         return 0.6D + speedBoost;
     }
 
-    private double clampSpeed(double value) {
-        double min = Math.max(0.2D, value * 0.45D);
-        double max = Math.max(0.5D, value * 1.6D);
-        return Mth.clamp(value, min, max);
+    @Override
+    protected float rotlerp(float current, float target, float maxDelta) {
+        float delta = Mth.wrapDegrees(target - current);
+        delta = Mth.clamp(delta, -maxDelta, maxDelta);
+        return current + delta;
     }
 }
 
