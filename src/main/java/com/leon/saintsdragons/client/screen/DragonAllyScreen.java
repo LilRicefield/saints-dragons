@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * GUI screen for managing dragon allies.
+ * GUI screen for managing wyvern allies.
  * Allows adding/removing allies by username with validation.
  */
 public class DragonAllyScreen extends Screen {

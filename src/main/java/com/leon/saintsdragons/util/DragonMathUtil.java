@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Math utilities for dragon movement and behavior
+ * Math utilities for wyvern movement and behavior
  */
 public class DragonMathUtil {
 

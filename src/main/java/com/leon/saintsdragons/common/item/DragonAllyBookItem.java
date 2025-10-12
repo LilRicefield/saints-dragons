@@ -18,8 +18,8 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * Item used to open the dragon ally management GUI.
- * Right-click on a dragon to manage its allies.
+ * Item used to open the wyvern ally management GUI.
+ * Right-click on a wyvern to manage its allies.
  */
 public class DragonAllyBookItem extends Item {
     public DragonAllyBookItem(Properties properties) {
@@ -29,7 +29,7 @@ public class DragonAllyBookItem extends Item {
     @Override
     public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
         if (target instanceof DragonEntity dragon) {
-            // Check if player owns the dragon
+            // Check if player owns the wyvern
             if (!dragon.isTame() || !dragon.isOwnedBy(player)) {
                 player.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable("saintsdragons.message.not_dragon_owner"), 

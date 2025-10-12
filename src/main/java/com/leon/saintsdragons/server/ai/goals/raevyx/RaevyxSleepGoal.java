@@ -1,0 +1,96 @@
+package com.leon.saintsdragons.server.ai.goals.raevyx;
+
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.player.Player;
+
+import java.util.EnumSet;
+
+/**
+ * Fresh sleep goal for Lightning Dragons.
+ */
+public class RaevyxSleepGoal extends Goal {
+
+    private final Raevyx wyvern;
+    private int retryCooldown;
+
+    public RaevyxSleepGoal(Raevyx wyvern) {
+        this.wyvern = wyvern;
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
+    }
+
+    @Override
+    public boolean canUse() {
+        if (retryCooldown > 0) retryCooldown--;
+        if (retryCooldown > 0) return false;
+        if (wyvern.isSleepLocked()) return false;
+        if (!wyvern.canSleepNow() || wyvern.isSleepSuppressed()) return false;
+        if (wyvern.isInWaterOrBubble() || wyvern.isInLava()) return false;
+        if (wyvern.isDying() || wyvern.isVehicle() || wyvern.getTarget() != null || wyvern.isAggressive()) return false;
+        if (wyvern.level().isThundering()) return false;
+
+        return wyvern.isTame() ? ownerAsleepNearby() : wildShouldSleep();
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        return wyvern.isSleepLocked();
+    }
+
+    @Override
+    public void start() {
+        wyvern.startSleepEnter();
+    }
+
+    @Override
+    public void tick() {
+        if (wyvern.level().isClientSide) return;
+        if (wyvern.isSleepLocked() && !shouldRemainAsleep()) {
+            if (!wyvern.isSleepTransitioning()) {
+                wyvern.startSleepExit();
+            }
+        }
+    }
+
+    @Override
+    public void stop() {
+        if (!wyvern.isSleepLocked()) {
+            retryCooldown = 100;
+        }
+    }
+
+    @Override
+    public boolean isInterruptable() {
+        return false;
+    }
+
+    private boolean ownerAsleepNearby() {
+        LivingEntity owner = wyvern.getOwner();
+        if (!(owner instanceof Player player)) {
+            return false;
+        }
+        if (!player.isSleeping() || !player.isAlive()) {
+            return false;
+        }
+        if (player.level() != wyvern.level()) {
+            return false;
+        }
+        return wyvern.distanceToSqr(owner) <= 14 * 14;
+    }
+
+    private boolean wildShouldSleep() {
+        // Wild lightning dragons nap during the day when sheltered.
+        if (!wyvern.level().isDay()) return false;
+        var pos = wyvern.blockPosition();
+        var level = wyvern.level();
+        return !level.canSeeSky(pos) || level.getMaxLocalRawBrightness(pos) < 7;
+    }
+
+    private boolean shouldRemainAsleep() {
+        if (wyvern.isTame()) {
+            return ownerAsleepNearby();
+        }
+        return wildShouldSleep();
+    }
+}

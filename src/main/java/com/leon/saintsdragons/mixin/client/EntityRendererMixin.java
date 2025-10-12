@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.mixin.client;
 
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import net.minecraft.client.Camera;
@@ -25,26 +25,25 @@ public class EntityRendererMixin {
     private void modifyFOV(Camera camera, float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Double> cir) {
         Minecraft mc = Minecraft.getInstance();
         double targetFOVMultiplier = 1.0;
-        if (mc.player != null && (mc.player.getVehicle() instanceof LightningDragonEntity dragon || mc.player.getVehicle() instanceof AmphithereEntity amphithere || mc.player.getVehicle() instanceof RiftDrakeEntity riftDrake)) {
-            // Calculate target FOV multiplier based on dragon sprint state
+        if (mc.player != null && (mc.player.getVehicle() instanceof Raevyx raevyx || mc.player.getVehicle() instanceof AmphithereEntity amphithere || mc.player.getVehicle() instanceof RiftDrakeEntity riftDrake)) {
             boolean isAccelerating = false;
             boolean isFlying = false;
             double currentSpeed = 0;
             double maxSpeed = 0;
             
-            if (mc.player.getVehicle() instanceof LightningDragonEntity lightningDragon) {
-                isAccelerating = lightningDragon.isAccelerating();
-                isFlying = lightningDragon.isFlying();
+            if (mc.player.getVehicle() instanceof Raevyx raevyx) {
+                isAccelerating = raevyx.isAccelerating();
+                isFlying = raevyx.isFlying();
                 
                 if (isAccelerating) {
                     if (isFlying) {
                         // Flying sprint - use flying speed attributes
-                        currentSpeed = lightningDragon.getDeltaMovement().horizontalDistance();
-                        maxSpeed = lightningDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 50.0; // SPRINT_MAX_MULT
+                        currentSpeed = raevyx.getDeltaMovement().horizontalDistance();
+                        maxSpeed = raevyx.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 50.0; // SPRINT_MAX_MULT
                     } else {
                         // Ground sprint - use movement speed attributes
-                        currentSpeed = lightningDragon.getDeltaMovement().horizontalDistance();
-                        maxSpeed = lightningDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7; // Ground sprint multiplier
+                        currentSpeed = raevyx.getDeltaMovement().horizontalDistance();
+                        maxSpeed = raevyx.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7; // Ground sprint multiplier
                     }
                 }
             } else if (mc.player.getVehicle() instanceof AmphithereEntity amphithereDragon) {

@@ -2,9 +2,9 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
-import com.leon.saintsdragons.server.entity.effect.lightningdragon.LightningChainEntity;
+import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import com.leon.saintsdragons.server.entity.effect.amphithere.AmphithereMagmaBlockEntity;
 
@@ -15,25 +15,25 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
- * Central registry for all dragon entities.
- * Organized by dragon type for easy management and expansion.
+ * Central registry for all wyvern entities.
+ * Organized by wyvern type for easy management and expansion.
  */
 public class ModEntities {
     public static final DeferredRegister<EntityType<?>> REGISTER =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, SaintsDragons.MOD_ID);
 
     // ===== LIGHTNING DRAGON =====
-    public static final RegistryObject<EntityType<LightningDragonEntity>> LIGHTNING_DRAGON =
-            REGISTER.register("lightning_dragon", () -> EntityType.Builder.of(LightningDragonEntity::new, MobCategory.CREATURE)
+    public static final RegistryObject<EntityType<Raevyx>> RAEVYX =
+            REGISTER.register("raevyx", () -> EntityType.Builder.of(Raevyx::new, MobCategory.CREATURE)
                     .sized(3.5F, 3.0F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .build("lightning_dragon"));
+                    .build("raevyx"));
 
     // ===== PRIMITIVE DRAKE =====
     public static final RegistryObject<EntityType<PrimitiveDrakeEntity>> PRIMITIVE_DRAKE =
             REGISTER.register("primitive_drake", () -> EntityType.Builder.of(PrimitiveDrakeEntity::new, MobCategory.CREATURE)
-                    .sized(1.5F, 1.0F)  // Smaller than lightning dragon, cute little drake!
+                    .sized(1.5F, 1.0F)  // Smaller than lightning wyvern, cute little drake!
                     .clientTrackingRange(32)
                     .updateInterval(1)
                     .build("primitive_drake"));
@@ -55,12 +55,12 @@ public class ModEntities {
                     .build("rift_drake"));
 
     // ===== EFFECT ENTITIES =====
-    public static final RegistryObject<EntityType<LightningChainEntity>> LIGHTNING_CHAIN =
-            REGISTER.register("lightning_chain", () -> EntityType.Builder.<LightningChainEntity>of(LightningChainEntity::new, MobCategory.MISC)
+    public static final RegistryObject<EntityType<RaevyxLightningChainEntity>> RAEVYX_LIGHTNING_CHAIN =
+            REGISTER.register("raevyx_lightning_chain", () -> EntityType.Builder.<RaevyxLightningChainEntity>of(RaevyxLightningChainEntity::new, MobCategory.MISC)
                     .sized(1.0F, 1.0F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
-                    .build("lightning_chain"));
+                    .build("raevyx_lightning_chain"));
 
     public static final RegistryObject<EntityType<AmphithereMagmaBlockEntity>> AMPHITHERE_MAGMA_BLOCK =
             REGISTER.register("amphithere_magma_block", () -> EntityType.Builder.<AmphithereMagmaBlockEntity>of(AmphithereMagmaBlockEntity::new, MobCategory.MISC)

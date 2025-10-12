@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.primitivedrake;
 
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 
@@ -32,7 +32,7 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
     private boolean isPlayingDead = false;
     private int playDeadTicks = 0;
     private int cooldownTicks = 0;
-    private LightningDragonEntity nearbyLightningDragon = null;
+    private Raevyx nearbyLightningDragon = null;
     private boolean skipCooldownOnStop = false;
     
     public PrimitiveDrakePlayDeadGoal(PrimitiveDrakeEntity drake) {
@@ -101,7 +101,7 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
                 // For tamed drakes, re-check if there are any wild lightning dragons nearby
                 // If not, stop playing dead immediately
                 var nearbyWildLightningDragons = drake.level().getEntitiesOfClass(
-                    com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity.class,
+                    Raevyx.class,
                     drake.getBoundingBox().inflate(DETECTION_RANGE),
                     dragon -> dragon != null && !dragon.isRemoved() && !dragon.isTame()
                 );
@@ -111,9 +111,9 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
                     return false; // No wild lightning dragons nearby, stop playing dead
                 }
 
-                LightningDragonEntity closestWild = null;
+                Raevyx closestWild = null;
                 double closestDistance = Double.MAX_VALUE;
-                for (LightningDragonEntity dragon : nearbyWildLightningDragons) {
+                for (Raevyx dragon : nearbyWildLightningDragons) {
                     double distance = drake.distanceToSqr(dragon);
                     if (distance < closestDistance) {
                         closestDistance = distance;
@@ -124,16 +124,16 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
                     nearbyLightningDragon = closestWild;
                 }
             }
-            // Wild drakes continue playing dead around ANY lightning dragon (wild or tamed)
+            // Wild drakes continue playing dead around ANY lightning wyvern (wild or tamed)
             
-            // Check if lightning dragon is still nearby
+            // Check if lightning wyvern is still nearby
             if (nearbyLightningDragon != null && !nearbyLightningDragon.isRemoved()) {
                 double distance = drake.distanceToSqr(nearbyLightningDragon);
                 if (distance <= DETECTION_RANGE_SQR) {
-                    return true; // Lightning dragon still nearby, keep playing dead
+                    return true; // Lightning wyvern still nearby, keep playing dead
                 }
             }
-            // Lightning dragon moved away - stop playing dead soon (give it a few seconds to be safe)
+            // Lightning wyvern moved away - stop playing dead soon (give it a few seconds to be safe)
             if (playDeadTicks > 60) { // If more than 3 seconds left, reduce it
                 playDeadTicks = 40 + drake.getRandom().nextInt(40); // 2-4 seconds to "wake up"
             }
@@ -174,7 +174,7 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
     @Override
     public void tick() {
         if (isPlayingDead) {
-            // Check if lightning dragon is still nearby
+            // Check if lightning wyvern is still nearby
             boolean threatNearby = false;
             if (nearbyLightningDragon != null && !nearbyLightningDragon.isRemoved()) {
                 double distance = drake.distanceToSqr(nearbyLightningDragon);
@@ -246,12 +246,12 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
     }
     
     /**
-     * Find a nearby lightning dragon that could trigger the play dead behavior
+     * Find a nearby lightning wyvern that could trigger the play dead behavior
      */
     private boolean findNearbyLightningDragon() {
         // Look for lightning dragons in range
-        List<LightningDragonEntity> dragonsInRange = level.getEntitiesOfClass(
-            LightningDragonEntity.class,
+        List<Raevyx> dragonsInRange = level.getEntitiesOfClass(
+            Raevyx.class,
             drake.getBoundingBox().inflate(DETECTION_RANGE),
             dragon -> dragon != null && !dragon.isRemoved()
         );
@@ -261,12 +261,12 @@ public class PrimitiveDrakePlayDeadGoal extends Goal {
             return false;
         }
 
-        LightningDragonEntity closestDragon = null;
-        LightningDragonEntity closestWildDragon = null;
+        Raevyx closestDragon = null;
+        Raevyx closestWildDragon = null;
         double closestDistance = Double.MAX_VALUE;
         double closestWildDistance = Double.MAX_VALUE;
 
-        for (LightningDragonEntity dragon : dragonsInRange) {
+        for (Raevyx dragon : dragonsInRange) {
             double distance = drake.distanceToSqr(dragon);
 
             if (distance < closestDistance) {

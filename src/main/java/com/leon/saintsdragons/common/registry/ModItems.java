@@ -4,7 +4,7 @@ import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.common.item.AmphithereBinderItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.PrimitiveDrakeBinderItem;
-import com.leon.saintsdragons.common.item.LightningDragonBinderItem;
+import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.RiftDrakeBinderItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.ForgeSpawnEggItem;
@@ -16,10 +16,10 @@ public final class ModItems {
     public static final DeferredRegister<Item> REGISTER =
             DeferredRegister.create(ForgeRegistries.ITEMS, SaintsDragons.MOD_ID);
 
-    public static final RegistryObject<Item> LIGHTNING_DRAGON_SPAWN_EGG =
-            REGISTER.register("lightning_dragon_spawn_egg",
+    public static final RegistryObject<Item> RAEVYX_SPAWN_EGG =
+            REGISTER.register("raevyx_spawn_egg",
                     () -> new ForgeSpawnEggItem(
-                            ModEntities.LIGHTNING_DRAGON,
+                            ModEntities.RAEVYX,
                             0x000000, 0x8B0000, // base=black, spots=dark red
                             new Item.Properties()
                     )
@@ -70,9 +70,9 @@ public final class ModItems {
                     )
             );
 
-    public static final RegistryObject<Item> LIGHTNING_DRAGON_BINDER =
-            REGISTER.register("lightning_dragon_binder",
-                    () -> new LightningDragonBinderItem(
+    public static final RegistryObject<Item> RAEVYX_BINDER =
+            REGISTER.register("raevyx_binder",
+                    () -> new RaevyxBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0) // Unbreakable

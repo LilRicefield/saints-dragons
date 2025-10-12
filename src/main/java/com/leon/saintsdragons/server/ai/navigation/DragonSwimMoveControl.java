@@ -8,7 +8,7 @@ import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Smooth aquatic movement controller used while a dragon relies on {@link DragonAmphibiousNavigation}.
+ * Smooth aquatic movement controller used while a wyvern relies on {@link DragonAmphibiousNavigation}.
  * Based on Critters & Companions' Otter movement system - uses movement intention values (zza/yya)
  * instead of direct velocity manipulation to prevent jittering.
  */

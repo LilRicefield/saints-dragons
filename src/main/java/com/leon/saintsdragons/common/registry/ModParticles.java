@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.SaintsDragons;
-import com.leon.saintsdragons.common.particle.lightningdragon.LightningStormData;
-import com.leon.saintsdragons.common.particle.lightningdragon.LightningArcData;
-import com.leon.saintsdragons.common.particle.lightningdragon.LightningChainData;
+import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
+import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningArcData;
+import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraftforge.registries.DeferredRegister;
@@ -14,30 +14,30 @@ public class ModParticles {
     public static final DeferredRegister<ParticleType<?>> REGISTER =
             DeferredRegister.create(ForgeRegistries.PARTICLE_TYPES, SaintsDragons.MOD_ID);
 
-    public static final RegistryObject<ParticleType<LightningStormData>> LIGHTNING_STORM =
+    public static final RegistryObject<ParticleType<RaevyxLightningStormData>> LIGHTNING_STORM =
             REGISTER.register("lightning_storm",
-                    () -> new ParticleType<LightningStormData>(false, LightningStormData.DESERIALIZER) {
+                    () -> new ParticleType<RaevyxLightningStormData>(false, RaevyxLightningStormData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<LightningStormData> codec() {
-                            return LightningStormData.CODEC(this);
+                        public com.mojang.serialization.Codec<RaevyxLightningStormData> codec() {
+                            return RaevyxLightningStormData.CODEC(this);
                         }
                     });
 
-    public static final RegistryObject<ParticleType<LightningArcData>> LIGHTNING_ARC =
+    public static final RegistryObject<ParticleType<RaevyxLightningArcData>> LIGHTNING_ARC =
             REGISTER.register("lightning_arc",
-                    () -> new ParticleType<LightningArcData>(false, LightningArcData.DESERIALIZER) {
+                    () -> new ParticleType<RaevyxLightningArcData>(false, RaevyxLightningArcData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<LightningArcData> codec() {
-                            return LightningArcData.CODEC(this);
+                        public com.mojang.serialization.Codec<RaevyxLightningArcData> codec() {
+                            return RaevyxLightningArcData.CODEC(this);
                         }
                     });
 
-    public static final RegistryObject<ParticleType<LightningChainData>> LIGHTNING_CHAIN =
+    public static final RegistryObject<ParticleType<RaevyxLightningChainData>> LIGHTNING_CHAIN =
             REGISTER.register("lightning_chain",
-                    () -> new ParticleType<LightningChainData>(false, LightningChainData.DESERIALIZER) {
+                    () -> new ParticleType<RaevyxLightningChainData>(false, RaevyxLightningChainData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<LightningChainData> codec() {
-                            return LightningChainData.CODEC(this);
+                        public com.mojang.serialization.Codec<RaevyxLightningChainData> codec() {
+                            return RaevyxLightningChainData.CODEC(this);
                         }
                     });
 

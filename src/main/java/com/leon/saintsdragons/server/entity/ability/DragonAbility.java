@@ -11,7 +11,7 @@ import software.bernie.geckolib.core.object.PlayState;
 import java.util.Random;
 
 /**
- * Base dragon ability class with GeckoLib integration
+ * Base wyvern ability class with GeckoLib integration
  */
 public abstract class DragonAbility<T extends LivingEntity> {
     private final DragonAbilitySection[] sectionTrack;
@@ -234,7 +234,7 @@ public abstract class DragonAbility<T extends LivingEntity> {
     }
 
     /**
-     * Interface for entities that can use dragon abilities
+     * Interface for entities that can use wyvern abilities
      */
     @SuppressWarnings("unused") // Optional integration interface for entities opting into this API
     public interface DragonAbilityEntity {

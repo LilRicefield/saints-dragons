@@ -45,11 +45,11 @@ public class DragonKeybindHandler {
             if (!prevAttack && attack) {
                 var hitResult = rider.pick(6.0, 1.0f, false);
                 if (hitResult.getType() != net.minecraft.world.phys.HitResult.Type.ENTITY) {
-                    // Use the dragon's primary attack ability
+                    // Use the wyvern's primary attack ability
                     var chosen = dragon.getPrimaryAttackAbility();
 
                     if (chosen != null && dragon.combatManager.canStart(chosen)) {
-                        // Align dragon to rider's current view just before triggering the animation
+                        // Align wyvern to rider's current view just before triggering the animation
                         float yaw = rider.getYRot();
                         float pitch = rider.getXRot();
                         if (pitch > 35f) pitch = 35f;

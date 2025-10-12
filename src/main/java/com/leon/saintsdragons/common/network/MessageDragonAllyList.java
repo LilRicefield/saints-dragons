@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Network message for syncing dragon ally lists to clients.
+ * Network message for syncing wyvern ally lists to clients.
  * Updates the GUI with the current ally list.
  */
 public class MessageDragonAllyList {

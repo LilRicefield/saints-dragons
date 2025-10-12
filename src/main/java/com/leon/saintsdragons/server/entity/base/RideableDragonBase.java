@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Base implementation for rideable dragons.
  * Provides common functionality for animation state management and rider input handling.
- *
  * Usage: Extend this class in your dragon entity to get the standard rideable dragon behavior.
  */
 public abstract class RideableDragonBase extends DragonEntity implements RideableDragon, FlyingAnimal {

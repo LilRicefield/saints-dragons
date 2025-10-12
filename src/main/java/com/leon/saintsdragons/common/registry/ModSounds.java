@@ -8,17 +8,16 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
- * All the custom sounds for our lightning dragon
- * Because vanilla sounds are boring as heck
+ * Vanilla sounds are boring as heck
  */
 public final class ModSounds {
     public static final DeferredRegister<SoundEvent> REGISTER =
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, SaintsDragons.MOD_ID);
 
     // ===== AMBIENT SOUNDS =====
-    public static final RegistryObject<SoundEvent> DRAGON_GRUMBLE_1 = registerSound("lightningdragon_grumble_1");
-    public static final RegistryObject<SoundEvent> DRAGON_GRUMBLE_2 = registerSound("lightningdragon_grumble_2");
-    public static final RegistryObject<SoundEvent> DRAGON_GRUMBLE_3 = registerSound("lightningdragon_grumble_3");
+    public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_1 = registerSound("raevyx_grumble_1");
+    public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_2 = registerSound("raevyx_grumble_2");
+    public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_3 = registerSound("raevyx_grumble_3");
     
     // ===== PRIMITIVE DRAKE SOUNDS =====
     public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_GRUMBLE_1 = registerSound("primitivedrake_grumble1");
@@ -29,23 +28,23 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_HURT = registerSound("primitivedrake_hurt");
     public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_DIE = registerSound("primitivedrake_die");
 
-    public static final RegistryObject<SoundEvent> DRAGON_PURR = registerSound("lightningdragon_purr");
-    public static final RegistryObject<SoundEvent> DRAGON_SNORT = registerSound("lightningdragon_snort");
-    public static final RegistryObject<SoundEvent> DRAGON_CHUFF = registerSound("lightningdragon_chuff");
+    public static final RegistryObject<SoundEvent> RAEVYX_PURR = registerSound("raevyx_purr");
+    public static final RegistryObject<SoundEvent> RAEVYX_SNORT = registerSound("raevyx_snort");
+    public static final RegistryObject<SoundEvent> RAEVYX_CHUFF = registerSound("raevyx_chuff");
 
     // ===== EMOTIONAL SOUNDS =====
-    public static final RegistryObject<SoundEvent> DRAGON_CONTENT = registerSound("lightningdragon_content");
-    public static final RegistryObject<SoundEvent> DRAGON_ANNOYED = registerSound("lightningdragon_annoyed");
-    public static final RegistryObject<SoundEvent> DRAGON_EXCITED = registerSound("lightningdragon_excited");
+    public static final RegistryObject<SoundEvent> RAEVYX_CONTENT = registerSound("raevyx_content");
+    public static final RegistryObject<SoundEvent> RAEVYX_ANNOYED = registerSound("raevyx_annoyed");
+    public static final RegistryObject<SoundEvent> RAEVYX_EXCITED = registerSound("raevyx_excited");
 
     // ===== COMBAT SOUNDS =====
-    public static final RegistryObject<SoundEvent> DRAGON_ROAR = registerSound("lightningdragon_roar");
-    public static final RegistryObject<SoundEvent> DRAGON_SUMMON_STORM = registerSound("lightningdragon_summon_storm");
-    public static final RegistryObject<SoundEvent> DRAGON_GROWL_WARNING = registerSound("lightningdragon_growl_warning");
-    public static final RegistryObject<SoundEvent> DRAGON_HURT = registerSound("lightningdragon_hurt");
-    public static final RegistryObject<SoundEvent> DRAGON_BITE = registerSound("lightningdragon_bite");
-    public static final RegistryObject<SoundEvent> DRAGON_HORNGORE = registerSound("lightningdragon_horngore");
-    public static final RegistryObject<SoundEvent> DRAGON_DIE = registerSound("lightningdragon_die");
+    public static final RegistryObject<SoundEvent> RAEVYX_ROAR = registerSound("raevyx_roar");
+    public static final RegistryObject<SoundEvent> RAEVYX_SUMMON_STORM = registerSound("raevyx_summon_storm");
+    public static final RegistryObject<SoundEvent> RAEVYX_GROWL_WARNING = registerSound("raevyx_growl_warning");
+    public static final RegistryObject<SoundEvent> RAEVYX_HURT = registerSound("raevyx_hurt");
+    public static final RegistryObject<SoundEvent> RAEVYX_BITE = registerSound("raevyx_bite");
+    public static final RegistryObject<SoundEvent> RAEVYX_HORNGORE = registerSound("raevyx_horngore");
+    public static final RegistryObject<SoundEvent> RAEVYX_DIE = registerSound("raevyx_die");
 
 
     // ===== AMPHITHERE SOUNDS =====
@@ -63,16 +62,14 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> RIFTDRAKE_CLAW = registerSound("riftdrake_claw");
     public static final RegistryObject<SoundEvent> RIFTDRAKE_BITE = registerSound("riftdrake_bite");
 
-    // ===== STEP SOUNDS =====
-    public static final RegistryObject<SoundEvent> DRAGON_STEP = registerSound("dragon_step") ;
 
     // ===== KEYFRAMED ANIMATION SOUNDS =====
-    public static final RegistryObject<SoundEvent> FLAP1 = registerSound("lightningdragon_flap1");
-    public static final RegistryObject<SoundEvent> STEP1 = registerSound("lightningdragon_step1");
-    public static final RegistryObject<SoundEvent> STEP2 = registerSound("lightningdragon_step2");
+    public static final RegistryObject<SoundEvent> FLAP1 = registerSound("raevyx_flap1");
+    public static final RegistryObject<SoundEvent> STEP1 = registerSound("raevyx_step1");
+    public static final RegistryObject<SoundEvent> STEP2 = registerSound("raevyx_step2");
     // Run steps (faster cadence, distinct audio)
-    public static final RegistryObject<SoundEvent> RUN_STEP1 = registerSound("lightningdragon_run_step1");
-    public static final RegistryObject<SoundEvent> RUN_STEP2 = registerSound("lightningdragon_run_step2");
+    public static final RegistryObject<SoundEvent> RUN_STEP1 = registerSound("raevyx_run_step1");
+    public static final RegistryObject<SoundEvent> RUN_STEP2 = registerSound("raevyx_run_step2");
 
     /**
      * Helper method to register sounds without writing the same crap over and over

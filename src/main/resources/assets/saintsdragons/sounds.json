@@ -1,99 +1,99 @@
 {
-  "lightningdragon_grumble_1": {
-    "subtitle": "Dragon grumbles",
+  "raevyx_grumble_1": {
+    "subtitle": "Raevyx grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_grumble_1",
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble_1",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_grumble_2": {
-    "subtitle": "Dragon grumbles",
+  "raevyx_grumble_2": {
+    "subtitle": "Raevyx grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_grumble_2",
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble_2",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_grumble_3": {
-    "subtitle": "Dragon grumbles",
+  "raevyx_grumble_3": {
+    "subtitle": "Raevyx grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_grumble_3",
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble_3",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_purr": {
-    "subtitle": "Dragon purrs contentedly",
+  "raevyx_purr": {
+    "subtitle": "Raevyx purrs contentedly",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_purr",
+        "name": "saintsdragons:entity/raevyx/lightningdragon_purr",
         "volume": 0.7,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_snort": {
-    "subtitle": "Dragon snorts",
+  "raevyx_snort": {
+    "subtitle": "Raevyx snorts",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_snort",
+        "name": "saintsdragons:entity/raevyx/lightningdragon_snort",
         "volume": 0.9,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_chuff": {
-    "subtitle": "Dragon chuffs",
+  "raevyx_chuff": {
+    "subtitle": "Raevyx chuffs",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_chuff",
+        "name": "saintsdragons:entity/raevyx/raevyx_chuff",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_content": {
-    "subtitle": "Dragon sounds content",
+  "raevyx_content": {
+    "subtitle": "Raevyx sounds content",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_content",
+        "name": "saintsdragons:entity/raevyx/raevyx_content",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_annoyed": {
-    "subtitle": "Dragon sounds annoyed",
+  "raevyx_annoyed": {
+    "subtitle": "Raevyx sounds annoyed",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_annoyed",
+        "name": "saintsdragons:entity/raevyx/raevyx_annoyed",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_excited": {
-    "subtitle": "Dragon sounds excited",
+  "raevyx_excited": {
+    "subtitle": "Raevyx sounds excited",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_excited",
+        "name": "saintsdragons:entity/raevyx/raevyx_excited",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_roar": {
-    "subtitle": "Dragon roars",
+  "raevyx_roar": {
+    "subtitle": "Raevyx roars",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_roar",
+        "name": "saintsdragons:entity/raevyx/raevyx_roar",
         "volume": 2.5,
         "pitch": 1.0
       }
@@ -139,118 +139,118 @@
       }
     ]
   },
-  "lightningdragon_bite": {
-    "subtitle": "Dragon bites",
+  "raevyx_bite": {
+    "subtitle": "Raevyx bites",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_bite",
+        "name": "saintsdragons:entity/raevyx/raevyx_bite",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_horngore": {
-    "subtitle": "Dragon gores with horn",
+  "raevyx_horngore": {
+    "subtitle": "Raevyx gores with horn",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_horngore",
+        "name": "saintsdragons:entity/raevyx/raevyx_horngore",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_growl_warning": {
-    "subtitle": "Dragon growls menacingly",
+  "raevyx_growl_warning": {
+    "subtitle": "Raevyx growls menacingly",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_growl_warning",
+        "name": "saintsdragons:entity/raevyx/raevyx_growl_warning",
         "volume": 1.1,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_hurt": {
-    "subtitle": "Dragon hurt",
+  "raevyx_hurt": {
+    "subtitle": "Raevyx hurt",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_hurt",
+        "name": "saintsdragons:entity/raevyx/raevyx_hurt",
         "volume": 1.2,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_die": {
-    "subtitle": "Dragon dies",
+  "raevyx_die": {
+    "subtitle": "Raevyx dies",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_die",
+        "name": "saintsdragons:entity/raevyx/raevyx_die",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_step": {
+  "raevyx_step": {
     "subtitle": "Heavy footsteps",
     "sounds": [
-      { "name": "saintsdragons:entity/lightningdragon/lightningdragon_step1", "volume": 0.8, "pitch": 1.0 },
-      { "name": "saintsdragons:entity/lightningdragon/lightningdragon_step2", "volume": 0.8, "pitch": 1.0 }
+      { "name": "saintsdragons:entity/raevyx/raevyx_step1", "volume": 0.8, "pitch": 1.0 },
+      { "name": "saintsdragons:entity/raevyx/raevyx_step2", "volume": 0.8, "pitch": 1.0 }
     ]
   },
-  "lightningdragon_flap1": {
+  "raevyx_flap1": {
     "subtitle": "Wings flap",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_flap1",
+        "name": "saintsdragons:entity/raevyx/raevyx_flap1",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_step1": {
-    "subtitle": "Dragon steps",
+  "raevyx_step1": {
+    "subtitle": "Raevyx steps",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_step1",
+        "name": "saintsdragons:entity/raevyx/raevyx_step1",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_step2": {
-    "subtitle": "Dragon steps",
+  "raevyx_step2": {
+    "subtitle": "Raevyx steps",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_step2",
+        "name": "saintsdragons:entity/raevyx/raevyx_step2",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_run_step1": {
-    "subtitle": "Dragon runs",
+  "raevyx_run_step1": {
+    "subtitle": "Raevyx runs",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_run_step1",
+        "name": "saintsdragons:entity/raevyx/raevyx_run_step1",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_run_step2": {
-    "subtitle": "Dragon runs",
+  "raevyx_run_step2": {
+    "subtitle": "Raevyx runs",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_run_step2",
+        "name": "saintsdragons:entity/raevyx/raevyx_run_step2",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "lightningdragon_summon_storm": {
+  "raevyx_summon_storm": {
     "subtitle": "Storm gathers",
     "sounds": [
       {
-        "name": "saintsdragons:entity/lightningdragon/lightningdragon_summon_storm",
+        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm",
         "volume": 2.0,
         "pitch": 1.0
       }

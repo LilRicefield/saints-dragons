@@ -7,12 +7,12 @@ package com.leon.saintsdragons.server.entity.interfaces;
 public interface DragonSleepCapable {
     
     /**
-     * Check if the dragon is currently sleeping
+     * Check if the wyvern is currently sleeping
      */
     boolean isSleeping();
     
     /**
-     * Check if the dragon is transitioning to/from sleep
+     * Check if the wyvern is transitioning to/from sleep
      */
     boolean isSleepTransitioning();
     
@@ -32,17 +32,17 @@ public interface DragonSleepCapable {
     void startSleepExit();
     
     /**
-     * Get the dragon's preferred sleep conditions
+     * Get the wyvern's preferred sleep conditions
      */
     SleepPreferences getSleepPreferences();
     
     /**
-     * Check if the dragon can sleep in current conditions
+     * Check if the wyvern can sleep in current conditions
      */
     boolean canSleepNow();
     
     /**
-     * Sleep preferences for different dragon types
+     * Sleep preferences for different wyvern types
      */
     record SleepPreferences(
         boolean canSleepAtNight,      // Can sleep during night

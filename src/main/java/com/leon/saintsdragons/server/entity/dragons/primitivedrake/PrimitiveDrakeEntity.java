@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.primitivedrake;
 import com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakePlayDeadGoal;
 import com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake.PrimitiveDrakePassiveBuffAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
@@ -122,7 +123,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
         // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeSleepGoal(this)); // Highest priority - deep slumber takes precedence
-        PrimitiveDrakePlayDeadGoal playDeadGoalInstance = new PrimitiveDrakePlayDeadGoal(this); // Second priority - play dead when lightning dragon nearby
+        PrimitiveDrakePlayDeadGoal playDeadGoalInstance = new PrimitiveDrakePlayDeadGoal(this); // Second priority - play dead when lightning wyvern nearby
         this.playDeadGoal = playDeadGoalInstance;
         this.goalSelector.addGoal(1, playDeadGoalInstance);
         this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.primitivedrake.PrimitiveDrakeFollowOwnerGoal(this));
@@ -145,7 +146,7 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     }
     
     /**
-     * Check if the dragon is in a muted state (sitting/staying/playing dead)
+     * Check if the wyvern is in a muted state (sitting/staying/playing dead)
      * Used by sound system to prevent ambient sounds
      */
     public boolean isStayOrSitMuted() {
@@ -321,12 +322,12 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
             
             // Re-evaluate play dead state when tamed
             if (this.isPlayingDead()) {
-                // Check if there's still a reason to play dead (wild lightning dragon nearby)
+                // Check if there's still a reason to play dead (wild lightning wyvern nearby)
                 boolean shouldStillPlayDead = false;
                 
                 // Look for nearby lightning dragons
                 var nearbyLightningDragons = this.level().getEntitiesOfClass(
-                    com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity.class,
+                    Raevyx.class,
                     this.getBoundingBox().inflate(8.0), // Same range as play dead detection
                     dragon -> dragon != null && !dragon.isRemoved() && !dragon.isTame() // Only wild lightning dragons
                 );

@@ -1,4 +1,4 @@
-//FOR FUTURE USE CASEs LIKE NEW DRAGONS??? more zap van dinks or some fire dragon named Lava Tickler, idk
+//FOR FUTURE USE CASEs LIKE NEW DRAGONS??? more zap van dinks or some fire wyvern named Lava Tickler, idk
 
 package com.leon.saintsdragons.server.entity.base;
 
@@ -32,8 +32,8 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
- * Base class for all dragon entities in the Lightning Dragon mod.
- * Provides common GeckoLib integration, ability management, and basic dragon functionality.
+ * Base class for all wyvern entities in the Lightning Dragon mod.
+ * Provides common GeckoLib integration, ability management, and basic wyvern functionality.
  */
 public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Shared command synced data for all dragons
@@ -52,7 +52,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Combat manager for handling abilities and cooldowns
     public final DragonCombatHandler combatManager;
     
-    // Ally manager for handling dragon allies
+    // Ally manager for handling wyvern allies
     public final DragonAllyManager allyManager;
     
     // Sit progress fields
@@ -118,7 +118,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     /**
-     * Check if dragon can use abilities (not on cooldown, not already using one)
+     * Check if wyvern can use abilities (not on cooldown, not already using one)
      */
     public boolean canUseAbility() {
         return combatManager.canUseAbility();
@@ -154,7 +154,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     /**
      * Builder for creating VocalEntry maps with less boilerplate.
-     * Use this to define dragon vocals instead of manual Map.ofEntries bookkeeping.
+     * Use this to define wyvern vocals instead of manual Map.ofEntries bookkeeping.
      */
     public static final class VocalEntryBuilder {
         private final Map<String, VocalEntry> entries = new java.util.HashMap<>();
@@ -214,31 +214,31 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     /**
-     * Get the primary attack ability for this dragon type.
-     * Override in subclasses to define dragon-specific attack abilities.
+     * Get the primary attack ability for this wyvern type.
+     * Override in subclasses to define wyvern-specific attack abilities.
      */
     public abstract DragonAbilityType<?, ?> getPrimaryAttackAbility();
 
     /**
-     * Get the roar ability for this dragon type (if any)
+     * Get the roar ability for this wyvern type (if any)
      */
     public DragonAbilityType<?, ?> getRoaringAbility() {
         return null; // Default: no roar ability
     }
 
     /**
-     * Get the summon storm ability for this dragon type (if any)
+     * Get the summon storm ability for this wyvern type (if any)
      */
     public DragonAbilityType<?, ?> getChannelingAbility() {
         return null;
     }
 
     // ===== DRAGON STATE METHODS =====
-    // These methods should be implemented by dragon subclasses
+    // These methods should be implemented by wyvern subclasses
     // Default implementations return false/null for basic functionality
 
     /**
-     * Check if the dragon is currently dying
+     * Check if the wyvern is currently dying
      */
     public boolean isDying() {
         return dying;
@@ -264,8 +264,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // ===== DEATH SEQUENCE HELPERS =====
 
     /**
-     * Begin the standard death sequence for this dragon.
-     * Sets the dragon invulnerable, marks it as dying, and starts the death ability.
+     * Begin the standard death sequence for this wyvern.
+     * Sets the wyvern invulnerable, marks it as dying, and starts the death ability.
      * 
      * @param deathAbility The death ability type to activate
      */
@@ -304,7 +304,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     /**
      * Handle lethal damage by starting the death sequence.
-     * Call this from your dragon's hurt() override to intercept lethal damage.
+     * Call this from your wyvern's hurt() override to intercept lethal damage.
      * 
      * @param source The damage source
      * @param amount The damage amount
@@ -334,7 +334,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     /**
      * Register a bite sound key for animation controllers.
-     * Convenience method to avoid repeating the same pattern in every dragon.
+     * Convenience method to avoid repeating the same pattern in every wyvern.
      * 
      * @param controller The animation controller to register the sound key with
      */
@@ -344,42 +344,42 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
 
     /**
-     * Check if the dragon is in a muted state (sitting/staying)
+     * Check if the wyvern is in a muted state (sitting/staying)
      */
     public boolean isStayOrSitMuted() {
         return false;
     }
 
     /**
-     * Check if the dragon is transitioning between sleep states
+     * Check if the wyvern is transitioning between sleep states
      */
     public boolean isSleepTransitioning() {
         return false;
     }
 
     /**
-     * Check if the dragon is flying
+     * Check if the wyvern is flying
      */
     public boolean isFlying() {
         return false;
     }
 
     /**
-     * Check if the dragon is running
+     * Check if the wyvern is running
      */
     public boolean isRunning() {
         return false;
     }
 
     /**
-     * Check if the dragon is walking
+     * Check if the wyvern is walking
      */
     public boolean isWalking() {
         return false;
     }
 
     /**
-     * Check if the dragon is actually running (not just flagged as running)
+     * Check if the wyvern is actually running (not just flagged as running)
      */
     public boolean isActuallyRunning() {
         return false;
@@ -421,28 +421,28 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     /**
-     * Check if the dragon is going up (for riding controls)
+     * Check if the wyvern is going up (for riding controls)
      */
     public boolean isGoingUp() {
         return false; // Default implementation - override in subclasses
     }
 
     /**
-     * Set if the dragon is going up (for riding controls)
+     * Set if the wyvern is going up (for riding controls)
      */
     public void setGoingUp(boolean goingUp) {
         // Default implementation - override in subclasses
     }
 
     /**
-     * Check if the dragon is going down (for riding controls)
+     * Check if the wyvern is going down (for riding controls)
      */
     public boolean isGoingDown() {
         return false; // Default implementation - override in subclasses
     }
 
     /**
-     * Set if the dragon is going down (for riding controls)
+     * Set if the wyvern is going down (for riding controls)
      */
     public void setGoingDown(boolean goingDown) {
         // Default implementation - override in subclasses
@@ -508,7 +508,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
     
     /**
-     * Check if an entity is an ally of this dragon.
+     * Check if an entity is an ally of this wyvern.
      * Includes owner, other dragons owned by the same player, and manually set allies.
      */
     public boolean isAlly(net.minecraft.world.entity.Entity entity) {
@@ -541,11 +541,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return allyManager.isAlly(player);
         }
         
-        // Check if entity is owned by an ally (including the dragon's owner)
+        // Check if entity is owned by an ally (including the wyvern's owner)
         if (entity instanceof net.minecraft.world.entity.TamableAnimal tamable && tamable.isTame()) {
             net.minecraft.world.entity.LivingEntity owner = tamable.getOwner();
             if (owner instanceof Player playerOwner) {
-                // Check if the pet's owner is the dragon's owner OR a manually set ally
+                // Check if the pet's owner is the wyvern's owner OR a manually set ally
                 return (this.isTame() && this.isOwnedBy(playerOwner)) || allyManager.isAlly(playerOwner);
             }
         }
@@ -560,7 +560,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
     
     /**
-     * Check if an entity should be considered a valid target for this dragon.
+     * Check if an entity should be considered a valid target for this wyvern.
      * This prevents targeting allies even in retaliation scenarios.
      */
     public boolean canTarget(net.minecraft.world.entity.Entity entity) {
