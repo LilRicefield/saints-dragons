@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.common.network;
 
 /**
- * Enum for dragon rider actions to replace magic strings
+ * Enum for wyvern rider actions to replace magic strings
  */
 public enum DragonRiderAction {
     NONE,           // No special action

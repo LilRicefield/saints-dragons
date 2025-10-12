@@ -5,7 +5,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 
 /**
- * Custom OwnerHurtByTargetGoal that respects the dragon's ally system.
+ * Custom OwnerHurtByTargetGoal that respects the wyvern's ally system.
  * Prevents targeting allies even when they hurt the owner.
  */
 public class DragonOwnerHurtByTargetGoal extends OwnerHurtByTargetGoal {
@@ -33,7 +33,7 @@ public class DragonOwnerHurtByTargetGoal extends OwnerHurtByTargetGoal {
             return false;
         }
         
-        // Use dragon's canTarget method to respect ally system
+        // Use wyvern's canTarget method to respect ally system
         return dragon.canTarget(target);
     }
     

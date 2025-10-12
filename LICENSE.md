@@ -212,7 +212,7 @@ YOU MAY NOT:
 - Sell, reupload, or monetize the assets independently or as part of another
   project
 - Claim authorship or ownership of the assets
-- Use the assets in competing dragon mods or similar projects without
+- Use the assets in competing wyvern mods or similar projects without
   explicit permission
 
 For additional usage rights or permissions, contact: lilricefield@gmail.com

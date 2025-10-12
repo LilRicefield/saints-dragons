@@ -10,7 +10,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Network message for requesting dragon ally list from server.
+ * Network message for requesting wyvern ally list from server.
  * Sent by client when opening the ally management GUI.
  */
 public class MessageDragonAllyRequest {
@@ -34,15 +34,15 @@ public class MessageDragonAllyRequest {
             ServerPlayer player = context.getSender();
             if (player == null) return;
             
-            // Find the dragon entity
+            // Find the wyvern entity
             Entity entity = player.level().getEntity(message.dragonId);
             if (!(entity instanceof DragonEntity dragon)) {
                 return; // Dragon not found, ignore
             }
             
-            // Check if player owns the dragon
+            // Check if player owns the wyvern
             if (!dragon.isTame() || !dragon.isOwnedBy(player)) {
-                return; // Player doesn't own dragon, ignore
+                return; // Player doesn't own wyvern, ignore
             }
             
             // Send current ally list to client

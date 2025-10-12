@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static com.leon.saintsdragons.common.registry.ModSounds.RAEVYX_GRUMBLE_2;
+
 /**
  * Handles all sound effects for dragons
  * Separates sound logic from entity class for cleaner organization
@@ -230,24 +232,24 @@ public class DragonSoundHandler {
         Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
 
         switch (key) {
-            case "grumble1" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "grumble2" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "grumble3" -> playRouted(dragon.level(), ModSounds.DRAGON_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "grumble1" -> playRouted(dragon.level(), ModSounds.RAEVYX_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "grumble2" -> playRouted(dragon.level(), RAEVYX_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "grumble3" -> playRouted(dragon.level(), ModSounds.RAEVYX_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "primitivedrake_grumble1" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_1.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             case "primitivedrake_grumble2" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_2.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             case "primitivedrake_grumble3" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_3.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "purr"      -> playRouted(dragon.level(), ModSounds.DRAGON_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos, true);
-            case "snort"     -> playRouted(dragon.level(), ModSounds.DRAGON_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "chuff"     -> playRouted(dragon.level(), ModSounds.DRAGON_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "content"   -> playRouted(dragon.level(), ModSounds.DRAGON_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, true);
-            case "annoyed"   -> playRouted(dragon.level(), ModSounds.DRAGON_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "growl_warning" -> playRouted(dragon.level(), ModSounds.DRAGON_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
-            case "roar"      -> playRouted(dragon.level(), ModSounds.DRAGON_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
+            case "purr"      -> playRouted(dragon.level(), ModSounds.RAEVYX_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos, true);
+            case "snort"     -> playRouted(dragon.level(), ModSounds.RAEVYX_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "chuff"     -> playRouted(dragon.level(), ModSounds.RAEVYX_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "content"   -> playRouted(dragon.level(), ModSounds.RAEVYX_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, true);
+            case "annoyed"   -> playRouted(dragon.level(), ModSounds.RAEVYX_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+            case "growl_warning" -> playRouted(dragon.level(), ModSounds.RAEVYX_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
+            case "roar"      -> playRouted(dragon.level(), ModSounds.RAEVYX_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
             case "amphithere_roar" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_ROAR.get(), 1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "amphithere_bite" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_BITE.get(), 1.0f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             case "amphithere_hurt" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_HURT.get(), 1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "hurt"      -> playRouted(dragon.level(), ModSounds.DRAGON_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "die"       -> playRouted(dragon.level(), ModSounds.DRAGON_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "hurt"      -> playRouted(dragon.level(), ModSounds.RAEVYX_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+            case "die"       -> playRouted(dragon.level(), ModSounds.RAEVYX_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             default -> {
                 return;
             }
@@ -264,7 +266,7 @@ public class DragonSoundHandler {
 
     /**
      * Returns an appropriate action-controller window length (in ticks) for a vocal animation key.
-     * Values mirror the animation lengths defined in lightning_dragon.animation.json (rounded up).
+     * Values mirror the animation lengths defined in raevyx.animation.json (rounded up).
      */
     private static int getVocalAnimationWindowTicks(String key) {
         if (key == null) return 0;
@@ -431,7 +433,7 @@ public class DragonSoundHandler {
 
     private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting, boolean allowDuringSleep) {
         // Allow hurt and die sounds to play regardless of sleep/sit state
-        boolean isHurtOrDieSound = sound == ModSounds.DRAGON_HURT.get() || sound == ModSounds.DRAGON_DIE.get();
+        boolean isHurtOrDieSound = sound == ModSounds.RAEVYX_HURT.get() || sound == ModSounds.RAEVYX_DIE.get();
         if (!allowDuringSleep && !isHurtOrDieSound && dragon.isSleeping()) return;
         if (!allowWhenSitting && !isHurtOrDieSound && dragon.isStayOrSitMuted()) return;
         if (level == null) return;
@@ -466,12 +468,12 @@ public class DragonSoundHandler {
 
     /**
      * Compute an approximate world position for a given locator name from the .geo.
-     * This uses static locator offsets and rotates them by the dragon's body yaw.
+     * This uses static locator offsets and rotates them by the wyvern's body yaw.
      * If the locator is unknown or null, returns null to fall back to the entity position.
      */
     private Vec3 resolveLocatorWorldPos(String locator) {
         if (locator == null || locator.isEmpty()) return null;
-        // Only compute for known locators. Values taken from lightning_dragon.geo.json
+        // Only compute for known locators. Values taken from raevyx.geo.json
         // "leftfeetLocator":  [ 2.2, 0.05, 2.85]
         // "rightfeetLocator": [-2.2, 0.05, 2.85]
         // "mouth_origin":      [ 0.1, 8.7, -17.4]
@@ -499,20 +501,20 @@ public class DragonSoundHandler {
         Vec3 cached = dragon.getClientLocatorPosition(locator);
         if (cached != null) return cached;
 
-        // Fallback: Convert model-space units (pixels) into world units using dragon's model scale
-        double modelScale = dragon.getBbWidth() / 4.5f; // Default dragon width is 4.5f, adjust based on actual size
+        // Fallback: Convert model-space units (pixels) into world units using wyvern's model scale
+        double modelScale = dragon.getBbWidth() / 4.5f; // Default wyvern width is 4.5f, adjust based on actual size
         double sx = (lx / 16.0) * modelScale;
         double sy = (ly / 16.0) * modelScale;
         double sz = (lz / 16.0) * modelScale;
 
-        // Rotate around Y by the dragon's body yaw
+        // Rotate around Y by the wyvern's body yaw
         double yawDeg = dragon.yBodyRot;
         double cy = Math.cos(Math.toRadians(yawDeg));
         double syaw = Math.sin(Math.toRadians(yawDeg));
         double rx = sx * cy - sz * syaw;
         double rz = sx * syaw + sz * cy;
 
-        // Offset from current dragon position
+        // Offset from current wyvern position
         return new Vec3(dragon.getX() + rx, dragon.getY() + sy, dragon.getZ() + rz);
     }
     

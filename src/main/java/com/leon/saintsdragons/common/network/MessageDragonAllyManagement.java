@@ -11,7 +11,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Network message for managing dragon allies.
+ * Network message for managing wyvern allies.
  * Handles adding/removing allies and syncing ally lists.
  */
 public class MessageDragonAllyManagement {
@@ -43,14 +43,14 @@ public class MessageDragonAllyManagement {
             ServerPlayer player = context.getSender();
             if (player == null) return;
             
-            // Find the dragon entity
+            // Find the wyvern entity
             Entity entity = player.level().getEntity(message.dragonId);
             if (!(entity instanceof DragonEntity dragon)) {
                 player.sendSystemMessage(Component.translatable("saintsdragons.message.dragon_not_found"));
                 return;
             }
             
-            // Check if player owns the dragon
+            // Check if player owns the wyvern
             if (!dragon.isTame() || !dragon.isOwnedBy(player)) {
                 player.sendSystemMessage(Component.translatable("saintsdragons.message.not_dragon_owner"));
                 return;

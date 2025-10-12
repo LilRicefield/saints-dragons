@@ -11,8 +11,8 @@ import net.minecraft.world.level.pathfinder.Path;
 import java.util.EnumSet;
 
 /**
- * Base class for dragon melee attack goals.
- * Works with any dragon that implements DragonCombatCapable.
+ * Base class for wyvern melee attack goals.
+ * Works with any wyvern that implements DragonCombatCapable.
  */
 public abstract class DragonMeleeAttackGoalBase extends Goal {
     protected final DragonEntity dragon;
@@ -40,7 +40,7 @@ public abstract class DragonMeleeAttackGoalBase extends Goal {
         LivingEntity target = dragon.getTarget();
         if (target == null || !target.isAlive()) return false;
         
-        // Use interface methods instead of hardcoded dragon type
+        // Use interface methods instead of hardcoded wyvern type
         return combatCapable.canMeleeAttack() && 
                dragon.distanceToSqr(target) <= attackRange * attackRange;
     }
@@ -125,12 +125,12 @@ public abstract class DragonMeleeAttackGoalBase extends Goal {
     }
     
     /**
-     * Called when an attack is performed. Override for dragon-specific behavior.
+     * Called when an attack is performed. Override for wyvern-specific behavior.
      */
     protected abstract void onAttackPerformed(LivingEntity target);
     
     /**
-     * Configure combat parameters. Override in subclasses for different dragon types.
+     * Configure combat parameters. Override in subclasses for different wyvern types.
      */
     protected void configureCombatParameters() {
         // Default parameters - can be overridden

@@ -2,7 +2,7 @@ package com.leon.saintsdragons.client.event;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
-import com.leon.saintsdragons.server.entity.dragons.lightningdragon.LightningDragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import net.minecraft.client.Minecraft;
@@ -25,8 +25,8 @@ public class ClientEventHandler {
         
         
         // Dragon riding camera adjustments
-        if (player.isPassenger() && player.getVehicle() instanceof LightningDragonEntity && event.getCamera().isDetached()) {
-            // Base zoom for dragon riding - adjusted distance for better dragon visibility
+        if (player.isPassenger() && player.getVehicle() instanceof Raevyx && event.getCamera().isDetached()) {
+            // Base zoom for wyvern riding - adjusted distance for better wyvern visibility
             event.getCamera().move(-event.getCamera().getMaxZoom(10F), 0, 0);
         }
 

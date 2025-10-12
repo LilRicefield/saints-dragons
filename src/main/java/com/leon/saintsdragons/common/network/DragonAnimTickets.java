@@ -5,7 +5,7 @@ import software.bernie.geckolib.network.SerializableDataTicket;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
- * Shared GeckoLib data tickets for syncing dragon animation state.
+ * Shared GeckoLib data tickets for syncing wyvern animation state.
  */
 public final class DragonAnimTickets {
     public static final SerializableDataTicket<Integer> GROUND_STATE = registerInt("dragon_ground_state");

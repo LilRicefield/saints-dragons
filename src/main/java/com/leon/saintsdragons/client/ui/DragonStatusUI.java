@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Main Dragon Status UI manager.
- * Handles rendering and interaction for all dragon UI elements.
+ * Handles rendering and interaction for all wyvern UI elements.
  */
 public class DragonStatusUI {
     private static final long SLIDE_DURATION_MS = 250L;
@@ -106,7 +106,7 @@ public class DragonStatusUI {
     }
 
     /**
-     * Update the UI with current dragon
+     * Update the UI with current wyvern
      */
     public void updateDragon(DragonEntity dragon) {
         this.currentDragon = dragon;
@@ -128,7 +128,7 @@ public class DragonStatusUI {
             return;
         }
 
-        // Check if player is riding the dragon
+        // Check if player is riding the wyvern
         Player player = minecraft.player;
         if (player == null || player.getVehicle() != currentDragon) {
             return;

@@ -1,16 +1,16 @@
 {
   "item.saintsdragons.dragon_ally_book": "Dragon Ally Book",
   "item.saintsdragons.primitive_drake_binder": "Primitive Drake Binder",
-  "item.saintsdragons.lightning_dragon_binder": "Lightning Dragon Binder",
+  "item.saintsdragons.raevyx_binder": "Raevyx Binder",
   "item.saintsdragons.amphithere_binder": "Amphithere Binder",
   "item.saintsdragons.rift_drake_binder": "Rift Drake Binder",
-  "item.saintsdragons.lightning_dragon_spawn_egg": "Lightning Dragon Spawn Egg",
+  "item.saintsdragons.raevyx_spawn_egg": "Raevyx Spawn Egg",
   "item.saintsdragons.primitive_drake_spawn_egg": "Primitive Drake Spawn Egg",
   "item.saintsdragons.amphithere_spawn_egg": "Amphithere Spawn Egg",
   "item.saintsdragons.rift_drake_spawn_egg": "Rift Drake Spawn Egg",
   
-  "entity.saintsdragons.lightning_dragon": "Lightning Dragon",
-  "entity.saintsdragons.lightning_chain": "Lightning Chain",
+  "entity.saintsdragons.raevyx": "Raevyx",
+  "entity.saintsdragons.raevyx_lightning_chain": "Raevyx's Lightning Chain",
   "entity.saintsdragons.primitive_drake": "Primitive Drake",
   "entity.saintsdragons.amphithere": "Amphithere",
   "entity.saintsdragons.rift_drake": "Rift Drake",
@@ -32,11 +32,11 @@
   "saintsdragons.tooltip.primitive_drake_binder.bound_desc": "Provides resistance buff while carried",
 
 
-  "saintsdragons.tooltip.lightning_dragon_binder.description": "§4Holds the storm at bay. §r§4§l§oFor now.§r§r§r",
-  "saintsdragons.tooltip.lightning_dragon_binder.empty": "Right-click on a tamed Lightning Dragon to bind it",
-  "saintsdragons.tooltip.lightning_dragon_binder.right_click_dragon_to_bind": "Right-click on ground to release bound dragon",
-  "saintsdragons.tooltip.lightning_dragon_binder.bound": "Contains: %s",
-  "saintsdragons.tooltip.lightning_dragon_binder.right_click_to_release": "Right-click on ground to release bound dragon",
+  "saintsdragons.tooltip.raevyx_binder.description": "§4Holds the storm at bay. §r§4§l§oFor now.§r§r§r",
+  "saintsdragons.tooltip.raevyx_binder.empty": "Right-click on a tamed Raevyx to bind it",
+  "saintsdragons.tooltip.raevyx_binder.right_click_dragon_to_bind": "Right-click on ground to release bound wyvern",
+  "saintsdragons.tooltip.raevyx_binder.bound": "Contains: %s",
+  "saintsdragons.tooltip.raevyx_binder.right_click_to_release": "Right-click on ground to release bound wyvern",
 
 
   "saintsdragons.tooltip.amphithere_binder.description": "§6The wind hums within, restless yet graceful.§r",
@@ -59,10 +59,11 @@
   "saintsdragons.message.binder_already_occupied": "This binder already contains a drake",
   "saintsdragons.message.binder_not_bound": "This binder is empty - bind a drake first",
   
-  "saintsdragons.message.lightning_dragon_captured": "Bound %s in Lightning Dragon Binder!",
-  "saintsdragons.message.lightning_dragon_released": "Released %s from Lightning Dragon Binder!",
+  "saintsdragons.message.raevyx_captured": "Bound %s in Raevyx Binder!",
+  "saintsdragons.message.raevyx_released": "Released %s from Raevyx Binder!",
   "saintsdragons.message.dragon_cannot_be_captured": "This dragon cannot be bound right now",
   "saintsdragons.message.cannot_release_others_dragon": "You can only release dragons you own",
+  "saintsdragons.message.raevyx_already_occupied": "This binder already contains a Raevyx",
   
   "saintsdragons.message.amphithere_captured": "Bound %s in Amphithere Binder!",
   "saintsdragons.message.amphithere_released": "Released %s from Amphithere Binder!",
@@ -77,8 +78,8 @@
   "saintsdragons.command.ally.clear.success": "Cleared all allies for %s",
   "saintsdragons.command.ally.not_dragon": "Entity %s is not a dragon",
   
-  "advancement.saintsdragons.tame_lightning_dragon.title": "Bleeding Bolt",
-  "advancement.saintsdragons.tame_lightning_dragon.description": "Tame a Lightning Dragon with a lot of fish and a lot of patience",
+  "advancement.saintsdragons.tame_raevyx.title": "Bleeding Bolt",
+  "advancement.saintsdragons.tame_raevyx.description": "Tame a Raevyx with a lot of fish and a lot of patience",
   
   "advancement.saintsdragons.tame_primitive_drake.title": "Iron Idiot",
   "advancement.saintsdragons.tame_primitive_drake.description": "Tame a Primitive Drake",
@@ -102,9 +103,9 @@
   "saintsdragons.ui.control.ability_tertiary": "Channel Ability",
   "saintsdragons.ui.control.ability_with_name": "%s (%s)",
   
-  "saintsdragons.ability.lightning_roar": "Roar",
-  "saintsdragons.ability.lightning_summon_storm": "Summon Storm",
-  "saintsdragons.ability.lightning_beam": "Lightning Beam",
+  "saintsdragons.ability.raevyx": "Roar",
+  "saintsdragons.ability.raevyx": "Summon Storm",
+  "saintsdragons.ability.raevyx": "Lightning Beam",
   "saintsdragons.ability.amphithere_bite": "Bite",
   "saintsdragons.ability.amphithere_roar": "Roar",
   "saintsdragons.ability.amphithere_fire_body": "Fire Body",
@@ -128,9 +129,9 @@
   "entity.saintsdragons.all.command_1": "%s is now sitting", 
   "entity.saintsdragons.all.command_2": "%s is now wandering",
   
-  "entity.saintsdragons.lightning_dragon.fed": "%s is fully healed!",
-  "entity.saintsdragons.lightning_dragon.fed_partial": "%s is being healed...",
-  "entity.saintsdragons.lightning_dragon.sleeping": "The dragon is sleeping.",
+  "entity.saintsdragons.raevyx.fed": "%s is fully healed!",
+  "entity.saintsdragons.raevyx.fed_partial": "%s is being healed...",
+  "entity.saintsdragons.raevyx.sleeping": "The wyvern is sleeping.",
   "entity.saintsdragons.primitive_drake.tamed": "%s has been tamed!",
   "entity.saintsdragons.primitive_drake.fed": "%s is fully healed!",
   "entity.saintsdragons.primitive_drake.fed_partial": "%s is being healed... (you must love this thing to even heal it)",

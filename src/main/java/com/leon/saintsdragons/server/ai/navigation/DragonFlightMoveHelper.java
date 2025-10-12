@@ -9,9 +9,8 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 
 /**
- * Generic dragon flight movement controller - handles AI flight pathfinding for any dragon type
+ * Generic flight movement controller - handles AI flight pathfinding for any type
  * Banking is handled elsewhere; MoveHelper focuses on movement only
- * 
  * Works with any entity that implements DragonFlightCapable interface
  */
 public class DragonFlightMoveHelper extends MoveControl {
@@ -59,7 +58,7 @@ public class DragonFlightMoveHelper extends MoveControl {
         );
     }
 
-    // Flight parameters for different dragon types
+    // Flight parameters for different wyvern types
     public static class FlightParameters {
         public final float maxYawChange;
         public final float maxPitchChange;
@@ -185,7 +184,7 @@ public class DragonFlightMoveHelper extends MoveControl {
         Vec3 motion = mob.getDeltaMovement();
         Vec3 targetVel = dir.scale(this.speedFactor);
         // Blend toward target velocity with per-axis acceleration cap to reduce twitch/overshoot
-        Vec3 delta = targetVel.subtract(motion).scale(velocityBlendRate); // dragon-specific blend rate
+        Vec3 delta = targetVel.subtract(motion).scale(velocityBlendRate); // wyvern-specific blend rate
         double accelCap = accelerationCap;
         // Additional dampening when obstructed
         if (isLineObstructed(mob.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ))) {

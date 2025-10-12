@@ -13,10 +13,10 @@ import net.minecraftforge.fml.common.Mod;
  * Awards XP orbs for kills made by dragons in multiplayer.
  *
  * By default, Minecraft drops XP when a player (or player-attributed source) kills a mob.
- * When the dragon kills directly (bite/gore), the victim may not drop XP.
+ * When the wyvern kills directly (bite/gore), the victim may not drop XP.
  * This handler spawns a reasonable amount of XP orbs at the victim's position
- * when the killer is our dragon. Roar lightning uses a vanilla LightningBolt with
- * the owner set to the dragon's owner, so XP for Roar remains vanilla and is not doubled.
+ * when the killer is our wyvern. Roar lightning uses a vanilla LightningBolt with
+ * the owner set to the wyvern's owner, so XP for Roar remains vanilla and is not doubled.
  */
 @Mod.EventBusSubscriber(modid = SaintsDragons.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class DragonXpHandler {
@@ -37,7 +37,7 @@ public class DragonXpHandler {
         var credit = dragonVictim.getKillCredit();
         if (!(credit instanceof net.minecraft.world.entity.player.Player)) return;
 
-        // Compute XP payout for the dragon
+        // Compute XP payout for the wyvern
         // Heuristic based on max health; clamp to reasonable bounds
         int xp = Mth.clamp((int)Math.ceil(dragonVictim.getMaxHealth() / 4.0f), 10, 75);
 

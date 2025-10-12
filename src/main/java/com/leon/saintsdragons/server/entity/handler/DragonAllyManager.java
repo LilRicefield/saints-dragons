@@ -31,7 +31,7 @@ public class DragonAllyManager {
     // Cache for username-to-UUID resolution to avoid repeated lookups
     private final Map<String, UUID> usernameCache = new ConcurrentHashMap<>();
     
-    // Maximum number of allies per dragon
+    // Maximum number of allies per wyvern
     private static final int MAX_ALLIES = 10;
     
     public DragonAllyManager(DragonEntity dragon) {
@@ -80,7 +80,7 @@ public class DragonAllyManager {
             return AllyResult.EASTER_EGG;
         }
         
-        // Check if trying to add the dragon owner as an ally (they're already the owner!)
+        // Check if trying to add the wyvern owner as an ally (they're already the owner!)
         if (dragon.getOwner() != null) {
             String ownerName = dragon.getOwner().getName().getString();
             if (username.equalsIgnoreCase(ownerName)) {
@@ -117,7 +117,7 @@ public class DragonAllyManager {
         allies.put(playerUuid, resolvedUsername);
         usernameCache.put(resolvedUsername.toLowerCase(), playerUuid);
         
-        LOGGER.info("Added ally '{}' ({}) to dragon {}", resolvedUsername, playerUuid, dragon);
+        LOGGER.info("Added ally '{}' ({}) to wyvern {}", resolvedUsername, playerUuid, dragon);
         return AllyResult.SUCCESS;
     }
     
@@ -139,7 +139,7 @@ public class DragonAllyManager {
         allies.remove(uuid);
         usernameCache.remove(username);
         
-        LOGGER.info("Removed ally '{}' ({}) from dragon {}", username, uuid, dragon);
+        LOGGER.info("Removed ally '{}' ({}) from wyvern {}", username, uuid, dragon);
         return AllyResult.SUCCESS;
     }
     
@@ -150,7 +150,7 @@ public class DragonAllyManager {
         String username = allies.remove(uuid);
         if (username != null) {
             usernameCache.remove(username.toLowerCase());
-            LOGGER.info("Removed ally '{}' ({}) from dragon {}", username, uuid, dragon);
+            LOGGER.info("Removed ally '{}' ({}) from wyvern {}", username, uuid, dragon);
             return true;
         }
         return false;
@@ -205,7 +205,7 @@ public class DragonAllyManager {
     public void clearAllies() {
         allies.clear();
         usernameCache.clear();
-        LOGGER.info("Cleared all allies from dragon {}", dragon);
+        LOGGER.info("Cleared all allies from wyvern {}", dragon);
     }
     
     /**
@@ -347,7 +347,7 @@ public class DragonAllyManager {
         NOT_ALLY("Player is not an ally"),
         ALLY_LIMIT_REACHED("Maximum ally limit reached"),
         EASTER_EGG("Easter egg message"),
-        IS_OWNER("You are already the owner of this dragon!"),
+        IS_OWNER("You are already the owner of this wyvern!"),
         INAPPROPRIATE_CONTENT("Inappropriate content detected");
         
         private final String message;

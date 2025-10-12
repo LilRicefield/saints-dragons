@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * Base class for all dragon UI elements.
+ * Base class for all wyvern UI elements.
  * Provides common functionality for moveable, draggable UI components.
  */
 public abstract class DragonUIElement {

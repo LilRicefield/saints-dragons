@@ -9,8 +9,8 @@ import net.minecraft.world.entity.player.Player;
 import java.util.EnumSet;
 
 /**
- * Base class for dragon sleep goals.
- * Works with any dragon that implements DragonSleepCapable.
+ * Base class for wyvern sleep goals.
+ * Works with any wyvern that implements DragonSleepCapable.
  */
 public abstract class DragonSleepGoalBase extends Goal {
     protected final DragonEntity dragon;
@@ -32,7 +32,7 @@ public abstract class DragonSleepGoalBase extends Goal {
             return false;
         }
         
-        // Use interface method to check if dragon can sleep
+        // Use interface method to check if wyvern can sleep
         if (!sleepCapable.canSleepNow()) return false;
         
         if (dragon.isTame()) {
@@ -61,12 +61,12 @@ public abstract class DragonSleepGoalBase extends Goal {
             // For wild dragons, check if they should wake up due to day/night transition
             DragonSleepCapable.SleepPreferences prefs = sleepCapable.getSleepPreferences();
             
-            // If dragon is sleeping at night and it becomes day, they should wake up
+            // If wyvern is sleeping at night and it becomes day, they should wake up
             if (prefs.canSleepAtNight() && !prefs.canSleepDuringDay() && isDay()) {
                 return false; // Wake up when day comes
             }
             
-            // If dragon is sleeping during day and it becomes night, they should wake up
+            // If wyvern is sleeping during day and it becomes night, they should wake up
             if (prefs.canSleepDuringDay() && !prefs.canSleepAtNight() && isNight()) {
                 return false; // Wake up when night comes
             }

@@ -33,7 +33,7 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         // Use ability ID to look up vocal entry (matches the pattern)
         String abilityId = this.getAbilityType().getName();
 
-        // Trigger death animation using dragon-specific metadata when available
+        // Trigger death animation using wyvern-specific metadata when available
         String controllerId = "action";
         VocalEntry deathEntry = dragon.getVocalEntries().get(abilityId);
         if (deathEntry != null && deathEntry.controllerId() != null) {
@@ -49,9 +49,9 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     @Override
     protected void endSection(DragonAbilitySection section) {
-        // After death animation completes, actually kill the dragon
+        // After death animation completes, actually kill the wyvern
         if (!getLevel().isClientSide) {
-            // Remove invulnerability and kill the dragon
+            // Remove invulnerability and kill the wyvern
             getUser().setInvulnerable(false);
             getUser().hurt(getLevel().damageSources().genericKill(), Float.MAX_VALUE);
         }

@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Player;
 
 /**
  * Manager for the Dragon Status UI system.
- * Handles UI lifecycle and dragon detection.
+ * Handles UI lifecycle and wyvern detection.
  */
 public class DragonStatusUIManager {
     private static DragonStatusUIManager instance;
@@ -51,17 +51,17 @@ public class DragonStatusUIManager {
         Player player = minecraft.player;
         DragonEntity currentDragon = null;
         
-        // Check if player is riding a dragon
+        // Check if player is riding a wyvern
         if (player != null && player.getVehicle() instanceof DragonEntity) {
             currentDragon = (DragonEntity) player.getVehicle();
         }
         
-        // Update UI if dragon changed
+        // Update UI if wyvern changed
         if (currentDragon != lastRiddenDragon) {
             dragonStatusUI.updateDragon(currentDragon);
             lastRiddenDragon = currentDragon;
             
-            // Auto-hide UI when not riding a dragon
+            // Auto-hide UI when not riding a wyvern
             if (currentDragon == null && dragonStatusUI.isVisible()) {
                 dragonStatusUI.setVisible(false);
             }

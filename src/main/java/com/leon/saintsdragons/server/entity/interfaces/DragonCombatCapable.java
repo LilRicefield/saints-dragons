@@ -9,17 +9,17 @@ import net.minecraft.world.entity.LivingEntity;
 public interface DragonCombatCapable {
     
     /**
-     * Get the dragon's melee attack range
+     * Get the wyvern's melee attack range
      */
     double getMeleeRange();
     
     /**
-     * Get the dragon's melee attack damage
+     * Get the wyvern's melee attack damage
      */
     float getMeleeDamage();
     
     /**
-     * Check if the dragon can perform melee attacks
+     * Check if the wyvern can perform melee attacks
      */
     boolean canMeleeAttack();
     
@@ -29,17 +29,17 @@ public interface DragonCombatCapable {
     void performMeleeAttack(LivingEntity target);
     
     /**
-     * Get the dragon's attack cooldown in ticks
+     * Get the wyvern's attack cooldown in ticks
      */
     int getAttackCooldown();
     
     /**
-     * Check if the dragon is currently attacking
+     * Check if the wyvern is currently attacking
      */
     boolean isAttacking();
     
     /**
-     * Set the dragon's attacking state
+     * Set the wyvern's attacking state
      */
     void setAttacking(boolean attacking);
 }
