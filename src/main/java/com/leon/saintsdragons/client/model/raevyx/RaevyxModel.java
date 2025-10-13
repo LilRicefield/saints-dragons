@@ -87,8 +87,11 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         deltaY = Mth.clamp(deltaY, -yawClamp, yawClamp);
         deltaX = Mth.clamp(deltaX, -pitchClamp, pitchClamp);
 
-        head.setRotY(snap.getRotY() + deltaY);
-        head.setRotX(snap.getRotX() + deltaX);
+        float targetY = snap.getRotY() + deltaY;
+        float targetX = snap.getRotX() + deltaX;
+        float smooth = entity.isFlying() ? 0.35f : 0.5f;
+        head.setRotY(Mth.lerp(smooth, head.getRotY(), targetY));
+        head.setRotX(Mth.lerp(smooth, head.getRotX(), targetX));
     }
 
     /**

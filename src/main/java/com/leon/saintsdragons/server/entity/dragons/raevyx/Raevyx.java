@@ -1468,7 +1468,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;
 
         // Convert smoothed yaw delta into a banking roll. Multiplying gives us headroom for aggressive turns.
-        float targetAngle = Mth.clamp(bankSmoothedYaw * 6.5f, -90f, 90f);
+        float targetAngle = Mth.clamp(bankSmoothedYaw * 8.5f, -90f, 90f);
         // Ease toward the new target so long sweeping turns feel weighty but responsive.
         bankAngle = Mth.lerp(0.28f, bankAngle, targetAngle);
         if (Math.abs(bankAngle) < 0.01f) {
