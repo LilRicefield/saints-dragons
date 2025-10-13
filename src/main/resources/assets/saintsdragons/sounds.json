@@ -256,71 +256,71 @@
       }
     ]
   },
-  "primitivedrake_grumble1": {
-    "subtitle": "Primitive Drake grumbles",
+  "stegonaut_grumble1": {
+    "subtitle": "Stegonaut grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/primitivedrake/primitivedrake_grumble1",
+        "name": "saintsdragons:entity/stegonaut/stegonaut_grumble1",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "primitivedrake_grumble2": {
-    "subtitle": "Primitive Drake grumbles",
+  "stegonaut_grumble2": {
+    "subtitle": "Stegonaut grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/primitivedrake/primitivedrake_grumble2",
+        "name": "saintsdragons:entity/stegonaut/stegonaut_grumble2",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "primitivedrake_grumble3": {
-    "subtitle": "Primitive Drake grumbles",
+  "stegonaut_grumble3": {
+    "subtitle": "Stegonaut grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/primitivedrake/primitivedrake_grumble3",
+        "name": "saintsdragons:entity/stegonaut/stegonaut_grumble3",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "primitivedrake_scared": {
-    "subtitle": "Primitive Drake is scared",
+  "stegonaut_scared": {
+    "subtitle": "Stegonaut is scared",
     "sounds": [
       {
-        "name": "saintsdragons:entity/primitivedrake/primitivedrake_scared",
+        "name": "saintsdragons:entity/stegonaut/stegonaut_scared",
         "volume": 1.2,
         "pitch": 1.0
       }
     ]
   },
-  "primitivedrake_relieved": {
-    "subtitle": "Primitive Drake sighs with relief",
+  "stegonaut_relieved": {
+    "subtitle": "Stegonaut sighs with relief",
     "sounds": [
       {
-        "name": "saintsdragons:entity/primitivedrake/primitivedrake_relieved",
+        "name": "saintsdragons:entity/stegonaut/stegonaut_relieved",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "primitivedrake_die": {
-    "subtitle": "Primitive Drake dies",
+  "stegonaut_die": {
+    "subtitle": "Stegonaut dies",
     "sounds": [
       {
-        "name": "saintsdragons:entity/primitivedrake/primitivedrake_die",
+        "name": "saintsdragons:entity/stegonaut/stegonaut_die",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "primitivedrake_hurt": {
-    "subtitle": "Primitive Drake hurts",
+  "stegonaut_hurt": {
+    "subtitle": "Stegonaut hurts",
     "sounds": [
       {
-        "name": "saintsdragons:entity/primitivedrake/primitivedrake_hurt",
+        "name": "saintsdragons:entity/stegonaut/stegonaut_hurt",
         "volume": 0.8,
         "pitch": 1.0
       }

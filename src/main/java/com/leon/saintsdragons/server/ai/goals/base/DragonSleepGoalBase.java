@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -28,7 +29,7 @@ public abstract class DragonSleepGoalBase extends Goal {
         if (sleepCapable.isSleepSuppressed()) return false;
         
         // Don't sleep while playing dead (deep slumber takes priority)
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity drake && drake.isPlayingDead()) {
+        if (dragon instanceof Stegonaut drake && drake.isPlayingDead()) {
             return false;
         }
         
@@ -48,7 +49,7 @@ public abstract class DragonSleepGoalBase extends Goal {
         if (agitated()) return false;
         
         // Don't continue sleeping while playing dead (deep slumber takes priority)
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity drake && drake.isPlayingDead()) {
+        if (dragon instanceof Stegonaut drake && drake.isPlayingDead()) {
             return false;
         }
         

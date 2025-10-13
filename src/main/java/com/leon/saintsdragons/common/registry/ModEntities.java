@@ -3,7 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.effect.amphithere.AmphithereMagmaBlockEntity;
@@ -30,13 +30,13 @@ public class ModEntities {
                     .updateInterval(1)
                     .build("raevyx"));
 
-    // ===== PRIMITIVE DRAKE =====
-    public static final RegistryObject<EntityType<PrimitiveDrakeEntity>> PRIMITIVE_DRAKE =
-            REGISTER.register("primitive_drake", () -> EntityType.Builder.of(PrimitiveDrakeEntity::new, MobCategory.CREATURE)
+    // ===== STEGONAUT =====
+    public static final RegistryObject<EntityType<Stegonaut>> STEGONAUT =
+            REGISTER.register("stegonaut", () -> EntityType.Builder.of(Stegonaut::new, MobCategory.CREATURE)
                     .sized(1.5F, 1.0F)  // Smaller than lightning wyvern, cute little drake!
                     .clientTrackingRange(32)
                     .updateInterval(1)
-                    .build("primitive_drake"));
+                    .build("stegonaut"));
 
     // ===== AMPHITHERE =====
     public static final RegistryObject<EntityType<AmphithereEntity>> AMPHITHERE =
