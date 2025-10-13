@@ -21,10 +21,14 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
     private static final double SEAT_BASE_FACTOR = 0.05D; // 0.0..1.0 of bbHeight
     // Additional vertical lift to avoid clipping
     private static final double SEAT_LIFT = 0.70D;
-    // Forward/back relative to body (blocks). +forward = toward head, - = toward tail
-    private static final double SEAT_FORWARD = 8.0D;
-    // Sideways relative to body (blocks). +side = to the dragon's right, - = left
-    private static final double SEAT_SIDE = 0.00D;
+
+    // SEAT 0 (DRIVER - OWNER ONLY) - Front seat position
+    private static final double SEAT_0_FORWARD = 8.0D;  // Toward head
+    private static final double SEAT_0_SIDE = 0.00D;
+
+    // SEAT 1 (PASSENGER) - Back seat position
+    private static final double SEAT_1_FORWARD = 4.0D;  // Behind driver
+    private static final double SEAT_1_SIDE = 0.00D;
 
     // ===== FLIGHT VERTICAL RATES (SLOWER THAN LIGHTNING DRAGON) =====
     // Up/down rates while flying controlled by keybinds - gliders are slower
@@ -259,11 +263,28 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
     
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
         if (!dragon.hasPassenger(passenger)) return;
-        
-        // Simple vanilla positioning - let the render layer handle bone positioning
+
+        // Determine which seat the passenger is in (0 = driver, 1 = passenger)
+        var passengers = dragon.getPassengers();
+        int seatIndex = passengers.indexOf(passenger);
+
+        if (seatIndex == -1) return; // Passenger not found
+
+        // Calculate seat position based on seat index
         double offsetY = getPassengersRidingOffset() + SEAT_LIFT;
-        double forward = SEAT_FORWARD;
-        double side = SEAT_SIDE;
+        double forward;
+        double side;
+
+        if (seatIndex == 0) {
+            // Seat 0 - Driver (front)
+            forward = SEAT_0_FORWARD;
+            side = SEAT_0_SIDE;
+        } else {
+            // Seat 1+ - Passenger (back)
+            forward = SEAT_1_FORWARD;
+            side = SEAT_1_SIDE;
+        }
+
         double rad = Math.toRadians(dragon.yBodyRot);
         double dx = -Math.sin(rad) * forward + Math.cos(rad) * side;
         double dz =  Math.cos(rad) * forward + Math.sin(rad) * side;
@@ -309,10 +330,16 @@ public record AmphithereRiderController(AmphithereEntity dragon) {
         return base.add(direction.scale(2.0));
     }
     
-    @Nullable 
+    @Nullable
     public LivingEntity getControllingPassenger() {
-        Entity entity = dragon.getFirstPassenger();
-        if (entity instanceof Player player && dragon.isTame() && dragon.isOwnedBy(player)) {
+        // Only seat 0 (first passenger) can control, and only if they're the owner
+        var passengers = dragon.getPassengers();
+        if (passengers.isEmpty()) {
+            return null;
+        }
+
+        Entity firstPassenger = passengers.get(0);
+        if (firstPassenger instanceof Player player && dragon.isTame() && dragon.isOwnedBy(player)) {
             return player;
         }
         return null;

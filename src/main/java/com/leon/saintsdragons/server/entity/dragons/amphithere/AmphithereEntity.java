@@ -771,11 +771,22 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
 
 
     // ===== Riding System Methods =====
-    
+
+    protected int getMaxPassengers() {
+        // Two-seater: Seat 0 (driver/owner) + Seat 1 (passenger)
+        return 2;
+    }
+
+    @Override
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
+        // Allow up to 2 passengers
+        return this.getPassengers().size() < getMaxPassengers();
+    }
+
     public void requestRiderTakeoff() {
         riderController.requestRiderTakeoff();
     }
-    
+
     public double getPassengersRidingOffset() {
         return riderController.getPassengersRidingOffset();
     }
