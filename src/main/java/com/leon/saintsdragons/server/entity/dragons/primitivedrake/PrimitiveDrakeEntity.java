@@ -5,7 +5,9 @@ import com.leon.saintsdragons.server.entity.ability.abilities.primitivedrake.Pri
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.primitivedrake.handlers.PrimitiveDrakeSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.Direction;
@@ -74,6 +76,11 @@ public class PrimitiveDrakeEntity extends DragonEntity implements DragonSleepCap
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonSoundProfile getSoundProfile() {
+        return PrimitiveDrakeSoundProfile.INSTANCE;
     }
 
     // Sleep system fields

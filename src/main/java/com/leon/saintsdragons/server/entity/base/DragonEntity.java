@@ -5,6 +5,7 @@ package com.leon.saintsdragons.server.entity.base;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import java.util.Collections;
@@ -146,9 +147,16 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return Collections.emptyMap();
     }
 
+    /**
+     * Provides dragon-specific sound configuration. Subclasses should override as needed.
+     */
+    public DragonSoundProfile getSoundProfile() {
+        return DragonSoundProfile.EMPTY;
+    }
+
     public record VocalEntry(String controllerId, String animationId, Supplier<SoundEvent> soundSupplier,
-                                 float volume, float basePitch, float pitchVariance, boolean allowWhenSitting,
-                                 boolean allowDuringSleep, boolean preventOverlap) {
+                                  float volume, float basePitch, float pitchVariance, boolean allowWhenSitting,
+                                  boolean allowDuringSleep, boolean preventOverlap) {
     }
 
 

@@ -18,6 +18,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.*;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.AquaticDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonControlStateHolder;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
@@ -358,6 +359,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
 
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
+    }
+
+    @Override
+    public DragonSoundProfile getSoundProfile() {
+        return NulljawSoundProfile.INSTANCE;
     }
 
     @Override
