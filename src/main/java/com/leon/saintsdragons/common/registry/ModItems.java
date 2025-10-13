@@ -3,7 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.common.item.AmphithereBinderItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
-import com.leon.saintsdragons.common.item.PrimitiveDrakeBinderItem;
+import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import net.minecraft.world.item.Item;
@@ -25,10 +25,10 @@ public final class ModItems {
                     )
             );
 
-    public static final RegistryObject<Item> PRIMITIVE_DRAKE_SPAWN_EGG =
-            REGISTER.register("primitive_drake_spawn_egg",
+    public static final RegistryObject<Item> STEGONAUT_SPAWN_EGG =
+            REGISTER.register("stegonaut_spawn_egg",
                     () -> new ForgeSpawnEggItem(
-                            ModEntities.PRIMITIVE_DRAKE,
+                            ModEntities.STEGONAUT,
                             0x8B4513, 0xCD853F, // base=brown, spots=sandy brown
                             new Item.Properties()
                     )
@@ -61,9 +61,9 @@ public final class ModItems {
                     )
             );
 
-    public static final RegistryObject<Item> PRIMITIVE_DRAKE_BINDER =
-            REGISTER.register("primitive_drake_binder",
-                    () -> new PrimitiveDrakeBinderItem(
+    public static final RegistryObject<Item> STEGONAUT_BINDER =
+            REGISTER.register("stegonaut_binder",
+                    () -> new StegonautBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0) // Unbreakable

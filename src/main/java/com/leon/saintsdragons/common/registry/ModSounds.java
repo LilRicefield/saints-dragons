@@ -20,13 +20,13 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_3 = registerSound("raevyx_grumble_3");
     
     // ===== PRIMITIVE DRAKE SOUNDS =====
-    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_GRUMBLE_1 = registerSound("primitivedrake_grumble1");
-    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_GRUMBLE_2 = registerSound("primitivedrake_grumble2");
-    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_GRUMBLE_3 = registerSound("primitivedrake_grumble3");
-    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_SCARED = registerSound("primitivedrake_scared");
-    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_RELIEVED = registerSound("primitivedrake_relieved");
-    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_HURT = registerSound("primitivedrake_hurt");
-    public static final RegistryObject<SoundEvent> PRIMITIVE_DRAKE_DIE = registerSound("primitivedrake_die");
+    public static final RegistryObject<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");
+    public static final RegistryObject<SoundEvent> STEGONAUT_GRUMBLE_2 = registerSound("stegonaut_grumble2");
+    public static final RegistryObject<SoundEvent> STEGONAUT_GRUMBLE_3 = registerSound("stegonaut_grumble3");
+    public static final RegistryObject<SoundEvent> STEGONAUT_SCARED = registerSound("stegonaut_scared");
+    public static final RegistryObject<SoundEvent> STEGONAUT_RELIEVED = registerSound("stegonaut_relieved");
+    public static final RegistryObject<SoundEvent> STEGONAUT_HURT = registerSound("stegonaut_hurt");
+    public static final RegistryObject<SoundEvent> STEGONAUT_DIE = registerSound("stegonaut_die");
 
     public static final RegistryObject<SoundEvent> RAEVYX_PURR = registerSound("raevyx_purr");
     public static final RegistryObject<SoundEvent> RAEVYX_SNORT = registerSound("raevyx_snort");
