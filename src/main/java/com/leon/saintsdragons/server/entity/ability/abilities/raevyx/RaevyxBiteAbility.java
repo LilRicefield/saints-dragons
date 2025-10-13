@@ -25,7 +25,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     // Tuning knobs
-    private static final float BITE_DAMAGE = 25.0f;
+    private static final float BITE_DAMAGE = 15.0f;
     // Slightly larger reach to match large model scale and AI stop distance
     private static final double BITE_RANGE = 4.6;
     // Extra range when ridden to be more forgiving for small mobs
