@@ -1,11 +1,16 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Raevyx-specific vocal timing metadata.
+ * Raevyx-specific vocal timing metadata and animation sound routing.
  */
 public final class RaevyxSoundProfile implements DragonSoundProfile {
 
@@ -26,10 +31,111 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             Map.entry("raevyx_die", 62)
     );
 
+    private static final Map<String, String> EFFECT_TO_VOCAL_KEY = Map.of(
+            "raevyx_grumble1", "grumble1",
+            "raevyx_grumble2", "grumble2",
+            "raevyx_grumble3", "grumble3",
+            "raevyx_chuff", "chuff",
+            "raevyx_content", "content",
+            "raevyx_purr", "purr",
+            "raevyx_roar", "roar",
+            "raevyx_hurt", "raevyx_hurt",
+            "raevyx_die", "raevyx_die"
+    );
+
+    private static final Set<String> STEP_KEYS = Set.of(
+            "raevyx_step1", "raevyx_step2",
+            "raevyx_run_step1", "raevyx_run_step2"
+    );
+
     private RaevyxSoundProfile() {}
+
+    @Override
+    public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
+        if (key.startsWith("raevyx_flap")) {
+            playWingFlap(handler, dragon, locator);
+            return true;
+        }
+        if (STEP_KEYS.contains(key)) {
+            return false; // let shared handler normalise & process footsteps
+        }
+        String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
+        if (vocalKey != null) {
+            playVocalEntry(handler, dragon, vocalKey, locator);
+            return true;
+        }
+        return switch (key) {
+            case "raevyx_bite" -> {
+                playSimpleMouthSound(handler, dragon, locator, ModSounds.RAEVYX_BITE.get(), 1.0f, 0.95f, 0.1f);
+                yield true;
+            }
+            case "raevyx_horngore" -> {
+                playSimpleMouthSound(handler, dragon, locator, ModSounds.RAEVYX_HORNGORE.get(), 1.3f, 0.9f, 0.2f);
+                yield true;
+            }
+            case "raevyx_summon_storm" -> {
+                playSummonStorm(handler, dragon, locator);
+                yield true;
+            }
+            default -> false;
+        };
+    }
+
+    @Override
+    public boolean handleSoundByName(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        if (key.startsWith("raevyx_flap")) {
+            playWingFlap(handler, dragon, null);
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public int getVocalAnimationWindowTicks(String key) {
         return VOCAL_WINDOWS.getOrDefault(key, -1);
+    }
+
+    private void playWingFlap(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 bodyPos = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "bodyLocator"
+        );
+        double flightSpeed = dragon.getCachedHorizontalSpeed();
+        float pitch = 1.0f + (float) (flightSpeed * 0.3f);
+        float volume = Math.max(0.6f, 0.9f + (float) (flightSpeed * 0.2f));
+        handler.emitSound(ModSounds.RAEVYX_FLAP1.get(), volume, pitch, bodyPos, false);
+    }
+
+    private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
+        DragonEntity.VocalEntry entry = dragon.getVocalEntries().get(vocalKey);
+        if (entry == null) {
+            return;
+        }
+        if (!entry.allowDuringSleep() && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+            return;
+        }
+        if (!entry.allowWhenSitting() && dragon.isStayOrSitMuted()) {
+            return;
+        }
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        float pitch = entry.basePitch();
+        if (entry.pitchVariance() != 0f) {
+            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+        }
+        handler.emitSound(entry.soundSupplier().get(), entry.volume(), pitch, at, entry.allowWhenSitting(), entry.allowDuringSleep());
+    }
+
+    private void playSimpleMouthSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                      net.minecraft.sounds.SoundEvent sound, float volume, float basePitch, float variance) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        float pitch = basePitch;
+        if (variance != 0f) {
+            pitch += dragon.getRandom().nextFloat() * variance;
+        }
+        handler.emitSound(sound, volume, pitch, at, false);
+    }
+
+    private void playSummonStorm(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        handler.emitSound(ModSounds.RAEVYX_SUMMON_STORM.get(), 1.6f, 1.0f, at, false);
     }
 }
