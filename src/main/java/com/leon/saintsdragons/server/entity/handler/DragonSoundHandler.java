@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.handler;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
@@ -12,16 +13,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static com.leon.saintsdragons.common.registry.ModSounds.RAEVYX_GRUMBLE_2;
-
 /**
  * Handles all sound effects for dragons
  * Separates sound logic from entity class for cleaner organization
  */
 public class DragonSoundHandler {
     private final DragonEntity dragon;
+    private final DragonSoundProfile profile;
     private static final int MIN_OVERLAP_GUARD_TICKS = 5;
-    private static final Set<String> DEFAULT_NON_OVERLAPPING_KEYS = Set.of("hurt", "amphithere_hurt", "die");
+    private static final Set<String> DEFAULT_NON_OVERLAPPING_KEYS = Set.of(
+            "hurt", "amphithere_hurt", "die",
+            "raevyx_hurt", "raevyx_die"
+    );
+    private static final Map<String, Integer> GENERIC_VOCAL_WINDOWS = Map.of(
+            "hurt", 20,
+            "die", 62
+    );
     private final Map<String, Integer> vocalCooldowns = new HashMap<>();
     // Step timing control for walk animation to match Blockbench keyframes precisely
     private static final int WALK_STEP_SEPARATION_TICKS = 12; // 0.6s @ 20 TPS
@@ -42,6 +49,8 @@ public class DragonSoundHandler {
     
     public DragonSoundHandler(DragonEntity dragon) {
         this.dragon = dragon;
+        DragonSoundProfile providedProfile = dragon.getSoundProfile();
+        this.profile = providedProfile != null ? providedProfile : DragonSoundProfile.EMPTY;
     }
 
     /** Call every entity tick to process any pending delayed footsteps */
@@ -115,40 +124,12 @@ public class DragonSoundHandler {
             handleStepSound(sound, stepLocator);
             return;
         }
+        if (profile.handleAnimationSound(this, dragon, sound, locator)) {
+            return;
+        }
         switch (sound) {
             case "wing_flap" -> handleWingFlapSound(sound);
             case "dragon_step" -> handleStepSound(sound, null);
-            case "amphithere_bite" -> {
-                Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.AMPHITHERE_BITE.get(), 1.0f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            }
-            case "nulljaw_phase2" -> {
-                Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.NULLJAW_PHASE2.get(), 2.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            }
-            case "nulljaw_phase1" -> {
-                Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.NULLJAW_PHASE1.get(), 1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            }
-            case "nulljaw_step" -> {
-                Vec3 locPos = resolveLocatorWorldPos(locator);
-                playRouted(dragon.level(), ModSounds.NULLJAW_STEP.get(), 0.8f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
-            }
-            case "nulljaw_claw" -> {
-                Vec3 locPos = resolveLocatorWorldPos(locator);
-                playRouted(dragon.level(), ModSounds.NULLJAW_CLAW.get(), 1.2f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
-            }
-            case "nulljaw_bite" -> {
-                Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.NULLJAW_BITE.get(), 1.1f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            }
-            case "nulljaw_roarclaw" -> {
-                Vec3 clawPos = resolveLocatorWorldPos(locator);
-                if (clawPos == null) {
-                    clawPos = resolveLocatorWorldPos("frontLocator");
-                }
-                playRouted(dragon.level(), ModSounds.NULLJAW_ROARCLAW.get(), 1.3f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, clawPos, false);
-            }
             case "takeoff_whoosh" -> handleTakeoffSound();
             case "landing_thud" -> handleLandingSound();
             default -> handleSoundByName(sound);
@@ -163,6 +144,9 @@ public class DragonSoundHandler {
         if (dragon.isStayOrSitMuted() || dragon.isSleeping() || dragon.isSleepTransitioning()) return; // Suppress during sit/sleep/transition
         if (soundName == null || soundName.isEmpty()) return;
         String key = soundName.toLowerCase(java.util.Locale.ROOT);
+        if (profile.handleSoundByName(this, dragon, key)) {
+            return;
+        }
         if (key.startsWith("flap")) { handleWingFlapSound(key); return; }
         if (key.startsWith("step") || key.startsWith("run_step")) { handleStepSound(key, null); return; }
         switch (key) {
@@ -191,6 +175,10 @@ public class DragonSoundHandler {
         }
 
         VocalEntry entry = dragon.getVocalEntries().get(key);
+        if (entry == null) {
+            entry = profile.getFallbackVocalEntry(key);
+        }
+
         boolean suppressOverlap = entry != null ? entry.preventOverlap() : DEFAULT_NON_OVERLAPPING_KEYS.contains(key);
         if (suppressOverlap) {
             Integer guard = vocalCooldowns.get(key);
@@ -199,68 +187,30 @@ public class DragonSoundHandler {
             }
         }
 
-        if (entry != null) {
-            if (!entry.allowDuringSleep() && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
-                return;
-            }
-            if (!entry.allowWhenSitting() && dragon.isStayOrSitMuted()) {
-                return;
-            }
-
-            Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-            float pitch = entry.basePitch();
-            if (entry.pitchVariance() != 0f) {
-                pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
-            }
-            playRouted(dragon.level(), entry.soundSupplier().get(), entry.volume(), pitch, mouthPos, entry.allowWhenSitting(), entry.allowDuringSleep());
-
-            int window = getVocalAnimationWindowTicks(key);
-            if (suppressOverlap) {
-                vocalCooldowns.put(key, currentTick + Math.max(window, MIN_OVERLAP_GUARD_TICKS));
-            }
-            if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
-                dragon.triggerAnim(entry.controllerId(), key);
-            }
+        if (entry == null) {
             return;
         }
 
-        // Fallback: legacy handling for dragons without metadata
-        if (!"hurt".equals(key) && !"amphithere_hurt".equals(key) && !"die".equals(key) && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
-            return; // Gate vocals during sleep/transition
+        if (!entry.allowDuringSleep() && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+            return;
+        }
+        if (!entry.allowWhenSitting() && dragon.isStayOrSitMuted()) {
+            return;
         }
 
         Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-
-        switch (key) {
-            case "grumble1" -> playRouted(dragon.level(), ModSounds.RAEVYX_GRUMBLE_1.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "grumble2" -> playRouted(dragon.level(), RAEVYX_GRUMBLE_2.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "grumble3" -> playRouted(dragon.level(), ModSounds.RAEVYX_GRUMBLE_3.get(), 0.8f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "primitivedrake_grumble1" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_1.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "primitivedrake_grumble2" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_2.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "primitivedrake_grumble3" -> playRouted(dragon.level(), ModSounds.PRIMITIVE_DRAKE_GRUMBLE_3.get(), 0.6f, 1.1f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "purr"      -> playRouted(dragon.level(), ModSounds.RAEVYX_PURR.get(),      0.8f, 1.05f + dragon.getRandom().nextFloat() * 0.05f, mouthPos, true);
-            case "snort"     -> playRouted(dragon.level(), ModSounds.RAEVYX_SNORT.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "chuff"     -> playRouted(dragon.level(), ModSounds.RAEVYX_CHUFF.get(),     0.9f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "content"   -> playRouted(dragon.level(), ModSounds.RAEVYX_CONTENT.get(),   0.8f, 1.0f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, true);
-            case "annoyed"   -> playRouted(dragon.level(), ModSounds.RAEVYX_ANNOYED.get(),   1.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
-            case "growl_warning" -> playRouted(dragon.level(), ModSounds.RAEVYX_GROWL_WARNING.get(), 1.2f, 0.8f + dragon.getRandom().nextFloat() * 0.4f, mouthPos, false);
-            case "roar"      -> playRouted(dragon.level(), ModSounds.RAEVYX_ROAR.get(),      1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.15f, mouthPos, false);
-            case "amphithere_roar" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_ROAR.get(), 1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "amphithere_bite" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_BITE.get(), 1.0f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "amphithere_hurt" -> playRouted(dragon.level(), ModSounds.AMPHITHERE_HURT.get(), 1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "hurt"      -> playRouted(dragon.level(), ModSounds.RAEVYX_HURT.get(),      1.2f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            case "die"       -> playRouted(dragon.level(), ModSounds.RAEVYX_DIE.get(),       1.5f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
-            default -> {
-                return;
-            }
+        float pitch = entry.basePitch();
+        if (entry.pitchVariance() != 0f) {
+            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
         }
+        playRouted(dragon.level(), entry.soundSupplier().get(), entry.volume(), pitch, mouthPos, entry.allowWhenSitting(), entry.allowDuringSleep());
 
         int window = getVocalAnimationWindowTicks(key);
         if (suppressOverlap) {
             vocalCooldowns.put(key, currentTick + Math.max(window, MIN_OVERLAP_GUARD_TICKS));
         }
         if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
-            dragon.triggerAnim("action", key);
+            dragon.triggerAnim(entry.controllerId(), key);
         }
     }
 
@@ -268,34 +218,17 @@ public class DragonSoundHandler {
      * Returns an appropriate action-controller window length (in ticks) for a vocal animation key.
      * Values mirror the animation lengths defined in raevyx.animation.json (rounded up).
      */
-    private static int getVocalAnimationWindowTicks(String key) {
+    private int getVocalAnimationWindowTicks(String key) {
         if (key == null) return 0;
-        // Map known keys to their approximate durations (seconds * 20)
-        // grumble1: 5.9167s, grumble2: 8.6667s, grumble3: 2.625s
-        // content: 4.7083s, purr: 5.2083s, snort: 0.875s, chuff: 1.2083s
-        return switch (key) {
-            case "grumble1" -> 120;  // ~5.9s
-            case "grumble2" -> 180;  // ~8.7s
-            case "grumble3" -> 60;   // ~2.6s
-            
-            // Primitive Drake grumbles - shorter, simpler animations
-            case "primitivedrake_grumble1" -> 40;  // ~2s - short cute grumble
-            case "primitivedrake_grumble2" -> 60;  // ~3s - medium grumble
-            case "primitivedrake_grumble3" -> 30;  // ~1.5s - quick grumble
-            case "content"  -> 100;  // ~4.7s
-            case "purr"     -> 110;  // ~5.2s
-            case "snort"    -> 24;   // ~0.9s
-            case "chuff"    -> 28;   // ~1.2s
-            case "roar"             -> 69;   // ~3.45s (animation ~3.4167s)
-            case "roar_ground"     -> 69;
-            case "roar_air"        -> 69;
-            case "amphithere_roar" -> 45;   // ~2.25s (animation length 2.25s)
-            case "amphithere_hurt" -> 20;   // ~1.0s one-shot
-            case "hurt"     -> 20;   // ~1.0s one-shot
-            case "die"      -> 62;   // ~3.071s one-shot
-            // Fallback window for other simple one-shots
-            default -> 40;            // ~2s
-        };
+        int custom = profile.getVocalAnimationWindowTicks(key);
+        if (custom >= 0) {
+            return custom;
+        }
+        Integer generic = GENERIC_VOCAL_WINDOWS.get(key);
+        if (generic != null) {
+            return generic;
+        }
+        return 40;
     }
     
     /**
@@ -419,6 +352,22 @@ public class DragonSoundHandler {
     /**
      * Plays sound properly on both client and server sides
      */
+    public void emitSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+        playRouted(dragon.level(), sound, volume, pitch);
+    }
+
+    public void emitSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at) {
+        playRouted(dragon.level(), sound, volume, pitch, at);
+    }
+
+    public void emitSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting) {
+        playRouted(dragon.level(), sound, volume, pitch, at, allowWhenSitting);
+    }
+
+    public void emitSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting, boolean allowDuringSleep) {
+        playRouted(dragon.level(), sound, volume, pitch, at, allowWhenSitting, allowDuringSleep);
+    }
+
     private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
         playRouted(level, sound, volume, pitch, null, false);
     }
@@ -471,7 +420,7 @@ public class DragonSoundHandler {
      * This uses static locator offsets and rotates them by the wyvern's body yaw.
      * If the locator is unknown or null, returns null to fall back to the entity position.
      */
-    private Vec3 resolveLocatorWorldPos(String locator) {
+    public Vec3 resolveLocatorWorldPos(String locator) {
         if (locator == null || locator.isEmpty()) return null;
         // Only compute for known locators. Values taken from raevyx.geo.json
         // "leftfeetLocator":  [ 2.2, 0.05, 2.85]

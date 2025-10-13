@@ -40,7 +40,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     private static String resolveManualVocalKey(String abilityId) {
         return switch (abilityId) {
-            case "hurt", "amphithere_hurt", "primitive_drake_hurt" -> abilityId; // Manual audio fallback for dragons without keyframes
+            case "hurt", "amphithere_hurt", "primitive_drake_hurt", "raevyx_hurt" -> abilityId; // Manual audio fallback when animation lacks audio
             default -> null;                      // Other dragons rely on keyframed audio
         };
     }

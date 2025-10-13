@@ -21,8 +21,10 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.controller.lightningdragon.RaevyxFlightController;
 import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxSoundProfile;
 import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.*;
 import com.leon.saintsdragons.server.entity.interfaces.ElectricalConductivityCapable;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
@@ -112,8 +114,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", "action", "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("hurt", "action", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
-            .add("die", "action", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
+            .add("raevyx_hurt", "action", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
+            .add("raevyx_die", "action", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
 
     private boolean manualSitCommand = false;
@@ -2451,6 +2453,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonSoundProfile getSoundProfile() {
+        return RaevyxSoundProfile.INSTANCE;
     }
 
     @Override

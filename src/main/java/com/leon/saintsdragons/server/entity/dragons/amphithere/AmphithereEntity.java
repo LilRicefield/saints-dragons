@@ -17,8 +17,10 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.amphithere.AmphithereRiderController;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.amphithere.handlers.AmphithereSoundProfile;
 import java.util.Map;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
@@ -1141,6 +1143,11 @@ public class AmphithereEntity extends RideableDragonBase implements DragonFlight
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonSoundProfile getSoundProfile() {
+        return AmphithereSoundProfile.INSTANCE;
     }
 
     @Override

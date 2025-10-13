@@ -36,8 +36,8 @@ public final class RaevyxAbilities {
 
     // Generic abilities (can be used by any wyvern)
     public static final DragonAbilityType<Raevyx, HurtAbility<Raevyx>> HURT =
-            AbilityRegistry.register(new DragonAbilityType<>("hurt", HurtAbility::new));
+            AbilityRegistry.register(new DragonAbilityType<>("raevyx_hurt", HurtAbility::new));
 
     public static final DragonAbilityType<Raevyx, DieAbility<Raevyx>> DIE =
-            AbilityRegistry.register(new DragonAbilityType<>("die", DieAbility::new));
+            AbilityRegistry.register(new DragonAbilityType<>("raevyx_die", DieAbility::new));
 }
