@@ -3,7 +3,7 @@
   "item.saintsdragons.stegonaut_binder": "Stegonaut Binder",
   "item.saintsdragons.raevyx_binder": "Raevyx Binder",
   "item.saintsdragons.amphithere_binder": "Amphithere Binder",
-  "item.saintsdragons.nulljaw": "Nulljaw Binder",
+  "item.saintsdragons.nulljaw_binder": "Nulljaw Binder",
   "item.saintsdragons.raevyx_spawn_egg": "Raevyx Spawn Egg",
   "item.saintsdragons.stegonaut_spawn_egg": "Stegonaut Spawn Egg",
   "item.saintsdragons.amphithere_spawn_egg": "Amphithere Spawn Egg",
@@ -45,7 +45,7 @@
   "saintsdragons.tooltip.amphithere_binder.bound": "Contains: %s",
   "saintsdragons.tooltip.amphithere_binder.right_click_to_release": "Right-click on ground to release bound amphithere",
   "saintsdragons.tooltip.nulljaw.description": "§lA shard of the abyss hums quietly inside.§r",
-  "saintsdragons.tooltip.nulljaw.empty": "Right-click on a tamed Rift Drake to bind it",
+  "saintsdragons.tooltip.nulljaw.empty": "Right-click on a tamed Nulljaw to bind it",
   "saintsdragons.tooltip.nulljaw.right_click_nulljaw_to_bind": "Right-click on ground to release bound Nulljaw",
   "saintsdragons.tooltip.nulljaw.bound": "Contains: %s",
   "saintsdragons.tooltip.nulljaw.right_click_to_release": "Right-click on ground to release bound Nulljaw",
@@ -67,7 +67,7 @@
   
   "saintsdragons.message.amphithere_captured": "Bound %s in Amphithere Binder!",
   "saintsdragons.message.amphithere_released": "Released %s from Amphithere Binder!",
-  "saintsdragons.message.nulljaw_captured": "Bound %s in nulljaw Binder!",
+  "saintsdragons.message.nulljaw_captured": "Bound %s in Nulljaw Binder!",
   "saintsdragons.message.nulljaw_released": "Released %s from Nulljaw Binder!",
   "saintsdragons.message.nulljaw_cannot_be_captured": "This Nulljaw cannot be bound right now",
   
