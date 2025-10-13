@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.controller.riftdrake;
 
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,18 +11,18 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Handles all riding mechanics for the Rift Drake
- * Ground-based dragon with aquatic capabilities
+ * Ground-based drake with aquatic capabilities
  */
-public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
+public record RiftDrakeRiderController(Nulljaw dragon) {
     // ===== SEAT TUNING CONSTANTS =====
-    // Baseline vertical offset relative to dragon height
+    // Baseline vertical offset relative to drake height
     private static final double SEAT_BASE_FACTOR = 0.45D; // 0.0..1.0 of bbHeight
     // Additional vertical lift to avoid clipping
     private static final double SEAT_LIFT = 0.75D;
     private static final double PHASE_TWO_LIFT = 3.5D;
     // Forward/back relative to body (blocks). +forward = toward head, - = toward tail
     private static final double SEAT_FORWARD = 3.0D;
-    // Sideways relative to body (blocks). +side = to the dragon's right, - = left
+    // Sideways relative to body (blocks). +side = to the drake's right, - = left
     private static final double SEAT_SIDE = 0.00D;
 
     // ===== GROUND MOVEMENT TUNING =====
@@ -67,7 +67,7 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
         // Clear target when being ridden to prevent AI interference
         dragon.setTarget(null);
         
-        // Make dragon responsive to player look direction - use conditional like other dragons
+        // Make drake responsive to player look direction - use conditional like other dragons
         float yawDiff = Math.abs(player.getYRot() - dragon.getYRot());
         if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
             float currentYaw = dragon.getYRot();
@@ -131,7 +131,7 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
     }
 
     /**
-     * Position a rider on the dragon
+     * Position a rider on the drake
      */
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
         if (passenger == null) return;
@@ -140,7 +140,7 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
         double seatForward = SEAT_FORWARD;
         double seatSide = SEAT_SIDE;
 
-        // Convert dragon-relative offsets to world coordinates
+        // Convert drake-relative offsets to world coordinates
         Vec3 forward = Vec3.directionFromRotation(0.0F, dragon.getYRot());
         Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
 
@@ -155,12 +155,12 @@ public record RiftDrakeRiderController(RiftDrakeEntity dragon) {
      * Get dismount location for a passenger
      */
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        // Simple dismount - place passenger beside the dragon
+        // Simple dismount - place passenger beside the drake
         Vec3 dragonPos = dragon.position();
         Vec3 forward = Vec3.directionFromRotation(0.0F, dragon.getYRot());
         Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
         
-        // Place passenger to the right side of the dragon
+        // Place passenger to the right side of the drake
         return dragonPos.add(right.scale(2.0D));
     }
 

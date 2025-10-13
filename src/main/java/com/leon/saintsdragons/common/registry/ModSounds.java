@@ -53,23 +53,23 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> AMPHITHERE_BITE = registerSound("amphithere_bite");
     public static final RegistryObject<SoundEvent> AMPHITHERE_DIE = registerSound("amphithere_die");
 
-    // ===== RIFT DRAKE SOUNDS =====
-    public static final RegistryObject<SoundEvent> RIFTDRAKE_PHASE1 = registerSound("riftdrake_phase1");
-    public static final RegistryObject<SoundEvent> RIFTDRAKE_PHASE2 = registerSound("riftdrake_phase2");
-    public static final RegistryObject<SoundEvent> RIFTDRAKE_ROAR = registerSound("riftdrake_roar");
-    public static final RegistryObject<SoundEvent> RIFTDRAKE_ROARCLAW = registerSound("riftdrake_roarclaw");
-    public static final RegistryObject<SoundEvent> RIFTDRAKE_STEP = registerSound("riftdrake_step");
-    public static final RegistryObject<SoundEvent> RIFTDRAKE_CLAW = registerSound("riftdrake_claw");
-    public static final RegistryObject<SoundEvent> RIFTDRAKE_BITE = registerSound("riftdrake_bite");
+    // ===== NULLJAW SOUNDS =====
+    public static final RegistryObject<SoundEvent> NULLJAW_PHASE1 = registerSound("nulljaw_phase1");
+    public static final RegistryObject<SoundEvent> NULLJAW_PHASE2 = registerSound("nulljaw_phase2");
+    public static final RegistryObject<SoundEvent> NULLJAW_ROAR = registerSound("nulljaw_roar");
+    public static final RegistryObject<SoundEvent> NULLJAW_ROARCLAW = registerSound("nulljaw_roarclaw");
+    public static final RegistryObject<SoundEvent> NULLJAW_STEP = registerSound("nulljaw_step");
+    public static final RegistryObject<SoundEvent> NULLJAW_CLAW = registerSound("nulljaw_claw");
+    public static final RegistryObject<SoundEvent> NULLJAW_BITE = registerSound("nulljaw_bite");
 
 
     // ===== KEYFRAMED ANIMATION SOUNDS =====
-    public static final RegistryObject<SoundEvent> FLAP1 = registerSound("raevyx_flap1");
-    public static final RegistryObject<SoundEvent> STEP1 = registerSound("raevyx_step1");
-    public static final RegistryObject<SoundEvent> STEP2 = registerSound("raevyx_step2");
+    public static final RegistryObject<SoundEvent> RAEVYX_FLAP1 = registerSound("raevyx_flap1");
+    public static final RegistryObject<SoundEvent> RAEVYX_STEP1 = registerSound("raevyx_step1");
+    public static final RegistryObject<SoundEvent> RAEVYX_STEP2 = registerSound("raevyx_step2");
     // Run steps (faster cadence, distinct audio)
-    public static final RegistryObject<SoundEvent> RUN_STEP1 = registerSound("raevyx_run_step1");
-    public static final RegistryObject<SoundEvent> RUN_STEP2 = registerSound("raevyx_run_step2");
+    public static final RegistryObject<SoundEvent> RAEVYX_RUN_STEP1 = registerSound("raevyx_run_step1");
+    public static final RegistryObject<SoundEvent> RAEVYX_RUN_STEP2 = registerSound("raevyx_run_step2");
 
     /**
      * Helper method to register sounds without writing the same crap over and over

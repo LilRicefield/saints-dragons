@@ -5,7 +5,7 @@ import com.leon.saintsdragons.common.item.AmphithereBinderItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.PrimitiveDrakeBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
-import com.leon.saintsdragons.common.item.RiftDrakeBinderItem;
+import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.registries.DeferredRegister;
@@ -43,10 +43,10 @@ public final class ModItems {
                     )
             );
 
-    public static final RegistryObject<Item> RIFT_DRAKE_SPAWN_EGG =
-            REGISTER.register("rift_drake_spawn_egg",
+    public static final RegistryObject<Item> NULLJAW_SPAWN_EGG =
+            REGISTER.register("nulljaw_spawn_egg",
                     () -> new ForgeSpawnEggItem(
-                            ModEntities.RIFT_DRAKE,
+                            ModEntities.NULLJAW,
                             0x2C3E50, 0x16A085,
                             new Item.Properties()
                     )
@@ -88,9 +88,9 @@ public final class ModItems {
                     )
             );
 
-    public static final RegistryObject<Item> RIFT_DRAKE_BINDER =
-            REGISTER.register("rift_drake_binder",
-                    () -> new RiftDrakeBinderItem(
+    public static final RegistryObject<Item> NULLJAW_BINDER =
+            REGISTER.register("nulljaw_binder",
+                    () -> new NulljawBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0) // Unbreakable

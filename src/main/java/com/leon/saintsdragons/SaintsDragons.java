@@ -5,7 +5,7 @@ import com.leon.saintsdragons.client.renderer.amphithere.AmphithereRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.primitivedrake.PrimitiveDrakeRenderer;
-import com.leon.saintsdragons.client.renderer.riftdrake.RiftDrakeRenderer;
+import com.leon.saintsdragons.client.renderer.nulljaw.NulljawRenderer;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
@@ -15,7 +15,7 @@ import com.leon.saintsdragons.server.command.DragonAllyCommand;
 import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.client.renderer.amphithere.AmphithereMagmaBlockRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.SpawnPlacements;
@@ -76,7 +76,7 @@ public class SaintsDragons {
         event.put(ModEntities.RAEVYX.get(), Raevyx.createAttributes().build());
         event.put(ModEntities.PRIMITIVE_DRAKE.get(), PrimitiveDrakeEntity.createAttributes().build());
         event.put(ModEntities.AMPHITHERE.get(), AmphithereEntity.createAttributes().build());
-        event.put(ModEntities.RIFT_DRAKE.get(), RiftDrakeEntity.createAttributes().build());
+        event.put(ModEntities.NULLJAW.get(), Nulljaw.createAttributes().build());
     }
 
     private void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -84,7 +84,7 @@ public class SaintsDragons {
         event.registerEntityRenderer(ModEntities.RAEVYX_LIGHTNING_CHAIN.get(), RaevyxLightningChainRenderer::new);
         event.registerEntityRenderer(ModEntities.PRIMITIVE_DRAKE.get(), PrimitiveDrakeRenderer::new);
         event.registerEntityRenderer(ModEntities.AMPHITHERE.get(), AmphithereRenderer::new);
-        event.registerEntityRenderer(ModEntities.RIFT_DRAKE.get(), RiftDrakeRenderer::new);
+        event.registerEntityRenderer(ModEntities.NULLJAW.get(), NulljawRenderer::new);
         event.registerEntityRenderer(ModEntities.AMPHITHERE_MAGMA_BLOCK.get(), AmphithereMagmaBlockRenderer::new);
     }
 
@@ -93,14 +93,14 @@ public class SaintsDragons {
             event.accept(ModItems.RAEVYX_SPAWN_EGG);
             event.accept(ModItems.PRIMITIVE_DRAKE_SPAWN_EGG);
             event.accept(ModItems.AMPHITHERE_SPAWN_EGG);
-            event.accept(ModItems.RIFT_DRAKE_SPAWN_EGG);
+            event.accept(ModItems.NULLJAW_SPAWN_EGG);
         }
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(ModItems.DRAGON_ALLY_BOOK);
             event.accept(ModItems.PRIMITIVE_DRAKE_BINDER);
             event.accept(ModItems.RAEVYX_BINDER);
             event.accept(ModItems.AMPHITHERE_BINDER);
-            event.accept(ModItems.RIFT_DRAKE_BINDER);
+            event.accept(ModItems.NULLJAW_BINDER);
         }
     }
 
@@ -130,10 +130,10 @@ public class SaintsDragons {
         );
 
         event.register(
-                ModEntities.RIFT_DRAKE.get(),
+                ModEntities.NULLJAW.get(),
                 SpawnPlacements.Type.IN_WATER,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                RiftDrakeEntity::canSpawn,
+                Nulljaw::canSpawn,
                 SpawnPlacementRegisterEvent.Operation.AND
         );
     }

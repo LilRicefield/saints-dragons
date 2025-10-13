@@ -7,7 +7,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * Routes player left-clicks to the wyvern's abilities while riding.
+ * Routes player left-clicks to the abilities while riding.
  * This ensures clicks on any entity (including the wyvern itself) trigger wyvern abilities.
  */
 @Mod.EventBusSubscriber(modid = SaintsDragons.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -26,7 +26,7 @@ public class DragonAttackEventHandler {
         if (dragon.areRiderControlsLocked()) return;
         if (!dragon.isTame() || !dragon.isOwnedBy(player)) return;
 
-        // While ridden, use wyvern's primary attack ability
+        // While ridden, use primary attack ability
         // Each wyvern type can define its own attack abilities
         var abilityType = dragon.getPrimaryAttackAbility();
         if (abilityType != null) {

@@ -20,8 +20,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Server commands for managing dragon allies.
- * Provides /dragonally add/remove/list commands for administrators and dragon owners.
+ * Server commands for managing drake allies.
+ * Provides /dragonally add/remove/list commands for administrators and drake owners.
  */
 public class DragonAllyCommand {
     
@@ -42,24 +42,24 @@ public class DragonAllyCommand {
         dispatcher.register(Commands.literal("dragonally")
             .requires(source -> source.hasPermission(2)) // OP level 2 required
             .then(Commands.literal("add")
-                .then(Commands.argument("dragon", EntityArgument.entity())
+                .then(Commands.argument("drake", EntityArgument.entity())
                     .then(Commands.argument("username", StringArgumentType.string())
                         .executes(DragonAllyCommand::addAlly))))
             .then(Commands.literal("remove")
-                .then(Commands.argument("dragon", EntityArgument.entity())
+                .then(Commands.argument("drake", EntityArgument.entity())
                     .then(Commands.argument("username", StringArgumentType.string())
                         .executes(DragonAllyCommand::removeAlly))))
             .then(Commands.literal("list")
-                .then(Commands.argument("dragon", EntityArgument.entity())
+                .then(Commands.argument("drake", EntityArgument.entity())
                     .executes(DragonAllyCommand::listAllies)))
             .then(Commands.literal("clear")
-                .then(Commands.argument("dragon", EntityArgument.entity())
+                .then(Commands.argument("drake", EntityArgument.entity())
                     .executes(DragonAllyCommand::clearAllies))));
     }
     
     private static int addAlly(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        Collection<? extends Entity> entities = EntityArgument.getEntities(context, "dragon");
+        Collection<? extends Entity> entities = EntityArgument.getEntities(context, "drake");
         String username = StringArgumentType.getString(context, "username");
         
         int successCount = 0;
@@ -83,7 +83,7 @@ public class DragonAllyCommand {
     
     private static int removeAlly(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        Collection<? extends Entity> entities = EntityArgument.getEntities(context, "dragon");
+        Collection<? extends Entity> entities = EntityArgument.getEntities(context, "drake");
         String username = StringArgumentType.getString(context, "username");
         
         int successCount = 0;
@@ -107,7 +107,7 @@ public class DragonAllyCommand {
     
     private static int listAllies(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        Collection<? extends Entity> entities = EntityArgument.getEntities(context, "dragon");
+        Collection<? extends Entity> entities = EntityArgument.getEntities(context, "drake");
         
         for (Entity entity : entities) {
             if (entity instanceof DragonEntity dragon) {
@@ -133,7 +133,7 @@ public class DragonAllyCommand {
     
     private static int clearAllies(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        Collection<? extends Entity> entities = EntityArgument.getEntities(context, "dragon");
+        Collection<? extends Entity> entities = EntityArgument.getEntities(context, "drake");
         
         int successCount = 0;
         for (Entity entity : entities) {

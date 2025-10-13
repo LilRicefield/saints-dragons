@@ -122,32 +122,32 @@ public class DragonSoundHandler {
                 Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
                 playRouted(dragon.level(), ModSounds.AMPHITHERE_BITE.get(), 1.0f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             }
-            case "riftdrake_phase2" -> {
+            case "nulljaw_phase2" -> {
                 Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.RIFTDRAKE_PHASE2.get(), 2.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+                playRouted(dragon.level(), ModSounds.NULLJAW_PHASE2.get(), 2.0f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             }
-            case "riftdrake_phase1" -> {
+            case "nulljaw_phase1" -> {
                 Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.RIFTDRAKE_PHASE1.get(), 1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
+                playRouted(dragon.level(), ModSounds.NULLJAW_PHASE1.get(), 1.4f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, mouthPos, false);
             }
-            case "riftdrake_step" -> {
+            case "nulljaw_step" -> {
                 Vec3 locPos = resolveLocatorWorldPos(locator);
-                playRouted(dragon.level(), ModSounds.RIFTDRAKE_STEP.get(), 0.8f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
+                playRouted(dragon.level(), ModSounds.NULLJAW_STEP.get(), 0.8f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
             }
-            case "riftdrake_claw" -> {
+            case "nulljaw_claw" -> {
                 Vec3 locPos = resolveLocatorWorldPos(locator);
-                playRouted(dragon.level(), ModSounds.RIFTDRAKE_CLAW.get(), 1.2f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
+                playRouted(dragon.level(), ModSounds.NULLJAW_CLAW.get(), 1.2f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, locPos, false);
             }
-            case "riftdrake_bite" -> {
+            case "nulljaw_bite" -> {
                 Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-                playRouted(dragon.level(), ModSounds.RIFTDRAKE_BITE.get(), 1.1f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
+                playRouted(dragon.level(), ModSounds.NULLJAW_BITE.get(), 1.1f, 0.95f + dragon.getRandom().nextFloat() * 0.1f, mouthPos, false);
             }
-            case "riftdrake_roarclaw" -> {
+            case "nulljaw_roarclaw" -> {
                 Vec3 clawPos = resolveLocatorWorldPos(locator);
                 if (clawPos == null) {
                     clawPos = resolveLocatorWorldPos("frontLocator");
                 }
-                playRouted(dragon.level(), ModSounds.RIFTDRAKE_ROARCLAW.get(), 1.3f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, clawPos, false);
+                playRouted(dragon.level(), ModSounds.NULLJAW_ROARCLAW.get(), 1.3f, 0.9f + dragon.getRandom().nextFloat() * 0.2f, clawPos, false);
             }
             case "takeoff_whoosh" -> handleTakeoffSound();
             case "landing_thud" -> handleLandingSound();
@@ -308,7 +308,7 @@ public class DragonSoundHandler {
         float volume = Math.max(0.6f, 0.9f + (float)(flightSpeed * 0.2f));
 
         // Use custom flap sound (matches Blockbench keyframe label like "flap1")
-        playRouted(dragon.level(), ModSounds.FLAP1.get(), volume, pitch);
+        playRouted(dragon.level(), ModSounds.RAEVYX_FLAP1.get(), volume, pitch);
     }
     
     /**
@@ -377,18 +377,18 @@ public class DragonSoundHandler {
 
         if (isRun) {
             if (isSecond) {
-                playRouted(dragon.level(), ModSounds.RUN_STEP2.get(), volume, pitch, at);
+                playRouted(dragon.level(), ModSounds.RAEVYX_RUN_STEP2.get(), volume, pitch, at);
                 lastStep2Tick = dragon.tickCount;
             } else {
-                playRouted(dragon.level(), ModSounds.RUN_STEP1.get(), volume, pitch, at);
+                playRouted(dragon.level(), ModSounds.RAEVYX_RUN_STEP1.get(), volume, pitch, at);
                 lastStep1Tick = dragon.tickCount;
             }
         } else {
             if (isSecond) {
-                playRouted(dragon.level(), ModSounds.STEP2.get(), volume, pitch, at);
+                playRouted(dragon.level(), ModSounds.RAEVYX_STEP2.get(), volume, pitch, at);
                 lastStep2Tick = dragon.tickCount;
             } else {
-                playRouted(dragon.level(), ModSounds.STEP1.get(), volume, pitch, at);
+                playRouted(dragon.level(), ModSounds.RAEVYX_STEP1.get(), volume, pitch, at);
                 lastStep1Tick = dragon.tickCount;
             }
         }
@@ -525,7 +525,7 @@ public class DragonSoundHandler {
         if (dragon.isStayOrSitMuted() || dragon.isSleeping() || dragon.isSleepTransitioning()) return;
         float urgency = dragon.getTarget() != null ? 1.3f : 1.0f;
         // Use custom flap for takeoff to avoid vanilla ENDER_DRAGON_FLAP
-        playRouted(dragon.level(), ModSounds.FLAP1.get(), urgency * 1.2f, 0.85f);
+        playRouted(dragon.level(), ModSounds.RAEVYX_FLAP1.get(), urgency * 1.2f, 0.85f);
     }
     
     /**
