@@ -26,6 +26,10 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
             return false;
         }
 
+        if (drake.isInWaterOrBubble()) {
+            return false;
+        }
+
         // Don't wander while playing dead
         if (drake.isPlayingDead()) {
             return false;
@@ -52,6 +56,10 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
     public boolean canContinueToUse() {
         // Stop if combat starts
         if (drake.getTarget() != null && drake.getTarget().isAlive()) {
+            return false;
+        }
+
+        if (drake.isInWaterOrBubble()) {
             return false;
         }
 

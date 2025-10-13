@@ -65,28 +65,97 @@ public class AmphithereInteractionHandler {
      * Handle interactions with tamed amphitheres (feeding, commands, mounting)
      */
     private InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
-        if (!dragon.isOwnedBy(player)) {
-            return InteractionResult.PASS;
+        boolean isOwner = dragon.isOwnedBy(player);
+
+        // Owner-only interactions
+        if (isOwner) {
+            // Handle feeding for healing
+            if (dragon.isFood(heldItem) && dragon.getHealth() < dragon.getMaxHealth()) {
+                return handleFeeding(player, heldItem);
+            }
+
+            // Handle owner commands - Shift+Right-click cycles through commands
+            if (dragon.canOwnerCommand(player) && heldItem.isEmpty() && hand == InteractionHand.MAIN_HAND) {
+                return handleCommandCycling(player);
+            }
         }
 
-        // Handle feeding for healing
-        if (dragon.isFood(heldItem) && dragon.getHealth() < dragon.getMaxHealth()) {
-            return handleFeeding(player, heldItem);
-        }
-
-        // Handle owner commands - Shift+Right-click cycles through commands
-        if (dragon.canOwnerCommand(player) && heldItem.isEmpty() && hand == InteractionHand.MAIN_HAND) {
-            return handleCommandCycling(player);
-        }
-
-        // Handle mounting
+        // Handle mounting - both owner and non-owners can mount
         if (hand == InteractionHand.MAIN_HAND && heldItem.isEmpty() && !player.isCrouching()) {
-            if (dragon.canOwnerMount(player) && !dragon.isVehicle()) {
+            return handleMounting(player, isOwner);
+        }
+
+        return InteractionResult.PASS;
+    }
+
+    /**
+     * Handle mounting logic for both owner and passengers
+     */
+    private InteractionResult handleMounting(Player player, boolean isOwner) {
+        var passengers = dragon.getPassengers();
+
+        if (isOwner) {
+            // Owner can mount if seat 0 is empty (or no passengers at all)
+            if (passengers.isEmpty() && dragon.canOwnerMount(player)) {
                 if (!dragon.level().isClientSide) {
                     dragon.prepareForMounting();
                     player.startRiding(dragon);
                 }
                 return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+            } else if (!passengers.isEmpty() && passengers.get(0) != player) {
+                // Owner tried to mount but someone else is in seat 0 (shouldn't happen normally)
+                if (!dragon.level().isClientSide) {
+                    player.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.amphithere.mount_occupied"),
+                        true
+                    );
+                }
+                return InteractionResult.FAIL;
+            }
+        } else {
+            // Non-owner can mount as passenger if:
+            // 1. Seat 0 is occupied by the owner
+            // 2. Seat 1 is empty (less than 2 passengers)
+            // 3. Dragon is not sitting or doing something that would prevent riding
+
+            if (passengers.isEmpty()) {
+                // No one is riding - non-owners can't mount without owner
+                if (!dragon.level().isClientSide) {
+                    player.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.amphithere.passenger_needs_owner"),
+                        true
+                    );
+                }
+                return InteractionResult.FAIL;
+            }
+
+            if (passengers.size() >= 2) {
+                // Both seats are full
+                if (!dragon.level().isClientSide) {
+                    player.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.amphithere.seats_full"),
+                        true
+                    );
+                }
+                return InteractionResult.FAIL;
+            }
+
+            // Check if owner is in seat 0
+            if (passengers.get(0) instanceof Player firstPlayer && dragon.isOwnedBy(firstPlayer)) {
+                // Owner is driving, non-owner can mount as passenger
+                if (!dragon.level().isClientSide) {
+                    player.startRiding(dragon);
+                }
+                return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+            } else {
+                // Seat 0 is occupied by non-owner (shouldn't happen, but handle it)
+                if (!dragon.level().isClientSide) {
+                    player.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.amphithere.passenger_needs_owner"),
+                        true
+                    );
+                }
+                return InteractionResult.FAIL;
             }
         }
 

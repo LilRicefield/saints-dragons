@@ -130,13 +130,14 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(0, new StegonautSleepGoal(this)); // Highest priority - deep slumber takes precedence
-        StegonautPlayDeadGoal playDeadGoalInstance = new StegonautPlayDeadGoal(this); // Second priority - play dead when lightning wyvern nearby
+        this.goalSelector.addGoal(1, new StegonautLeaveWaterGoal(this, 1.15D)); // Emergency priority - get out of water fast
+        StegonautPlayDeadGoal playDeadGoalInstance = new StegonautPlayDeadGoal(this); // Predator avoidance once safe on land
         this.playDeadGoal = playDeadGoalInstance;
-        this.goalSelector.addGoal(1, playDeadGoalInstance);
-        this.goalSelector.addGoal(2, new StegonautFollowOwnerGoal(this));
-        this.goalSelector.addGoal(3, new StegonautGroundWanderGoal(this, 0.35D, 120));
-        this.goalSelector.addGoal(4, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(5, new StegonautRandomLookAroundGoal(this));
+        this.goalSelector.addGoal(2, playDeadGoalInstance);
+        this.goalSelector.addGoal(3, new StegonautFollowOwnerGoal(this));
+        this.goalSelector.addGoal(4, new StegonautGroundWanderGoal(this, 0.35D, 120));
+        this.goalSelector.addGoal(5, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(6, new StegonautRandomLookAroundGoal(this));
     }
     
     public static AttributeSupplier.Builder createAttributes() {
