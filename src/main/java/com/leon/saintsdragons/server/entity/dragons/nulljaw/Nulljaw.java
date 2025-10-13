@@ -12,6 +12,7 @@ import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawLeaveWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawMoveGoal;
+import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawRandomSwimGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -97,6 +98,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     private final RiftDrakeLookController landLookControl;
     private int riderControlLockTicks = 0;
     private NulljawRandomSwimGoal waterSwimGoal;
+    private NulljawGroundWanderGoal groundWanderGoal;
     private boolean swimming;
     private int swimTicks;
     private int ticksInWater;
@@ -316,6 +318,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         // Priority 7: Idle swimming
         this.waterSwimGoal = new NulljawRandomSwimGoal(this, 1.2D, 30);
         this.goalSelector.addGoal(7, waterSwimGoal);
+
+        // Priority 8: Idle roaming on land
+        this.groundWanderGoal = new NulljawGroundWanderGoal(this, 1.0D, 100);
+        this.goalSelector.addGoal(8, groundWanderGoal);
 
         // Priority 10: Ambient behaviors
         this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
@@ -751,6 +757,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         this.waterNavigation.stop();
         Vec3 delta = this.getDeltaMovement();
         this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
+        if (groundWanderGoal != null) {
+            groundWanderGoal.forceTrigger();
+        }
         this.entityData.set(DATA_SWIMMING, false);
         this.entityData.set(DATA_SWIM_TURN, 0);
         this.entityData.set(DATA_SWIM_PITCH, 0);
