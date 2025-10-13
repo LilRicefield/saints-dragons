@@ -77,12 +77,14 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     private static final float L_LEFT_X =  2.2f,  L_LEFT_Y = 0.05f, L_LEFT_Z = 2.85f;
     private static final float L_RIGHT_X = -2.2f, L_RIGHT_Y = 0.05f, L_RIGHT_Z = 2.85f;
     private static final float MOUTH_X = 0.1f, MOUTH_Y = 8.7f, MOUTH_Z = -17.4f;
+    private static final float BODY_X = 0.0f, BODY_Y = 10.0f, BODY_Z = 0.0f;
 
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) return;
         model.getBone("leftfeet").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("rightfeet").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("head").ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone("heightController").ifPresent(b -> b.setTrackingMatrices(true));
     }
 
     private void sampleAndStashLocatorsAccurate(Raevyx entity) {
@@ -101,6 +103,11 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         this.lastBakedModel.getBone("head").ifPresent(b -> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, MOUTH_X, MOUTH_Y, MOUTH_Z);
             if (world != null) entity.setClientLocatorPosition("mouth_origin", world);
+        });
+        // Sample body locator
+        this.lastBakedModel.getBone("heightController").ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, BODY_X, BODY_Y, BODY_Z);
+            if (world != null) entity.setClientLocatorPosition("bodyLocator", world);
         });
         // No beam_origin sampling required; beam uses computeHeadMouthOrigin()
     }

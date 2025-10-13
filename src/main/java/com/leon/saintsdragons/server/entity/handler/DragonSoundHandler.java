@@ -109,9 +109,20 @@ public class DragonSoundHandler {
             handleAutoSoundSpec(sound);
             return;
         }
-        // Allow flexible keys from animation JSON: flap1, flap_right, step2, step_left, run_step1, etc.
-        if (sound.startsWith("flap")) { handleWingFlapSound(sound); return; }
-        if (sound.startsWith("step") || sound.startsWith("run_step")) {
+        String normalizedForFlap = null;
+        if (sound.contains("flap")) {
+            normalizedForFlap = sound.substring(sound.indexOf("flap"));
+        }
+        String normalizedForStep = null;
+        if (sound.contains("step")) {
+            normalizedForStep = sound.substring(sound.indexOf("step"));
+        }
+        // Allow flexible keys from animation JSON: flap1, flap_right, raevyx_flap1, step2, raevyx_run_step1, etc.
+        if (normalizedForFlap != null && normalizedForFlap.startsWith("flap")) {
+            handleWingFlapSound(normalizedForFlap);
+            return;
+        }
+        if (normalizedForStep != null && (normalizedForStep.startsWith("step") || normalizedForStep.startsWith("run_step"))) {
             // Only handle footsteps from the movement controller (runs walk/run)
             try {
                 if (controller != null && controller.getName() != null) {
@@ -120,8 +131,8 @@ public class DragonSoundHandler {
                 }
             } catch (Throwable ignored) {}
             // Use locator position if provided by the keyframe
-            String stepLocator = (locator != null && !locator.isEmpty()) ? locator : mapStepKeyToLocator(sound);
-            handleStepSound(sound, stepLocator);
+            String stepLocator = (locator != null && !locator.isEmpty()) ? locator : mapStepKeyToLocator(normalizedForStep);
+            handleStepSound(normalizedForStep, stepLocator);
             return;
         }
         if (profile.handleAnimationSound(this, dragon, sound, locator)) {
@@ -442,6 +453,9 @@ public class DragonSoundHandler {
                 // Lightning Dragon mouth position - fallback for both entities
                 // Primitive Drake will use renderer-sampled position when available
                 lx = 0.1; ly = 8.7; lz = -17.4;
+            }
+            case "bodyLocator" -> {
+                lx = 0.0; ly = 10.0; lz = 0.0;
             }
             default -> { return null; }
         }
