@@ -86,15 +86,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
      * Handles banking animation based on bank direction
      */
     public PlayState bankingPredicate(AnimationState<Raevyx> state) {
-        double bankDir = wyvern.getBankDirection();
-        
-        if (bankDir > 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_right"));
-        } else if (bankDir < 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_left"));
-        } else {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_off"));
-        }
+        state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_off"));
         return PlayState.CONTINUE;
     }
     

@@ -8562,7 +8562,7 @@
 			"bones": {
 				"body": {
 					"rotation": {
-						"vector": [0, 0, 25]
+						"vector": [0, 0, 90]
 					}
 				}
 			}
@@ -8572,7 +8572,7 @@
 			"bones": {
 				"body": {
 					"rotation": {
-						"vector": [0, 0, -25]
+						"vector": [0, 0, -95]
 					}
 				}
 			}

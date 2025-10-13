@@ -31,6 +31,8 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
         // Apply procedural animations when alive
         if (entity.isAlive()) {
+            applyBankingRoll(entity, animationState);
+
             // Clamp built-in head rotation to sane limits first
             applyHeadClamp(entity);
 
@@ -40,6 +42,29 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
             // When beaming, bias the neck chain to aim along the beam direction
             applyNeckAimAlongBeam(entity, animationState);
         }
+    }
+
+    /**
+     * Apply smoothed banking roll straight to the body bone so we can lean at any angle.
+     */
+    private void applyBankingRoll(Raevyx entity, AnimationState<Raevyx> state) {
+        var bodyOpt = getBone("body");
+        if (bodyOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone body = bodyOpt.get();
+        var snap = body.getInitialSnapshot();
+
+        float partialTick = state.getPartialTick();
+        float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
+        // Banking right rotates negative around Z, hence the inversion.
+        float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
+        float targetRoll = snap.getRotZ() + bankAngleRad;
+
+        // Blend a little so animation data and procedural value stay in sync without snapping.
+        float lerpFactor = entity.isFlying() ? 0.45f : 0.25f;
+        body.setRotZ(Mth.lerp(lerpFactor, body.getRotZ(), targetRoll));
     }
 
     /**
