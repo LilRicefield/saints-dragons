@@ -202,6 +202,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private float bankSmoothedYaw = 0f;
     private int bankHoldTicks = 0;
     private int bankDir = 0; // -1 left, 0 none, 1 right
+    private float bankAngle = 0f;
+    private float prevBankAngle = 0f;
 
     // Pitching smoothing state
     private float pitchSmoothedPitch = 0f;
@@ -1447,26 +1449,41 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
     
     private void tickBankingLogic() {
-        // Reset banking when not flying or when controls are locked - INSTANT reset
+        prevBankAngle = bankAngle;
+
+        // Reset banking when not flying or when controls are locked - instant snap back
         if (areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
-            if (bankDir != 0) {
+            if (bankDir != 0 || bankAngle != 0f || bankSmoothedYaw != 0f) {
                 bankDir = 0;
                 bankSmoothedYaw = 0f;
                 bankHoldTicks = 0;
+                bankAngle = 0f;
+                prevBankAngle = 0f;
             }
             return;
         }
-        
-        // Exponential smoothing to avoid jitter
-        float yawChange = getYRot() - yRotO;
-        bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
-        float enter = 1.0f; 
-        float exit = 5.0f;
+
+        // Exponential smoothing on yaw delta to avoid jitter, wrap to account for crossing 360 -> 0
+        float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
+        bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;
+
+        // Convert smoothed yaw delta into a banking roll. Multiplying gives us headroom for aggressive turns.
+        float targetAngle = Mth.clamp(bankSmoothedYaw * 6.5f, -90f, 90f);
+        // Ease toward the new target so long sweeping turns feel weighty but responsive.
+        bankAngle = Mth.lerp(0.28f, bankAngle, targetAngle);
+        if (Math.abs(bankAngle) < 0.01f) {
+            bankAngle = 0f;
+        }
+
+        // Update coarse direction for animation fallbacks / sound hooks
+        float enter = 10.0f;
+        float exit = 4.0f;
 
         int desiredDir = bankDir;
-        if (bankSmoothedYaw > enter) desiredDir = 1;
-        else if (bankSmoothedYaw < -enter) desiredDir = -1;
-        else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;  // banking_off when flying straight
+        if (bankAngle > enter) desiredDir = 1;
+        else if (bankAngle < -enter) desiredDir = -1;
+        else if (Math.abs(bankAngle) < exit) desiredDir = 0;  // banking_off when flying straight
+
         if (desiredDir != bankDir) {
             // If transitioning to "off" (0), use very short hold time for instant reset
             int holdTime = (desiredDir == 0) ? 1 : 2;
@@ -1907,6 +1924,20 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
      */
     public int getBankDirection() {
         return bankDir;
+    }
+
+    /**
+     * Gets the current bank angle in degrees. Positive values bank right, negative bank left.
+     */
+    public float getBankAngleDegrees() {
+        return bankAngle;
+    }
+
+    /**
+     * Interpolated bank angle for smooth client-side rendering.
+     */
+    public float getBankAngleDegrees(float partialTick) {
+        return Mth.lerp(partialTick, prevBankAngle, bankAngle);
     }
     
     /**
