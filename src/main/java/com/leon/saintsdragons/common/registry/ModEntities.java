@@ -5,7 +5,7 @@ import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.primitivedrake.PrimitiveDrakeEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
-import com.leon.saintsdragons.server.entity.dragons.riftdrake.RiftDrakeEntity;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.effect.amphithere.AmphithereMagmaBlockEntity;
 
 import net.minecraft.world.entity.EntityType;
@@ -47,12 +47,12 @@ public class ModEntities {
                     .build("amphithere"));
 
     // ===== RIFT DRAKE =====
-    public static final RegistryObject<EntityType<RiftDrakeEntity>> RIFT_DRAKE =
-            REGISTER.register("rift_drake", () -> EntityType.Builder.of(RiftDrakeEntity::new, MobCategory.CREATURE)
+    public static final RegistryObject<EntityType<Nulljaw>> NULLJAW =
+            REGISTER.register("nulljaw", () -> EntityType.Builder.of(Nulljaw::new, MobCategory.CREATURE)
                     .sized(4.5F, 5.0F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
-                    .build("rift_drake"));
+                    .build("nulljaw"));
 
     // ===== EFFECT ENTITIES =====
     public static final RegistryObject<EntityType<RaevyxLightningChainEntity>> RAEVYX_LIGHTNING_CHAIN =

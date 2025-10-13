@@ -326,71 +326,71 @@
       }
     ]
   },
-  "riftdrake_phase1": {
-    "subtitle": "Rift Drake reverts phase",
+  "nulljaw_phase1": {
+    "subtitle": "Nulljaw reverts phase",
     "sounds": [
       {
-        "name": "saintsdragons:entity/riftdrake/riftdrake_phase1",
+        "name": "saintsdragons:entity/nulljaw/nulljaw_phase1",
         "volume": 0.8,
         "pitch": 1.0
       }
     ]
   },
-  "riftdrake_phase2": {
-    "subtitle": "Rift Drake switches phase",
+  "nulljaw_phase2": {
+    "subtitle": "Nulljaw switches phase",
     "sounds": [
       {
-        "name": "saintsdragons:entity/riftdrake/riftdrake_phase2",
+        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2",
         "volume": 3.5,
         "pitch": 1.0
       }
     ]
   },
-  "riftdrake_roar": {
-    "subtitle": "Rift Drake roars",
+  "nulljaw_roar": {
+    "subtitle": "Nulljaw roars",
     "sounds": [
       {
-        "name": "saintsdragons:entity/riftdrake/riftdrake_roar",
+        "name": "saintsdragons:entity/nulljaw/nulljaw_roar",
         "volume": 2.5,
         "pitch": 1.0
       }
     ]
   },
-  "riftdrake_roarclaw": {
-    "subtitle": "Rift Drake slashes while roaring",
+  "nulljaw_roarclaw": {
+    "subtitle": "Nulljaw slashes while roaring",
     "sounds": [
       {
-        "name": "saintsdragons:entity/riftdrake/riftdrake_roarclaw",
+        "name": "saintsdragons:entity/nulljaw/nulljaw_roarclaw",
         "volume": 1.4,
         "pitch": 1.0
       }
     ]
   },
-  "riftdrake_step": {
-    "subtitle": "Rift Drake steps",
+  "nulljaw_step": {
+    "subtitle": "Nulljaw steps",
     "sounds": [
       {
-        "name": "saintsdragons:entity/riftdrake/riftdrake_step",
+        "name": "saintsdragons:entity/nulljaw/nulljaw_step",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "riftdrake_claw": {
-    "subtitle": "Rift Drake slashes",
+  "nulljaw_claw": {
+    "subtitle": "Nulljaw slashes",
     "sounds": [
       {
-        "name": "saintsdragons:entity/riftdrake/riftdrake_claw",
+        "name": "saintsdragons:entity/nulljaw/nulljaw_claw",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "riftdrake_bite": {
-    "subtitle": "Rift Drake bites",
+  "nulljaw_bite": {
+    "subtitle": "Nulljaw bites",
     "sounds": [
       {
-        "name": "saintsdragons:entity/riftdrake/riftdrake_bite",
+        "name": "saintsdragons:entity/nulljaw/nulljaw_bite",
         "volume": 1.0,
         "pitch": 1.0
       }
