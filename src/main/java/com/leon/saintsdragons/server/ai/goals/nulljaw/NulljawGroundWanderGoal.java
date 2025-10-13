@@ -26,6 +26,9 @@ public class NulljawGroundWanderGoal extends RandomStrollGoal {
         if (dragon.isFlying()) {
             return false;
         }
+        if (dragon.isSwimming() || dragon.isInWaterOrBubble()) {
+            return false;
+        }
 
         // Don't interfere with important behaviors
         if (dragon.isOrderedToSit() || dragon.isVehicle() || dragon.isPassenger()) {
@@ -52,6 +55,9 @@ public class NulljawGroundWanderGoal extends RandomStrollGoal {
     public boolean canContinueToUse() {
         // Stop if we start flying
         if (dragon.isFlying()) {
+            return false;
+        }
+        if (dragon.isSwimming() || dragon.isInWaterOrBubble()) {
             return false;
         }
 
@@ -88,5 +94,9 @@ public class NulljawGroundWanderGoal extends RandomStrollGoal {
 
         // Default random wandering
         return DefaultRandomPos.getPos(this.mob, 20, 8); // Slightly larger range for a wyvern
+    }
+
+    public void forceTrigger() {
+        this.forceTrigger = true;
     }
 }
