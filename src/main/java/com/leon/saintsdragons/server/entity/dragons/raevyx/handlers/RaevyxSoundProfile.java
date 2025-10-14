@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 /**
  * Raevyx-specific vocal timing metadata and animation sound routing.
+ * Uses client-side local playback for animation keyframe sounds (more efficient).
  */
 public final class RaevyxSoundProfile implements DragonSoundProfile {
 
@@ -52,6 +54,8 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
 
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
+        // Handler already blocks server-side, we're only called on client
+
         if (key.startsWith("raevyx_flap")) {
             playWingFlap(handler, dragon, locator);
             return true;
@@ -61,6 +65,10 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         }
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
+            // Roar sound is handled by RaevyxRoarAbility with precise timing, skip keyframe
+            if ("roar".equals(vocalKey)) {
+                return true; // Block the keyframe, ability plays the sound
+            }
             playVocalEntry(handler, dragon, vocalKey, locator);
             return true;
         }
@@ -83,6 +91,7 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
 
     @Override
     public boolean handleSoundByName(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        // Handler already blocks server-side, we're only called on client
         if (key.startsWith("raevyx_flap")) {
             playWingFlap(handler, dragon, null);
             return true;
@@ -102,7 +111,8 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         double flightSpeed = dragon.getCachedHorizontalSpeed();
         float pitch = 1.0f + (float) (flightSpeed * 0.3f);
         float volume = Math.max(0.6f, 0.9f + (float) (flightSpeed * 0.2f));
-        handler.emitSound(ModSounds.RAEVYX_FLAP1.get(), volume, pitch, bodyPos, false);
+
+        playClientSound(dragon, bodyPos, ModSounds.RAEVYX_FLAP1.get(), volume, pitch);
     }
 
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
@@ -121,7 +131,8 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         if (entry.pitchVariance() != 0f) {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
         }
-        handler.emitSound(entry.soundSupplier().get(), entry.volume(), pitch, at, entry.allowWhenSitting(), entry.allowDuringSleep());
+
+        playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
     }
 
     private void playSimpleMouthSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
@@ -131,11 +142,26 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         if (variance != 0f) {
             pitch += dragon.getRandom().nextFloat() * variance;
         }
-        handler.emitSound(sound, volume, pitch, at, false);
+
+        playClientSound(dragon, at, sound, volume, pitch);
     }
 
     private void playSummonStorm(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
-        handler.emitSound(ModSounds.RAEVYX_SUMMON_STORM.get(), 1.6f, 1.0f, at, false);
+
+        playClientSound(dragon, at, ModSounds.RAEVYX_SUMMON_STORM.get(), 1.6f, 1.0f);
+    }
+
+    /**
+     * Play sound on client side using local playback.
+     * More efficient than server broadcast for animation keyframe sounds.
+     */
+    private void playClientSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent sound,
+                                 float volume, float pitch) {
+        double x = position != null ? position.x : dragon.getX();
+        double y = position != null ? position.y : dragon.getY();
+        double z = position != null ? position.z : dragon.getZ();
+
+        dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
     }
 }

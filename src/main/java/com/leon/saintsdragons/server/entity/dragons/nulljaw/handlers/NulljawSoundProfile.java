@@ -19,11 +19,7 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
 
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
-        // GeckoLib fires animation sounds on CLIENT side!
-        // Must play locally on client, not broadcast from server
-        if (!dragon.level().isClientSide) {
-            return false;
-        }
+        // Handler already blocks server-side, we're only called on client
 
         return switch (key) {
             case "nulljaw_phase2" -> {
