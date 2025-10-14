@@ -76,7 +76,8 @@ public class DragonSoundHandler {
      */
     public void handleAnimationSound(DragonEntity entity, Object keyframeData, software.bernie.geckolib.core.animation.AnimationController<?> controller) {
         if (dragon.isDying()) return;
-        if (dragon.level().isClientSide) return;
+        // IMPORTANT: GeckoLib fires animation sound events on CLIENT side, not server!
+        // We must handle sounds on client for animation keyframes to work
         if (keyframeData == null) return;
         String controllerName = null;
         try {
@@ -118,6 +119,9 @@ public class DragonSoundHandler {
         if (sound.contains("step")) {
             normalizedForStep = sound.substring(sound.indexOf("step"));
         }
+        if (profile.handleAnimationSound(this, dragon, sound, locator)) {
+            return;
+        }
         // Allow flexible keys from animation JSON: flap1, flap_right, raevyx_flap1, step2, raevyx_run_step1, etc.
         if (normalizedForFlap != null && normalizedForFlap.startsWith("flap")) {
             handleWingFlapSound(normalizedForFlap);
@@ -134,9 +138,6 @@ public class DragonSoundHandler {
             // Use locator position if provided by the keyframe
             String stepLocator = (locator != null && !locator.isEmpty()) ? locator : mapStepKeyToLocator(normalizedForStep);
             handleStepSound(normalizedForStep, stepLocator);
-            return;
-        }
-        if (profile.handleAnimationSound(this, dragon, sound, locator)) {
             return;
         }
         switch (sound) {
@@ -399,6 +400,13 @@ public class DragonSoundHandler {
         if (!allowDuringSleep && !isHurtOrDieSound && dragon.isSleeping()) return;
         if (!allowWhenSitting && !isHurtOrDieSound && dragon.isStayOrSitMuted()) return;
         if (level == null) return;
+
+        // IMPORTANT: Only play sounds on server side - server will broadcast to clients
+        // Playing on both sides causes duplicate sounds
+        if (level.isClientSide) {
+            return;
+        }
+
         double px = dragon.getX();
         double py = dragon.getY();
         double pz = dragon.getZ();
@@ -407,13 +415,9 @@ public class DragonSoundHandler {
             py = at.y;
             pz = at.z;
         }
-        if (level.isClientSide) {
-            // Client side: play local sound without distance delay
-            level.playLocalSound(px, py, pz, sound, SoundSource.NEUTRAL, volume, pitch, false);
-        } else {
-            // Server side: broadcast to all nearby players
-            level.playSound(null, px, py, pz, sound, SoundSource.NEUTRAL, volume, pitch);
-        }
+
+        // Server side: broadcast to all nearby players
+        level.playSound(null, px, py, pz, sound, SoundSource.NEUTRAL, volume, pitch);
     }
 
     /**

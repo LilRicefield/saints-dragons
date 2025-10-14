@@ -4,10 +4,12 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * Nulljaw-specific animation keyed sounds.
+ * Uses direct playSound calls like the working roar ability to bypass handler complexity.
  */
 public final class NulljawSoundProfile implements DragonSoundProfile {
 
@@ -17,47 +19,62 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
 
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
+        // GeckoLib fires animation sounds on CLIENT side!
+        // Must play locally on client, not broadcast from server
+        if (!dragon.level().isClientSide) {
+            return false;
+        }
+
         return switch (key) {
             case "nulljaw_phase2" -> {
-                Vec3 mouth = handler.resolveLocatorWorldPos("mouth_origin");
-                float pitch = 0.9f + dragon.getRandom().nextFloat() * 0.2f;
-                handler.emitSound(ModSounds.NULLJAW_PHASE2.get(), 2.0f, pitch, mouth, false);
+                playClientSound(dragon, ModSounds.NULLJAW_PHASE2.get(), 2.0f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_phase1" -> {
-                Vec3 mouth = handler.resolveLocatorWorldPos("mouth_origin");
-                float pitch = 0.9f + dragon.getRandom().nextFloat() * 0.2f;
-                handler.emitSound(ModSounds.NULLJAW_PHASE1.get(), 1.4f, pitch, mouth, false);
+                playClientSound(dragon, ModSounds.NULLJAW_PHASE1.get(), 1.4f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_step" -> {
-                Vec3 pos = handler.resolveLocatorWorldPos(locator);
-                float pitch = 0.9f + dragon.getRandom().nextFloat() * 0.2f;
-                handler.emitSound(ModSounds.NULLJAW_STEP.get(), 0.8f, pitch, pos, false);
+                playClientSound(dragon, ModSounds.NULLJAW_STEP.get(), 0.8f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_claw" -> {
-                Vec3 pos = handler.resolveLocatorWorldPos(locator);
-                float pitch = 0.9f + dragon.getRandom().nextFloat() * 0.2f;
-                handler.emitSound(ModSounds.NULLJAW_CLAW.get(), 1.2f, pitch, pos, false);
+                playClientSound(dragon, ModSounds.NULLJAW_CLAW.get(), 1.2f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_bite" -> {
-                Vec3 mouth = handler.resolveLocatorWorldPos("mouth_origin");
-                float pitch = 0.95f + dragon.getRandom().nextFloat() * 0.1f;
-                handler.emitSound(ModSounds.NULLJAW_BITE.get(), 1.1f, pitch, mouth, false);
+                playClientSound(dragon, ModSounds.NULLJAW_BITE.get(), 1.1f, 0.95f, 0.1f);
                 yield true;
             }
             case "nulljaw_roarclaw" -> {
-                Vec3 pos = handler.resolveLocatorWorldPos(locator);
-                if (pos == null) {
-                    pos = handler.resolveLocatorWorldPos("frontLocator");
-                }
-                float pitch = 0.9f + dragon.getRandom().nextFloat() * 0.2f;
-                handler.emitSound(ModSounds.NULLJAW_ROARCLAW.get(), 1.3f, pitch, pos, false);
+                playClientSound(dragon, ModSounds.NULLJAW_ROARCLAW.get(), 1.3f, 0.9f, 0.2f);
                 yield true;
+            }
+            case "nulljaw_roar" -> {
+                // Roar is handled by ability, return false to skip
+                yield false;
             }
             default -> false;
         };
+    }
+
+    /**
+     * Play sound on client side for animation keyframes.
+     * GeckoLib fires sound events on client, so we use playLocalSound.
+     */
+    private void playClientSound(DragonEntity dragon, net.minecraft.sounds.SoundEvent sound,
+                                 float volume, float basePitch, float variance) {
+        float pitch = basePitch + dragon.getRandom().nextFloat() * variance;
+        // Client-side local sound playback
+        dragon.level().playLocalSound(
+                dragon.getX(),
+                dragon.getY(),
+                dragon.getZ(),
+                sound,
+                SoundSource.NEUTRAL,
+                volume,
+                pitch,
+                false  // distanceDelay
+        );
     }
 }
