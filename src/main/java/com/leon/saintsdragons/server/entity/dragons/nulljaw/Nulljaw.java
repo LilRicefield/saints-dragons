@@ -25,7 +25,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonControlStateHolder;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.server.level.ServerPlayer;
-import com.leon.saintsdragons.server.entity.controller.riftdrake.RiftDrakeRiderController;
+import com.leon.saintsdragons.server.entity.controller.nulljaw.NulljawRiderController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -90,7 +90,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     private final DragonKeybindHandler keybindHandler = new DragonKeybindHandler(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
     private final NulljawInteractionHandler interactionHandler = new NulljawInteractionHandler(this);
-    private final RiftDrakeRiderController riderController;
+    private final NulljawRiderController riderController;
     private final PathNavigation groundNavigation;
     private final DragonAmphibiousNavigation waterNavigation;
     private final MoveControl landMoveControl;
@@ -125,7 +125,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         this.navigation = this.groundNavigation;
         this.moveControl = this.landMoveControl;
         this.lookControl = this.landLookControl;
-        this.riderController = new RiftDrakeRiderController(this);
+        this.riderController = new NulljawRiderController(this);
         this.setRideable();
     }
 

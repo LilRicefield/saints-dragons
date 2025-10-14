@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.controller.riftdrake;
+package com.leon.saintsdragons.server.entity.controller.nulljaw;
 
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.util.Mth;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * Handles all riding mechanics for the Rift Drake
  * Ground-based drake with aquatic capabilities
  */
-public record RiftDrakeRiderController(Nulljaw dragon) {
+public record NulljawRiderController(Nulljaw drake) {
     // ===== SEAT TUNING CONSTANTS =====
     // Baseline vertical offset relative to drake height
     private static final double SEAT_BASE_FACTOR = 0.45D; // 0.0..1.0 of bbHeight
@@ -33,7 +33,7 @@ public record RiftDrakeRiderController(Nulljaw dragon) {
 
     @Nullable
     public Player getRidingPlayer() {
-        if (dragon.getFirstPassenger() instanceof Player player) {
+        if (drake.getFirstPassenger() instanceof Player player) {
             return player;
         }
         return null;
@@ -47,7 +47,7 @@ public record RiftDrakeRiderController(Nulljaw dragon) {
     public Vec3 getRiddenInput(Player player, @SuppressWarnings("unused") Vec3 deltaIn) {
         float f = player.zza < 0.0F ? 0.5F : 1.0F;
 
-        if (dragon.isInWater()) {
+        if (drake.isInWater()) {
             // Aquatic movement - enhanced responsiveness in water
             return new Vec3(player.xxa * 0.6F, 0.0F, player.zza * 1.0F * f);
         } else {
@@ -62,30 +62,30 @@ public record RiftDrakeRiderController(Nulljaw dragon) {
     public void tickRidden(Player player, @SuppressWarnings("unused") Vec3 travelVector) {
         // Prevent accidental rider fall damage while mounted
         player.fallDistance = 0.0F;
-        dragon.fallDistance = 0.0F;
+        drake.fallDistance = 0.0F;
         
         // Clear target when being ridden to prevent AI interference
-        dragon.setTarget(null);
+        drake.setTarget(null);
         
         // Make drake responsive to player look direction - use conditional like other dragons
-        float yawDiff = Math.abs(player.getYRot() - dragon.getYRot());
+        float yawDiff = Math.abs(player.getYRot() - drake.getYRot());
         if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
-            float currentYaw = dragon.getYRot();
+            float currentYaw = drake.getYRot();
             float targetYaw = player.getYRot();
             float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-            float blend = dragon.isPhaseTwoActive() ? 0.28f : 0.9f;
+            float blend = drake.isPhaseTwoActive() ? 0.28f : 0.9f;
             float newYaw = currentYaw + (rawDiff * blend);
             
             // Set rotation
-            dragon.setYRot(newYaw);
-            dragon.setXRot(0.0F);
+            drake.setYRot(newYaw);
+            drake.setXRot(0.0F);
             
             // Force entity to be dirty for network sync
-            dragon.setDeltaMovement(dragon.getDeltaMovement());
+            drake.setDeltaMovement(drake.getDeltaMovement());
             
             // Update body and head rotation
-            dragon.yBodyRot = newYaw;
-            dragon.yHeadRot = newYaw;
+            drake.yBodyRot = newYaw;
+            drake.yHeadRot = newYaw;
         }
     }
 
@@ -103,15 +103,15 @@ public record RiftDrakeRiderController(Nulljaw dragon) {
      * Get the speed for ridden movement
      */
     public float getRiddenSpeed(Player player) {
-        float baseSpeed = (float) dragon.getAttributeValue(Attributes.MOVEMENT_SPEED);
+        float baseSpeed = (float) drake.getAttributeValue(Attributes.MOVEMENT_SPEED);
         
-        if (dragon.isInWater()) {
+        if (drake.isInWater()) {
             // Enhanced speed in water
-            float swimSpeed = (float) dragon.getSwimSpeed();
-            return dragon.isAccelerating() ? swimSpeed * (float)WATER_SPEED_MULT : swimSpeed;
+            float swimSpeed = (float) drake.getSwimSpeed();
+            return drake.isAccelerating() ? swimSpeed * (float)WATER_SPEED_MULT : swimSpeed;
         } else {
             // Ground movement with sprint capability
-            return dragon.isAccelerating() ? baseSpeed * 1.0F : baseSpeed * (float)GROUND_SPEED_MULT;
+            return drake.isAccelerating() ? baseSpeed * 1.0F : baseSpeed * (float)GROUND_SPEED_MULT;
         }
     }
 
@@ -119,8 +119,8 @@ public record RiftDrakeRiderController(Nulljaw dragon) {
      * Get the riding offset for passengers
      */
     private double computeSeatY() {
-        double seat = (dragon.getBbHeight() * SEAT_BASE_FACTOR) + SEAT_LIFT;
-        if (dragon.isPhaseTwoActive()) {
+        double seat = (drake.getBbHeight() * SEAT_BASE_FACTOR) + SEAT_LIFT;
+        if (drake.isPhaseTwoActive()) {
             seat += PHASE_TWO_LIFT;
         }
         return seat;
@@ -141,14 +141,14 @@ public record RiftDrakeRiderController(Nulljaw dragon) {
         double seatSide = SEAT_SIDE;
 
         // Convert drake-relative offsets to world coordinates
-        Vec3 forward = Vec3.directionFromRotation(0.0F, dragon.getYRot());
+        Vec3 forward = Vec3.directionFromRotation(0.0F, drake.getYRot());
         Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
 
         Vec3 offset = forward.scale(seatForward)
                 .add(right.scale(seatSide))
                 .add(0.0D, seatY, 0.0D);
 
-        moveFunction.accept(passenger, dragon.getX() + offset.x, dragon.getY() + offset.y, dragon.getZ() + offset.z);
+        moveFunction.accept(passenger, drake.getX() + offset.x, drake.getY() + offset.y, drake.getZ() + offset.z);
     }
 
     /**
@@ -156,8 +156,8 @@ public record RiftDrakeRiderController(Nulljaw dragon) {
      */
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
         // Simple dismount - place passenger beside the drake
-        Vec3 dragonPos = dragon.position();
-        Vec3 forward = Vec3.directionFromRotation(0.0F, dragon.getYRot());
+        Vec3 dragonPos = drake.position();
+        Vec3 forward = Vec3.directionFromRotation(0.0F, drake.getYRot());
         Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
         
         // Place passenger to the right side of the drake

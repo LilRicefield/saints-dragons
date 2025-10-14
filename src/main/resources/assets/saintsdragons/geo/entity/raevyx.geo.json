@@ -268,8 +268,13 @@
 					]
 				},
 				{
+					"name": "head",
+					"parent": "hip",
+					"pivot": [0, 7.7, -5.5]
+				},
+				{
 					"name": "neckstart",
-					"parent": "heightController",
+					"parent": "head",
 					"pivot": [0, 7.95, -3],
 					"rotation": [15, 0, 0]
 				},
@@ -440,13 +445,13 @@
 					]
 				},
 				{
-					"name": "head",
+					"name": "head1",
 					"parent": "neck4Controller",
 					"pivot": [0, 8.95, -16.25]
 				},
 				{
-					"name": "headController",
-					"parent": "head",
+					"name": "head1Controller",
+					"parent": "head1",
 					"pivot": [0, 8.95, -16.25],
 					"locators": {
 						"mouth_origin": [0.1, 8.7, -17.4]
@@ -454,7 +459,7 @@
 				},
 				{
 					"name": "upperjaw",
-					"parent": "headController",
+					"parent": "head1Controller",
 					"pivot": [0, 9.21667, -16.38333]
 				},
 				{
@@ -583,7 +588,7 @@
 				},
 				{
 					"name": "lowerjaw",
-					"parent": "headController",
+					"parent": "head1Controller",
 					"pivot": [0, 8.5917, -16.27567]
 				},
 				{

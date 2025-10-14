@@ -12,63 +12,58 @@ import software.bernie.geckolib.core.object.PlayState;
 public record RaevyxAnimationHandler(Raevyx wyvern) {
     
     // ===== ANIMATION TRIGGERS =====
-    
+
     /**
      * Triggers the dodge animation
      */
     public void triggerDodgeAnimation() {
         wyvern.triggerAnim("action", "dodge");
     }
-    
-    /**
-     * Triggers sleep enter animation
-     */
-    public void triggerSleepEnter() {
-        wyvern.triggerAnim("action", "sleep_enter");
-    }
-    
-    /**
-     * Triggers sleep exit animation
-     */
-    public void triggerSleepExit() {
-        wyvern.triggerAnim("action", "sleep_exit");
-    }
 
     // ===== GECKOLIB SETUP =====
     /**
-     * Sets up all GeckoLib animation triggers for the action controller
+     * Sets up all GeckoLib animation triggers for the action controller.
+     * ALL animations should use triggers for consistent behavior between player and AI control.
      */
     public void setupActionController(AnimationController<Raevyx> actionController) {
         // Register triggerable one-shots for server-side triggerAnim()
         registerVocalTriggers(actionController);
-        
-        // Register native keys for triggers
+
+        // Combat abilities
         actionController.triggerableAnim("lightning_bite",
                 RawAnimation.begin().thenPlay("animation.raevyx.lightning_bite"));
         actionController.triggerableAnim("horn_gore",
                 RawAnimation.begin().thenPlay("animation.raevyx.horn_gore"));
         actionController.triggerableAnim("dodge",
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge"));
+
+        // Lightning beam ability
         actionController.triggerableAnim("lightning_beam_start",
                 RawAnimation.begin().thenPlay("animation.raevyx.lightning_beam_start"));
         actionController.triggerableAnim("lightning_beaming",
                 RawAnimation.begin().thenLoop("animation.raevyx.lightning_beaming"));
         actionController.triggerableAnim("lightning_beam_stop",
                 RawAnimation.begin().thenPlay("animation.raevyx.lightning_beam_stop"));
+
+        // Other abilities
         actionController.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.raevyx.eat"));
-        
-        // Summon Storm variants
         actionController.triggerableAnim("summon_storm_ground",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_ground"));
         actionController.triggerableAnim("summon_storm_air",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air"));
-        
-        // Sleep transitions
+
+        // Sleep animations (enter → loop → exit)
         actionController.triggerableAnim("sleep_enter",
                 RawAnimation.begin().thenPlay("animation.raevyx.sleep_enter"));
+        actionController.triggerableAnim("sleep",
+                RawAnimation.begin().thenLoop("animation.raevyx.sleep"));
         actionController.triggerableAnim("sleep_exit",
                 RawAnimation.begin().thenPlay("animation.raevyx.sleep_exit"));
+
+        // Death animation
+        actionController.triggerableAnim("die",
+                RawAnimation.begin().thenPlay("animation.raevyx.die"));
     }
     
     /**
@@ -104,36 +99,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.pitching_off"));
         }
         return PlayState.CONTINUE;
-    }
-    
-    /**
-     * Handles action animations (combat, abilities, sleep transitions)
-     */
-    public PlayState actionPredicate(AnimationState<Raevyx> state) {
-        // Native GeckoLib: controller idles until triggerAnim is fired
-        state.getController().transitionLength(5);
-        
-        // If dying, force the death clip to hold until completion
-        if (wyvern.isDying()) {
-            state.setAndContinue(RawAnimation.begin().thenPlay("animation.raevyx.die"));
-            return PlayState.CONTINUE;
-        }
-        
-        // Sleep transitions and loop
-        if (wyvern.sleepingEntering) {
-            state.setAndContinue(RawAnimation.begin().thenPlay("animation.raevyx.sleep_enter"));
-            return PlayState.CONTINUE;
-        }
-        if (wyvern.isSleeping()) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.sleep"));
-            return PlayState.CONTINUE;
-        }
-        if (wyvern.sleepingExiting) {
-            state.setAndContinue(RawAnimation.begin().thenPlay("animation.raevyx.sleep_exit"));
-            return PlayState.CONTINUE;
-        }
-        
-        return PlayState.STOP;
     }
 
 }
