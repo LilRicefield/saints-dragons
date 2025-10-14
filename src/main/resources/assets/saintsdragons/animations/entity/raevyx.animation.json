@@ -1148,11 +1148,11 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "step1",
+					"effect": "raevyx_step1",
 					"locator": "rightfeetLocator"
 				},
 				"0.8": {
-					"effect": "step2",
+					"effect": "raevyx_step2",
 					"locator": "leftfeetLocator"
 				}
 			}
@@ -2170,11 +2170,11 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "run_step1",
+					"effect": "raevyx_run_step1",
 					"locator": "rightfeetLocator"
 				},
 				"0.6286": {
-					"effect": "run_step2",
+					"effect": "raevyx_run_step2",
 					"locator": "leftfeetLocator"
 				}
 			}
@@ -7977,6 +7977,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.1667": {
+					"effect": "raevyx_flap1",
+					"locator": "bodyLocator"
+				}
 			}
 		},
 		"animation.raevyx.glide_down": {
@@ -8562,7 +8568,7 @@
 			"bones": {
 				"body": {
 					"rotation": {
-						"vector": [0, 0, 90]
+						"vector": [0, 0, 25]
 					}
 				}
 			}
@@ -8572,7 +8578,7 @@
 			"bones": {
 				"body": {
 					"rotation": {
-						"vector": [0, 0, -95]
+						"vector": [0, 0, -25]
 					}
 				}
 			}
@@ -9863,7 +9869,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_roar",
+					"effect": "raevyx_roar",
 					"locator": "mouth_origin"
 				}
 			}
@@ -10393,7 +10399,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_roar",
+					"effect": "raevyx_roar",
 					"locator": "mouth_origin"
 				}
 			}
@@ -10683,7 +10689,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_bite",
+					"effect": "raevyx_bite",
 					"locator": "mouth_origin"
 				}
 			}
@@ -10903,7 +10909,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_horngore",
+					"effect": "raevyx_horngore",
 					"locator": "mouth_origin"
 				}
 			}
@@ -12519,7 +12525,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_grumble_1",
+					"effect": "raevyx_grumble1",
 					"locator": "mouth_origin"
 				}
 			}
@@ -13428,7 +13434,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_grumble_2",
+					"effect": "raevyx_grumble2",
 					"locator": "mouth_origin"
 				}
 			}
