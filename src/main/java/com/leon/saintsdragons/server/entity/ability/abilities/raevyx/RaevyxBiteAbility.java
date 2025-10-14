@@ -73,19 +73,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
 
 
         if (section.sectionType == AbilitySectionType.ACTIVE && !didHitThisActive) {
-            // Play bite sound at mouth position when the bite "lands"
-            if (!getLevel().isClientSide) {
-                net.minecraft.world.level.Level lvl = getLevel();
-                net.minecraft.world.phys.Vec3 mouth = getUser().getMouthPosition();
-                lvl.playSound(
-                        null,
-                        mouth.x, mouth.y, mouth.z,
-                        com.leon.saintsdragons.common.registry.ModSounds.RAEVYX_BITE.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL,
-                        1.0f,
-                        0.95f + getUser().getRandom().nextFloat() * 0.1f
-                );
-            }
+            // Sound is handled by animation keyframe in lightning_bite animation
             // Apply bite and chain once at the start of ACTIVE
             LivingEntity primary = findPrimaryTarget();
             // Fallback: use current target if within generous melee range

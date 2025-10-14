@@ -48,19 +48,8 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
             hitIdsThisUse.clear();
             playedSoundThisUse = false;
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
-            // Play horn gore sound at the start of the strike window even if no target is hit
-            if (!playedSoundThisUse && !getLevel().isClientSide) {
-                Vec3 head = getUser().getHeadPosition();
-                getLevel().playSound(
-                        null,
-                        head.x, head.y, head.z,
-                        com.leon.saintsdragons.common.registry.ModSounds.RAEVYX_HORNGORE.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL,
-                        1.0f,
-                        0.95f + getUser().getRandom().nextFloat() * 0.1f
-                );
-                playedSoundThisUse = true;
-            }
+            // Sound is handled by animation keyframe in horn_gore animation
+            hitIdsThisUse.clear(); // Reset hit tracking for this strike window
         }
     }
 

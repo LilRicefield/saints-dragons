@@ -76,8 +76,9 @@ public class DragonSoundHandler {
      */
     public void handleAnimationSound(DragonEntity entity, Object keyframeData, software.bernie.geckolib.core.animation.AnimationController<?> controller) {
         if (dragon.isDying()) return;
-        // IMPORTANT: GeckoLib fires animation sound events on CLIENT side, not server!
-        // We must handle sounds on client for animation keyframes to work
+        // IMPORTANT: GeckoLib fires animation sound events on BOTH client and server!
+        // We ONLY want to handle on client side for local playback
+        if (!dragon.level().isClientSide) return; // Block server-side completely
         if (keyframeData == null) return;
         String controllerName = null;
         try {
@@ -217,7 +218,7 @@ public class DragonSoundHandler {
         if (entry.pitchVariance() != 0f) {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
         }
-        playRouted(dragon.level(), entry.soundSupplier().get(), entry.volume(), pitch, mouthPos, entry.allowWhenSitting(), entry.allowDuringSleep());
+        playServerBroadcast(entry.soundSupplier().get(), entry.volume(), pitch, mouthPos);
 
         int window = getVocalAnimationWindowTicks(key);
         if (suppressOverlap) {
@@ -250,12 +251,14 @@ public class DragonSoundHandler {
      */
     private void handleWingFlapSound(String key) {
         if (dragon.isStayOrSitMuted()) return;
+        if (!dragon.level().isClientSide) return; // Client-side only
         double flightSpeed = dragon.getCachedHorizontalSpeed();
         float pitch = 1.0f + (float)(flightSpeed * 0.3f); // Higher pitch when flying faster
         float volume = Math.max(0.6f, 0.9f + (float)(flightSpeed * 0.2f));
 
         // Use custom flap sound (matches Blockbench keyframe label like "flap1")
-        playRouted(dragon.level(), ModSounds.RAEVYX_FLAP1.get(), volume, pitch);
+        dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                ModSounds.RAEVYX_FLAP1.get(), SoundSource.NEUTRAL, volume, pitch, false);
     }
     
     /**
@@ -310,6 +313,8 @@ public class DragonSoundHandler {
     }
 
     private void actuallyPlayStep(String which, String locator) {
+        if (!dragon.level().isClientSide) return; // Client-side only
+
         // Heavier steps when running or carrying rider
         float weight = 1.0f;
         if (dragon.isRunning()) weight *= 1.2f;
@@ -322,20 +327,28 @@ public class DragonSoundHandler {
         boolean isRun = which != null && which.startsWith("run_step");
         boolean isSecond = which != null && which.endsWith("2");
 
+        double x = at != null ? at.x : dragon.getX();
+        double y = at != null ? at.y : dragon.getY();
+        double z = at != null ? at.z : dragon.getZ();
+
         if (isRun) {
             if (isSecond) {
-                playRouted(dragon.level(), ModSounds.RAEVYX_RUN_STEP2.get(), volume, pitch, at);
+                dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_RUN_STEP2.get(),
+                        SoundSource.NEUTRAL, volume, pitch, false);
                 lastStep2Tick = dragon.tickCount;
             } else {
-                playRouted(dragon.level(), ModSounds.RAEVYX_RUN_STEP1.get(), volume, pitch, at);
+                dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_RUN_STEP1.get(),
+                        SoundSource.NEUTRAL, volume, pitch, false);
                 lastStep1Tick = dragon.tickCount;
             }
         } else {
             if (isSecond) {
-                playRouted(dragon.level(), ModSounds.RAEVYX_STEP2.get(), volume, pitch, at);
+                dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_STEP2.get(),
+                        SoundSource.NEUTRAL, volume, pitch, false);
                 lastStep2Tick = dragon.tickCount;
             } else {
-                playRouted(dragon.level(), ModSounds.RAEVYX_STEP1.get(), volume, pitch, at);
+                dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_STEP1.get(),
+                        SoundSource.NEUTRAL, volume, pitch, false);
                 lastStep1Tick = dragon.tickCount;
             }
         }
@@ -343,9 +356,11 @@ public class DragonSoundHandler {
 
     /**
      * Parses and plays sounds specified as namespace:soundid or namespace:soundid|vol|pitch
+     * Uses client-side local playback for animation keyframe sounds.
      */
     private void handleAutoSoundSpec(String spec) {
         if (dragon.isStayOrSitMuted() || dragon.isSleeping()) return;
+        if (!dragon.level().isClientSide) return; // Only on client for animation sounds
         if (spec == null) return;
         String[] parts = spec.split("\\|");
         String id = parts[0];
@@ -360,64 +375,25 @@ public class DragonSoundHandler {
         if (rl == null) return;
         net.minecraft.sounds.SoundEvent evt = net.minecraftforge.registries.ForgeRegistries.SOUND_EVENTS.getValue(rl);
         if (evt == null) return;
-        playRouted(dragon.level(), evt, vol, pitch);
+
+        // Client-side local playback
+        dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                evt, SoundSource.NEUTRAL, vol, pitch, false);
     }
 
     /**
-     * Plays sound properly on both client and server sides
+     * Server-side sound broadcast for vocals (hurt, die, ambient sounds).
+     * NOT used for animation keyframe sounds - those use client-side playback.
      */
-    public void emitSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
-        playRouted(dragon.level(), sound, volume, pitch);
-    }
+    private void playServerBroadcast(net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 position) {
+        if (dragon.level().isClientSide) return; // Server only
 
-    public void emitSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at) {
-        playRouted(dragon.level(), sound, volume, pitch, at);
-    }
+        double x = position != null ? position.x : dragon.getX();
+        double y = position != null ? position.y : dragon.getY();
+        double z = position != null ? position.z : dragon.getZ();
 
-    public void emitSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting) {
-        playRouted(dragon.level(), sound, volume, pitch, at, allowWhenSitting);
-    }
-
-    public void emitSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting, boolean allowDuringSleep) {
-        playRouted(dragon.level(), sound, volume, pitch, at, allowWhenSitting, allowDuringSleep);
-    }
-
-    private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
-        playRouted(level, sound, volume, pitch, null, false);
-    }
-
-    private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at) {
-        playRouted(level, sound, volume, pitch, at, false);
-    }
-
-    private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting) {
-        playRouted(level, sound, volume, pitch, at, allowWhenSitting, false);
-    }
-
-    private void playRouted(Level level, net.minecraft.sounds.SoundEvent sound, float volume, float pitch, Vec3 at, boolean allowWhenSitting, boolean allowDuringSleep) {
-        // Allow hurt and die sounds to play regardless of sleep/sit state
-        boolean isHurtOrDieSound = sound == ModSounds.RAEVYX_HURT.get() || sound == ModSounds.RAEVYX_DIE.get();
-        if (!allowDuringSleep && !isHurtOrDieSound && dragon.isSleeping()) return;
-        if (!allowWhenSitting && !isHurtOrDieSound && dragon.isStayOrSitMuted()) return;
-        if (level == null) return;
-
-        // IMPORTANT: Only play sounds on server side - server will broadcast to clients
-        // Playing on both sides causes duplicate sounds
-        if (level.isClientSide) {
-            return;
-        }
-
-        double px = dragon.getX();
-        double py = dragon.getY();
-        double pz = dragon.getZ();
-        if (at != null) {
-            px = at.x;
-            py = at.y;
-            pz = at.z;
-        }
-
-        // Server side: broadcast to all nearby players
-        level.playSound(null, px, py, pz, sound, SoundSource.NEUTRAL, volume, pitch);
+        // Server broadcasts to all nearby clients
+        dragon.level().playSound(null, x, y, z, sound, SoundSource.NEUTRAL, volume, pitch);
     }
 
     /**
@@ -492,9 +468,11 @@ public class DragonSoundHandler {
      */
     private void handleTakeoffSound() {
         if (dragon.isStayOrSitMuted() || dragon.isSleeping() || dragon.isSleepTransitioning()) return;
+        if (!dragon.level().isClientSide) return; // Client-side only
         float urgency = dragon.getTarget() != null ? 1.3f : 1.0f;
         // Use custom flap for takeoff to avoid vanilla ENDER_DRAGON_FLAP
-        playRouted(dragon.level(), ModSounds.RAEVYX_FLAP1.get(), urgency * 1.2f, 0.85f);
+        dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                ModSounds.RAEVYX_FLAP1.get(), SoundSource.NEUTRAL, urgency * 1.2f, 0.85f, false);
     }
     
     /**

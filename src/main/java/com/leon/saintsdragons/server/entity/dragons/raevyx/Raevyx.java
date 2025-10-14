@@ -2478,11 +2478,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         AnimationController<Raevyx> actionController =
                 new AnimationController<>(this, "action", 3, state -> PlayState.STOP);
 
-        // Sound keyframes
-        bankingController.setSoundKeyframeHandler(this::onAnimationSound);
-        pitchingController.setSoundKeyframeHandler(this::onAnimationSound);
+        // Sound keyframes - only register on relevant controllers to prevent duplication
+        // Movement controller: handles footsteps, wing flaps during locomotion
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
+        // Action controller: handles combat sounds, ability sounds, vocalizations
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
+        // Banking/Pitching controllers: NO sound keyframes (purely visual animations)
 
         // Setup animation triggers via animation handler
         animationHandler.setupActionController(actionController);
