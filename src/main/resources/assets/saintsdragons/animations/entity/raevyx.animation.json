@@ -3150,7 +3150,7 @@
 			}
 		},
 		"animation.raevyx.takeoff": {
-			"animation_length": 1.6667,
+			"animation_length": 2,
 			"bones": {
 				"heightController": {
 					"position": {
@@ -8614,7 +8614,7 @@
 			}
 		},
 		"animation.raevyx.roar_ground": {
-			"animation_length": 4,
+			"animation_length": 4.375,
 			"bones": {
 				"neckstart": {
 					"rotation": {
@@ -9608,12 +9608,6 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
-						"3.7083": {
-							"post": {
-								"vector": [10.37677, -0.17717, -10.80511]
-							},
-							"lerp_mode": "catmullrom"
-						},
 						"4.0": {
 							"post": {
 								"vector": [0, 0, 0]
@@ -9645,6 +9639,12 @@
 						"1.2083": {
 							"post": {
 								"vector": [0, 30, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"3.125": {
+							"post": {
+								"vector": [0, 0, 0]
 							},
 							"lerp_mode": "catmullrom"
 						},
@@ -10405,7 +10405,7 @@
 			}
 		},
 		"animation.raevyx.lightning_bite": {
-			"animation_length": 0.6027,
+			"animation_length": 0.7083,
 			"bones": {
 				"neckstart": {
 					"rotation": {
@@ -10695,7 +10695,7 @@
 			}
 		},
 		"animation.raevyx.horn_gore": {
-			"animation_length": 0.6061,
+			"animation_length": 0.7083,
 			"bones": {
 				"neckstart": {
 					"rotation": {
@@ -10915,7 +10915,7 @@
 			}
 		},
 		"animation.raevyx.lightning_beam_start": {
-			"animation_length": 0.375,
+			"animation_length": 0.4583,
 			"bones": {
 				"neckstart": {
 					"rotation": {
@@ -11570,7 +11570,7 @@
 			}
 		},
 		"animation.raevyx.lightning_beam_stop": {
-			"animation_length": 0.875,
+			"animation_length": 1,
 			"bones": {
 				"neck2Controller": {
 					"rotation": {
@@ -14197,7 +14197,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_chuff",
+					"effect": "raevyx_chuff",
 					"locator": "mouth_origin"
 				}
 			}
@@ -14462,7 +14462,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_purr",
+					"effect": "raevyx_purr",
 					"locator": "mouth_origin"
 				}
 			}
@@ -14737,7 +14737,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_chuff",
+					"effect": "raevyx_content",
 					"locator": "mouth_origin"
 				}
 			}
@@ -15438,7 +15438,7 @@
 			}
 		},
 		"animation.raevyx.sleep_enter": {
-			"animation_length": 4.2083,
+			"animation_length": 4.6667,
 			"bones": {
 				"heightController": {
 					"rotation": {
@@ -17639,7 +17639,7 @@
 			}
 		},
 		"animation.raevyx.sleep_exit": {
-			"animation_length": 6.75,
+			"animation_length": 7.2083,
 			"bones": {
 				"body": {
 					"position": {
@@ -18965,13 +18965,13 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_hurt",
+					"effect": "raevyx_hurt",
 					"locator": "mouth_origin"
 				}
 			}
 		},
 		"animation.raevyx.die": {
-			"animation_length": 4.1667,
+			"animation_length": 4.375,
 			"bones": {
 				"body": {
 					"rotation": {
@@ -20456,7 +20456,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_die",
+					"effect": "raevyx_die",
 					"locator": "mouth_origin"
 				}
 			}
@@ -22661,7 +22661,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_summon_storm",
+					"effect": "raevyx_summon_storm",
 					"locator": "mouth_origin"
 				}
 			}
@@ -23621,7 +23621,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "lightningdragon_summon_storm",
+					"effect": "raevyx_summon_storm",
 					"locator": "mouth_origin"
 				}
 			}

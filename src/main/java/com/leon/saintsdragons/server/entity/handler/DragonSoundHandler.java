@@ -76,6 +76,7 @@ public class DragonSoundHandler {
      */
     public void handleAnimationSound(DragonEntity entity, Object keyframeData, software.bernie.geckolib.core.animation.AnimationController<?> controller) {
         if (dragon.isDying()) return;
+        if (dragon.level().isClientSide) return;
         if (keyframeData == null) return;
         String controllerName = null;
         try {
@@ -152,6 +153,7 @@ public class DragonSoundHandler {
      */
     public void handleSoundByName(String soundName) {
         if (dragon.isDying()) return;
+        if (dragon.level().isClientSide) return;
         if (dragon.isStayOrSitMuted() || dragon.isSleeping() || dragon.isSleepTransitioning()) return; // Suppress during sit/sleep/transition
         if (soundName == null || soundName.isEmpty()) return;
         String key = soundName.toLowerCase(java.util.Locale.ROOT);
