@@ -3,7 +3,7 @@
 	"minecraft:geometry": [
 		{
 			"description": {
-				"identifier": "geometry.raevyx",
+				"identifier": "geometry.unknown",
 				"texture_width": 128,
 				"texture_height": 128,
 				"visible_bounds_width": 6,
@@ -23,7 +23,10 @@
 				{
 					"name": "heightController",
 					"parent": "body",
-					"pivot": [0, 8.925, 0]
+					"pivot": [0, 8.925, 0],
+					"locators": {
+						"bodyLocator": [0, 0, 0]
+					}
 				},
 				{
 					"name": "tail1",

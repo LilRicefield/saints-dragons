@@ -3,7 +3,7 @@
     "subtitle": "Raevyx grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/raevyx/raevyx_grumble_1",
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble1",
         "volume": 1.5,
         "pitch": 1.0
       }
@@ -13,7 +13,7 @@
     "subtitle": "Raevyx grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/raevyx/raevyx_grumble_2",
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble2",
         "volume": 1.5,
         "pitch": 1.0
       }
@@ -23,7 +23,7 @@
     "subtitle": "Raevyx grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/raevyx/raevyx_grumble_3",
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble3",
         "volume": 1.5,
         "pitch": 1.0
       }
@@ -33,7 +33,7 @@
     "subtitle": "Raevyx purrs contentedly",
     "sounds": [
       {
-        "name": "saintsdragons:entity/raevyx/lightningdragon_purr",
+        "name": "saintsdragons:entity/raevyx/raevyx_purr",
         "volume": 0.7,
         "pitch": 1.0
       }
@@ -43,7 +43,7 @@
     "subtitle": "Raevyx snorts",
     "sounds": [
       {
-        "name": "saintsdragons:entity/raevyx/lightningdragon_snort",
+        "name": "saintsdragons:entity/raevyx/raevyx_snort",
         "volume": 0.9,
         "pitch": 1.0
       }
