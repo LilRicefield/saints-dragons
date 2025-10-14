@@ -2,8 +2,6 @@ package com.leon.saintsdragons.server.entity.controller.raevyx;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.*;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -11,7 +9,7 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
 /**
- * Handles all animation logic for Raevyx
+ * Clean animation controller for Raevyx - simple and maintainable
  */
 public class RaevyxPhysicsController {
     private final Raevyx wyvern;
@@ -19,25 +17,7 @@ public class RaevyxPhysicsController {
     private static final int TAKEOFF_ANIM_MAX_TICKS = 24;   // previously 30
     private static final int TAKEOFF_ANIM_EARLY_TICKS = 16; // start even sooner once airborne
 
-    // ===== FLIGHT ANIMATION CONTROLLERS =====
-    public static class FlightAnimationController {
-        private float timer = 0f;
-        private final float maxTime;
-
-        public FlightAnimationController(float maxTime) {
-            this.maxTime = maxTime;
-        }
-
-        public void increaseTimer() { timer = Math.min(timer + 0.2f, maxTime); }
-
-        public void decreaseTimer() { timer = Math.max(timer - 0.2f, 0f); }
-    }
-
-    // Animation controllers
-    public final FlightAnimationController glidingController = new FlightAnimationController(25f);
-    public final FlightAnimationController flappingController = new FlightAnimationController(20f);
-    public final FlightAnimationController hoveringController = new FlightAnimationController(15f);
-    // Physics envelopes (only used when USE_PHYSICS_ENVELOPES)
+    // Physics envelopes for renderer effects
     private final Envelope01 glideEnv = new Envelope01(0.25f, 0.25f);
     private final Envelope01 flapEnv  = new Envelope01(0.25f, 0.18f);
     private final Envelope01 hoverEnv = new Envelope01(0.40f, 0.15f);
@@ -52,20 +32,6 @@ public class RaevyxPhysicsController {
 
     // Flight animation state tracking
     private RawAnimation currentFlightAnimation = FLY_GLIDE;
-
-    // Enhanced flap timing
-    private int discreteFlapCooldown = 0;
-    private boolean hasPlayedFlapSound = false;
-    private static final int FLAP_MIN_HOLD_TICKS = 28; // ensure near-full visible cycle incl. blend
-    // Temporary lock to force flapping (e.g., when starting to climb)
-    private int flapLockTicks = 0;
-    // Temporary lock to hold glide state briefly
-
-    // Wing beat intensity for sound timing
-    private float wingBeatIntensity = 0f;
-
-    // Sound timing constants
-    private static final float BEAT_THRESHOLD = 0.7f;
 
     // ===== Envelopes and lift model =====
     public static class Envelope01 {
@@ -102,7 +68,7 @@ public class RaevyxPhysicsController {
         prevGlidingFraction = glidingFraction;
         prevFlappingFraction = flappingFraction;
         prevHoveringFraction = hoveringFraction;
-        // no previous wingbeat interpolation needed; value is used internally
+
         updatePhysicsEnvelopes();
     }
 
@@ -113,7 +79,7 @@ public class RaevyxPhysicsController {
         // Use same hysteresis tendencies as predicate: if flapping dominates → forward, else glide; hovering when hoveringFraction is significant
         float hoverWeight = hoveringFraction;
         float flapWeight = flappingFraction;
-        boolean hovering = hoverWeight > 0.35f; // slightly above predicate’s exit
+        boolean hovering = hoverWeight > 0.35f; // slightly above predicate's exit
         if (hovering) return 2;
         boolean flap = flapWeight > 0.40f; // coarse threshold for sync
         return flap ? 1 : 0;
@@ -121,8 +87,8 @@ public class RaevyxPhysicsController {
     public PlayState handleMovementAnimation(AnimationState<Raevyx> state) {
         // Default transition length (safe baseline); override per-branch below
         state.getController().transitionLength(6);
-        // While dying or sleeping, suppress movement animations entirely; action controller plays die/sleep clips
-        if (wyvern.isDying() || wyvern.isSleeping()) {
+        // While dying or sleeping (including transitions), suppress movement animations entirely; action controller plays die/sleep clips
+        if (wyvern.isDying() || wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()) {
             return PlayState.STOP;
         }
         // Drive SIT from our custom progress system only to avoid desync
@@ -133,14 +99,6 @@ public class RaevyxPhysicsController {
         } else if (wyvern.isLanding()) {
             state.setAndContinue(LANDING);
         } else if (wyvern.isFlying()) {
-            // Ensure short ascents finish a full flap cycle
-            if (flapLockTicks > 0) {
-                flapLockTicks--;
-                state.getController().transitionLength(4);
-                boolean ascendingNow = wyvern.isGoingUp() || wyvern.getDeltaMovement().y > 0.02;
-                state.setAndContinue(ascendingNow ? FLAP : FLY_FORWARD);
-                return PlayState.CONTINUE;
-            }
             // Prefer server-synced flight mode when available for observer consistency
             int syncedMode = wyvern.getSyncedFlightMode();
             Vec3 vNow = wyvern.getDeltaMovement();
@@ -178,15 +136,9 @@ public class RaevyxPhysicsController {
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 1) {
+                // Mode 1 = FLAP (low altitude or physics demands flapping)
                 state.getController().transitionLength(4);
-                boolean ascendingNow = wyvern.isGoingUp() || vNow.y > 0.02;
-                boolean stationaryAir = (vNow.horizontalDistanceSqr() < 0.0025 && Math.abs(vNow.y) < 0.02)
-                        || wyvern.isHovering()
-                        || hoveringFraction > 0.45f;
-                RawAnimation desired = (ascendingNow || stationaryAir)
-                        ? FLAP
-                        : FLY_FORWARD;
-                state.setAndContinue(desired);
+                state.setAndContinue(FLAP);
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 0) {
@@ -214,9 +166,9 @@ public class RaevyxPhysicsController {
                 }
 
                 // Base thresholds for entering/exiting flap (without locks)
-                boolean shouldFlapBase = (currentFlightAnimation == FLY_FORWARD)
-                        ? (flapWeight > 0.22f || hoverWeight > 0.28f) // Lower threshold to exit
-                        : (flapWeight > 0.55f || hoverWeight > 0.65f); // Higher threshold to enter
+                boolean shouldFlapBase = (currentFlightAnimation == FLAP)
+                        ? (flapWeight > 0.55f || hoverWeight > 0.65f) // Higher threshold to stay flapping
+                        : (flapWeight > 0.22f || hoverWeight > 0.28f); // Lower threshold to enter flapping
 
                 // If we are clearly in hover without a synced mode (fallback), play air hover
                 if (hoverWeight > 0.45f) {
@@ -226,23 +178,29 @@ public class RaevyxPhysicsController {
                     return PlayState.CONTINUE;
                 }
 
-                if (!descendingNow && (shouldFlapBase || vNow.y >= -0.005)) {
-                    boolean ascendingNow = wyvern.isGoingUp() || vNow.y > 0.02;
-                    RawAnimation desired = ascendingNow
-                            ? FLAP
-                            : FLY_FORWARD;
-                    if (currentFlightAnimation != desired) {
-                        // Slightly quicker blend into flap so the beat reads
+                // PHYSICS-BASED: Use flap/glide envelope weights
+                boolean ascendingNow = wyvern.isGoingUp() || vNow.y > 0.02;
+
+                // Always flap when ascending
+                if (ascendingNow) {
+                    if (currentFlightAnimation != FLAP) {
                         state.getController().transitionLength(4);
-                        currentFlightAnimation = desired;
+                        currentFlightAnimation = FLAP;
                     }
-                    state.setAndContinue(desired);
+                    state.setAndContinue(FLAP);
+                }
+                // Use physics envelope to decide
+                else if (shouldFlapBase) {
+                    if (currentFlightAnimation != FLAP) {
+                        state.getController().transitionLength(4);
+                        currentFlightAnimation = FLAP;
+                    }
+                    state.setAndContinue(FLAP);
                 } else {
-                    // Check if ridden wyvern is actively descending for glide animation
+                    // Default to gliding when not ascending and physics doesn't demand flapping
                     RawAnimation glideAnimation = resolveGlideAnimation(vNow);
                     if (currentFlightAnimation != glideAnimation) {
-                        // Smooth blend out of flap - longer for gradual feel
-                        state.getController().transitionLength(12);
+                        state.getController().transitionLength(8);
                         currentFlightAnimation = glideAnimation;
                     }
                     state.setAndContinue(glideAnimation);
@@ -273,173 +231,6 @@ public class RaevyxPhysicsController {
 
         return (wyvern.timeFlying < TAKEOFF_ANIM_MAX_TICKS) && (airborne || ascending);
     }
-
-    private void updateFlightAnimationControllers() {
-        if (!wyvern.isFlying()) {
-            // Ground state - smoothly fade out all flight animations
-            glidingController.decreaseTimer();
-            flappingController.decreaseTimer();
-            hoveringController.decreaseTimer();
-            return;
-        }
-
-        Vec3 velocity = wyvern.getDeltaMovement();
-        Vec3 lookDirection = wyvern.getLookAngle();
-        double speedSqr = velocity.horizontalDistanceSqr();
-
-        // Enhanced flight condition analysis
-        boolean isDiving = lookDirection.y < -0.15 && velocity.y < -0.08;
-        // More sensitive climb detection to encourage flaps
-        boolean isClimbing = velocity.y > 0.06;
-        boolean isSlowSpeed = speedSqr < 0.0036f;
-        boolean isHoveringMode = wyvern.isHovering() || (wyvern.getTarget() != null && speedSqr < 0.03f);
-        boolean isDescending = velocity.y < -0.04 && !isDiving;
-
-        // Determine primary flight mode
-        if (isHoveringMode || wyvern.isLanding()) {
-            // HOVERING MODE - for combat and precise movement
-            hoveringController.increaseTimer();
-            glidingController.decreaseTimer();
-
-            // Hover-flapping (gentle wing beats to maintain position)
-            if (isClimbing || isSlowSpeed || Math.abs(velocity.y) > 0.05) {
-                // Smooth every-tick updates with reduced increment
-                flappingController.increaseTimer();
-                // Force a brief flap burst on initiating a climb
-                if (isClimbing && flapLockTicks == 0 && discreteFlapCooldown <= 0) {
-                    flapLockTicks = FLAP_MIN_HOLD_TICKS;
-                    discreteFlapCooldown = FLAP_MIN_HOLD_TICKS;
-                }
-            } else {
-                flappingController.decreaseTimer();
-            }
-
-            // Discrete hover flaps - less frequent than combat flaps
-            if (discreteFlapCooldown <= 0 && (isClimbing || wyvern.getRandom().nextFloat() < 0.03)) {
-                triggerDiscreteFlapAnimation();
-                discreteFlapCooldown = 30;
-            }
-
-        } else {
-            // GLIDING MODE - the bread and butter of wyvern flight
-            hoveringController.decreaseTimer();
-
-            // Intelligent flap detection
-            boolean needsActiveFlapping = isDiving || isClimbing || isSlowSpeed || isDescending;
-
-            if (needsActiveFlapping) {
-                // Smooth every-tick updates with reduced increment
-                flappingController.increaseTimer();
-                glidingController.decreaseTimer();
-
-                // Discrete flap trigger (only when physics demands it)
-                if (discreteFlapCooldown <= 0) {
-                    boolean shouldTriggerFlap = isDiving && velocity.y < -0.15;
-
-                    if (isClimbing && velocity.y > 0.15) shouldTriggerFlap = true;
-                    if (isDescending && wyvern.getRandom().nextFloat() < 0.08) shouldTriggerFlap = true;
-
-                    if (shouldTriggerFlap) {
-                        triggerDiscreteFlapAnimation();
-                        discreteFlapCooldown = 28 + wyvern.getRandom().nextInt(16);
-                        flapLockTicks = Math.max(flapLockTicks, 10);
-                    }
-                }
-
-            } else {
-                flappingController.decreaseTimer();
-                glidingController.increaseTimer();
-
-                // Reset flap sound flag during smooth gliding
-                hasPlayedFlapSound = false;
-            }
-        }
-    }
-
-    private void updateWingBeatIntensity() {
-        // Calculate wing beat intensity for realistic sound timing
-        float targetIntensity = 0f;
-
-        if (wyvern.isFlying()) {
-            // Base intensity on flight state
-            if (hoveringFraction > 0.5f) {
-                targetIntensity = 0.6f + flappingFraction * 0.4f; // Steady hover beats
-            } else if (flappingFraction > 0.3f) {
-                targetIntensity = 0.4f + flappingFraction * 0.6f; // Active flight beats
-            } else {
-                targetIntensity = glidingFraction * 0.2f; // Minimal gliding adjustments
-            }
-
-
-            Vec3 velocity = wyvern.getDeltaMovement();
-            double speed = velocity.horizontalDistanceSqr();
-
-            targetIntensity += (float) (speed * 2.0f);
-            targetIntensity = Mth.clamp(targetIntensity, 0f, 1f);
-        }
-
-        // Smooth approach to target intensity
-        wingBeatIntensity = Mth.approach(wingBeatIntensity, targetIntensity, 0.05f);
-
-        // Sound triggering logic
-        if (wyvern.isFlying() && !wyvern.level().isClientSide) {
-            handleFlightSounds();
-        }
-    }
-
-    private void handleFlightSounds() {
-        if (wyvern.isStayOrSitMuted()) return;
-        if (wingBeatIntensity <= BEAT_THRESHOLD || hasPlayedFlapSound) {
-            if (wingBeatIntensity < 0.3f) {
-                hasPlayedFlapSound = false;
-            }
-            return;
-        }
-
-        // Wing beat sound timing
-        boolean shouldPlaySound = false;
-
-        if (hoveringFraction > 0.5f) {
-            shouldPlaySound = discreteFlapCooldown <= 0;
-        } else if (flappingFraction > 0.4f) {
-            shouldPlaySound = true;
-        }
-
-        if (shouldPlaySound) {
-            playFlappingSound();
-            hasPlayedFlapSound = true;
-            discreteFlapCooldown = Math.max(discreteFlapCooldown, 15);
-        }
-    }
-
-    private void triggerDiscreteFlapAnimation() {
-        // TODO: Check with new Dragon ability system if animation can be triggered
-        playFlappingSound();
-    }
-
-    private void playFlappingSound() {
-        if (wyvern.isStayOrSitMuted()) return;
-        if (!wyvern.level().isClientSide) {
-            // Vary sound based on flight state
-            float volume = 0.6f + wingBeatIntensity * 0.4f;
-            float pitch = 0.9f + wyvern.getRandom().nextFloat() * 0.4f;
-
-            // Different sounds for different flight modes
-            if (hoveringFraction > 0.5f) {
-                pitch *= 1.1f; // Higher pitch for hovering
-                volume *= 0.8f; // Softer for hovering
-            } else if (glidingFraction > 0.5f) {
-                volume *= 0.6f; // Very quiet for gliding adjustments
-                pitch *= 0.9f; // Lower pitch for gliding
-            }
-
-            wyvern.level().playSound(null, wyvern.getX(), wyvern.getY(), wyvern.getZ(),
-                    SoundEvents.ENDER_DRAGON_FLAP, SoundSource.HOSTILE,
-                    volume, pitch);
-        }
-    }
-
-    // ===== GETTERS FOR RENDERER =====
 
     private void updatePhysicsEnvelopes() {
         Vec3 v = wyvern.getDeltaMovement();
@@ -483,14 +274,6 @@ public class RaevyxPhysicsController {
         glidingFraction = glideEnv.raw();
         flappingFraction = flapEnv.raw();
         hoveringFraction = hoverEnv.raw();
-
-        // Wing beat intensity for sound timing and flap sound handling
-        updateWingBeatIntensity();
-
-        // Handle flap cooldowns
-        if (discreteFlapCooldown > 0) {
-            discreteFlapCooldown--;
-        }
     }
 
     private RawAnimation resolveGlideAnimation(Vec3 velocity) {
@@ -522,38 +305,22 @@ public class RaevyxPhysicsController {
         tag.putFloat("GlideVal", glideEnv.raw());
         tag.putFloat("FlapVal", flapEnv.raw());
         tag.putFloat("HoverVal", hoverEnv.raw());
-        tag.putFloat("WingBeatIntensity", wingBeatIntensity);
-        tag.putFloat("GlidingFraction", glidingFraction);
-        tag.putFloat("FlappingFraction", flappingFraction);
-        tag.putFloat("HoveringFraction", hoveringFraction);
-        tag.putInt("DiscreteFlapCooldown", discreteFlapCooldown);
     }
 
     public void readFromNBT(net.minecraft.nbt.CompoundTag tag) {
         // Restore all animation state after load
-        wingBeatIntensity = tag.getFloat("WingBeatIntensity");
-
         if (tag.contains("GlideVal")) {
             glideEnv.setRaw(tag.getFloat("GlideVal"));
             flapEnv.setRaw(tag.getFloat("FlapVal"));
             hoverEnv.setRaw(tag.getFloat("HoverVal"));
-            glidingFraction = glideEnv.raw();
-            flappingFraction = flapEnv.raw();
-            hoveringFraction = hoverEnv.raw();
-        } else {
-            // Backward compatibility: fall back to old fractions
-            glidingFraction = tag.getFloat("GlidingFraction");
-            flappingFraction = tag.getFloat("FlappingFraction");
-            hoveringFraction = tag.getFloat("HoveringFraction");
-            glideEnv.setRaw(glidingFraction);
-            flapEnv.setRaw(flappingFraction);
-            hoverEnv.setRaw(hoveringFraction);
         }
+
+        glidingFraction = glideEnv.raw();
+        flappingFraction = flapEnv.raw();
+        hoveringFraction = hoverEnv.raw();
 
         prevGlidingFraction = glidingFraction;
         prevFlappingFraction = flappingFraction;
         prevHoveringFraction = hoveringFraction;
-
-        discreteFlapCooldown = tag.getInt("DiscreteFlapCooldown");
     }
 }

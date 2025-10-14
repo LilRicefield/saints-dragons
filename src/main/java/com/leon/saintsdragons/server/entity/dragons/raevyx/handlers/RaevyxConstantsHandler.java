@@ -43,9 +43,6 @@ public class RaevyxConstantsHandler {
     
     /** Flying glide down animation (for tamed dragons pitching down) */
     public static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.raevyx.glide_down");
-    
-    /** Flying forward animation */
-    public static final RawAnimation FLY_FORWARD = RawAnimation.begin().thenLoop("animation.raevyx.fly_forward");
 
     /** Wing flapping animation */
     public static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.raevyx.flap");
@@ -175,6 +172,14 @@ public class RaevyxConstantsHandler {
     /** Entity data accessor for sleeping state */
     public static final EntityDataAccessor<Boolean> DATA_SLEEPING =
             RideableDragonData.createSleepingAccessor(Raevyx.class);
+
+    /** Entity data accessor for sleep enter transition state */
+    public static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
+            SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for sleep exit transition state */
+    public static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
+            SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
 
     // ===== AI CONSTANTS =====
     

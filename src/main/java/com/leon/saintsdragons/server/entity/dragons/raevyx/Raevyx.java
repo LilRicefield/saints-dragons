@@ -75,8 +75,10 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 
+
 //GeckoLib
 import software.bernie.geckolib.core.animation.*;
+import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 
 //WHO ARE THESE SUCKAS
@@ -222,8 +224,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public int attackCooldown = 0;
     private boolean allowGroundBeamDuringStorm = false;
     // Sleep transition state
-    public boolean sleepingEntering = false;
-    public boolean sleepingExiting = false;
+    // Sleep transition states now synced via entity data (DATA_SLEEPING_ENTERING, DATA_SLEEPING_EXITING)
+    // Removed public boolean fields in favor of synced entity data
     private int sleepTransitionTicks = 0;
     // Tiny ambient resume buffer after exit completes
     private int sleepAmbientCooldownTicks = 0;
@@ -389,6 +391,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.define(DATA_ATTACK_STATE, ATTACK_STATE_IDLE);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
+        this.entityData.define(DATA_SLEEPING_ENTERING, false);
+        this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_BEAM_END_SET, false);
         this.entityData.define(DATA_BEAM_END_X, 0f);
         this.entityData.define(DATA_BEAM_END_Y, 0f);
@@ -834,40 +838,31 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (isHovering()) return 2; // Hover
         if (isLanding()) return 2;  // Landing (treat as hover)
 
-        // High-altitude gliding check for tamed, owner-ridden dragons
-        // Note: Check rider input instead of velocity because getFlightMode() is called
-        // before travel() updates the velocity, so getDeltaMovement() shows stale data
+        // Altitude-based animation for ridden dragons
         if (this.isTame() && this.isVehicle()) {
             Entity rider = this.getControllingPassenger();
             if (rider instanceof Player player && this.isOwnedBy(player)) {
-                // Check if rider is actively moving forward (use rider input, not velocity)
-                float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
-                boolean movingForward = Math.abs(riderForward) > 0.02f;
+                int groundY = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        Mth.floor(this.getX()), Mth.floor(this.getZ()));
+                double altitudeAboveTerrain = this.getY() - groundY;
 
-                if (movingForward) {
-                    int groundY = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                            Mth.floor(this.getX()), Mth.floor(this.getZ()));
-                    double altitudeAboveTerrain = this.getY() - groundY;
-
-                    // Hysteresis: Enter glide at 40 blocks, exit at 30 blocks
-                    // This prevents rapid flickering between animations
-                    if (inHighAltitudeGlide) {
-                        // Already gliding - stay in glide until we drop below exit threshold
-                        if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_EXIT) {
-                            return 0; // High-altitude glide
-                        } else {
-                            inHighAltitudeGlide = false;
-                        }
+                // Hysteresis: Enter glide at 40 blocks, exit at 30 blocks
+                if (inHighAltitudeGlide) {
+                    // Already gliding - stay in glide until we drop below exit threshold
+                    if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_EXIT) {
+                        return 0; // High-altitude glide
                     } else {
-                        // Not gliding yet - enter glide if above entry threshold
-                        if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
-                            inHighAltitudeGlide = true;
-                            return 0; // High-altitude glide
-                        }
+                        inHighAltitudeGlide = false;
+                        return 1; // Low altitude - flap
                     }
                 } else {
-                    // Not moving forward - exit high altitude glide
-                    inHighAltitudeGlide = false;
+                    // Not gliding yet - enter glide if above entry threshold
+                    if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
+                        inHighAltitudeGlide = true;
+                        return 0; // High-altitude glide
+                    } else {
+                        return 1; // Low altitude - flap
+                    }
                 }
             }
         } else {
@@ -875,7 +870,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             inHighAltitudeGlide = false;
         }
 
-        // Check if gliding (moving horizontally without significant vertical movement)
+        // Fallback for wild/untamed dragons: Check if gliding (moving horizontally without significant vertical movement)
         double horizontalSpeedSqr = getDeltaMovement().horizontalDistanceSqr();
         double yDelta = this.getY() - this.yo;
         if (Math.abs(yDelta) < 0.06 && horizontalSpeedSqr > 0.01) {
@@ -1086,7 +1081,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tickPitchingLogic();
 
         // Wake up if mounted or target appears/aggression
-        if (!level().isClientSide && (isSleeping() || sleepingEntering || sleepingExiting)) {
+        if (!level().isClientSide && (isSleeping() || isSleepingEntering() || isSleepingExiting())) {
             if (this.isVehicle()) {
                 wakeUpImmediately();
                 // Clear all states when mounted to ensure full control
@@ -1106,7 +1101,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         // Use RideableDragonBase animation state management for normal ticks
-        if (!level().isClientSide && !(isSleeping() || sleepingEntering || sleepingExiting)) {
+        if (!level().isClientSide && !(isSleeping() || isSleepingEntering() || isSleepingExiting())) {
             super.tickAnimationStates();
         }
 
@@ -1428,13 +1423,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (sleepTransitionTicks > 0) {
             sleepTransitionTicks--;
             if (sleepTransitionTicks == 0) {
-                if (sleepingEntering) {
-                    // Enter finished: mark sleeping
+                if (isSleepingEntering()) {
+                    // Enter finished: mark sleeping and trigger loop animation
                     setSleeping(true);
-                    sleepingEntering = false;
-                } else if (sleepingExiting) {
+                    setSleepingEntering(false);
+                    this.triggerAnim("action", "sleep");
+                } else if (isSleepingExiting()) {
                     // Exit finished
-                    sleepingExiting = false;
+                    setSleepingExiting(false);
                     // Start small ambient cooldown buffer (~0.5s)
                     sleepAmbientCooldownTicks = 10;
                 }
@@ -1468,7 +1464,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;
 
         // Convert smoothed yaw delta into a banking roll. Multiplying gives us headroom for aggressive turns.
-        float targetAngle = Mth.clamp(bankSmoothedYaw * 8.5f, -90f, 90f);
+        float targetAngle = Mth.clamp(bankSmoothedYaw * 5.0f, -90f, 90f);
         // Ease toward the new target so long sweeping turns feel weighty but responsive.
         bankAngle = Mth.lerp(0.28f, bankAngle, targetAngle);
         if (Math.abs(bankAngle) < 0.01f) {
@@ -1857,7 +1853,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             return false;
         }
         // Wake if sleeping and suppress re-entry on damage
-        if (isSleeping() || sleepingEntering || sleepingExiting) {
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
             wakeUpImmediately();
             suppressSleep(200);
         }
@@ -2043,10 +2039,26 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         setBooleanData(DATA_SLEEPING, sleeping);
     }
     public boolean isSleepTransitioning() {
-        return sleepingEntering || sleepingExiting;
+        return isSleepingEntering() || isSleepingExiting();
+    }
+
+    public boolean isSleepingEntering() {
+        return getBooleanData(DATA_SLEEPING_ENTERING);
+    }
+
+    public void setSleepingEntering(boolean entering) {
+        setBooleanData(DATA_SLEEPING_ENTERING, entering);
+    }
+
+    public boolean isSleepingExiting() {
+        return getBooleanData(DATA_SLEEPING_EXITING);
+    }
+
+    public void setSleepingExiting(boolean exiting) {
+        setBooleanData(DATA_SLEEPING_EXITING, exiting);
     }
     public boolean isSleepLocked() {
-        return sleepLocked || isSleeping() || sleepingEntering || sleepingExiting;
+        return sleepLocked || isSleeping() || isSleepingEntering() || isSleepingExiting();
     }
 
     private void enterSleepLock() {
@@ -2091,22 +2103,24 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     public void startSleepEnter() {
-        if (isSleeping() || sleepingEntering || sleepingExiting) return;
-        sleepingEntering = true;
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
+        setSleepingEntering(true);
         sleepTransitionTicks = 81;
-        animationHandler.triggerSleepEnter();
+        // Trigger sleep enter animation
+        this.triggerAnim("action", "sleep_enter");
         if (!level().isClientSide) {
             enterSleepLock();
         }
     }
 
     public void startSleepExit() {
-        if ((!isSleeping() && !sleepingEntering) || sleepingExiting) return;
+        if ((!isSleeping() && !isSleepingEntering()) || isSleepingExiting()) return;
         this.entityData.set(DATA_SLEEPING, false);
-        sleepingEntering = false;
-        sleepingExiting = true;
+        setSleepingEntering(false);
+        setSleepingExiting(true);
         sleepTransitionTicks = 122;
-        animationHandler.triggerSleepExit();
+        // Trigger sleep exit animation
+        this.triggerAnim("action", "sleep_exit");
         if (!level().isClientSide) {
             suppressSleep(20);
             releaseSleepLock();
@@ -2115,8 +2129,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public void wakeUpImmediately() {
         this.entityData.set(DATA_SLEEPING, false);
-        sleepingEntering = false;
-        sleepingExiting = false;
+        setSleepingEntering(false);
+        setSleepingExiting(false);
         sleepTransitionTicks = 0;
         sleepCancelTicks = 2;
         if (!level().isClientSide) {
@@ -2264,8 +2278,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // Persist sleep state and transition timers
         tag.putBoolean("Sleeping", this.isSleeping());
-        tag.putBoolean("SleepingEntering", this.sleepingEntering);
-        tag.putBoolean("SleepingExiting", this.sleepingExiting);
+        // Sleep transition states now synced via entity data, no need to save separately
         tag.putInt("SleepTransitionTicks", Math.max(0, this.sleepTransitionTicks));
         tag.putInt("SleepAmbientCooldownTicks", Math.max(0, this.sleepAmbientCooldownTicks));
         tag.putInt("SleepReentryCooldownTicks", Math.max(0, this.sleepReentryCooldownTicks));
@@ -2323,8 +2336,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // Restore sleep state and transition timers
         if (tag.contains("Sleeping")) this.setSleeping(tag.getBoolean("Sleeping"));
-        this.sleepingEntering = tag.getBoolean("SleepingEntering");
-        this.sleepingExiting = tag.getBoolean("SleepingExiting");
+        // Sleep transition states now synced via entity data, loaded automatically
         this.sleepTransitionTicks = Math.max(0, tag.getInt("SleepTransitionTicks"));
         this.sleepAmbientCooldownTicks = Math.max(0, tag.getInt("SleepAmbientCooldownTicks"));
         this.sleepReentryCooldownTicks = Math.max(0, tag.getInt("SleepReentryCooldownTicks"));
@@ -2349,13 +2361,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         // If we reload while sleep-locked (or mid-transition), immediately wake and clear the lock so AI goals resume.
-        if (this.sleepLocked || this.sleepingEntering || this.sleepingExiting || this.entityData.get(DATA_SLEEPING)) {
+        if (this.sleepLocked || this.isSleepingEntering() || this.isSleepingExiting() || this.entityData.get(DATA_SLEEPING)) {
             this.releaseSleepLock();
             this.wakeUpImmediately();
             this.suppressSleep(200);
         }
-        this.sleepingEntering = false;
-        this.sleepingExiting = false;
+        this.setSleepingEntering(false);
+        this.setSleepingExiting(false);
         this.sleepTransitionTicks = 0;
         this.entityData.set(DATA_SLEEPING, false);
         this.sleepCommandSnapshot = -1;
@@ -2456,13 +2468,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Use entity-specific controller names to prevent animation bleeding between dragons
         // Update frequency: run every tick to maintain accurate keyframe timing
         AnimationController<Raevyx> movementController =
-                new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
+                new AnimationController<>(this, "movement", 3, animationController::handleMovementAnimation);
         AnimationController<Raevyx> bankingController =
                 new AnimationController<>(this, "banking", 8, animationHandler::bankingPredicate);
         AnimationController<Raevyx> pitchingController =
                 new AnimationController<>(this, "pitching", 6, animationHandler::pitchingPredicate);
+        // Action controller uses ONLY triggers (no predicate logic)
+        // All animations (combat, abilities, sleep, death) are triggered via triggerAnim()
         AnimationController<Raevyx> actionController =
-                new AnimationController<>(this, "action", 0, animationHandler::actionPredicate);
+                new AnimationController<>(this, "action", 3, state -> PlayState.STOP);
 
         // Sound keyframes
         bankingController.setSoundKeyframeHandler(this::onAnimationSound);

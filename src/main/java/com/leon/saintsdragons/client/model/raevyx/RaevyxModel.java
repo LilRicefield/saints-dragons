@@ -7,8 +7,9 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 /**
- * Lightning Dragon model with enhanced bone system and procedural animations
- * Now uses DefaultedEntityGeoModel for entity-focused conveniences (default asset paths, hooks)
+ * Raevyx (Lightning Dragon) model using GeckoLib's built-in head tracking system.
+ * The "head" bone parents all neck bones, so GeckoLib automatically rotates the entire chain.
+ * Only procedural animation: banking roll for flight physics.
  */
 public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
     public RaevyxModel() {
@@ -16,36 +17,23 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         super(SaintsDragons.rl("raevyx"), "head");
     }
 
-    /**
-     * This is where head tracking happen
-     */
-    @Override
-    public void applyMolangQueries(Raevyx animatable, double animTime) {
-        // Do not hard-reset head/neck each frame; smoothing handles stability
-        super.applyMolangQueries(animatable, animTime);
-    }
 
     @Override
     public void setCustomAnimations(Raevyx entity, long instanceId, AnimationState<Raevyx> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        // Apply procedural animations when alive
+        // Banking is the only procedural animation - GeckoLib's built-in head tracking handles everything else!
+        // The "head" bone now parents all neck bones, so GeckoLib rotates the entire chain automatically
         if (entity.isAlive()) {
             applyBankingRoll(entity, animationState);
-
-            // Clamp built-in head rotation to sane limits first
-            applyHeadClamp(entity);
-
-            // Light neck follow based on clamped head rotation
             applyNeckFollow();
-
-            // When beaming, bias the neck chain to aim along the beam direction
-            applyNeckAimAlongBeam(entity, animationState);
+            applyHeadClamp(entity);
         }
     }
 
     /**
      * Apply smoothed banking roll straight to the body bone so we can lean at any angle.
+     * FIXED: Always calculate from initialSnapshot to prevent cross-entity sync bleeding.
      */
     private void applyBankingRoll(Raevyx entity, AnimationState<Raevyx> state) {
         var bodyOpt = getBone("body");
@@ -60,16 +48,14 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         // Banking right rotates negative around Z, hence the inversion.
         float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
-        float targetRoll = snap.getRotZ() + bankAngleRad;
 
-        // Blend a little so animation data and procedural value stay in sync without snapping.
-        float lerpFactor = entity.isFlying() ? 0.45f : 0.25f;
-        body.setRotZ(Mth.lerp(lerpFactor, body.getRotZ(), targetRoll));
+        // Set directly from snapshot + bank angle (no lerp with previous frame's bone rotation)
+        // This prevents sync bleeding between multiple dragons rendering in the same frame
+        body.setRotZ(snap.getRotZ() + bankAngleRad);
     }
-
     /**
-     * Clamp head yaw/pitch deltas so the wyvern cannot look fully backwards.
-     * Uses deltas relative to the initial snapshot to avoid drift.
+     * Clamps the main "head" bone rotation to prevent extreme angles.
+     * This bone is controlled by GeckoLib but we limit how far it can turn.
      */
     private void applyHeadClamp(Raevyx entity) {
         var headOpt = getBone("head");
@@ -81,22 +67,21 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         float deltaY = head.getRotY() - snap.getRotY();
         float deltaX = head.getRotX() - snap.getRotX();
 
+        // Clamp to reasonable limits
         float yawClamp = entity.isFlying() ? 0.9f : 0.6f;   // ~51° / ~34°
         float pitchClamp = entity.isFlying() ? 1.0f : 0.5f; // ~57° / ~29°
 
         deltaY = Mth.clamp(deltaY, -yawClamp, yawClamp);
         deltaX = Mth.clamp(deltaX, -pitchClamp, pitchClamp);
 
-        float targetY = snap.getRotY() + deltaY;
-        float targetX = snap.getRotX() + deltaX;
-        float smooth = entity.isFlying() ? 0.35f : 0.5f;
-        head.setRotY(Mth.lerp(smooth, head.getRotY(), targetY));
-        head.setRotX(Mth.lerp(smooth, head.getRotX(), targetX));
+        // Set directly from snapshot (no lerp to avoid cross-entity sync)
+        head.setRotY(snap.getRotY() + deltaY);
+        head.setRotX(snap.getRotX() + deltaX);
     }
-
     /**
-     * Light neck follow: gently propagates head rotation down neck1 to neck4.
-     * Uses small weights and smoothing to avoid over-rotation.
+     * Distributes the parent "head" bone's rotation across neck segments like a giraffe.
+     * GeckoLib rotates the main "head" bone, and we distribute that rotation so each
+     * neck segment contributes a portion, creating smooth natural movement.
      */
     private void applyNeckFollow() {
         var headOpt = getBone("head");
@@ -104,15 +89,21 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
         GeoBone head = headOpt.get();
 
+        // Get how much GeckoLib rotated the parent "head" bone
         float headDeltaX = head.getRotX() - head.getInitialSnapshot().getRotX();
         float headDeltaY = head.getRotY() - head.getInitialSnapshot().getRotY();
 
-        // Gentle distribution from head down the neck (tip follows more than base)
-        applyNeckBoneFollow("neck4Controller", headDeltaX, headDeltaY, 0.16f);
-        applyNeckBoneFollow("neck3Controller", headDeltaX, headDeltaY, 0.12f);
-        applyNeckBoneFollow("neck2Controller", headDeltaX, headDeltaY, 0.08f);
-        applyNeckBoneFollow("neck1Controller", headDeltaX, headDeltaY, 0.05f);
-        applyNeckBoneFollow("neckstartController", headDeltaX, headDeltaY, 0.02f);
+        // COUNTER-ROTATE the parent "head" bone so it doesn't rotate rigidly
+        // We'll redistribute this rotation across the neck segments instead
+        head.setRotX(head.getInitialSnapshot().getRotX());
+        head.setRotY(head.getInitialSnapshot().getRotY());
+
+        // Now distribute the rotation across neck segments (more at tip, less at base)
+        // This creates a smooth curve like a giraffe neck
+        applyNeckBoneFollow("neck1Controller", headDeltaX, headDeltaY, 0.10f);  // Base - least rotation
+        applyNeckBoneFollow("neck2Controller", headDeltaX, headDeltaY, 0.15f);
+        applyNeckBoneFollow("neck3Controller", headDeltaX, headDeltaY, 0.20f);
+        applyNeckBoneFollow("neck4Controller", headDeltaX, headDeltaY, 0.25f);  // Tip - most rotation
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -122,75 +113,12 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         GeoBone bone = boneOpt.get();
         var snap = bone.getInitialSnapshot();
 
-        // Cap how much any single neck bone can add from the head
-        float maxNeckPitch = 0.35f; // ~20°
-        float maxNeckYaw   = 0.35f; // ~20°
-        float addX = Mth.clamp(headDeltaX * weight, -maxNeckPitch, maxNeckPitch);
-        float addY = Mth.clamp(headDeltaY * weight, -maxNeckYaw,   maxNeckYaw);
+        // Apply weighted portion of the head's rotation
+        float addX = headDeltaX * weight;
+        float addY = headDeltaY * weight;
 
-        float targetX = snap.getRotX() + addX;
-        float targetY = snap.getRotY() + addY;
-
-        // Smooth towards target to keep motion stable
-        float lerpA = 0.18f;
-        bone.setRotX(Mth.lerp(lerpA, bone.getRotX(), targetX));
-        bone.setRotY(Mth.lerp(lerpA, bone.getRotY(), targetY));
+        // Set directly from snapshot (no lerp to avoid cross-entity sync)
+        bone.setRotX(snap.getRotX() + addX);
+        bone.setRotY(snap.getRotY() + addY);
     }
-
-    /**
-     * While the wyvern is beaming, gently steer the neck chain toward the beam direction
-     * so the segments follow the aim instead of staying fixed.
-     */
-    private void applyNeckAimAlongBeam(Raevyx entity, AnimationState<Raevyx> state) {
-        if (!entity.isBeaming()) return;
-
-        float pt = state.getPartialTick();
-        net.minecraft.world.phys.Vec3 start = entity.computeHeadMouthOrigin(pt);
-        net.minecraft.world.phys.Vec3 end = entity.getClientBeamEndPosition(pt);
-        if (end == null) return;
-        net.minecraft.world.phys.Vec3 dir = end.subtract(start);
-        if (dir.lengthSqr() < 1.0e-6) return;
-        dir = dir.normalize();
-
-        // Desired yaw/pitch in Minecraft's convention
-        // Yaw: 0 = +Z (south), +90 = -X (west), uses atan2(-x, z)
-        float desiredYawDeg = (float)(Math.atan2(-dir.x, dir.z) * (180.0 / Math.PI));
-        // Pitch: MC positive looks down; GeoBone X often reads opposite of world pitch.
-        // Use non-inverted pitch here; we will apply a negative sign when adding to bones if needed.
-        float desiredPitchDeg = (float)(Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * (180.0 / Math.PI));
-
-        // Compute deltas from body orientation so the base of the neck can participate
-        // Anchor against head yaw for tighter beam alignment when the player looks around
-        float bodyYaw = entity.yHeadRot;
-        float yawErrDeg = Mth.degreesDifference(bodyYaw, desiredYawDeg);
-        float yawErr = yawErrDeg * Mth.DEG_TO_RAD;
-        float pitchErr = desiredPitchDeg * Mth.DEG_TO_RAD;
-
-        // Distribute along neck segments with increasing weight toward the head
-        String[] bones = {"neck1Controller", "neck2Controller", "neck3Controller", "neck4Controller"};
-        float[] weights = {0.18f, 0.22f, 0.26f, 0.30f};
-        float maxYaw = 0.70f;   // ~40° per bone
-        float maxPitch = 0.90f; // ~52° per bone (allows near-90° combined)
-        float lerp = 0.25f;     // more responsive while beaming
-
-        for (int i = 0; i < bones.length; i++) {
-            var boneOpt = getBone(bones[i]);
-            if (boneOpt.isEmpty()) continue;
-            GeoBone bone = boneOpt.get();
-
-            // Invert yaw contribution to match GeoBone Y rotation orientation
-            float addY = Mth.clamp(-yawErr * weights[i], -maxYaw, maxYaw);
-            // Use positive pitch contribution so looking up bends neck upward
-            float addX = Mth.clamp(pitchErr * weights[i], -maxPitch, maxPitch);
-
-            // Bias around the initial snapshot to avoid cumulative drift and sign inconsistencies
-            var snap = bone.getInitialSnapshot();
-            float targetY = snap.getRotY() + addY;
-            float targetX = snap.getRotX() + addX;
-
-            bone.setRotY(Mth.lerp(lerp, bone.getRotY(), targetY));
-            bone.setRotX(Mth.lerp(lerp, bone.getRotX(), targetX));
-        }
-    }
-
 }
