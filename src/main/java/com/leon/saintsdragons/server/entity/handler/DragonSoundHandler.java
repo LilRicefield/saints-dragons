@@ -466,9 +466,9 @@ public class DragonSoundHandler {
         if (dragon.isStayOrSitMuted() || dragon.isSleeping() || dragon.isSleepTransitioning()) return;
         if (!dragon.level().isClientSide) return; // Client-side only
         float urgency = dragon.getTarget() != null ? 1.3f : 1.0f;
-        // Use custom flap for takeoff to avoid vanilla ENDER_DRAGON_FLAP
+        // Use vanilla Ender Dragon flap for takeoff
         dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
-                ModSounds.RAEVYX_FLAP1.get(), SoundSource.NEUTRAL, urgency * 1.2f, 0.85f, false);
+                SoundEvents.ENDER_DRAGON_FLAP, SoundSource.NEUTRAL, urgency * 1.2f, 0.85f, false);
     }
     
     /**
