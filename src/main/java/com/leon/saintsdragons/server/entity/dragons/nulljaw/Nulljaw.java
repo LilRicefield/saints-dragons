@@ -103,6 +103,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     private float swimTurnSmoothedYaw;
     private int swimTurnState;
     private int swimPitchStateTicks;
+    // Continuous swim roll angle for smooth banking (like Raevyx's flight banking)
+    private float swimRollAngle = 0f;
+    private float prevSwimRollAngle = 0f;
     private byte controlState = 0;
     private boolean useLeftClawNext = true; // Toggles between left/right claw attacks
     // ===== SCREEN SHAKE SYSTEM =====
@@ -764,6 +767,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         this.swimTurnSmoothedYaw = 0.0F;
         this.swimTurnState = 0;
         this.swimPitchStateTicks = 0;
+        this.swimRollAngle = 0f;
+        this.prevSwimRollAngle = 0f;
     }
 
     private void updateSwimOrientationState() {
@@ -835,6 +840,24 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         if (this.entityData.get(DATA_SWIM_PITCH) != desiredPitchState) {
             this.entityData.set(DATA_SWIM_PITCH, desiredPitchState);
         }
+
+        // Calculate continuous swim roll angle (like Raevyx's banking)
+        prevSwimRollAngle = swimRollAngle;
+
+        // Reset when not swimming or controls locked
+        if (!isSwimming() || areRiderControlsLocked()) {
+            swimRollAngle = 0f;
+            prevSwimRollAngle = 0f;
+            return;
+        }
+
+        // Convert smoothed yaw delta into a roll angle
+        float targetAngle = Mth.clamp(swimTurnSmoothedYaw * 40.0f, -60f, 60f); // More roll than Raevyx
+        // Ease toward the new target
+        swimRollAngle = Mth.lerp(0.25f, swimRollAngle, targetAngle);
+        if (Math.abs(swimRollAngle) < 0.01f) {
+            swimRollAngle = 0f;
+        }
     }
 
     public boolean isSwimming() {
@@ -874,6 +897,20 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         }
 
         return this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D;
+    }
+
+    /**
+     * Get the swim roll angle in degrees (like Raevyx's banking)
+     */
+    public float getSwimRollAngleDegrees() {
+        return swimRollAngle;
+    }
+
+    /**
+     * Get interpolated swim roll angle for smooth rendering
+     */
+    public float getSwimRollAngleDegrees(float partialTick) {
+        return Mth.lerp(partialTick, prevSwimRollAngle, swimRollAngle);
     }
 
     public boolean isPhaseTwoActive() {

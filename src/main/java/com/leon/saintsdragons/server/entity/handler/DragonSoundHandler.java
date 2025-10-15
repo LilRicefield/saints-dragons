@@ -213,17 +213,13 @@ public class DragonSoundHandler {
             return;
         }
 
-        Vec3 mouthPos = resolveLocatorWorldPos("mouth_origin");
-        float pitch = entry.basePitch();
-        if (entry.pitchVariance() != 0f) {
-            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
-        }
-        playServerBroadcast(entry.soundSupplier().get(), entry.volume(), pitch, mouthPos);
-
         int window = getVocalAnimationWindowTicks(key);
         if (suppressOverlap) {
             vocalCooldowns.put(key, currentTick + Math.max(window, MIN_OVERLAP_GUARD_TICKS));
         }
+
+        // Only trigger animation - the animation keyframe will handle the sound
+        // This prevents duplication from server broadcast + keyframe playback
         if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
             dragon.triggerAnim(entry.controllerId(), key);
         }

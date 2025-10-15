@@ -100,10 +100,10 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
         // Now distribute the rotation across neck segments (more at tip, less at base)
         // This creates a smooth curve like a giraffe neck
-        applyNeckBoneFollow("neck1", headDeltaX, headDeltaY, 0.10f);  // Base - least rotation
-        applyNeckBoneFollow("neck2", headDeltaX, headDeltaY, 0.15f);
-        applyNeckBoneFollow("neck3", headDeltaX, headDeltaY, 0.20f);
-        applyNeckBoneFollow("neck4", headDeltaX, headDeltaY, 0.25f);  // Tip - most rotation
+        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.10f);  // Base - least rotation
+        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.15f);
+        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.20f);
+        applyNeckBoneFollow("neck4LookControl", headDeltaX, headDeltaY, 0.25f);  // Tip - most rotation
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
