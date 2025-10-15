@@ -111,6 +111,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             .add("snort", "action", "animation.raevyx.snort", ModSounds.RAEVYX_SNORT, 0.9f, 0.9f, 0.2f, false, false, false)
             .add("chuff", "action", "animation.raevyx.chuff", ModSounds.RAEVYX_CHUFF, 0.9f, 0.9f, 0.2f, false, false, false)
             .add("content", "action", "animation.raevyx.content", ModSounds.RAEVYX_CONTENT, 0.8f, 1.0f, 0.1f, true, false, false)
+            .add("excited", "action", "animation.raevyx.excited", ModSounds.RAEVYX_EXCITED, 1.0f, 1.0f, 0.3f, false, false, false)
             .add("annoyed", "action", "animation.raevyx.annoyed", ModSounds.RAEVYX_ANNOYED, 1.0f, 0.9f, 0.2f, false, false, false)
             .add("growl_warning", "action", "animation.raevyx.growl_warning", ModSounds.RAEVYX_GROWL_WARNING, 1.2f, 0.8f, 0.4f, false, false, false)
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
@@ -1636,20 +1637,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
     /**
      * Call this method when wyvern gets excited/happy (like when player approaches)
+     * Uses GeckoLib animation keyframe system - sound is handled by animation
      */
     public void playExcitedSound() {
-        if (!level().isClientSide && !isDying() && !isStayOrSitMuted() && !isSleepTransitioning()) {
-            this.playSound(ModSounds.RAEVYX_EXCITED.get(), 1.0f, 1.0f + getRandom().nextFloat() * 0.3f);
-        }
+        getSoundHandler().playVocal("excited");
     }
 
     /**
      * Call this when wyvern gets annoyed (like when attacked by something weak)
+     * Uses GeckoLib animation keyframe system - sound is handled by animation
      */
     public void playAnnoyedSound() {
-        if (!level().isClientSide && !isDying() && !isStayOrSitMuted() && !isSleepTransitioning()) {
-            this.playSound(ModSounds.RAEVYX_ANNOYED.get(), 1.2f, 0.8f + getRandom().nextFloat() * 0.4f);
-        }
+        getSoundHandler().playVocal("annoyed");
     }
 
     private void handleDodgeMovement() {
@@ -2700,9 +2699,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             if (target != null && previousTarget == null && aggroGrowlCooldown <= 0) {
                 // Suppress frequent growls when mounted; lengthen cooldown if mounted
                 if (!this.isVehicle() && !isStayOrSitMuted()) {
-                    this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                            ModSounds.RAEVYX_GROWL_WARNING.get(), SoundSource.HOSTILE,
-                            1.2f, 0.8f + this.random.nextFloat() * 0.4f);
+                    // Uses GeckoLib animation keyframe system - sound is handled by animation
+                    getSoundHandler().playVocal("growl_warning");
                 }
                 // Set cooldown (mounted has longer to avoid flicker from rider clearing target)
                 this.aggroGrowlCooldown = this.isVehicle() ? 120 : 80;
