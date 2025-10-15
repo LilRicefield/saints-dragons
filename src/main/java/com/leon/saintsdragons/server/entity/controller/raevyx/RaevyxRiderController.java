@@ -351,5 +351,13 @@ public record RaevyxRiderController(Raevyx wyvern) {
         wyvern.setLanding(false);
         // Keep takeoff active for a brief window so server flight logic applies upward force
         wyvern.setRiderTakeoffTicks(30);
+
+        // Play takeoff sound (Ender Dragon flap)
+        if (wyvern.level().isClientSide) {
+            float urgency = wyvern.getTarget() != null ? 1.3f : 1.0f;
+            wyvern.level().playLocalSound(wyvern.getX(), wyvern.getY(), wyvern.getZ(),
+                    net.minecraft.sounds.SoundEvents.ENDER_DRAGON_FLAP,
+                    net.minecraft.sounds.SoundSource.NEUTRAL, urgency * 1.2f, 0.85f, false);
+        }
     }
 }

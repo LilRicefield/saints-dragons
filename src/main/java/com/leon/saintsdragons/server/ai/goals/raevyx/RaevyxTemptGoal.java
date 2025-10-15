@@ -201,8 +201,8 @@ public class RaevyxTemptGoal extends Goal {
     private void sendFeedingMessage(Player player, float newHealth) {
         if (player instanceof ServerPlayer serverPlayer) {
             String messageKey = (newHealth >= dragon.getMaxHealth()) 
-                ? "entity.saintsdragons.lightning_dragon.fed"
-                : "entity.saintsdragons.lightning_dragon.fed_partial";
+                ? "entity.saintsdragons.raevyx.fed"
+                : "entity.saintsdragons.raevyx.fed_partial";
                 
             serverPlayer.displayClientMessage(
                 Component.translatable(messageKey, dragon.getName()),
