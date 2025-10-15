@@ -22,12 +22,36 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     public void setCustomAnimations(Nulljaw entity, long instanceId, AnimationState<Nulljaw> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
+        // Apply swim roll for dynamic underwater banking (like Raevyx's flight banking)
+        if (entity.isAlive() && entity.isSwimming()) {
+            applySwimRoll(entity, animationState);
+        }
+
         // Distribute head rotation across neck segments for smooth natural movement
         // ONLY when not in phase 2 - phase 2 animation controls the neck curve itself
         if (entity.isAlive() && !entity.isPhaseTwoActive()) {
             applyNeckFollow();
             applyHeadClamp(entity);
         }
+    }
+
+    /**
+     * Applies dynamic swim roll to the body bone for smooth underwater banking.
+     * Similar to Raevyx's flight banking but adapted for swimming mechanics.
+     * Adds to whatever the animation (swimming_left/swimming_right) already set.
+     */
+    private void applySwimRoll(Nulljaw entity, AnimationState<Nulljaw> state) {
+        var bodyOpt = getBone("root");
+        if (bodyOpt.isEmpty()) return;
+
+        GeoBone body = bodyOpt.get();
+
+        float partialTick = state.getPartialTick();
+        float swimRollDeg = entity.getSwimRollAngleDegrees(partialTick);
+        float swimRollRad = Mth.clamp(-swimRollDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
+
+        // Add to whatever the animation already set (don't use snapshot - we want to layer on top)
+        body.setRotZ(body.getRotZ() + swimRollRad);
     }
 
     /**
