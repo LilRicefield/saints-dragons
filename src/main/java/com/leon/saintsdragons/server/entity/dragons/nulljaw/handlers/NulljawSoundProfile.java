@@ -22,6 +22,18 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
         // Handler already blocks server-side, we're only called on client
 
         return switch (key) {
+            case "nulljaw_grumble1" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_GRUMBLE_1.get(), 0.8f, 0.95f, 0.1f);
+                yield true;
+            }
+            case "nulljaw_grumble2" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_GRUMBLE_2.get(), 0.8f, 0.95f, 0.1f);
+                yield true;
+            }
+            case "nulljaw_grumble3" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_GRUMBLE_3.get(), 0.8f, 0.95f, 0.1f);
+                yield true;
+            }
             case "nulljaw_phase2" -> {
                 playClientSound(dragon, ModSounds.NULLJAW_PHASE2.get(), 2.0f, 0.9f, 0.2f);
                 yield true;

@@ -56,6 +56,9 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> AMPHITHERE_DIE = registerSound("amphithere_die");
 
     // NULLJAW
+    public static final RegistryObject<SoundEvent> NULLJAW_GRUMBLE_1 = registerSound("nulljaw_grumble1");
+    public static final RegistryObject<SoundEvent> NULLJAW_GRUMBLE_2 = registerSound("nulljaw_grumble2");
+    public static final RegistryObject<SoundEvent> NULLJAW_GRUMBLE_3 = registerSound("nulljaw_grumble3");
     public static final RegistryObject<SoundEvent> NULLJAW_PHASE1 = registerSound("nulljaw_phase1");
     public static final RegistryObject<SoundEvent> NULLJAW_PHASE2 = registerSound("nulljaw_phase2");
     public static final RegistryObject<SoundEvent> NULLJAW_ROAR = registerSound("nulljaw_roar");

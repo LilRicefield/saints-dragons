@@ -326,6 +326,36 @@
       }
     ]
   },
+  "nulljaw_grumble1": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble1",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_grumble2": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble2",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_grumble3": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble3",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "nulljaw_phase1": {
     "subtitle": "Nulljaw reverts phase",
     "sounds": [

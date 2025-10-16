@@ -36,6 +36,14 @@ public record NulljawAnimationHandler(Nulljaw drake) {
      * Sets up all GeckoLib animation triggers for the action controller
      */
     public void setupActionController(AnimationController<Nulljaw> actionController) {
+        // Ambient/idle sounds
+        actionController.triggerableAnim("grumble1",
+                RawAnimation.begin().thenPlay("animation.nulljaw.grumble1"));
+        actionController.triggerableAnim("grumble2",
+                RawAnimation.begin().thenPlay("animation.nulljaw.grumble2"));
+        actionController.triggerableAnim("grumble3",
+                RawAnimation.begin().thenPlay("animation.nulljaw.grumble3"));
+
         // Register phase transitions
         actionController.triggerableAnim("phase1",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase1"));
