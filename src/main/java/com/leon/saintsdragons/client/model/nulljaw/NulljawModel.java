@@ -26,13 +26,8 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         if (entity.isAlive() && entity.isSwimming()) {
             applySwimRoll(entity, animationState);
         }
-
-        // Distribute head rotation across neck segments for smooth natural movement
-        // ONLY when not in phase 2 - phase 2 animation controls the neck curve itself
-        if (entity.isAlive() && !entity.isPhaseTwoActive()) {
             applyNeckFollow();
             applyHeadClamp(entity);
-        }
     }
 
     /**
@@ -101,9 +96,9 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         head.setRotY(head.getInitialSnapshot().getRotY());
 
         // Now distribute the rotation across neck segments (adjust bone names and weights as needed)
-        applyNeckBoneFollow("neck1", headDeltaX, headDeltaY, 0.15f);  // Base
-        applyNeckBoneFollow("neck2", headDeltaX, headDeltaY, 0.25f);    // Middle
-        applyNeckBoneFollow("neck3", headDeltaX, headDeltaY, 0.35f);    // Tip - most rotation
+        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.15f);  // Base
+        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.25f);    // Middle
+        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.35f);    // Tip - most rotation
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {

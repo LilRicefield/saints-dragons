@@ -21,7 +21,9 @@ import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import com.leon.saintsdragons.server.entity.controller.nulljaw.NulljawRiderController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -65,6 +67,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Nulljaw extends RideableDragonBase implements AquaticDragon, DragonControlStateHolder, ShakesScreen, SoundHandledDragon {
+
+    // ===== VOCAL ENTRIES =====
+    // IMPORTANT: Keys MUST match animation trigger names registered in NulljawAnimationHandler
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
+            .add("grumble1", "action", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble2", "action", "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble3", "action", "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
+            .build();
+
+    // ===== AMBIENT SOUND SYSTEM =====
+    private int ambientSoundTimer;
+    private int nextAmbientSoundDelay;
+    private static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
+    private static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
 
     private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
@@ -127,6 +143,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         this.lookControl = this.landLookControl;
         this.riderController = new NulljawRiderController(this);
         this.setRideable();
+
+        // Initialize ambient sound system with random offset
+        RandomSource rng = this.getRandom();
+        this.ambientSoundTimer = rng.nextInt(80);
+        this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
     }
 
     private void tickRiderControlLock() {
@@ -373,12 +394,75 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     }
 
     @Override
+    public Map<String, VocalEntry> getVocalEntries() {
+        return VOCAL_ENTRIES;
+    }
+
+    @Override
     protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
         // Mute vanilla footsteps; custom sounds handled via GeckoLib keyframes
     }
 
     public DragonKeybindHandler getKeybindHandler() {
         return keybindHandler;
+    }
+
+    // ===== AMBIENT SOUND METHODS =====
+
+    /**
+     * Plays appropriate ambient sound based on drake's current mood and state
+     */
+    private void playCustomAmbientSound() {
+        RandomSource random = getRandom();
+
+        // Don't make ambient sounds if dying, in combat, or using abilities
+        if (isDying() || getTarget() != null || getActiveAbility() != null) {
+            return;
+        }
+
+        String vocalKey = null;
+
+        // Simple grumbles for the amphibious drake
+        float moodRoll = random.nextFloat();
+        if (moodRoll < 0.4f) {
+            vocalKey = "grumble1";
+        } else if (moodRoll < 0.7f) {
+            vocalKey = "grumble2";
+        } else {
+            vocalKey = "grumble3";
+        }
+
+        // Play/animate if we chose one
+        if (vocalKey != null) {
+            this.getSoundHandler().playVocal(vocalKey);
+        }
+    }
+
+    /**
+     * Handles all the ambient grumbling sounds
+     */
+    private void handleAmbientSounds() {
+        // Don't play ambient sounds while dying or sitting
+        if (isDying() || isOrderedToSit()) {
+            return;
+        }
+
+        ambientSoundTimer++;
+
+        // Time to make some noise?
+        if (ambientSoundTimer >= nextAmbientSoundDelay) {
+            playCustomAmbientSound();
+            resetAmbientSoundTimer();
+        }
+    }
+
+    /**
+     * Resets the ambient sound timer with some randomness
+     */
+    private void resetAmbientSoundTimer() {
+        RandomSource random = getRandom();
+        ambientSoundTimer = 0;
+        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
     }
 
     @Override
@@ -389,6 +473,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         tickSittingState();
         updateSittingProgress();
         tickClientSideUpdates();
+
+        // Handle ambient sounds (server-side only)
+        if (!level().isClientSide) {
+            handleAmbientSounds();
+        }
 
         if (!level().isClientSide) {
             tickRiderControlLock();
