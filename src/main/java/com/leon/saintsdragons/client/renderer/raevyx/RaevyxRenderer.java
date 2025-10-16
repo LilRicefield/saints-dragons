@@ -20,11 +20,18 @@ import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxLightningBeamLa
 @OnlyIn(Dist.CLIENT)
 public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     private BakedGeoModel lastBakedModel;
+    private static final ResourceLocation TEXTURE_MALE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx.png");
+    private static final ResourceLocation TEXTURE_FEMALE =  ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx_female.png");
 
     public RaevyxRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new RaevyxModel());
         // Attach beam render layer
         this.addRenderLayer(new RaevyxLightningBeamLayer());
+    }
+
+    @Override
+    public @NotNull ResourceLocation getTextureLocation(@NotNull Raevyx entity) {
+        return entity.isFemale() ? TEXTURE_FEMALE : TEXTURE_MALE;
     }
 
     // Suppress vanilla death flip; use custom death animation instead (method name varies by MC version)
@@ -44,8 +51,9 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
                           int packedOverlay,
                           float red, float green, float blue, float alpha) {
 
-        // Scale the wyvern
-        float scale = 4.5f;
+        // Scale the wyvern - females are slightly smaller (90% scale)
+        float baseScale = 4.5f;
+        float scale = entity.isFemale() ? baseScale * 0.7f : baseScale;
         poseStack.scale(scale, scale, scale);
         this.shadowRadius = 0.8f * scale;
 

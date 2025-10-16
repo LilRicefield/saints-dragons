@@ -181,6 +181,10 @@ public class RaevyxConstantsHandler {
     public static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
             SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
 
+    /** Entity data accessor for gender (false=male, true=female) */
+    public static final EntityDataAccessor<Boolean> DATA_IS_FEMALE =
+            SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
+
     // ===== AI CONSTANTS =====
     
     /** Time to live for aggression tracking (in ticks) */
