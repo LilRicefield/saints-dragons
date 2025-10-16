@@ -61,6 +61,7 @@ import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.control.LookControl;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
@@ -345,6 +346,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         RandomSource rng = this.getRandom();
         this.ambientSoundTimer = rng.nextInt(80); // small random offset
         this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+
+        // Randomly assign gender (50/50 chance)
+        this.setFemale(rng.nextBoolean());
     }
 
     // ===== HANDLER ACCESS METHODS (expose only what is used externally) =====
@@ -394,6 +398,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
+        this.entityData.define(DATA_IS_FEMALE, false);
         this.entityData.define(DATA_BEAM_END_SET, false);
         this.entityData.define(DATA_BEAM_END_X, 0f);
         this.entityData.define(DATA_BEAM_END_Y, 0f);
@@ -617,6 +622,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public boolean isBeaming() { return getBooleanData(DATA_BEAMING); }
     public void setBeaming(boolean beaming) {
         setBooleanData(DATA_BEAMING, beaming);
+    }
+
+    public boolean isFemale() { return getBooleanData(DATA_IS_FEMALE); }
+    public void setFemale(boolean female) {
+        setBooleanData(DATA_IS_FEMALE, female);
     }
 
     // (No client/server rider anchor fields; seat uses math-based head-space anchor)
@@ -2286,6 +2296,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tag.putInt("SleepCommandSnapshot", this.sleepCommandSnapshot);
         tag.putBoolean("ManualSitCommand", this.manualSitCommand);
 
+        // Save gender
+        tag.putBoolean("IsFemale", this.isFemale());
+
         animationController.writeToNBT(tag);
     }
 
@@ -2342,6 +2355,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.sleepCancelTicks = Math.max(0, tag.getInt("SleepCancelTicks"));
         this.sleepLocked = tag.getBoolean("SleepLock");
         this.sleepCommandSnapshot = tag.getInt("SleepCommandSnapshot");
+
+        // Load gender
+        if (tag.contains("IsFemale")) {
+            this.setFemale(tag.getBoolean("IsFemale"));
+        }
 
         animationController.readFromNBT(tag);
 
@@ -2625,8 +2643,25 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return cachedHorizontalSpeed;
     }
     @Override
+    public boolean canMate(@Nonnull Animal otherAnimal) {
+        // Prevent same-sex breeding
+        if (otherAnimal instanceof Raevyx otherDragon) {
+            if (this.isFemale() == otherDragon.isFemale()) {
+                return false; // Same sex can't breed
+            }
+        }
+        return super.canMate(otherAnimal);
+    }
+
+    @Override
     @Nullable
     public AgeableMob getBreedOffspring(@Nonnull net.minecraft.server.level.ServerLevel level, @Nonnull AgeableMob otherParent) {
+        // Breeding is currently disabled, but when enabled, baby will inherit random gender
+        // Raevyx baby = ModEntities.RAEVYX.get().create(level);
+        // if (baby != null) {
+        //     baby.setFemale(this.random.nextBoolean()); // Random gender for baby
+        // }
+        // return baby;
         return null;
     }
 

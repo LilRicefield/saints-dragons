@@ -1697,7 +1697,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "primitivedrake_grumble1",
+					"effect": "stegonaut_grumble1",
 					"locator": "mouth_origin"
 				}
 			}
@@ -1814,7 +1814,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "primitivedrake_grumble2",
+					"effect": "stegonaut_grumble2",
 					"locator": "mouth_origin"
 				}
 			}
@@ -1933,7 +1933,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "primitivedrake_grumble3",
+					"effect": "stegonaut_grumble3",
 					"locator": "mouth_origin"
 				}
 			}
@@ -2424,7 +2424,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "primitive_drake_hurt",
+					"effect": "stegonaut_hurt",
 					"locator": "mouth_origin"
 				}
 			}

@@ -67,10 +67,20 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
 
+    // ===== AMBIENT SOUND SYSTEM =====
+    private int ambientSoundTimer;
+    private int nextAmbientSoundDelay;
+    private static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
+    private static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
+
     // ===== VOCAL ENTRIES =====
+    // IMPORTANT: Keys MUST match animation trigger names registered in StegonautAnimationHandler
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("stegonaut_hurt", "action", "animation.stegonaut.hurt", ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
-            .add("stegonaut_die", "action", "animation.stegonaut.die", ModSounds.STEGONAUT_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
+            .add("grumble1", "action", "animation.stegonaut.grumble1", ModSounds.STEGONAUT_GRUMBLE_1, 0.6f, 1.1f, 0.2f, false, false, true)
+            .add("grumble2", "action", "animation.stegonaut.grumble2", ModSounds.STEGONAUT_GRUMBLE_2, 0.6f, 1.1f, 0.2f, false, false, true)
+            .add("grumble3", "action", "animation.stegonaut.grumble3", ModSounds.STEGONAUT_GRUMBLE_3, 0.6f, 1.1f, 0.2f, false, false, true)
+            .add("hurt", "action", "animation.stegonaut.hurt", ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
+            .add("die", "action", "animation.stegonaut.die", ModSounds.STEGONAUT_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
             .build();
 
     @Override
@@ -115,6 +125,11 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         super(entityType, level);
         // Initialize animation state
         animationController.initializeAnimation();
+
+        // Desynchronize ambient system across instances to avoid synchronized vocals/animations
+        RandomSource rng = this.getRandom();
+        this.ambientSoundTimer = rng.nextInt(80); // small random offset
+        this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
     }
     
     @Override
@@ -509,27 +524,77 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
      */
     public void playRandomGrumble() {
         if (level().isClientSide || isDying()) return;
-        
+
         float grumbleChance = getRandom().nextFloat();
         String vocalKey;
-        String animationTrigger;
-        
+
         if (grumbleChance < 0.4f) {
-            vocalKey = "stegonaut_grumble1";
-            animationTrigger = "grumble1";
+            vocalKey = "grumble1";
         } else if (grumbleChance < 0.7f) {
-            vocalKey = "stegonaut_grumble2";
-            animationTrigger = "grumble2";
+            vocalKey = "grumble2";
         } else {
-            vocalKey = "stegonaut_grumble3";
-            animationTrigger = "grumble3";
+            vocalKey = "grumble3";
         }
-        
-        // Play the grumble sound
+
+        // Play the grumble sound (this will trigger the animation automatically)
         getSoundHandler().playVocal(vocalKey);
-        
-        // Trigger the corresponding animation
-        triggerAnim("action", animationTrigger);
+    }
+
+    /**
+     * Plays appropriate ambient sound based on drake's current mood and state
+     */
+    private void playCustomAmbientSound() {
+        RandomSource random = getRandom();
+
+        // Don't make ambient sounds if we're in combat, dying, or playing dead
+        if (isDying() || getTarget() != null || isPlayingDead()) {
+            return;
+        }
+
+        String vocalKey = null;
+
+        // Simple drake has simple moods - mostly just grumbles
+        float moodRoll = random.nextFloat();
+
+        if (moodRoll < 0.4f) {
+            vocalKey = "grumble1";
+        } else if (moodRoll < 0.7f) {
+            vocalKey = "grumble2";
+        } else {
+            vocalKey = "grumble3";
+        }
+
+        // Play/animate if we chose one
+        if (vocalKey != null) {
+            this.getSoundHandler().playVocal(vocalKey);
+        }
+    }
+
+    /**
+     * Handles all the ambient grumbling and personality sounds
+     * Because a silent drake is a boring drake
+     */
+    private void handleAmbientSounds() {
+        if (isDying() || isSleeping() || isSleepTransitioning()) {
+            return;
+        }
+
+        ambientSoundTimer++;
+
+        // Time to make some noise?
+        if (ambientSoundTimer >= nextAmbientSoundDelay) {
+            playCustomAmbientSound();
+            resetAmbientSoundTimer();
+        }
+    }
+
+    /**
+     * Resets the ambient sound timer with some randomness
+     */
+    private void resetAmbientSoundTimer() {
+        RandomSource random = getRandom();
+        ambientSoundTimer = 0;
+        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
     }
     
     @Override
@@ -624,10 +689,15 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     @Override
     public void tick() {
         super.tick();
-        
+
         // Tick sound handler
         soundHandler.tick();
-        
+
+        // Handle ambient sounds (server-side only)
+        if (!level().isClientSide) {
+            handleAmbientSounds();
+        }
+
         // Tick passive buff ability (only if alive)
         if (this.isAlive()) {
             passiveBuffAbility.tick();
@@ -635,12 +705,12 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             // Clean up resistance buffs when dead
             passiveBuffAbility.cleanup();
         }
-        
+
         // Handle sleep transition completion
         if (sleepTransitioning) {
             sleepTransitioning = false;
         }
-        
+
         // Handle nap system
         if (napTicks > 0) {
             napTicks--;
@@ -652,21 +722,15 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
                 napCooldown = 1200 + getRandom().nextInt(1800); // 1-2.5 minute cooldown
             }
         }
-        
+
         // Handle nap cooldown
         if (napCooldown > 0) {
             napCooldown--;
         }
-        
-        // Handle grumble cooldown
+
+        // Handle grumble cooldown (now deprecated - replaced by handleAmbientSounds)
         if (grumbleCooldown > 0) {
             grumbleCooldown--;
-        } else if (!level().isClientSide && !isDying() && !isSleeping()) {
-            // Random chance to grumble every tick (very low chance)
-            if (getRandom().nextFloat() < 0.001f) { // 0.1% chance per tick
-                playRandomGrumble();
-                grumbleCooldown = 200 + getRandom().nextInt(400); // 10-30 second cooldown
-            }
         }
 
         // Handle sit progress animation
