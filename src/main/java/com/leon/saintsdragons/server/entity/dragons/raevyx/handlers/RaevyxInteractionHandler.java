@@ -278,13 +278,24 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
     
     /**
      * Trigger the taming advancement for the player.
+     * Awards different advancements based on dragon gender.
      */
     private void triggerTamingAdvancement(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
-            var advancement = serverPlayer.server.getAdvancements()
-                .getAdvancement(SaintsDragons.rl("tame_raevyx"));
-            if (advancement != null) {
-                serverPlayer.getAdvancements().award(advancement, "tame_raevyx");
+            if (wyvern.isFemale()) {
+                // Female-specific advancement
+                var femaleAdvancement = serverPlayer.server.getAdvancements()
+                    .getAdvancement(SaintsDragons.rl("tame_raevyx_female"));
+                if (femaleAdvancement != null) {
+                    serverPlayer.getAdvancements().award(femaleAdvancement, "tame_raevyx_female");
+                }
+            } else {
+                // Male-specific advancement
+                var advancement = serverPlayer.server.getAdvancements()
+                    .getAdvancement(SaintsDragons.rl("tame_raevyx"));
+                if (advancement != null) {
+                    serverPlayer.getAdvancements().award(advancement, "tame_raevyx");
+                }
             }
         }
     }
