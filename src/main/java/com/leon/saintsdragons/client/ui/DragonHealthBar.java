@@ -48,8 +48,9 @@ public class DragonHealthBar extends DragonUIElement {
         }
         
         // Render health text anchored to the left so longer values stay visible
-
-        String healthText = String.format("%.0f/%.0f", dragon.getHealth(), dragon.getMaxHealth());
+        // Include gender symbol (♂/♀) for quick identification
+        String genderSymbol = dragon.isFemale() ? "♀" : "♂";
+        String healthText = String.format("%s %.0f/%.0f", genderSymbol, dragon.getHealth(), dragon.getMaxHealth());
 
         int textWidth = minecraft.font.width(healthText);
 

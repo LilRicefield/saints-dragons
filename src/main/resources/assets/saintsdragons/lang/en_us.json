@@ -81,6 +81,9 @@
   "advancement.saintsdragons.tame_raevyx.title": "Bleeding Bolt",
   "advancement.saintsdragons.tame_raevyx.description": "Tame a Raevyx with a lot of fish and a lot of patience",
 
+  "advancement.saintsdragons.tame_raevyx_female.title": "Ivory Surge",
+  "advancement.saintsdragons.tame_raevyx_female.description": "Tame a female Raevyx a lot of fish and a lot of patience",
+
   "advancement.saintsdragons.tame_nulljaw.title": "Blackout Spire",
   "advancement.saintsdragons.tame_nulljaw.description": "Tame a Nulljaw, good job!",
   
@@ -136,6 +139,12 @@
   
   "entity.saintsdragons.raevyx.fed": "%s is fully healed!",
   "entity.saintsdragons.raevyx.fed_partial": "%s is being healed...",
+  "entity.saintsdragons.raevyx.baby_fed": "%s is growing stronger!",
+  "entity.saintsdragons.raevyx.baby_grown": "%s has grown into an adult!",
+  "entity.saintsdragons.raevyx.breeding_too_young": "%s is too young to breed",
+  "entity.saintsdragons.raevyx.breeding_cooling_down": "%s is not ready to breed yet",
+  "entity.saintsdragons.raevyx.breeding_already_ready": "%s is already ready to breed",
+  "entity.saintsdragons.raevyx.breeding_ready": "%s is ready to breed!",
   "entity.saintsdragons.raevyx.sleeping": "The wyvern is sleeping.",
   "entity.saintsdragons.stegonaut.tamed": "%s has been tamed!",
   "entity.saintsdragons.stegonaut.fed": "%s is fully healed!",
