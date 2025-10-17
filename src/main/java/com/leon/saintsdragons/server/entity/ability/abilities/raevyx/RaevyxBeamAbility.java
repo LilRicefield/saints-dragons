@@ -141,28 +141,11 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         var start = wyvern.computeHeadMouthOrigin(1.0f);
         wyvern.setBeamStartPosition(start);
 
-        // Aim preference: rider look (if mounted) -> target center -> head-based look
-        net.minecraft.world.entity.Entity cp = wyvern.getControllingPassenger();
-        net.minecraft.world.phys.Vec3 aimDir;
-
-        if (cp instanceof net.minecraft.world.entity.LivingEntity rider) {
-            aimDir = rider.getLookAngle().normalize();
-        } else {
-            net.minecraft.world.entity.LivingEntity tgt = wyvern.getTarget();
-            if (tgt != null && tgt.isAlive()) {
-                // Aim at target's mid/eye height from the muzzle
-                var aimPoint = tgt.getEyePosition().add(0, -0.25, 0);
-                aimDir = aimPoint.subtract(start).normalize();
-            } else {
-                // Fallback to wyvern's head-based look (use head yaw for alignment)
-                float yaw = wyvern.yHeadRot;
-                float pitch = wyvern.getXRot();
-                aimDir = net.minecraft.world.phys.Vec3.directionFromRotation(pitch, yaw).normalize();
-            }
+        // Reuse the entity's beaming aim direction so visuals, neck, and damage align.
+        net.minecraft.world.phys.Vec3 aimDir = wyvern.refreshBeamAimDirection(start, true);
+        if (aimDir == null) {
+            aimDir = net.minecraft.world.phys.Vec3.directionFromRotation(wyvern.getXRot(), wyvern.yHeadRot).normalize();
         }
-
-        // Clamp aim to neck capability so beam cannot bend further than neck can
-        aimDir = clampAimToNeck(wyvern, aimDir);
 
         // Raycast along aim to determine endpoint
         final double MAX_DISTANCE = 128.0; // blocks
@@ -179,30 +162,6 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         wyvern.setBeamEndPosition(end);
     }
 
-    private static net.minecraft.world.phys.Vec3 clampAimToNeck(Raevyx wyvern, net.minecraft.world.phys.Vec3 desiredDir) {
-        if (desiredDir.lengthSqr() < 1.0e-6) return desiredDir;
-        desiredDir = desiredDir.normalize();
-
-        float desiredYawDeg = (float)(Math.atan2(-desiredDir.x, desiredDir.z) * (180.0 / Math.PI));
-        float desiredPitchDeg = (float)(-Math.atan2(desiredDir.y, Math.sqrt(desiredDir.x * desiredDir.x + desiredDir.z * desiredDir.z)) * (180.0 / Math.PI));
-
-        float headYaw = wyvern.yHeadRot;
-        float headPitch = wyvern.getXRot();
-
-        float yawErrDeg = net.minecraft.util.Mth.degreesDifference(headYaw, desiredYawDeg);
-        float pitchErrDeg = desiredPitchDeg - headPitch;
-
-        float TOTAL_MAX_YAW_DEG = (float)Math.toDegrees(0.70f * (0.18f + 0.22f + 0.26f + 0.30f));
-        float TOTAL_MAX_PITCH_DEG = (float)Math.toDegrees(0.90f * (0.18f + 0.22f + 0.26f + 0.30f));
-
-        float clampedYawErr = net.minecraft.util.Mth.clamp(yawErrDeg, -TOTAL_MAX_YAW_DEG, TOTAL_MAX_YAW_DEG);
-        float clampedPitchErr = net.minecraft.util.Mth.clamp(pitchErrDeg, -TOTAL_MAX_PITCH_DEG, TOTAL_MAX_PITCH_DEG);
-
-        float finalYaw = headYaw + clampedYawErr;
-        float finalPitch = headPitch + clampedPitchErr;
-        return net.minecraft.world.phys.Vec3.directionFromRotation(finalPitch, finalYaw).normalize();
-    }
-    
     private void damageAlongBeam(Raevyx wyvern, net.minecraft.world.phys.Vec3 start, net.minecraft.world.phys.Vec3 end) {
         if (!(wyvern.level() instanceof net.minecraft.server.level.ServerLevel server)) return;
 

@@ -26,7 +26,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         // The "head" bone now parents all neck bones, so GeckoLib rotates the entire chain automatically
         if (entity.isAlive()) {
             applyBankingRoll(entity, animationState);
-            applyNeckFollow();
+            applyNeckFollow(entity, animationState);
             applyHeadClamp(entity);
         }
     }
@@ -83,27 +83,43 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
      * GeckoLib rotates the main "head" bone, and we distribute that rotation so each
      * neck segment contributes a portion, creating smooth natural movement.
      */
-    private void applyNeckFollow() {
+    private void applyNeckFollow(Raevyx entity, AnimationState<Raevyx> state) {
         var headOpt = getBone("head");
         if (headOpt.isEmpty()) return;
 
         GeoBone head = headOpt.get();
 
-        // Get how much GeckoLib rotated the parent "head" bone
-        float headDeltaX = head.getRotX() - head.getInitialSnapshot().getRotX();
-        float headDeltaY = head.getRotY() - head.getInitialSnapshot().getRotY();
+        var headSnap = head.getInitialSnapshot();
+        float basePitch = head.getRotX() - headSnap.getRotX();
+        float baseYaw = head.getRotY() - headSnap.getRotY();
 
-        // COUNTER-ROTATE the parent "head" bone so it doesn't rotate rigidly
-        // We'll redistribute this rotation across the neck segments instead
-        head.setRotX(head.getInitialSnapshot().getRotX());
-        head.setRotY(head.getInitialSnapshot().getRotY());
+        float targetPitch = basePitch;
+        float targetYaw = baseYaw;
 
-        // Now distribute the rotation across neck segments (more at tip, less at base)
-        // This creates a smooth curve like a giraffe neck
-        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.10f);  // Base - least rotation
-        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.15f);
-        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.20f);
-        applyNeckBoneFollow("neck4LookControl", headDeltaX, headDeltaY, 0.25f);  // Tip - most rotation
+        if (entity.isBeaming()) {
+            targetPitch -= entity.getBeamPitchOffsetRad();
+            targetYaw += entity.getBeamYawOffsetRad();
+
+            float maxPitch = Raevyx.MAX_BEAM_PITCH_DEG * net.minecraft.util.Mth.DEG_TO_RAD;
+            float maxYaw = Raevyx.MAX_BEAM_YAW_DEG * net.minecraft.util.Mth.DEG_TO_RAD;
+            targetPitch = net.minecraft.util.Mth.clamp(targetPitch, -maxPitch, maxPitch);
+            targetYaw = net.minecraft.util.Mth.clamp(targetYaw, -maxYaw, maxYaw);
+        }
+
+        head.setRotX(headSnap.getRotX());
+        head.setRotY(headSnap.getRotY());
+
+        float[] weights = entity.isBeaming()
+                ? com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx.BEAM_NECK_WEIGHTS
+                : com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx.IDLE_NECK_WEIGHTS;
+
+        applyNeckBoneFollow("neck1LookControl", targetPitch, targetYaw, weights[0]);
+        applyNeckBoneFollow("neck2LookControl", targetPitch, targetYaw, weights[1]);
+        applyNeckBoneFollow("neck3LookControl", targetPitch, targetYaw, weights[2]);
+        applyNeckBoneFollow("neck4LookControl", targetPitch, targetYaw, weights[3]);
+
+        head.setRotX(headSnap.getRotX() + targetPitch);
+        head.setRotY(headSnap.getRotY() + targetYaw);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
