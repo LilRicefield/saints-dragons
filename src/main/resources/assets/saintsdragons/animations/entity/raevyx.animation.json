@@ -14577,24 +14577,12 @@
 								"vector": [-15, 0, 0]
 							},
 							"lerp_mode": "catmullrom"
-						},
-						"5.0": {
-							"post": {
-								"vector": [-15, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
 						}
 					},
 					"position": {
 						"0.0": {
 							"post": {
 								"vector": [0, -23.3, 0]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"5.0": {
-							"post": {
-								"vector": [0, -5.3, 0]
 							},
 							"lerp_mode": "catmullrom"
 						}
