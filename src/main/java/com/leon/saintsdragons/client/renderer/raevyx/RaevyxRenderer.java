@@ -52,10 +52,10 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
                           float red, float green, float blue, float alpha) {
 
         // Scale the wyvern - females are slightly smaller (90% scale)
-        float baseScale = 4.5f;
+        float baseScale = 1.0f;
         float scale = entity.isFemale() ? baseScale * 0.7f : baseScale;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 0.8f * scale;
+        this.shadowRadius = 2.0f * scale;
 
         // Enable matrix tracking for the feet bones we care about
         this.lastBakedModel = model;

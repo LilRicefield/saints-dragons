@@ -56,7 +56,7 @@ public class RaevyxConstantsHandler {
     // ===== MODEL CONSTANTS =====
     
     /** Scale factor for the wyvern model */
-    public static final float MODEL_SCALE = 4.5f;
+    public static final float MODEL_SCALE = 1.0f;
 
     // ===== SPEED CONSTANTS =====
     
