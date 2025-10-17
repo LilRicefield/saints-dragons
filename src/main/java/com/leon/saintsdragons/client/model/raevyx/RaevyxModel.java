@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.model.raevyx;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -12,9 +13,44 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
  * Only procedural animation: banking roll for flight physics.
  */
 public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
+    private static final ResourceLocation ADULT_MODEL = ResourceLocation.fromNamespaceAndPath("saintsdragons", "geo/entity/raevyx.geo.json");
+    private static final ResourceLocation FEMALE_MODEL = ResourceLocation.fromNamespaceAndPath("saintsdragons", "geo/entity/raevyx.geo.json");
+    private static final ResourceLocation BABY_MODEL = ResourceLocation.fromNamespaceAndPath("saintsdragons", "geo/entity/baby_raevyx.geo.json");
+
+    private static final ResourceLocation ADULT_ANIM = ResourceLocation.fromNamespaceAndPath("saintsdragons", "animations/entity/raevyx.animation.json");
+    private static final ResourceLocation BABY_ANIM = ResourceLocation.fromNamespaceAndPath("saintsdragons", "animations/entity/baby_raevyx.animation.json");
+
+    private static final ResourceLocation MALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/raevyx.png");
+    private static final ResourceLocation FEMALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/raevyx_female.png");
+    private static final ResourceLocation BABY_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/baby_raevyx.png");
+
     public RaevyxModel() {
         // Defaulted paths under entity/ and built-in head rotation for "head" bone
         super(SaintsDragons.rl("raevyx"), "head");
+    }
+
+    @Override
+    public ResourceLocation getModelResource(Raevyx entity) {
+        if (entity.isBaby()) {
+            return BABY_MODEL;
+        }
+        if (entity.isFemale()) {
+            return FEMALE_MODEL;
+        }
+        return ADULT_MODEL;
+    }
+
+    @Override
+    public ResourceLocation getTextureResource(Raevyx entity) {
+        if (entity.isBaby()) {
+            return BABY_TEXTURE;
+        }
+        return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
+    }
+
+    @Override
+    public ResourceLocation getAnimationResource(Raevyx entity) {
+        return entity.isBaby() ? BABY_ANIM : ADULT_ANIM;
     }
 
 

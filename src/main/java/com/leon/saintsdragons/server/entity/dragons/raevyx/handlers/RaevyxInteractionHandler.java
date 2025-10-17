@@ -70,13 +70,18 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
      * Handle interactions with tamed dragons (feeding, commands, mounting).
      */
     private InteractionResult handleTamedInteraction(Player player, ItemStack itemstack, InteractionHand hand) {
+        boolean isOwner = player.equals(wyvern.getOwner());
+
         // Handle feeding for healing
         if (wyvern.isFood(itemstack)) {
+            if (player.isCrouching() && isOwner) {
+                return handleBreeding(player, itemstack);
+            }
             return handleFeeding(player, itemstack);
         }
         
         // Handle owner commands and mounting
-        if (player.equals(wyvern.getOwner())) {
+        if (isOwner) {
             boolean isSleeping = wyvern.isSleeping() || wyvern.isSleepTransitioning();
             // Command cycling - Shift+Right-click cycles through commands
             if (canOwnerCommand(player) && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND) {
@@ -98,6 +103,38 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
         }
         
         return InteractionResult.PASS;
+    }
+    
+    /**
+     * Handle initiating breeding when crouching with food.
+     */
+    private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
+        boolean client = wyvern.level().isClientSide;
+
+        if (wyvern.isBaby()) {
+            sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_too_young");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (wyvern.getAge() != 0) { // still on cooldown from previous breeding
+            sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_cooling_down");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (wyvern.isInLove()) {
+            sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_already_ready");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (!client) {
+            if (!player.getAbilities().instabuild) {
+                itemstack.shrink(1);
+            }
+            wyvern.setInLove(player);
+            sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_ready");
+        }
+
+        return InteractionResult.sidedSuccess(client);
     }
     
     /**
@@ -172,6 +209,12 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 wyvern.sitProgress = 0f;
                 wyvern.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
                 break;
+        }
+    }
+    
+    private void sendStatusMessage(Player player, String key) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.displayClientMessage(Component.translatable(key, wyvern.getName()), true);
         }
     }
     

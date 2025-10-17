@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxPhysicsController;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxFlightController;
@@ -34,6 +35,7 @@ import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.util.DragonMathUtil;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -1739,6 +1741,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
      * Plays appropriate ambient sound based on wyvern's current mood and state
      */
     private void playCustomAmbientSound() {
+        if (isBaby()) {
+            return;
+        }
         RandomSource random = getRandom();
 
         // Don't make ambient sounds if we're in combat or using abilities
@@ -1782,7 +1787,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
      * Because a silent wyvern is a boring wyvern
      */
     private void handleAmbientSounds() {
-        if (isDying() || isSleeping() || isSleepTransitioning() || sleepAmbientCooldownTicks > 0) return;
+        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || sleepAmbientCooldownTicks > 0) return;
         ambientSoundTimer++;
 
         // Time to make some noise?
@@ -1961,6 +1966,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.goalSelector.addGoal(2, new RaevyxDodgeGoal(this));
         this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(6, new FloatGoal(this));
+        this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
 
         // Combat goals (prioritized to avoid conflicts)
         // Using new Cataclysm-style separated goal system focused on ground combat
@@ -2637,10 +2643,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Update frequency: run every tick to maintain accurate keyframe timing
         AnimationController<Raevyx> movementController =
                 new AnimationController<>(this, "movement", 3, animationController::handleMovementAnimation);
-        AnimationController<Raevyx> bankingController =
-                new AnimationController<>(this, "banking", 8, animationHandler::bankingPredicate);
-        AnimationController<Raevyx> pitchingController =
-                new AnimationController<>(this, "pitching", 6, animationHandler::pitchingPredicate);
+
         // Action controller uses ONLY triggers (no predicate logic)
         // All animations (combat, abilities, sleep, death) are triggered via triggerAnim()
         AnimationController<Raevyx> actionController =
@@ -2651,15 +2654,23 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         // Action controller: handles combat sounds, ability sounds, vocalizations
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
-        // Banking/Pitching controllers: NO sound keyframes (purely visual animations)
 
         // Setup animation triggers via animation handler
         animationHandler.setupActionController(actionController);
 
+        // Babies don't fly, so skip banking/pitching controllers
+        if (!this.isBaby()) {
+            AnimationController<Raevyx> bankingController =
+                    new AnimationController<>(this, "banking", 8, animationHandler::bankingPredicate);
+            AnimationController<Raevyx> pitchingController =
+                    new AnimationController<>(this, "pitching", 6, animationHandler::pitchingPredicate);
+            // Banking/Pitching controllers: NO sound keyframes (purely visual animations)
 
-        // Add controllers in order
-        controllers.add(bankingController);
-        controllers.add(pitchingController);
+            // Add controllers in order
+            controllers.add(bankingController);
+            controllers.add(pitchingController);
+        }
+
         controllers.add(movementController);
         controllers.add(actionController);
     }
@@ -2795,25 +2806,46 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
     @Override
     public boolean canMate(@Nonnull Animal otherAnimal) {
+        // Basic breeding checks
+        if (!this.canBreed()) {
+            return false;
+        }
+
         // Prevent same-sex breeding
         if (otherAnimal instanceof Raevyx otherDragon) {
             if (this.isFemale() == otherDragon.isFemale()) {
                 return false; // Same sex can't breed
             }
+            return otherDragon.canBreed();
         }
-        return super.canMate(otherAnimal);
+
+        return false;
+    }
+
+    @Override
+    public boolean canBreed() {
+        // Allow breeding even when tamed (bypass TamableAnimal's sitting requirement)
+        // Requirements:
+        // 1. Not a baby
+        // 2. Has love hearts (in love mode from feeding)
+        // 3. Health is sufficient
+        return !this.isBaby() && this.getHealth() >= this.getMaxHealth() && this.isInLove();
     }
 
     @Override
     @Nullable
     public AgeableMob getBreedOffspring(@Nonnull net.minecraft.server.level.ServerLevel level, @Nonnull AgeableMob otherParent) {
-        // Breeding is currently disabled, but when enabled, baby will inherit random gender
-        // Raevyx baby = ModEntities.RAEVYX.get().create(level);
-        // if (baby != null) {
-        //     baby.setFemale(this.random.nextBoolean()); // Random gender for baby
-        // }
-        // return baby;
-        return null;
+        Raevyx baby = ModEntities.RAEVYX.get().create(level);
+        if (baby != null) {
+            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+            java.util.UUID ownerId = this.getOwnerUUID();
+            if (ownerId != null) {
+                baby.setOwnerUUID(ownerId);
+                baby.setTame(true);
+            }
+            baby.setAge(-24000);
+        }
+        return baby;
     }
 
     // ===== RIDING INPUT IMPLEMENTATION =====

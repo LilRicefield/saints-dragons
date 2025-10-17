@@ -87,6 +87,22 @@ public class RaevyxPhysicsController {
     public PlayState handleMovementAnimation(AnimationState<Raevyx> state) {
         // Default transition length (safe baseline); override per-branch below
         state.getController().transitionLength(6);
+
+        // BABY dragons use simple idle/walk/run only (no flying, no complex behaviors)
+        if (wyvern.isBaby()) {
+            if (wyvern.isActuallyRunning()) {
+                state.getController().transitionLength(3);
+                state.setAndContinue(com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.BABY_RUN);
+            } else if (wyvern.isWalking()) {
+                state.getController().transitionLength(3);
+                state.setAndContinue(com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.BABY_WALK);
+            } else {
+                state.getController().transitionLength(4);
+                state.setAndContinue(com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.BABY_IDLE);
+            }
+            return PlayState.CONTINUE;
+        }
+
         // While dying or sleeping (including transitions), suppress movement animations entirely; action controller plays die/sleep clips
         if (wyvern.isDying() || wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()) {
             return PlayState.STOP;
