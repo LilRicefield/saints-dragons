@@ -212,25 +212,29 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     }
 
     private static net.minecraft.world.phys.Vec3 predictBeamEnd(Raevyx dragon, net.minecraft.world.phys.Vec3 mouthWorld, float partialTicks) {
-        // Choose aim direction: rider look -> target center -> head look
-        net.minecraft.world.phys.Vec3 aimDir;
-        net.minecraft.world.entity.Entity cp = dragon.getControllingPassenger();
-        if (cp instanceof net.minecraft.world.entity.LivingEntity rider) {
-            aimDir = rider.getViewVector(partialTicks).normalize();
-        } else {
-            net.minecraft.world.entity.LivingEntity tgt = dragon.getTarget();
-            if (tgt != null && tgt.isAlive()) {
-                net.minecraft.world.phys.Vec3 aimPoint = tgt.getEyePosition(partialTicks).add(0, -0.25, 0);
-                aimDir = aimPoint.subtract(mouthWorld).normalize();
-            } else {
-                float yaw = net.minecraft.util.Mth.lerp(partialTicks, dragon.yHeadRotO, dragon.yHeadRot);
-                float pitch = net.minecraft.util.Mth.lerp(partialTicks, dragon.xRotO, dragon.getXRot());
-                aimDir = net.minecraft.world.phys.Vec3.directionFromRotation(pitch, yaw).normalize();
-            }
+        // Prefer the dragon's smoothed beam aim direction so visuals track the same arc.
+        net.minecraft.world.phys.Vec3 aimDir = dragon.getBeamAimDirection();
+        if (aimDir == null || aimDir.lengthSqr() < 1.0e-6) {
+            dragon.refreshBeamAimDirection(mouthWorld, true);
+            aimDir = dragon.getBeamAimDirection();
         }
 
-        // Clamp desired aim to what the neck can reasonably achieve
-        aimDir = clampAimToNeck(dragon, aimDir, partialTicks);
+        if (aimDir == null || aimDir.lengthSqr() < 1.0e-6) {
+            net.minecraft.world.entity.Entity cp = dragon.getControllingPassenger();
+            if (cp instanceof net.minecraft.world.entity.LivingEntity rider) {
+                aimDir = rider.getViewVector(partialTicks).normalize();
+            } else {
+                net.minecraft.world.entity.LivingEntity tgt = dragon.getTarget();
+                if (tgt != null && tgt.isAlive()) {
+                    net.minecraft.world.phys.Vec3 aimPoint = tgt.getEyePosition(partialTicks).add(0, -0.25, 0);
+                    aimDir = aimPoint.subtract(mouthWorld).normalize();
+                } else {
+                    float yaw = net.minecraft.util.Mth.lerp(partialTicks, dragon.yHeadRotO, dragon.yHeadRot);
+                    float pitch = net.minecraft.util.Mth.lerp(partialTicks, dragon.xRotO, dragon.getXRot());
+                    aimDir = net.minecraft.world.phys.Vec3.directionFromRotation(pitch, yaw).normalize();
+                }
+            }
+        }
 
         final double MAX_DISTANCE = 32.0; // blocks
         net.minecraft.world.phys.Vec3 tentativeEnd = mouthWorld.add(aimDir.scale(MAX_DISTANCE));
@@ -242,34 +246,5 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
                 dragon
         ));
         return hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? hit.getLocation() : tentativeEnd;
-    }
-
-    // Use the same effective limits as the neck-aim system to avoid visuals exceeding neck capability
-    private static net.minecraft.world.phys.Vec3 clampAimToNeck(Raevyx dragon, net.minecraft.world.phys.Vec3 desiredDir, float pt) {
-        if (desiredDir.lengthSqr() < 1.0e-6) return desiredDir;
-        desiredDir = desiredDir.normalize();
-
-        // Convert desired dir to MC yaw/pitch (pitch positive = down)
-        float desiredYawDeg = (float)(Math.atan2(-desiredDir.x, desiredDir.z) * (180.0 / Math.PI));
-        float desiredPitchDeg = (float)(-Math.atan2(desiredDir.y, Math.sqrt(desiredDir.x * desiredDir.x + desiredDir.z * desiredDir.z)) * (180.0 / Math.PI));
-
-        float headYaw = net.minecraft.util.Mth.lerp(pt, dragon.yHeadRotO, dragon.yHeadRot);
-        float headPitch = net.minecraft.util.Mth.lerp(pt, dragon.xRotO, dragon.getXRot());
-
-        float yawErrDeg = net.minecraft.util.Mth.degreesDifference(headYaw, desiredYawDeg);
-        float pitchErrDeg = desiredPitchDeg - headPitch;
-
-        // Effective totals from neck weights/clamps in model
-        float TOTAL_MAX_YAW_DEG = (float)Math.toDegrees(0.70f * (0.18f + 0.22f + 0.26f + 0.30f));   // ~38.5°
-        float TOTAL_MAX_PITCH_DEG = (float)Math.toDegrees(0.90f * (0.18f + 0.22f + 0.26f + 0.30f)); // ~49.5°
-
-        float clampedYawErr = net.minecraft.util.Mth.clamp(yawErrDeg, -TOTAL_MAX_YAW_DEG, TOTAL_MAX_YAW_DEG);
-        float clampedPitchErr = net.minecraft.util.Mth.clamp(pitchErrDeg, -TOTAL_MAX_PITCH_DEG, TOTAL_MAX_PITCH_DEG);
-
-        float finalYaw = headYaw + clampedYawErr;
-        float finalPitch = headPitch + clampedPitchErr;
-
-        // Reconstruct clamped direction
-        return net.minecraft.world.phys.Vec3.directionFromRotation(finalPitch, finalYaw).normalize();
     }
 }

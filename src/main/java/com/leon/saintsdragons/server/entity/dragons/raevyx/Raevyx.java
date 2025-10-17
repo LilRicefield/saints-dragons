@@ -92,6 +92,11 @@ import java.util.concurrent.ConcurrentHashMap;
 //Just everything
 public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
         DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, DragonControlStateHolder, ElectricalConductivityCapable {
+    public static final float MAX_BEAM_YAW_DEG = 40.0f;
+    public static final float MAX_BEAM_PITCH_DEG = 50.0f;
+    public static final float[] IDLE_NECK_WEIGHTS = {0.10f, 0.15f, 0.20f, 0.25f};
+    public static final float[] BEAM_NECK_WEIGHTS = {0.18f, 0.22f, 0.26f, 0.30f};
+
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
     private int ownerDistanceCacheTime = -1;
@@ -618,7 +623,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public boolean isBeaming() { return getBooleanData(DATA_BEAMING); }
     public void setBeaming(boolean beaming) {
+        boolean wasBeaming = getBooleanData(DATA_BEAMING);
         setBooleanData(DATA_BEAMING, beaming);
+        if (!beaming || !wasBeaming) {
+            resetBeamAim();
+        }
     }
 
     // (No client/server rider anchor fields; seat uses math-based head-space anchor)
@@ -626,6 +635,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // ===== BEAM END SYNC + CLIENT LERP =====
     private Vec3 prevClientBeamEnd = null;
     private Vec3 clientBeamEnd = null;
+    private Vec3 beamLookLerp = null;
+    private Vec3 beamAimDir = null;
+    private float beamYawOffsetRad = 0.0f;
+    private float beamPitchOffsetRad = 0.0f;
 
     public void setBeamEndPosition(@org.jetbrains.annotations.Nullable Vec3 pos) {
         if (pos == null) {
@@ -1115,6 +1128,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         tickRunningTime();
+        tickBeamLook();
 
         tickClientSideUpdates();
     }
@@ -1206,6 +1220,160 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
     }
     
+    // Steer the head/neck chain toward the active beam so VFX and rig stay aligned.
+    private void tickBeamLook() {
+        if (!isBeaming()) {
+            resetBeamAim();
+            return;
+        }
+
+        Vec3 start = getBeamStartPosition();
+        if (start == null) {
+            start = computeHeadMouthOrigin(1.0f);
+        }
+        if (start == null) {
+            resetBeamAim();
+            return;
+        }
+
+        Vec3 aimDir = refreshBeamAimDirection(start, true);
+        if (aimDir == null) {
+            beamAimDir = Vec3.directionFromRotation(this.getXRot(), this.yHeadRot).normalize();
+            aimDir = beamAimDir;
+            updateBeamOffsets(aimDir);
+        }
+
+        Vec3 desiredLook = start.add(aimDir.scale(6.0));
+        double alpha = level().isClientSide ? 0.45D : 0.30D;
+        beamLookLerp = beamLookLerp == null
+                ? desiredLook
+                : beamLookLerp.add(desiredLook.subtract(beamLookLerp).scale(alpha));
+
+        float yawSpeed = Math.max(90.0F, (float)this.getHeadRotSpeed());
+        float pitchRange = (float)this.getMaxHeadXRot();
+        this.getLookControl().setLookAt(beamLookLerp.x, beamLookLerp.y, beamLookLerp.z, yawSpeed, pitchRange);
+    }
+
+    public Vec3 getBeamAimDirection() {
+        return beamAimDir;
+    }
+
+    public float getBeamYawOffsetRad() {
+        return beamYawOffsetRad;
+    }
+
+    public float getBeamPitchOffsetRad() {
+        return beamPitchOffsetRad;
+    }
+
+    public Vec3 refreshBeamAimDirection(Vec3 start, boolean smooth) {
+        Vec3 desiredDir = computeRawBeamAimDirection(start);
+        if (desiredDir == null) {
+            updateBeamOffsets(null);
+            return null;
+        }
+        Vec3 clamped = clampBeamDirection(desiredDir);
+        if (clamped == null) {
+            updateBeamOffsets(null);
+            return null;
+        }
+
+        if (beamAimDir == null) {
+            beamAimDir = clamped;
+        } else if (smooth) {
+            double blend = level().isClientSide ? 0.30D : 0.20D;
+            beamAimDir = beamAimDir.add(clamped.subtract(beamAimDir).scale(blend));
+            double len = beamAimDir.length();
+            if (len > 1.0E-6) {
+                beamAimDir = beamAimDir.scale(1.0 / len);
+            } else {
+                beamAimDir = clamped;
+            }
+        } else {
+            beamAimDir = clamped;
+        }
+
+        updateBeamOffsets(beamAimDir);
+        return beamAimDir;
+    }
+
+    private Vec3 computeRawBeamAimDirection(Vec3 start) {
+        Entity cp = getControllingPassenger();
+        if (cp instanceof LivingEntity rider) {
+            Vec3 riderLook = rider.getLookAngle();
+            if (riderLook.lengthSqr() > 1.0E-6) {
+                return riderLook.normalize();
+            }
+        }
+
+        LivingEntity target = getTarget();
+        if (target != null && target.isAlive()) {
+            Vec3 aimPoint = target.getEyePosition().add(0.0, -0.25, 0.0);
+            Vec3 towardTarget = aimPoint.subtract(start);
+            if (towardTarget.lengthSqr() > 1.0E-6) {
+                return towardTarget.normalize();
+            }
+        }
+
+        Vec3 fallbackDir = Vec3.directionFromRotation(this.getXRot(), this.yHeadRot);
+        return fallbackDir.lengthSqr() > 1.0E-6 ? fallbackDir.normalize() : Vec3.ZERO;
+    }
+
+    private Vec3 clampBeamDirection(Vec3 desiredDir) {
+        if (desiredDir == null || desiredDir.lengthSqr() < 1.0E-6) {
+            updateBeamOffsets(null);
+            return null;
+        }
+
+        Vec3 dir = desiredDir.normalize();
+
+        float desiredYawDeg = (float)(Math.atan2(-dir.x, dir.z) * (180.0 / Math.PI));
+        float desiredPitchDeg = (float)(-Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * (180.0 / Math.PI));
+
+        float headYaw = this.yHeadRot;
+        float headPitch = this.getXRot();
+
+        float yawErrDeg = net.minecraft.util.Mth.degreesDifference(headYaw, desiredYawDeg);
+        float pitchErrDeg = desiredPitchDeg - headPitch;
+
+        float clampedYawErr = net.minecraft.util.Mth.clamp(yawErrDeg, -MAX_BEAM_YAW_DEG, MAX_BEAM_YAW_DEG);
+        float clampedPitchErr = net.minecraft.util.Mth.clamp(pitchErrDeg, -MAX_BEAM_PITCH_DEG, MAX_BEAM_PITCH_DEG);
+
+        float finalYaw = headYaw + clampedYawErr;
+        float finalPitch = headPitch + clampedPitchErr;
+
+        Vec3 finalDir = Vec3.directionFromRotation(finalPitch, finalYaw);
+        return finalDir.lengthSqr() > 1.0E-6 ? finalDir.normalize() : null;
+    }
+
+    private void resetBeamAim() {
+        beamLookLerp = null;
+        beamAimDir = null;
+        beamYawOffsetRad = 0.0f;
+        beamPitchOffsetRad = 0.0f;
+    }
+
+    private void updateBeamOffsets(@org.jetbrains.annotations.Nullable Vec3 direction) {
+        if (direction == null || direction.lengthSqr() < 1.0E-6) {
+            beamYawOffsetRad = 0.0f;
+            beamPitchOffsetRad = 0.0f;
+            return;
+        }
+
+        Vec3 dir = direction.normalize();
+        float finalYawDeg = (float)(Math.atan2(-dir.x, dir.z) * (180.0 / Math.PI));
+        float finalPitchDeg = (float)(-Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * (180.0 / Math.PI));
+
+        float headYaw = this.yHeadRot;
+        float headPitch = this.getXRot();
+
+        float yawOffsetDeg = net.minecraft.util.Mth.degreesDifference(headYaw, finalYawDeg);
+        float pitchOffsetDeg = finalPitchDeg - headPitch;
+
+        beamYawOffsetRad = yawOffsetDeg * net.minecraft.util.Mth.DEG_TO_RAD;
+        beamPitchOffsetRad = pitchOffsetDeg * net.minecraft.util.Mth.DEG_TO_RAD;
+    }
+
     private void tickClientSideUpdates() {
         // Update client-side sit progress and lerp beam end from synchronized data
         if (level().isClientSide) {
@@ -1755,15 +1923,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public int getMaxHeadXRot() {
-        return 180;
+        return isBeaming() ? (int)MAX_BEAM_PITCH_DEG : 180;
     }
 
     // Help the wyvern keep its gaze while running: allow wide, fast head turns
     @Override
     public int getMaxHeadYRot() {
-        // Encourage body alignment during beam by limiting head swivel
-        if (isBeaming()) return 60;
-        return 180; // large horizontal head sweep otherwise
+        return isBeaming() ? (int)MAX_BEAM_YAW_DEG : 180;
     }
 
     @Override
