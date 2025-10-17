@@ -22,6 +22,7 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     private BakedGeoModel lastBakedModel;
     private static final ResourceLocation TEXTURE_MALE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx.png");
     private static final ResourceLocation TEXTURE_FEMALE =  ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx_female.png");
+    private static final ResourceLocation TEXTURE_BABY = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/baby_raevyx.png");
 
     public RaevyxRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new RaevyxModel());
@@ -31,6 +32,9 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
 
     @Override
     public @NotNull ResourceLocation getTextureLocation(@NotNull Raevyx entity) {
+        if (entity.isBaby()) {
+            return TEXTURE_BABY;
+        }
         return entity.isFemale() ? TEXTURE_FEMALE : TEXTURE_MALE;
     }
 
@@ -52,8 +56,14 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
                           float red, float green, float blue, float alpha) {
 
         // Scale the wyvern - females are slightly smaller (75% scale)
-        float baseScale = 1.0f;
-        float scale = entity.isFemale() ? baseScale * 0.75f : baseScale;
+        float scale;
+        if (entity.isBaby()) {
+            scale = 0.45f;
+        } else if (entity.isFemale()) {
+            scale = 0.75f;
+        } else {
+            scale = 1.0f;
+        }
         poseStack.scale(scale, scale, scale);
         this.shadowRadius = 2.0f * scale;
 

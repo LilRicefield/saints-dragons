@@ -22,15 +22,25 @@ public class RaevyxConstantsHandler {
     public static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
 
     // ===== ANIMATION CONSTANTS =====
-    
+
     /** Ground idle animation */
     public static final RawAnimation GROUND_IDLE = RawAnimation.begin().thenLoop("animation.raevyx.idle");
-    
+
     /** Ground walk animation */
     public static final RawAnimation GROUND_WALK = RawAnimation.begin().thenLoop("animation.raevyx.walk");
-    
+
     /** Ground run animation */
     public static final RawAnimation GROUND_RUN = RawAnimation.begin().thenLoop("animation.raevyx.run");
+
+    // Baby-specific animations
+    /** Baby ground idle animation */
+    public static final RawAnimation BABY_IDLE = RawAnimation.begin().thenLoop("animation.baby_raevyx.idle");
+
+    /** Baby ground walk animation */
+    public static final RawAnimation BABY_WALK = RawAnimation.begin().thenLoop("animation.baby_raevyx.walk");
+
+    /** Baby ground run animation */
+    public static final RawAnimation BABY_RUN = RawAnimation.begin().thenLoop("animation.baby_raevyx.run");
     
     /** Sitting animation */
     public static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.raevyx.sit");
