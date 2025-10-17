@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -17,19 +18,23 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public class RaevyxLightningParticle extends TextureSheetParticle {
-    private final SpriteSet sprites;
+    private final TextureAtlasSprite[] frames;
 
     protected RaevyxLightningParticle(ClientLevel level, double x, double y, double z,
                                       double xSpeed, double ySpeed, double zSpeed,
-                                      float size, SpriteSet spriteSet) {
+                                      float size, SpriteSet spriteSet, boolean female) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-        this.sprites = spriteSet;
-        this.setSpriteFromAge(this.sprites);
+        TextureAtlasSprite[] resolved = RaevyxParticleSprites.storm(female);
+        if (resolved.length == 0) {
+            resolved = new TextureAtlasSprite[]{spriteSet.get(0, 1)};
+        }
+        this.frames = resolved;
+        this.setSprite(this.frames[0]);
         this.xd = xSpeed;
         this.yd = ySpeed;
         this.zd = zSpeed;
         this.quadSize = size;
-        this.lifetime = 8; // Match 8-frame texture list
+        this.lifetime = Math.max(this.frames.length, 1); // Match texture sequence
         this.setSize(size * 1.5F, size * 1.5F);
     }
 
@@ -42,8 +47,13 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
         if (this.age++ >= this.lifetime) {
             this.remove();
         } else {
-            this.setSpriteFromAge(this.sprites);
+            updateSprite();
         }
+    }
+
+    private void updateSprite() {
+        int frameIndex = RaevyxParticleSprites.frameIndexByProgress(this.frames, (float) this.age / (float) this.lifetime);
+        this.setSprite(this.frames[frameIndex]);
     }
 
     @Override
@@ -100,7 +110,7 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
         public Factory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
         @Override
         public Particle createParticle(@Nonnull RaevyxLightningStormData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new RaevyxLightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
+            return new RaevyxLightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.female());
         }
     }
 
@@ -110,7 +120,7 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
         public FactoryArc(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
         @Override
         public Particle createParticle(@Nonnull RaevyxLightningArcData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new RaevyxLightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
+            return new RaevyxLightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.female());
         }
     }
 }

@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,14 +21,18 @@ import org.joml.Vector3f;
  * Creates layered, duplicated effects for dramatic impact.
  */
 public class RaevyxLightningArcParticle extends TextureSheetParticle {
-    private final SpriteSet sprites;
+    private final TextureAtlasSprite[] frames;
 
     protected RaevyxLightningArcParticle(ClientLevel level, double x, double y, double z,
                                          double xSpeed, double ySpeed, double zSpeed,
-                                         float size, SpriteSet spriteSet) {
+                                         float size, SpriteSet spriteSet, boolean female) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-        this.sprites = spriteSet;
-        this.setSpriteFromAge(this.sprites);
+        TextureAtlasSprite[] resolved = RaevyxParticleSprites.arc(female);
+        if (resolved.length == 0) {
+            resolved = new TextureAtlasSprite[]{spriteSet.get(0, 1)};
+        }
+        this.frames = resolved;
+        this.setSprite(this.frames[0]);
         this.xd = xSpeed;
         this.yd = ySpeed;
         this.zd = zSpeed;
@@ -45,8 +50,13 @@ public class RaevyxLightningArcParticle extends TextureSheetParticle {
         if (this.age++ >= this.lifetime) {
             this.remove();
         } else {
-            this.setSpriteFromAge(this.sprites);
+            updateSprite();
         }
+    }
+
+    private void updateSprite() {
+        int frameIndex = RaevyxParticleSprites.frameIndexByProgress(this.frames, (float) this.age / (float) this.lifetime);
+        this.setSprite(this.frames[frameIndex]);
     }
 
     @Override
@@ -104,7 +114,7 @@ public class RaevyxLightningArcParticle extends TextureSheetParticle {
         
         @Override
         public Particle createParticle(@Nonnull RaevyxLightningArcData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new RaevyxLightningArcParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
+            return new RaevyxLightningArcParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.female());
         }
     }
 
@@ -115,7 +125,7 @@ public class RaevyxLightningArcParticle extends TextureSheetParticle {
         
         @Override
         public Particle createParticle(@Nonnull RaevyxLightningChainData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new RaevyxLightningArcParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
+            return new RaevyxLightningArcParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.female());
         }
     }
 }
