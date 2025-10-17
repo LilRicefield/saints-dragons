@@ -26,8 +26,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final ResourceLocation INNER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/lightning_beam_inner.png");
     private static final ResourceLocation OUTER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/lightning_beam_outer.png");
     // Beam tuning constants - adjust these to change beam appearance
-    private static final float BASE_BEAM_WIDTH = 0.1F;        // Base width of the beam
-    private static final float OUTER_BEAM_BONUS = 0.05F;      // Extra width for outer glow layer
+    private static final float BASE_BEAM_WIDTH = 0.30F;        // Base width of the beam
+    private static final float OUTER_BEAM_BONUS = 0.15F;      // Extra width for outer glow layer
     private static final float INNER_SPEED_MULTIPLIER = 0.25F; // Animation speed for inner beam
     private static final float OUTER_SPEED_MULTIPLIER = 0.25F; // Animation speed for outer beam
     private static final float BEAM_SHAKE_INTENSITY = 0.01F; // Intensity of beam shake effect
@@ -48,9 +48,9 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
     // Local-space fine alignment (applied AFTER rotations so it follows the head)
     // Positive X = beam's right, Positive Y = up, Positive Z = forward along the beam
-    private static final float LOCAL_OFFSET_LEFT = 0.05F;  // nudge left a touch
-    private static final float LOCAL_OFFSET_UP    =  0.00F;
-    private static final float LOCAL_OFFSET_FWD   =  0.2F;  // small forward bias if z-fighting occurs (e.g., 0.01F)
+    private static final float LOCAL_OFFSET_LEFT = 1.5F;  // nudge left a touch
+    private static final float LOCAL_OFFSET_UP    =  1.5F;
+    private static final float LOCAL_OFFSET_FWD   =  4.0F;  // small forward bias if z-fighting occurs (e.g., 0.01F)
 
     public RaevyxLightningBeamLayer() { super(null); }
 
