@@ -473,9 +473,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return (DragonAbility<T>) combatManager.getActiveAbility();
     }
     public boolean canUseAbility() {
-        return combatManager.canUseAbility();
+        return !isBaby() && combatManager.canUseAbility();
     }
     public void useRidingAbility(String abilityName) {
+        if (isBaby()) {
+            return;
+        }
         if (abilityName == null || abilityName.isEmpty()) return;
         // Only allow when actually being ridden by a living controller (owner ideally)
         var cp = getControllingPassenger();
@@ -494,6 +497,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             // Delegate to combat manager which handles proper generic casting
             combatManager.tryUseAbility(type);
         }
+    }
+
+    @Override
+    public <T extends DragonEntity> void tryActivateAbility(DragonAbilityType<T, ?> abilityType) {
+        if (isBaby()) {
+            return;
+        }
+        super.tryActivateAbility(abilityType);
     }
 
 
@@ -833,7 +844,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
      * Check if the wyvern can start a new attack (not on cooldown)
      */
     public boolean canAttack() {
-        return attackCooldown <= 0 && !isInAttackState();
+        return !isBaby() && attackCooldown <= 0 && !isInAttackState();
     }
 
     // ===== Lightning Dragon Specific Methods =====
@@ -1131,6 +1142,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         tickRunningTime();
         tickBeamLook();
+
+        if (!level().isClientSide && isBaby()) {
+            if (getTarget() != null) {
+                super.setTarget(null);
+            }
+            if (getActiveAbility() != null) {
+                combatManager.forceEndActiveAbility();
+            }
+            setAggressive(false);
+        }
 
         tickClientSideUpdates();
     }
@@ -1966,6 +1987,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.goalSelector.addGoal(2, new RaevyxDodgeGoal(this));
         this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(6, new FloatGoal(this));
+        this.goalSelector.addGoal(7, new RaevyxFollowParentGoal(this, 1.15D));
         this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
 
         // Combat goals (prioritized to avoid conflicts)
@@ -2906,6 +2928,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
+        if (isBaby()) {
+            super.setTarget(null);
+            return;
+        }
         LivingEntity previousTarget = this.getTarget();
         super.setTarget(target);
 
