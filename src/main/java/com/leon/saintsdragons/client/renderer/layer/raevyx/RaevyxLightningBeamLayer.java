@@ -23,8 +23,10 @@ import java.util.WeakHashMap;
  */
 public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     // Core textures: inner (crisp) + outer (soft)
-    private static final ResourceLocation INNER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/lightning_beam_inner.png");
-    private static final ResourceLocation OUTER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/lightning_beam_outer.png");
+    private static final ResourceLocation INNER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/raevyx/lightning_beam_inner.png");
+    private static final ResourceLocation OUTER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/raevyx/lightning_beam_outer.png");
+    private static final ResourceLocation FEMALE_INNER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/raevyx/female_lightning_beam_inner.png");
+    private static final ResourceLocation FEMALE_OUTER_TEX = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/effects/raevyx/female_lightning_beam_outer.png");
     // Beam tuning constants - adjust these to change beam appearance
     private static final float BASE_BEAM_WIDTH = 0.30F;        // Base width of the beam
     private static final float OUTER_BEAM_BONUS = 0.15F;      // Extra width for outer glow layer
@@ -142,16 +144,18 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         float scaledWidth = Math.max(0.001f, BASE_BEAM_WIDTH * (0.75f + 0.25f * visScale));
 
         // Render inner beam
-        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, true);
+        ResourceLocation innerTex = animatable.isFemale() ? FEMALE_INNER_TEX : INNER_TEX;
+        ResourceLocation outerTex = animatable.isFemale() ? FEMALE_OUTER_TEX : OUTER_TEX;
+        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, true, innerTex);
         // Render outer beam
-        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, false);
+        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, false, outerTex);
 
         poseStack.popPose();
 
         // No particle VFX; keep visuals minimal (inner/outer beam only)
     }
 
-    private void renderBeam(Raevyx entity, PoseStack poseStack, MultiBufferSource source, float partialTicks, float width, float length, boolean inner) {
+    private void renderBeam(Raevyx entity, PoseStack poseStack, MultiBufferSource source, float partialTicks, float width, float length, boolean inner, ResourceLocation texture) {
         poseStack.pushPose();
         int vertices;
         VertexConsumer vertexconsumer;
@@ -160,11 +164,11 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         float endAlpha = 1.0F;
         if (inner) {
             vertices = 4;
-            vertexconsumer = source.getBuffer(RenderType.entityTranslucent(INNER_TEX));
+            vertexconsumer = source.getBuffer(RenderType.entityTranslucent(texture));
             speed = INNER_SPEED_MULTIPLIER;
         } else {
             vertices = 8;
-            vertexconsumer = source.getBuffer(RenderType.entityTranslucent(OUTER_TEX));
+            vertexconsumer = source.getBuffer(RenderType.entityTranslucent(texture));
             width += OUTER_BEAM_BONUS; // configurable outer beam bonus width
             speed = OUTER_SPEED_MULTIPLIER;
             endAlpha = 0.0F;

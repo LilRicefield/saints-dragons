@@ -4,22 +4,28 @@ import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.particle.*;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.ParticleProvider;
+import net.minecraft.client.particle.ParticleRenderType;
+import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import javax.annotation.Nonnull;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+
+import javax.annotation.Nonnull;
 
 /**
  * Animated lightning chain particle that traces a path between two points.
  * Creates the visual effect of lightning jumping from target to target.
  */
 public class RaevyxLightningChainParticle extends TextureSheetParticle {
-    private final SpriteSet sprites;
+    private final TextureAtlasSprite[] frames;
     private final Vec3 startPos;
     private final Vec3 endPos;
     private final float totalDistance;
@@ -28,9 +34,13 @@ public class RaevyxLightningChainParticle extends TextureSheetParticle {
 
     protected RaevyxLightningChainParticle(ClientLevel level, double x, double y, double z,
                                            double xSpeed, double ySpeed, double zSpeed,
-                                           float size, SpriteSet spriteSet, Vec3 startPos, Vec3 endPos) {
+                                           float size, SpriteSet spriteSet, Vec3 startPos, Vec3 endPos, boolean female) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-        this.sprites = spriteSet;
+        TextureAtlasSprite[] resolved = RaevyxParticleSprites.arc(female);
+        if (resolved.length == 0) {
+            resolved = new TextureAtlasSprite[]{spriteSet.get(0, 1)};
+        }
+        this.frames = resolved;
         this.startPos = startPos;
         this.endPos = endPos;
         this.totalDistance = (float) startPos.distanceTo(endPos);
@@ -38,7 +48,7 @@ public class RaevyxLightningChainParticle extends TextureSheetParticle {
         this.quadSize = size;
         this.lifetime = (int) (totalDistance / speed) + 10; // Extra frames for cleanup
         this.setSize(size * 2.0F, size * 2.0F);
-        this.setSpriteFromAge(this.sprites);
+        this.setSprite(this.frames[0]);
         
         // Set initial position to start
         this.setPos(startPos.x, startPos.y, startPos.z);
@@ -54,20 +64,28 @@ public class RaevyxLightningChainParticle extends TextureSheetParticle {
             this.remove();
         } else {
             // Animate along the path
-            progress = Math.min(1.0f, (float) this.age / (this.lifetime - 10));
+            progress = Math.min(1.0f, (float) this.age / Math.max(1, this.lifetime - 10));
             
             // Interpolate position along the path
             Vec3 currentPos = startPos.lerp(endPos, progress);
             this.setPos(currentPos.x, currentPos.y, currentPos.z);
             
-            // Update sprite for animation
-            this.setSpriteFromAge(this.sprites);
+            // Update sprite for animation (loop through frames)
+            updateSprite();
             
             // Fade out at the end
             if (progress > 0.8f) {
                 this.alpha = 1.0f - ((progress - 0.8f) / 0.2f);
             }
         }
+    }
+
+    private void updateSprite() {
+        if (this.frames.length == 0) {
+            return;
+        }
+        int frameIndex = (this.age / 2) % this.frames.length;
+        this.setSprite(this.frames[frameIndex]);
     }
 
     @Override
@@ -125,7 +143,7 @@ public class RaevyxLightningChainParticle extends TextureSheetParticle {
         
         @Override
         public Particle createParticle(@Nonnull RaevyxLightningChainData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new RaevyxLightningChainParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.startPos(), data.endPos());
+            return new RaevyxLightningChainParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.startPos(), data.endPos(), data.female());
         }
     }
 }

@@ -175,6 +175,7 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
     private void spawnElectrocuteArcs(ServerLevel server, net.minecraft.world.entity.LivingEntity target) {
         Raevyx dragon = getUser();
         java.util.Random rnd = new java.util.Random(dragon.getRandom().nextLong());
+        boolean female = dragon.isFemale();
         Vec3 center = target.position().add(0, target.getBbHeight() * 0.5, 0);
         double radius = Math.max(target.getBoundingBox().getXsize(), target.getBoundingBox().getZsize()) * 0.6;
         int count = 6 + dragon.getRandom().nextInt(5); // 6-10 short arcs
@@ -184,11 +185,11 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
             Vec3 b = randomUnit(rnd).scale(radius * (0.4 + rnd.nextDouble() * 0.6));
             Vec3 from = center.add(a);
             Vec3 to = center.add(b);
-            spawnRoarArc(server, from, to);
+            spawnRoarArc(server, from, to, female);
         }
     }
 
-    private void spawnRoarArc(ServerLevel server, Vec3 from, Vec3 to) {
+    private void spawnRoarArc(ServerLevel server, Vec3 from, Vec3 to, boolean female) {
         // Spawn simpler lightning arc impact effects (less layered)
         Vec3 delta = to.subtract(from);
         int steps = Math.max(2, (int) (delta.length() * 4)); // Fewer steps
@@ -199,7 +200,7 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
         
         // Spawn single particle at each position (no layering)
         for (int i = 0; i <= steps; i++) {
-            server.sendParticles(new RaevyxLightningArcData(size),
+            server.sendParticles(new RaevyxLightningArcData(size, female),
                     pos.x, pos.y, pos.z,
                     1, dir.x, dir.y, dir.z, 0.0);
             pos = pos.add(step);

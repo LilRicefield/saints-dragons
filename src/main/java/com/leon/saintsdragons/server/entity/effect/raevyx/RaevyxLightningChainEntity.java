@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningArcData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -35,6 +36,7 @@ public class RaevyxLightningChainEntity extends Entity {
     private static final EntityDataAccessor<Integer> LIFESPAN = SynchedEntityData.defineId(RaevyxLightningChainEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DELAY = SynchedEntityData.defineId(RaevyxLightningChainEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> IS_CHAIN = SynchedEntityData.defineId(RaevyxLightningChainEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> CASTER_FEMALE = SynchedEntityData.defineId(RaevyxLightningChainEntity.class, EntityDataSerializers.BOOLEAN);
 
     @Nullable
     private LivingEntity owner;
@@ -82,6 +84,7 @@ public class RaevyxLightningChainEntity extends Entity {
         this.entityData.define(LIFESPAN, 0);
         this.entityData.define(DELAY, 0);
         this.entityData.define(IS_CHAIN, false);
+        this.entityData.define(CASTER_FEMALE, false);
     }
 
     public int getLifespan() {
@@ -129,6 +132,9 @@ public class RaevyxLightningChainEntity extends Entity {
     public void setCaster(@Nullable LivingEntity caster) {
         this.owner = caster;
         this.ownerUUID = caster == null ? null : caster.getUUID();
+        if (caster instanceof DragonEntity dragon) {
+            this.entityData.set(CASTER_FEMALE, dragon.isFemale());
+        }
     }
 
     @Nullable
@@ -140,6 +146,10 @@ public class RaevyxLightningChainEntity extends Entity {
             }
         }
         return this.owner;
+    }
+
+    private boolean isCasterFemale() {
+        return this.entityData.get(CASTER_FEMALE);
     }
 
     @Override
@@ -186,12 +196,13 @@ public class RaevyxLightningChainEntity extends Entity {
     }
 
     private void spawnLightningParticles() {
+        boolean female = isCasterFemale();
         if (startPos != null && endPos != null) {
             // Spawn animated lightning arc that traces the path
             if (getIsChain()) {
                 // Animated chain lightning arc
                 this.level().addAlwaysVisibleParticle(
-                    new RaevyxLightningChainData(getSize(), startPos, endPos),
+                    new RaevyxLightningChainData(getSize(), startPos, endPos, female),
                     startPos.x, startPos.y, startPos.z,
                     0, 0, 0
                 );
@@ -206,7 +217,7 @@ public class RaevyxLightningChainEntity extends Entity {
                     Vec3 dir = step.normalize();
                     
                     this.level().addAlwaysVisibleParticle(
-                        new RaevyxLightningStormData(getSize()),
+                        new RaevyxLightningStormData(getSize(), female),
                         pos.x, pos.y, pos.z,
                         dir.x, dir.y, dir.z
                     );
@@ -216,13 +227,13 @@ public class RaevyxLightningChainEntity extends Entity {
             // Single point lightning
             if (getIsChain()) {
                 this.level().addAlwaysVisibleParticle(
-                    new RaevyxLightningArcData(getSize()),
+                    new RaevyxLightningArcData(getSize(), female),
                     this.getX(), this.getY(), this.getZ(),
                     0, 0, 0
                 );
             } else {
                 this.level().addAlwaysVisibleParticle(
-                    new RaevyxLightningStormData(getSize()),
+                    new RaevyxLightningStormData(getSize(), female),
                     this.getX(), this.getY(), this.getZ(),
                     0, 0, 0
                 );
@@ -252,6 +263,7 @@ public class RaevyxLightningChainEntity extends Entity {
 
     private void spawnImpactEffects(Vec3 impactPos) {
         if (!(this.level() instanceof ServerLevel server)) return;
+        boolean female = isCasterFemale();
         
         // Spawn layered lightning arc impact effects for dramatic visual
         float size = getSize() * 0.6f; // Reduced from 1.2f
@@ -267,7 +279,7 @@ public class RaevyxLightningChainEntity extends Entity {
                 double offsetX = Math.cos(angle) * layerOffset;
                 double offsetZ = Math.sin(angle) * layerOffset;
                 
-                server.sendParticles(new RaevyxLightningArcData(layerSize),
+                server.sendParticles(new RaevyxLightningArcData(layerSize, female),
                         impactPos.x + offsetX, impactPos.y + layerOffset, impactPos.z + offsetZ,
                         1, 0, 0, 0, 0.0);
             }
@@ -276,6 +288,7 @@ public class RaevyxLightningChainEntity extends Entity {
 
     private void spawnChainImpactEffects(Vec3 chainPos) {
         if (!(this.level() instanceof ServerLevel server)) return;
+        boolean female = isCasterFemale();
         
         // Spawn chain-specific impact effects (smaller, more focused)
         float size = getSize() * 0.4f; // Reduced from 0.8f
@@ -291,7 +304,7 @@ public class RaevyxLightningChainEntity extends Entity {
                 double offsetX = Math.cos(angle) * layerOffset;
                 double offsetZ = Math.sin(angle) * layerOffset;
                 
-                server.sendParticles(new RaevyxLightningArcData(layerSize),
+                server.sendParticles(new RaevyxLightningArcData(layerSize, female),
                         chainPos.x + offsetX, chainPos.y + layerOffset, chainPos.z + offsetZ,
                         1, 0, 0, 0, 0.0);
             }
@@ -358,6 +371,7 @@ public class RaevyxLightningChainEntity extends Entity {
         compound.putFloat("damage", this.getDamage());
         compound.putFloat("size", this.getSize());
         compound.putBoolean("isChain", this.getIsChain());
+        compound.putBoolean("casterFemale", this.entityData.get(CASTER_FEMALE));
         compound.putInt("chainCount", this.chainCount);
         compound.putInt("maxChains", this.maxChains);
         
@@ -385,6 +399,9 @@ public class RaevyxLightningChainEntity extends Entity {
         this.setDamage(compound.getFloat("damage"));
         this.setSize(compound.getFloat("size"));
         this.setIsChain(compound.getBoolean("isChain"));
+        if (compound.contains("casterFemale")) {
+            this.entityData.set(CASTER_FEMALE, compound.getBoolean("casterFemale"));
+        }
         this.chainCount = compound.getInt("chainCount");
         this.maxChains = compound.getInt("maxChains");
         

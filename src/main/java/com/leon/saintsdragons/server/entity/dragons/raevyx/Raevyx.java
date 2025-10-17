@@ -2009,14 +2009,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         net.minecraft.world.phys.Vec3 step = delta.scale(1.0 / steps);
         net.minecraft.world.phys.Vec3 pos = from;
         net.minecraft.world.phys.Vec3 dir = step.lengthSqr() > 1.0e-6 ? step.normalize() : randomUnit(this.random);
+        boolean female = this.isFemale();
         for (int i = 0; i <= steps; i++) {
             // Randomly pick arc type per point and randomly drop some points for a crackly feel
             if (this.random.nextFloat() < 0.7f) {
                 if (this.random.nextBoolean()) {
-                    server.sendParticles(new RaevyxLightningArcData(size),
+                    server.sendParticles(new RaevyxLightningArcData(size, female),
                             pos.x, pos.y, pos.z, 1, dir.x, dir.y, dir.z, 0.0);
                 } else {
-                    server.sendParticles(new RaevyxLightningStormData(size),
+                    server.sendParticles(new RaevyxLightningStormData(size, female),
                             pos.x, pos.y, pos.z, 1, dir.x, dir.y, dir.z, 0.0);
                 }
             }
@@ -2832,7 +2833,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Lightning effect implementation
         if (level().isClientSide) {
             // Client-side lightning effect
-            level().addParticle(new RaevyxLightningStormData(1.0f),
+            level().addParticle(new RaevyxLightningStormData(1.0f, this.isFemale()),
                 position.x, position.y, position.z, 0.0, 0.0, 0.0);
         }
     }
