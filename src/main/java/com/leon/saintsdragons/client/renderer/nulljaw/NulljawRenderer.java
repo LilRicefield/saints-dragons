@@ -35,9 +35,12 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
         // Store model and enable matrix tracking for bones with locators
         this.lastBakedModel = model;
         enableTrackingForBones(model);
-        float scale = 1.0f;
+
+        // Scale the drake - females are slightly smaller (85% scale)
+        float scale = entity.isFemale() ? 0.85f : 1.0f;
         poseStack.scale(scale, scale, scale);
         this.shadowRadius = 2.5f * scale;
+
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
 

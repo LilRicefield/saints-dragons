@@ -24,7 +24,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Phase 1 bite attack for the Rift Drake. Shorter range than Amphithere due to shorter neck.
  */
 public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
-    private static final float BASE_DAMAGE = 15.0f;
+    private static final float BASE_DAMAGE = 40.0f;
     private static final double BASE_RANGE = 7.5;
     private static final double RIDDEN_RANGE_BONUS = 1.0;
     private static final double SWIM_RANGE_BONUS = 8.0;
