@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:husbandry/tame_an_animal",
+  "display": {
+    "icon": {
+      "item": "minecraft:cod"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.tame_raevyx_female.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.tame_raevyx_female.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "tame_raevyx_female": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 300
+  }
+}
