@@ -1267,7 +1267,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         Vec3 desiredLook = start.add(aimDir.scale(6.0));
-        double alpha = level().isClientSide ? 0.45D : 0.30D;
+        // Unified smoothing for both client and server to prevent jitter
+        double alpha = 0.35D;
         beamLookLerp = beamLookLerp == null
                 ? desiredLook
                 : beamLookLerp.add(desiredLook.subtract(beamLookLerp).scale(alpha));
@@ -1304,7 +1305,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (beamAimDir == null) {
             beamAimDir = clamped;
         } else if (smooth) {
-            double blend = level().isClientSide ? 0.30D : 0.20D;
+            // Unified smoothing for both client and server to prevent jitter
+            double blend = 0.35D;
             beamAimDir = beamAimDir.add(clamped.subtract(beamAimDir).scale(blend));
             double len = beamAimDir.length();
             if (len > 1.0E-6) {
@@ -1975,9 +1977,42 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         @Override
         public void tick() {
-            if (this.dragon.isAlive()) {
-                super.tick();
+            if (!this.dragon.isAlive()) {
+                return;
             }
+
+            LivingEntity rider = this.dragon.getControllingPassenger();
+            if (this.dragon.isVehicle() && rider != null) {
+                boolean controlsLocked = this.dragon.areRiderControlsLocked();
+                float baseYaw = this.dragon.getYRot();
+                float targetYaw = rider.getYRot();
+
+                float maxOffsetDeg = (this.dragon.isFlying() ? 0.9F : 0.6F) * Mth.RAD_TO_DEG;
+                float desiredOffset = Mth.degreesDifference(baseYaw, targetYaw);
+                float clampedOffset = controlsLocked
+                        ? Mth.approachDegrees(0.0F, desiredOffset, 6.0F)
+                        : Mth.clamp(desiredOffset, -maxOffsetDeg, maxOffsetDeg);
+                float headYaw = baseYaw + clampedOffset;
+
+                // Don't set yHeadRotO - let Minecraft interpolate smoothly between old and new values
+                this.dragon.setYHeadRot(headYaw);
+
+                if (!controlsLocked) {
+                    float minPitch = this.dragon.getRiderLockPitchMin();
+                    float maxPitch = this.dragon.getRiderLockPitchMax();
+                    float targetPitch = Mth.clamp(rider.getXRot(), minPitch, maxPitch);
+                    float newPitch = Mth.approachDegrees(this.dragon.getXRot(), targetPitch, 7.0F);
+                    // Don't set xRotO - let Minecraft interpolate smoothly
+                    this.dragon.setXRot(newPitch);
+                } else {
+                    float easedPitch = Mth.approachDegrees(this.dragon.getXRot(), 0.0F, 6.0F);
+                    // Don't set xRotO - let Minecraft interpolate smoothly
+                    this.dragon.setXRot(easedPitch);
+                }
+                return;
+            }
+
+            super.tick();
         }
     }
     // ===== AI GOALS =====
