@@ -797,6 +797,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         return riderController.getControllingPassenger();
     }
 
+    @Override
+    public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
+        return riderController.getDismountLocationForPassenger(passenger);
+    }
 
     @Override
     public net.minecraft.world.entity.AgeableMob getBreedOffspring(@Nonnull net.minecraft.server.level.ServerLevel level, @Nonnull net.minecraft.world.entity.AgeableMob other) {

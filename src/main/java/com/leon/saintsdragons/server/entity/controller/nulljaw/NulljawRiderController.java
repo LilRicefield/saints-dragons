@@ -1,11 +1,17 @@
 package com.leon.saintsdragons.server.entity.controller.nulljaw;
 
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.DismountHelper;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,16 +158,83 @@ public record NulljawRiderController(Nulljaw drake) {
     }
 
     /**
-     * Get dismount location for a passenger
+     * Get dismount location for a passenger - finds safe ground position
+     * Based on vanilla AbstractHorse dismount logic
      */
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        // Simple dismount - place passenger beside the drake
-        Vec3 dragonPos = drake.position();
-        Vec3 forward = Vec3.directionFromRotation(0.0F, drake.getYRot());
-        Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
-        
-        // Place passenger to the right side of the drake
-        return dragonPos.add(right.scale(2.0D));
+        // Try right side first (based on passenger's main hand)
+        Vec3 vec3 = getCollisionHorizontalEscapeVector(
+            drake.getBbWidth(),
+            passenger.getBbWidth(),
+            drake.getYRot() + (passenger.getMainArm() == HumanoidArm.RIGHT ? 90.0F : -90.0F)
+        );
+        Vec3 rightSide = getDismountLocationInDirection(vec3, passenger);
+        if (rightSide != null) {
+            return rightSide;
+        }
+
+        // Try left side if right side failed
+        Vec3 vec32 = getCollisionHorizontalEscapeVector(
+            drake.getBbWidth(),
+            passenger.getBbWidth(),
+            drake.getYRot() + (passenger.getMainArm() == HumanoidArm.LEFT ? 90.0F : -90.0F)
+        );
+        Vec3 leftSide = getDismountLocationInDirection(vec32, passenger);
+        return leftSide != null ? leftSide : drake.position();
+    }
+
+    /**
+     * Calculate horizontal escape vector for dismounting
+     * Reimplementation of Entity.getCollisionHorizontalEscapeVector (which is protected)
+     */
+    private static Vec3 getCollisionHorizontalEscapeVector(double entityWidth, double passengerWidth, float yaw) {
+        double d0 = (entityWidth + passengerWidth + 1.0E-5F) / 2.0D;
+        float f = -Mth.sin(yaw * ((float)Math.PI / 180F));
+        float f1 = Mth.cos(yaw * ((float)Math.PI / 180F));
+        float f2 = Math.max(Math.abs(f), Math.abs(f1));
+        return new Vec3((double)f * d0 / (double)f2, 0.0D, (double)f1 * d0 / (double)f2);
+    }
+
+    /**
+     * Finds a safe dismount location in the given direction by scanning upward for valid ground
+     * Based on vanilla AbstractHorse.getDismountLocationInDirection
+     */
+    @Nullable
+    private Vec3 getDismountLocationInDirection(Vec3 offset, LivingEntity passenger) {
+        double targetX = drake.getX() + offset.x;
+        double minY = drake.getBoundingBox().minY;
+        double targetZ = drake.getZ() + offset.z;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+
+        // Try all possible poses (standing, crouching, etc.)
+        for (Pose pose : passenger.getDismountPoses()) {
+            pos.set(targetX, minY, targetZ);
+            double maxY = drake.getBoundingBox().maxY + 0.75D;
+
+            // Scan upward to find valid ground
+            while (true) {
+                double floorHeight = drake.level().getBlockFloorHeight(pos);
+                if ((double)pos.getY() + floorHeight > maxY) {
+                    break;
+                }
+
+                if (DismountHelper.isBlockFloorValid(floorHeight)) {
+                    AABB aabb = passenger.getLocalBoundsForPose(pose);
+                    Vec3 dismountPos = new Vec3(targetX, (double)pos.getY() + floorHeight, targetZ);
+                    if (DismountHelper.canDismountTo(drake.level(), passenger, aabb.move(dismountPos))) {
+                        passenger.setPose(pose);
+                        return dismountPos;
+                    }
+                }
+
+                pos.move(Direction.UP);
+                if (!((double)pos.getY() < maxY)) {
+                    break;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

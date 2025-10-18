@@ -14,6 +14,7 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
  */
 public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     private static final ResourceLocation MALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/nulljaw/nulljaw.png");
+    private static final ResourceLocation FEMALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/nulljaw/nulljaw_female.png");
 
     public NulljawModel() {
         // Defaulted paths under entity/ and built-in head rotation for "head" bone
@@ -22,8 +23,8 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
 
     @Override
     public ResourceLocation getTextureResource(Nulljaw entity) {
-        // TODO: Add baby and female texture variants
-        return MALE_TEXTURE;
+        // TODO: Add baby texture variant
+        return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
     }
 
     @Override

@@ -22,7 +22,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Phase 2 rage mode bite - faster and more aggressive than normal bite.
  */
 public class NulljawBite2Ability extends DragonAbility<Nulljaw> {
-    private static final float BASE_DAMAGE = 35.0f;
+    private static final float BASE_DAMAGE = 50.0f;
     private static final double BASE_RANGE = 7.5;
     private static final double RIDDEN_RANGE_BONUS = 1.0;
     private static final double SWIM_RANGE_BONUS = 8.0;
