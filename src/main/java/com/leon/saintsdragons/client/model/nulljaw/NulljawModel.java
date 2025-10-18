@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.model.nulljaw;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -12,10 +13,17 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
  * The "head" bone parents all neck bones, so we distribute rotation across the neck chain.
  */
 public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
+    private static final ResourceLocation MALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/nulljaw/nulljaw.png");
 
     public NulljawModel() {
         // Defaulted paths under entity/ and built-in head rotation for "head" bone
         super(SaintsDragons.rl("nulljaw"), "head");
+    }
+
+    @Override
+    public ResourceLocation getTextureResource(Nulljaw entity) {
+        // TODO: Add baby and female texture variants
+        return MALE_TEXTURE;
     }
 
     @Override

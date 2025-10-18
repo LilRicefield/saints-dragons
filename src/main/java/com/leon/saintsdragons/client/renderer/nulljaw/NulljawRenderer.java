@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.renderer.nulljaw;
 import com.leon.saintsdragons.client.model.nulljaw.NulljawModel;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -15,10 +16,8 @@ import org.jetbrains.annotations.NotNull;
 @OnlyIn(Dist.CLIENT)
 public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
     private BakedGeoModel lastBakedModel;
-
     public NulljawRenderer(EntityRendererProvider.Context context) {
         super(context, new NulljawModel());
-        this.shadowRadius = 0.8f;
     }
 
     @Override
@@ -32,14 +31,13 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
                           int packedLight,
                           int packedOverlay,
                           float red, float green, float blue, float alpha) {
-        float scale = 4.5f;
-        poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 0.8f * scale;
 
         // Store model and enable matrix tracking for bones with locators
         this.lastBakedModel = model;
         enableTrackingForBones(model);
-
+        float scale = 1.0f;
+        poseStack.scale(scale, scale, scale);
+        this.shadowRadius = 2.5f * scale;
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
 

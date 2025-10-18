@@ -20,8 +20,8 @@ import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxLightningBeamLa
 @OnlyIn(Dist.CLIENT)
 public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     private BakedGeoModel lastBakedModel;
-    private static final ResourceLocation TEXTURE_MALE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx.png");
-    private static final ResourceLocation TEXTURE_FEMALE =  ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx_female.png");
+    private static final ResourceLocation TEXTURE_MALE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/raevyx.png");
+    private static final ResourceLocation TEXTURE_FEMALE =  ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/raevyx_female.png");
     private static final ResourceLocation TEXTURE_BABY = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/baby_raevyx.png");
 
     public RaevyxRenderer(EntityRendererProvider.Context renderManager) {
@@ -58,7 +58,7 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         // Scale the wyvern - females are slightly smaller (75% scale)
         float scale;
         if (entity.isBaby()) {
-            scale = 0.45f;
+            scale = 1.0f;
         } else if (entity.isFemale()) {
             scale = 0.75f;
         } else {
