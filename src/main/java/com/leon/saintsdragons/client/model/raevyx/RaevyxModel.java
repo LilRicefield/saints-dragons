@@ -24,9 +24,17 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
     private static final ResourceLocation FEMALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/raevyx_female.png");
     private static final ResourceLocation BABY_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/raevyx/baby_raevyx.png");
 
+    // Per-entity smoothed head rotation state for riders
+    private final java.util.Map<Integer, SmoothedHeadState> headStates = new java.util.HashMap<>();
+
+    private static class SmoothedHeadState {
+        float smoothedYaw = 0f;
+        float smoothedPitch = 0f;
+    }
+
     public RaevyxModel() {
         // Defaulted paths under entity/ and built-in head rotation for "head" bone
-        super(SaintsDragons.rl("raevyx"), "head");
+        super(SaintsDragons.rl("raevyx"),"head");
     }
 
     @Override
@@ -56,15 +64,57 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
     @Override
     public void setCustomAnimations(Raevyx entity, long instanceId, AnimationState<Raevyx> animationState) {
-        super.setCustomAnimations(entity, instanceId, animationState);
+        // Only let GeckoLib do automatic head tracking when there's NO rider
+        // When riding, we handle head rotation manually to avoid jitter
+        if (!entity.isVehicle()) {
+            super.setCustomAnimations(entity, instanceId, animationState);
+        }
 
-        // Banking is the only procedural animation - GeckoLib's built-in head tracking handles everything else!
-        // The "head" bone now parents all neck bones, so GeckoLib rotates the entire chain automatically
         if (entity.isAlive()) {
             applyBankingRoll(entity, animationState);
+
+            // If there's a rider, we need to manually apply head tracking with smoothing
+            if (entity.isVehicle()) {
+                applyManualHeadTracking(entity, animationState);
+            }
+
             applyNeckFollow(entity, animationState);
             applyHeadClamp(entity);
         }
+    }
+
+    /**
+     * Manually apply head rotation with exponential smoothing when riding.
+     * This replaces GeckoLib's built-in head tracking to eliminate jitter.
+     */
+    private void applyManualHeadTracking(Raevyx entity, AnimationState<Raevyx> state) {
+        var headOpt = getBone("head");
+        if (headOpt.isEmpty()) return;
+
+        GeoBone head = headOpt.get();
+        var headSnap = head.getInitialSnapshot();
+
+        // Calculate target rotation from entity's head rotation with partial tick interpolation
+        float partialTick = state.getPartialTick();
+        float entityYaw = entity.yBodyRot;
+        float headYaw = Mth.lerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+        float headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+
+        // Convert to relative yaw (head offset from body) in radians
+        float targetYaw = Mth.degreesDifference(entityYaw, headYaw) * Mth.DEG_TO_RAD;
+        float targetPitch = -headPitch * Mth.DEG_TO_RAD;
+
+        // Get or create smoothing state
+        SmoothedHeadState smoothing = headStates.computeIfAbsent(entity.getId(), k -> new SmoothedHeadState());
+
+        // Exponential smoothing to eliminate jitter
+        float alpha =0.025f; // Higher value = more responsive, lower = smoother
+        smoothing.smoothedYaw = smoothing.smoothedYaw * (1f - alpha) + targetYaw * alpha;
+        smoothing.smoothedPitch = smoothing.smoothedPitch * (1f - alpha) + targetPitch * alpha;
+
+        // Apply smoothed rotation to head bone
+        head.setRotY(headSnap.getRotY() + smoothing.smoothedYaw);
+        head.setRotX(headSnap.getRotX() + smoothing.smoothedPitch);
     }
 
     /**
