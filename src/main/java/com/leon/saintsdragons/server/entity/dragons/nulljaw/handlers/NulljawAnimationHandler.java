@@ -33,17 +33,9 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     private static final int SWIM_TRANSITION_TICKS = 7;
 
     /**
-     * Sets up all GeckoLib animation triggers for the action controller
+     * Sets up all GeckoLib animation triggers for the action controller (combat abilities)
      */
     public void setupActionController(AnimationController<Nulljaw> actionController) {
-        // Ambient/idle sounds
-        actionController.triggerableAnim("grumble1",
-                RawAnimation.begin().thenPlay("animation.nulljaw.grumble1"));
-        actionController.triggerableAnim("grumble2",
-                RawAnimation.begin().thenPlay("animation.nulljaw.grumble2"));
-        actionController.triggerableAnim("grumble3",
-                RawAnimation.begin().thenPlay("animation.nulljaw.grumble3"));
-
         // Register phase transitions
         actionController.triggerableAnim("phase1",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase1"));
@@ -68,11 +60,24 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         actionController.triggerableAnim("horn_gore",
                 RawAnimation.begin().thenPlay("animation.nulljaw.horn_gore"));
 
-        // Roar animations (different for each phase)
+        // Roar animations (different for each phase) - player triggered
         actionController.triggerableAnim("roar",
                 RawAnimation.begin().thenPlay("animation.nulljaw.roar"));
         actionController.triggerableAnim("roar2",
                 RawAnimation.begin().thenPlay("animation.nulljaw.roar2"));
+    }
+
+    /**
+     * Sets up all GeckoLib animation triggers for the ambient controller (AI-triggered vocal animations)
+     */
+    public void setupAmbientController(AnimationController<Nulljaw> ambientController) {
+        // Ambient/idle sounds - triggered by random ticks and AI
+        ambientController.triggerableAnim("grumble1",
+                RawAnimation.begin().thenPlay("animation.nulljaw.grumble1"));
+        ambientController.triggerableAnim("grumble2",
+                RawAnimation.begin().thenPlay("animation.nulljaw.grumble2"));
+        ambientController.triggerableAnim("grumble3",
+                RawAnimation.begin().thenPlay("animation.nulljaw.grumble3"));
     }
 
     public PlayState movementPredicate(AnimationState<Nulljaw> state) {
@@ -175,9 +180,16 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     }
 
     public PlayState actionPredicate(AnimationState<Nulljaw> state) {
-        // Action controller handles one-shot animations triggered via triggerAnim()
+        // Action controller handles one-shot combat animations triggered via triggerAnim()
         state.getController().transitionLength(5);
         // Return STOP so this controller doesn't compete with movement controller when idle
+        return PlayState.STOP;
+    }
+
+    public PlayState ambientPredicate(AnimationState<Nulljaw> state) {
+        // Ambient controller handles vocal/ambient animations triggered via triggerAnim()
+        state.getController().transitionLength(3);
+        // Return STOP so this controller doesn't compete with other controllers when idle
         return PlayState.STOP;
     }
 

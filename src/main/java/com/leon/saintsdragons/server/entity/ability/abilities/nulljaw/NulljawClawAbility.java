@@ -4,11 +4,14 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -30,6 +33,11 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
     private static final double CLAW_SWIPE_HORIZONTAL = 4.0;
     private static final double CLAW_SWIPE_HORIZONTAL_RIDDEN = 3.0;
     private static final double CLAW_SWIPE_VERTICAL = 4.0;
+
+    // Block breaking configuration
+    private static final double BLOCK_BREAK_RANGE = 6.0;     // How far forward to break blocks
+    private static final double BLOCK_BREAK_WIDTH = 3.0;     // Width of the breaking area
+    private static final double BLOCK_BREAK_HEIGHT = 4.0;    // Height of the breaking area
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 1),
@@ -93,6 +101,9 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
                 applyHit(dragon, target);
             }
 
+            // Break blocks to clear path
+            breakBlocksInPath(dragon);
+
             appliedHit = true;
         }
     }
@@ -113,6 +124,88 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
         // Stronger knockback than bite
         Vec3 push = dragon.getLookAngle().scale(0.5);
         target.push(push.x, 0.15, push.z);
+    }
+
+    // ===== Block Breaking =====
+
+    /**
+     * Breaks blocks in the path of the claw swipe to allow the large dragon to clear obstacles
+     * like trees, foliage, and other natural terrain.
+     */
+    private void breakBlocksInPath(Nulljaw dragon) {
+        if (!(dragon.level() instanceof ServerLevel server)) {
+            return;
+        }
+
+        Vec3 mouth = dragon.getMouthPosition();
+        Vec3 look = dragon.getLookAngle().normalize();
+
+        // Calculate the swipe area in front of the dragon
+        Vec3 start = mouth;
+        Vec3 end = mouth.add(look.scale(BLOCK_BREAK_RANGE));
+
+        // Create a bounding box for the swipe area
+        AABB breakArea = new AABB(start, end)
+                .inflate(BLOCK_BREAK_WIDTH, BLOCK_BREAK_HEIGHT, BLOCK_BREAK_WIDTH);
+
+        // Iterate through all blocks in the area
+        BlockPos minPos = new BlockPos(
+                (int) Math.floor(breakArea.minX),
+                (int) Math.floor(breakArea.minY),
+                (int) Math.floor(breakArea.minZ)
+        );
+        BlockPos maxPos = new BlockPos(
+                (int) Math.ceil(breakArea.maxX),
+                (int) Math.ceil(breakArea.maxY),
+                (int) Math.ceil(breakArea.maxZ)
+        );
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        for (int x = minPos.getX(); x <= maxPos.getX(); x++) {
+            for (int y = minPos.getY(); y <= maxPos.getY(); y++) {
+                for (int z = minPos.getZ(); z <= maxPos.getZ(); z++) {
+                    cursor.set(x, y, z);
+
+                    if (!server.isLoaded(cursor)) {
+                        continue;
+                    }
+
+                    BlockState state = server.getBlockState(cursor);
+
+                    // Skip air and blocks that shouldn't be broken
+                    if (state.isAir() || !canBreakBlock(state)) {
+                        continue;
+                    }
+
+                    // Break the block and drop items
+                    server.destroyBlock(cursor, true, dragon);
+                }
+            }
+        }
+    }
+
+    /**
+     * Determines if a block can be broken by the claw attack.
+     * Prevents breaking of very hard blocks like obsidian, bedrock, etc.
+     */
+    private boolean canBreakBlock(BlockState state) {
+        // Don't break liquid blocks
+        if (state.liquid()) {
+            return false;
+        }
+
+        // Get block hardness
+        float hardness = state.getDestroySpeed(getUser().level(), BlockPos.ZERO);
+
+        // Don't break unbreakable blocks (bedrock, barriers, etc.)
+        if (hardness < 0) {
+            return false;
+        }
+
+        // Only break relatively soft blocks (wood, leaves, dirt, stone, etc.)
+        // Prevent breaking very hard blocks like obsidian (hardness 50)
+        return hardness <= 30.0f;
     }
 
     // ===== Range calculation =====
