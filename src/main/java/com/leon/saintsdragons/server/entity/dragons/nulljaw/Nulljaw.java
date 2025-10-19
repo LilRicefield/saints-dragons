@@ -71,9 +71,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     // ===== VOCAL ENTRIES =====
     // IMPORTANT: Keys MUST match animation trigger names registered in NulljawAnimationHandler
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", "action", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
-            .add("grumble2", "action", "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
-            .add("grumble3", "action", "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble1", "ambient", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble2", "ambient", "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble3", "ambient", "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
             .build();
 
     // ===== AMBIENT SOUND SYSTEM =====
@@ -362,6 +362,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
                 new AnimationController<>(this, "swim_direction", 4, animationHandler::swimDirectionPredicate);
         AnimationController<Nulljaw> actions =
                 new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
+        AnimationController<Nulljaw> ambient =
+                new AnimationController<>(this, "ambient", 3, animationHandler::ambientPredicate);
 
         animationHandler.configureMovementBlend(movementController);
         animationHandler.configureSwimBlend(swimController);
@@ -370,13 +372,16 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         swimController.setSoundKeyframeHandler(this::onAnimationSound);
         actions.setSoundKeyframeHandler(this::onAnimationSound);
+        ambient.setSoundKeyframeHandler(this::onAnimationSound);
 
         // Setup animation triggers
         animationHandler.setupActionController(actions);
+        animationHandler.setupAmbientController(ambient);
 
         controllers.add(movementController);
         controllers.add(swimController);
         controllers.add(actions);
+        controllers.add(ambient);
     }
 
     @Override
