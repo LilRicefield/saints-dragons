@@ -70,9 +70,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
      * Registers vocal animation triggers
      */
     private void registerVocalTriggers(AnimationController<Raevyx> action) {
-        // Only register sounds that actually exist in sounds.json + required ability animations
-        wyvern.getVocalEntries().forEach((key, entry) ->
-                action.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId())));
+        // Only register sounds that actually have animations (skip sound-only vocals like excited, growl_warning)
+        wyvern.getVocalEntries().forEach((key, entry) -> {
+            if (entry.animationId() != null && !entry.animationId().isEmpty()) {
+                action.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId()));
+            }
+        });
     }
     
     // ===== ANIMATION PREDICATES =====
