@@ -218,10 +218,25 @@ public class DragonSoundHandler {
             vocalCooldowns.put(key, currentTick + Math.max(window, MIN_OVERLAP_GUARD_TICKS));
         }
 
-        // Only trigger animation - the animation keyframe will handle the sound
-        // This prevents duplication from server broadcast + keyframe playback
-        if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
-            dragon.triggerAnim(entry.controllerId(), key);
+        // Check if this vocal has an animation or is sound-only
+        boolean hasAnimation = entry.animationId() != null && !entry.animationId().isEmpty();
+
+        if (hasAnimation) {
+            // Trigger animation - the animation keyframe will handle the sound
+            // This prevents duplication from server broadcast + keyframe playback
+            if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
+                dragon.triggerAnim(entry.controllerId(), key);
+            }
+        } else {
+            // Sound-only vocal - play sound directly without animation
+            if (!dragon.level().isClientSide) {
+                float volume = entry.volume();
+                float basePitch = entry.basePitch();
+                float pitchVar = entry.pitchVariance();
+                float pitch = basePitch + (dragon.getRandom().nextFloat() - 0.5f) * 2.0f * pitchVar;
+
+                playServerBroadcast(entry.soundSupplier().get(), volume, pitch, null);
+            }
         }
     }
 
