@@ -37,7 +37,7 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
         enableTrackingForBones(model);
 
         // Scale the drake - females are slightly smaller (85% scale)
-        float scale = entity.isFemale() ? 0.85f : 1.0f;
+        float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
         this.shadowRadius = 2.5f * scale;
 
