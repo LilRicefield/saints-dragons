@@ -138,13 +138,37 @@ public record NulljawRiderController(Nulljaw drake) {
 
         if (passengerLoc != null) {
             // The cached position is in world-space but may be from the previous frame
-            // Calculate the OFFSET from drake's old position
-            Vec3 drakeOldPos = new Vec3(drake.xo, drake.yo, drake.zo);
-            Vec3 boneOffset = passengerLoc.subtract(drakeOldPos);
+            // We need to convert to drake-local space to handle both movement AND rotation
 
-            // Apply that offset to the drake's CURRENT position
+            // Get drake's old position and rotation (from when bone was sampled)
+            Vec3 drakeOldPos = new Vec3(drake.xo, drake.yo, drake.zo);
+            float oldYaw = drake.yRotO;
+
+            // Calculate offset in world space
+            Vec3 worldOffset = passengerLoc.subtract(drakeOldPos);
+
+            // Convert world offset to drake-local space (relative to old rotation)
+            double oldYawRad = Math.toRadians(-oldYaw); // Negative because Minecraft yaw is inverted
+            double cosOld = Math.cos(oldYawRad);
+            double sinOld = Math.sin(oldYawRad);
+
+            // Rotate world offset back to local space
+            double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
+            double localY = worldOffset.y;
+            double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
+
+            // Now rotate local offset to current rotation
+            float currentYaw = drake.getYRot();
+            double currentYawRad = Math.toRadians(-currentYaw);
+            double cosCurrent = Math.cos(currentYawRad);
+            double sinCurrent = Math.sin(currentYawRad);
+
+            double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
+            double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
+
+            // Apply to current drake position
             Vec3 drakeCurrentPos = drake.position();
-            Vec3 passengerCurrentPos = drakeCurrentPos.add(boneOffset);
+            Vec3 passengerCurrentPos = drakeCurrentPos.add(currentWorldX, localY, currentWorldZ);
 
             moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
         } else {
