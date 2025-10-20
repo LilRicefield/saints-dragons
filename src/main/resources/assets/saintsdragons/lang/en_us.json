@@ -146,6 +146,8 @@
   "entity.saintsdragons.raevyx.breeding_already_ready": "%s is already ready to breed",
   "entity.saintsdragons.raevyx.breeding_ready": "%s is ready to breed!",
   "entity.saintsdragons.raevyx.sleeping": "The wyvern is sleeping.",
+  "entity.saintsdragons.raevyx.sitting_down": "%s is sitting down...",
+  "entity.saintsdragons.raevyx.standing_up": "%s is standing up...",
   "entity.saintsdragons.stegonaut.tamed": "%s has been tamed!",
   "entity.saintsdragons.stegonaut.fed": "%s is fully healed!",
   "entity.saintsdragons.stegonaut.fed_partial": "%s is being healed... (you must love this thing to even heal it)",
