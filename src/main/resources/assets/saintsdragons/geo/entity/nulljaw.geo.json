@@ -316,6 +316,11 @@
 					]
 				},
 				{
+					"name": "passengerBone",
+					"parent": "neck3Controller",
+					"pivot": [0, 54.56904, -70.70184]
+				},
+				{
 					"name": "tail1",
 					"parent": "body",
 					"pivot": [0, 32.95, 48.4],

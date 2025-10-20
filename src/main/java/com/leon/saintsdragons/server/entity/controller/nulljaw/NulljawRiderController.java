@@ -21,14 +21,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public record NulljawRiderController(Nulljaw drake) {
     // ===== SEAT TUNING CONSTANTS =====
-    // Baseline vertical offset relative to drake height
+    // Baseline vertical offset relative to drake height (FALLBACK ONLY - bone positioning is preferred)
     private static final double SEAT_BASE_FACTOR = 0.45D; // 0.0..1.0 of bbHeight
-    // Additional vertical lift to avoid clipping
+    // Additional vertical lift to avoid clipping (FALLBACK ONLY)
     private static final double SEAT_LIFT = 0.75D;
-    private static final double PHASE_TWO_LIFT = 3.5D;
-    // Forward/back relative to body (blocks). +forward = toward head, - = toward tail
+    // Forward/back relative to body (blocks). +forward = toward head, - = toward tail (FALLBACK ONLY)
     private static final double SEAT_FORWARD = 3.0D;
-    // Sideways relative to body (blocks). +side = to the drake's right, - = left
+    // Sideways relative to body (blocks). +side = to the drake's right, - = left (FALLBACK ONLY)
     private static final double SEAT_SIDE = 0.00D;
 
     // ===== GROUND MOVEMENT TUNING =====
@@ -122,39 +121,44 @@ public record NulljawRiderController(Nulljaw drake) {
     }
 
     /**
-     * Get the riding offset for passengers
+     * Get the riding offset for passengers (FALLBACK ONLY)
      */
-    private double computeSeatY() {
-        double seat = (drake.getBbHeight() * SEAT_BASE_FACTOR) + SEAT_LIFT;
-        if (drake.isPhaseTwoActive()) {
-            seat += PHASE_TWO_LIFT;
-        }
-        return seat;
-    }
-
     public double getPassengersRidingOffset() {
-        return computeSeatY();
+        return (drake.getBbHeight() * SEAT_BASE_FACTOR) + SEAT_LIFT;
     }
 
     /**
-     * Position a rider on the drake
+     * Position a rider on the drake using bone-based positioning
      */
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
         if (passenger == null) return;
 
-        double seatY = computeSeatY();
-        double seatForward = SEAT_FORWARD;
-        double seatSide = SEAT_SIDE;
+        // Get the bone position from the renderer's cache (updated each render frame)
+        Vec3 passengerLoc = drake.getClientLocatorPosition("passengerLocator");
 
-        // Convert drake-relative offsets to world coordinates
-        Vec3 forward = Vec3.directionFromRotation(0.0F, drake.getYRot());
-        Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
+        if (passengerLoc != null) {
+            // The cached position is in world-space but may be from the previous frame
+            // Calculate the OFFSET from drake's old position
+            Vec3 drakeOldPos = new Vec3(drake.xo, drake.yo, drake.zo);
+            Vec3 boneOffset = passengerLoc.subtract(drakeOldPos);
 
-        Vec3 offset = forward.scale(seatForward)
-                .add(right.scale(seatSide))
-                .add(0.0D, seatY, 0.0D);
+            // Apply that offset to the drake's CURRENT position
+            Vec3 drakeCurrentPos = drake.position();
+            Vec3 passengerCurrentPos = drakeCurrentPos.add(boneOffset);
 
-        moveFunction.accept(passenger, drake.getX() + offset.x, drake.getY() + offset.y, drake.getZ() + offset.z);
+            moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
+        } else {
+            // Fallback to vanilla positioning if bone position not available yet
+            // This handles server-side and initial frames before renderer updates the cache
+            double seatY = getPassengersRidingOffset();
+            Vec3 forward = Vec3.directionFromRotation(0.0F, drake.getYRot());
+            Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
+            Vec3 offset = forward.scale(SEAT_FORWARD)
+                    .add(right.scale(SEAT_SIDE))
+                    .add(0.0D, seatY, 0.0D);
+
+            moveFunction.accept(passenger, drake.getX() + offset.x, drake.getY() + offset.y, drake.getZ() + offset.z);
+        }
     }
 
     /**
