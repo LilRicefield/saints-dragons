@@ -16,7 +16,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxLightningBeamLayer;
-import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxRiderLayer;
 
 @OnlyIn(Dist.CLIENT)
 public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
@@ -101,7 +100,10 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     private static final float BODY_X = 0.0f, BODY_Y = 10.0f, BODY_Z = 0.0f;
     // Passenger bone offsets (in pixels, divided by 16 to convert to blocks)
     // Negative Y pushes the player down
-    private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
+    // Male offset (1.0f scale)
+    private static final float PASSENGER_MALE_X = 0.0f, PASSENGER_MALE_Y = -5.0f, PASSENGER_MALE_Z = 0.0f;
+    // Female offset (0.75f scale) - adjust Y for smaller size
+    private static final float PASSENGER_FEMALE_X = 0.0f, PASSENGER_FEMALE_Y = -6.0f, PASSENGER_FEMALE_Z = 10.0f;
 
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) return;
@@ -135,8 +137,21 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
             if (world != null) entity.setClientLocatorPosition("bodyLocator", world);
         });
         // Sample passenger bone position for rider placement
+        // Use different offsets for male vs female based on scale difference
         this.lastBakedModel.getBone("passengerBone").ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+            float passengerX, passengerY, passengerZ;
+            if (entity.isFemale()) {
+                // Female: 0.75f scale, use female offset
+                passengerX = PASSENGER_FEMALE_X;
+                passengerY = PASSENGER_FEMALE_Y;
+                passengerZ = PASSENGER_FEMALE_Z;
+            } else {
+                // Male: 1.0f scale, use male offset
+                passengerX = PASSENGER_MALE_X;
+                passengerY = PASSENGER_MALE_Y;
+                passengerZ = PASSENGER_MALE_Z;
+            }
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, passengerX, passengerY, passengerZ);
             if (world != null) entity.setClientLocatorPosition("passengerLocator", world);
         });
         // No beam_origin sampling required; beam uses computeHeadMouthOrigin()
