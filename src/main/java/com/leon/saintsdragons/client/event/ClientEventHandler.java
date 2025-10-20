@@ -10,6 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -70,4 +71,18 @@ public class ClientEventHandler {
             randomTremorOffsets[2] = (Math.random() - 0.5) * 2.0;
         }
     }
+
+    // DISABLED: Let vanilla render the passenger normally for now
+    // We'll handle bone-based positioning purely through the render layer
+    public static boolean allowRaevyxPassengerRender = false;
+
+    // @SubscribeEvent
+    // public static void suppressVanillaPassengerRendering(RenderLivingEvent.Pre<?, ?> event) {
+    //     Entity entity = event.getEntity();
+    //     if (entity == null) return;
+    //     Entity vehicle = entity.getVehicle();
+    //     if (vehicle instanceof Raevyx && !allowRaevyxPassengerRender) {
+    //         event.setCanceled(true);
+    //     }
+    // }
 }
