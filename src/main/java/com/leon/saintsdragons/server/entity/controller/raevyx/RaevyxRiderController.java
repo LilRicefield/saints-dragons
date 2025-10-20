@@ -267,13 +267,20 @@ public record RaevyxRiderController(Raevyx wyvern) {
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
         if (!wyvern.hasPassenger(passenger)) return;
 
-        // Try to use bone-based positioning from client locator cache
-        // This is updated each render frame on the client
+        // Get the bone position from the renderer's cache (updated each render frame)
         Vec3 passengerLoc = wyvern.getClientLocatorPosition("passengerLocator");
 
         if (passengerLoc != null) {
-            // Use bone position from the animated passengerBone
-            moveFunction.accept(passenger, passengerLoc.x, passengerLoc.y, passengerLoc.z);
+            // The cached position is in world-space but may be from the previous frame
+            // Calculate the OFFSET from dragon's old position
+            Vec3 dragonOldPos = new Vec3(wyvern.xo, wyvern.yo, wyvern.zo);
+            Vec3 boneOffset = passengerLoc.subtract(dragonOldPos);
+
+            // Apply that offset to the dragon's CURRENT position
+            Vec3 dragonCurrentPos = wyvern.position();
+            Vec3 passengerCurrentPos = dragonCurrentPos.add(boneOffset);
+
+            moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
         } else {
             // Fallback to vanilla positioning if bone position not available yet
             double x = wyvern.getX();
