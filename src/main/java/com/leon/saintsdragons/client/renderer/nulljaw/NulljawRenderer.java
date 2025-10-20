@@ -60,6 +60,9 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
     private static final float MOUTH_X = 0f, MOUTH_Y = 10.25f, MOUTH_Z = -24f;
     private static final float LEFT_FEET_X = 4.2f, LEFT_FEET_Y = 0f, LEFT_FEET_Z = -5f;
     private static final float RIGHT_FEET_X = -4.2f, RIGHT_FEET_Y = 0f, RIGHT_FEET_Z = -5f;
+    // Passenger bone offsets (in pixels, divided by 16 to convert to blocks)
+    // X = left/right, Y = up/down (negative pushes down), Z = forward/back (negative = forward)
+    private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
 
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) return;
@@ -67,6 +70,7 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
         model.getBone("jawController").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("leftfrontfeetController").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("rightfrontfeetController").ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone("passengerBone").ifPresent(b -> b.setTrackingMatrices(true));
     }
 
     private void sampleAndStashLocatorsAccurate(Nulljaw entity) {
@@ -97,6 +101,12 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
         this.lastBakedModel.getBone("rightfrontfeetController").ifPresent(b -> {
             net.minecraft.world.phys.Vec3 rightFeet = transformLocator(b, RIGHT_FEET_X, RIGHT_FEET_Y, RIGHT_FEET_Z);
             if (rightFeet != null) entity.setClientLocatorPosition("rightfrontfeetLocator", rightFeet);
+        });
+
+        // Sample passenger bone position for rider placement
+        this.lastBakedModel.getBone("passengerBone").ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+            if (world != null) entity.setClientLocatorPosition("passengerLocator", world);
         });
     }
 
