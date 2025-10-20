@@ -193,6 +193,28 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
      * Handle command cycling (Follow/Sit/Wander).
      */
     private InteractionResult handleCommandCycling(Player player) {
+        // Prevent command changes during sit transitions (sitting down or standing up)
+        float sitProgress = wyvern.getSitProgress();
+        float maxSit = wyvern.maxSitTicks();
+        boolean isTransitioning = sitProgress > 0f && sitProgress < maxSit;
+
+        if (isTransitioning) {
+            // Dragon is in the middle of sitting down or standing up - ignore command spam
+            if (!wyvern.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                // Determine which transition is happening
+                boolean sittingDown = wyvern.isOrderedToSit();
+                String messageKey = sittingDown
+                    ? "entity.saintsdragons.raevyx.sitting_down"
+                    : "entity.saintsdragons.raevyx.standing_up";
+
+                serverPlayer.displayClientMessage(
+                    Component.translatable(messageKey, wyvern.getName()),
+                    true
+                );
+            }
+            return InteractionResult.sidedSuccess(wyvern.level().isClientSide);
+        }
+
         // Get current command and cycle to next
         int currentCommand = wyvern.getCommand();
         int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
@@ -200,7 +222,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
         // Apply the new command
         wyvern.setCommandManual(nextCommand);
         applyCommandState(nextCommand);
-        
+
         // Send feedback message to player (action bar), server-side only to avoid duplicates
         if (!wyvern.level().isClientSide) {
             player.displayClientMessage(
@@ -211,7 +233,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 true
             );
         }
-        
+
         return InteractionResult.SUCCESS;
     }
     
