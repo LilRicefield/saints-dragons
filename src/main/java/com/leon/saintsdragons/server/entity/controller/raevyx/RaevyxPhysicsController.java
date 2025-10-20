@@ -108,8 +108,16 @@ public class RaevyxPhysicsController {
             return PlayState.STOP;
         }
         // Drive SIT from our custom progress system only to avoid desync
-        if (wyvern.getSitProgress() > 0.5f) {
+        // Only play SIT loop when FULLY sat down (sit_down transition finished)
+        float maxSit = wyvern.maxSitTicks();
+        float sitProgress = wyvern.getSitProgress();
+
+        if (sitProgress >= maxSit) {
+            // Fully sitting - play SIT loop
             state.setAndContinue(SIT);
+        } else if (sitProgress > 0f) {
+            // In transition (either sitting down or standing up) - let action controller handle it
+            return PlayState.STOP;
         } else if (wyvern.isDodging()) {
             state.setAndContinue(DODGE);
         } else if (wyvern.isLanding()) {

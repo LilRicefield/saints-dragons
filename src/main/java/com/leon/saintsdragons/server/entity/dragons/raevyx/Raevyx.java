@@ -593,11 +593,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
     @Override
     public Vec3 getMouthPosition() {
-        // Use the proven computeHeadMouthOrigin method - it does everything correctly!
+        // Try to use bone-based mouth position from renderer cache (most accurate!)
+        Vec3 mouthLoc = getClientLocatorPosition("mouth_origin");
+        if (mouthLoc != null) {
+            return mouthLoc;
+        }
+        // Fallback to computed position if bone data not available (server-side, etc.)
         return computeHeadMouthOrigin(1.0f);
     }
+
     /**
      * Compute a mouth origin in world space from head yaw/pitch and a fixed local offset.
+     * FALLBACK ONLY - bone-based positioning is preferred and more accurate!
      */
     public Vec3 computeHeadMouthOrigin(float partialTicks) {
         double x = Mth.lerp(partialTicks, this.xo, this.getX());
@@ -1458,6 +1465,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         if (this.isOrderedToSit()) {
+            // Trigger sit_down animation when STARTING to sit (transition from 0 → 1)
+            if (sitProgress == 0f) {
+                animationHandler.triggerSitDownAnimation();
+            }
+
             if (sitProgress < maxSitTicks()) {
                 sitProgress++;
                 this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
@@ -1466,6 +1478,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             if (!this.level().isClientSide && super.isInSittingPose()) {
                 this.setInSittingPose(false);
             }
+
+            // Trigger sit_up animation when STARTING to stand (transition from sitting → standing)
+            if (sitProgress == maxSitTicks()) {
+                animationHandler.triggerSitUpAnimation();
+            }
+
             if (this.isVehicle()) {
                 if (sitProgress != 0f) {
                     sitProgress = 0f;

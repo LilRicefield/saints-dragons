@@ -20,6 +20,20 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         wyvern.triggerAnim("action", "dodge");
     }
 
+    /**
+     * Triggers the sit down transition animation
+     */
+    public void triggerSitDownAnimation() {
+        wyvern.triggerAnim("action", "sit_down");
+    }
+
+    /**
+     * Triggers the stand up transition animation
+     */
+    public void triggerSitUpAnimation() {
+        wyvern.triggerAnim("action", "sit_up");
+    }
+
     // ===== GECKOLIB SETUP =====
     /**
      * Sets up all GeckoLib animation triggers for the action controller.
@@ -52,6 +66,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_ground"));
         actionController.triggerableAnim("summon_storm_air",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air"));
+
+        // Sit transition animations (player command)
+        actionController.triggerableAnim("sit_down",
+                RawAnimation.begin().thenPlay("animation.raevyx.down"));
+        actionController.triggerableAnim("sit_up",
+                RawAnimation.begin().thenPlay("animation.raevyx.up"));
 
         // Sleep animations (enter → loop → exit)
         actionController.triggerableAnim("sleep_enter",
