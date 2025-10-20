@@ -99,7 +99,9 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     private static final float L_RIGHT_X = -2.2f, L_RIGHT_Y = 0.05f, L_RIGHT_Z = 2.85f;
     private static final float MOUTH_X = 0.1f, MOUTH_Y = 8.7f, MOUTH_Z = -17.4f;
     private static final float BODY_X = 0.0f, BODY_Y = 10.0f, BODY_Z = 0.0f;
-    private static final float PASSENGER_X = 0.0f, PASSENGER_Y = 0.0f, PASSENGER_Z = 0.0f;
+    // Passenger bone offsets (in pixels, divided by 16 to convert to blocks)
+    // Negative Y pushes the player down
+    private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
 
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) return;
