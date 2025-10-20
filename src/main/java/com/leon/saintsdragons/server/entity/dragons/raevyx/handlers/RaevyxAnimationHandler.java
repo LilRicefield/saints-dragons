@@ -34,6 +34,27 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         wyvern.triggerAnim("action", "sit_up");
     }
 
+    /**
+     * Triggers the fall asleep transition animation (sit → sleep)
+     */
+    public void triggerFallAsleepAnimation() {
+        wyvern.triggerAnim("action", "fall_asleep");
+    }
+
+    /**
+     * Triggers the sleep loop animation
+     */
+    public void triggerSleepAnimation() {
+        wyvern.triggerAnim("action", "sleep");
+    }
+
+    /**
+     * Triggers the wake up transition animation (sleep → sit)
+     */
+    public void triggerWakeUpAnimation() {
+        wyvern.triggerAnim("action", "wake_up");
+    }
+
     // ===== GECKOLIB SETUP =====
     /**
      * Sets up all GeckoLib animation triggers for the action controller.
@@ -73,13 +94,13 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         actionController.triggerableAnim("sit_up",
                 RawAnimation.begin().thenPlay("animation.raevyx.up"));
 
-        // Sleep animations (enter → loop → exit)
-        actionController.triggerableAnim("sleep_enter",
-                RawAnimation.begin().thenPlay("animation.raevyx.sleep_enter"));
+        // Sleep animations (new system: sit → fall_asleep → sleep → wake_up → sit)
+        actionController.triggerableAnim("fall_asleep",
+                RawAnimation.begin().thenPlay("animation.raevyx.fall_asleep"));
         actionController.triggerableAnim("sleep",
                 RawAnimation.begin().thenLoop("animation.raevyx.sleep"));
-        actionController.triggerableAnim("sleep_exit",
-                RawAnimation.begin().thenPlay("animation.raevyx.sleep_exit"));
+        actionController.triggerableAnim("wake_up",
+                RawAnimation.begin().thenPlay("animation.raevyx.wake_up"));
 
         // Death animation
         actionController.triggerableAnim("die",

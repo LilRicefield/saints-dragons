@@ -1634,16 +1634,28 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
     
     private void tickSleepTransition() {
+        // Handle sleep enter transition: sit_down → fall_asleep → sleep loop
+        if (isSleepingEntering() && !level().isClientSide) {
+            // Check if sit_down animation is complete (sitProgress reached max)
+            if (getSitProgress() >= maxSitTicks()) {
+                // Sit down complete, now trigger fall_asleep if we haven't started the transition timer yet
+                if (sleepTransitionTicks == 50) {
+                    // Just reached sitting position, trigger fall_asleep
+                    animationHandler.triggerFallAsleepAnimation();
+                }
+            }
+        }
+
         if (sleepTransitionTicks > 0) {
             sleepTransitionTicks--;
             if (sleepTransitionTicks == 0) {
                 if (isSleepingEntering()) {
-                    // Enter finished: mark sleeping and trigger loop animation
+                    // fall_asleep finished: mark sleeping and trigger loop animation
                     setSleeping(true);
                     setSleepingEntering(false);
-                    this.triggerAnim("action", "sleep");
+                    animationHandler.triggerSleepAnimation();
                 } else if (isSleepingExiting()) {
-                    // Exit finished
+                    // wake_up finished: dragon is now sitting, will stand up via normal sit system
                     setSleepingExiting(false);
                     // Start small ambient cooldown buffer (~0.5s)
                     sleepAmbientCooldownTicks = 10;
@@ -2066,6 +2078,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Movement/idle
         // Unified sleep goal: high priority to preempt follow/wander, but calm() prevents overriding combat/aggro
         this.goalSelector.addGoal(0, new RaevyxSleepGoal(this));         // Higher priority than follow
+        this.goalSelector.addGoal(1, new RaevyxRestGoal(this));          // Casual sitting for wild dragons
         this.goalSelector.addGoal(8, new RaevyxFollowOwnerGoal(this));   // Lower priority than combat
         this.goalSelector.addGoal(9, new RaevyxGroundWanderGoal(this, 1.0, 60)); // Lower priority than combat
         
@@ -2354,9 +2367,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public void startSleepEnter() {
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
         setSleepingEntering(true);
-        sleepTransitionTicks = 81;
-        // Trigger sleep enter animation
-        this.triggerAnim("action", "sleep_enter");
+        // New system: sit_down (uses sitProgress) → fall_asleep (2.5s = 50 ticks) → sleep loop
+        // Total transition: ~15 ticks (sit down) + 50 ticks (fall asleep) = ~65 ticks
+        sleepTransitionTicks = 50; // Duration of fall_asleep animation (2.5 seconds)
+        // Trigger sit_down animation first (handled by sit progress system)
+        animationHandler.triggerSitDownAnimation();
         if (!level().isClientSide) {
             enterSleepLock();
         }
@@ -2367,9 +2382,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.set(DATA_SLEEPING, false);
         setSleepingEntering(false);
         setSleepingExiting(true);
-        sleepTransitionTicks = 122;
-        // Trigger sleep exit animation
-        this.triggerAnim("action", "sleep_exit");
+        // New system: wake_up (7.6667s = ~153 ticks) → sit (brief) → sit_up
+        sleepTransitionTicks = 153; // Duration of wake_up animation (7.6667 seconds)
+        // Trigger wake_up animation
+        animationHandler.triggerWakeUpAnimation();
         if (!level().isClientSide) {
             suppressSleep(20);
             releaseSleepLock();
