@@ -272,13 +272,37 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
         if (passengerLoc != null) {
             // The cached position is in world-space but may be from the previous frame
-            // Calculate the OFFSET from dragon's old position
-            Vec3 dragonOldPos = new Vec3(wyvern.xo, wyvern.yo, wyvern.zo);
-            Vec3 boneOffset = passengerLoc.subtract(dragonOldPos);
+            // We need to convert to dragon-local space to handle both movement AND rotation
 
-            // Apply that offset to the dragon's CURRENT position
+            // Get dragon's old position and rotation (from when bone was sampled)
+            Vec3 dragonOldPos = new Vec3(wyvern.xo, wyvern.yo, wyvern.zo);
+            float oldYaw = wyvern.yRotO;
+
+            // Calculate offset in world space
+            Vec3 worldOffset = passengerLoc.subtract(dragonOldPos);
+
+            // Convert world offset to dragon-local space (relative to old rotation)
+            double oldYawRad = Math.toRadians(-oldYaw); // Negative because Minecraft yaw is inverted
+            double cosOld = Math.cos(oldYawRad);
+            double sinOld = Math.sin(oldYawRad);
+
+            // Rotate world offset back to local space
+            double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
+            double localY = worldOffset.y;
+            double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
+
+            // Now rotate local offset to current rotation
+            float currentYaw = wyvern.getYRot();
+            double currentYawRad = Math.toRadians(-currentYaw);
+            double cosCurrent = Math.cos(currentYawRad);
+            double sinCurrent = Math.sin(currentYawRad);
+
+            double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
+            double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
+
+            // Apply to current dragon position
             Vec3 dragonCurrentPos = wyvern.position();
-            Vec3 passengerCurrentPos = dragonCurrentPos.add(boneOffset);
+            Vec3 passengerCurrentPos = dragonCurrentPos.add(currentWorldX, localY, currentWorldZ);
 
             moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
         } else {
