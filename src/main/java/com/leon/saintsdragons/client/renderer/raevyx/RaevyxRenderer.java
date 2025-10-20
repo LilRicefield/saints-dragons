@@ -16,6 +16,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxLightningBeamLayer;
+import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxRiderLayer;
 
 @OnlyIn(Dist.CLIENT)
 public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
@@ -28,6 +29,8 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         super(renderManager, new RaevyxModel());
         // Attach beam render layer
         this.addRenderLayer(new RaevyxLightningBeamLayer());
+        // TODO: Re-enable once vanilla positioning is confirmed working
+        // this.addRenderLayer(new RaevyxRiderLayer());
     }
 
     @Override
@@ -96,6 +99,7 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     private static final float L_RIGHT_X = -2.2f, L_RIGHT_Y = 0.05f, L_RIGHT_Z = 2.85f;
     private static final float MOUTH_X = 0.1f, MOUTH_Y = 8.7f, MOUTH_Z = -17.4f;
     private static final float BODY_X = 0.0f, BODY_Y = 10.0f, BODY_Z = 0.0f;
+    private static final float PASSENGER_X = 0.0f, PASSENGER_Y = 0.0f, PASSENGER_Z = 0.0f;
 
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) return;
@@ -103,6 +107,7 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         model.getBone("rightfeet").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("head").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("heightController").ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone("passengerBone").ifPresent(b -> b.setTrackingMatrices(true));
     }
 
     private void sampleAndStashLocatorsAccurate(Raevyx entity) {
@@ -126,6 +131,11 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         this.lastBakedModel.getBone("heightController").ifPresent(b -> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, BODY_X, BODY_Y, BODY_Z);
             if (world != null) entity.setClientLocatorPosition("bodyLocator", world);
+        });
+        // Sample passenger bone position for rider placement
+        this.lastBakedModel.getBone("passengerBone").ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+            if (world != null) entity.setClientLocatorPosition("passengerLocator", world);
         });
         // No beam_origin sampling required; beam uses computeHeadMouthOrigin()
     }

@@ -266,15 +266,21 @@ public record RaevyxRiderController(Raevyx wyvern) {
     
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
         if (!wyvern.hasPassenger(passenger)) return;
-        
-        // Simple vanilla positioning - let the render layer handle bone positioning
-        double offsetY = getPassengersRidingOffset() + SEAT_LIFT;
-        double forward = SEAT_FORWARD;
-        double side = SEAT_SIDE;
-        double rad = Math.toRadians(wyvern.yBodyRot);
-        double dx = -Math.sin(rad) * forward + Math.cos(rad) * side;
-        double dz =  Math.cos(rad) * forward + Math.sin(rad) * side;
-        moveFunction.accept(passenger, wyvern.getX() + dx, wyvern.getY() + offsetY, wyvern.getZ() + dz);
+
+        // Try to use bone-based positioning from client locator cache
+        // This is updated each render frame on the client
+        Vec3 passengerLoc = wyvern.getClientLocatorPosition("passengerLocator");
+
+        if (passengerLoc != null) {
+            // Use bone position from the animated passengerBone
+            moveFunction.accept(passenger, passengerLoc.x, passengerLoc.y, passengerLoc.z);
+        } else {
+            // Fallback to vanilla positioning if bone position not available yet
+            double x = wyvern.getX();
+            double y = wyvern.getY() + getPassengersRidingOffset() + passenger.getMyRidingOffset();
+            double z = wyvern.getZ();
+            moveFunction.accept(passenger, x, y, z);
+        }
     }
     
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
