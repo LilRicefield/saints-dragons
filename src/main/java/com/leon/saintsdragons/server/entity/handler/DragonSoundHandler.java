@@ -86,10 +86,12 @@ public class DragonSoundHandler {
                 controllerName = controller.getName();
             }
         } catch (Throwable ignored) {}
-        // Gate non-action sounds during sit/sleep; allow action controller during sleep transitions so enter/exit can play
-        if (dragon.isStayOrSitMuted()) return;
-        if (dragon.isSleeping()) return;
-        if (dragon.isSleepTransitioning() && (!"action".equals(controllerName))) return;
+        boolean sittingMuted = dragon.isStayOrSitMuted();
+        boolean sleeping = dragon.isSleeping();
+        boolean sleepTransitioning = dragon.isSleepTransitioning();
+        // Sleep always silences keyframes, sitting is handled per vocal profile opt-ins
+        if (sleeping) return;
+        if (sleepTransitioning && (!"action".equals(controllerName))) return;
         String raw;
         String locator = null;
         try {
@@ -121,6 +123,9 @@ public class DragonSoundHandler {
             normalizedForStep = sound.substring(sound.indexOf("step"));
         }
         if (profile.handleAnimationSound(this, dragon, sound, locator)) {
+            return;
+        }
+        if (sittingMuted) {
             return;
         }
         // Allow flexible keys from animation JSON: flap1, flap_right, raevyx_flap1, step2, raevyx_run_step1, etc.
