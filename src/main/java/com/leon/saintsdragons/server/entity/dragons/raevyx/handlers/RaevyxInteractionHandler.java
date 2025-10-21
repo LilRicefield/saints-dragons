@@ -194,15 +194,13 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
      */
     private InteractionResult handleCommandCycling(Player player) {
         // Prevent command changes during sit transitions (sitting down or standing up)
-        float sitProgress = wyvern.getSitProgress();
-        float maxSit = wyvern.maxSitTicks();
-        boolean isTransitioning = sitProgress > 0f && sitProgress < maxSit;
+        boolean isTransitioning = wyvern.isInSitTransition();
 
         if (isTransitioning) {
             // Dragon is in the middle of sitting down or standing up - ignore command spam
             if (!wyvern.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 // Determine which transition is happening
-                boolean sittingDown = wyvern.isOrderedToSit();
+                boolean sittingDown = wyvern.isSittingDownAnimation();
                 String messageKey = sittingDown
                     ? "entity.saintsdragons.raevyx.sitting_down"
                     : "entity.saintsdragons.raevyx.standing_up";
