@@ -232,6 +232,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     /** Attack cooldown timer */
     public int attackCooldown = 0;
     private boolean allowGroundBeamDuringStorm = false;
+    // Sit transition state
+    // Track sit down/up animations separately from sitProgress (which is for sit pose interpolation)
+    private int sitTransitionTicks = 0; // Counts down during down/up animations
+    private boolean isSittingDown = false; // True during "down" animation (93 ticks)
+    private boolean isStandingUp = false;  // True during "up" animation (23 ticks)
+
     // Sleep transition state
     // Sleep transition states now synced via entity data (DATA_SLEEPING_ENTERING, DATA_SLEEPING_EXITING)
     // Removed public boolean fields in favor of synced entity data
@@ -1464,10 +1470,22 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             return;
         }
 
+        // Tick down sit transition animations
+        if (sitTransitionTicks > 0) {
+            sitTransitionTicks--;
+            if (sitTransitionTicks == 0) {
+                // Transition animation finished
+                isSittingDown = false;
+                isStandingUp = false;
+            }
+        }
+
         if (this.isOrderedToSit()) {
             // Trigger sit_down animation when STARTING to sit (transition from 0 → 1)
-            if (sitProgress == 0f) {
+            if (sitProgress == 0f && !isSittingDown) {
                 animationHandler.triggerSitDownAnimation();
+                isSittingDown = true;
+                sitTransitionTicks = 93; // down animation is 4.6667s = 93 ticks
             }
 
             if (sitProgress < maxSitTicks()) {
@@ -1480,8 +1498,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
 
             // Trigger sit_up animation when STARTING to stand (transition from sitting → standing)
-            if (sitProgress == maxSitTicks()) {
+            if (sitProgress == maxSitTicks() && !isStandingUp) {
                 animationHandler.triggerSitUpAnimation();
+                isStandingUp = true;
+                sitTransitionTicks = 23; // up animation is 1.125s = 23 ticks
             }
 
             if (this.isVehicle()) {
@@ -1489,6 +1509,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                     sitProgress = 0f;
                     prevSitProgress = 0f;
                     this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                    // Cancel any ongoing transitions
+                    isSittingDown = false;
+                    isStandingUp = false;
+                    sitTransitionTicks = 0;
                 }
             } else if (sitProgress > 0f) {
                 sitProgress--;
@@ -1840,7 +1864,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
      * Because a silent wyvern is a boring wyvern
      */
     private void handleAmbientSounds() {
-        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || sleepAmbientCooldownTicks > 0) return;
+        // Suppress ambient sounds during transitions to prevent animation snapping
+        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0) return;
         ambientSoundTimer++;
 
         // Time to make some noise?
@@ -2291,6 +2316,19 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         double z = 2 * v - 1;
         double r = Math.sqrt(1 - z * z);
         return new net.minecraft.world.phys.Vec3(r * Math.cos(theta), z, r * Math.sin(theta));
+    }
+
+    // ===== SIT TRANSITIONS =====
+    public boolean isInSitTransition() {
+        return isSittingDown || isStandingUp;
+    }
+
+    public boolean isSittingDownAnimation() {
+        return isSittingDown;
+    }
+
+    public boolean isStandingUpAnimation() {
+        return isStandingUp;
     }
 
     // ===== SLEEPING =====
