@@ -19,6 +19,10 @@ import net.minecraftforge.fml.common.Mod;
 public class ClientEventHandler {
     private static final double[] randomTremorOffsets = new double[3];
 
+    // Raevyx takeoff camera zoom transition
+    private static float raevyxCameraZoom = 10F; // Base zoom
+    private static float raevyxCameraZoomTarget = 10F;
+
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
         Entity player = Minecraft.getInstance().getCameraEntity();
@@ -26,9 +30,23 @@ public class ClientEventHandler {
         
         
         // Dragon riding camera adjustments
-        if (player.isPassenger() && player.getVehicle() instanceof Raevyx && event.getCamera().isDetached()) {
-            // Base zoom for wyvern riding - adjusted distance for better wyvern visibility
-            event.getCamera().move(-event.getCamera().getMaxZoom(10F), 0, 0);
+        if (player.isPassenger() && player.getVehicle() instanceof Raevyx raevyx && event.getCamera().isDetached()) {
+            // Determine target zoom based on flight state
+            boolean isFlying = raevyx.isFlying();
+
+            // Flying: zoom to 18F, grounded: 10F base
+            raevyxCameraZoomTarget = isFlying ? 18F : 10F;
+
+            // Smooth transition (0.15 = gentle blend rate)
+            float blendRate = 0.15F;
+            raevyxCameraZoom += (raevyxCameraZoomTarget - raevyxCameraZoom) * blendRate;
+
+            // Apply the smoothed zoom
+            event.getCamera().move(-event.getCamera().getMaxZoom(raevyxCameraZoom), 0, 0);
+        } else {
+            // Reset zoom when not riding Raevyx
+            raevyxCameraZoom = 10F;
+            raevyxCameraZoomTarget = 10F;
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof AmphithereEntity && event.getCamera().isDetached()) {
