@@ -140,7 +140,11 @@ public class RaevyxConstantsHandler {
     /** Entity data accessor for beaming state */
     public static final EntityDataAccessor<Boolean> DATA_BEAMING =
             SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
-    
+
+    /** Entity data accessor for rider landing blend active state */
+    public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
+            SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
+
     /** Entity data accessor for beam end position set flag */
     public static final EntityDataAccessor<Boolean> DATA_BEAM_END_SET =
             SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);

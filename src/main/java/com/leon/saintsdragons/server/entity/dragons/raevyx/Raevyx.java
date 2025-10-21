@@ -110,6 +110,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private int horizontalSpeedCacheTime = -1;
     private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
+    private static final double RIDER_LANDING_BLEND_ALTITUDE = 10.5D;
+    private static final int RIDER_LANDING_BLEND_DURATION = 18; // ticks to keep landing blend active after triggering
     private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", "action", "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
@@ -131,6 +133,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     private boolean manualSitCommand = false;
     private boolean commandChangeManual = false;
+    private int riderLandingBlendTicks = 0;
 
     @Override
     public void setCommand(int command) {
@@ -407,6 +410,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.define(DATA_ATTACK_STATE, ATTACK_STATE_IDLE);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
+        this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_BEAM_END_SET, false);
@@ -1744,7 +1748,46 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
     }
     
+    private void tickRiderLandingBlendTimer() {
+        if (!isVehicle() || !isFlying() || onGround()) {
+            riderLandingBlendTicks = 0;
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+            }
+            return;
+        }
+        if (riderLandingBlendTicks > 0) {
+            riderLandingBlendTicks--;
+            if (riderLandingBlendTicks == 0 && !level().isClientSide) {
+                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+            }
+        }
+    }
+
+    private void triggerRiderLandingBlend() {
+        riderLandingBlendTicks = RIDER_LANDING_BLEND_DURATION;
+        if (!level().isClientSide) {
+            this.entityData.set(DATA_RIDER_LANDING_BLEND, true);
+        }
+    }
+
+    public boolean isRiderLandingBlendActive() {
+        // Use synced entity data so client can see it
+        return this.entityData.get(DATA_RIDER_LANDING_BLEND);
+    }
+
+    private double getAltitudeAboveTerrain() {
+        net.minecraft.core.BlockPos pos = this.blockPosition();
+        if (!level().hasChunkAt(pos)) {
+            return Double.POSITIVE_INFINITY;
+        }
+        int groundY = this.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                pos.getX(), pos.getZ());
+        return this.getY() - groundY;
+    }
+    
     private void tickPitchingLogic() {
+        tickRiderLandingBlendTimer();
         // Reset pitching when not flying or when controls are locked - INSTANT reset
         if (areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
             if (pitchDir != 0) {
@@ -1764,6 +1807,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 desiredDir = 1;   // Pitching down
             } else {
                 desiredDir = 0;   // No pitching
+            }
+            if (isGoingDown()) {
+                double altitude = getAltitudeAboveTerrain();
+                // Trigger landing blend when descending below threshold altitude
+                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= RIDER_LANDING_BLEND_ALTITUDE) {
+                    // Trigger landing blend immediately when below altitude threshold
+                    desiredDir = 0; // Stop pitching down
+                    triggerRiderLandingBlend();
+                }
             }
         } else {
             float pitchChange = getXRot() - xRotO;
