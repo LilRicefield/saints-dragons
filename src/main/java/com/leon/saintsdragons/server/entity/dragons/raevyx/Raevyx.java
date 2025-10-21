@@ -111,7 +111,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
     private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.5D;
-    private static final int RIDER_LANDING_BLEND_DURATION = 18; // ticks to keep landing blend active after triggering
+    private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", "action", "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
