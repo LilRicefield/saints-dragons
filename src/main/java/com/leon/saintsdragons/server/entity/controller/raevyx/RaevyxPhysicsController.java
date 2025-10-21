@@ -131,6 +131,12 @@ public class RaevyxPhysicsController {
                 state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
             }
+            if (wyvern.isRiderLandingBlendActive()) {
+                state.getController().transitionLength(4);
+                currentFlightAnimation = LANDING;
+                state.setAndContinue(LANDING);
+                return PlayState.CONTINUE;
+            }
 
             boolean manualRiderControl = wyvern.isTame() && wyvern.isVehicle();
             if (manualRiderControl) {
@@ -143,7 +149,8 @@ public class RaevyxPhysicsController {
                     state.setAndContinue(upward);
                     return PlayState.CONTINUE;
                 }
-                if (wyvern.isGoingDown()) {
+                // Only play glide_down if NOT in landing blend (landing blend takes priority)
+                if (wyvern.isGoingDown() && !wyvern.isRiderLandingBlendActive()) {
                     RawAnimation descend = GLIDE_DOWN;
                     if (currentFlightAnimation != descend) {
                         state.getController().transitionLength(6);
