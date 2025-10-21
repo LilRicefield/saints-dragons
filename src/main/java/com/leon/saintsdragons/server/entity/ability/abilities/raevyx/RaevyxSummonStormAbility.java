@@ -19,12 +19,16 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private static final int SUPERCHARGE_TICKS = 20 * 120; // 120s
     private static final int COOLDOWN_TICKS = 20 * 240; // 240s
+    private static final int ANIMATION_LENGTH_TICKS = 145; // 7.25 seconds
+    private static final int SCREEN_SHAKE_TRIGGER_TICK = 35; // 1.76 seconds (35.2 ticks)
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(AbilitySectionType.STARTUP, 120), // 6s windup (i-frames)
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, ANIMATION_LENGTH_TICKS), // 7.25s animation
             new AbilitySectionInstant(AbilitySectionType.ACTIVE),
             new AbilitySectionDuration(AbilitySectionType.RECOVERY, 20) // small tail to keep action controller busy
     };
+
+    private boolean isGroundCast;
 
     public RaevyxSummonStormAbility(DragonAbilityType<Raevyx, RaevyxSummonStormAbility> type, Raevyx user) {
         super(type, user, TRACK, COOLDOWN_TICKS);
@@ -32,9 +36,11 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
 
     @Override
     public void tickUsing() {
-        // Continuously trigger screen shake during the entire ability
-        if (!getUser().level().isClientSide) {
-            getUser().triggerScreenShake(3.0F);
+        // Trigger screen shake at 1.76 seconds (35 ticks) into the animation
+        if (getTicksInUse() == SCREEN_SHAKE_TRIGGER_TICK) {
+            if (!getUser().level().isClientSide) {
+                getUser().triggerScreenShake(3.0F);
+            }
         }
     }
 
@@ -42,21 +48,24 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            // Lock inputs and grant invulnerability for 6 seconds while animating
-            getUser().lockRiderControls(20 * 6);
-            getUser().lockTakeoff(20 * 6);
-            getUser().startTemporaryInvuln(20 * 6);
-            // Screen shake is now handled by the animation predicate
-            // Play summon_storm animation variant + sound
-            boolean flying = getUser().isFlying();
-            String trigger = flying ? "summon_storm_air" : "summon_storm_ground";
-            getUser().triggerAnim("action", trigger);
-            if (!getLevel().isClientSide) {
-                getLevel().playSound(null, getUser().getX(), getUser().getY(), getUser().getZ(),
-                        com.leon.saintsdragons.common.registry.ModSounds.RAEVYX_SUMMON_STORM.get(),
-                        net.minecraft.sounds.SoundSource.NEUTRAL, 1.6f,
-                        0.85f + getUser().getRandom().nextFloat() * 0.1f);
+            // Determine if this is a ground or air cast
+            isGroundCast = !getUser().isFlying();
+
+            // Grant invulnerability for the full animation duration
+            getUser().startTemporaryInvuln(ANIMATION_LENGTH_TICKS);
+
+            // Lock controls ONLY for ground cast - air cast allows free movement
+            if (isGroundCast) {
+                getUser().lockRiderControls(ANIMATION_LENGTH_TICKS); // 7.25 seconds
+                getUser().lockTakeoff(ANIMATION_LENGTH_TICKS);
+            } else {
+                // Air cast: only lock takeoff to prevent awkward transitions, but allow movement
+                getUser().lockTakeoff(ANIMATION_LENGTH_TICKS);
             }
+
+            // Play appropriate animation variant (sound is handled by keyframe at 1.76s)
+            String trigger = isGroundCast ? "summon_storm_ground" : "summon_storm_air";
+            getUser().triggerAnim("action", trigger);
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (!getLevel().isClientSide) {
                 // Apply supercharge

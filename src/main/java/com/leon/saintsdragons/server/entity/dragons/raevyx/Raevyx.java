@@ -110,7 +110,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private int horizontalSpeedCacheTime = -1;
     private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
-    private static final double RIDER_LANDING_BLEND_ALTITUDE = 10.5D;
+    private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.5D;
     private static final int RIDER_LANDING_BLEND_DURATION = 18; // ticks to keep landing blend active after triggering
     private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
@@ -411,6 +411,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
+        this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_BEAM_END_SET, false);
@@ -2926,11 +2927,35 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // DYNAMIC EYE HEIGHT SYSTEM
     // Will be calculated dynamically from renderer
 
-    // While > 0, rider input is ignored to keep action animation coherent (e.g., roar)
+    // While > 0, rider input is ignored to keep action animation coherent (e.g., roar, summon storm)
     private int riderControlLockTicks = 0;
-    public boolean areRiderControlsLocked() { return riderControlLockTicks > 0; }
-    private void tickRiderControlLock() { if (riderControlLockTicks > 0) riderControlLockTicks--; }
-    public void lockRiderControls(int ticks) { this.riderControlLockTicks = Math.max(this.riderControlLockTicks, Math.max(0, ticks)); }
+
+    public boolean areRiderControlsLocked() {
+        return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
+    }
+
+    private void tickRiderControlLock() {
+        if (riderControlLockTicks > 0) {
+            riderControlLockTicks--;
+            if (riderControlLockTicks <= 0) {
+                this.entityData.set(DATA_RIDER_LOCKED, false);
+            }
+        }
+    }
+
+    public void lockRiderControls(int ticks) {
+        riderControlLockTicks = Math.max(riderControlLockTicks, Math.max(0, ticks));
+        this.entityData.set(DATA_RIDER_LOCKED, true);
+        this.setAccelerating(false);
+        // Reset rider inputs
+        this.setGoingUp(false);
+        this.setGoingDown(false);
+        this.setDeltaMovement(Vec3.ZERO);
+        if (!this.level().isClientSide) {
+            this.getNavigation().stop();
+            this.setTarget(null);
+        }
+    }
 
     // While > 0, only takeoff is locked (allows running/movement during roar)
     private int takeoffLockTicks = 0;
