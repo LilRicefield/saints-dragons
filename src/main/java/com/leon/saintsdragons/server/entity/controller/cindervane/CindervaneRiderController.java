@@ -33,16 +33,16 @@ public record CindervaneRiderController(Cindervane dragon) {
     // ===== FLIGHT VERTICAL RATES (SLOWER THAN LIGHTNING DRAGON) =====
     // Up/down rates while flying controlled by keybinds - gliders are slower
     private static final double ASCEND_RATE = 0.03D;  // Slower than Lightning Dragon (0.05D)
-    private static final double DESCEND_RATE = 0.08D;  // Much slower than Lightning Dragon (0.5D) for glider behavior
+    private static final double DESCEND_RATE = 0.06D;  // Deliberately gentle descent for glider feel
 
     // ===== AIR SPRINT / ACCELERATION TUNING (MUCH SLOWER FOR GLIDER) =====
     // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
     // Base cruise cap is intentionally lower; sprint raises cap and accel.
-    private static final double CRUISE_MAX_MULT = 10.0;
-    private static final double SPRINT_MAX_MULT = 20.0;    // Moderate sprint boost for glider (vs Lightning Dragon's 50.0)
+    private static final double CRUISE_MAX_MULT = 14.0;
+    private static final double SPRINT_MAX_MULT = 28.0;    // Still far below Lightning Dragon's 55.5
     private static final double AIR_ACCEL_MULT = 0.10;
-    private static final double SPRINT_ACCEL_MULT = 0.18;  // Moderate sprint acceleration (vs Lightning Dragon's 0.25)
-    private static final double AIR_DRAG = 0.05;           // More drag for glider behavior
+    private static final double SPRINT_ACCEL_MULT = 0.20;  // Slightly quicker sprint spool-up
+    private static final double AIR_DRAG = 0.035;           // Retain glider feel but with less bleed-off
     
     // ===== AMPHITHERE GLIDER MANEUVERABILITY =====
     // Gliders have different turning characteristics - more graceful, less sharp
@@ -235,7 +235,7 @@ public record CindervaneRiderController(Cindervane dragon) {
                 vy -= DESCEND_RATE;
             } else {
                 // Mild vertical damping to stabilize when no vertical input
-                vy *= 0.98;
+                vy *= 0.985;
             }
 
             Vec3 next = new Vec3(horiz.x, vy, horiz.z);
