@@ -129,15 +129,26 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private boolean fireBodyCrashArmed;
     private double fireBodyCrashMaxHeight;
 
+    // Banking smoothing state (mouse-sensitivity based, like Raevyx)
     private float bankSmoothedYaw = 0f;
-    private int bankDir = 0;
-    private float bankTransitionProgress = 0f; // 0.0 to 1.0 for smooth transitions
+    private int bankHoldTicks = 0;
+    private int bankDir = 0; // -1 left, 0 none, 1 right
+    private float bankAngle = 0f;
+    private float prevBankAngle = 0f;
 
     private float pitchSmoothedPitch = 0f;
     private int pitchHoldTicks = 0;
     private int pitchDir = 0;
 
     private static final double MODEL_SCALE = 1.0D;
+
+    // ===== ALTITUDE-BASED FLYING SYSTEM (like Raevyx) =====
+    private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
+    private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
+    private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
+
+    // ===== CLIENT LOCATOR CACHE (client-side only) =====
+    private final Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     // ===== Client animation overrides (for robust observer sync) =====
 
@@ -523,36 +534,57 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     private void tickBankingLogic() {
-        // Reset banking when not flying or when controls are locked - INSTANT reset
-        if (!isFlying() || isLanding() || isHovering() || isOrderedToSit()) {
-            if (bankDir != 0) {
+        prevBankAngle = bankAngle;
+
+        // Only apply mouse-sensitivity banking when being ridden
+        // Wild Cindervanes don't need banking animations
+        boolean shouldBank = isFlying() && !isLanding() && !isHovering() && !isOrderedToSit() && isVehicle();
+
+        // Reset banking when not flying, or not being ridden - instant snap back
+        if (!shouldBank) {
+            if (bankDir != 0 || bankAngle != 0f || bankSmoothedYaw != 0f) {
                 bankDir = 0;
                 bankSmoothedYaw = 0f;
+                bankHoldTicks = 0;
+                bankAngle = 0f;
+                prevBankAngle = 0f;
             }
             return;
         }
 
-        float yawChange = getYRot() - yRotO;
-        bankSmoothedYaw = bankSmoothedYaw * 0.85f + yawChange * 0.15f;
-        float enter = 0.9f;
-        float exit = 3.5f;
+        // Exponential smoothing on yaw delta to avoid jitter, wrap to account for crossing 360 -> 0
+        float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
+        bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;
 
-        int desiredDir = bankDir;
-        if (bankSmoothedYaw > enter) desiredDir = 1;
-        else if (bankSmoothedYaw < -enter) desiredDir = -1;
-        else if (Math.abs(bankSmoothedYaw) < exit) desiredDir = 0;
-
-        if (desiredDir != bankDir) {
-            bankDir = desiredDir;
-            if (bankDir != 0) {
-                bankTransitionProgress = Math.min(bankTransitionProgress, 0.25f);
-            }
+        // Convert smoothed yaw delta into a banking roll. Multiplying gives us headroom for aggressive turns.
+        // More aggressive multiplier for glider-style banking (6.0f vs Raevyx's 5.0f)
+        float targetAngle = Mth.clamp(bankSmoothedYaw * 6.0f, -90f, 90f);
+        // Ease toward the new target so long sweeping turns feel weighty but responsive.
+        bankAngle = Mth.lerp(0.30f, bankAngle, targetAngle);
+        if (Math.abs(bankAngle) < 0.01f) {
+            bankAngle = 0f;
         }
 
-        if (bankDir != 0) {
-            bankTransitionProgress = Math.min(bankTransitionProgress + 0.18f, 1.0f);
+        // Update coarse direction for animation fallbacks
+        float enter = 10.0f;
+        float exit = 4.0f;
+
+        int desiredDir = bankDir;
+        if (bankAngle > enter) desiredDir = 1;
+        else if (bankAngle < -enter) desiredDir = -1;
+        else if (Math.abs(bankAngle) < exit) desiredDir = 0;  // banking_off when flying straight
+
+        if (desiredDir != bankDir) {
+            // If transitioning to "off" (0), use very short hold time for instant reset
+            int holdTime = (desiredDir == 0) ? 1 : 2;
+            if (bankHoldTicks >= holdTime) {
+                bankDir = desiredDir;
+                bankHoldTicks = 0;
+            } else {
+                bankHoldTicks++;
+            }
         } else {
-            bankTransitionProgress = Math.max(bankTransitionProgress - 0.20f, 0.0f);
+            bankHoldTicks = Math.min(bankHoldTicks + 1, 10);
         }
     }
 
@@ -607,14 +639,48 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
+    /**
+     * Gets the current bank direction for animation purposes
+     * @return -1 for left, 0 for none, 1 for right
+     */
+    public int getBankDirection() {
+        return bankDir;
+    }
+
+    /**
+     * Gets the current bank angle in degrees. Positive values bank right, negative bank left.
+     * This is based on mouse drag sensitivity - faster mouse movement = harder banking.
+     */
+    public float getBankAngleDegrees() {
+        return bankAngle;
+    }
+
+    /**
+     * Interpolated bank angle for smooth client-side rendering.
+     */
+    public float getBankAngleDegrees(float partialTick) {
+        return Mth.lerp(partialTick, prevBankAngle, bankAngle);
+    }
+
+    /**
+     * Legacy method - returns smooth bank direction for animation
+     * Returns a smooth value based on actual bank angle
+     */
     public float getSmoothBankDirection() {
-        // Return a smooth value between -1.0 and 1.0 for banking
-        if (bankDir == 0) return 0f;
-        return bankDir * bankTransitionProgress;
+        // Normalize bank angle to -1.0 to 1.0 range for animation
+        return Mth.clamp(bankAngle / 45.0f, -1.0f, 1.0f);
     }
 
     public int getPitchDirection() {
         return pitchDir;
+    }
+
+    /**
+     * Gets the number of ticks the dragon has been airborne.
+     * Used for takeoff animation timing.
+     */
+    public int getAirTicks() {
+        return airTicks;
     }
 
     // ===== Rider Control Methods =====
@@ -679,21 +745,60 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     
 
     @Override
-    protected int getFlightMode() {
+    public int getFlightMode() {
         int flightMode = -1; // not flying (ground state)
         if (isFlying()) {
+            // Reset altitude glide flag when not flying
+            inHighAltitudeGlide = false;
+
             if (isTakeoff()) {
                 flightMode = 3; // takeoff
             } else if (isHovering()) {
                 flightMode = 2; // hover
             } else if (isGoingDown()) {
-                flightMode = 0; // glide
+                flightMode = 0; // glide (descending always plays GLIDE_DOWN via animation handler)
             } else if (isGoingUp()) {
-                flightMode = 1; // flap
+                flightMode = 1; // flap (ascending)
             } else {
-                // Default to glide for natural descent
-                flightMode = 0; // glide
+                // Altitude-based flight mode for ridden dragons
+                if (this.isTame() && this.isVehicle()) {
+                    Entity rider = this.getControllingPassenger();
+                    if (rider != null) {
+                        int groundY = this.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                                Mth.floor(this.getX()), Mth.floor(this.getZ()));
+                        double altitudeAboveTerrain = this.getY() - groundY;
+
+                        // Hysteresis: Enter glide at 40 blocks, exit at 30 blocks
+                        if (inHighAltitudeGlide) {
+                            // Already gliding - stay in glide until we drop below exit threshold
+                            if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_EXIT) {
+                                flightMode = 0; // High-altitude glide
+                            } else {
+                                inHighAltitudeGlide = false;
+                                flightMode = 1; // Low altitude - flap
+                            }
+                        } else {
+                            // Not gliding yet - enter glide if above entry threshold
+                            if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
+                                inHighAltitudeGlide = true;
+                                flightMode = 0; // High-altitude glide
+                            } else {
+                                flightMode = 1; // Low altitude - flap
+                            }
+                        }
+                    } else {
+                        // Default to glide for natural descent
+                        flightMode = 0; // glide
+                    }
+                } else {
+                    // Not being ridden - reset flag and default to glide
+                    inHighAltitudeGlide = false;
+                    flightMode = 0; // glide
+                }
             }
+        } else {
+            // Not flying - reset flag
+            inHighAltitudeGlide = false;
         }
         return flightMode;
     }
@@ -1315,7 +1420,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob partner) {
-        return ModEntities.AMPHITHERE.get().create(level);
+        return ModEntities.CINDERVANE.get().create(level);
     }
 
     @Override
@@ -1560,6 +1665,25 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             // Call super for all other entity events (NOT 6 or 7)
             super.handleEntityEvent(eventId);
         }
+    }
+
+    // ===== CLIENT LOCATOR CACHE METHODS =====
+
+    /**
+     * Store a client-side locator position (used by renderer to cache bone positions)
+     */
+    public void setClientLocatorPosition(String name, Vec3 pos) {
+        if (name == null || pos == null) return;
+        this.clientLocatorCache.put(name, pos);
+    }
+
+    /**
+     * Get a client-side locator position (used by rider controller to position passengers)
+     */
+    @Override
+    public Vec3 getClientLocatorPosition(String name) {
+        if (name == null) return null;
+        return this.clientLocatorCache.get(name);
     }
 
 }

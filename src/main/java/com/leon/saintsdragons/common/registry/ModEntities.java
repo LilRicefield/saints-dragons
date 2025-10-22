@@ -41,7 +41,7 @@ public class ModEntities {
     // ===== AMPHITHERE =====
     public static final RegistryObject<EntityType<Cindervane>> CINDERVANE =
             REGISTER.register("cindervane", () -> EntityType.Builder.of(Cindervane::new, MobCategory.CREATURE)
-                    .sized(4.5F, 1.5F)
+                    .sized(4.5F, 6.5F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("cindervane"));

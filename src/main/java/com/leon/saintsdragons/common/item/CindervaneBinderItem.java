@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.item;
 
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -198,7 +199,7 @@ public class CindervaneBinderItem extends Item {
         String amphithereName = tag.getString(BOUND_DRAGON_NAME);
 
         Cindervane newAmphithere = new Cindervane(
-            com.leon.saintsdragons.common.registry.ModEntities.AMPHITHERE.get(),
+            ModEntities.CINDERVANE.get(),
             serverLevel
         );
 

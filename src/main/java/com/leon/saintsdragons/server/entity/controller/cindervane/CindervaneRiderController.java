@@ -270,25 +270,60 @@ public record CindervaneRiderController(Cindervane dragon) {
 
         if (seatIndex == -1) return; // Passenger not found
 
-        // Calculate seat position based on seat index
-        double offsetY = getPassengersRidingOffset() + SEAT_LIFT;
-        double forward;
-        double side;
+        // Try to use bone-based positioning from renderer cache
+        String locatorName = (seatIndex == 0) ? "passengerSeat0" : "passengerSeat1";
+        Vec3 passengerLoc = dragon.getClientLocatorPosition(locatorName);
 
-        if (seatIndex == 0) {
-            // Seat 0 - Driver (front)
-            forward = SEAT_0_FORWARD;
-            side = SEAT_0_SIDE;
+        if (passengerLoc != null) {
+            // Bone-based positioning with rotation-aware offset
+            // Convert to dragon-local space to handle both movement AND rotation
+            Vec3 dragonOldPos = new Vec3(dragon.xo, dragon.yo, dragon.zo);
+            float oldYaw = dragon.yRotO;
+            Vec3 worldOffset = passengerLoc.subtract(dragonOldPos);
+
+            // Convert world offset to dragon-local space using old rotation
+            double oldYawRad = Math.toRadians(-oldYaw);
+            double cosOld = Math.cos(oldYawRad);
+            double sinOld = Math.sin(oldYawRad);
+
+            double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
+            double localY = worldOffset.y;
+            double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
+
+            // Rotate local offset to current rotation
+            float currentYaw = dragon.getYRot();
+            double currentYawRad = Math.toRadians(-currentYaw);
+            double cosCurrent = Math.cos(currentYawRad);
+            double sinCurrent = Math.sin(currentYawRad);
+
+            double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
+            double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
+
+            Vec3 dragonCurrentPos = dragon.position();
+            Vec3 passengerCurrentPos = dragonCurrentPos.add(currentWorldX, localY, currentWorldZ);
+
+            moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
         } else {
-            // Seat 1+ - Passenger (back)
-            forward = SEAT_1_FORWARD;
-            side = SEAT_1_SIDE;
-        }
+            // Fallback to vanilla positioning if bone data not available
+            double offsetY = getPassengersRidingOffset() + SEAT_LIFT;
+            double forward;
+            double side;
 
-        double rad = Math.toRadians(dragon.yBodyRot);
-        double dx = -Math.sin(rad) * forward + Math.cos(rad) * side;
-        double dz =  Math.cos(rad) * forward + Math.sin(rad) * side;
-        moveFunction.accept(passenger, dragon.getX() + dx, dragon.getY() + offsetY, dragon.getZ() + dz);
+            if (seatIndex == 0) {
+                // Seat 0 - Driver (front)
+                forward = SEAT_0_FORWARD;
+                side = SEAT_0_SIDE;
+            } else {
+                // Seat 1+ - Passenger (back)
+                forward = SEAT_1_FORWARD;
+                side = SEAT_1_SIDE;
+            }
+
+            double rad = Math.toRadians(dragon.yBodyRot);
+            double dx = -Math.sin(rad) * forward + Math.cos(rad) * side;
+            double dz =  Math.cos(rad) * forward + Math.sin(rad) * side;
+            moveFunction.accept(passenger, dragon.getX() + dx, dragon.getY() + offsetY, dragon.getZ() + dz);
+        }
     }
     
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {

@@ -13,7 +13,10 @@ public class CinderAnimationHandler {
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.cindervane.idle");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.cindervane.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.glide_down");
+    private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.cindervane.flap");
+    private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.cindervane.takeoff");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.cindervane.walk");
+    private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.cindervane.run");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.cindervane.sit");
 
     private static final RawAnimation BANK_LEFT = RawAnimation.begin().thenLoop("animation.cindervane.banking_left");
@@ -36,10 +39,38 @@ public class CinderAnimationHandler {
         if (dragon.isVehicle()) {
             state.getController().transitionLength(4);
             if (dragon.isFlying()) {
-                state.setAndContinue(GLIDE);
+                // Check for takeoff first (highest priority)
+                if (shouldPlayTakeoff()) {
+                    state.setAndContinue(TAKEOFF);
+                }
+                // Check if descending (takes priority over altitude-based)
+                else if (dragon.isGoingDown()) {
+                    state.getController().transitionLength(6);
+                    state.setAndContinue(GLIDE_DOWN);
+                } else {
+                    // Altitude-based animation when being ridden
+                    int flightMode = dragon.getFlightMode();
+
+                    if (flightMode == 0) {
+                        // High altitude glide
+                        state.setAndContinue(GLIDE);
+                    } else if (flightMode == 1) {
+                        // Low altitude flap
+                        state.setAndContinue(FLAP);
+                    } else {
+                        // Default to glide
+                        state.setAndContinue(GLIDE);
+                    }
+                }
             } else {
                 int groundState = dragon.getEffectiveGroundState();
-                state.setAndContinue(groundState >= 1 ? WALK : IDLE);
+                if (groundState == 2) {
+                    state.setAndContinue(RUN);
+                } else if (groundState == 1) {
+                    state.setAndContinue(WALK);
+                } else {
+                    state.setAndContinue(IDLE);
+                }
             }
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
@@ -54,11 +85,20 @@ public class CinderAnimationHandler {
         state.getController().setAnimationSpeed(1.0f);
 
         if (dragon.isFlying()) {
+            // Check for takeoff first (highest priority)
+            if (shouldPlayTakeoff()) {
+                state.getController().transitionLength(4);
+                state.setAndContinue(TAKEOFF);
+                return PlayState.CONTINUE;
+            }
+
+            // Check if descending when being ridden (for GLIDE_DOWN animation)
             boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && dragon.isGoingDown();
             if (riderDescending) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(GLIDE_DOWN);
             } else {
+                // When not being ridden or not descending, use default glide
                 state.setAndContinue(GLIDE);
             }
             return PlayState.CONTINUE;
@@ -71,13 +111,13 @@ public class CinderAnimationHandler {
             // Add hysteresis to prevent rapid animation changes
             if (groundState == 2) {
                 // Running state
-                state.setAndContinue(WALK); // Fallback to walk for now (no run animation yet)
+                state.setAndContinue(RUN);
             } else if (groundState == 1) {
                 // Walking state
                 state.setAndContinue(WALK);
             } else if (dragon.isRunning()) {
                 // Fallback to running check
-                state.setAndContinue(WALK);
+                state.setAndContinue(RUN);
             } else if (dragon.isWalking()) {
                 // Fallback to walking check
                 state.setAndContinue(WALK);
@@ -132,6 +172,29 @@ public class CinderAnimationHandler {
     public PlayState actionPredicate(AnimationState<Cindervane> state) {
         state.getController().transitionLength(5);
         return PlayState.STOP;
+    }
+
+    /**
+     * Determines if the takeoff animation should play.
+     * Plays during initial launch AND while ascending, like Raevyx.
+     */
+    private boolean shouldPlayTakeoff() {
+        if (!dragon.isFlying()) {
+            return false;
+        }
+
+        final int TAKEOFF_ANIM_MAX_TICKS = 55; // Max duration (2.88 seconds)
+        final int TAKEOFF_ANIM_EARLY_TICKS = 16; // Always play during first 16 ticks
+        int airTicks = dragon.getAirTicks();
+
+        // Always play during initial launch
+        if (airTicks < TAKEOFF_ANIM_EARLY_TICKS) {
+            return true;
+        }
+
+        // After 16 ticks, only continue if still within time limit AND actively ascending
+        boolean ascending = dragon.getDeltaMovement().y > 0.08;
+        return (airTicks < TAKEOFF_ANIM_MAX_TICKS) && ascending;
     }
 }
 
