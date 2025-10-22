@@ -16,12 +16,12 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 public final class CindervaneAbilities {
     private CindervaneAbilities() {}
 
-    public static final String BITE_ID = "amphithere_bite";
-    public static final String FIRE_BODY_ID = "amphithere_fire_body";
-    public static final String ROAR_ID = "amphithere_roar";
-    public static final String FIRE_BREATH_VOLLEY_ID = "amphithere_fire_breath_volley";
-    public static final String HURT_ID = "amphithere_hurt";
-    public static final String DIE_ID = "amphithere_die";
+    public static final String BITE_ID = "cindervane_bite";
+    public static final String FIRE_BODY_ID = "cindervane_fire_body";
+    public static final String ROAR_ID = "cindervane_roar";
+    public static final String FIRE_BREATH_VOLLEY_ID = "cindervane_fire_breath_volley";
+    public static final String HURT_ID = "cindervane_hurt";
+    public static final String DIE_ID = "cindervane_die";
 
 
     public static final DragonAbilityType<Cindervane, CindervaneBiteAbility> BITE =
