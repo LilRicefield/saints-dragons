@@ -50,10 +50,10 @@ public final class ModSounds {
 
 
     // ===== AMPHITHERE SOUNDS =====
-    public static final RegistryObject<SoundEvent> AMPHITHERE_ROAR = registerSound("amphithere_roar");
-    public static final RegistryObject<SoundEvent> AMPHITHERE_HURT = registerSound("amphithere_hurt");
-    public static final RegistryObject<SoundEvent> AMPHITHERE_BITE = registerSound("amphithere_bite");
-    public static final RegistryObject<SoundEvent> AMPHITHERE_DIE = registerSound("amphithere_die");
+    public static final RegistryObject<SoundEvent> CINDERVANE_ROAR = registerSound("cindervane_roar");
+    public static final RegistryObject<SoundEvent> CINDERVANE_HURT = registerSound("cindervane_hurt");
+    public static final RegistryObject<SoundEvent> CINDERVANE_BITE = registerSound("cindervane_bite");
+    public static final RegistryObject<SoundEvent> CINDERVANE_DIE = registerSound("cindervane_die");
 
     // NULLJAW
     public static final RegistryObject<SoundEvent> NULLJAW_GRUMBLE_1 = registerSound("nulljaw_grumble1");

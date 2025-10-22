@@ -44,6 +44,9 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
             Cindervane dragon = getUser();
             String trigger = dragon.isFlying() ? "roar_air" : "roar_ground";
             dragon.triggerAnim("actions", trigger);
+            if (!dragon.level().isClientSide) {
+                dragon.triggerScreenShake(0.4F);
+            }
             soundQueued = true;
         }
     }
@@ -71,10 +74,11 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
                 float pitch = basePitch + dragon.getRandom().nextFloat() * 0.05f;
                 dragon.level().playSound(null,
                         mouth.x, mouth.y, mouth.z,
-                        ModSounds.AMPHITHERE_ROAR.get(),
+                        ModSounds.CINDERVANE_ROAR.get(),
                         SoundSource.NEUTRAL,
                         1.5f,
                         pitch);
+                dragon.triggerScreenShake(0.4F);
             }
             soundQueued = false;
         }

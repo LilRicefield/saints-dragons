@@ -123,7 +123,12 @@
 				{
 					"name": "neck1",
 					"parent": "heightController",
-					"pivot": [0, 75, -22],
+					"pivot": [0, 75, -22]
+				},
+				{
+					"name": "neck1Controller",
+					"parent": "neck1",
+					"pivot": [0, 79, -22],
 					"cubes": [
 						{"origin": [-4.25, 73.5, -81], "size": [8.5, 8, 60], "uv": [1010, 1022]},
 						{"origin": [0, 81.5, -81], "size": [0, 8, 59], "uv": [258, 1047]}
@@ -131,7 +136,12 @@
 				},
 				{
 					"name": "neck2",
-					"parent": "neck1",
+					"parent": "neck1Controller",
+					"pivot": [0, 75, -79]
+				},
+				{
+					"name": "neckController2",
+					"parent": "neck2",
 					"pivot": [0, 75, -79],
 					"cubes": [
 						{"origin": [-3.25, 74.75, -138], "size": [6.5, 6.5, 60], "uv": [0, 1023]},
@@ -140,7 +150,12 @@
 				},
 				{
 					"name": "skull",
-					"parent": "neck2",
+					"parent": "neckController2",
+					"pivot": [0, 78.58333, -136.5]
+				},
+				{
+					"name": "skullController",
+					"parent": "skull",
 					"pivot": [0, 78.58333, -136.5],
 					"cubes": [
 						{"origin": [-4.25, 78, -143.5], "size": [8.5, 3.9, 7.5], "uv": [1002, 744]},
@@ -151,7 +166,7 @@
 				},
 				{
 					"name": "pharynx",
-					"parent": "skull",
+					"parent": "skullController",
 					"pivot": [0, 80.5, -137],
 					"cubes": [
 						{"origin": [3.5, 75, -143.5], "size": [0, 6, 7.5], "uv": [836, 275]},
@@ -160,7 +175,7 @@
 				},
 				{
 					"name": "lefthorn",
-					"parent": "skull",
+					"parent": "skullController",
 					"pivot": [5.75, 82.95, -134.75],
 					"rotation": [0, 17.5, 0],
 					"cubes": [
@@ -172,7 +187,7 @@
 				},
 				{
 					"name": "righthorn",
-					"parent": "skull",
+					"parent": "skullController",
 					"pivot": [-5.75, 82.95, -134.75],
 					"rotation": [0, -17.5, 0],
 					"cubes": [
@@ -184,7 +199,7 @@
 				},
 				{
 					"name": "eyes",
-					"parent": "skull",
+					"parent": "skullController",
 					"pivot": [0, 79, -144.55],
 					"cubes": [
 						{"origin": [-4.25, 80.75, -143.55], "size": [8.5, 1, 0], "uv": [548, 295]}
@@ -192,7 +207,12 @@
 				},
 				{
 					"name": "jaw",
-					"parent": "skull",
+					"parent": "skullController",
+					"pivot": [0, 75.5, -137]
+				},
+				{
+					"name": "jawController",
+					"parent": "jaw",
 					"pivot": [0, 75.5, -137],
 					"cubes": [
 						{"origin": [-3.75, 75, -143.5], "size": [7.5, 3, 7.5], "uv": [1024, 494]},
@@ -202,7 +222,7 @@
 				},
 				{
 					"name": "tongue",
-					"parent": "jaw",
+					"parent": "jawController",
 					"pivot": [0, 78.25, -139],
 					"cubes": [
 						{"origin": [-2.75, 78.99583, -145.66512], "size": [5.5, 0, 7.5], "pivot": [0, 78.99583, -141.91512], "rotation": [-15, 0, 0], "uv": [392, 749]}
@@ -228,22 +248,22 @@
 				},
 				{
 					"name": "passengerBone1",
-					"parent": "neck2",
+					"parent": "neckController2",
 					"pivot": [0, 81, -122]
 				},
 				{
 					"name": "passengerBone2",
-					"parent": "neck2",
+					"parent": "neckController2",
 					"pivot": [0, 81, -112]
 				},
 				{
 					"name": "passengerBone3",
-					"parent": "neck2",
+					"parent": "neckController2",
 					"pivot": [0, 81, -102]
 				},
 				{
 					"name": "passengerBone4",
-					"parent": "neck2",
+					"parent": "neckController2",
 					"pivot": [0, 81, -92]
 				},
 				{
@@ -251,8 +271,8 @@
 					"parent": "heightController",
 					"pivot": [7.75, 79.75, -18.75],
 					"cubes": [
-						{"origin": [7, 74.75, -17.75], "size": [56, 7, 7], "pivot": [22.5, 79.75, -15.75], "rotation": [0, -15, 0], "uv": [812, 721]},
-						{"origin": [7.75, 79, -19.75], "size": [45.25, 0, 126], "uv": [548, 149]}
+						{"origin": [7.75, 79, -19.75], "size": [65.25, 0, 126], "uv": [548, 149]},
+						{"origin": [7, 74.75, -17.75], "size": [56, 7, 7], "pivot": [22.5, 79.75, -15.75], "rotation": [0, -15, 0], "uv": [812, 721]}
 					]
 				},
 				{
@@ -320,7 +340,7 @@
 					"pivot": [-7.75, 79.75, -18.75],
 					"cubes": [
 						{"origin": [-63, 74.75, -17.75], "size": [56, 7, 7], "pivot": [-22.5, 79.75, -15.75], "rotation": [0, 15, 0], "uv": [812, 735]},
-						{"origin": [-53, 79, -19.75], "size": [45.25, 0, 126], "uv": [812, 587]}
+						{"origin": [-73, 79, -19.75], "size": [65.25, 0, 126], "uv": [548, 149], "mirror": true}
 					]
 				},
 				{

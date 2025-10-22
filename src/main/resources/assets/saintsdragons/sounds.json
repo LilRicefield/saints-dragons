@@ -99,41 +99,41 @@
       }
     ]
   },
-  "amphithere_roar": {
-    "subtitle": "Amphithere roars",
+  "cindervane_roar": {
+    "subtitle": "Cindervane roars",
     "sounds": [
       {
-        "name": "saintsdragons:entity/amphithere/amphithere_roar",
+        "name": "saintsdragons:entity/cindervane/cindervane_roar",
         "volume": 1.5,
         "pitch": 1.0
       }
     ]
   },
-  "amphithere_hurt": {
-    "subtitle": "Amphithere screeches in pain",
+  "cindervane_hurt": {
+    "subtitle": "Cindervane screeches in pain",
     "sounds": [
       {
-        "name": "saintsdragons:entity/amphithere/amphithere_hurt",
+        "name": "saintsdragons:entity/cindervane/cindervane_hurt",
         "volume": 1.2,
         "pitch": 1.0
       }
     ]
   },
-  "amphithere_bite": {
-    "subtitle": "Amphithere bites",
+  "cindervane_bite": {
+    "subtitle": "Cindervane bites",
     "sounds": [
       {
-        "name": "saintsdragons:entity/amphithere/amphithere_bite",
+        "name": "saintsdragons:entity/cindervane/cindervane_bite",
         "volume": 1.0,
         "pitch": 1.0
       }
     ]
   },
-  "amphithere_die": {
-    "subtitle": "Amphithere dies",
+  "cindervane_die": {
+    "subtitle": "Cindervane dies",
     "sounds": [
       {
-        "name": "saintsdragons:entity/amphithere/amphithere_die",
+        "name": "saintsdragons:entity/cindervane/cindervane_die",
         "volume": 1.5,
         "pitch": 1.0
       }

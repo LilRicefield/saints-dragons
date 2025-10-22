@@ -24,6 +24,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
+import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.Direction;
@@ -91,7 +92,7 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
-public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon {
+public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
     // Note: DATA_FIRE_BREATHING will be defined in defineSynchedData() using a unique ID
     private static final int LANDING_SETTLE_TICKS = 4;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
@@ -103,11 +104,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
         new VocalEntryBuilder()
-            .add("roar", "actions", "animation.amphithere.roar", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
-            .add("roar_ground", "actions", "animation.amphithere.roar_ground", ModSounds.AMPHITHERE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)
-            .add("roar_air", "actions", "animation.amphithere.roar_air", ModSounds.AMPHITHERE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)
-            .add("amphithere_hurt", "actions", "animation.amphithere.hurt", ModSounds.AMPHITHERE_HURT, 1.2f, 0.95f, 0.1f, false, true, true)
-            .add("amphithere_die", "actions", "animation.amphithere.die", ModSounds.AMPHITHERE_DIE, 1.5f, 1.0f, 0.0f, false, true, true)
+            .add("roar", "actions", "animation.cindervane.roar", ModSounds.CINDERVANE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
+            .add("roar_ground", "actions", "animation.cindervane.roar_ground", ModSounds.CINDERVANE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)
+            .add("roar_air", "actions", "animation.cindervane.roar_air", ModSounds.CINDERVANE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)
+            .add("cindervane_hurt", "actions", "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, true, true)
+            .add("cindervane_die", "actions", "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, true, true)
             .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -139,6 +140,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private float pitchSmoothedPitch = 0f;
     private int pitchHoldTicks = 0;
     private int pitchDir = 0;
+
+    private float prevScreenShakeAmount = 0f;
+    private float screenShakeAmount = 0f;
 
     private static final double MODEL_SCALE = 1.0D;
 
@@ -250,12 +254,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             RideableDragonData.createGoingDownAccessor(Cindervane.class);
     private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = 
             RideableDragonData.createAcceleratingAccessor(Cindervane.class);
+    private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
         defineRideableDragonData();
         // Define Amphithere-specific data
         this.entityData.define(DATA_FIRE_BREATHING, false);
+        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0f);
     }
 
     @Override
@@ -391,6 +398,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         tickPitchingLogic();
         tickRiderTakeoff();
         tickMountedState();
+        tickScreenShake();
         updateSittingProgress();
 
         if (!level().isClientSide) {
@@ -635,6 +643,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             }
         } else {
             pitchHoldTicks = Math.min(pitchHoldTicks + 1, 15);  // Increased max for stability
+        }
+    }
+
+    private void tickScreenShake() {
+        prevScreenShakeAmount = screenShakeAmount;
+        if (screenShakeAmount > 0f) {
+            screenShakeAmount = Math.max(0f, screenShakeAmount - 0.12F);
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
         }
     }
 
@@ -1685,5 +1701,20 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         return this.clientLocatorCache.get(name);
     }
 
-}
+    @Override
+    public float getScreenShakeAmount(float partialTicks) {
+        float current = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+        return prevScreenShakeAmount + (current - prevScreenShakeAmount) * partialTicks;
+    }
 
+    @Override
+    public double getShakeDistance() {
+        return 18.0;
+    }
+
+    public void triggerScreenShake(float intensity) {
+        screenShakeAmount = Math.max(screenShakeAmount, intensity);
+        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+    }
+
+}

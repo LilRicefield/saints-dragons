@@ -22,7 +22,7 @@ public class DragonSoundHandler {
     private final DragonSoundProfile profile;
     private static final int MIN_OVERLAP_GUARD_TICKS = 5;
     private static final Set<String> DEFAULT_NON_OVERLAPPING_KEYS = Set.of(
-            "hurt", "amphithere_hurt", "die",
+            "hurt", "cindervane_hurt", "die",
             "raevyx_hurt", "raevyx_die"
     );
     private static final Map<String, Integer> GENERIC_VOCAL_WINDOWS = Map.of(
