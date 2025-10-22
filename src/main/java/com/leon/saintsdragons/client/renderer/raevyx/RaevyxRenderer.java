@@ -57,15 +57,7 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
                           int packedOverlay,
                           float red, float green, float blue, float alpha) {
 
-        // Scale the wyvern - females are slightly smaller (75% scale)
-        float scale;
-        if (entity.isBaby()) {
-            scale = 1.0f;
-        } else if (entity.isFemale()) {
-            scale = 1.0f;
-        } else {
-            scale = 1.0f;
-        }
+        float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
         this.shadowRadius = 2.0f * scale;
 

@@ -1,12 +1,12 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.SaintsDragons;
-import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
-import com.leon.saintsdragons.server.entity.effect.amphithere.AmphithereMagmaBlockEntity;
+import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -39,12 +39,12 @@ public class ModEntities {
                     .build("stegonaut"));
 
     // ===== AMPHITHERE =====
-    public static final RegistryObject<EntityType<AmphithereEntity>> AMPHITHERE =
-            REGISTER.register("amphithere", () -> EntityType.Builder.of(AmphithereEntity::new, MobCategory.CREATURE)
+    public static final RegistryObject<EntityType<Cindervane>> CINDERVANE =
+            REGISTER.register("cindervane", () -> EntityType.Builder.of(Cindervane::new, MobCategory.CREATURE)
                     .sized(4.5F, 1.5F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
-                    .build("amphithere"));
+                    .build("cindervane"));
 
     // ===== RIFT DRAKE =====
     public static final RegistryObject<EntityType<Nulljaw>> NULLJAW =
@@ -62,12 +62,12 @@ public class ModEntities {
                     .updateInterval(1)
                     .build("raevyx_lightning_chain"));
 
-    public static final RegistryObject<EntityType<AmphithereMagmaBlockEntity>> AMPHITHERE_MAGMA_BLOCK =
-            REGISTER.register("amphithere_magma_block", () -> EntityType.Builder.<AmphithereMagmaBlockEntity>of(AmphithereMagmaBlockEntity::new, MobCategory.MISC)
+    public static final RegistryObject<EntityType<CindervaneMagmaBlockEntity>> CINDERVANE_MAGMA_BLOCK =
+            REGISTER.register("cindervane_magma_block", () -> EntityType.Builder.<CindervaneMagmaBlockEntity>of(CindervaneMagmaBlockEntity::new, MobCategory.MISC)
                     .sized(0.98F, 0.98F)
                     .clientTrackingRange(32)
                     .updateInterval(1)
                     .fireImmune()
                     .noSummon()
-                    .build("amphithere_magma_block"));
+                    .build("cindervane_magma_block"));
 }

@@ -1,7 +1,7 @@
 package com.leon.saintsdragons;
 
 import com.leon.saintsdragons.client.ClientProxy;
-import com.leon.saintsdragons.client.renderer.amphithere.AmphithereRenderer;
+import com.leon.saintsdragons.client.renderer.cindervane.CindervaneRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
@@ -12,11 +12,11 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.command.DragonAllyCommand;
-import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
-import com.leon.saintsdragons.client.renderer.amphithere.AmphithereMagmaBlockRenderer;
+import com.leon.saintsdragons.client.renderer.cindervane.CindervaneMagmaBlockRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -75,7 +75,7 @@ public class SaintsDragons {
     private void onEntityAttributes(EntityAttributeCreationEvent event) {
         event.put(ModEntities.RAEVYX.get(), Raevyx.createAttributes().build());
         event.put(ModEntities.STEGONAUT.get(), Stegonaut.createAttributes().build());
-        event.put(ModEntities.AMPHITHERE.get(), AmphithereEntity.createAttributes().build());
+        event.put(ModEntities.CINDERVANE.get(), Cindervane.createAttributes().build());
         event.put(ModEntities.NULLJAW.get(), Nulljaw.createAttributes().build());
     }
 
@@ -83,23 +83,23 @@ public class SaintsDragons {
         event.registerEntityRenderer(ModEntities.RAEVYX.get(), RaevyxRenderer::new);
         event.registerEntityRenderer(ModEntities.RAEVYX_LIGHTNING_CHAIN.get(), RaevyxLightningChainRenderer::new);
         event.registerEntityRenderer(ModEntities.STEGONAUT.get(), StegonautRenderer::new);
-        event.registerEntityRenderer(ModEntities.AMPHITHERE.get(), AmphithereRenderer::new);
+        event.registerEntityRenderer(ModEntities.CINDERVANE.get(), CindervaneRenderer::new);
         event.registerEntityRenderer(ModEntities.NULLJAW.get(), NulljawRenderer::new);
-        event.registerEntityRenderer(ModEntities.AMPHITHERE_MAGMA_BLOCK.get(), AmphithereMagmaBlockRenderer::new);
+        event.registerEntityRenderer(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneMagmaBlockRenderer::new);
     }
 
     private void onBuildCreativeTabContents(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(ModItems.RAEVYX_SPAWN_EGG);
             event.accept(ModItems.STEGONAUT_SPAWN_EGG);
-            event.accept(ModItems.AMPHITHERE_SPAWN_EGG);
+            event.accept(ModItems.CINDERVANE_SPAWN_EGG);
             event.accept(ModItems.NULLJAW_SPAWN_EGG);
         }
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(ModItems.DRAGON_ALLY_BOOK);
             event.accept(ModItems.STEGONAUT_BINDER);
             event.accept(ModItems.RAEVYX_BINDER);
-            event.accept(ModItems.AMPHITHERE_BINDER);
+            event.accept(ModItems.CINDERVANE_BINDER);
             event.accept(ModItems.NULLJAW_BINDER);
         }
     }
@@ -122,10 +122,10 @@ public class SaintsDragons {
         );
 
         event.register(
-                ModEntities.AMPHITHERE.get(),
+                ModEntities.CINDERVANE.get(),
                 SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                AmphithereEntity::canSpawnHere,
+                Cindervane::canSpawnHere,
                 SpawnPlacementRegisterEvent.Operation.AND
         );
 

@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.event;
 
 import com.leon.saintsdragons.SaintsDragons;
-import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
@@ -10,7 +10,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -49,7 +48,7 @@ public class ClientEventHandler {
             raevyxCameraZoomTarget = 10F;
         }
 
-        if (player.isPassenger() && player.getVehicle() instanceof AmphithereEntity && event.getCamera().isDetached()) {
+        if (player.isPassenger() && player.getVehicle() instanceof Cindervane && event.getCamera().isDetached()) {
             event.getCamera().move(-event.getCamera().getMaxZoom(25F), 0, 0);
         }
 
