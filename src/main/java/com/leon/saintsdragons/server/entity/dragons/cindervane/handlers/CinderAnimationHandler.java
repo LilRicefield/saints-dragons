@@ -116,8 +116,19 @@ public class CinderAnimationHandler {
                 state.getController().transitionLength(6);
                 state.setAndContinue(GLIDE_DOWN);
             } else {
-                // When not being ridden or not descending, use default glide
-                state.setAndContinue(GLIDE);
+                // Wild dragons alternate between FLAP and GLIDE for natural flight
+                // Use vertical velocity to determine which animation to play
+                double verticalVelocity = dragon.getDeltaMovement().y;
+
+                // Ascending or low-speed flight: flap wings
+                // Gliding: high-speed level flight or descending slowly
+                if (verticalVelocity > 0.02 || dragon.getDeltaMovement().horizontalDistanceSqr() < 0.1) {
+                    state.getController().transitionLength(6);
+                    state.setAndContinue(FLAP);
+                } else {
+                    state.getController().transitionLength(8);
+                    state.setAndContinue(GLIDE);
+                }
             }
             return PlayState.CONTINUE;
         }

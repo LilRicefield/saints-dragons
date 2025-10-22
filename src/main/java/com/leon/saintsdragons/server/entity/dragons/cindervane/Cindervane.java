@@ -536,11 +536,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private void tickBankingLogic() {
         prevBankAngle = bankAngle;
 
-        // Only apply mouse-sensitivity banking when being ridden
-        // Wild Cindervanes don't need banking animations
-        boolean shouldBank = isFlying() && !isLanding() && !isHovering() && !isOrderedToSit() && isVehicle();
+        // Apply banking to all flying Cindervanes (ridden and wild)
+        boolean shouldBank = isFlying() && !isLanding() && !isHovering() && !isOrderedToSit();
 
-        // Reset banking when not flying, or not being ridden - instant snap back
+        // Reset banking when not flying - instant snap back
         if (!shouldBank) {
             if (bankDir != 0 || bankAngle != 0f || bankSmoothedYaw != 0f) {
                 bankDir = 0;
