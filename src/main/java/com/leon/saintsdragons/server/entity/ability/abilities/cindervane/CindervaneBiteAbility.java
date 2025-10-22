@@ -11,6 +11,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -68,10 +69,19 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
         if (section.sectionType == ACTIVE && !appliedHit) {
             Cindervane dragon = getUser();
 
-            LivingEntity target = selectTarget();
-            if (target != null) {
+            List<LivingEntity> targets = selectTargets();
+
+            if (targets.isEmpty()) {
+                LivingEntity currentTarget = dragon.getTarget();
+                if (currentTarget != null && currentTarget.isAlive() && !dragon.isAlly(currentTarget)) {
+                    targets = List.of(currentTarget);
+                }
+            }
+
+            for (LivingEntity target : targets) {
                 applyHit(dragon, target);
             }
+
             appliedHit = true;
         }
     }
@@ -94,7 +104,7 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
         target.push(push.x, dragon.isFlying() ? 0.15 : 0.05, push.z);
     }
 
-    private LivingEntity selectTarget() {
+    private List<LivingEntity> selectTargets() {
         Cindervane dragon = getUser();
         double range = BASE_RANGE;
         if (dragon.getControllingPassenger() != null) {
@@ -112,20 +122,10 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
         List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, sweep,
                 entity -> entity != dragon && entity.isAlive() && entity.attackable() && !dragon.isAlly(entity));
 
-        if (candidates.isEmpty()) {
-            LivingEntity currentTarget = dragon.getTarget();
-            if (currentTarget != null && currentTarget.isAlive() && !dragon.isAlly(currentTarget)) {
-                double distSqr = currentTarget.position().distanceToSqr(origin);
-                if (distSqr <= (range + currentTarget.getBbWidth()) * (range + currentTarget.getBbWidth())) {
-                    return currentTarget;
-                }
-            }
-            return null;
-        }
-
         final double effectiveRange = range;
+        List<LivingEntity> results = new ArrayList<>();
 
-        return candidates.stream()
+        candidates.stream()
                 .map(entity -> {
                     Vec3 center = entity.getBoundingBox().getCenter();
                     Vec3 toward = center.subtract(origin);
@@ -144,11 +144,17 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
                     return new TargetScore(entity, dot, distanceSqr);
                 })
                 .filter(Objects::nonNull)
-                .max(Comparator
-                        .comparingDouble(TargetScore::dot)
-                        .thenComparingDouble(score -> -score.distanceSqr()))
+                .sorted(Comparator
+                        .comparingDouble(TargetScore::dot).reversed()
+                        .thenComparingDouble(TargetScore::distanceSqr))
                 .map(TargetScore::entity)
-                .orElse(null);
+                .forEach(entity -> {
+                    if (!results.contains(entity)) {
+                        results.add(entity);
+                    }
+                });
+
+        return results;
     }
 
     private record TargetScore(LivingEntity entity, double dot, double distanceSqr) {}

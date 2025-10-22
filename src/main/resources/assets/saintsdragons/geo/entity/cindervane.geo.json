@@ -6,9 +6,9 @@
 				"identifier": "geometry.cindervane",
 				"texture_width": 2048,
 				"texture_height": 2048,
-				"visible_bounds_width": 44,
-				"visible_bounds_height": 7.5,
-				"visible_bounds_offset": [0, 3.25, 0]
+				"visible_bounds_width": 45,
+				"visible_bounds_height": 9.5,
+				"visible_bounds_offset": [0, 4.25, 0]
 			},
 			"bones": [
 				{
@@ -218,7 +218,10 @@
 						{"origin": [-3.75, 75, -143.5], "size": [7.5, 3, 7.5], "uv": [1024, 494]},
 						{"origin": [-3.25, 75, -158.25], "size": [6.5, 1.75, 14.75], "uv": [776, 1044]},
 						{"origin": [-3.25, 76.75, -158], "size": [6.5, 2, 15.5], "uv": [776, 1027]}
-					]
+					],
+					"locators": {
+						"mouth_origin": [0, 77, -146]
+					}
 				},
 				{
 					"name": "tongue",
