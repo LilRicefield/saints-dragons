@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.mixin.client;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.amphithere.AmphithereEntity;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -25,7 +25,7 @@ public class EntityRendererMixin {
     private void modifyFOV(Camera camera, float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Double> cir) {
         Minecraft mc = Minecraft.getInstance();
         double targetFOVMultiplier = 1.0;
-        if (mc.player != null && (mc.player.getVehicle() instanceof Raevyx raevyx || mc.player.getVehicle() instanceof AmphithereEntity amphithere || mc.player.getVehicle() instanceof Nulljaw nulljaw)) {
+        if (mc.player != null && (mc.player.getVehicle() instanceof Raevyx raevyx || mc.player.getVehicle() instanceof Cindervane amphithere || mc.player.getVehicle() instanceof Nulljaw nulljaw)) {
             boolean isAccelerating = false;
             boolean isFlying = false;
             double currentSpeed = 0;
@@ -46,7 +46,7 @@ public class EntityRendererMixin {
                         maxSpeed = raevyx.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7; // Ground sprint multiplier
                     }
                 }
-            } else if (mc.player.getVehicle() instanceof AmphithereEntity amphithereDragon) {
+            } else if (mc.player.getVehicle() instanceof Cindervane amphithereDragon) {
                 isAccelerating = amphithereDragon.isAccelerating();
                 isFlying = amphithereDragon.isFlying();
                 

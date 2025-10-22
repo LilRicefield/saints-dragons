@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "S S",
+    "SOS",
+    "S S"
+  ],
+  "key": {
+    "O": {
+      "item": "minecraft:orange_terracotta"
+    },
+    "S": {
+      "item": "minecraft:stone_bricks"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:cindervane_binder",
+    "count": 1
+  }
+}

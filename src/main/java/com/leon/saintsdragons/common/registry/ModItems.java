@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.SaintsDragons;
-import com.leon.saintsdragons.common.item.AmphithereBinderItem;
+import com.leon.saintsdragons.common.item.CindervaneBinderItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
@@ -34,10 +34,10 @@ public final class ModItems {
                     )
             );
 
-    public static final RegistryObject<Item> AMPHITHERE_SPAWN_EGG =
-            REGISTER.register("amphithere_spawn_egg",
+    public static final RegistryObject<Item> CINDERVANE_SPAWN_EGG =
+            REGISTER.register("cindervane_spawn_egg",
                     () -> new ForgeSpawnEggItem(
-                            ModEntities.AMPHITHERE,
+                            ModEntities.CINDERVANE,
                             0x5E5E5E, 0xA7490D, // base=teal plume, spots=sandy underside
                             new Item.Properties()
                     )
@@ -79,9 +79,9 @@ public final class ModItems {
                     )
             );
 
-    public static final RegistryObject<Item> AMPHITHERE_BINDER =
-            REGISTER.register("amphithere_binder",
-                    () -> new AmphithereBinderItem(
+    public static final RegistryObject<Item> CINDERVANE_BINDER =
+            REGISTER.register("cindervane_binder",
+                    () -> new CindervaneBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0) // Unbreakable
