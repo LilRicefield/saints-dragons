@@ -22,6 +22,10 @@ public class ClientEventHandler {
     private static float raevyxCameraZoom = 10F; // Base zoom
     private static float raevyxCameraZoomTarget = 10F;
 
+    // Cindervane takeoff camera zoom transition
+    private static float cindervaneCameraZoom = 10F; // Base zoom
+    private static float cindervaneCameraZoomTarget = 10F;
+
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
         Entity player = Minecraft.getInstance().getCameraEntity();
@@ -48,8 +52,24 @@ public class ClientEventHandler {
             raevyxCameraZoomTarget = 10F;
         }
 
-        if (player.isPassenger() && player.getVehicle() instanceof Cindervane && event.getCamera().isDetached()) {
-            event.getCamera().move(-event.getCamera().getMaxZoom(25F), 0, 0);
+        // Cindervane camera zoom adjustments
+        if (player.isPassenger() && player.getVehicle() instanceof Cindervane cindervane && event.getCamera().isDetached()) {
+            // Determine target zoom based on flight state
+            boolean isFlying = cindervane.isFlying();
+
+            // Flying: zoom to 25F, grounded: 10F base
+            cindervaneCameraZoomTarget = isFlying ? 30F : 15F;
+
+            // Smooth transition (0.15 = gentle blend rate)
+            float blendRate = 0.15F;
+            cindervaneCameraZoom += (cindervaneCameraZoomTarget - cindervaneCameraZoom) * blendRate;
+
+            // Apply the smoothed zoom
+            event.getCamera().move(-event.getCamera().getMaxZoom(cindervaneCameraZoom), 0, 0);
+        } else if (!(player.getVehicle() instanceof Cindervane)) {
+            // Reset zoom when not riding Cindervane
+            cindervaneCameraZoom = 15F;
+            cindervaneCameraZoomTarget = 15F;
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof Nulljaw && event.getCamera().isDetached()) {
