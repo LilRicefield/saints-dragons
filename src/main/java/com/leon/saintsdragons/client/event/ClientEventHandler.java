@@ -23,8 +23,8 @@ public class ClientEventHandler {
     private static float raevyxCameraZoomTarget = 10F;
 
     // Cindervane takeoff camera zoom transition
-    private static float cindervaneCameraZoom = 10F; // Base zoom
-    private static float cindervaneCameraZoomTarget = 10F;
+    private static float cindervaneCameraZoom = 15F; // Base zoom
+    private static float cindervaneCameraZoomTarget = 15F;
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
