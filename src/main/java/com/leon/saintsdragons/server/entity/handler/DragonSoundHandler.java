@@ -22,7 +22,7 @@ public class DragonSoundHandler {
     private final DragonSoundProfile profile;
     private static final int MIN_OVERLAP_GUARD_TICKS = 5;
     private static final Set<String> DEFAULT_NON_OVERLAPPING_KEYS = Set.of(
-            "hurt", "cindervane_hurt", "die",
+            "hurt", "stegonaut_hurt", "cindervane_hurt", "primitive_drake_hurt", "die",
             "raevyx_hurt", "raevyx_die"
     );
     private static final Map<String, Integer> GENERIC_VOCAL_WINDOWS = Map.of(
@@ -227,18 +227,28 @@ public class DragonSoundHandler {
         boolean hasAnimation = entry.animationId() != null && !entry.animationId().isEmpty();
 
         if (hasAnimation) {
-            // Trigger animation - the animation keyframe will handle the sound
-            // This prevents duplication from server broadcast + keyframe playback
-            if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0 && !dragon.level().isClientSide) {
-                dragon.triggerAnim(entry.controllerId(), key);
+            if (!dragon.level().isClientSide) {
+                if (shouldBroadcastInstantly(key)) {
+                    float pitch = entry.basePitch();
+                    float variance = entry.pitchVariance();
+                    if (variance != 0f) {
+                        pitch += dragon.getRandom().nextFloat() * variance;
+                    }
+                    playServerBroadcast(entry.soundSupplier().get(), entry.volume(), pitch, null);
+                }
+                if (!dragon.isSleeping() && !dragon.isSleepTransitioning() && window > 0) {
+                    dragon.triggerAnim(entry.controllerId(), key);
+                }
             }
         } else {
             // Sound-only vocal - play sound directly without animation
             if (!dragon.level().isClientSide) {
                 float volume = entry.volume();
-                float basePitch = entry.basePitch();
-                float pitchVar = entry.pitchVariance();
-                float pitch = basePitch + (dragon.getRandom().nextFloat() - 0.5f) * 2.0f * pitchVar;
+                float pitch = entry.basePitch();
+                float variance = entry.pitchVariance();
+                if (variance != 0f) {
+                    pitch += dragon.getRandom().nextFloat() * variance;
+                }
 
                 playServerBroadcast(entry.soundSupplier().get(), volume, pitch, null);
             }
@@ -260,6 +270,10 @@ public class DragonSoundHandler {
             return generic;
         }
         return 40;
+    }
+
+    private boolean shouldBroadcastInstantly(String key) {
+        return DEFAULT_NON_OVERLAPPING_KEYS.contains(key);
     }
     
     /**

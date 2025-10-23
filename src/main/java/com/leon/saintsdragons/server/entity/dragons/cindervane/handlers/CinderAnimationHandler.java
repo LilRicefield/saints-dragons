@@ -197,18 +197,21 @@ public class CinderAnimationHandler {
     }
 
     public void setupActionController(AnimationController<Cindervane> controller) {
+        // Explicit animation triggers
         controller.triggerableAnim("bite_ground",
                 RawAnimation.begin().thenPlay("animation.cindervane.bite_ground"));
         controller.triggerableAnim("bite_air",
                 RawAnimation.begin().thenPlay("animation.cindervane.bite_air"));
         controller.triggerableAnim("magma_blast",
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
+
+        // Vocal entries (automatically registers roar, hurt, die animations with sounds)
         dragon.getVocalEntries().forEach((key, entry) ->
                 controller.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId())));
     }
 
     public PlayState actionPredicate(AnimationState<Cindervane> state) {
-        state.getController().transitionLength(5);
+        state.getController().transitionLength(1);
         return PlayState.STOP;
     }
 
