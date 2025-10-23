@@ -50,6 +50,9 @@ public final class ModSounds {
 
 
     // ===== AMPHITHERE SOUNDS =====
+    public static final RegistryObject<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");
+    public static final RegistryObject<SoundEvent> CINDERVANE_GRUMBLE_2 = registerSound("cindervane_grumble2");
+    public static final RegistryObject<SoundEvent> CINDERVANE_GRUMBLE_3 = registerSound("cindervane_grumble3");
     public static final RegistryObject<SoundEvent> CINDERVANE_ROAR = registerSound("cindervane_roar");
     public static final RegistryObject<SoundEvent> CINDERVANE_HURT = registerSound("cindervane_hurt");
     public static final RegistryObject<SoundEvent> CINDERVANE_BITE = registerSound("cindervane_bite");

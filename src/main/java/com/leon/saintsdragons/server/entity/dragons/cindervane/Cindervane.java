@@ -102,9 +102,17 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final double FIRE_BODY_IMPRINT_DEPTH_FACTOR = 0.6D;
     private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
 
+    private static final int MIN_AMBIENT_DELAY = 180;
+    private static final int MAX_AMBIENT_DELAY = 420;
+
+    private int ambientSoundTimer;
+    private int nextAmbientSoundDelay;
 
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
         new VocalEntryBuilder()
+            .add("grumble1", "actions", "animation.cindervane.grumble1", ModSounds.CINDERVANE_GRUMBLE_1, 1.1f, 0.98f, 0.06f, false, false, false)
+            .add("grumble2", "actions", "animation.cindervane.grumble2", ModSounds.CINDERVANE_GRUMBLE_2, 1.2f, 0.96f, 0.08f, false, false, false)
+            .add("grumble3", "actions", "animation.cindervane.grumble3", ModSounds.CINDERVANE_GRUMBLE_3, 1.0f, 1.0f, 0.05f, false, false, false)
             .add("roar", "actions", "animation.cindervane.roar", ModSounds.CINDERVANE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
             .add("roar_ground", "actions", "animation.cindervane.roar_ground", ModSounds.CINDERVANE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)
             .add("roar_air", "actions", "animation.cindervane.roar_air", ModSounds.CINDERVANE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)
@@ -185,6 +193,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
+
+        RandomSource rng = this.getRandom();
+        this.ambientSoundTimer = rng.nextInt(80);
+        this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1));
     }
 
     @Override
@@ -419,6 +431,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 targetCooldown--;
             }
             handleFireBodyCrash();
+            handleAmbientSounds();
         }
 
         // Initialize animation state on first tick after loading to prevent thrashing
@@ -500,6 +513,57 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             prevSitProgress = sitProgress;
             sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
         }
+    }
+
+    private void handleAmbientSounds() {
+        if (nextAmbientSoundDelay <= 0) {
+            resetAmbientSoundTimer();
+        }
+
+        if (isBaby() || isDying()) {
+            ambientSoundTimer = 0;
+            return;
+        }
+
+        if (getActiveAbility() != null || isBreathingFire() || this.getTarget() != null) {
+            ambientSoundTimer = 0;
+            return;
+        }
+
+        if (isVehicle() || isTakeoff() || isLanding() || isHovering()) {
+            return;
+        }
+
+        ambientSoundTimer++;
+        if (ambientSoundTimer < nextAmbientSoundDelay) {
+            return;
+        }
+
+        String vocal = selectAmbientGrumble();
+        if (vocal != null) {
+            this.getSoundHandler().playVocal(vocal);
+        }
+        resetAmbientSoundTimer();
+    }
+
+    private String selectAmbientGrumble() {
+        RandomSource random = getRandom();
+        float roll = random.nextFloat();
+
+        if (roll < 0.45f) {
+            return "grumble1";
+        }
+        if (roll < 0.8f) {
+            return "grumble2";
+        }
+        return "grumble3";
+    }
+
+    private void resetAmbientSoundTimer() {
+        ambientSoundTimer = 0;
+        RandomSource random = getRandom();
+        int range = Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1);
+        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(range);
     }
 
     private void clearStatesWhenMounted() {
