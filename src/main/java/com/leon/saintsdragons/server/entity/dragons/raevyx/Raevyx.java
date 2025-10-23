@@ -2830,7 +2830,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Action controller uses ONLY triggers (no predicate logic)
         // All animations (combat, abilities, sleep, death) are triggered via triggerAnim()
         AnimationController<Raevyx> actionController =
-                new AnimationController<>(this, "action", 3, state -> PlayState.STOP);
+                new AnimationController<>(this, "action", 1, state -> PlayState.STOP);
 
         // Sound keyframes - only register on relevant controllers to prevent duplication
         // Movement controller: handles footsteps, wing flaps during locomotion

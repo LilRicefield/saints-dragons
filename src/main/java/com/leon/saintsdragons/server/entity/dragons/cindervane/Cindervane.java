@@ -107,8 +107,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             .add("roar", "actions", "animation.cindervane.roar", ModSounds.CINDERVANE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
             .add("roar_ground", "actions", "animation.cindervane.roar_ground", ModSounds.CINDERVANE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)
             .add("roar_air", "actions", "animation.cindervane.roar_air", ModSounds.CINDERVANE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)
-            .add("cindervane_hurt", "actions", "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, true, true)
-            .add("cindervane_die", "actions", "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, true, true)
+            .add("cindervane_hurt", "actions", "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, false, false)
+            .add("cindervane_die", "actions", "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
             .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -1307,7 +1307,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         AnimationController<Cindervane> pitching = new AnimationController<>(this, "pitching", 10, animationHandler::pitchingPredicate);
         controllers.add(pitching);
 
-        AnimationController<Cindervane> actions = new AnimationController<>(this, "actions", 10, animationHandler::actionPredicate);
+        AnimationController<Cindervane> actions = new AnimationController<>(this, "actions", 1, animationHandler::actionPredicate);
         animationHandler.setupActionController(actions);
         actions.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(actions);
@@ -1371,7 +1371,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (handleLethalDamage(source, amount, CindervaneAbilities.DIE)) {
             return true;
         }
-        return super.hurt(source, amount);
+
+        boolean result = super.hurt(source, amount);
+
+        // Trigger hurt animation immediately on CLIENT for instant feedback (server will also trigger via ability)
+        if (result && level().isClientSide && !source.is(DamageTypes.GENERIC_KILL)) {
+            triggerAnim("actions", "cindervane_hurt");
+        }
+
+        return result;
     }
 
     @Override

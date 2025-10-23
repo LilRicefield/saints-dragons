@@ -46,6 +46,24 @@ public final class CinderSoundProfile implements DragonSoundProfile {
                     SoundSource.NEUTRAL, 1.0f, pitch, false);
             return true;
         }
+
+        if ("cindervane_hurt".equals(key)) {
+            return true; // Server now broadcasts hurt vocal immediately
+        }
+
+        if ("cindervane_roar".equals(key) || "roar_ground".equals(key) || "roar_air".equals(key)) {
+            float pitch = 0.95f + dragon.getRandom().nextFloat() * 0.1f;
+            dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                    ModSounds.CINDERVANE_ROAR.get(), SoundSource.NEUTRAL, 1.5f, pitch, false);
+            return true;
+        }
+
+        if ("cindervane_die".equals(key)) {
+            dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                    ModSounds.CINDERVANE_DIE.get(), SoundSource.NEUTRAL, 1.5f, 1.0f, false);
+            return true;
+        }
+
         return false;
     }
 

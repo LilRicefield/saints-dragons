@@ -34,13 +34,14 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
         // Allow future dragons to supply specialized hurt clips via ability id mapping
         return switch (abilityId) {
             case "cindervane_hurt" -> "cindervane_hurt";
+            case "raevyx_hurt" -> "raevyx_hurt";
             default -> "hurt";
         };
     }
 
     private static String resolveManualVocalKey(String abilityId) {
         return switch (abilityId) {
-            case "hurt", "cindervane_hurt", "primitive_drake_hurt", "raevyx_hurt" -> abilityId; // Manual audio fallback when animation lacks audio
+            case "hurt", "stegonaut_hurt", "cindervane_hurt", "raevyx_hurt", "primitive_drake_hurt" -> abilityId; // Manual audio fallback when animation lacks audio
             default -> null;                      // Other dragons rely on keyframed audio
         };
     }
