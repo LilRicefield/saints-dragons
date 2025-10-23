@@ -99,6 +99,36 @@
       }
     ]
   },
+  "cindervane_grumble1": {
+    "subtitle": "Cindervane grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_grumble1",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_grumble2": {
+    "subtitle": "Cindervane grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_grumble2",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_grumble3": {
+    "subtitle": "Cindervane grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_grumble3",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
   "cindervane_roar": {
     "subtitle": "Cindervane roars",
     "sounds": [
