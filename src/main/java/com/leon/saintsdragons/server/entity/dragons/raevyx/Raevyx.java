@@ -127,8 +127,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", "action", "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("raevyx_hurt", "action", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
-            .add("raevyx_die", "action", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
+            .add("raevyx_hurt", "hurt_die", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
+            .add("raevyx_die", "hurt_die", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
 
     private boolean manualSitCommand = false;
@@ -2829,8 +2829,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // Action controller uses ONLY triggers (no predicate logic)
         // All animations (combat, abilities, sleep, death) are triggered via triggerAnim()
+        // Lightning wyvern = fast, aggressive combat - instant transitions
         AnimationController<Raevyx> actionController =
-                new AnimationController<>(this, "action", 1, state -> PlayState.STOP);
+                new AnimationController<>(this, "action", 2, state -> PlayState.STOP);
 
         // Sound keyframes - only register on relevant controllers to prevent duplication
         // Movement controller: handles footsteps, wing flaps during locomotion
@@ -2840,6 +2841,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // Setup animation triggers via animation handler
         animationHandler.setupActionController(actionController);
+
+        // Dedicated controller for instant hurt/die reactions (no transition easing)
+        AnimationController<Raevyx> hurtDieController =
+                new AnimationController<>(this, "hurt_die", 3, state -> PlayState.STOP);
+        hurtDieController.triggerableAnim("raevyx_hurt",
+                RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
+        hurtDieController.triggerableAnim("raevyx_die",
+                RawAnimation.begin().thenPlay("animation.raevyx.die"));
+        hurtDieController.setSoundKeyframeHandler(this::onAnimationSound);
+        controllers.add(hurtDieController);
 
         // Babies don't fly, so skip banking/pitching controllers
         if (!this.isBaby()) {

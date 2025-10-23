@@ -278,7 +278,7 @@ public class CindervaneBinderItem extends Item {
     @Override
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("saintsdragons.tooltip.amphithere_binder.description"));
+        tooltip.add(Component.translatable("saintsdragons.tooltip.cindervane_binder.description"));
         if (isBound(stack)) {
             String amphithereName = getBoundAmphithereName(stack);
             if (amphithereName != null) {
