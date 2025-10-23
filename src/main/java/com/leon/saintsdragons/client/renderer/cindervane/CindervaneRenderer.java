@@ -42,7 +42,7 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
 
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 0.8f * scale;
+        this.shadowRadius = 2.0f * scale;
 
         // Store the model for later use in render()
         this.lastBakedModel = model;
