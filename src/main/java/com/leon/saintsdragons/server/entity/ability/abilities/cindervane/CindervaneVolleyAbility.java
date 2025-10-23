@@ -20,21 +20,21 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 3),
             new AbilitySectionDuration(ACTIVE, 20),
-            new AbilitySectionDuration(RECOVERY, 3)
+            new AbilitySectionDuration(RECOVERY, 5)
     };
 
     private static final int MAX_VOLLEYS = 3;
     private static final int BLOCKS_PER_VOLLEY = 3;
     private static final int VOLLEY_INTERVAL_TICKS = 10;
-    private static final int COOLDOWN_TICKS = 1;
+    private static final int COOLDOWN_TICKS = 5;
     private static final int MAGMA_BLOCK_LIFETIME = 200;
 
     private static final double SPAWN_FORWARD_OFFSET = 13.0D;
-    private static final double SPAWN_VERTICAL_OFFSET = 0.4D;
-    private static final double VELOCITY_DOWN = -0.35D;
+    private static final double SPAWN_VERTICAL_OFFSET = 0.10D;
+    private static final double VELOCITY_DOWN = -0.15D;
     private static final double VELOCITY_FORWARD = 0.55D;
     private static final double MAGMA_IMPACT_RADIUS = 7.0D;
-    private static final float IMPACT_DAMAGE = 18.0F;
+    private static final float IMPACT_DAMAGE = 20.0F;
 
     private int ticksSinceVolley;
     private int volleysFired;
@@ -52,7 +52,7 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
         if (section.sectionType == STARTUP) {
             ticksSinceVolley = VOLLEY_INTERVAL_TICKS;
             volleysFired = 0;
-            getUser().triggerAnim("actions", getUser().isFlying() ? "magma_volley_air" : "magma_volley_ground");
+            getUser().triggerAnim("actions", "magma_blast");
             Level level = getLevel();
             level.playSound(null, getUser().blockPosition(), SoundEvents.BLAZE_SHOOT, getUser().getSoundSource(), 1.4F, 0.8F + getUser().getRandom().nextFloat() * 0.2F);
         }

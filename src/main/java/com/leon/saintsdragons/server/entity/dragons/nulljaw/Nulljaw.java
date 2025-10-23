@@ -253,6 +253,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
                 .add(Attributes.MOVEMENT_SPEED, 0.28D)
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.5D)
+                .add(Attributes.ARMOR, 8.0D)
                 .add(Attributes.ATTACK_DAMAGE, 10.0D);
     }
 

@@ -397,7 +397,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 .add(Attributes.MOVEMENT_SPEED, WALK_SPEED)
                 .add(Attributes.FOLLOW_RANGE, 80.0D)
                 .add(Attributes.FLYING_SPEED, 1.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D);
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                .add(Attributes.ARMOR, 8.0D);
     }
 
     // Cooldown to prevent hurt sound spam when ridden or under rapid hits

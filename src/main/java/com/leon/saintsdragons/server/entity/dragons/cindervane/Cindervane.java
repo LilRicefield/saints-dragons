@@ -151,6 +151,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
     private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
 
+    // ===== RIDER LANDING BLEND SYSTEM =====
+    private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.0D; // Trigger landing animation at this altitude
+    private static final int RIDER_LANDING_BLEND_DURATION = 3; // ticks to keep landing blend active
+    private int riderLandingBlendTicks = 0;
+
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -197,7 +202,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public static AttributeSupplier.Builder createAttributes() {
         return TamableAnimal.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 60.0D)
+                .add(Attributes.MAX_HEALTH, 80.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.45D)
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
                 .add(Attributes.FLYING_SPEED, 0.60D) // Slower for glider behavior
@@ -256,6 +261,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             RideableDragonData.createAcceleratingAccessor(Cindervane.class);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -263,6 +270,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // Define Amphithere-specific data
         this.entityData.define(DATA_FIRE_BREATHING, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0f);
+        this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
     }
 
     @Override
@@ -595,7 +603,45 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
+    private void tickRiderLandingBlendTimer() {
+        if (!isVehicle() || !isFlying() || onGround()) {
+            riderLandingBlendTicks = 0;
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+            }
+            return;
+        }
+        if (riderLandingBlendTicks > 0) {
+            riderLandingBlendTicks--;
+            if (riderLandingBlendTicks == 0 && !level().isClientSide) {
+                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+            }
+        }
+    }
+
+    private void triggerRiderLandingBlend() {
+        riderLandingBlendTicks = RIDER_LANDING_BLEND_DURATION;
+        if (!level().isClientSide) {
+            this.entityData.set(DATA_RIDER_LANDING_BLEND, true);
+        }
+    }
+
+    public boolean isRiderLandingBlendActive() {
+        return this.entityData.get(DATA_RIDER_LANDING_BLEND);
+    }
+
+    private double getAltitudeAboveTerrain() {
+        net.minecraft.core.BlockPos pos = this.blockPosition();
+        if (!level().hasChunkAt(pos)) {
+            return Double.POSITIVE_INFINITY;
+        }
+        int groundY = this.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                pos.getX(), pos.getZ());
+        return this.getY() - groundY;
+    }
+
     private void tickPitchingLogic() {
+        tickRiderLandingBlendTimer();
         // Reset pitching when not flying or when controls are locked - INSTANT reset
         if (!isFlying() || isLanding() || isHovering() || isOrderedToSit()) {
             if (pitchDir != 0) {
@@ -616,6 +662,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 desiredDir = 1;   // Pitching down
             } else {
                 desiredDir = 0;   // No pitching
+            }
+            // Trigger landing blend when descending close to ground
+            if (isGoingDown()) {
+                double altitude = getAltitudeAboveTerrain();
+                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= RIDER_LANDING_BLEND_ALTITUDE) {
+                    desiredDir = 0; // Stop pitching down
+                    triggerRiderLandingBlend();
+                }
             }
         } else {
             // AI-controlled pitching based on movement - slower for glider

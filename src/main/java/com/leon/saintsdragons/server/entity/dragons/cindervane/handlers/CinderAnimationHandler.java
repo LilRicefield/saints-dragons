@@ -15,6 +15,7 @@ public class CinderAnimationHandler {
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.glide_down");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.cindervane.flap");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.cindervane.takeoff");
+    private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.cindervane.landing");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.cindervane.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.cindervane.run");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.cindervane.sit");
@@ -61,8 +62,14 @@ public class CinderAnimationHandler {
                     state.setAndContinue(TAKEOFF);
                     return PlayState.CONTINUE;
                 }
-                // Check if descending (takes priority over altitude-based)
-                else if (dragon.isGoingDown()) {
+                // Check for landing blend (second highest priority)
+                if (dragon.isRiderLandingBlendActive()) {
+                    state.getController().transitionLength(4);
+                    state.setAndContinue(LANDING);
+                    return PlayState.CONTINUE;
+                }
+                // Check if descending (takes priority over altitude-based, but not over landing blend)
+                else if (dragon.isGoingDown() && !dragon.isRiderLandingBlendActive()) {
                     state.getController().transitionLength(6);
                     state.setAndContinue(GLIDE_DOWN);
                 } else {
@@ -194,6 +201,8 @@ public class CinderAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.bite_ground"));
         controller.triggerableAnim("bite_air",
                 RawAnimation.begin().thenPlay("animation.cindervane.bite_air"));
+        controller.triggerableAnim("magma_blast",
+                RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
         dragon.getVocalEntries().forEach((key, entry) ->
                 controller.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId())));
     }
