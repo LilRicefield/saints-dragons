@@ -88,6 +88,7 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
@@ -107,8 +108,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             .add("roar", "actions", "animation.cindervane.roar", ModSounds.CINDERVANE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
             .add("roar_ground", "actions", "animation.cindervane.roar_ground", ModSounds.CINDERVANE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)
             .add("roar_air", "actions", "animation.cindervane.roar_air", ModSounds.CINDERVANE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)
-            .add("cindervane_hurt", "hurt_die", "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, false, false)
-            .add("cindervane_die", "hurt_die", "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
+            .add("cindervane_hurt", "hurt", "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, false, false)
+            .add("cindervane_die", "action", "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
             .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -1313,14 +1314,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         controllers.add(actions);
 
         // Dedicated controller for instant hurt/die reactions (no transition easing)
-        AnimationController<Cindervane> hurtDie = new AnimationController<>(this, "hurt_die", 3,
+        AnimationController<Cindervane> HurtController = new AnimationController<>(this, "hurt", 3,
                 state -> software.bernie.geckolib.core.object.PlayState.STOP);
-        hurtDie.triggerableAnim("cindervane_hurt",
-                software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.cindervane.hurt"));
-        hurtDie.triggerableAnim("cindervane_die",
-                software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.cindervane.die"));
-        hurtDie.setSoundKeyframeHandler(this::onAnimationSound);
-        controllers.add(hurtDie);
+        HurtController.triggerableAnim("cindervane_hurt",
+                RawAnimation.begin().thenPlay("animation.cindervane.hurt"));
+        HurtController.setSoundKeyframeHandler(this::onAnimationSound);
+        controllers.add(HurtController);
     }
     private void onAnimationSound(SoundKeyframeEvent<Cindervane> event) {
         soundHandler.handleAnimationSound(this, event.getKeyframeData(), event.getController());
