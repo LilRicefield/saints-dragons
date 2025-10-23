@@ -211,7 +211,7 @@ public class CinderAnimationHandler {
     }
 
     public PlayState actionPredicate(AnimationState<Cindervane> state) {
-        state.getController().transitionLength(1);
+        state.getController().transitionLength(5);
         return PlayState.STOP;
     }
 
