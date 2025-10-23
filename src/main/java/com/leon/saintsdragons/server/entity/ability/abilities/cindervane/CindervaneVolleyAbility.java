@@ -29,8 +29,8 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
     private static final int COOLDOWN_TICKS = 5;
     private static final int MAGMA_BLOCK_LIFETIME = 200;
 
-    private static final double SPAWN_FORWARD_OFFSET = 13.0D;
-    private static final double SPAWN_VERTICAL_OFFSET = 0.10D;
+    private static final double SPAWN_FORWARD_OFFSET = 5.0D;
+    private static final double SPAWN_VERTICAL_OFFSET = 1.5D;
     private static final double VELOCITY_DOWN = -0.15D;
     private static final double VELOCITY_FORWARD = 0.55D;
     private static final double MAGMA_IMPACT_RADIUS = 7.0D;
