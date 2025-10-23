@@ -160,6 +160,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
                 .add(Attributes.MAX_HEALTH, 100.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.40D)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
+                .add(Attributes.ARMOR, 15.0D)
                 .add(Attributes.FOLLOW_RANGE, 16.0D);
     }
     
