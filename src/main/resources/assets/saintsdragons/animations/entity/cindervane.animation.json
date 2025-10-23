@@ -5531,7 +5531,7 @@
 			"sound_effects": {
 				"0.0": {
 					"effect": "cindervane_grumble1",
-					"locator": "mouth_origin "
+					"locator": "mouth_origin"
 				}
 			}
 		},
