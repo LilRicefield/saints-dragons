@@ -121,13 +121,23 @@
 					]
 				},
 				{
-					"name": "neck1",
+					"name": "head",
 					"parent": "heightController",
+					"pivot": [0, 75, -22]
+				},
+				{
+					"name": "neck1",
+					"parent": "head",
 					"pivot": [0, 75, -22]
 				},
 				{
 					"name": "neck1Controller",
 					"parent": "neck1",
+					"pivot": [0, 79, -22]
+				},
+				{
+					"name": "neck1LookControl",
+					"parent": "neck1Controller",
 					"pivot": [0, 79, -22],
 					"cubes": [
 						{"origin": [-4.25, 73.5, -81], "size": [8.5, 8, 60], "uv": [1010, 1022]},
@@ -136,12 +146,17 @@
 				},
 				{
 					"name": "neck2",
-					"parent": "neck1Controller",
+					"parent": "neck1LookControl",
 					"pivot": [0, 75, -79]
 				},
 				{
 					"name": "neckController2",
 					"parent": "neck2",
+					"pivot": [0, 75, -79]
+				},
+				{
+					"name": "neck2LookControl",
+					"parent": "neckController2",
 					"pivot": [0, 75, -79],
 					"cubes": [
 						{"origin": [-3.25, 74.75, -138], "size": [6.5, 6.5, 60], "uv": [0, 1023]},
@@ -150,11 +165,16 @@
 				},
 				{
 					"name": "skull",
-					"parent": "neckController2",
+					"parent": "neck2LookControl",
 					"pivot": [0, 78.58333, -136.5]
 				},
 				{
 					"name": "skullController",
+					"parent": "skull",
+					"pivot": [0, 78.58333, -136.5]
+				},
+				{
+					"name": "skullLookControl",
 					"parent": "skull",
 					"pivot": [0, 78.58333, -136.5],
 					"cubes": [
@@ -168,7 +188,7 @@
 				},
 				{
 					"name": "pharynx",
-					"parent": "skullController",
+					"parent": "skullLookControl",
 					"pivot": [0, 80.5, -137],
 					"cubes": [
 						{"origin": [3.5, 75, -143.5], "size": [0, 6, 7.5], "uv": [836, 275]},
@@ -177,7 +197,7 @@
 				},
 				{
 					"name": "lefthorn",
-					"parent": "skullController",
+					"parent": "skullLookControl",
 					"pivot": [5.75, 82.95, -134.75],
 					"rotation": [0, 17.5, 0],
 					"cubes": [
@@ -189,7 +209,7 @@
 				},
 				{
 					"name": "righthorn",
-					"parent": "skullController",
+					"parent": "skullLookControl",
 					"pivot": [-5.75, 82.95, -134.75],
 					"rotation": [0, -17.5, 0],
 					"cubes": [
@@ -201,7 +221,7 @@
 				},
 				{
 					"name": "eyes",
-					"parent": "skullController",
+					"parent": "skullLookControl",
 					"pivot": [0, 81.25, -143.55],
 					"cubes": [
 						{"origin": [-4.35, 80.65, -143.65], "size": [8.7, 1, 1.1], "uv": [547, 294]}
@@ -209,7 +229,7 @@
 				},
 				{
 					"name": "jaw",
-					"parent": "skullController",
+					"parent": "skullLookControl",
 					"pivot": [0, 75.5, -137]
 				},
 				{
@@ -253,22 +273,22 @@
 				},
 				{
 					"name": "passengerBone1",
-					"parent": "neckController2",
+					"parent": "neck2LookControl",
 					"pivot": [0, 81, -122]
 				},
 				{
 					"name": "passengerBone2",
-					"parent": "neckController2",
+					"parent": "neck2LookControl",
 					"pivot": [0, 81, -112]
 				},
 				{
 					"name": "passengerBone3",
-					"parent": "neckController2",
+					"parent": "neck2LookControl",
 					"pivot": [0, 81, -102]
 				},
 				{
 					"name": "passengerBone4",
-					"parent": "neckController2",
+					"parent": "neck2LookControl",
 					"pivot": [0, 81, -92]
 				},
 				{
