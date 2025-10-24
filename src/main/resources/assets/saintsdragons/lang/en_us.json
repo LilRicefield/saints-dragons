@@ -125,11 +125,11 @@
   "saintsdragons.ability.cindervane_fire_breath_volley": "Magma Volley",
   "entity.saintsdragons.cindervane_magma_block": "Magma Burst",
 
-  "saintsdragons.ability.nulljaw_bite": "Abyssal Chomp",
-  "saintsdragons.ability.nulljaw_bite2": "Rage Bite (Phase 2)",
-  "saintsdragons.ability.nulljaw_claw": "Execution Claw",
+  "saintsdragons.ability.nulljaw_bite": "Bite",
+  "saintsdragons.ability.nulljaw_bite2": "Bite (Phase 2)",
+  "saintsdragons.ability.nulljaw_claw": "Claw",
   "saintsdragons.ability.nulljaw_horn_gore": "Horn Gore",
-  "saintsdragons.ability.nulljaw_roar": "Void Roar",
+  "saintsdragons.ability.nulljaw_roar": "Roar",
   "saintsdragons.ability.nulljaw_phase_shift": "Phase Shift",
 
   "commands.dragonally.description": "Manage allies",

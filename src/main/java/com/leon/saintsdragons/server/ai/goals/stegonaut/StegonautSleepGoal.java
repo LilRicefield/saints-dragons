@@ -48,26 +48,22 @@ public class StegonautSleepGoal extends DragonSleepGoalBase {
 
     @Override
     protected boolean canTamedDragonSleep() {
-        if (dragon instanceof Stegonaut drake && drake.level().isDay()) {
-            if (sleepCapable.getSleepPreferences().avoidsThunderstorms() && dragon.level().isThundering()) {
-                return false;
-            }
-            return drake.isDayNapQueued();
+        // Daytime napping is now handled by StegonautNapGoal - this only handles nighttime sleep
+        if (dragon.level().isDay()) {
+            return false;
         }
         return super.canTamedDragonSleep();
     }
 
     @Override
     protected boolean canWildDragonSleep() {
+        // Daytime napping is now handled by StegonautNapGoal - this only handles nighttime sleep
+        if (dragon.level().isDay()) {
+            return false;
+        }
+
         Stegonaut drake = (Stegonaut) dragon;
         var prefs = sleepCapable.getSleepPreferences();
-
-        if (drake.level().isDay()) {
-            if (prefs.avoidsThunderstorms() && dragon.level().isThundering()) {
-                return false;
-            }
-            return drake.isDayNapQueued();
-        }
 
         boolean sheltered = !prefs.requiresShelter() || isSheltered();
         if (prefs.canSleepAtNight() && isNight() && sheltered) {
