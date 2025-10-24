@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.model.cindervane;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -12,6 +13,10 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         super(SaintsDragons.rl("cindervane"), "headController");
     }
 
+    private static final ResourceLocation MALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/cindervane/cindervane.png");
+    private static final ResourceLocation FEMALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/cindervane/cindervane_female.png");
+
+
     @Override
     public void setCustomAnimations(Cindervane entity, long instanceId, AnimationState<Cindervane> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
@@ -19,6 +24,12 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         if (entity.isAlive()) {
             applyBankingRoll(entity, animationState);
         }
+    }
+
+    @Override
+    public ResourceLocation getTextureResource(Cindervane entity) {
+        // TODO: Add baby texture variant
+        return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
     }
 
     /**
