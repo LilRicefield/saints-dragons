@@ -44,9 +44,6 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
             Cindervane dragon = getUser();
             String trigger = dragon.isFlying() ? "roar_air" : "roar_ground";
             dragon.triggerAnim("actions", trigger);
-            if (!dragon.level().isClientSide) {
-                dragon.triggerScreenShake(0.4F);
-            }
             soundQueued = true;
         }
     }
@@ -65,8 +62,13 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
             return;
         }
 
+        // Continuously trigger screen shake during the entire ability
+        Cindervane dragon = getUser();
+        if (!dragon.level().isClientSide) {
+            dragon.triggerScreenShake(0.6F);
+        }
+
         if (soundQueued && section.sectionType == STARTUP && getTicksInSection() >= SOUND_DELAY_TICKS) {
-            Cindervane dragon = getUser();
             if (!dragon.level().isClientSide) {
                 Vec3 mouth = dragon.getMouthPosition();
                 boolean flying = dragon.isFlying();
@@ -78,7 +80,6 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
                         SoundSource.NEUTRAL,
                         1.5f,
                         pitch);
-                dragon.triggerScreenShake(0.4F);
             }
             soundQueued = false;
         }

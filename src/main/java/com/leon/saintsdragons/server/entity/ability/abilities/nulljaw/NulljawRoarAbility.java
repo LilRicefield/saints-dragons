@@ -94,8 +94,9 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
             return;
         }
 
+        Nulljaw dragon = getUser();
+
         if (soundQueued && section.sectionType == STARTUP && getTicksInSection() >= SOUND_DELAY_TICKS) {
-            Nulljaw dragon = getUser();
             if (!dragon.level().isClientSide) {
                 Vec3 mouth = dragon.getMouthPosition();
                 boolean phaseTwo = dragon.isPhaseTwoActive();
@@ -110,14 +111,18 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
                         SoundSource.NEUTRAL,
                         volume,
                         pitch);
-
-                dragon.triggerScreenShake(1.0F);
             }
             soundQueued = false;
         }
 
+        // Continuous screen shake for Phase 1 roar (from sound trigger until end)
+        if (!dragon.isPhaseTwoActive() && getTicksInUse() >= SOUND_DELAY_TICKS) {
+            if (!dragon.level().isClientSide) {
+                dragon.triggerScreenShake(0.8F);
+            }
+        }
+
         if (section.sectionType == ACTIVE) {
-            Nulljaw dragon = getUser();
             if (!dragon.level().isClientSide && dragon.isPhaseTwoActive()) {
                 int ticks = getTicksInSection();
 

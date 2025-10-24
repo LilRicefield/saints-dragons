@@ -36,10 +36,10 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
 
     @Override
     public void tickUsing() {
-        // Trigger screen shake at 1.76 seconds (35 ticks) into the animation
-        if (getTicksInUse() == SCREEN_SHAKE_TRIGGER_TICK) {
+        // Continuously trigger screen shake from when the roar starts (tick 35) until the end
+        if (getTicksInUse() >= SCREEN_SHAKE_TRIGGER_TICK) {
             if (!getUser().level().isClientSide) {
-                getUser().triggerScreenShake(3.0F);
+                getUser().triggerScreenShake(1.5F); // Continuous intensity for dramatic effect
             }
         }
     }

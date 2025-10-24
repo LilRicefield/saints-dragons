@@ -45,6 +45,9 @@ public class CinderInteractionHandler {
                 heldItem.shrink(1);
             }
 
+            // Trigger eat animation
+            dragon.triggerAnim("actions", "eat");
+
             if (dragon.getRandom().nextInt(5) == 0) {
                 dragon.tame(player);
                 dragon.getNavigation().stop();
@@ -170,6 +173,9 @@ public class CinderInteractionHandler {
             if (!player.getAbilities().instabuild) {
                 food.shrink(1);
             }
+
+            // Trigger eat animation
+            dragon.triggerAnim("actions", "eat");
 
             float healAmount = 5.0F;
             float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());

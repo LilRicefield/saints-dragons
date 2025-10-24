@@ -354,7 +354,10 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
-            
+
+            // Trigger eat animation
+            this.triggerAnim("action", "eat");
+
             // 100% success chance for Primitive Drake!
             this.tame(player);
             this.setOrderedToSit(true);
@@ -435,7 +438,10 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
-            
+
+            // Trigger eat animation
+            this.triggerAnim("action", "eat");
+
             // Heal the drake when fed
             float healAmount = 8.0f; // Heal 4 hearts per food item
             float oldHealth = this.getHealth();

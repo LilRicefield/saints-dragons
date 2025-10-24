@@ -63,6 +63,9 @@ public record NulljawInteractionHandler(Nulljaw drake) {
                 food.shrink(1);
             }
 
+            // Trigger eat animation
+            drake.triggerAnim("action", "eat");
+
             float healAmount = 5.0F;
             float newHealth = Math.min(drake.getHealth() + healAmount, drake.getMaxHealth());
             boolean fullyHealed = newHealth >= drake.getMaxHealth();
@@ -100,7 +103,10 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
-            
+
+            // Trigger eat animation
+            drake.triggerAnim("action", "eat");
+
             // Rift Drakes have a 1 in 8 chance of taming (easier than Lightning Dragons)
             if (drake.getRandom().nextInt(8) == 0) {
                 // Successful taming

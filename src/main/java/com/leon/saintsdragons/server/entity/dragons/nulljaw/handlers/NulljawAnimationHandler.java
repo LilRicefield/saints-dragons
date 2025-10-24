@@ -65,6 +65,10 @@ public record NulljawAnimationHandler(Nulljaw drake) {
                 RawAnimation.begin().thenPlay("animation.nulljaw.roar"));
         actionController.triggerableAnim("roar2",
                 RawAnimation.begin().thenPlay("animation.nulljaw.roar2"));
+
+        // Eat animation - triggered when feeding
+        actionController.triggerableAnim("eat",
+                RawAnimation.begin().thenPlay("animation.nulljaw.eat"));
     }
 
     /**
