@@ -235,18 +235,14 @@ public class CinderInteractionHandler {
         switch (command) {
             case 0: // Follow
                 dragon.setOrderedToSit(false);
-                // Immediately reset sit progress when standing up
-                dragon.sitProgress = 0f;
-                dragon.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
             case 1: // Sit
                 dragon.setOrderedToSit(true);
                 break;
             case 2: // Wander
                 dragon.setOrderedToSit(false);
-                // Immediately reset sit progress when standing up
-                dragon.sitProgress = 0f;
-                dragon.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
         }
     }

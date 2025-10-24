@@ -210,18 +210,14 @@ public record NulljawInteractionHandler(Nulljaw drake) {
         switch (command) {
             case 0: // Follow
                 drake.setOrderedToSit(false);
-                // Immediately reset sit progress when standing up
-                drake.sitProgress = 0f;
-                drake.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
             case 1: // Sit
                 drake.setOrderedToSit(true);
                 break;
             case 2: // Wander
                 drake.setOrderedToSit(false);
-                // Immediately reset sit progress when standing up
-                drake.sitProgress = 0f;
-                drake.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
         }
     }

@@ -48,8 +48,12 @@ public class NulljawLeaveWaterGoal extends Goal {
         }
         // Help with getting out of water when hitting walls
         if (this.drake.horizontalCollision && this.drake.isInWater()) {
-            final float f1 = drake.getYRot() * Mth.DEG_TO_RAD;
-            drake.setDeltaMovement(drake.getDeltaMovement().add(-Mth.sin(f1) * 0.2F, 0.1D, Mth.cos(f1) * 0.2F));
+            final float yawRad = drake.getYRot() * Mth.DEG_TO_RAD;
+            Vec3 current = drake.getDeltaMovement();
+            double pushX = -Mth.sin(yawRad) * 0.3D;
+            double pushZ = Mth.cos(yawRad) * 0.3D;
+            double upward = Mth.clamp(current.y + 0.08D, 0.24D, 0.45D);
+            drake.setDeltaMovement(current.x + pushX, upward, current.z + pushZ);
         }
     }
 

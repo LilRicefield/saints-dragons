@@ -133,6 +133,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         super(type, level);
         this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
+        this.setMaxUpStep(1.4F);
         this.groundNavigation = new DragonPathNavigateGround(this, level);
         this.waterNavigation = new DragonAmphibiousNavigation(this, level);
         this.landMoveControl = new RiftDrakeMoveControl(this);
@@ -550,6 +551,15 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     @Override
     public PathNavigation getAquaticNavigation() {
         return waterNavigation;
+    }
+
+    @Override
+    public double getSwimSpeed() {
+        double baseSpeed = 1.45D; // Slightly faster baseline than default aquatic dragons
+        if (this.isVehicle()) {
+            baseSpeed += 0.2D; // Give riders a bit more responsiveness
+        }
+        return baseSpeed;
     }
 
     @Override

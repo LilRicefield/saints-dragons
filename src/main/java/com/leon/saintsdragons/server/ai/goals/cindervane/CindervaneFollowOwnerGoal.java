@@ -40,7 +40,13 @@ public class CindervaneFollowOwnerGoal extends Goal {
             return false;
         }
 
-        if (amphithere.getCommand() != 0) {
+        // Don't start following while sitting down (but standing up is OK)
+        if (amphithere.isSittingDownAnimation()) {
+            return false;
+        }
+
+        // Only disable for Sit command (1), allow for both Follow (0) and Wander (2)
+        if (amphithere.getCommand() == 1) {
             return false;
         }
 
@@ -68,7 +74,9 @@ public class CindervaneFollowOwnerGoal extends Goal {
             return false;
         }
 
-        if (amphithere.isOrderedToSit() || amphithere.getCommand() != 0) {
+        // Stop following while sitting down (but standing up is OK)
+        // Only disable for Sit command (1), allow for both Follow (0) and Wander (2)
+        if (amphithere.isOrderedToSit() || amphithere.isSittingDownAnimation() || amphithere.getCommand() == 1) {
             return false;
         }
 

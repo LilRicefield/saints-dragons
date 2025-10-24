@@ -1487,10 +1487,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         if (this.isOrderedToSit()) {
-            // Trigger sit_down animation when STARTING to sit (transition from 0 → 1)
-            if (sitProgress == 0f && !isSittingDown) {
+            // Trigger sit down animation when:
+            // 1. Starting from standing (sitProgress == 0), OR
+            // 2. Interrupting a stand-up animation (isStandingUp = true)
+            if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
                 animationHandler.triggerSitDownAnimation();
                 isSittingDown = true;
+                isStandingUp = false; // Cancel the stand-up
                 sitTransitionTicks = 93; // down animation is 4.6667s = 93 ticks
             }
 
@@ -1501,13 +1504,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         } else {
             if (!this.level().isClientSide && super.isInSittingPose()) {
                 this.setInSittingPose(false);
-            }
-
-            // Trigger sit_up animation when STARTING to stand (transition from sitting → standing)
-            if (sitProgress == maxSitTicks() && !isStandingUp) {
-                animationHandler.triggerSitUpAnimation();
-                isStandingUp = true;
-                sitTransitionTicks = 23; // up animation is 1.125s = 23 ticks
             }
 
             if (this.isVehicle()) {
@@ -1521,6 +1517,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                     sitTransitionTicks = 0;
                 }
             } else if (sitProgress > 0f) {
+                // Trigger sit up animation when:
+                // 1. At max sitting and ready to stand, OR
+                // 2. Interrupting a sit-down animation (isSittingDown = true)
+                if ((sitProgress == maxSitTicks() || isSittingDown) && !isStandingUp) {
+                    animationHandler.triggerSitUpAnimation();
+                    isStandingUp = true;
+                    isSittingDown = false; // Cancel the sit-down
+                    sitTransitionTicks = 23; // up animation is 1.125s = 23 ticks
+                }
+
+                // Always decrement sitProgress when standing up (let the animation play as it decrements)
                 sitProgress--;
                 if (sitProgress < 0f) {
                     sitProgress = 0f;
