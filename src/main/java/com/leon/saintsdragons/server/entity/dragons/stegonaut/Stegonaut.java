@@ -26,6 +26,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.AgeableMob;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -39,6 +40,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -146,13 +148,10 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(0, new StegonautSleepGoal(this)); // Highest priority - deep slumber takes precedence
         this.goalSelector.addGoal(1, new StegonautLeaveWaterGoal(this, 1.15D)); // Emergency priority - get out of water fast
-        StegonautPlayDeadGoal playDeadGoalInstance = new StegonautPlayDeadGoal(this); // Predator avoidance once safe on land
-        this.playDeadGoal = playDeadGoalInstance;
-        this.goalSelector.addGoal(2, playDeadGoalInstance);
-        this.goalSelector.addGoal(3, new StegonautFollowOwnerGoal(this));
-        this.goalSelector.addGoal(4, new StegonautGroundWanderGoal(this, 0.35D, 120));
-        this.goalSelector.addGoal(5, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(6, new StegonautRandomLookAroundGoal(this));
+        this.goalSelector.addGoal(2, new StegonautFollowOwnerGoal(this));
+        this.goalSelector.addGoal(3, new StegonautGroundWanderGoal(this, 0.35D, 120));
+        this.goalSelector.addGoal(4, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(5, new StegonautRandomLookAroundGoal(this));
     }
     
     public static AttributeSupplier.Builder createAttributes() {
@@ -253,11 +252,9 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
 
         // After taking damage, if we were playing dead, ensure we stay in play dead state
         // Don't let hurt animations or state changes interfere with the fake death behavior
-        if (result && wasPlayingDead && playDeadGoal != null) {
+        if (result && wasPlayingDead && this.isPlayingDead()) {
             // Re-enforce the play dead sitting pose in case hurt() reset it
-            this.setOrderedToSit(true);
-            // Ensure the play dead state is still synced
-            this.getEntityData().set(DATA_PLAYING_DEAD, true);
+            refreshPlayDeadPose();
         }
 
         return result;
@@ -619,15 +616,12 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!this.level().isClientSide && this.pendingRestorePlayDead && this.playDeadGoal != null) {
-            this.pendingRestorePlayDead = false;
-            this.playDeadGoal.restorePlayDeadState(this.pendingRestorePlayDeadTicks, this.pendingRestoreCooldownTicks);
-            this.pendingRestorePlayDeadTicks = 0;
-            this.pendingRestoreCooldownTicks = 0;
-        }
-        
-        // Update animation states
         if (!this.level().isClientSide) {
+            tickPlayDeadBehavior();
+            if (playDeadAnimationPending && playingDead) {
+                playDeadAnimationPending = false;
+                this.triggerAnim("action", "fake_death");
+            }
             tickAnimationStates();
         }
     }
@@ -821,36 +815,32 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         return this.clientLocatorCache.get(name);
     }
     
-    // ===== PLAY DEAD BEHAVIOR SUPPORT =====
-    
-    // Reference to the play dead goal for easy access
-    private StegonautPlayDeadGoal playDeadGoal;
-    private boolean pendingRestorePlayDead = false;
-    private int pendingRestorePlayDeadTicks = 0;
-    private int pendingRestoreCooldownTicks = 0;
-    
+    // ===== PLAY DEAD BEHAVIOR =====
+    private static final double PLAY_DEAD_DETECTION_RANGE = 12.0;
+    private static final double PLAY_DEAD_DETECTION_RANGE_SQR = PLAY_DEAD_DETECTION_RANGE * PLAY_DEAD_DETECTION_RANGE;
+    private static final int PLAY_DEAD_MIN_DURATION = 200;  // 10 seconds
+    private static final int PLAY_DEAD_MAX_DURATION = 600;  // 30 seconds
+    private static final int PLAY_DEAD_COOLDOWN_TICKS = 1200; // 60 seconds
+
+    private boolean playingDead = false;
+    private int playDeadTicksRemaining = 0;
+    private int playDeadCooldownTicks = 0;
+    private int playDeadOriginalCommand = -1;
+    private boolean playDeadOriginalSit = false;
+    private boolean playDeadAnimationPending = false;
+
     /**
-     * Set the play dead goal reference (called by the goal when it starts)
-     */
-    public void setPlayDeadGoal(StegonautPlayDeadGoal goal) {
-        this.playDeadGoal = goal;
-    }
-    
-    /**
-     * Clear the play dead goal reference (called by the goal when it stops)
+     * Externally forces the drake to stop playing dead (used by other goals).
      */
     public void clearPlayDeadGoal() {
-        if (this.playDeadGoal != null) {
-            this.playDeadGoal.markSkipCooldownOnNextStop();
-            this.playDeadGoal.stop();
-        }
+        stopPlayingDead(true);
     }
-    
+
     /**
-     * Check if this drake is currently playing dead
+     * Check if this drake is currently playing dead.
      */
     public boolean isPlayingDead() {
-        return playDeadGoal != null && playDeadGoal.isPlayingDead();
+        return playingDead;
     }
     
     // ===== MOVEMENT STATE METHODS =====
@@ -943,14 +933,169 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
      * Get the remaining play dead duration in ticks
      */
     public int getRemainingPlayDeadTicks() {
-        return playDeadGoal != null ? playDeadGoal.getRemainingPlayDeadTicks() : 0;
+        return playingDead ? playDeadTicksRemaining : 0;
     }
     
     /**
      * Get the remaining cooldown before can play dead again
      */
     public int getPlayDeadCooldownTicks() {
-        return playDeadGoal != null ? playDeadGoal.getRemainingCooldownTicks() : 0;
+        return playDeadCooldownTicks;
+    }
+
+    private void startPlayingDead() {
+        if (playingDead) {
+            return;
+        }
+        playingDead = true;
+        playDeadTicksRemaining = PLAY_DEAD_MIN_DURATION + this.random.nextInt(Math.max(1, PLAY_DEAD_MAX_DURATION - PLAY_DEAD_MIN_DURATION));
+        playDeadOriginalCommand = this.getCommand();
+        playDeadOriginalSit = this.isOrderedToSit();
+
+        refreshPlayDeadPose();
+        this.triggerAnim("action", "fake_death");
+        playDeadAnimationPending = false;
+    }
+
+    private void refreshPlayDeadPose() {
+        this.getNavigation().stop();
+        this.getMoveControl().setWantedPosition(this.getX(), this.getY(), this.getZ(), 0.0);
+        this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
+        this.setOrderedToSit(true);
+        this.entityData.set(DATA_PLAYING_DEAD, true);
+    }
+
+    private void stopPlayingDead(boolean skipCooldown) {
+        if (!playingDead) {
+            return;
+        }
+
+        playingDead = false;
+        playDeadTicksRemaining = 0;
+        this.entityData.set(DATA_PLAYING_DEAD, false);
+        this.triggerAnim("action", "clear_fake_death");
+
+        if (playDeadOriginalCommand >= 0) {
+            this.setCommand(playDeadOriginalCommand);
+            this.setOrderedToSit(playDeadOriginalSit);
+        } else {
+            refreshCommandState();
+        }
+
+        playDeadOriginalCommand = -1;
+        playDeadOriginalSit = false;
+        playDeadAnimationPending = false;
+
+        playDeadCooldownTicks = skipCooldown ? 0 : PLAY_DEAD_COOLDOWN_TICKS + this.random.nextInt(600);
+    }
+
+    private boolean canAttemptPlayDead() {
+        return !this.isSleeping() && !this.isDying() && !this.isVehicle();
+    }
+
+    @Nullable
+    private Raevyx findLightningThreat() {
+        List<Raevyx> dragons = level().getEntitiesOfClass(
+            Raevyx.class,
+            this.getBoundingBox().inflate(PLAY_DEAD_DETECTION_RANGE),
+            dragon -> dragon != null && !dragon.isRemoved()
+        );
+
+        if (dragons.isEmpty()) {
+            return null;
+        }
+
+        Raevyx closest = null;
+        double closestDistance = Double.MAX_VALUE;
+
+        if (this.isTame()) {
+            for (Raevyx dragon : dragons) {
+                if (dragon.isTame()) {
+                    continue;
+                }
+                double distance = this.distanceToSqr(dragon);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closest = dragon;
+                }
+            }
+            return closest;
+        }
+
+        Raevyx closestWild = null;
+        double closestWildDistance = Double.MAX_VALUE;
+
+        for (Raevyx dragon : dragons) {
+            double distance = this.distanceToSqr(dragon);
+            if (!dragon.isTame()) {
+                if (distance < closestWildDistance) {
+                    closestWildDistance = distance;
+                    closestWild = dragon;
+                }
+            }
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closest = dragon;
+            }
+        }
+
+        return closestWild != null ? closestWild : closest;
+    }
+
+    private void tickPlayDeadBehavior() {
+        if (this.level().isClientSide) {
+            return;
+        }
+
+        if (playingDead) {
+            refreshPlayDeadPose();
+
+            Raevyx threat = findLightningThreat();
+            boolean threatNearby = threat != null && this.distanceToSqr(threat) <= PLAY_DEAD_DETECTION_RANGE_SQR;
+
+            if (this.isTame() && threat != null && threat.isTame()) {
+                stopPlayingDead(true);
+                threatNearby = false;
+            }
+
+            if (!threatNearby) {
+                if (playDeadTicksRemaining > 60) {
+                    playDeadTicksRemaining = 40 + this.random.nextInt(40);
+                }
+                if (playDeadTicksRemaining > 0) {
+                    playDeadTicksRemaining--;
+                }
+                if (playDeadTicksRemaining <= 0) {
+                    stopPlayingDead(false);
+                }
+            } else {
+                playDeadTicksRemaining = Math.max(playDeadTicksRemaining, 1);
+            }
+
+            if (playingDead && this.tickCount % 100 == 0 && this.random.nextFloat() < 0.3f) {
+                this.getSoundHandler().playVocal("primitivedrake_scared");
+            }
+        } else {
+            if (canAttemptPlayDead()) {
+                Raevyx threat = findLightningThreat();
+                if (threat != null) {
+                    boolean realThreat = !this.isTame() || !threat.isTame();
+                    if (playDeadCooldownTicks > 0 && !realThreat) {
+                        playDeadCooldownTicks = Math.max(playDeadCooldownTicks - 1, 0);
+                        return;
+                    }
+                    if (playDeadCooldownTicks > 0 && realThreat) {
+                        playDeadCooldownTicks = 0;
+                    }
+                    startPlayingDead();
+                    return;
+                }
+            }
+
+            if (playDeadCooldownTicks > 0) {
+                playDeadCooldownTicks--;
+            }
+        }
     }
     
     // ===== SAVE/LOAD DATA =====
@@ -972,11 +1117,11 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         tag.putInt("GrumbleCooldown", grumbleCooldown);
 
         // Save play dead state
-        tag.putBoolean("PlayingDead", isPlayingDead());
-        if (playDeadGoal != null) {
-            tag.putInt("PlayDeadTicks", playDeadGoal.getRemainingPlayDeadTicks());
-            tag.putInt("PlayDeadCooldown", playDeadGoal.getRemainingCooldownTicks());
-        }
+        tag.putBoolean("PlayingDead", playingDead);
+        tag.putInt("PlayDeadTicks", playDeadTicksRemaining);
+        tag.putInt("PlayDeadCooldown", playDeadCooldownTicks);
+        tag.putInt("PlayDeadOriginalCommand", playDeadOriginalCommand);
+        tag.putBoolean("PlayDeadOriginalSit", playDeadOriginalSit);
 
         // Save binding state
         tag.putBoolean("BoundToBinder", boundToBinder);
@@ -1013,41 +1158,37 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Sync sleep state to client
         this.entityData.set(DATA_SLEEPING, sleeping);
 
-        // Load play dead state
-        boolean wasPlayingDead = tag.getBoolean("PlayingDead");
-        int savedPlayDeadTicks = tag.getInt("PlayDeadTicks");
-        int savedCooldownTicks = tag.getInt("PlayDeadCooldown");
-
-        // If we were playing dead when saved, restore that state
-        if (wasPlayingDead && savedPlayDeadTicks > 0) {
-            if (this.playDeadGoal != null) {
-                this.playDeadGoal.restorePlayDeadState(savedPlayDeadTicks, savedCooldownTicks);
-                this.pendingRestorePlayDead = false;
-            } else {
-                this.pendingRestorePlayDead = true;
-                this.pendingRestorePlayDeadTicks = savedPlayDeadTicks;
-                this.pendingRestoreCooldownTicks = savedCooldownTicks;
-            }
-        } else {
-            this.pendingRestorePlayDead = false;
-            this.pendingRestorePlayDeadTicks = 0;
-            this.pendingRestoreCooldownTicks = 0;
-            this.entityData.set(DATA_PLAYING_DEAD, false);
-        }
-
-        // Load sit progress for animation state
+        // Load sit progress for animation state prior to command refresh so poses align immediately
         if (tag.contains("SitProgress")) {
             sitProgress = tag.getFloat("SitProgress");
             this.entityData.set(DragonEntity.DATA_SIT_PROGRESS, sitProgress);
         }
 
-        // Apply the loaded command state to ensure sit progress and other state is properly restored
-        // This ensures consistency between command state and actual entity behavior
+        // Align baseline command state before restoring extra behaviors
         refreshCommandState();
-
-        // Explicitly enforce the sit state based on command to ensure it persists
-        // This bypasses any potential timing issues with the base class
         this.setOrderedToSit(restoredOrderedSit);
+
+        // Load play dead state
+        playingDead = tag.getBoolean("PlayingDead");
+        playDeadTicksRemaining = Math.max(tag.getInt("PlayDeadTicks"), 0);
+        playDeadCooldownTicks = Math.max(tag.getInt("PlayDeadCooldown"), 0);
+        playDeadOriginalCommand = tag.contains("PlayDeadOriginalCommand") ? tag.getInt("PlayDeadOriginalCommand") : restoredCommand;
+        playDeadOriginalSit = tag.contains("PlayDeadOriginalSit") ? tag.getBoolean("PlayDeadOriginalSit") : restoredOrderedSit;
+
+        if (playingDead && playDeadTicksRemaining > 0) {
+            this.entityData.set(DATA_PLAYING_DEAD, true);
+            this.setOrderedToSit(true);
+            refreshPlayDeadPose();
+            playDeadAnimationPending = true;
+        } else {
+            playingDead = false;
+            playDeadTicksRemaining = 0;
+            playDeadOriginalCommand = -1;
+            playDeadOriginalSit = false;
+            playDeadAnimationPending = false;
+            this.entityData.set(DATA_PLAYING_DEAD, false);
+        }
+
     }
     
     // ===== DRAKE BINDER FUNCTIONALITY =====
