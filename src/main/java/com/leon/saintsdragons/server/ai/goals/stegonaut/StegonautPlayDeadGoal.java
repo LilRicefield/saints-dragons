@@ -34,6 +34,10 @@ public class StegonautPlayDeadGoal extends Goal {
     private int cooldownTicks = 0;
     private Raevyx nearbyLightningDragon = null;
     private boolean skipCooldownOnStop = false;
+
+    // Track original state before playing dead to restore it properly
+    private int originalCommand = -1;
+    private boolean originalSittingState = false;
     
     public StegonautPlayDeadGoal(Stegonaut drake) {
         this.drake = drake;
@@ -149,23 +153,28 @@ public class StegonautPlayDeadGoal extends Goal {
         isPlayingDead = true;
         skipCooldownOnStop = false;
         playDeadTicks = MIN_PLAY_DEAD_DURATION + drake.getRandom().nextInt(MAX_PLAY_DEAD_DURATION - MIN_PLAY_DEAD_DURATION);
-        
+
+        // FIXED: Save the original command and sitting state to restore later
+        // This prevents the play dead behavior from interfering with the drake's actual command state
+        originalCommand = drake.getCommand();
+        originalSittingState = drake.isOrderedToSit();
+
         // Register this goal with the drake for easy access
         drake.setPlayDeadGoal(this);
-        
+
         // Stop all movement
         drake.getNavigation().stop();
         drake.getMoveControl().setWantedPosition(drake.getX(), drake.getY(), drake.getZ(), 0.0);
-        
-        // Set sitting pose for the "dead" look
+
+        // Set sitting pose for the "dead" look (but don't change the command state)
         drake.setOrderedToSit(true);
-        
+
         // Trigger the fake death animation
         drake.triggerAnim("action", "fake_death");
-        
+
         // Sync state to client
         drake.getEntityData().set(Stegonaut.DATA_PLAYING_DEAD, true);
-        
+
         // Play a scared sound
         drake.getSoundHandler().playVocal("primitivedrake_scared");
 
@@ -183,15 +192,12 @@ public class StegonautPlayDeadGoal extends Goal {
                 }
             }
 
-            // Only decrease timer if threat is gone - play dead indefinitely while threat is nearby
+            // FIXED: Only decrease timer if threat is gone - NEVER decrease while threat is nearby
+            // This ensures the drake will play dead indefinitely as long as the threat remains
             if (!threatNearby) {
                 playDeadTicks--;
-            } else {
-                // Keep timer from running out while threat is present
-                if (playDeadTicks < 100) {
-                    playDeadTicks = 100; // Maintain minimum time
-                }
             }
+            // Do NOT touch playDeadTicks when threat is present - it stays at whatever value it has
 
             // Keep the drake completely still - stop all movement
             drake.getNavigation().stop();
@@ -200,7 +206,8 @@ public class StegonautPlayDeadGoal extends Goal {
             // Stop any other movement goals from interfering
             drake.setDeltaMovement(0, drake.getDeltaMovement().y, 0); // Keep vertical movement for gravity
 
-            // Ensure the drake stays in sitting pose
+            // Ensure the drake stays in play dead pose (using sitting as the pose)
+            // We track play dead separately from command state to avoid confusion
             if (!drake.isInSittingPose()) {
                 drake.setOrderedToSit(true);
             }
@@ -223,8 +230,8 @@ public class StegonautPlayDeadGoal extends Goal {
         isPlayingDead = false;
         playDeadTicks = 0;
         nearbyLightningDragon = null;
-        
-        
+
+
         // Start cooldown
         if (skipCooldownOnStop) {
             cooldownTicks = 0;
@@ -232,14 +239,28 @@ public class StegonautPlayDeadGoal extends Goal {
             cooldownTicks = PLAY_DEAD_COOLDOWN + drake.getRandom().nextInt(600); // 60-90 seconds
         }
         skipCooldownOnStop = false;
-        
-        // Restore commanded pose
-        drake.refreshCommandState();
+
+        // FIXED: Restore the original command and sitting state
+        // This ensures the drake goes back to whatever it was doing before (Follow/Sit/Wander)
+        // instead of getting stuck in Sit mode
+        if (originalCommand >= 0) {
+            drake.setCommand(originalCommand);
+            drake.setOrderedToSit(originalSittingState);
+            // Reset sit progress if we're not supposed to be sitting
+            if (!originalSittingState) {
+                drake.sitProgress = 0f;
+                drake.getEntityData().set(com.leon.saintsdragons.server.entity.base.DragonEntity.DATA_SIT_PROGRESS, 0f);
+            }
+        } else {
+            // Fallback to refreshCommandState if we don't have original state
+            drake.refreshCommandState();
+        }
+
         drake.triggerAnim("action", "clear_fake_death");
-        
+
         // Sync state to client
         drake.getEntityData().set(Stegonaut.DATA_PLAYING_DEAD, false);
-        
+
         // Play a relieved sound
         drake.getSoundHandler().playVocal("primitivedrake_relieved");
 
@@ -332,16 +353,20 @@ public class StegonautPlayDeadGoal extends Goal {
             this.playDeadTicks = playDeadTicks;
             this.cooldownTicks = cooldownTicks;
             this.skipCooldownOnStop = false;
-            
+
+            // Save the current state before we override it with play dead
+            this.originalCommand = drake.getCommand();
+            this.originalSittingState = drake.isOrderedToSit();
+
             // Register this goal with the drake
             drake.setPlayDeadGoal(this);
-            
+
             // Set sitting pose for the "dead" look
             drake.setOrderedToSit(true);
-            
+
             // Trigger the fake death animation
             drake.triggerAnim("action", "fake_death");
-            
+
             // Sync state to client
             drake.getEntityData().set(Stegonaut.DATA_PLAYING_DEAD, true);
         }

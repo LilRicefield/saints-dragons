@@ -240,11 +240,27 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             return false;
         }
 
+        // FIXED: Preserve play dead state when hurt
+        // If playing dead, being hit shouldn't break the fake death - just take damage silently
+        boolean wasPlayingDead = isPlayingDead();
+
         // Intercept lethal damage to play custom death ability first
         if (handleLethalDamage(source, amount, StegonautAbilities.STEGONAUT_DIE)) {
             return true;
         }
-        return super.hurt(source, amount);
+
+        boolean result = super.hurt(source, amount);
+
+        // After taking damage, if we were playing dead, ensure we stay in play dead state
+        // Don't let hurt animations or state changes interfere with the fake death behavior
+        if (result && wasPlayingDead && playDeadGoal != null) {
+            // Re-enforce the play dead sitting pose in case hurt() reset it
+            this.setOrderedToSit(true);
+            // Ensure the play dead state is still synced
+            this.getEntityData().set(DATA_PLAYING_DEAD, true);
+        }
+
+        return result;
     }
 
     @Override
