@@ -13,9 +13,9 @@ import java.util.Map;
  * Amphithere-specific hooks for sound playback.
  * Uses client-side local playback for animation keyframe sounds.
  */
-public final class CinderSoundProfile implements DragonSoundProfile {
+public final class CindervaneSoundProfile implements DragonSoundProfile {
 
-    public static final CinderSoundProfile INSTANCE = new CinderSoundProfile();
+    public static final CindervaneSoundProfile INSTANCE = new CindervaneSoundProfile();
 
     private static final Map<String, Integer> VOCAL_WINDOWS = Map.ofEntries(
             Map.entry("grumble1", 90),
@@ -45,7 +45,7 @@ public final class CinderSoundProfile implements DragonSoundProfile {
                             ModSounds.CINDERVANE_BITE, 1.0f, 0.95f, 0.1f, false, false, false)
                     .build();
 
-    private CinderSoundProfile() {}
+    private CindervaneSoundProfile() {}
 
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {

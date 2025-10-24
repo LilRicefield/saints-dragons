@@ -2,7 +2,6 @@ package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -14,10 +13,10 @@ import net.minecraft.world.item.ItemStack;
  * Handles all interactions with Amphithere entities
  * Adapted from Lightning Dragon interaction handler
  */
-public class CinderInteractionHandler {
+public class CindervaneInteractionHandler {
     private final Cindervane dragon;
 
-    public CinderInteractionHandler(Cindervane dragon) {
+    public CindervaneInteractionHandler(Cindervane dragon) {
         this.dragon = dragon;
     }
 
