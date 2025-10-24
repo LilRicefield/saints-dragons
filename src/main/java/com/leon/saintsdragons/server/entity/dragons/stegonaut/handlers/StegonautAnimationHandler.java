@@ -48,10 +48,9 @@ public class StegonautAnimationHandler {
         }
 
         // Use the improved movement state detection
+        // Stegonaut only walks (no running - it's a slow, heavy drake)
         int groundState = drake.getEffectiveGroundState();
-        if (groundState == 2 || drake.isRunning()) {
-            state.setAndContinue(WALK_ANIM); // Fallback to walk for now
-        } else if (groundState == 1 || drake.isWalking()) {
+        if (groundState >= 1 || drake.isWalking()) {
             state.setAndContinue(WALK_ANIM);
         } else {
             state.setAndContinue(IDLE_ANIM);

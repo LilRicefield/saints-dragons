@@ -122,6 +122,9 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     private int clientGroundMoveState = 0;
     private int clientGroundMoveTarget = 0;
     private int clientGroundMoveHold = 0;
+
+    // Server-side hold timer to prevent flickering when stopping
+    private int walkAnimationHoldTicks = 0;
     
     public Stegonaut(EntityType<? extends Stegonaut> entityType, Level level) {
         super(entityType, level);
@@ -146,12 +149,13 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     protected void registerGoals() {
         // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(0, new StegonautSleepGoal(this)); // Highest priority - deep slumber takes precedence
+        this.goalSelector.addGoal(0, new StegonautSleepGoal(this)); // Highest priority - nighttime sleep only
         this.goalSelector.addGoal(1, new StegonautLeaveWaterGoal(this, 1.15D)); // Emergency priority - get out of water fast
         this.goalSelector.addGoal(2, new StegonautFollowOwnerGoal(this));
-        this.goalSelector.addGoal(3, new StegonautGroundWanderGoal(this, 0.35D, 120));
-        this.goalSelector.addGoal(4, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(5, new StegonautRandomLookAroundGoal(this));
+        this.goalSelector.addGoal(3, new StegonautNapGoal(this)); // Daytime napping - separate from sleep
+        this.goalSelector.addGoal(4, new StegonautGroundWanderGoal(this, 0.35D, 120));
+        this.goalSelector.addGoal(5, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(6, new StegonautRandomLookAroundGoal(this));
     }
     
     public static AttributeSupplier.Builder createAttributes() {
@@ -904,26 +908,27 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
      * Update animation states based on current movement
      */
     private void tickAnimationStates() {
-        // Update ground movement state with more sophisticated detection
-        int moveState = 0; // idle
-        
+        int moveState = 0; // Default to idle
+
         if (!isSleeping() && !isPlayingDead() && !isOrderedToSit()) {
-            // Ground movement with refined thresholds
-            double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-            
-            // Adjusted thresholds based on actual movement values observed in debug output
-            final double WALK_MIN = 0.0003; // Lower threshold to match actual movement (velSqr ≈ 5.34E-4)
-            final double RUN_MIN = 0.0020;  // Higher threshold for running
-            
-            
-            if (velSqr > RUN_MIN) {
-                moveState = 2; // running
-            } else if (velSqr > WALK_MIN) {
-                moveState = 1; // walking
+            // Simple logic: If navigation is active OR entity is moving, play walk animation
+            boolean hasActivePath = this.getNavigation().isInProgress();
+            boolean isActuallyMoving = this.getDeltaMovement().horizontalDistanceSqr() > 0.001;
+
+            if (hasActivePath || isActuallyMoving) {
+                moveState = 1; // Walking
+                walkAnimationHoldTicks = 8; // Hold walk animation for 8 ticks after stopping
+            } else if (walkAnimationHoldTicks > 0) {
+                // Keep playing walk animation while decelerating
+                moveState = 1;
+                walkAnimationHoldTicks--;
             }
+        } else {
+            // Force reset hold timer when sleeping/sitting/playing dead
+            walkAnimationHoldTicks = 0;
         }
-        
-        // Update entity data
+
+        // Update state only if changed to reduce network traffic
         if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
             this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
         }
