@@ -42,14 +42,8 @@ public class RaevyxConstantsHandler {
     /** Baby ground run animation */
     public static final RawAnimation BABY_RUN = RawAnimation.begin().thenLoop("animation.baby_raevyx.run");
     
-    /** Sit down transition animation (idle → sit) */
-    public static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.raevyx.down");
-
     /** Sitting animation (looping) */
     public static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.raevyx.sit");
-
-    /** Stand up transition animation (sit → idle) */
-    public static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.raevyx.up");
     
     /** Takeoff animation */
     public static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.raevyx.takeoff");
