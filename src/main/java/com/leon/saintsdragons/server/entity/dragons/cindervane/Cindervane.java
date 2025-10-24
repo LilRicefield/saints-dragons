@@ -16,9 +16,9 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
-import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CinderAnimationHandler;
-import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CinderInteractionHandler;
-import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CinderSoundProfile;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
 import java.util.Map;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -123,9 +123,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final CinderAnimationHandler animationHandler = new CinderAnimationHandler(this);
+    private final CindervaneAnimationHandler animationHandler = new CindervaneAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
-    private final CinderInteractionHandler interactionHandler = new CinderInteractionHandler(this);
+    private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
 
     private final DragonPathNavigateGround groundNav;
@@ -1483,7 +1483,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public DragonSoundProfile getSoundProfile() {
-        return CinderSoundProfile.INSTANCE;
+        return CindervaneSoundProfile.INSTANCE;
     }
 
     @Override

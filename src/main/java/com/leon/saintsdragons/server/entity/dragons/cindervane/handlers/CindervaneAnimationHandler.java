@@ -9,7 +9,7 @@ import software.bernie.geckolib.core.object.PlayState;
 /**
  * Lightweight animation helper for the Amphithere.
  */
-public class CinderAnimationHandler {
+public class CindervaneAnimationHandler {
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.cindervane.idle");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.cindervane.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.glide_down");
@@ -44,7 +44,7 @@ public class CinderAnimationHandler {
     private int takeoffAnimationTicks;
     private boolean wasFlying;
 
-    public CinderAnimationHandler(Cindervane dragon) {
+    public CindervaneAnimationHandler(Cindervane dragon) {
         this.dragon = dragon;
     }
 
