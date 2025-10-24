@@ -963,9 +963,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public int getFlightMode() {
         int flightMode = -1; // not flying (ground state)
         if (isFlying()) {
-            // Reset altitude glide flag when not flying
-            inHighAltitudeGlide = false;
-
             if (isTakeoff()) {
                 flightMode = 3; // takeoff
             } else if (isHovering()) {

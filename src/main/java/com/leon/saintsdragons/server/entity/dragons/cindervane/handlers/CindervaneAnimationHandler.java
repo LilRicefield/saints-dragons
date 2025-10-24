@@ -86,7 +86,9 @@ public class CindervaneAnimationHandler {
                     state.setAndContinue(GLIDE_DOWN);
                 } else {
                     // Altitude-based animation when being ridden
-                    int flightMode = dragon.getFlightMode();
+                    // IMPORTANT: Use synced flight mode from entity data, not recalculated value
+                    // Client-side getFlightMode() uses non-synced inHighAltitudeGlide flag
+                    int flightMode = dragon.getSyncedFlightMode();
 
                     if (flightMode == 0) {
                         // High altitude glide
