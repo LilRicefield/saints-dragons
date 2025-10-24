@@ -273,6 +273,18 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     @Override
+    protected SoundEvent getHurtSound(@NotNull DamageSource source) {
+        // Hurt vocals are driven by DragonAbility/HurtAbility for precise timing (avoid vanilla fallback subtitles)
+        return null;
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        // Death vocals are handled by DieAbility; suppress vanilla generic subtitle
+        return null;
+    }
+
+    @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
         boolean result = super.hurt(source, amount);
         if (result) {
