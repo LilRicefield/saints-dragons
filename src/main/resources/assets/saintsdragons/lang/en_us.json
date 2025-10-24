@@ -44,6 +44,8 @@
   "saintsdragons.tooltip.cindervane_binder.right_click_cindervane_to_bind": "Right-click on ground to release bound Cindervane",
   "saintsdragons.tooltip.cindervane_binder.bound": "Contains: %s",
   "saintsdragons.tooltip.cindervane_binder.right_click_to_release": "Right-click on ground to release bound Cindervane",
+
+
   "saintsdragons.tooltip.nulljaw.description": "§lA shard of the abyss hums quietly inside.§r",
   "saintsdragons.tooltip.nulljaw.empty": "Right-click on a tamed Nulljaw to bind it",
   "saintsdragons.tooltip.nulljaw.right_click_nulljaw_to_bind": "Right-click on ground to release bound Nulljaw",
@@ -79,16 +81,19 @@
   "saintsdragons.command.ally.not_dragon": "Entity %s is not a dragon",
   
   "advancement.saintsdragons.tame_raevyx.title": "Bleeding Bolt",
-  "advancement.saintsdragons.tame_raevyx.description": "Tame a Raevyx with a lot of fish and a lot of patience",
+  "advancement.saintsdragons.tame_raevyx.description": "Tame a Raevyx. Zeus who?",
 
-  "advancement.saintsdragons.tame_raevyx_female.title": "Ivory Surge",
-  "advancement.saintsdragons.tame_raevyx_female.description": "Tame a female Raevyx a lot of fish and a lot of patience",
+  "advancement.saintsdragons.tame_raevyx_female.title": "Amethyst Surge",
+  "advancement.saintsdragons.tame_raevyx_female.description": "Tame a female Raevyx. Again, ZEUS. WHO.",
 
-  "advancement.saintsdragons.tame_nulljaw.title": "Blackout Spire",
-  "advancement.saintsdragons.tame_nulljaw.description": "Tame a Nulljaw, good job!",
+  "advancement.saintsdragons.tame_cindervane.title": "Scorched Earth Protocol",
+  "advancement.saintsdragons.tame_cindervane.description": "Tame a Cindervane, now you own a tactical nuke with wings. Great insurance.",
+
+  "advancement.saintsdragons.tame_nulljaw.title": "Depths of Dread",
+  "advancement.saintsdragons.tame_nulljaw.description": "Tame a Nulljaw, the abyss that bites back. Good job!",
   
   "advancement.saintsdragons.tame_stegonaut.title": "My Sturdy Friend",
-  "advancement.saintsdragons.tame_stegonaut.description": "Tame a Stegonaut",
+  "advancement.saintsdragons.tame_stegonaut.description": "Win over the Stegonaut with a single fish.",
   
   "key.categories.saintsdragons": "Saint's Dragons",
   "key.saintsdragons.ascend": "Ascend",
@@ -172,6 +177,9 @@
   "saintsdragons.message.easter_egg.jeb_": "The lead developer! But he's busy working on the next update.",
   "saintsdragons.message.easter_egg.dinnerbone": "The developer who makes everything upside down! But he's not here.",
   "saintsdragons.message.easter_egg.grumm": "Another Minecraft developer! But he's not on this server.",
-  "saintsdragons.message.easter_egg.herobrine": "Do not turn around. You're not supposed to be here."
+  "saintsdragons.message.easter_egg.herobrine": "Do not turn around. You're not supposed to be here.",
+  "entity.saintsdragons.cindervane.passenger_needs_owner": "The owner needs to mount it first before you can do it.",
+  "entity.saintsdragons.cindervane.seats_full": "Sorry, but the seats are full.",
+  "entity.saintsdragons.cindervane.mount_occupied": "Uh... you shouldn't be here."
 }
 

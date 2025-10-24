@@ -1,8 +1,10 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 
+import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -55,6 +57,8 @@ public class CinderInteractionHandler {
                 dragon.setCommand(1); // Set command to Sit (1) to match the sitting state
                 dragon.setTarget(null);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+
+                triggerTamingAdvancement(player);
             } else {
                 dragon.level().broadcastEntityEvent(dragon, (byte) 6);
             }
@@ -244,6 +248,16 @@ public class CinderInteractionHandler {
                 dragon.setOrderedToSit(false);
                 // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
+        }
+    }
+
+    private void triggerTamingAdvancement(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            var advancement = serverPlayer.server.getAdvancements()
+                    .getAdvancement(SaintsDragons.rl("tame_cindervane"));
+            if (advancement != null) {
+                serverPlayer.getAdvancements().award(advancement, "tame_cindervane");
+            }
         }
     }
 }
