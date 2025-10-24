@@ -252,18 +252,14 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
         switch (command) {
             case 0: // Follow
                 wyvern.setOrderedToSit(false);
-                // Immediately reset sit progress when standing up
-                wyvern.sitProgress = 0f;
-                wyvern.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
             case 1: // Sit
                 wyvern.setOrderedToSit(true);
                 break;
             case 2: // Wander
                 wyvern.setOrderedToSit(false);
-                // Immediately reset sit progress when standing up
-                wyvern.sitProgress = 0f;
-                wyvern.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
         }
     }

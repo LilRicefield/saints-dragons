@@ -20,6 +20,13 @@ public class CinderAnimationHandler {
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.cindervane.run");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.cindervane.sit");
 
+    // Sleep sequence animations
+    private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.cindervane.down");
+    private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.cindervane.up");
+    private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.cindervane.fall_asleep");
+    private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.cindervane.sleep");
+    private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.cindervane.wake_up");
+
     private static final RawAnimation BANK_LEFT = RawAnimation.begin().thenLoop("animation.cindervane.banking_left");
     private static final RawAnimation BANK_RIGHT = RawAnimation.begin().thenLoop("animation.cindervane.banking_right");
     private static final RawAnimation BANK_OFF = RawAnimation.begin().thenLoop("animation.cindervane.banking_off");
@@ -53,6 +60,11 @@ public class CinderAnimationHandler {
         wasFlying = flyingNow;
 
         state.getController().transitionLength(12); // Longer transitions for smoother animation
+
+        // While dying or sleeping (including transitions), suppress movement animations entirely; action controller plays die/sleep clips
+        if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepTransitioning()) {
+            return PlayState.STOP;
+        }
 
         if (dragon.isVehicle()) {
             state.getController().transitionLength(4);
@@ -102,9 +114,17 @@ public class CinderAnimationHandler {
         }
 
         // Drive SIT from our custom progress system only to avoid desync
-        if (dragon.getSitProgress() > 0.5f) {
+        // Only play SIT loop when FULLY sat down (sit_down transition finished)
+        float sitProgress = dragon.getSitProgress();
+        float maxSit = dragon.maxSitTicks();
+
+        if (sitProgress >= maxSit) {
+            // Fully sitting - play SIT loop
             state.setAndContinue(SIT);
             return PlayState.CONTINUE;
+        } else if (sitProgress > 0f) {
+            // In transition (either sitting down or standing up) - let action controller handle it
+            return PlayState.STOP;
         }
 
         state.getController().setAnimationSpeed(1.0f);
@@ -207,10 +227,37 @@ public class CinderAnimationHandler {
         controller.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.cindervane.eat"));
 
+        // Sleep sequence animations
+        controller.triggerableAnim("down", SIT_DOWN);
+        controller.triggerableAnim("up", SIT_UP);
+        controller.triggerableAnim("fall_asleep", FALL_ASLEEP);
+        controller.triggerableAnim("sleep", SLEEP);
+        controller.triggerableAnim("wake_up", WAKE_UP);
 
         // Vocal entries (automatically registers roar, hurt, die animations with sounds)
         dragon.getVocalEntries().forEach((key, entry) ->
                 controller.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId())));
+    }
+
+    // Sleep animation trigger methods
+    public void triggerSitDownAnimation() {
+        dragon.triggerAnim("actions", "down");
+    }
+
+    public void triggerSitUpAnimation() {
+        dragon.triggerAnim("actions", "up");
+    }
+
+    public void triggerFallAsleepAnimation() {
+        dragon.triggerAnim("actions", "fall_asleep");
+    }
+
+    public void triggerSleepAnimation() {
+        dragon.triggerAnim("actions", "sleep");
+    }
+
+    public void triggerWakeUpAnimation() {
+        dragon.triggerAnim("actions", "wake_up");
     }
 
     public PlayState actionPredicate(AnimationState<Cindervane> state) {

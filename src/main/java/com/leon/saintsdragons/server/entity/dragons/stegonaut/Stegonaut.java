@@ -510,18 +510,14 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         switch (command) {
             case 0: // Follow
                 this.setOrderedToSit(false);
-                // Immediately reset sit progress when standing up
-                this.sitProgress = 0f;
-                this.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
             case 1: // Sit
                 this.setOrderedToSit(true);
                 break;
             case 2: // Wander
                 this.setOrderedToSit(false);
-                // Immediately reset sit progress when standing up
-                this.sitProgress = 0f;
-                this.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
         }
     }

@@ -33,6 +33,11 @@ public class CindervaneGroundWanderGoal extends RandomStrollGoal {
             return false;
         }
 
+        // Don't wander while sitting down (but standing up is OK)
+        if (dragon.isSittingDownAnimation()) {
+            return false;
+        }
+
         // Don't wander during transitional states
         if (dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering()) {
             return false;
