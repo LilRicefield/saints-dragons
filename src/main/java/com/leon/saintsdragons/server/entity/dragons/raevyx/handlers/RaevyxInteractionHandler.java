@@ -47,7 +47,10 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
-            
+
+            // Trigger eat animation
+            wyvern.triggerAnim("action", "eat");
+
             if (wyvern.getRandom().nextInt(10) == 0) {
                 // Successful taming
                 wyvern.tame(player);
