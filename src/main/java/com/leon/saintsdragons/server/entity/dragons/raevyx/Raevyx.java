@@ -2536,10 +2536,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             this.setRunning(false);
             this.getNavigation().stop();
         } else {
-            // Reset sit progress when standing up
+            // Don't clear sitProgress here; let updateSittingProgress() play the stand-up animation first.
             if (!level().isClientSide) {
-                sitProgress = 0;
-                this.entityData.set(DATA_SIT_PROGRESS, 0.0f);
                 // Ensure we are in ground navigation mode and not stuck in legacy flight flags
                 switchToGroundNavigation();
                 if (isFlying()) {

@@ -30,7 +30,7 @@ public class RaevyxSleepGoal extends Goal {
         if (wyvern.isDying() || wyvern.isVehicle() || wyvern.getTarget() != null || wyvern.isAggressive()) return false;
         if (wyvern.level().isThundering()) return false;
 
-        return wyvern.isTame() ? ownerAsleepNearby() : wildShouldSleep();
+        return wyvern.isTame() ? ownerAsleep() : wildShouldSleep();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class RaevyxSleepGoal extends Goal {
         return false;
     }
 
-    private boolean ownerAsleepNearby() {
+    private boolean ownerAsleep() {
         LivingEntity owner = wyvern.getOwner();
         if (!(owner instanceof Player player)) {
             return false;
@@ -76,7 +76,7 @@ public class RaevyxSleepGoal extends Goal {
         if (player.level() != wyvern.level()) {
             return false;
         }
-        return wyvern.distanceToSqr(owner) <= 14 * 14;
+        return true;
     }
 
     private boolean wildShouldSleep() {
@@ -89,7 +89,7 @@ public class RaevyxSleepGoal extends Goal {
 
     private boolean shouldRemainAsleep() {
         if (wyvern.isTame()) {
-            return ownerAsleepNearby();
+            return ownerAsleep();
         }
         return wildShouldSleep();
     }
