@@ -10,7 +10,7 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     public CindervaneModel() {
-        super(SaintsDragons.rl("cindervane"), "headController");
+        super(SaintsDragons.rl("cindervane"), "head");
     }
 
     private static final ResourceLocation MALE_TEXTURE = ResourceLocation.fromNamespaceAndPath("saintsdragons", "textures/entity/cindervane/cindervane.png");
@@ -23,6 +23,7 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
 
         if (entity.isAlive()) {
             applyBankingRoll(entity, animationState);
+            applyNeckFollow();
         }
     }
 
@@ -54,6 +55,48 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         // Set directly from snapshot + bank angle (no lerp with previous frame's bone rotation)
         // This prevents sync bleeding between multiple dragons rendering in the same frame
         body.setRotZ(snap.getRotZ() + bankAngleRad);
+    }
+
+    /**
+     * Softly distributes head look rotations across the neck segments so the
+     * turn feels organic instead of hinging on a single joint.
+     */
+    private void applyNeckFollow() {
+        var headOpt = getBone("head");
+        if (headOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone head = headOpt.get();
+        var snapshot = head.getInitialSnapshot();
+
+        float headDeltaX = head.getRotX() - snapshot.getRotX();
+        float headDeltaY = head.getRotY() - snapshot.getRotY();
+
+        // Limit how far the neck blend can push the segments (roughly 20–25 deg each axis)
+        headDeltaX = Mth.clamp(headDeltaX, -0.35f, 0.35f);
+        headDeltaY = Mth.clamp(headDeltaY, -0.45f, 0.45f);
+
+        // Reset the head bone so only the neck segments provide the visible rotation
+        head.setRotX(snapshot.getRotX());
+        head.setRotY(snapshot.getRotY());
+
+        // Two neck controls: base gets a lighter amount, tip gets the majority for smoother motion
+        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.4f);
+        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.6f);
+    }
+
+    private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone bone = boneOpt.get();
+        var snapshot = bone.getInitialSnapshot();
+
+        bone.setRotX(snapshot.getRotX() + headDeltaX * weight);
+        bone.setRotY(snapshot.getRotY() + headDeltaY * weight);
     }
 }
 
