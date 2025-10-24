@@ -204,6 +204,9 @@ public class CinderAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.bite_air"));
         controller.triggerableAnim("magma_blast",
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
+        controller.triggerableAnim("eat",
+                RawAnimation.begin().thenPlay("animation.cindervane.eat"));
+
 
         // Vocal entries (automatically registers roar, hurt, die animations with sounds)
         dragon.getVocalEntries().forEach((key, entry) ->

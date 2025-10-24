@@ -1839,6 +1839,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         return 18.0;
     }
 
+    @Override
+    public boolean canFeelShake(Entity player) {
+        // Allow screen shake regardless of whether player is on ground
+        // This is important for dragon riding scenarios
+        return true;
+    }
+
     public void triggerScreenShake(float intensity) {
         screenShakeAmount = Math.max(screenShakeAmount, intensity);
         this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);

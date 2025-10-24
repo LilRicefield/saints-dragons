@@ -115,6 +115,10 @@ public class StegonautAnimationHandler {
         actionController.triggerableAnim("grumble3",
                 RawAnimation.begin().thenPlay("animation.stegonaut.grumble3"));
 
+        // Eat animation - triggered when feeding
+        actionController.triggerableAnim("eat",
+                RawAnimation.begin().thenPlay("animation.stegonaut.eat"));
+
         // Register hurt and die animations
         actionController.triggerableAnim("hurt",
                 RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));

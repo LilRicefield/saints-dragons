@@ -130,6 +130,10 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
+
+            // Trigger eat animation
+            wyvern.triggerAnim("action", "eat");
+
             wyvern.setInLove(player);
             sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_ready");
         }
@@ -145,6 +149,9 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
+
+            // Trigger eat animation
+            wyvern.triggerAnim("action", "eat");
 
             // Babies: speed up growth instead of healing
             if (wyvern.isBaby()) {
