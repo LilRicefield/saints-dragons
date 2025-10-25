@@ -155,8 +155,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor levelAccessor, DifficultyInstance difficulty, MobSpawnType reason,
-                                        @Nullable SpawnGroupData spawnData, @Nullable CompoundTag spawnTag) {
+    public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor levelAccessor, @NotNull DifficultyInstance difficulty, MobSpawnType reason,
+                                                 @Nullable SpawnGroupData spawnData, @Nullable CompoundTag spawnTag) {
         SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
         ensureGenderInitialized();
         return data;
