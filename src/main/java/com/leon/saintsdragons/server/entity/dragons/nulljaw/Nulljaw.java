@@ -261,24 +261,23 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
-        this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
-        this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_SWIMMING, false);
         this.entityData.define(DATA_SWIM_TURN, 0);
         this.entityData.define(DATA_SWIM_PITCH, 0);
         this.entityData.define(DATA_PHASE_TWO, false);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
     }
     
     @Override
     protected void defineRideableDragonData() {
-        // Data accessors are already defined in defineSynchedData()
+        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
+        this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
+        this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
+        this.entityData.define(DATA_ACCELERATING, false);
+        this.entityData.define(DATA_FLIGHT_MODE, -1);
+        this.entityData.define(DATA_GOING_UP, false);
+        this.entityData.define(DATA_GOING_DOWN, false);
     }
     
     // ===== REQUIRED ABSTRACT METHODS FROM RIDEABLEDRAGONBASE =====
@@ -1310,12 +1309,14 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     @Override
     public void addAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        saveRideableData(tag);
         tag.putBoolean("PhaseTwo", isPhaseTwoActive());
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        loadRideableData(tag);
         if (tag.contains("PhaseTwo")) {
             setPhaseTwoActive(tag.getBoolean("PhaseTwo"), false);
         }

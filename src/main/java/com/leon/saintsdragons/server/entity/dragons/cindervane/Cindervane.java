@@ -301,10 +301,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        defineRideableDragonData();
         // Define Amphithere-specific data
         this.entityData.define(DATA_FIRE_BREATHING, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0f);
@@ -366,6 +366,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
         return DATA_ACCELERATING;
+    }
+
+    @Override
+    protected void applyLoadedFlightState(boolean flying, boolean takeoff, boolean hovering, boolean landing) {
+        setFlying(flying);
+        setTakeoff(takeoff);
+        setHovering(hovering);
+        setLanding(landing);
     }
 
     @Override
@@ -1452,7 +1460,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         actions.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(actions);
 
-        // Dedicated controller for instant hurt/die reactions (no transition easing)
         AnimationController<Cindervane> HurtController = new AnimationController<>(this, "hurt", 3,
                 state -> software.bernie.geckolib.core.object.PlayState.STOP);
         HurtController.triggerableAnim("cindervane_hurt",
@@ -1460,6 +1467,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         HurtController.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(HurtController);
     }
+
     private void onAnimationSound(SoundKeyframeEvent<Cindervane> event) {
         soundHandler.handleAnimationSound(this, event.getKeyframeData(), event.getController());
     }
@@ -1649,58 +1657,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putBoolean("Flying", isFlying());
-        tag.putBoolean("Hovering", isHovering());
-        tag.putBoolean("Landing", isLanding());
-        tag.putBoolean("Takeoff", isTakeoff());
-        tag.putBoolean("GoingUp", isGoingUp());
-        tag.putBoolean("GoingDown", isGoingDown());
-        tag.putBoolean("Running", isRunning());
-        tag.putBoolean("Accelerating", isAccelerating());
-        tag.putInt("GroundMoveState", getGroundMoveState());
-        tag.putInt("FlightMode", getSyncedFlightMode());
-        tag.putFloat("RiderForward", this.entityData.get(DATA_RIDER_FORWARD));
-        tag.putFloat("RiderStrafe", this.entityData.get(DATA_RIDER_STRAFE));
-        tag.putBoolean("IsSitting", this.isOrderedToSit());
-        tag.putFloat("SitProgress", this.sitProgress);
+        saveRideableData(tag);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
 
+        loadRideableData(tag);
         boolean savedFlying = tag.getBoolean("Flying");
-        boolean savedLanding = tag.getBoolean("Landing");
-        boolean savedTakeoff = tag.getBoolean("Takeoff");
-        boolean savedHovering = tag.getBoolean("Hovering");
-        boolean savedGoingUp = tag.getBoolean("GoingUp");
-        boolean savedGoingDown = tag.getBoolean("GoingDown");
-        boolean savedRunning = tag.getBoolean("Running");
-        boolean savedAccelerating = tag.getBoolean("Accelerating");
-        int savedGroundState = tag.contains("GroundMoveState") ? tag.getInt("GroundMoveState") : 0;
-        int savedFlightMode = tag.contains("FlightMode") ? tag.getInt("FlightMode") : -1;
-        float savedRiderForward = tag.contains("RiderForward") ? tag.getFloat("RiderForward") : 0f;
-        float savedRiderStrafe = tag.contains("RiderStrafe") ? tag.getFloat("RiderStrafe") : 0f;
-        boolean savedSitting = tag.getBoolean("IsSitting");
-        float savedSitProgress = tag.contains("SitProgress") ? tag.getFloat("SitProgress") : (savedSitting ? this.maxSitTicks() : 0f);
-
-        setFlying(savedFlying);
-        setLanding(savedLanding);
-        setTakeoff(savedFlying && savedTakeoff && !savedLanding);
-        setHovering(savedFlying && savedHovering && !savedLanding);
-        setGoingUp(savedFlying && savedGoingUp);
-        setGoingDown(savedFlying && savedGoingDown);
-        setRunning(savedRunning);
-        setAccelerating(savedAccelerating);
- 
-        this.entityData.set(DATA_GROUND_MOVE_STATE, Mth.clamp(savedGroundState, 0, 2));
-        this.entityData.set(DATA_FLIGHT_MODE, savedFlying ? Mth.clamp(savedFlightMode, -1, 3) : -1);
-        this.entityData.set(DATA_RIDER_FORWARD, savedRiderForward);
-        this.entityData.set(DATA_RIDER_STRAFE, savedRiderStrafe);
-        this.sitProgress = Mth.clamp(savedSitProgress, 0f, this.maxSitTicks());
-        this.prevSitProgress = this.sitProgress;
-        this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
-        this.setOrderedToSit(savedSitting);
 
         // Reset all tick counters to prevent state inconsistencies
         // Reset ground ticks when flying

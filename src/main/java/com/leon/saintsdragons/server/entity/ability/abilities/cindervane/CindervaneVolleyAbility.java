@@ -102,4 +102,5 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
             server.addFreshEntity(block);
         }
     }
+
 }
