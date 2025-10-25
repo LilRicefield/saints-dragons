@@ -48,7 +48,6 @@ import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -94,6 +93,130 @@ import java.util.concurrent.ConcurrentHashMap;
 //Just everything
 public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
         DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, DragonControlStateHolder, ElectricalConductivityCapable {
+    // ===== ENTITY DATA ACCESSORS =====
+
+    /** Entity data accessor for flying state */
+    public static final EntityDataAccessor<Boolean> DATA_FLYING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for takeoff state */
+    public static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for hovering state */
+    public static final EntityDataAccessor<Boolean> DATA_HOVERING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for landing state */
+    public static final EntityDataAccessor<Boolean> DATA_LANDING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for running state */
+    public static final EntityDataAccessor<Boolean> DATA_RUNNING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for ground move state (0=idle, 1=walk, 2=run) */
+    public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+
+    /** Entity data accessor for flight mode (0=glide,1=forward,2=hover,3=takeoff,-1=ground) */
+    public static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+
+    /** Entity data accessor for rider forward input */
+    public static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for rider strafe input */
+    public static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for attack kind */
+    public static final EntityDataAccessor<Integer> DATA_ATTACK_KIND =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+
+    /** Entity data accessor for attack phase */
+    public static final EntityDataAccessor<Integer> DATA_ATTACK_PHASE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+
+    /** Entity data accessor for attack state (Cataclysm-style simple state system) */
+    public static final EntityDataAccessor<Integer> DATA_ATTACK_STATE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+
+    /** Entity data accessor for screen shake amount */
+    public static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for beaming state */
+    public static final EntityDataAccessor<Boolean> DATA_BEAMING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for rider landing blend active state */
+    public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for rider controls locked state */
+    public static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for beam end position set flag */
+    public static final EntityDataAccessor<Boolean> DATA_BEAM_END_SET =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for beam end X coordinate */
+    public static final EntityDataAccessor<Float> DATA_BEAM_END_X =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for beam end Y coordinate */
+    public static final EntityDataAccessor<Float> DATA_BEAM_END_Y =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for beam end Z coordinate */
+    public static final EntityDataAccessor<Float> DATA_BEAM_END_Z =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for beam start position set flag */
+    public static final EntityDataAccessor<Boolean> DATA_BEAM_START_SET =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for beam start X coordinate */
+    public static final EntityDataAccessor<Float> DATA_BEAM_START_X =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for beam start Y coordinate */
+    public static final EntityDataAccessor<Float> DATA_BEAM_START_Y =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for beam start Z coordinate */
+    public static final EntityDataAccessor<Float> DATA_BEAM_START_Z =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for going up state */
+    public static final EntityDataAccessor<Boolean> DATA_GOING_UP =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for going down state */
+    public static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for accelerating state */
+    public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for sleeping state */
+    public static final EntityDataAccessor<Boolean> DATA_SLEEPING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for sleep enter transition state */
+    public static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for sleep exit transition state */
+    public static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    // ===== OTHER CONSTANTS =====
+
     public static final float MAX_BEAM_YAW_DEG = 40.0f;
     public static final float MAX_BEAM_PITCH_DEG = 50.0f;
     public static final float[] IDLE_NECK_WEIGHTS = {0.10f, 0.15f, 0.20f, 0.25f};
