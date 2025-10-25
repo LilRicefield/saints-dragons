@@ -2,6 +2,7 @@
 
 package com.leon.saintsdragons.server.entity.base;
 
+import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
@@ -285,12 +286,53 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     @Override
+    public boolean isInvulnerableTo(@NotNull DamageSource source) {
+        // Check elemental immunities first
+        DragonType dragonType = getDragonType();
+        if (dragonType != null && dragonType.getElementalProfile().isImmuneTo(source)) {
+            return true;
+        }
+        return super.isInvulnerableTo(source);
+    }
+
+    @Override
+    public boolean fireImmune() {
+        // Check if this dragon's element grants fire immunity
+        DragonType dragonType = getDragonType();
+        if (dragonType != null && dragonType.getElement() == com.leon.saintsdragons.common.registry.Element.FIRE) {
+            return true;
+        }
+        return super.fireImmune();
+    }
+
+    @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
+        // Apply elemental damage modifiers based on dragon type
+        DragonType dragonType = getDragonType();
+        if (dragonType != null) {
+            float multiplier = dragonType.getElementalProfile().getDamageMultiplier(source);
+            amount *= multiplier;
+
+            // If immune (multiplier = 0), don't take damage
+            if (multiplier == 0.0f) {
+                return false;
+            }
+        }
+
         boolean result = super.hurt(source, amount);
         if (result) {
             onSuccessfulDamage(source, amount);
         }
         return result;
+    }
+
+    /**
+     * Get the dragon type for this entity.
+     * Used for elemental damage calculations and type-specific behavior.
+     */
+    @Nullable
+    public DragonType getDragonType() {
+        return DragonType.fromEntity(this);
     }
 
     /**

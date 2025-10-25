@@ -2252,11 +2252,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return result;
     }
 
-    @Override
-    public boolean isInvulnerableTo(@Nonnull DamageSource source) {
-        if (source.is(DamageTypes.LIGHTNING_BOLT)) return true;
-        return super.isInvulnerableTo(source);
-    }
+    // Lightning immunity is now handled by DragonEntity base class via DragonType.LIGHTNING elemental profile
 
     // ===== BREATHING / AIR SUPPLY =====
     // Allow the wyvern to hold its breath underwater for ~3 minutes (3600 ticks)
