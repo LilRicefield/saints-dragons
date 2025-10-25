@@ -259,10 +259,30 @@ public class DragonAllyScreen extends Screen {
     }
     
     /**
-     * Update the ally list (called from network handler)
+     * Update the ally list (called from network handler when GUI is first opened)
      */
     public void updateAllyList(List<String> newAllyList) {
         this.allyList = newAllyList;
+        this.scrollOffset = Math.min(scrollOffset, Math.max(0, allyList.size() - MAX_VISIBLE_ALLIES));
+    }
+
+    /**
+     * Add a single ally to the list (delta update - optimized)
+     * Called from network handler when an ally is added
+     */
+    public void addAlly(String username) {
+        if (!this.allyList.contains(username)) {
+            this.allyList.add(username);
+            this.scrollOffset = Math.min(scrollOffset, Math.max(0, allyList.size() - MAX_VISIBLE_ALLIES));
+        }
+    }
+
+    /**
+     * Remove a single ally from the list (delta update - optimized)
+     * Called from network handler when an ally is removed
+     */
+    public void removeAlly(String username) {
+        this.allyList.remove(username);
         this.scrollOffset = Math.min(scrollOffset, Math.max(0, allyList.size() - MAX_VISIBLE_ALLIES));
     }
 }

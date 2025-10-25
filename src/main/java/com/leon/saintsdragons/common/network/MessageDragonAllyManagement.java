@@ -99,9 +99,13 @@ public class MessageDragonAllyManagement {
                 resultMessage = Component.translatable("saintsdragons.message.ally." + result.name().toLowerCase(), message.username);
             }
             player.sendSystemMessage(resultMessage);
-            
-            // Send updated ally list to client
-            ModNetworkHandler.sendToPlayer(player, new MessageDragonAllyList(dragon.getId(), allyManager.getAllyUsernames()));
+
+            // Send delta update to client (only the add/remove operation, not entire list)
+            // This is much more efficient than sending the entire ally list on every change
+            if (result == DragonAllyManager.AllyResult.SUCCESS) {
+                boolean isAdd = (message.action == Action.ADD);
+                ModNetworkHandler.sendToPlayer(player, new MessageDragonAllyDelta(dragon.getId(), message.username, isAdd));
+            }
         });
         context.setPacketHandled(true);
     }
