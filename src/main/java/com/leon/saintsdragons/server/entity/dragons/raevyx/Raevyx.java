@@ -406,7 +406,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        defineRideableDragonData();
         // Define Lightning Dragon specific data
         this.entityData.define(DATA_ATTACK_STATE, ATTACK_STATE_IDLE);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
@@ -477,6 +476,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
         return DATA_ACCELERATING;
+    }
+
+    @Override
+    protected void applyLoadedFlightState(boolean flying, boolean takeoff, boolean hovering, boolean landing) {
+        setFlying(flying);
+        setTakeoff(takeoff);
+        setHovering(hovering);
+        setLanding(landing);
     }
 
     @Override
@@ -2623,14 +2630,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putBoolean("Flying", isFlying());
-        tag.putBoolean("Takeoff", isTakeoff());
-        tag.putBoolean("Hovering", isHovering());
-        tag.putBoolean("Landing", isLanding());
-        tag.putBoolean("Running", isRunning());
+        saveRideableData(tag);
         tag.putInt("TimeFlying", timeFlying);
         tag.putBoolean("UsingAirNav", usingAirNav);
-        tag.putFloat("SitProgress", sitProgress);
         tag.putInt("RiderTakeoffTicks", riderTakeoffTicks);
 
         // Save critical flight state variables that were missing
@@ -2667,17 +2669,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.setFlying(tag.getBoolean("Flying"));
-        this.setTakeoff(tag.getBoolean("Takeoff"));
-        this.setHovering(tag.getBoolean("Hovering"));
-        this.setLanding(tag.getBoolean("Landing"));
-        this.setRunning(tag.getBoolean("Running"));
+        loadRideableData(tag);
         this.timeFlying = tag.getInt("TimeFlying");
         this.usingAirNav = tag.getBoolean("UsingAirNav");
-        this.sitProgress = tag.getFloat("SitProgress");
-        this.prevSitProgress = this.sitProgress;
-        // Sync the sit progress with client
-        this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
         this.riderTakeoffTicks = tag.contains("RiderTakeoffTicks") ? tag.getInt("RiderTakeoffTicks") : 0;
 
         // Restore critical flight state variables that were missing
@@ -3347,4 +3341,3 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
     }
 }
-

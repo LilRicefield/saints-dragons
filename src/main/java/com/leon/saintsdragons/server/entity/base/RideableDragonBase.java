@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.base;
 import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
@@ -25,6 +26,12 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        defineRideableDragonData();
     }
 
     // This method should be overridden by subclasses to define their own entity data keys
@@ -446,4 +453,74 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
      * Set if the dragon is running. Must be implemented by subclasses.
      */
     public abstract void setRunning(boolean running);
+
+    /**
+     * Persist the common rideable dragon state to NBT so every dragon saves the same baseline data.
+     */
+    protected void saveRideableData(CompoundTag tag) {
+        tag.putBoolean("Flying", isFlying());
+        tag.putBoolean("Takeoff", isTakeoff());
+        tag.putBoolean("Hovering", isHovering());
+        tag.putBoolean("Landing", isLanding());
+        tag.putBoolean("Running", isRunning());
+        tag.putBoolean("Accelerating", this.entityData.get(getAcceleratingAccessor()));
+        tag.putBoolean("GoingUp", isGoingUp());
+        tag.putBoolean("GoingDown", isGoingDown());
+        tag.putInt("GroundMoveState", this.entityData.get(getGroundMoveStateAccessor()));
+        tag.putInt("FlightMode", this.entityData.get(getFlightModeAccessor()));
+        tag.putFloat("RiderForward", this.entityData.get(getRiderForwardAccessor()));
+        tag.putFloat("RiderStrafe", this.entityData.get(getRiderStrafeAccessor()));
+        tag.putBoolean("IsSitting", this.isOrderedToSit());
+        tag.putFloat("SitProgress", this.sitProgress);
+    }
+
+    /**
+     * Load the common rideable state from NBT. Subclasses can override {@link #applyLoadedFlightState}
+     * if they need to push the booleans into custom accessors.
+     */
+    protected void loadRideableData(CompoundTag tag) {
+        boolean savedFlying = tag.getBoolean("Flying");
+        boolean savedTakeoff = tag.getBoolean("Takeoff");
+        boolean savedHovering = tag.getBoolean("Hovering");
+        boolean savedLanding = tag.getBoolean("Landing");
+        applyLoadedFlightState(savedFlying, savedTakeoff, savedHovering, savedLanding);
+
+        this.setRunning(tag.getBoolean("Running"));
+        this.setAccelerating(tag.getBoolean("Accelerating"));
+        this.setGoingUp(savedFlying && tag.getBoolean("GoingUp"));
+        this.setGoingDown(savedFlying && tag.getBoolean("GoingDown"));
+
+        int groundState = tag.contains("GroundMoveState") ? tag.getInt("GroundMoveState") : 0;
+        this.entityData.set(getGroundMoveStateAccessor(), Mth.clamp(groundState, 0, 2));
+
+        int flightMode = tag.contains("FlightMode") ? tag.getInt("FlightMode") : -1;
+        this.entityData.set(getFlightModeAccessor(), savedFlying ? Mth.clamp(flightMode, -1, 3) : -1);
+
+        float riderForward = tag.contains("RiderForward") ? tag.getFloat("RiderForward") : 0f;
+        float riderStrafe = tag.contains("RiderStrafe") ? tag.getFloat("RiderStrafe") : 0f;
+        this.entityData.set(getRiderForwardAccessor(), riderForward);
+        this.entityData.set(getRiderStrafeAccessor(), riderStrafe);
+
+        boolean savedSitting = tag.getBoolean("IsSitting");
+        this.setOrderedToSit(savedSitting);
+        float savedSitProgress = tag.contains("SitProgress")
+                ? tag.getFloat("SitProgress")
+                : (savedSitting ? this.maxSitTicks() : 0f);
+        this.sitProgress = Mth.clamp(savedSitProgress, 0f, this.maxSitTicks());
+        this.prevSitProgress = this.sitProgress;
+        this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
+
+        if (!level().isClientSide) {
+            this.syncAnimState(this.entityData.get(getGroundMoveStateAccessor()),
+                    this.entityData.get(getFlightModeAccessor()));
+        }
+    }
+
+    /**
+     * Hook for subclasses to push saved flight booleans into their own accessors.
+     * Ground-only dragons can ignore it.
+     */
+    protected void applyLoadedFlightState(boolean flying, boolean takeoff, boolean hovering, boolean landing) {
+        // Default no-op; dragons with dedicated flight data should override.
+    }
 }
