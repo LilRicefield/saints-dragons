@@ -1460,6 +1460,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
 
             postLoadAirStabilizeTicks--;
+            
+            // When stabilization expires, force wild/untamed dragons to land
+            if (postLoadAirStabilizeTicks == 0 && !isTame() && !isVehicle()) {
+                // Wild dragon reloaded mid-flight - force landing to prevent floating
+                setFlying(false);
+                setTakeoff(false);
+                setHovering(false);
+                setLanding(true);
+                switchToGroundNavigation();
+                // Apply downward force to start descent
+                setDeltaMovement(getDeltaMovement().multiply(0.5, -0.3, 0.5));
+            }
         }
     }
     
