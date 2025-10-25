@@ -13,6 +13,7 @@ public class NetworkHandler {
     private static final int ID_ALLY_MANAGEMENT = 2;
     private static final int ID_ALLY_LIST = 3;
     private static final int ID_ALLY_REQUEST = 4;
+    private static final int ID_ALLY_DELTA = 5;
 
     public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(SaintsDragons.MOD_ID, "main"),
@@ -57,6 +58,13 @@ public class NetworkHandler {
                 .encoder(MessageDragonAllyRequest::encode)
                 .decoder(MessageDragonAllyRequest::new)
                 .consumerNetworkThread(MessageDragonAllyRequest::handle)
+                .add();
+
+        // Message: Server->Client ally delta (add/remove single ally, optimized)
+        INSTANCE.messageBuilder(MessageDragonAllyDelta.class, ID_ALLY_DELTA)
+                .encoder(MessageDragonAllyDelta::encode)
+                .decoder(MessageDragonAllyDelta::new)
+                .consumerNetworkThread(MessageDragonAllyDelta::handle)
                 .add();
     }
 }

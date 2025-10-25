@@ -72,6 +72,13 @@ public class DragonRideKeybinds {
     private static boolean wasSecondaryAbilityDown = false;
     private static boolean wasAttackDown = false;
 
+    // Movement state tracking to avoid spamming movement packets
+    private static float lastForward = 0f;
+    private static float lastStrafe = 0f;
+    private static float lastYaw = 0f;
+    private static boolean lastAscendDown = false;
+    private static boolean lastDescendDown = false;
+
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ModEventHandler {
         @SubscribeEvent
@@ -130,7 +137,21 @@ public class DragonRideKeybinds {
             }
         }
 
-        sendInput(ascendDown, descendDown, DragonRiderAction.NONE, null, forward, strafe, yaw);
+        // Only send movement input when something actually changes (prevents spamming 20 packets/sec)
+        boolean movementChanged = forward != lastForward ||
+                                  strafe != lastStrafe ||
+                                  Math.abs(yaw - lastYaw) > 0.1f ||
+                                  ascendDown != lastAscendDown ||
+                                  descendDown != lastDescendDown;
+
+        if (movementChanged) {
+            sendInput(ascendDown, descendDown, DragonRiderAction.NONE, null, forward, strafe, yaw);
+            lastForward = forward;
+            lastStrafe = strafe;
+            lastYaw = yaw;
+            lastAscendDown = ascendDown;
+            lastDescendDown = descendDown;
+        }
 
         if (accelerateDown != wasAccelerateDown) {
             DragonRiderAction action = accelerateDown ? DragonRiderAction.ACCELERATE : DragonRiderAction.STOP_ACCELERATE;
@@ -189,5 +210,10 @@ public class DragonRideKeybinds {
         wasPrimaryAbilityDown = false;
         wasSecondaryAbilityDown = false;
         wasAttackDown = false;
+        lastForward = 0f;
+        lastStrafe = 0f;
+        lastYaw = 0f;
+        lastAscendDown = false;
+        lastDescendDown = false;
     }
 }
