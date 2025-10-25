@@ -1417,18 +1417,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
-    @Override
-    public boolean fireImmune() {
-        return true;
-    }
-
-    @Override
-    public boolean isInvulnerableTo(@NotNull DamageSource source) {
-        if (source.is(DamageTypeTags.IS_FIRE)) {
-            return true;
-        }
-        return super.isInvulnerableTo(source);
-    }
+    // Fire immunity is now handled by DragonEntity base class via DragonType.FIRE elemental profile
 
     public boolean isBreathingFire() {
         return this.entityData.get(DATA_FIRE_BREATHING);
