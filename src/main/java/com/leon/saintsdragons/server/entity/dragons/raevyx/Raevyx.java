@@ -492,7 +492,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     protected float getBodyTurnSpeed() {
-        return 0.3f; // Slower, more graceful turns for large flying dragon
+        return 0.6f; // Match default turn speed like other dragons
     }
 
     // ===== HANDLER ACCESS METHODS (expose only what is used externally) =====
