@@ -75,6 +75,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private boolean dying = false;
     private boolean genderInitialized = false;
 
+    // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
+    private boolean isRespawning = false;
+
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
@@ -160,6 +163,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                                                  @Nullable SpawnGroupData spawnData, @Nullable CompoundTag spawnTag) {
         SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
         ensureGenderInitialized();
+
+        // If baby spawned from spawn egg, reposition on ground to prevent falling from sky
+        if (this.isBaby() && reason == MobSpawnType.SPAWN_EGG) {
+            net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(levelAccessor, this.blockPosition());
+            if (safePos != null && safePos.getY() < this.getY()) {
+                this.moveTo(this.getX(), safePos.getY(), this.getZ(), this.getYRot(), this.getXRot());
+            }
+        }
+
         return data;
     }
 
@@ -745,6 +757,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
+        // Read re-entrancy flag FIRST before calling super (which eventually calls setAge())
+        if (tag.contains("IsRespawning")) {
+            this.isRespawning = tag.getBoolean("IsRespawning");
+        }
+
         super.readAdditionalSaveData(tag);
         if (tag.contains("Command")) {
             setCommand(tag.getInt("Command"));
@@ -771,6 +788,117 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return;
         }
         super.travel(travelVector);
+    }
+
+    // ===== BABY/BREEDING SYSTEM =====
+    /**
+     * Override setAge to detect baby->adult transition and force visual update.
+     * GeckoLib caches animations on the client renderer, so we need to force clients to refresh when aging up.
+     * This is a generic solution that works for all dragon types.
+     */
+    @Override
+    public void setAge(int age) {
+        boolean wasBaby = this.isBaby();
+        super.setAge(age);
+        boolean isNowBaby = this.isBaby();
+
+        // Detect baby->adult or adult->baby transition
+        // Skip if:
+        // - Already in the middle of a respawn (prevents infinite recursion)
+        // - Entity isn't in a world yet (prevents discarding newly created babies during initialization)
+        if (wasBaby != isNowBaby && !level().isClientSide && !isRespawning && this.isAddedToWorld()) {
+            // Set flag to prevent re-entrancy when newEntity.load() calls setAge()
+            isRespawning = true;
+
+            // NUCLEAR OPTION: GeckoLib caches animations on the client renderer, and there's
+            // no clean way to invalidate that cache. So we force the entity to "respawn"
+            // by saving its state, removing it, and spawning a fresh copy.
+
+            // Save current state
+            CompoundTag nbt = new CompoundTag();
+            this.saveWithoutId(nbt);
+
+            // Mark in NBT that we're currently respawning - the new entity will inherit this flag
+            nbt.putBoolean("IsRespawning", true);
+
+            // Update age in the saved data
+            nbt.putInt("Age", age);
+
+            // Create fresh entity with updated data
+            @SuppressWarnings("unchecked")
+            DragonEntity newEntity = (DragonEntity) this.getType().create(this.level());
+            if (newEntity != null) {
+                newEntity.load(nbt);  // Reads IsRespawning=true, preventing another respawn when setAge() is called
+                newEntity.setPos(this.getX(), this.getY(), this.getZ());
+                newEntity.setYRot(this.getYRot());
+                newEntity.setXRot(this.getXRot());
+
+                // Preserve UUID if tamed (important for ownership)
+                if (this.isTame()) {
+                    newEntity.setUUID(this.getUUID());
+                }
+
+                // Clear the respawning flag now that the process is complete
+                newEntity.isRespawning = false;
+
+                // Remove old entity and spawn new one
+                this.discard();
+                this.level().addFreshEntity(newEntity);
+
+                // Visual/sound feedback for the transformation
+                this.level().broadcastEntityEvent(newEntity, (byte) 7); // Hearts
+            }
+
+            // Note: We don't reset the flag on old entity because it's about to be discarded anyway
+        }
+    }
+
+    /**
+     * Override to spawn baby on the ground instead of at parent's Y position.
+     * Prevents babies from spawning mid-air when parent is flying/tall.
+     * NOTE: This is ONLY called for natural breeding (two animals in love), NOT for spawn eggs!
+     */
+    @Override
+    public void spawnChildFromBreeding(net.minecraft.server.level.ServerLevel level, net.minecraft.world.entity.animal.Animal otherParent) {
+        net.minecraft.world.entity.AgeableMob baby = this.getBreedOffspring(level, otherParent);
+        if (baby != null) {
+            net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
+            baby.setBaby(true);
+            baby.moveTo(this.getX(), safePos != null ? safePos.getY() : this.getY(), this.getZ(), 0.0F, 0.0F);
+            level.addFreshEntityWithPassengers(baby);
+        }
+    }
+
+    /**
+     * Finds a safe landing block for newly spawned babies by scanning downward until a sturdy,
+     * non-fluid surface with air above is located. Returns null if no such surface is found.
+     */
+    @Nullable
+    private net.minecraft.core.BlockPos findSafeBabySpawnPos(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos start) {
+        if (level == null || start == null) return null;
+        net.minecraft.core.BlockPos.MutableBlockPos cursor = start.mutable();
+        int minY = level.getMinBuildHeight();
+
+        while (cursor.getY() >= minY) {
+            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(cursor);
+            if (isStableBabyLandingSurface(level, cursor, state)) {
+                net.minecraft.core.BlockPos above = cursor.above();
+                net.minecraft.world.level.block.state.BlockState aboveState = level.getBlockState(above);
+                if (aboveState.getCollisionShape(level, above).isEmpty() && aboveState.getFluidState().isEmpty()) {
+                    return above;
+                }
+            }
+            cursor.move(net.minecraft.core.Direction.DOWN);
+        }
+        return null;
+    }
+
+    private boolean isStableBabyLandingSurface(net.minecraft.world.level.BlockGetter level, net.minecraft.core.BlockPos pos,
+                                               net.minecraft.world.level.block.state.BlockState state) {
+        if (state.isAir() || !state.getFluidState().isEmpty()) {
+            return false;
+        }
+        return state.isSolidRender(level, pos) || state.isFaceSturdy(level, pos, net.minecraft.core.Direction.UP);
     }
 
     // ===== ABSTRACT METHODS =====

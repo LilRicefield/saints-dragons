@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxPanicGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
+import com.leon.saintsdragons.server.ai.goals.raevyx.baby.RaevyxFollowParentGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxPhysicsController;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -252,6 +253,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             .add("roar_air", "action", "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("raevyx_hurt", "hurt", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
             .add("raevyx_die", "action", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
+            .add("baby_raevyx_hurt", "hurt", "animation.raevyx.hurt", ModSounds.BABY_RAEVYX_HURT, 1.4f, 1.05f, 0.15f, true, true, true)
+            .add("baby_raevyx_die", "action", "animation.raevyx.die", ModSounds.BABY_RAEVYX_DIE, 1.3f, 1.0f, 0.1f, false, true, true)
             .build();
 
     private boolean manualSitCommand = false;
@@ -1636,7 +1639,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 animationHandler.triggerSitDownAnimation();
                 isSittingDown = true;
                 isStandingUp = false; // Cancel the stand-up
-                sitTransitionTicks = 93; // down animation is 4.6667s = 93 ticks
+                sitTransitionTicks = getSitDownAnimationTicks();
             }
 
             if (sitProgress < maxSitTicks()) {
@@ -1666,11 +1669,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                     animationHandler.triggerSitUpAnimation();
                     isStandingUp = true;
                     isSittingDown = false; // Cancel the sit-down
-                    sitTransitionTicks = 23; // up animation is 1.125s = 23 ticks
+                    sitTransitionTicks = getSitUpAnimationTicks();
                 }
 
-                // Always decrement sitProgress when standing up (let the animation play as it decrements)
-                sitProgress--;
+                // Decrement sitProgress when standing up
+                // Speed matches stand-up animation duration (20 ticks) not sit-down (30 ticks)
+                float decrementRate = maxSitTicks() / (float) getSitUpAnimationTicks(); // 30/20 = 1.5
+                sitProgress -= decrementRate;
                 if (sitProgress < 0f) {
                     sitProgress = 0f;
                 }
@@ -1818,7 +1823,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             // Check if sit_down animation is complete (sitProgress reached max)
             if (getSitProgress() >= maxSitTicks()) {
                 // Sit down complete, now trigger fall_asleep if we haven't started the transition timer yet
-                if (sleepTransitionTicks == 50) {
+                if (sleepTransitionTicks == getFallAsleepAnimationTicks()) {
                     // Just reached sitting position, trigger fall_asleep
                     animationHandler.triggerFallAsleepAnimation();
                 }
@@ -2003,7 +2008,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
-        return RaevyxAbilities.HURT;
+        return isBaby() ? RaevyxAbilities.BABY_HURT : RaevyxAbilities.HURT;
     }
 
     @Override
@@ -2207,6 +2212,78 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return solidGround && feetFree && headFree;
     }
 
+    /**
+     * Family group spawning: When a wild Raevyx spawns naturally, it has a 60% chance
+     * to spawn with 2-3 baby hatchlings, creating a family group.
+     */
+    @Override
+    @Nullable
+    public SpawnGroupData finalizeSpawn(
+            @Nonnull net.minecraft.world.level.ServerLevelAccessor level,
+            @Nonnull net.minecraft.world.DifficultyInstance difficulty,
+            @Nonnull MobSpawnType spawnReason,
+            @Nullable SpawnGroupData spawnData,
+            @Nullable CompoundTag dataTag
+    ) {
+        spawnData = super.finalizeSpawn(level, difficulty, spawnReason, spawnData, dataTag);
+
+        // Only spawn families during chunk generation
+        // Use a custom SpawnGroupData to track if we've already spawned babies
+        if (spawnReason == MobSpawnType.CHUNK_GENERATION) {
+            // Check if this is the parent (not a baby we're spawning)
+            if (spawnData == null || !(spawnData instanceof RaevyxFamilyData)) {
+                // 60% chance to spawn with babies
+                if (this.random.nextFloat() < 0.6F) {
+                    int babyCount = 2 + this.random.nextInt(2); // 2 or 3 babies
+
+                    // Mark this as a family spawn (false = don't spawn baby via vanilla logic)
+                    spawnData = new RaevyxFamilyData(false);
+
+                    for (int i = 0; i < babyCount; i++) {
+                        Raevyx baby = ModEntities.RAEVYX.get().create(level.getLevel());
+                        if (baby != null) {
+                            // Set baby properties
+                            baby.setBaby(true);
+                            baby.setAge(-24000); // Standard baby age
+                            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+
+                            // Position baby VERY close to parent to avoid chunk boundary issues
+                            double angle = (Math.PI * 2.0 * i) / babyCount;
+                            double distance = 1.0 + this.random.nextDouble() * 0.5; // 1-1.5 blocks away (very close)
+                            double offsetX = Math.cos(angle) * distance;
+                            double offsetZ = Math.sin(angle) * distance;
+
+                            baby.moveTo(
+                                    this.getX() + offsetX,
+                                    this.getY(),
+                                    this.getZ() + offsetZ,
+                                    this.random.nextFloat() * 360.0F,
+                                    0.0F
+                            );
+
+                            // Finalize and add to world
+                            // Pass the family data to prevent recursive baby spawning
+                            baby.finalizeSpawn(level, difficulty, MobSpawnType.CHUNK_GENERATION, spawnData, null);
+                            level.addFreshEntity(baby);
+                        }
+                    }
+                }
+            }
+        }
+
+        return spawnData;
+    }
+
+    /**
+     * Custom SpawnGroupData to track family spawning and prevent recursive baby spawning.
+     * Extends AgeableMobGroupData to satisfy parent class requirements.
+     */
+    private static class RaevyxFamilyData extends AgeableMob.AgeableMobGroupData {
+        public RaevyxFamilyData(boolean shouldSpawnBaby) {
+            super(shouldSpawnBaby);
+        }
+    }
+
     @Override
     public int getMaxHeadXRot() {
         return isBeaming() ? (int)MAX_BEAM_PITCH_DEG : 180;
@@ -2324,7 +2401,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Target selection - use custom goals that respect ally system
         this.targetSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(3, new RaevyxProtectBabiesGoal(this));  // Protect nearby babies
+        this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
         // Neutral behavior: do not proactively target players. Only retaliate when hurt or defend owner.
     }
 
@@ -2351,7 +2429,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         // Intercept lethal damage to play custom death ability first
-        if (handleLethalDamage(damageSource, amount, RaevyxAbilities.DIE)) {
+        DragonAbilityType<?, ?> dieAbility = isBaby() ? RaevyxAbilities.BABY_DIE : RaevyxAbilities.DIE;
+        if (handleLethalDamage(damageSource, amount, dieAbility)) {
             return true;
         }
 
@@ -2530,6 +2609,48 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return isStandingUp;
     }
 
+    // ===== ANIMATION TIMING HELPERS =====
+    /**
+     * Returns the duration in ticks for the sit down animation.
+     * Uses shared animation name - both baby and adult use 1.5s animation.
+     */
+    private int getSitDownAnimationTicks() {
+        return 30; // 1.5s for both baby and adult (unified)
+    }
+
+    /**
+     * Returns the duration in ticks for the sit up animation.
+     * Uses shared animation name - both baby and adult use 1.0s animation.
+     */
+    private int getSitUpAnimationTicks() {
+        return 20; // 1.0s - matches actual animation length
+    }
+
+    /**
+     * Returns the duration in ticks for the fall asleep animation.
+     * Uses shared animation name - both baby and adult use 2.5s animation.
+     */
+    private int getFallAsleepAnimationTicks() {
+        return 50; // 2.5s for both baby and adult (unified)
+    }
+
+    /**
+     * Returns the duration in ticks for the wake up animation.
+     * Uses shared animation name - both baby and adult use 2.625s animation.
+     */
+    private int getWakeUpAnimationTicks() {
+        return 53; // 2.625s for both baby and adult (unified, ~2.65s)
+    }
+
+    /**
+     * Override max sit ticks to match the actual sit_down animation length.
+     * This prevents visual desync where the SIT loop starts before sit_down finishes.
+     */
+    @Override
+    public float maxSitTicks() {
+        return 30.0F; // Matches sit_down animation (1.5s = 30 ticks)
+    }
+
     // ===== SLEEPING =====
     public boolean isSleeping() {
         return getBooleanData(DATA_SLEEPING);
@@ -2604,9 +2725,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public void startSleepEnter() {
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
         setSleepingEntering(true);
-        // New system: sit_down (uses sitProgress) → fall_asleep (2.5s = 50 ticks) → sleep loop
-        // Total transition: ~15 ticks (sit down) + 50 ticks (fall asleep) = ~65 ticks
-        sleepTransitionTicks = 50; // Duration of fall_asleep animation (2.5 seconds)
+        // New system: sit_down (uses sitProgress) → fall_asleep → sleep loop
+        sleepTransitionTicks = getFallAsleepAnimationTicks();
         // Trigger sit_down animation first (handled by sit progress system)
         animationHandler.triggerSitDownAnimation();
         if (!level().isClientSide) {
@@ -2619,8 +2739,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.set(DATA_SLEEPING, false);
         setSleepingEntering(false);
         setSleepingExiting(true);
-        // New system: wake_up (7.6667s = ~153 ticks) → sit (brief) → sit_up
-        sleepTransitionTicks = 153; // Duration of wake_up animation (7.6667 seconds)
+        // New system: wake_up → sit (brief) → sit_up
+        sleepTransitionTicks = getWakeUpAnimationTicks();
         // Trigger wake_up animation
         animationHandler.triggerWakeUpAnimation();
         if (!level().isClientSide) {
@@ -2977,6 +3097,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 new AnimationController<>(this, "hurt", 3, state -> PlayState.STOP);
         HurtController.triggerableAnim("raevyx_hurt",
                 RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
+        HurtController.triggerableAnim("baby_raevyx_hurt",
+                RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
 
         HurtController.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(HurtController);
@@ -3142,6 +3264,26 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Always use cached value when available (both client and server need this)
         return dimensions.height * 0.6f;
     }
+
+    @Override
+    public EntityDimensions getDimensions(@Nonnull Pose pose) {
+        // Scale down hitbox for babies to prevent pushing parent dragon
+        EntityDimensions baseDimensions = super.getDimensions(pose);
+        if (this.isBaby()) {
+            // Scale babies to 40% of adult size (0.4x)
+            // Adult: 3.5F x 3.0F -> Baby: 1.4F x 1.2F
+            return baseDimensions.scale(0.4F);
+        }
+        return baseDimensions;
+    }
+
+    @Override
+    public void ageBoundaryReached() {
+        super.ageBoundaryReached();
+        // Refresh hitbox dimensions when baby grows into adult
+        this.refreshDimensions();
+    }
+
     // Cache horizontal flight speed - used in physics calculations
     public double getCachedHorizontalSpeed() {
         if (tickCount != horizontalSpeedCacheTime) {
@@ -3386,18 +3528,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 position.x, position.y, position.z, 0.0, 0.0, 0.0);
         }
     }
-
-    public boolean hasEnhancedLineOfSight(Vec3 target) {
-        // Lightning Dragons can see through some obstacles
-        // For now, use simple distance check - can be enhanced later
-        return position().distanceTo(target) < 50.0;
-    }
-    
-    public float getEnergyLevel() {
-        // Return energy level (0.0 to 1.0)
-        return 0.8f; // Default high energy for Lightning Dragons
-    }
-    
     public boolean isCharging() {
         // Check if Lightning Dragon is charging
         return false; // Implement based on your charging logic
@@ -3440,7 +3570,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public double getShakeDistance() {
-        return 25.0; // Lightning Dragons have a larger shake radius than Tremorsaurus
+        return 25.0; // larger shake radius
     }
 
     @Override

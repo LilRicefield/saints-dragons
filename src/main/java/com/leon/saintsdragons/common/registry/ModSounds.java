@@ -48,6 +48,10 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_2 = registerSound("raevyx_grumble_2");
     public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_3 = registerSound("raevyx_grumble_3");
 
+    // BABY RAEVYX
+    public static final RegistryObject<SoundEvent> BABY_RAEVYX_HURT = registerSound("baby_raevyx_hurt");
+    public static final RegistryObject<SoundEvent> BABY_RAEVYX_DIE = registerSound("baby_raevyx_die");
+
 
     // ===== AMPHITHERE SOUNDS =====
     public static final RegistryObject<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");

@@ -40,4 +40,11 @@ public final class RaevyxAbilities {
 
     public static final DragonAbilityType<Raevyx, DieAbility<Raevyx>> DIE =
             AbilityRegistry.register(new DragonAbilityType<>("raevyx_die", DieAbility::new));
+
+    // Baby-specific abilities
+    public static final DragonAbilityType<Raevyx, HurtAbility<Raevyx>> BABY_HURT =
+            AbilityRegistry.register(new DragonAbilityType<>("baby_raevyx_hurt", HurtAbility::new));
+
+    public static final DragonAbilityType<Raevyx, DieAbility<Raevyx>> BABY_DIE =
+            AbilityRegistry.register(new DragonAbilityType<>("baby_raevyx_die", DieAbility::new));
 }

@@ -53,6 +53,11 @@ public class RaevyxFlightGoal extends Goal {
             return false;
         }
 
+        // Parents shouldn't fly away and abandon their babies (unless in danger)
+        if (!wyvern.isBaby() && hasNearbyBabies() && !isOverDanger()) {
+            return false;
+        }
+
         // Weather state snapshot for this decision
         boolean thundering = wyvern.level().isThundering();
         boolean raining = !thundering && wyvern.level().isRaining();
@@ -391,6 +396,17 @@ public class RaevyxFlightGoal extends Goal {
     }
 
     // ===== UTILITY METHODS =====
+
+    /**
+     * Check if there are baby Raevyx nearby that this parent should protect
+     */
+    private boolean hasNearbyBabies() {
+        return !wyvern.level().getEntitiesOfClass(
+                Raevyx.class,
+                wyvern.getBoundingBox().inflate(16.0D),  // Check 16 block radius
+                baby -> baby != null && baby.isBaby() && baby.isAlive()
+        ).isEmpty();
+    }
 
     private boolean isOverDanger() {
         BlockPos dragonPos = wyvern.blockPosition();

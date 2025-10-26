@@ -55,6 +55,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         wyvern.triggerAnim("action", "wake_up");
     }
 
+
     // ===== GECKOLIB SETUP =====
     /**
      * Sets up all GeckoLib animation triggers for the action controller.
