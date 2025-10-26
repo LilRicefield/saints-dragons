@@ -2,7 +2,6 @@ package com.leon.saintsdragons.util.math;
 
 /**
  * Interpolation types for smooth value transitions.
- * Ported from AstemirLib for smooth entity rotation.
  */
 public enum InterpolationType {
     LINEAR((a, b, t) -> (1.0 - t) * a + t * b),

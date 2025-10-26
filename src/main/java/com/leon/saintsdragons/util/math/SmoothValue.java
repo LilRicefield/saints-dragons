@@ -2,7 +2,6 @@ package com.leon.saintsdragons.util.math;
 
 /**
  * Smooths value transitions over time using interpolation.
- * Ported from AstemirLib for smooth entity rotation.
  *
  * Two-stage interpolation:
  * 1. update() - LINEAR interpolation tick-to-tick (the actual smoothing)

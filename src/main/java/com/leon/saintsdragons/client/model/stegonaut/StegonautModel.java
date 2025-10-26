@@ -29,6 +29,7 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
 
         // Apply AstemirLib-style body rotation for smooth "body follows head" behavior
         applyBodyRotationDeviation(entity, partialTick);
+        applyTailDrag(entity, partialTick);
         // Note: Head rotation is handled by GeckoLib's built-in head tracking
     }
 
@@ -55,5 +56,36 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
 
         root.setRotY(snap.getRotY() - deviationRad);
+    }
+
+    /**
+     * Applies tail drag effect when turning (The Dawn Era approach).
+     * Tail swings OPPOSITE to turn direction, creating natural drag/whip effect.
+     * Base segments swing more, tip segments swing less.
+     */
+    private void applyTailDrag(Stegonaut entity, float partialTick) {
+        // Get the body rotation deviation (yaw change delta)
+        double deviation = entity.bodyRotDeviation.get(partialTick);
+        float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
+
+        // Apply negative rotation (opposite to turn) with decreasing intensity
+        // Base tail segment swings most (2x), tip swings least (1x)
+        applyTailBoneRotation("tail1", deviationRad * 1.0f);
+        applyTailBoneRotation("tail2", deviationRad * 2.5f);
+        applyTailBoneRotation("tail3", deviationRad * 3.0f);
+    }
+
+    /**
+     * Helper to apply Y-rotation to a tail bone
+     */
+    private void applyTailBoneRotation(String boneName, float rotationY) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone bone = boneOpt.get();
+        var snap = bone.getInitialSnapshot();
+        bone.setRotY(snap.getRotY() + rotationY);
     }
 }

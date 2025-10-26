@@ -84,6 +84,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
     public final com.leon.saintsdragons.util.math.SmoothValue xRotDeviation =
         com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
+    // Yaw velocity for tail drag (works for both wild and ridden)
+    public final com.leon.saintsdragons.util.math.SmoothValue yawVelocity =
+        com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
 
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -648,6 +651,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // Pitch deviation = how much entity is pitched (for vertical lag)
         xRotDeviation.update(0.25f);
         xRotDeviation.setTo((this.getXRot() - this.xRotO) * 0.5);
+
+        // Yaw velocity = rate of turn (for tail drag when riding or wild)
+        // Tracks yBodyRot change instead of head-body difference
+        yawVelocity.update(0.25f);
+        yawVelocity.setTo((this.yBodyRot - this.yBodyRotO) * 2.0);
     }
 
     // ===== COMMAND SYSTEM (shared) =====

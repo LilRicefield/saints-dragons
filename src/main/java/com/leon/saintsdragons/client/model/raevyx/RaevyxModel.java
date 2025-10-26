@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.model.raevyx;
 
 import com.leon.saintsdragons.SaintsDragons;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -64,34 +65,9 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);  // Same as Nulljaw/Stegonaut
             applyBankingRoll(entity, animationState);
-            applyHeadClamp(entity);
             applyNeckFollow(entity, animationState);
+            applyTailDrag(entity, partialTick);
         }
-    }
-
-    /**
-     * Manually applies smoothed head rotation using vanilla's interpolation.
-     * This replaces GeckoLib's automatic head tracking with explicit smoothed values.
-     */
-    private void applySmoothedHeadRotation(Raevyx entity, float partialTick) {
-        var headOpt = getBone("head");
-        if (headOpt.isEmpty()) return;
-
-        GeoBone head = headOpt.get();
-        var snap = head.getInitialSnapshot();
-
-        // Use vanilla's interpolated rotation values for smoothness
-        float entityYaw = entity.yBodyRot;
-        float headYaw = Mth.lerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
-        float headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
-
-        // Convert to relative rotation (head offset from body)
-        float relativeYaw = Mth.degreesDifference(entityYaw, headYaw) * Mth.DEG_TO_RAD;
-        float relativePitch = -headPitch * Mth.DEG_TO_RAD;
-
-        // Apply to head bone
-        head.setRotY(snap.getRotY() + relativeYaw);
-        head.setRotX(snap.getRotX() + relativePitch);
     }
 
     /**
@@ -140,31 +116,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         // This prevents sync bleeding between multiple dragons rendering in the same frame
         body.setRotZ(snap.getRotZ() + bankAngleRad);
     }
-    /**
-     * Clamps the main "head" bone rotation to prevent extreme angles.
-     * This bone is controlled by GeckoLib but we limit how far it can turn.
-     */
-    private void applyHeadClamp(Raevyx entity) {
-        var headOpt = getBone("head");
-        if (headOpt.isEmpty()) return;
 
-        GeoBone head = headOpt.get();
-        var snap = head.getInitialSnapshot();
-
-        float deltaY = head.getRotY() - snap.getRotY();
-        float deltaX = head.getRotX() - snap.getRotX();
-
-        // Clamp to reasonable limits
-        float yawClamp = entity.isFlying() ? 0.9f : 0.6f;   // ~51° / ~34°
-        float pitchClamp = entity.isFlying() ? 1.0f : 0.5f; // ~57° / ~29°
-
-        deltaY = Mth.clamp(deltaY, -yawClamp, yawClamp);
-        deltaX = Mth.clamp(deltaX, -pitchClamp, pitchClamp);
-
-        // Set directly from snapshot (no lerp to avoid cross-entity sync)
-        head.setRotY(snap.getRotY() + deltaY);
-        head.setRotX(snap.getRotX() + deltaX);
-    }
     /**
      * Distributes the parent "head" bone's rotation across neck segments like a giraffe.
      * GeckoLib rotates the main "head" bone, and we distribute that rotation so each
@@ -187,10 +139,10 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         head.setRotY(head.getInitialSnapshot().getRotY());
 
         // Now distribute the rotation across neck segments (4 segments for Raevyx)
-        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.25f);  // Base
-        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.35f);  // Lower-mid
-        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.45f);  // Upper-mid
-        applyNeckBoneFollow("neck4LookControl", headDeltaX, headDeltaY, 0.50f);  // Tip
+        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.15f);  // Base
+        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.20f);  // Lower-mid
+        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.25f);  // Upper-mid
+        applyNeckBoneFollow("neck4LookControl", headDeltaX, headDeltaY, 0.30f);  // Tip
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -207,5 +159,29 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         // Set directly from snapshot (no lerp to avoid cross-entity sync)
         bone.setRotX(snap.getRotX() + addX);
         bone.setRotY(snap.getRotY() + addY);
+    }
+
+    private void applyTailDrag(Raevyx entity, float partialTick) {
+        double deviation = entity.bodyRotDeviation.get(partialTick);
+        float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
+        applyTailBoneRotation("tail1Controller", deviationRad * 0.5f);
+        applyTailBoneRotation("tail2Controller", deviationRad * 1.0f);
+        applyTailBoneRotation("tail3Controller", deviationRad * 1.5f);
+        applyTailBoneRotation("tail4Controller", deviationRad * 2.0f);
+        applyTailBoneRotation("tail5Controller", deviationRad * 2.5f);
+    }
+
+    /**
+     * Helper to apply Y-rotation to a tail bone
+     */
+    private void applyTailBoneRotation(String boneName, float rotationY) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone bone = boneOpt.get();
+        var snap = bone.getInitialSnapshot();
+        bone.setRotY(snap.getRotY() + rotationY);
     }
 }

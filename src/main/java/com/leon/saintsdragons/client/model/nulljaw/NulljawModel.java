@@ -40,7 +40,7 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         if (entity.isAlive() && entity.isSwimming()) {
             applySwimRoll(entity, animationState);
         }
-
+        applyTailDrag(entity, partialTick);
         // Distribute head rotation across neck segments
         applyNeckFollow(entity, animationState);
     }
@@ -128,5 +128,32 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         // Set directly from snapshot (no lerp to avoid cross-entity sync)
         bone.setRotX(snap.getRotX() + addX);
         bone.setRotY(snap.getRotY() + addY);
+    }
+
+    private void applyTailDrag(Nulljaw entity, float partialTick) {
+        // Get the body rotation deviation (yaw change delta)
+        double deviation = entity.bodyRotDeviation.get(partialTick);
+        float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
+
+        // Apply negative rotation (opposite to turn) with decreasing intensity
+        // Base tail segment swings most (2x), tip swings least (1x)
+        applyTailBoneRotation("tail1", deviationRad * 1.5f);
+        applyTailBoneRotation("tail2", deviationRad * 2.5f);
+        applyTailBoneRotation("tail3", deviationRad * 3.5f);
+        applyTailBoneRotation("tail4", deviationRad * 4.0f);
+    }
+
+    /**
+     * Helper to apply Y-rotation to a tail bone
+     */
+    private void applyTailBoneRotation(String boneName, float rotationY) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone bone = boneOpt.get();
+        var snap = bone.getInitialSnapshot();
+        bone.setRotY(snap.getRotY() + rotationY);
     }
 }
