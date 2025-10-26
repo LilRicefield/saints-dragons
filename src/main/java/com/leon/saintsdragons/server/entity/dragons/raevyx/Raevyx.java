@@ -220,8 +220,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public static final float MAX_BEAM_YAW_DEG = 40.0f;
     public static final float MAX_BEAM_PITCH_DEG = 50.0f;
-    public static final float[] IDLE_NECK_WEIGHTS = {0.10f, 0.15f, 0.20f, 0.25f};
-    public static final float[] BEAM_NECK_WEIGHTS = {0.18f, 0.22f, 0.26f, 0.30f};
+
 
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
@@ -466,7 +465,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Start with ground navigation
         this.navigation = this.groundNav;
         this.moveControl = new MoveControl(this);
-        this.lookControl = new DragonLookController(this);
+        // lookControl inherited from DragonEntity (uses DragonLookControl)
 
         // Pathfinding setup
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
@@ -489,6 +488,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.ambientSoundTimer = rng.nextInt(80); // small random offset
         this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
 
+    }
+
+    @Override
+    protected float getBodyTurnSpeed() {
+        return 0.3f; // Slower, more graceful turns for large flying dragon
     }
 
     // ===== HANDLER ACCESS METHODS (expose only what is used externally) =====
@@ -1871,12 +1875,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // Exponential smoothing on yaw delta to avoid jitter, wrap to account for crossing 360 -> 0
         float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
-        bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;
+        bankSmoothedYaw = bankSmoothedYaw * 0.65f + yawChange * 0.35f; // More reactive (was 0.75/0.25)
 
         // Convert smoothed yaw delta into a banking roll. Multiplying gives us headroom for aggressive turns.
-        float targetAngle = Mth.clamp(bankSmoothedYaw * 5.0f, -90f, 90f);
+        float targetAngle = Mth.clamp(bankSmoothedYaw * 6.5f, -90f, 90f); // More dramatic (was 5.0)
         // Ease toward the new target so long sweeping turns feel weighty but responsive.
-        bankAngle = Mth.lerp(0.28f, bankAngle, targetAngle);
+        bankAngle = Mth.lerp(0.40f, bankAngle, targetAngle); // Snappier (was 0.28)
         if (Math.abs(bankAngle) < 0.01f) {
             bankAngle = 0f;
         }
@@ -2301,55 +2305,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return isBeaming() ? 90 : 180;
     }
 
-    // ===== LOOK CONTROLLER =====
-    public static class DragonLookController extends LookControl {
-        private final Raevyx dragon;
-
-        public DragonLookController(Raevyx dragon) {
-            super(dragon);
-            this.dragon = dragon;
-        }
-
-        @Override
-        public void tick() {
-            if (!this.dragon.isAlive()) {
-                return;
-            }
-
-            LivingEntity rider = this.dragon.getControllingPassenger();
-            if (this.dragon.isVehicle() && rider != null) {
-                boolean controlsLocked = this.dragon.areRiderControlsLocked();
-                float baseYaw = this.dragon.getYRot();
-                float targetYaw = rider.getYRot();
-
-                float maxOffsetDeg = (this.dragon.isFlying() ? 0.9F : 0.6F) * Mth.RAD_TO_DEG;
-                float desiredOffset = Mth.degreesDifference(baseYaw, targetYaw);
-                float clampedOffset = controlsLocked
-                        ? Mth.approachDegrees(0.0F, desiredOffset, 6.0F)
-                        : Mth.clamp(desiredOffset, -maxOffsetDeg, maxOffsetDeg);
-                float headYaw = baseYaw + clampedOffset;
-
-                // Don't set yHeadRotO - let Minecraft interpolate smoothly between old and new values
-                this.dragon.setYHeadRot(headYaw);
-
-                if (!controlsLocked) {
-                    float minPitch = this.dragon.getRiderLockPitchMin();
-                    float maxPitch = this.dragon.getRiderLockPitchMax();
-                    float targetPitch = Mth.clamp(rider.getXRot(), minPitch, maxPitch);
-                    float newPitch = Mth.approachDegrees(this.dragon.getXRot(), targetPitch, 7.0F);
-                    // Don't set xRotO - let Minecraft interpolate smoothly
-                    this.dragon.setXRot(newPitch);
-                } else {
-                    float easedPitch = Mth.approachDegrees(this.dragon.getXRot(), 0.0F, 6.0F);
-                    // Don't set xRotO - let Minecraft interpolate smoothly
-                    this.dragon.setXRot(easedPitch);
-                }
-                return;
-            }
-
-            super.tick();
-        }
-    }
     // ===== AI GOALS =====
     @Override
     protected void registerGoals() {
@@ -2395,8 +2350,19 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                                                                net.minecraft.world.item.Items.PUFFERFISH), false));
         
         this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
-        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        // Look goals that skip when being ridden (so rider has full control)
+        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
+            @Override
+            public boolean canUse() {
+                return !Raevyx.this.isVehicle() && super.canUse();
+            }
+        });
+        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+            @Override
+            public boolean canUse() {
+                return !Raevyx.this.isVehicle() && super.canUse();
+            }
+        });
 
         // Target selection - use custom goals that respect ally system
         this.targetSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal(this));

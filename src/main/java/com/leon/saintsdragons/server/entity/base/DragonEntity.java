@@ -89,11 +89,21 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
         this.allyManager = new DragonAllyManager(this);
+        // Set custom look control (lookControl field is protected in Mob)
+        this.lookControl = new com.leon.saintsdragons.server.entity.controller.DragonLookControl<>(this);
     }
 
     @Override
-    protected net.minecraft.world.entity.ai.control.BodyRotationControl createBodyControl() {
-        return new com.leon.saintsdragons.server.entity.controller.DragonBodyControl(this);
+    protected net.minecraft.world.entity.ai.control.@NotNull BodyRotationControl createBodyControl() {
+        return new com.leon.saintsdragons.server.entity.controller.DragonBodyControl(this, getBodyTurnSpeed());
+    }
+
+    /**
+     * Returns the turn speed multiplier for body rotation when moving.
+     * Higher = faster turns. Default 0.6, override for slower/faster species.
+     */
+    protected float getBodyTurnSpeed() {
+        return 0.6f; // Default for most dragons
     }
 
     protected void setRideable() {

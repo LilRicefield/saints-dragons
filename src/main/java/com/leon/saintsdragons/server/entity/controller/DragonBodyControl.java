@@ -18,10 +18,16 @@ public class DragonBodyControl extends BodyRotationControl {
     private float targetYawHead;
     private final double[] histPosX = new double[HISTORY_SIZE];
     private final double[] histPosZ = new double[HISTORY_SIZE];
+    private final float turnSpeed;
 
     public DragonBodyControl(Mob entity) {
+        this(entity, 0.6f); // Default turn speed
+    }
+
+    public DragonBodyControl(Mob entity, float turnSpeed) {
         super(entity);
         this.entity = entity;
+        this.turnSpeed = turnSpeed;
     }
 
     @Override
@@ -46,9 +52,19 @@ public class DragonBodyControl extends BodyRotationControl {
 
         // If moving (velocity detected)
         if (distSq > 2.5E-7) {
-            // Align body to movement direction
+            // Calculate movement direction
             double moveAngle = Math.toDegrees(Mth.atan2(dz, dx)) - 90.0;
-            this.entity.yBodyRot = (float)(this.entity.yBodyRot + Mth.wrapDegrees(moveAngle - this.entity.yBodyRot) * 0.6);
+
+            // Check if moving backward (movement direction is opposite to body facing)
+            float angleDiff = Math.abs(Mth.wrapDegrees((float)moveAngle - this.entity.yBodyRot));
+            boolean movingBackward = angleDiff > 135.0f; // ~135-180° = backing up
+
+            if (!movingBackward) {
+                // Normal movement: align body to movement direction
+                this.entity.yBodyRot = (float)(this.entity.yBodyRot + Mth.wrapDegrees(moveAngle - this.entity.yBodyRot) * this.turnSpeed);
+            }
+            // If moving backward, keep current body rotation (don't try to turn around)
+
             this.targetYawHead = this.entity.yHeadRot;
         }
         // If standing still

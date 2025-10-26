@@ -72,13 +72,14 @@ public record NulljawRiderController(Nulljaw drake) {
         // Clear target when being ridden to prevent AI interference
         drake.setTarget(null);
         
-        // Make drake responsive to player look direction - use conditional like other dragons
+        // Make drake responsive to player look direction
+        // Smooth turning handled by DragonBodyControl + bodyRotDeviation system
         float yawDiff = Math.abs(player.getYRot() - drake.getYRot());
         if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
             float currentYaw = drake.getYRot();
             float targetYaw = player.getYRot();
             float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-            float blend = drake.isPhaseTwoActive() ? 0.28f : 0.9f;
+            float blend = 0.28f;
             float newYaw = currentYaw + (rawDiff * blend);
             
             // Set rotation
