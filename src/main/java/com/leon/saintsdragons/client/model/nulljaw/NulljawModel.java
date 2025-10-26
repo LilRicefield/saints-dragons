@@ -109,9 +109,9 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         head.setRotY(head.getInitialSnapshot().getRotY());
 
         // Now distribute the rotation across neck segments (adjust bone names and weights as needed)
-        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.15f);  // Base
-        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.25f);    // Middle
-        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.35f);    // Tip - most rotation
+        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.35f);  // Base
+        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.40f);    // Middle
+        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.45f);    // Tip - most rotation
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
