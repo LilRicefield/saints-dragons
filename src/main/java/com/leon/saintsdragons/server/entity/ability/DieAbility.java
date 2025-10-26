@@ -39,7 +39,13 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         if (deathEntry != null && deathEntry.controllerId() != null) {
             controllerId = deathEntry.controllerId();
         }
-        dragon.triggerAnim(controllerId, "die");
+
+        // Use baby die animation if this is a baby dragon
+        String animationTrigger = "die";
+        if (abilityId.startsWith("baby_")) {
+            animationTrigger = "baby_die";
+        }
+        dragon.triggerAnim(controllerId, animationTrigger);
 
         // Play death sound manually using ability ID as vocal key
         if (!getLevel().isClientSide && dragon instanceof SoundHandledDragon soundDragon) {

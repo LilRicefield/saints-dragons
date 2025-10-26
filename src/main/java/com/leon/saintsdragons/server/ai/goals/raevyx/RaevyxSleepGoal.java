@@ -8,7 +8,8 @@ import net.minecraft.world.entity.player.Player;
 import java.util.EnumSet;
 
 /**
- * Fresh sleep goal for Lightning Dragons.
+ * Sleep goal for Raevyx - ONLY for tamed dragons when owner sleeps.
+ * Wild dragons use RaevyxRestGoal for ambient resting behavior instead.
  */
 public class RaevyxSleepGoal extends Goal {
 
@@ -30,7 +31,8 @@ public class RaevyxSleepGoal extends Goal {
         if (wyvern.isDying() || wyvern.isVehicle() || wyvern.getTarget() != null || wyvern.isAggressive()) return false;
         if (wyvern.level().isThundering()) return false;
 
-        return wyvern.isTame() ? ownerAsleep() : wildShouldSleep();
+        // ONLY tamed dragons sleep (when owner sleeps). Wild dragons use RestGoal instead.
+        return wyvern.isTame() && ownerAsleep();
     }
 
     @Override
@@ -79,18 +81,8 @@ public class RaevyxSleepGoal extends Goal {
         return true;
     }
 
-    private boolean wildShouldSleep() {
-        // Wild lightning dragons nap during the day when sheltered.
-        if (!wyvern.level().isDay()) return false;
-        var pos = wyvern.blockPosition();
-        var level = wyvern.level();
-        return !level.canSeeSky(pos) || level.getMaxLocalRawBrightness(pos) < 7;
-    }
-
     private boolean shouldRemainAsleep() {
-        if (wyvern.isTame()) {
-            return ownerAsleep();
-        }
-        return wildShouldSleep();
+        // Only tamed dragons sleep, so only check owner status
+        return ownerAsleep();
     }
 }

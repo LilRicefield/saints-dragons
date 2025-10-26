@@ -88,37 +88,43 @@ public class RaevyxPhysicsController {
         // Default transition length (safe baseline); override per-branch below
         state.getController().transitionLength(6);
 
-        // BABY dragons use simple idle/walk/run only (no flying, no complex behaviors)
-        if (wyvern.isBaby()) {
-            if (wyvern.isActuallyRunning()) {
-                state.getController().transitionLength(3);
-                state.setAndContinue(com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.BABY_RUN);
-            } else if (wyvern.isWalking()) {
-                state.getController().transitionLength(3);
-                state.setAndContinue(com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.BABY_WALK);
-            } else {
-                state.getController().transitionLength(4);
-                state.setAndContinue(com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.BABY_IDLE);
-            }
-            return PlayState.CONTINUE;
-        }
-
-        // While dying or sleeping (including transitions), suppress movement animations entirely; action controller plays die/sleep clips
+        // PRIORITY: Handle dying and sleeping FIRST (applies to both baby and adult)
         if (wyvern.isDying() || wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()) {
             return PlayState.STOP;
         }
+
+        // PRIORITY: Handle sitting BEFORE baby check (applies to both baby and adult)
         // Drive SIT from our custom progress system only to avoid desync
-        // Only play SIT loop when FULLY sat down (sit_down transition finished)
         float maxSit = wyvern.maxSitTicks();
         float sitProgress = wyvern.getSitProgress();
 
         if (sitProgress >= maxSit) {
             // Fully sitting - play SIT loop
             state.setAndContinue(SIT);
+            return PlayState.CONTINUE;
         } else if (sitProgress > 0f) {
             // In transition (either sitting down or standing up) - let action controller handle it
             return PlayState.STOP;
-        } else if (wyvern.isDodging()) {
+        }
+
+        // BABY dragons use simple idle/walk/run only (no flying, no complex behaviors)
+        // NOTE: Uses same animation names as adult - renderer switches JSON file based on isBaby()
+        if (wyvern.isBaby()) {
+            if (wyvern.isActuallyRunning()) {
+                state.getController().transitionLength(3);
+                state.setAndContinue(GROUND_RUN);
+            } else if (wyvern.isWalking()) {
+                state.getController().transitionLength(3);
+                state.setAndContinue(GROUND_WALK);
+            } else {
+                state.getController().transitionLength(4);
+                state.setAndContinue(GROUND_IDLE);
+            }
+            return PlayState.CONTINUE;
+        }
+
+        // ADULT-ONLY animations below (babies returned above)
+        if (wyvern.isDodging()) {
             state.setAndContinue(DODGE);
         } else if (wyvern.isLanding()) {
             state.setAndContinue(LANDING);

@@ -1,4 +1,14 @@
 {
+  "baby_raevyx_hurt": {
+    "subtitle": "Raevyx chirps hurtfully",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/baby_raevyx_hurt",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_grumble_1": {
     "subtitle": "Raevyx grumbles",
     "sounds": [

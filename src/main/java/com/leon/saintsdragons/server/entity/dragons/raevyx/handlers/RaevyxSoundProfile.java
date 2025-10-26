@@ -30,19 +30,23 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             Map.entry("roar_ground", 69),
             Map.entry("roar_air", 69),
             Map.entry("raevyx_hurt", 20),
-            Map.entry("raevyx_die", 62)
+            Map.entry("raevyx_die", 62),
+            Map.entry("baby_raevyx_hurt", 15),
+            Map.entry("baby_raevyx_die", 40)
     );
 
-    private static final Map<String, String> EFFECT_TO_VOCAL_KEY = Map.of(
-            "raevyx_grumble1", "grumble1",
-            "raevyx_grumble2", "grumble2",
-            "raevyx_grumble3", "grumble3",
-            "raevyx_chuff", "chuff",
-            "raevyx_content", "content",
-            "raevyx_purr", "purr",
-            "raevyx_roar", "roar",
-            "raevyx_hurt", "raevyx_hurt",
-            "raevyx_die", "raevyx_die"
+    private static final Map<String, String> EFFECT_TO_VOCAL_KEY = Map.ofEntries(
+            Map.entry("raevyx_grumble1", "grumble1"),
+            Map.entry("raevyx_grumble2", "grumble2"),
+            Map.entry("raevyx_grumble3", "grumble3"),
+            Map.entry("raevyx_chuff", "chuff"),
+            Map.entry("raevyx_content", "content"),
+            Map.entry("raevyx_purr", "purr"),
+            Map.entry("raevyx_roar", "roar"),
+            Map.entry("raevyx_hurt", "raevyx_hurt"),
+            Map.entry("raevyx_die", "raevyx_die"),
+            Map.entry("baby_raevyx_hurt", "baby_raevyx_hurt"),
+            Map.entry("baby_raevyx_die", "baby_raevyx_die")
     );
 
     private static final Set<String> STEP_KEYS = Set.of(
@@ -66,8 +70,10 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
             // Roar sound is handled by RaevyxRoarAbility with precise timing, skip keyframe
-            if ("roar".equals(vocalKey) || "raevyx_hurt".equals(vocalKey) || "raevyx_die".equals(vocalKey)) {
-                return true; // Block the keyframe, ability plays the sound
+            // Hurt/die sounds are handled by entity hurt/death methods, skip keyframe
+            if ("roar".equals(vocalKey) || "raevyx_hurt".equals(vocalKey) || "raevyx_die".equals(vocalKey) ||
+                "baby_raevyx_hurt".equals(vocalKey) || "baby_raevyx_die".equals(vocalKey)) {
+                return true; // Block the keyframe, entity plays the sound
             }
             playVocalEntry(handler, dragon, vocalKey, locator);
             return true;
