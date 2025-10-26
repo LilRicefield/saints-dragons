@@ -31,12 +31,42 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     public void setCustomAnimations(Nulljaw entity, long instanceId, AnimationState<Nulljaw> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
+        float partialTick = animationState.getPartialTick();
+
+        // Apply body rotation deviation for smooth "body follows head" behavior
+        applyBodyRotationDeviation(entity, partialTick);
+
         // Apply swim roll for dynamic underwater banking (like Raevyx's flight banking)
         if (entity.isAlive() && entity.isSwimming()) {
             applySwimRoll(entity, animationState);
         }
-            applyNeckFollow();
-            applyHeadClamp(entity);
+
+        // Distribute head rotation across neck segments
+        applyNeckFollow(entity, animationState);
+    }
+
+    /**
+     * Applies smooth body rotation using AstemirLib's deviation approach.
+     * bodyRotDeviation tracks the difference between head and body rotation.
+     * This creates the natural "head leads, body follows" behavior.
+     */
+    private void applyBodyRotationDeviation(Nulljaw entity, float partialTick) {
+        var rootOpt = getBone("root");
+        if (rootOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone root = rootOpt.get();
+        var snap = root.getInitialSnapshot();
+
+        // Get the smoothed head-body difference
+        double deviation = entity.bodyRotDeviation.get(partialTick);
+
+        // Convert to radians and apply
+        // GeckoLib bones rotate left when positive, Minecraft rotates right when positive
+        float deviationRad = (float)(deviation * net.minecraft.util.Mth.DEG_TO_RAD);
+
+        root.setRotY(snap.getRotY() - deviationRad);
     }
 
     /**
@@ -59,37 +89,11 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     }
 
     /**
-     * Clamps the main "head" bone rotation to prevent extreme angles.
-     * This bone is controlled by GeckoLib but we limit how far it can turn.
-     */
-    private void applyHeadClamp(Nulljaw entity) {
-        var headOpt = getBone("head");
-        if (headOpt.isEmpty()) return;
-
-        GeoBone head = headOpt.get();
-        var snap = head.getInitialSnapshot();
-
-        float deltaY = head.getRotY() - snap.getRotY();
-        float deltaX = head.getRotX() - snap.getRotX();
-
-        // Clamp to reasonable limits
-        float yawClamp = 0.8f;   // ~46°
-        float pitchClamp = 0.7f; // ~40°
-
-        deltaY = Mth.clamp(deltaY, -yawClamp, yawClamp);
-        deltaX = Mth.clamp(deltaX, -pitchClamp, pitchClamp);
-
-        // Set directly from snapshot (no lerp to avoid cross-entity sync)
-        head.setRotY(snap.getRotY() + deltaY);
-        head.setRotX(snap.getRotX() + deltaX);
-    }
-
-    /**
      * Distributes the parent "head" bone's rotation across neck segments like a giraffe.
      * GeckoLib rotates the main "head" bone, and we distribute that rotation so each
      * neck segment contributes a portion, creating smooth natural movement.
      */
-    private void applyNeckFollow() {
+    private void applyNeckFollow(Nulljaw entity, AnimationState<Nulljaw> state) {
         var headOpt = getBone("head");
         if (headOpt.isEmpty()) return;
 
