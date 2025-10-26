@@ -33,7 +33,7 @@ public class DragonBodyControl extends BodyRotationControl {
     @Override
     public void clientTick() {
         // Skip if ridden (rider controls rotation)
-        if (this.entity.isPassenger()) {
+        if (this.entity.isVehicle()) {
             return;
         }
 
