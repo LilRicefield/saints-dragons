@@ -78,10 +78,22 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
     private boolean isRespawning = false;
 
+    // AstemirLib-style smooth rotation deviations (client-side only)
+    // Smooths the DELTA (how much rotation changed) not the absolute rotation
+    public final com.leon.saintsdragons.util.math.SmoothValue bodyRotDeviation =
+        com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
+    public final com.leon.saintsdragons.util.math.SmoothValue xRotDeviation =
+        com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
+
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
         this.allyManager = new DragonAllyManager(this);
+    }
+
+    @Override
+    protected net.minecraft.world.entity.ai.control.BodyRotationControl createBodyControl() {
+        return new com.leon.saintsdragons.server.entity.controller.DragonBodyControl(this);
     }
 
     protected void setRideable() {
@@ -604,6 +616,28 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public void tick() {
         super.tick();
         tickAbilities();
+
+        // Update rotation deviations (AstemirLib approach)
+        // Only on client - smoothing is purely visual
+        if (level().isClientSide) {
+            updateRotationDeviations();
+        }
+    }
+
+    /**
+     * Updates smooth rotation deviations using AstemirLib's approach.
+     * Tracks the DIFFERENCE between head and body rotation, not frame-to-frame delta.
+     * This creates the natural "head leads, body follows" behavior.
+     */
+    private void updateRotationDeviations() {
+        // Body deviation = how far head is turned relative to body
+        // When head snaps to look at something, body smoothly catches up
+        bodyRotDeviation.update(0.25f);
+        bodyRotDeviation.setTo((this.yHeadRot - this.yBodyRot) * 0.25);
+
+        // Pitch deviation = how much entity is pitched (for vertical lag)
+        xRotDeviation.update(0.25f);
+        xRotDeviation.setTo((this.getXRot() - this.xRotO) * 0.5);
     }
 
     // ===== COMMAND SYSTEM (shared) =====
