@@ -19,8 +19,6 @@ public class DragonLookControl<T extends DragonEntity> extends LookControl {
 
     @Override
     public void tick() {
-        // Just let vanilla handle everything
-        // Smoothing is purely client-side via bodyRotDeviation/xRotDeviation
         super.tick();
     }
 }

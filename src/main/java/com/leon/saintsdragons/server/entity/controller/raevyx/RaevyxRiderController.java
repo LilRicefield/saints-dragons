@@ -74,7 +74,8 @@ public record RaevyxRiderController(Raevyx wyvern) {
     }
 
     /**
-     * Main rider tick method - handles rotation and banking
+     * Main rider tick method - handles rotation
+     * Smooth turning handled by DragonBodyControl + bodyRotDeviation system
      */
     public void tickRidden(Player player, @SuppressWarnings("unused") Vec3 travelVector) {
         // Prevent accidental rider fall damage while mounted
@@ -85,38 +86,31 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
         boolean flying = wyvern.isFlying();
 
-        // Smooth yaw alignment - keep responsive but with a controllable ease.
-        float targetYaw = player.getYRot();
-        float currentYaw = wyvern.getYRot();
-        float yawDelta = Mth.wrapDegrees(targetYaw - currentYaw);
-        float absYawDelta = Math.abs(yawDelta);
-        float baseYawStep = flying ? 2.5f : 4.0f;
-        float responsiveStep = flying ? absYawDelta * 0.32f : absYawDelta * 0.45f;
-        float maxYawStep = Mth.clamp(baseYawStep + responsiveStep, 1.5f, flying ? 18.0f : 22.0f);
-        float newYaw = Mth.approachDegrees(currentYaw, targetYaw, maxYawStep);
-        wyvern.yBodyRotO = wyvern.yBodyRot;
-        wyvern.yHeadRotO = wyvern.yHeadRot;
-        wyvern.setYRot(newYaw);
-        wyvern.yBodyRot = newYaw;
-        wyvern.yHeadRot = newYaw;
+        // Simple yaw alignment - DragonBodyControl + bodyRotDeviation handle smoothing
+        float yawDiff = Math.abs(player.getYRot() - wyvern.getYRot());
+        if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
+            float currentYaw = wyvern.getYRot();
+            float targetYaw = player.getYRot();
+            float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
+            float blend = flying ? 0.35f : 0.28f; // Slightly more responsive when flying
+            float newYaw = currentYaw + (rawDiff * blend);
 
-        // Smooth pitch alignment with separate ground/flight tuning.
-        float targetPitch;
-        if (flying) {
-            targetPitch = Mth.clamp(player.getXRot() * 0.55f, -35.0f, 30.0f);
-        } else {
-            float desiredGroundPitch = player.getXRot() * 0.25f;
-            targetPitch = Math.abs(desiredGroundPitch) < 1.0f ? 0.0f : Mth.clamp(desiredGroundPitch, -12.0f, 12.0f);
+            // Set rotation - don't manually set old values, let vanilla interpolate
+            wyvern.setYRot(newYaw);
+            wyvern.yBodyRot = newYaw;
+            wyvern.yHeadRot = newYaw;
+
+            // Simple pitch for flight
+            if (flying) {
+                float targetPitch = Mth.clamp(player.getXRot() * 0.55f, -35.0f, 30.0f);
+                wyvern.setXRot(targetPitch);
+            } else {
+                wyvern.setXRot(0.0F);
+            }
+
+            // Force entity to be dirty for network sync
+            wyvern.setDeltaMovement(wyvern.getDeltaMovement());
         }
-        float currentPitch = wyvern.getXRot();
-        float pitchDelta = targetPitch - currentPitch;
-        float absPitchDelta = Math.abs(pitchDelta);
-        float basePitchStep = flying ? 1.8f : 2.2f;
-        float responsivePitchStep = absPitchDelta * (flying ? 0.35f : 0.45f);
-        float maxPitchStep = Mth.clamp(basePitchStep + responsivePitchStep, 1.1f, flying ? 12.0f : 10.0f);
-        float newPitch = Mth.approach(currentPitch, targetPitch, maxPitchStep);
-        wyvern.xRotO = wyvern.getXRot();
-        wyvern.setXRot(newPitch);
 
         // Extra safety: if we just touched ground, ensure rider has no fall damage
         if (wyvern.onGround()) {

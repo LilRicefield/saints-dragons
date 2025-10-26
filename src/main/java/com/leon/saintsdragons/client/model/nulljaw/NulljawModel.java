@@ -75,7 +75,7 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
      * Adds to whatever the animation (swimming_left/swimming_right) already set.
      */
     private void applySwimRoll(Nulljaw entity, AnimationState<Nulljaw> state) {
-        var bodyOpt = getBone("root");
+        var bodyOpt = getBone("body");
         if (bodyOpt.isEmpty()) return;
 
         GeoBone body = bodyOpt.get();
