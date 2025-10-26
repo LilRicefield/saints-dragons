@@ -79,7 +79,8 @@ public record CindervaneRiderController(Cindervane dragon) {
     }
 
     /**
-     * Main rider tick method - handles rotation and banking
+     * Main rider tick method - handles rotation
+     * Smooth turning handled by DragonBodyControl + bodyRotDeviation system
      */
     public void tickRidden(Player player, @SuppressWarnings("unused") Vec3 travelVector) {
         // Prevent accidental rider fall damage while mounted
@@ -88,39 +89,33 @@ public record CindervaneRiderController(Cindervane dragon) {
         // Clear target when being ridden to prevent AI interference
         dragon.setTarget(null);
 
-        // Make dragon responsive to player look direction
-        if (dragon.isFlying()) {
-            float targetYaw = player.getYRot();
-            float targetPitch = player.getXRot() * 0.4f; // More gentle than Lightning Dragon (0.5f)
+        boolean flying = dragon.isFlying();
 
-            // SMOOTHER RESPONSE for glider behavior - less aggressive than Lightning Dragon
+        // Simple yaw/pitch alignment - DragonBodyControl + bodyRotDeviation handle smoothing
+        float yawDiff = Math.abs(player.getYRot() - dragon.getYRot());
+        if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
             float currentYaw = dragon.getYRot();
-            float yawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-            float newYaw = currentYaw + (yawDiff * 0.7f); // Slower than Lightning Dragon (0.85f)
+            float targetYaw = player.getYRot();
+            float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
+            float blend = flying ? 0.30f : 0.25f; // Glider feel - slower than Raevyx
+            float newYaw = currentYaw + (rawDiff * blend);
+
+            // Set rotation - don't manually set old values, let vanilla interpolate
             dragon.setYRot(newYaw);
+            dragon.yBodyRot = newYaw;
+            dragon.yHeadRot = newYaw;
 
-            float currentPitch = dragon.getXRot();
-            float pitchDiff = targetPitch - currentPitch;
-            float newPitch = currentPitch + (pitchDiff * 0.6f); // Slower than Lightning Dragon (0.8f)
-            dragon.setXRot(newPitch);
-
-            // Banking currently disabled for stability
-        } else {
-            // Ground: Also direct response 
-            float yawDiff = Math.abs(player.getYRot() - dragon.getYRot());
-            if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
-                float currentYaw = dragon.getYRot();
-                float targetYaw = player.getYRot();
-                float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-                float newYaw = currentYaw + (rawDiff * 0.6f); // Slower than Lightning Dragon (0.75f)
-                dragon.setYRot(newYaw);
-                dragon.setXRot(0); // Keep level on ground
+            // Simple pitch for flight
+            if (flying) {
+                float targetPitch = Mth.clamp(player.getXRot() * 0.4f, -35.0f, 30.0f);
+                dragon.setXRot(targetPitch);
+            } else {
+                dragon.setXRot(0.0F);
             }
-        }
 
-        // Update body and head rotation
-        dragon.yBodyRot = dragon.getYRot();
-        dragon.yHeadRot = dragon.getYRot();
+            // Force entity to be dirty for network sync
+            dragon.setDeltaMovement(dragon.getDeltaMovement());
+        }
 
         // Extra safety: if we just touched ground, ensure rider has no fall damage
         if (dragon.onGround()) {
