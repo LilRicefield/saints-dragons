@@ -60,23 +60,28 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
 
     /**
      * Applies tail drag effect when turning (The Dawn Era approach).
-     * Tail swings OPPOSITE to turn direction, creating natural drag/whip effect.
-     * Base segments swing more, tip segments swing less.
+     * Uses yawVelocity (body turning speed) NOT bodyRotDeviation (head-body difference).
+     * This way tail only swings when BODY turns, not when head looks around.
      */
     private void applyTailDrag(Stegonaut entity, float partialTick) {
-        // Get the body rotation deviation (yaw change delta)
-        double deviation = entity.bodyRotDeviation.get(partialTick);
-        float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
+        // Use yawVelocity (body turn rate) instead of bodyRotDeviation (head-body difference)
+        // This prevents tail from acting like a second neck when dragon looks around while walking
+        double velocity = entity.yawVelocity.get(partialTick);
 
-        // Apply negative rotation (opposite to turn) with decreasing intensity
-        // Base tail segment swings most (2x), tip swings least (1x)
-        applyTailBoneRotation("tail1", deviationRad * 1.0f);
-        applyTailBoneRotation("tail2", deviationRad * 2.5f);
-        applyTailBoneRotation("tail3", deviationRad * 3.0f);
+        // Clamp velocity to prevent tail from going crazy during rapid movements
+        velocity = Mth.clamp(velocity, -30.0, 30.0); // Max ~30 degrees of tail swing
+
+        float velocityRad = (float)(velocity * Mth.DEG_TO_RAD);
+
+        // Apply rotation with increasing intensity toward tip
+        applyTailBoneRotation("tail1", velocityRad * 1.0f);
+        applyTailBoneRotation("tail2", velocityRad * 2.5f);
+        applyTailBoneRotation("tail3", velocityRad * 3.0f);
     }
 
     /**
-     * Helper to apply Y-rotation to a tail bone
+     * Helper to apply Y-rotation to a tail bone.
+     * ADDS to current rotation (preserves animation) instead of replacing it.
      */
     private void applyTailBoneRotation(String boneName, float rotationY) {
         var boneOpt = getBone(boneName);
@@ -85,7 +90,7 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         }
 
         GeoBone bone = boneOpt.get();
-        var snap = bone.getInitialSnapshot();
-        bone.setRotY(snap.getRotY() + rotationY);
+        // Add to current rotation (which includes animation) instead of setting from snapshot
+        bone.setRotY(bone.getRotY() + rotationY);
     }
 }

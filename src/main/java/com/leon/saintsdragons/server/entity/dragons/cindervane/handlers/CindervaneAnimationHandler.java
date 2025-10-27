@@ -35,8 +35,8 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation PITCH_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.pitching_down");
     private static final RawAnimation PITCH_OFF = RawAnimation.begin().thenLoop("animation.cindervane.pitching_off");
 
-    private static final int TAKEOFF_ANIM_MIN_TICKS = 16;
-    private static final int TAKEOFF_ANIM_MAX_TICKS = 120;
+    private static final int TAKEOFF_ANIM_MIN_TICKS = 1;
+    private static final int TAKEOFF_ANIM_MAX_TICKS = 200;
     private static final double TAKEOFF_ASCENT_THRESHOLD = 0.05D;
 
     private final Cindervane dragon;

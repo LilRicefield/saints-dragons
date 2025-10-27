@@ -126,20 +126,28 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         bone.setRotX(snapshot.getRotX() + headDeltaX * weight);
         bone.setRotY(snapshot.getRotY() + headDeltaY * weight);
     }
+    /**
+     * Applies tail drag effect based on turning speed (yaw velocity).
+     * Works for both wild and ridden dragons - tail swings with turn direction.
+     */
     private void applyTailDrag(Cindervane entity, float partialTick) {
-        // Get the body rotation deviation (yaw change delta)
-        double deviation = entity.bodyRotDeviation.get(partialTick);
-        float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
+        // Use yawVelocity instead of bodyRotDeviation so it works when riding
+        double velocity = entity.yawVelocity.get(partialTick);
 
-        // Apply negative rotation (opposite to turn) with decreasing intensity
-        // Base tail segment swings most (2x), tip swings least (1x)
-        applyTailBoneRotation("tail1", deviationRad * 1.0f);
-        applyTailBoneRotation("tail2", deviationRad * 2.5f);
-        applyTailBoneRotation("tail3", deviationRad * 3.0f);
+        // Clamp velocity to prevent tail from going crazy during rapid movements
+        velocity = Mth.clamp(velocity, -30.0, 30.0); // Max ~30 degrees of tail swing
+
+        float velocityRad = (float)(velocity * Mth.DEG_TO_RAD);
+
+        // Tail swings with increasing intensity toward tip
+        applyTailBoneRotation("tail1", velocityRad * 1.0f);
+        applyTailBoneRotation("tail2", velocityRad * 2.5f);
+        applyTailBoneRotation("tail3", velocityRad * 3.0f);
     }
 
     /**
-     * Helper to apply Y-rotation to a tail bone
+     * Helper to apply Y-rotation to a tail bone.
+     * ADDS to current rotation (preserves animation) instead of replacing it.
      */
     private void applyTailBoneRotation(String boneName, float rotationY) {
         var boneOpt = getBone(boneName);
@@ -148,8 +156,8 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         }
 
         GeoBone bone = boneOpt.get();
-        var snap = bone.getInitialSnapshot();
-        bone.setRotY(snap.getRotY() + rotationY);
+        // Add to current rotation (which includes animation) instead of setting from snapshot
+        bone.setRotY(bone.getRotY() + rotationY);
     }
 
 }
