@@ -139,10 +139,10 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         head.setRotY(head.getInitialSnapshot().getRotY());
 
         // Now distribute the rotation across neck segments (4 segments for Raevyx)
-        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.15f);  // Base
-        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.20f);  // Lower-mid
-        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.25f);  // Upper-mid
-        applyNeckBoneFollow("neck4LookControl", headDeltaX, headDeltaY, 0.30f);  // Tip
+        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.20f);  // Base
+        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.25f);  // Lower-mid
+        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.30f);  // Upper-mid
+        applyNeckBoneFollow("neck4LookControl", headDeltaX, headDeltaY, 0.35f);  // Tip
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {

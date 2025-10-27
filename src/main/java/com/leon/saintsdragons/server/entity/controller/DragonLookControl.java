@@ -28,8 +28,10 @@ public class DragonLookControl<T extends DragonEntity> extends LookControl {
 
     @Override
     public void tick() {
-        // Skip look control when being ridden
+        // When being ridden, skip custom clamping but still call vanilla logic
+        // (vanilla tick() might update internal state needed for camera smoothness)
         if (dragon.isVehicle()) {
+            super.tick();
             return;
         }
 
