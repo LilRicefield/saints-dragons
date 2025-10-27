@@ -2765,7 +2765,7 @@
 						}
 					}
 				},
-				"tail5": {
+				"tail5Controller": {
 					"rotation": {
 						"0.0": {
 							"post": {
