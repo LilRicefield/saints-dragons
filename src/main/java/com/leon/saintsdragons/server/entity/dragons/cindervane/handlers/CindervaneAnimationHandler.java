@@ -35,30 +35,14 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation PITCH_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.pitching_down");
     private static final RawAnimation PITCH_OFF = RawAnimation.begin().thenLoop("animation.cindervane.pitching_off");
 
-    private static final int TAKEOFF_ANIM_MIN_TICKS = 1;
-    private static final int TAKEOFF_ANIM_MAX_TICKS = 200;
-    private static final double TAKEOFF_ASCENT_THRESHOLD = 0.05D;
 
     private final Cindervane dragon;
-    private boolean takeoffAnimationActive;
-    private int takeoffAnimationTicks;
-    private boolean wasFlying;
 
     public CindervaneAnimationHandler(Cindervane dragon) {
         this.dragon = dragon;
     }
 
     public PlayState handleMovementAnimation(AnimationState<Cindervane> state) {
-        boolean flyingNow = dragon.isFlying();
-        if (flyingNow && !wasFlying) {
-            takeoffAnimationActive = true;
-            takeoffAnimationTicks = 0;
-        } else if (!flyingNow) {
-            takeoffAnimationActive = false;
-            takeoffAnimationTicks = 0;
-        }
-        wasFlying = flyingNow;
-
         state.getController().transitionLength(12); // Longer transitions for smoother animation
 
         // While dying or sleeping (including transitions), suppress movement animations entirely; action controller plays die/sleep clips
@@ -70,7 +54,7 @@ public class CindervaneAnimationHandler {
             state.getController().transitionLength(4);
             if (dragon.isFlying()) {
                 // Check for takeoff first (highest priority)
-                if (shouldPlayTakeoff()) {
+                if (dragon.getSyncedFlightMode() == 3) {
                     state.setAndContinue(TAKEOFF);
                     return PlayState.CONTINUE;
                 }
@@ -133,7 +117,7 @@ public class CindervaneAnimationHandler {
 
         if (dragon.isFlying()) {
             // Check for takeoff first (highest priority)
-            if (shouldPlayTakeoff()) {
+            if (dragon.getSyncedFlightMode() == 3) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
@@ -267,55 +251,4 @@ public class CindervaneAnimationHandler {
         return PlayState.STOP;
     }
 
-    /**
-     * Determines if the takeoff animation should play.
-     * Plays during initial launch AND while ascending, like Raevyx.
-     */
-    private boolean shouldPlayTakeoff() {
-        if (!dragon.isFlying()) {
-            takeoffAnimationActive = false;
-            takeoffAnimationTicks = 0;
-            return false;
-        }
-
-        boolean flaggedTakeoff = dragon.isTakeoff() || dragon.getSyncedFlightMode() == 3;
-
-        if (flaggedTakeoff) {
-            if (!takeoffAnimationActive) {
-                takeoffAnimationActive = true;
-                takeoffAnimationTicks = 0;
-            } else {
-                takeoffAnimationTicks++;
-            }
-            return true;
-        }
-
-        if (!takeoffAnimationActive) {
-            return false;
-        }
-
-        takeoffAnimationTicks++;
-
-        int elapsedTicks = takeoffAnimationTicks;
-        if (!dragon.level().isClientSide()) {
-            elapsedTicks = Math.max(elapsedTicks, dragon.getAirTicks());
-        }
-
-        if (elapsedTicks < TAKEOFF_ANIM_MIN_TICKS) {
-            return true;
-        }
-
-        boolean ascending = dragon.getDeltaMovement().y > TAKEOFF_ASCENT_THRESHOLD;
-        boolean airborne = !dragon.onGround();
-        if (dragon.getAirTicks() > 0) {
-            airborne = true;
-        }
-        if (elapsedTicks < TAKEOFF_ANIM_MAX_TICKS && (ascending || airborne)) {
-            return true;
-        }
-
-        takeoffAnimationActive = false;
-        takeoffAnimationTicks = 0;
-        return false;
-    }
 }
