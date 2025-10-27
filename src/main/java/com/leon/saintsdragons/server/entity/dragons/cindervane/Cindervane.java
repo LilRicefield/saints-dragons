@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
+import com.leon.saintsdragons.server.entity.controller.cindervane.CindervanePhysicsController;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
@@ -125,6 +126,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final CindervaneAnimationHandler animationHandler = new CindervaneAnimationHandler(this);
+    private final CindervanePhysicsController physicsController = new CindervanePhysicsController(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
@@ -136,6 +138,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private int targetCooldown;
     private int airTicks;
     public int groundTicks;
+    public int timeFlying = 0;
     private int landingTicks;
     private int riderTakeoffTicks;
     private boolean wasVehicleLastTick;
@@ -465,6 +468,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public void tick() {
         super.tick();
 
+        // Tick physics controller to update flight mode computation
+        physicsController.tick();
+
         tickSittingState();
         tickBankingLogic();
         tickPitchingLogic();
@@ -484,6 +490,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 targetCooldown--;
             }
             handleFireBodyCrash();
+            // Update timeFlying counter
+            if (isFlying()) {
+                timeFlying++;
+            } else {
+                timeFlying = 0;
+            }
             handleAmbientSounds();
 
             // Wake up if sleeping and conditions changed
@@ -918,6 +930,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public int getAirTicks() {
         return airTicks;
     }
+    public int getTimeFlying() {
+        return timeFlying;
+    }
 
     // ===== Rider Control Methods =====
     @Override
@@ -982,58 +997,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public int getFlightMode() {
-        int flightMode = -1; // not flying (ground state)
-        if (isFlying()) {
-            if (isTakeoff()) {
-                flightMode = 3; // takeoff
-            } else if (isHovering()) {
-                flightMode = 2; // hover
-            } else if (isGoingDown()) {
-                flightMode = 0; // glide (descending always plays GLIDE_DOWN via animation handler)
-            } else if (isGoingUp()) {
-                flightMode = 1; // flap (ascending)
-            } else {
-                // Altitude-based flight mode for ridden dragons
-                if (this.isTame() && this.isVehicle()) {
-                    Entity rider = this.getControllingPassenger();
-                    if (rider != null) {
-                        int groundY = this.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                                Mth.floor(this.getX()), Mth.floor(this.getZ()));
-                        double altitudeAboveTerrain = this.getY() - groundY;
-
-                        // Hysteresis: Enter glide at 40 blocks, exit at 30 blocks
-                        if (inHighAltitudeGlide) {
-                            // Already gliding - stay in glide until we drop below exit threshold
-                            if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_EXIT) {
-                                flightMode = 0; // High-altitude glide
-                            } else {
-                                inHighAltitudeGlide = false;
-                                flightMode = 1; // Low altitude - flap
-                            }
-                        } else {
-                            // Not gliding yet - enter glide if above entry threshold
-                            if (altitudeAboveTerrain > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
-                                inHighAltitudeGlide = true;
-                                flightMode = 0; // High-altitude glide
-                            } else {
-                                flightMode = 1; // Low altitude - flap
-                            }
-                        }
-                    } else {
-                        // Default to glide for natural descent
-                        flightMode = 0; // glide
-                    }
-                } else {
-                    // Not being ridden - reset flag and default to glide
-                    inHighAltitudeGlide = false;
-                    flightMode = 0; // glide
-                }
-            }
-        } else {
-            // Not flying - reset flag
-            inHighAltitudeGlide = false;
-        }
-        return flightMode;
+        // Delegate to physics controller for consistent flight mode computation
+        return physicsController.computeFlightModeForSync();
     }
 
     @Override
@@ -1659,6 +1624,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.putInt("TimeFlying", timeFlying);
         saveRideableData(tag);
     }
 
@@ -1668,6 +1634,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         loadRideableData(tag);
         boolean savedFlying = tag.getBoolean("Flying");
+        this.timeFlying = tag.getInt("TimeFlying");
 
         // Reset all tick counters to prevent state inconsistencies
         // Reset ground ticks when flying
