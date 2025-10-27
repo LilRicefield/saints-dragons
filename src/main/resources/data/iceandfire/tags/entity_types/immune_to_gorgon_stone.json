@@ -1,7 +1,9 @@
 {
+  "replace": false,
+  "__comment" : "Resists IaF's Gorgon.",
   "values": [
     "saintsdragons:raevyx",
-    "saintsdragons:amphithere",
-    "saintsdragons:rift_drake"
+    "saintsdragons:nulljaw",
+    "saintsdragons:cindervane"
   ]
 }
