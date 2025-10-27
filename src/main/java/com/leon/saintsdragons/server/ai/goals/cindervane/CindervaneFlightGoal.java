@@ -443,6 +443,16 @@ public class CindervaneFlightGoal extends Goal {
             return true;
         }
 
+        // NIGHT-TIME: Wild Cindervanes don't take off at night (they sleep)
+        // Tamed dragons can still fly at night with owner
+        if (!amphithere.isTame()) {
+            long dayTime = amphithere.level().getDayTime() % 24000;
+            boolean isNight = dayTime >= 13000 && dayTime < 23000;
+            if (isNight) {
+                return false; // Stay grounded at night for RestGoal to activate
+            }
+        }
+
         if (thundering) {
             // Gliders avoid thunderstorms - very rare takeoff
             return amphithere.getRandom().nextInt(200) == 0; // 0.5% chance - gliders avoid storms
@@ -458,6 +468,17 @@ public class CindervaneFlightGoal extends Goal {
     private boolean shouldKeepFlying(boolean thundering, boolean raining) {
         if (isOverDanger()) {
             return true;
+        }
+
+        // NIGHT-TIME: Wild Cindervanes land quickly at night (they sleep)
+        // Tamed dragons can still fly at night with owner
+        if (!amphithere.isTame()) {
+            long dayTime = amphithere.level().getDayTime() % 24000;
+            boolean isNight = dayTime >= 13000 && dayTime < 23000;
+            if (isNight) {
+                // Land quickly at night (~5 sec average) to find a safe spot to sleep
+                return amphithere.getRandom().nextInt(100) != 0;
+            }
         }
 
         // Weather-weighted patrol durations - gliders avoid storms

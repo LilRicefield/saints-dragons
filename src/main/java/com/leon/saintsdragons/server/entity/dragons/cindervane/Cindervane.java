@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.ai.goals.cindervane.CindervaneCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.cindervane.CindervaneFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.cindervane.CindervaneFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.cindervane.CindervaneGroundWanderGoal;
+import com.leon.saintsdragons.server.ai.goals.cindervane.CindervaneRestGoal;
 import com.leon.saintsdragons.server.ai.goals.cindervane.CindervaneSleepGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
@@ -379,12 +380,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new CindervaneSleepGoal(this)); // Sleep goal - high priority
-        this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(3, new CindervaneFlightGoal(this));
-        this.goalSelector.addGoal(4, new CindervaneCombatGoal(this));
-        this.goalSelector.addGoal(5, new CindervaneFollowOwnerGoal(this));
-        this.goalSelector.addGoal(6, new CindervaneGroundWanderGoal(this, 0.6D, 160));
+        this.goalSelector.addGoal(1, new CindervaneSleepGoal(this)); // Sleep goal - high priority (tamed dragons sleep with owner)
+        this.goalSelector.addGoal(2, new CindervaneRestGoal(this)); // Wild rest/sleep goal - night-time only (MUST be before FlightGoal!)
+        this.goalSelector.addGoal(3, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(4, new CindervaneFlightGoal(this));
+        this.goalSelector.addGoal(5, new CindervaneCombatGoal(this));
+        this.goalSelector.addGoal(6, new CindervaneFollowOwnerGoal(this));
+        this.goalSelector.addGoal(7, new CindervaneGroundWanderGoal(this, 0.6D, 160));
 
         this.targetSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal(this));
