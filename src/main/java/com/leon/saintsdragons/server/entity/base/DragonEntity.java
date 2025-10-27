@@ -19,6 +19,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -55,6 +56,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Shared gender flag for all dragons (0=male,1=female)
     private static final EntityDataAccessor<Byte> DATA_GENDER =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BYTE);
+    // Server authoritative smooth look data
+    private static final EntityDataAccessor<Float> DATA_BODY_DEVIATION =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_PITCH_DEVIATION =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_YAW_VELOCITY =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     
@@ -78,7 +86,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
     private boolean isRespawning = false;
 
-    // AstemirLib-style smooth rotation deviations (client-side only)
+    // AstemirLib-style smooth rotation deviations (mirrored on both sides)
     // Smooths the DELTA (how much rotation changed) not the absolute rotation
     public final com.leon.saintsdragons.util.math.SmoothValue bodyRotDeviation =
         com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
@@ -125,6 +133,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.define(DATA_COMMAND, 0); // 0=Follow, 1=Sit, 2=Wander (default Follow)
         this.entityData.define(DATA_SIT_PROGRESS, 0.0f); // Sit progress for smooth animations
         this.entityData.define(DATA_GENDER, DragonGender.MALE.getId());
+        this.entityData.define(DATA_BODY_DEVIATION, 0.0f);
+        this.entityData.define(DATA_PITCH_DEVIATION, 0.0f);
+        this.entityData.define(DATA_YAW_VELOCITY, 0.0f);
     }
 
     public DragonGender getGender() {
@@ -634,6 +645,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // Only on client - smoothing is purely visual
         if (level().isClientSide) {
             updateRotationDeviations();
+        } else {
+            updateServerRotationTargets();
         }
     }
 
@@ -643,19 +656,57 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * This creates the natural "head leads, body follows" behavior.
      */
     private void updateRotationDeviations() {
-        // Body deviation = how far head is turned relative to body
-        // When head snaps to look at something, body smoothly catches up
+        double localBody = Mth.wrapDegrees(this.yHeadRot - this.yBodyRot) * 0.25;
+        double localPitch = (this.getXRot() - this.xRotO) * 0.5;
+        double localYawVel = Mth.wrapDegrees(this.yBodyRot - this.yBodyRotO) * 2.0;
+
+        if (this.isControlledByLocalInstance()) {
+            // Local authority: run the smoothing locally for instant feedback
+            bodyRotDeviation.setTo(localBody);
+            bodyRotDeviation.update(0.25f);
+
+            xRotDeviation.setTo(localPitch);
+            xRotDeviation.update(0.25f);
+
+            yawVelocity.setTo(localYawVel);
+            yawVelocity.update(0.25f);
+        } else {
+            // Remote view: consume server-smoothed values
+            bodyRotDeviation.setTo(this.entityData.get(DATA_BODY_DEVIATION));
+            bodyRotDeviation.update(0.25f);
+
+            xRotDeviation.setTo(this.entityData.get(DATA_PITCH_DEVIATION));
+            xRotDeviation.update(0.25f);
+
+            yawVelocity.setTo(this.entityData.get(DATA_YAW_VELOCITY));
+            yawVelocity.update(0.25f);
+        }
+    }
+
+    /**
+     * Computes the latest raw rotation deltas and pushes them to SynchedEntityData so
+     * all tracking clients receive identical targets for smoothing.
+     */
+    private void updateServerRotationTargets() {
+        float headToBody;
+        if (this.isVehicle()) {
+            headToBody = 0.0f;
+        } else {
+            headToBody = Mth.wrapDegrees(this.yHeadRot - this.yBodyRot) * 0.25f;
+        }
+        float pitchDelta = (this.getXRot() - this.xRotO) * 0.5f;
+        float bodyYawDelta = Mth.wrapDegrees(this.yBodyRot - this.yBodyRotO) * 2.0f;
+
+        bodyRotDeviation.setTo(headToBody);
         bodyRotDeviation.update(0.25f);
-        bodyRotDeviation.setTo((this.yHeadRot - this.yBodyRot) * 0.25);
-
-        // Pitch deviation = how much entity is pitched (for vertical lag)
+        xRotDeviation.setTo(pitchDelta);
         xRotDeviation.update(0.25f);
-        xRotDeviation.setTo((this.getXRot() - this.xRotO) * 0.5);
-
-        // Yaw velocity = rate of turn (for tail drag when riding or wild)
-        // Tracks yBodyRot change instead of head-body difference
+        yawVelocity.setTo(bodyYawDelta);
         yawVelocity.update(0.25f);
-        yawVelocity.setTo((this.yBodyRot - this.yBodyRotO) * 2.0);
+
+        this.entityData.set(DATA_BODY_DEVIATION, (float) bodyRotDeviation.getImmediate());
+        this.entityData.set(DATA_PITCH_DEVIATION, (float) xRotDeviation.getImmediate());
+        this.entityData.set(DATA_YAW_VELOCITY, (float) yawVelocity.getImmediate());
     }
 
     // ===== COMMAND SYSTEM (shared) =====
