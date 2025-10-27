@@ -161,18 +161,30 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         bone.setRotY(snap.getRotY() + addY);
     }
 
+    /**
+     * Applies tail drag effect based on turning speed (yaw velocity).
+     * Works for both wild and ridden dragons - tail swings with turn direction.
+     */
     private void applyTailDrag(Raevyx entity, float partialTick) {
-        double deviation = entity.bodyRotDeviation.get(partialTick);
-        float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
-        applyTailBoneRotation("tail1Controller", deviationRad * 0.5f);
-        applyTailBoneRotation("tail2Controller", deviationRad * 1.0f);
-        applyTailBoneRotation("tail3Controller", deviationRad * 1.5f);
-        applyTailBoneRotation("tail4Controller", deviationRad * 2.0f);
-        applyTailBoneRotation("tail5Controller", deviationRad * 2.5f);
+        // Use yawVelocity instead of bodyRotDeviation so it works when riding
+        double velocity = entity.yawVelocity.get(partialTick);
+
+        // Clamp velocity to prevent tail from going crazy during rapid movements (takeoff, dodging, etc.)
+        velocity = Mth.clamp(velocity, -30.0, 30.0); // Max ~30 degrees of tail swing
+
+        float velocityRad = (float)(velocity * Mth.DEG_TO_RAD);
+
+        // Tail swings with increasing intensity toward tip
+        applyTailBoneRotation("tail1Controller", velocityRad * 0.5f);
+        applyTailBoneRotation("tail2Controller", velocityRad * 0.75f);
+        applyTailBoneRotation("tail3Controller", velocityRad * 1.0f);
+        applyTailBoneRotation("tail4Controller", velocityRad * 1.25f);
+        applyTailBoneRotation("tail5Controller", velocityRad * 1.75f);
     }
 
     /**
-     * Helper to apply Y-rotation to a tail bone
+     * Helper to apply Y-rotation to a tail bone.
+     * ADDS to current rotation (preserves animation) instead of replacing it.
      */
     private void applyTailBoneRotation(String boneName, float rotationY) {
         var boneOpt = getBone(boneName);
@@ -181,7 +193,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         }
 
         GeoBone bone = boneOpt.get();
-        var snap = bone.getInitialSnapshot();
-        bone.setRotY(snap.getRotY() + rotationY);
+        // Add to current rotation (which includes animation) instead of setting from snapshot
+        bone.setRotY(bone.getRotY() + rotationY);
     }
 }
