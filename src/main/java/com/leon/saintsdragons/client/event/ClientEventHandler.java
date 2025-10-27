@@ -40,8 +40,8 @@ public class ClientEventHandler {
             // Flying: zoom to 18F, grounded: 10F base
             raevyxCameraZoomTarget = isFlying ? 18F : 10F;
 
-            // Smooth transition (0.15 = gentle blend rate)
-            float blendRate = 0.15F;
+            // Smooth transition (slower blend rate for more gradual zoom)
+            float blendRate = 0.05F; // Reduced from 0.15F for slower, smoother transitions
             raevyxCameraZoom += (raevyxCameraZoomTarget - raevyxCameraZoom) * blendRate;
 
             // Apply the smoothed zoom
@@ -60,8 +60,8 @@ public class ClientEventHandler {
             // Flying: zoom to 25F, grounded: 10F base
             cindervaneCameraZoomTarget = isFlying ? 30F : 15F;
 
-            // Smooth transition (0.15 = gentle blend rate)
-            float blendRate = 0.15F;
+            // Smooth transition (slower blend rate for more gradual zoom)
+            float blendRate = 0.05F; // Reduced from 0.15F for slower, smoother transitions
             cindervaneCameraZoom += (cindervaneCameraZoomTarget - cindervaneCameraZoom) * blendRate;
 
             // Apply the smoothed zoom
