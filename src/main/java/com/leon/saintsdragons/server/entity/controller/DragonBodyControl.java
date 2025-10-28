@@ -32,7 +32,8 @@ public class DragonBodyControl extends BodyRotationControl {
 
     @Override
     public void clientTick() {
-        // Skip if ridden (rider controls rotation)
+        // Skip if ridden (rider controls rotation, synced from server)
+        // CRITICAL: Also skip for observers - let vanilla sync handle body rotation!
         if (this.entity.isVehicle()) {
             return;
         }
