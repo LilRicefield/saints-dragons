@@ -11,7 +11,6 @@ import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxDodgeGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxGroundWanderGoal;
-import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxPanicGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.ai.goals.raevyx.baby.RaevyxFollowParentGoal;
@@ -2308,8 +2307,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // ===== AI GOALS =====
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new RaevyxPanicGoal(this));
-        this.goalSelector.addGoal(2, new RaevyxDodgeGoal(this));
+        this.goalSelector.addGoal(1, new RaevyxDodgeGoal(this));
         this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(6, new FloatGoal(this));
         this.goalSelector.addGoal(7, new RaevyxFollowParentGoal(this, 1.15D));

@@ -13,7 +13,7 @@ import java.util.EnumSet;
  */
 public class CindervaneRestGoal extends Goal {
 
-    private final Cindervane dragon;
+    private final Cindervane amphithere;
     private int retryCooldown;
 
     // State tracking for animation sequence
@@ -29,8 +29,8 @@ public class CindervaneRestGoal extends Goal {
     private RestState state;
     private int stateTimer;
 
-    public CindervaneRestGoal(Cindervane dragon) {
-        this.dragon = dragon;
+    public CindervaneRestGoal(Cindervane amphithere) {
+        this.amphithere = amphithere;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
@@ -43,33 +43,33 @@ public class CindervaneRestGoal extends Goal {
         }
 
         // Only wild (untamed) dragons rest casually
-        if (dragon.isTame()) return false;
+        if (amphithere.isTame()) return false;
 
         // Don't rest if busy with other things
-        if (dragon.isOrderedToSit()) return false;
-        if (dragon.isSleepLocked()) return false;
-        if (dragon.isInWaterOrBubble() || dragon.isInLava()) return false;
-        if (dragon.isDying() || dragon.isVehicle()) return false;
-        if (dragon.getTarget() != null || dragon.isAggressive()) return false;
-        if (dragon.isFlying()) return false;
+        if (amphithere.isOrderedToSit()) return false;
+        if (amphithere.isSleepLocked()) return false;
+        if (amphithere.isInWaterOrBubble() || amphithere.isInLava()) return false;
+        if (amphithere.isDying() || amphithere.isVehicle()) return false;
+        if (amphithere.getTarget() != null || amphithere.isAggressive()) return false;
+        if (amphithere.isFlying()) return false;
 
         // NIGHT-ONLY: Cindervanes sleep at night (like Stegonaut)
-        long dayTime = dragon.level().getDayTime() % 24000;
+        long dayTime = amphithere.level().getDayTime() % 24000;
         boolean isNight = dayTime >= 13000 && dayTime < 23000;
         if (!isNight) return false;
 
         // Random chance to sleep at night (about 1% chance per second when idle)
-        return dragon.getRandom().nextFloat() < 0.0005f;
+        return amphithere.getRandom().nextFloat() < 0.0005f;
     }
 
     @Override
     public boolean canContinueToUse() {
         // Continue until we've completed the full sequence
-        boolean safeToRest = !dragon.isInWaterOrBubble() && dragon.getTarget() == null;
+        boolean safeToRest = !amphithere.isInWaterOrBubble() && amphithere.getTarget() == null;
         boolean sequenceComplete = (state == RestState.STANDING_UP && stateTimer > 46); // After stand up animation
 
         // Also wake up if it becomes day
-        long dayTime = dragon.level().getDayTime() % 24000;
+        long dayTime = amphithere.level().getDayTime() % 24000;
         boolean isNight = dayTime >= 13000 && dayTime < 23000;
 
         return !sequenceComplete && safeToRest && isNight;
@@ -81,25 +81,25 @@ public class CindervaneRestGoal extends Goal {
 
         // Start with sitting down animation (down → sit)
         state = RestState.SITTING_DOWN;
-        dragon.setOrderedToSit(true); // Triggers down animation
-        dragon.getNavigation().stop();
+        amphithere.setOrderedToSit(true); // Triggers down animation
+        amphithere.getNavigation().stop();
     }
 
     @Override
     public void tick() {
-        if (dragon.level().isClientSide) return;
+        if (amphithere.level().isClientSide) return;
 
         stateTimer++;
 
         // Stop navigation and stay still
-        dragon.getNavigation().stop();
-        dragon.setDeltaMovement(0, dragon.getDeltaMovement().y, 0);
+        amphithere.getNavigation().stop();
+        amphithere.setDeltaMovement(0, amphithere.getDeltaMovement().y, 0);
 
         // Ensure dragon stays sitting ONLY during initial sit-down and sitting states
         // DO NOT re-trigger sit during WAKING_UP or SITTING_AFTER (wake_up already transitions to sit)
         if (state == RestState.SITTING_DOWN || state == RestState.SITTING) {
-            if (!dragon.isOrderedToSit()) {
-                dragon.setOrderedToSit(true); // Re-enforce sit if it got cleared somehow
+            if (!amphithere.isOrderedToSit()) {
+                amphithere.setOrderedToSit(true); // Re-enforce sit if it got cleared somehow
             }
         }
 
@@ -107,7 +107,7 @@ public class CindervaneRestGoal extends Goal {
         switch (state) {
             case SITTING_DOWN:
                 // Wait for down → sit animation (2.25s = 45 ticks, +5 buffer)
-                if (stateTimer > 50 && !dragon.isInSitTransition()) {
+                if (stateTimer > 50 && !amphithere.isInSitTransition()) {
                     state = RestState.SITTING;
                     stateTimer = 0;
                 }
@@ -118,14 +118,14 @@ public class CindervaneRestGoal extends Goal {
                 if (stateTimer > 20) {
                     state = RestState.FALLING_ASLEEP;
                     stateTimer = 0;
-                    dragon.startSleepEnter(); // Triggers fall_asleep → sleep
+                    amphithere.startSleepEnter(); // Triggers fall_asleep → sleep
                 }
                 break;
 
             case FALLING_ASLEEP:
                 // Wait for fall_asleep animation (3.0s = 60 ticks, +5 buffer)
                 // Use state check as primary, timer as fallback
-                if ((dragon.isSleeping() && !dragon.isSleepTransitioning()) || stateTimer > 65) {
+                if ((amphithere.isSleeping() && !amphithere.isSleepTransitioning()) || stateTimer > 65) {
                     state = RestState.SLEEPING;
                     stateTimer = 0;
                 }
@@ -133,16 +133,16 @@ public class CindervaneRestGoal extends Goal {
 
             case SLEEPING:
                 // Sleep until dawn (or until interrupted by threats/damage)
-                long dayTime = dragon.level().getDayTime() % 24000;
+                long dayTime = amphithere.level().getDayTime() % 24000;
                 boolean isNight = dayTime >= 13000 && dayTime < 23000;
 
                 // Wake up when it becomes day
                 if (!isNight) {
                     state = RestState.WAKING_UP;
                     stateTimer = 0;
-                    dragon.startSleepExit(); // Triggers wake_up → sit (with yawn!)
+                    amphithere.startSleepExit(); // Triggers wake_up → sit (with yawn!)
                     // Keep sit flag true so wake_up can play (don't let dragon stand yet!)
-                    dragon.setOrderedToSit(true);
+                    amphithere.setOrderedToSit(true);
                 }
                 break;
 
@@ -153,7 +153,7 @@ public class CindervaneRestGoal extends Goal {
                     state = RestState.SITTING_AFTER;
                     stateTimer = 0;
                     // Ensure still sitting after wake_up completes (wake_up ends in sit pose)
-                    dragon.setOrderedToSit(true);
+                    amphithere.setOrderedToSit(true);
                 }
                 break;
 
@@ -162,7 +162,7 @@ public class CindervaneRestGoal extends Goal {
                 if (stateTimer > 20) {
                     state = RestState.STANDING_UP;
                     stateTimer = 0;
-                    dragon.setOrderedToSit(false); // NOW trigger up → idle animation
+                    amphithere.setOrderedToSit(false); // NOW trigger up → idle animation
                 }
                 break;
 
@@ -177,14 +177,14 @@ public class CindervaneRestGoal extends Goal {
     public void stop() {
         // Emergency cleanup - force stand up if interrupted
         if (state != RestState.STANDING_UP) {
-            if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
-                dragon.startSleepExit();
+            if (amphithere.isSleeping() || amphithere.isSleepTransitioning()) {
+                amphithere.startSleepExit();
             }
-            dragon.setOrderedToSit(false);
+            amphithere.setOrderedToSit(false);
         }
 
         // Set cooldown before next rest (400-800 ticks = 20-40 seconds)
-        retryCooldown = 400 + dragon.getRandom().nextInt(401);
+        retryCooldown = 400 + amphithere.getRandom().nextInt(401);
 
         stateTimer = 0;
         state = null;

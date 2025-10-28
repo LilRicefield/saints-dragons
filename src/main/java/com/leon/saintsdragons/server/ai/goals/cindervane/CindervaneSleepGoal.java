@@ -14,11 +14,11 @@ import java.util.EnumSet;
  */
 public class CindervaneSleepGoal extends Goal {
 
-    private final Cindervane dragon;
+    private final Cindervane amphithere;
     private int retryCooldown;
 
-    public CindervaneSleepGoal(Cindervane dragon) {
-        this.dragon = dragon;
+    public CindervaneSleepGoal(Cindervane amphithere) {
+        this.amphithere = amphithere;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
@@ -29,39 +29,39 @@ public class CindervaneSleepGoal extends Goal {
             return false;
         }
 
-        if (dragon.isSleepLocked()) return false;
-        if (!dragon.canSleepNow() || dragon.isSleepSuppressed()) return false;
-        if (dragon.isInWaterOrBubble() || dragon.isInLava()) return false;
-        if (dragon.isDying() || dragon.isVehicle() || dragon.getTarget() != null || dragon.isAggressive()) return false;
-        if (dragon.level().isThundering()) return false;
+        if (amphithere.isSleepLocked()) return false;
+        if (!amphithere.canSleepNow() || amphithere.isSleepSuppressed()) return false;
+        if (amphithere.isInWaterOrBubble() || amphithere.isInLava()) return false;
+        if (amphithere.isDying() || amphithere.isVehicle() || amphithere.getTarget() != null || amphithere.isAggressive()) return false;
+        if (amphithere.level().isThundering()) return false;
 
         // Only tamed behavior for now - wild behavior will be added later
-        return dragon.isTame() && ownerAsleep();
+        return amphithere.isTame() && ownerAsleep();
     }
 
     @Override
     public boolean canContinueToUse() {
-        return dragon.isSleepLocked();
+        return amphithere.isSleepLocked();
     }
 
     @Override
     public void start() {
-        dragon.startSleepEnter();
+        amphithere.startSleepEnter();
     }
 
     @Override
     public void tick() {
-        if (dragon.level().isClientSide) return;
-        if (dragon.isSleepLocked() && !shouldRemainAsleep()) {
-            if (!dragon.isSleepTransitioning()) {
-                dragon.startSleepExit();
+        if (amphithere.level().isClientSide) return;
+        if (amphithere.isSleepLocked() && !shouldRemainAsleep()) {
+            if (!amphithere.isSleepTransitioning()) {
+                amphithere.startSleepExit();
             }
         }
     }
 
     @Override
     public void stop() {
-        if (!dragon.isSleepLocked()) {
+        if (!amphithere.isSleepLocked()) {
             retryCooldown = 100;
         }
     }
@@ -76,14 +76,14 @@ public class CindervaneSleepGoal extends Goal {
      * Cindervanes sleep whenever their owner sleeps, regardless of distance.
      */
     private boolean ownerAsleep() {
-        LivingEntity owner = dragon.getOwner();
+        LivingEntity owner = amphithere.getOwner();
         if (!(owner instanceof Player player)) {
             return false;
         }
         if (!player.isSleeping() || !player.isAlive()) {
             return false;
         }
-        if (player.level() != dragon.level()) {
+        if (player.level() != amphithere.level()) {
             return false;
         }
         return true;
@@ -94,7 +94,7 @@ public class CindervaneSleepGoal extends Goal {
      * For now, only tamed behavior is implemented.
      */
     private boolean shouldRemainAsleep() {
-        if (dragon.isTame()) {
+        if (amphithere.isTame()) {
             return ownerAsleep();
         }
         // Wild behavior will be added later

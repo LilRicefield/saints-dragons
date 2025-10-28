@@ -8,14 +8,14 @@ import net.minecraft.world.phys.Vec3;
  * Mirrors the Raevyx physics controller architecture for consistency
  */
 public class CindervanePhysicsController {
-    private final Cindervane wyvern;
+    private final Cindervane amphithere;
 
     // Takeoff animation timing - longer than Raevyx due to different animation length
     private static final int TAKEOFF_ANIM_MAX_TICKS = 30;   // Match animation length
     private static final int TAKEOFF_ANIM_EARLY_TICKS = 28; // Start checking conditions slightly earlier
 
-    public CindervanePhysicsController(Cindervane wyvern) {
-        this.wyvern = wyvern;
+    public CindervanePhysicsController(Cindervane amphithere) {
+        this.amphithere = amphithere;
     }
 
     /**
@@ -30,22 +30,22 @@ public class CindervanePhysicsController {
      * 0 = glide, 1 = flap/forward, 2 = hover, 3 = takeoff, -1 = ground/none
      */
     public int computeFlightModeForSync() {
-        if (!wyvern.isFlying()) return -1;
+        if (!amphithere.isFlying()) return -1;
         if (shouldPlayTakeoff()) return 3;
 
         // Simple heuristic for Cindervane: check if hovering/landing
-        if (wyvern.isHovering() || wyvern.isLanding()) return 2;
+        if (amphithere.isHovering() || amphithere.isLanding()) return 2;
 
         // Check altitude-based flight mode (if Cindervane has this logic)
         // High altitude = glide (0), low altitude = flap (1)
-        double altitude = wyvern.getY() - wyvern.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                                                                     (int) wyvern.getX(), (int) wyvern.getZ());
+        double altitude = amphithere.getY() - amphithere.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                                                                     (int) amphithere.getX(), (int) amphithere.getZ());
 
-        Vec3 velocity = wyvern.getDeltaMovement();
+        Vec3 velocity = amphithere.getDeltaMovement();
         boolean ascending = velocity.y > 0.02;
         
         // Check if rider is commanding ascend (takes priority over altitude)
-        boolean riderAscending = wyvern.isVehicle() && wyvern.isGoingUp();
+        boolean riderAscending = amphithere.isVehicle() && amphithere.isGoingUp();
 
         // Always flap when ascending (velocity OR rider command)
         if (ascending || riderAscending) return 1;
@@ -64,14 +64,14 @@ public class CindervanePhysicsController {
      */
     private boolean shouldPlayTakeoff() {
         // Get timeFlying from entity
-        int timeFlying = wyvern.getTimeFlying();
+        int timeFlying = amphithere.getTimeFlying();
 
         // Play takeoff at the very start of flight
         if (timeFlying < TAKEOFF_ANIM_EARLY_TICKS) return true;
 
         // Continue playing if still within max ticks AND conditions are met
-        boolean airborne = !wyvern.onGround();
-        boolean ascending = wyvern.getDeltaMovement().y > 0.05;
+        boolean airborne = !amphithere.onGround();
+        boolean ascending = amphithere.getDeltaMovement().y > 0.05;
 
         return (timeFlying < TAKEOFF_ANIM_MAX_TICKS) && (airborne || ascending);
     }
