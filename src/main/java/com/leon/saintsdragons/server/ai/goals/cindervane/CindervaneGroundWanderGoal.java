@@ -13,45 +13,45 @@ import javax.annotation.Nullable;
  */
 public class CindervaneGroundWanderGoal extends RandomStrollGoal {
 
-    private final Cindervane dragon;
+    private final Cindervane amphithere;
 
-    public CindervaneGroundWanderGoal(Cindervane dragon, double speed, int interval) {
+    public CindervaneGroundWanderGoal(Cindervane amphithere, double speed, int interval) {
         // Fixed interval wandering
-        super(dragon, speed, interval);
-        this.dragon = dragon;
+        super(amphithere, speed, interval);
+        this.amphithere = amphithere;
     }
 
     @Override
     public boolean canUse() {
         // Only wander on ground when not flying
-        if (dragon.isFlying()) {
+        if (amphithere.isFlying()) {
             return false;
         }
 
         // Don't interfere with important behaviors
-        if (dragon.isOrderedToSit() || dragon.isVehicle() || dragon.isPassenger()) {
+        if (amphithere.isOrderedToSit() || amphithere.isVehicle() || amphithere.isPassenger()) {
             return false;
         }
 
         // Don't wander while sitting down (but standing up is OK)
-        if (dragon.isSittingDownAnimation()) {
+        if (amphithere.isSittingDownAnimation()) {
             return false;
         }
 
         // Don't wander during transitional states
-        if (dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering()) {
+        if (amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering()) {
             return false;
         }
 
         // Don't wander during combat
-        var target = dragon.getTarget();
+        var target = amphithere.getTarget();
         if (target != null && target.isAlive()) {
             return false;
         }
 
         // Hook up to command system - only wander when command is 2 (Wander) or when untamed
-        if (dragon.isTame()) {
-            int command = dragon.getCommand();
+        if (amphithere.isTame()) {
+            int command = amphithere.getCommand();
             if (command != 2) { // 0=Follow, 1=Sit, 2=Wander
                 return false;
             }
@@ -63,23 +63,23 @@ public class CindervaneGroundWanderGoal extends RandomStrollGoal {
     @Override
     public boolean canContinueToUse() {
         // Stop if we start flying
-        if (dragon.isFlying()) {
+        if (amphithere.isFlying()) {
             return false;
         }
 
         // Stop if we enter transitional states
-        if (dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering()) {
+        if (amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering()) {
             return false;
         }
 
         // Stop if combat starts
-        var target = dragon.getTarget();
+        var target = amphithere.getTarget();
         if (target != null && target.isAlive()) {
             return false;
         }
 
         // Stop if ordered to sit
-        if (dragon.isOrderedToSit()) {
+        if (amphithere.isOrderedToSit()) {
             return false;
         }
 
@@ -91,9 +91,9 @@ public class CindervaneGroundWanderGoal extends RandomStrollGoal {
     @Override
     protected Vec3 getPosition() {
         // If tamed and owner is far, bias movement towards owner
-        if (dragon.isTame()) {
-            var owner = dragon.getOwner();
-            if (owner != null && dragon.distanceToSqr(owner) > 20.0 * 20.0) {
+        if (amphithere.isTame()) {
+            var owner = amphithere.getOwner();
+            if (owner != null && amphithere.distanceToSqr(owner) > 20.0 * 20.0) {
                 // Move generally towards owner but not directly (maintain some independence)
                 return DefaultRandomPos.getPosTowards(
                         this.mob,
