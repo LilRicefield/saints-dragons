@@ -49,7 +49,7 @@ public class CindervanePhysicsController {
         if (ascending) return 1;
 
         // Use altitude threshold for glide/flap decision
-        if (altitude > 15.0) {
+        if (altitude > 35.0) {
             return 0; // Glide at high altitude
         } else {
             return 1; // Flap at low altitude
