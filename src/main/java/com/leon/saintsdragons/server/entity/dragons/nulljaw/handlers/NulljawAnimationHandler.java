@@ -9,6 +9,27 @@ import software.bernie.geckolib.core.object.PlayState;
 
 public record NulljawAnimationHandler(Nulljaw drake) {
 
+    // ===== ANIMATION TRIGGER HELPERS =====
+    public void triggerSitDownAnimation() {
+        drake.triggerAnim("action", "sit_down");
+    }
+
+    public void triggerSitUpAnimation() {
+        drake.triggerAnim("action", "sit_up");
+    }
+
+    public void triggerFallAsleepAnimation() {
+        drake.triggerAnim("action", "fall_asleep");
+    }
+
+    public void triggerSleepAnimation() {
+        drake.triggerAnim("action", "sleep");
+    }
+
+    public void triggerWakeUpAnimation() {
+        drake.triggerAnim("action", "wake_up");
+    }
+
     // Phase 1 animations
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.nulljaw.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.nulljaw.walk");
@@ -28,6 +49,11 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     private static final RawAnimation SWIM_RIGHT = RawAnimation.begin().thenLoop("animation.nulljaw.swimming_right");
     private static final RawAnimation SWIM_NEUTRAL = RawAnimation.begin().thenLoop("animation.nulljaw.swimming_off");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.nulljaw.sit");
+    private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.nulljaw.down");
+    private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.nulljaw.up");
+    private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.nulljaw.fall_asleep");
+    private static final RawAnimation SLEEP_LOOP = RawAnimation.begin().thenLoop("animation.nulljaw.sleep");
+    private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.nulljaw.wake_up");
 
     private static final int MOVEMENT_TRANSITION_TICKS = 6;
     private static final int SWIM_TRANSITION_TICKS = 7;
@@ -69,18 +95,20 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         // Eat animation - triggered when feeding
         actionController.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.nulljaw.eat"));
-    }
 
-    /**
-     * Sets up all GeckoLib animation triggers for the ambient controller (AI-triggered vocal animations)
-     */
-    public void setupAmbientController(AnimationController<Nulljaw> ambientController) {
-        // Ambient/idle sounds - triggered by random ticks and AI
-        ambientController.triggerableAnim("grumble1",
+        // Sit & sleep transitions
+        actionController.triggerableAnim("sit_down", SIT_DOWN);
+        actionController.triggerableAnim("sit_up", SIT_UP);
+        actionController.triggerableAnim("fall_asleep", FALL_ASLEEP);
+        actionController.triggerableAnim("sleep", SLEEP_LOOP);
+        actionController.triggerableAnim("wake_up", WAKE_UP);
+
+        // Ambient vocal grumbles now run through the action controller so they can blend with look control
+        actionController.triggerableAnim("grumble1",
                 RawAnimation.begin().thenPlay("animation.nulljaw.grumble1"));
-        ambientController.triggerableAnim("grumble2",
+        actionController.triggerableAnim("grumble2",
                 RawAnimation.begin().thenPlay("animation.nulljaw.grumble2"));
-        ambientController.triggerableAnim("grumble3",
+        actionController.triggerableAnim("grumble3",
                 RawAnimation.begin().thenPlay("animation.nulljaw.grumble3"));
     }
 
@@ -187,13 +215,6 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         // Action controller handles one-shot combat animations triggered via triggerAnim()
         state.getController().transitionLength(5);
         // Return STOP so this controller doesn't compete with movement controller when idle
-        return PlayState.STOP;
-    }
-
-    public PlayState ambientPredicate(AnimationState<Nulljaw> state) {
-        // Ambient controller handles vocal/ambient animations triggered via triggerAnim()
-        state.getController().transitionLength(3);
-        // Return STOP so this controller doesn't compete with other controllers when idle
         return PlayState.STOP;
     }
 

@@ -14,6 +14,8 @@ import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawLeaveWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawMoveGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawRandomSwimGoal;
+import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawRestGoal;
+import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawSleepGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.*;
@@ -66,14 +68,14 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Nulljaw extends RideableDragonBase implements AquaticDragon, DragonControlStateHolder, ShakesScreen, SoundHandledDragon {
+public class Nulljaw extends RideableDragonBase implements AquaticDragon, DragonControlStateHolder, ShakesScreen, SoundHandledDragon, DragonSleepCapable {
 
     // ===== VOCAL ENTRIES =====
     // IMPORTANT: Keys MUST match animation trigger names registered in NulljawAnimationHandler
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", "ambient", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
-            .add("grumble2", "ambient", "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
-            .add("grumble3", "ambient", "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble1", "action", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble2", "action", "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble3", "action", "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
             .build();
 
     // ===== AMBIENT SOUND SYSTEM =====
@@ -97,6 +99,12 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_GOING_UP = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
+            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
+            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
+            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
 
     private final AnimatableInstanceCache animCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
@@ -128,6 +136,17 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     private static final float SHAKE_DECAY_PER_TICK = 0.02F;
     private float prevScreenShakeAmount = 0.0F;
     private float screenShakeAmount = 0.0F;
+    // ===== SIT / SLEEP STATE =====
+    private boolean isSittingDown = false;
+    private boolean isStandingUp = false;
+    private int sitTransitionTicks = 0;
+    private int sleepTransitionTicks = 0;
+    private int sleepAmbientCooldownTicks = 0;
+    private int sleepReentryCooldownTicks = 0;
+    private int sleepCancelTicks = 0;
+    private boolean sleepLocked = false;
+    private int sleepCommandSnapshot = -1;
+    private boolean wasVehicleLastTick = false;
 
     public Nulljaw(EntityType<? extends Nulljaw> type, Level level) {
         super(type, level);
@@ -267,6 +286,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         this.entityData.define(DATA_PHASE_TWO, false);
         this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        this.entityData.define(DATA_SLEEPING, false);
+        this.entityData.define(DATA_SLEEPING_ENTERING, false);
+        this.entityData.define(DATA_SLEEPING_EXITING, false);
     }
     
     @Override
@@ -322,32 +344,36 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         super.registerGoals();
         // Priority 0: Critical survival - air management
         this.goalSelector.addGoal(0, new BreathAirGoal(this));
+        // Priority 1: Sleep system (tamed dragons following owners)
+        this.goalSelector.addGoal(1, new NulljawSleepGoal(this));
+        // Priority 2: Casual resting for wild dragons
+        this.goalSelector.addGoal(2, new NulljawRestGoal(this));
 
-        // Priority 1-2: Combat abilities
-        this.goalSelector.addGoal(1, new NulljawAttackGoal(this));
-        this.goalSelector.addGoal(2, new NulljawCombatGoal(this));
+        // Priority 3-4: Combat abilities
+        this.goalSelector.addGoal(3, new NulljawAttackGoal(this));
+        this.goalSelector.addGoal(4, new NulljawCombatGoal(this));
 
-        // Priority 3: Combat movement (chasing targets/fleeing)
-        this.goalSelector.addGoal(3, new NulljawMoveGoal(this, true, 1.3D));
+        // Priority 5: Combat movement (chasing targets/fleeing)
+        this.goalSelector.addGoal(5, new NulljawMoveGoal(this, true, 1.3D));
 
-        // Priority 4-5: Amphibious behavior (semi-aquatic patrol pattern)
-        this.goalSelector.addGoal(4, new NulljawLeaveWaterGoal(this));
-        this.goalSelector.addGoal(5, new NulljawFindWaterGoal(this));
+        // Priority 6-7: Amphibious behavior (semi-aquatic patrol pattern)
+        this.goalSelector.addGoal(6, new NulljawLeaveWaterGoal(this));
+        this.goalSelector.addGoal(7, new NulljawFindWaterGoal(this));
 
-        // Priority 6: Social behavior (follow owner)
-        this.goalSelector.addGoal(6, new NulljawFollowOwnerGoal(this));
+        // Priority 8: Social behavior (follow owner)
+        this.goalSelector.addGoal(8, new NulljawFollowOwnerGoal(this));
 
-        // Priority 7: Idle swimming
+        // Priority 9: Idle swimming
         this.waterSwimGoal = new NulljawRandomSwimGoal(this, 1.2D, 30);
-        this.goalSelector.addGoal(7, waterSwimGoal);
+        this.goalSelector.addGoal(9, waterSwimGoal);
 
-        // Priority 8: Idle roaming on land
+        // Priority 10: Idle roaming on land
         this.groundWanderGoal = new NulljawGroundWanderGoal(this, 1.0D, 100);
-        this.goalSelector.addGoal(8, groundWanderGoal);
+        this.goalSelector.addGoal(10, groundWanderGoal);
 
-        // Priority 10: Ambient behaviors
-        this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        // Priority 11: Ambient behaviors
+        this.goalSelector.addGoal(11, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         // Target selectors (threat detection)
         this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
@@ -363,8 +389,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
                 new AnimationController<>(this, "swim_direction", 4, animationHandler::swimDirectionPredicate);
         AnimationController<Nulljaw> actions =
                 new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
-        AnimationController<Nulljaw> ambient =
-                new AnimationController<>(this, "ambient", 3, animationHandler::ambientPredicate);
 
         animationHandler.configureMovementBlend(movementController);
         animationHandler.configureSwimBlend(swimController);
@@ -373,16 +397,13 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         swimController.setSoundKeyframeHandler(this::onAnimationSound);
         actions.setSoundKeyframeHandler(this::onAnimationSound);
-        ambient.setSoundKeyframeHandler(this::onAnimationSound);
 
         // Setup animation triggers
         animationHandler.setupActionController(actions);
-        animationHandler.setupAmbientController(ambient);
 
         controllers.add(movementController);
         controllers.add(swimController);
         controllers.add(actions);
-        controllers.add(ambient);
     }
 
     @Override
@@ -448,8 +469,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
      * Handles all the ambient grumbling sounds
      */
     private void handleAmbientSounds() {
-        // Don't play ambient sounds while dying or sitting
-        if (isDying() || isOrderedToSit()) {
+        // Suppress ambient sounds while transitioning or resting to prevent animation snapping
+        if (isBaby() || isDying() || isOrderedToSit() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0) {
             return;
         }
 
@@ -475,17 +496,16 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     public void tick() {
         super.tick();
         soundHandler.tick();
-        tickScreenShake();
         tickSittingState();
+        tickMountedState();
+        tickScreenShake();
         updateSittingProgress();
-        tickClientSideUpdates();
+        tickSleepTransition();
+        tickSleepCooldowns();
 
         // Handle ambient sounds (server-side only)
         if (!level().isClientSide) {
             handleAmbientSounds();
-        }
-
-        if (!level().isClientSide) {
             tickRiderControlLock();
             boolean inWater = this.isInWater();
             if (inWater) {
@@ -510,9 +530,17 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
                 this.lookControl = landLookControl;
             }
 
+            if ((isSleeping() || isSleepingEntering() || isSleepingExiting())
+                    && (this.getTarget() != null || this.isAggressive() || this.isInWaterOrBubble())) {
+                wakeUpImmediately();
+                suppressSleep(200);
+            }
+
             this.tickAnimationStates();
             this.updateSwimOrientationState();
         }
+
+        tickClientSideUpdates();
     }
 
     @Override
@@ -1256,12 +1284,63 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         }
     }
 
+    private void tickMountedState() {
+        boolean mounted = this.isVehicle();
+
+        if (mounted && !wasVehicleLastTick) {
+            this.sitProgress = 0f;
+            this.prevSitProgress = 0f;
+            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            isSittingDown = false;
+            isStandingUp = false;
+            sitTransitionTicks = 0;
+
+            if (this.isOrderedToSit()) {
+                this.setOrderedToSit(false);
+                if (this.getCommand() == 1) {
+                    this.setCommand(0);
+                }
+            }
+
+            if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
+                wakeUpImmediately();
+                suppressSleep(300);
+            }
+        }
+
+        if (!mounted && wasVehicleLastTick) {
+            this.sitProgress = 0f;
+            this.prevSitProgress = 0f;
+            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            isSittingDown = false;
+            isStandingUp = false;
+            sitTransitionTicks = 0;
+        }
+
+        wasVehicleLastTick = mounted;
+    }
+
     private void updateSittingProgress() {
         if (level().isClientSide) {
             return;
         }
 
+        if (sitTransitionTicks > 0) {
+            sitTransitionTicks--;
+            if (sitTransitionTicks == 0) {
+                isSittingDown = false;
+                isStandingUp = false;
+            }
+        }
+
         if (this.isOrderedToSit()) {
+            if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
+                animationHandler.triggerSitDownAnimation();
+                isSittingDown = true;
+                isStandingUp = false;
+                sitTransitionTicks = getSitDownAnimationTicks();
+            }
+
             if (sitProgress < maxSitTicks()) {
                 sitProgress++;
                 this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
@@ -1272,10 +1351,23 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
                     sitProgress = 0f;
                     prevSitProgress = 0f;
                     this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                    isSittingDown = false;
+                    isStandingUp = false;
+                    sitTransitionTicks = 0;
                 }
             } else if (sitProgress > 0f) {
-                sitProgress--;
-                if (sitProgress < 0f) sitProgress = 0f;
+                if ((sitProgress >= maxSitTicks() || isSittingDown) && !isStandingUp) {
+                    animationHandler.triggerSitUpAnimation();
+                    isStandingUp = true;
+                    isSittingDown = false;
+                    sitTransitionTicks = getSitUpAnimationTicks();
+                }
+
+                float decrementRate = maxSitTicks() / (float) getSitUpAnimationTicks();
+                sitProgress -= decrementRate;
+                if (sitProgress < 0f) {
+                    sitProgress = 0f;
+                }
                 this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
             }
         }
@@ -1287,6 +1379,204 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
             prevSitProgress = sitProgress;
             sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
         }
+    }
+
+    private void tickSleepTransition() {
+        if (isSleepingEntering() && !level().isClientSide) {
+            if (getSitProgress() >= maxSitTicks()) {
+                if (sleepTransitionTicks > getFallAsleepAnimationTicks()) {
+                    animationHandler.triggerFallAsleepAnimation();
+                    sleepTransitionTicks = getFallAsleepAnimationTicks();
+                }
+            } else {
+                sleepTransitionTicks = getFallAsleepAnimationTicks() + 1;
+                return;
+            }
+        }
+
+        if (sleepTransitionTicks > 0) {
+            sleepTransitionTicks--;
+            if (sleepTransitionTicks == 0) {
+                if (isSleepingEntering()) {
+                    setSleeping(true);
+                    setSleepingEntering(false);
+                    animationHandler.triggerSleepAnimation();
+                } else if (isSleepingExiting()) {
+                    setSleepingExiting(false);
+                    sleepAmbientCooldownTicks = Math.max(sleepAmbientCooldownTicks, 10);
+                }
+            }
+        }
+    }
+
+    private void tickSleepCooldowns() {
+        if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
+        if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
+        if (sleepCancelTicks > 0) sleepCancelTicks--;
+    }
+
+    // ===== SIT TRANSITION HELPERS =====
+
+    public boolean isInSitTransition() {
+        return isSittingDown || isStandingUp;
+    }
+
+    public boolean isSittingDownAnimation() {
+        return isSittingDown;
+    }
+
+    public boolean isStandingUpAnimation() {
+        return isStandingUp;
+    }
+
+    @Override
+    public float maxSitTicks() {
+        return 33.0F; // down animation is 1.6667s = 33 ticks
+    }
+
+    public int getSitDownAnimationTicks() {
+        return 33;
+    }
+
+    public int getSitUpAnimationTicks() {
+        return 40; // up animation is 2.0s = 40 ticks
+    }
+
+    public int getFallAsleepAnimationTicks() {
+        return 37; // fall_asleep animation is 1.8333s ≈ 37 ticks
+    }
+
+    public int getWakeUpAnimationTicks() {
+        return 38; // wake_up animation is 1.875s ≈ 38 ticks
+    }
+
+    // ===== SLEEP SYSTEM =====
+
+    @Override
+    public boolean isSleeping() {
+        return this.entityData.get(DATA_SLEEPING);
+    }
+
+    public void setSleeping(boolean sleeping) {
+        this.entityData.set(DATA_SLEEPING, sleeping);
+    }
+
+    @Override
+    public boolean isSleepTransitioning() {
+        return isSleepingEntering() || isSleepingExiting();
+    }
+
+    public boolean isSleepingEntering() {
+        return this.entityData.get(DATA_SLEEPING_ENTERING);
+    }
+
+    public void setSleepingEntering(boolean entering) {
+        this.entityData.set(DATA_SLEEPING_ENTERING, entering);
+    }
+
+    public boolean isSleepingExiting() {
+        return this.entityData.get(DATA_SLEEPING_EXITING);
+    }
+
+    public void setSleepingExiting(boolean exiting) {
+        this.entityData.set(DATA_SLEEPING_EXITING, exiting);
+    }
+
+    public boolean isSleepLocked() {
+        return sleepLocked || isSleeping() || isSleepingEntering() || isSleepingExiting();
+    }
+
+    private void enterSleepLock() {
+        if (level().isClientSide) {
+            return;
+        }
+        if (!sleepLocked) {
+            sleepLocked = true;
+            sleepCommandSnapshot = this.getCommand();
+        }
+        this.setOrderedToSit(true);
+        this.getNavigation().stop();
+        this.setTarget(null);
+        this.setDeltaMovement(Vec3.ZERO);
+        if (this.getCommand() != 1) {
+            this.setCommand(1);
+        }
+    }
+
+    private void releaseSleepLock() {
+        if (level().isClientSide) {
+            return;
+        }
+        if (sleepLocked) {
+            int desired = sleepCommandSnapshot;
+            sleepCommandSnapshot = -1;
+            sleepLocked = false;
+            if (desired >= 0 && desired != this.getCommand()) {
+                this.setCommand(desired);
+                this.setOrderedToSit(desired == 1);
+            }
+        }
+    }
+
+    @Override
+    public void startSleepEnter() {
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
+        setSleepingEntering(true);
+        sleepTransitionTicks = getFallAsleepAnimationTicks() + 1;
+        if (!level().isClientSide) {
+            enterSleepLock();
+        }
+    }
+
+    @Override
+    public void startSleepExit() {
+        if ((!isSleeping() && !isSleepingEntering()) || isSleepingExiting()) return;
+        this.entityData.set(DATA_SLEEPING, false);
+        setSleepingEntering(false);
+        setSleepingExiting(true);
+        sleepTransitionTicks = getWakeUpAnimationTicks();
+        animationHandler.triggerWakeUpAnimation();
+        if (!level().isClientSide) {
+            suppressSleep(40);
+            releaseSleepLock();
+        }
+    }
+
+    public void wakeUpImmediately() {sleepAmbientCooldownTicks = Math.max(sleepAmbientCooldownTicks, 10);
+        this.entityData.set(DATA_SLEEPING, false);
+        setSleepingEntering(false);
+        setSleepingExiting(false);
+        sleepTransitionTicks = 0;
+        sleepCancelTicks = 2;
+        if (!level().isClientSide) {
+            suppressSleep(40);
+            releaseSleepLock();
+        }
+    }
+
+    public void suppressSleep(int ticks) {
+        sleepReentryCooldownTicks = Math.max(sleepReentryCooldownTicks, ticks);
+    }
+
+    @Override
+    public boolean isSleepSuppressed() {
+        return sleepReentryCooldownTicks > 0;
+    }
+
+    @Override
+    public SleepPreferences getSleepPreferences() {
+        return new SleepPreferences(
+                true,   // canSleepAtNight
+                false,  // canSleepDuringDay
+                false,  // requiresShelter
+                true,   // avoidsThunderstorms
+                true    // sleepsNearOwner
+        );
+    }
+
+    @Override
+    public boolean canSleepNow() {
+        return !isVehicle() && !this.isInWaterOrBubble() && getActiveAbility() == null && !isPhaseTwoActive();
     }
 
     private void tickScreenShake() {
@@ -1311,12 +1601,33 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
         tag.putBoolean("PhaseTwo", isPhaseTwoActive());
+        tag.putBoolean("Sleeping", isSleeping());
+        tag.putBoolean("SleepingEntering", isSleepingEntering());
+        tag.putBoolean("SleepingExiting", isSleepingExiting());
+        tag.putBoolean("SleepLocked", sleepLocked);
+        tag.putInt("SleepTransitionTicks", sleepTransitionTicks);
+        tag.putInt("SleepAmbientCooldown", sleepAmbientCooldownTicks);
+        tag.putInt("SleepReentryCooldown", sleepReentryCooldownTicks);
+        tag.putInt("SleepCancelTicks", sleepCancelTicks);
+        tag.putInt("SleepCommandSnapshot", sleepCommandSnapshot);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         loadRideableData(tag);
+        setSleeping(tag.getBoolean("Sleeping"));
+        setSleepingEntering(tag.getBoolean("SleepingEntering"));
+        setSleepingExiting(tag.getBoolean("SleepingExiting"));
+        sleepLocked = tag.getBoolean("SleepLocked");
+        sleepTransitionTicks = tag.getInt("SleepTransitionTicks");
+        sleepAmbientCooldownTicks = tag.getInt("SleepAmbientCooldown");
+        sleepReentryCooldownTicks = tag.getInt("SleepReentryCooldown");
+        sleepCancelTicks = tag.getInt("SleepCancelTicks");
+        sleepCommandSnapshot = tag.contains("SleepCommandSnapshot") ? tag.getInt("SleepCommandSnapshot") : -1;
+        if (sleepLocked) {
+            setOrderedToSit(true);
+        }
         if (tag.contains("PhaseTwo")) {
             setPhaseTwoActive(tag.getBoolean("PhaseTwo"), false);
         }
