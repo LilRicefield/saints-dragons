@@ -43,7 +43,7 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
      * This creates the natural "head leads, body follows" behavior.
      */
     private void applyBodyRotationDeviation(Cindervane entity, float partialTick) {
-        var rootOpt = getBone("root");
+        var rootOpt = getBone("body");
         if (rootOpt.isEmpty()) {
             return;
         }

@@ -71,12 +71,12 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
     }
 
     /**
-     * Applies smooth body rotation using AstemirLib's deviation approach.
+     * Applies smooth body rotation using TDE's deviation approach.
      * bodyRotDeviation tracks the difference between head and body rotation.
      * This creates the natural "head leads, body follows" behavior.
      */
     private void applyBodyRotationDeviation(Raevyx entity, float partialTick) {
-        var rootOpt = getBone("root");
+        var rootOpt = getBone("body");
         if (rootOpt.isEmpty()) {
             return;
         }
