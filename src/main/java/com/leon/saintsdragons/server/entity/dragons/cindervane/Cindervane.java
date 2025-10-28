@@ -1118,7 +1118,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     protected void tickRidden(@Nonnull Player player, @Nonnull Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         riderController.tickRidden(player, travelVector);
-        if (areRiderControlsLocked()) {
+        // Only call copyRiderLook when not using any ability (active or overlay) to preserve pitch animation
+        if (areRiderControlsLocked() && combatManager.getActiveAbility() == null && !combatManager.hasActiveOverlay()) {
             copyRiderLook(player);
         }
     }

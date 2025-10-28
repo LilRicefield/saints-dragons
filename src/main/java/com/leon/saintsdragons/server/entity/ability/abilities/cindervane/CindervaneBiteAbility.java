@@ -53,8 +53,8 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
 
         if (section.sectionType == STARTUP) {
             Cindervane dragon = getUser();
-            String clip = dragon.isFlying() ? "bite_air" : "bite_ground";
-            dragon.triggerAnim("actions", clip);
+            // Use unified bite animation for both air and ground
+            dragon.triggerAnim("actions", "bite");
             appliedHit = false;
         }
     }
