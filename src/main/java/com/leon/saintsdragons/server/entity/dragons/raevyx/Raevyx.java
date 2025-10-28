@@ -2320,9 +2320,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.goalSelector.addGoal(4, new RaevyxMoveGoal(this, true, 1.4)); // Pure movement - yields when attacking
         
         // Attack execution goals (high priority, interrupt movement)
-        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, 15, 10, 4.0f));
-        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_WINDUP, 11, 8, 3.0f));
-        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, 5, 5, 4.0f));
+        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, 3, 10, 4.0f));
+        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_WINDUP, 3, 8, 3.0f));
+        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, 3, 5, 4.0f));
         this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, 3, 3, 3.0f));
         this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, 5, 5, 4.0f));
         
@@ -2343,8 +2343,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Item pickup behavior (like foxes eating berries) + ground fish taming
         this.goalSelector.addGoal(10, new RaevyxTemptGoal(this, 1.2,
                 net.minecraft.world.item.crafting.Ingredient.of(net.minecraft.world.item.Items.SALMON, 
-                                                               net.minecraft.world.item.Items.COD, 
-                                                               net.minecraft.world.item.Items.TROPICAL_FISH, 
+                                                               net.minecraft.world.item.Items.COD,
                                                                net.minecraft.world.item.Items.PUFFERFISH), false));
         
         this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
