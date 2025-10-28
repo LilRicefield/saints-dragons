@@ -28,8 +28,6 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         super(renderManager, new RaevyxModel());
         // Attach beam render layer
         this.addRenderLayer(new RaevyxLightningBeamLayer());
-        // TODO: Re-enable once vanilla positioning is confirmed working
-        // this.addRenderLayer(new RaevyxRiderLayer());
     }
 
     @Override
