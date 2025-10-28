@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.entity.controller.cindervane;
 
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -44,9 +43,12 @@ public class CindervanePhysicsController {
 
         Vec3 velocity = wyvern.getDeltaMovement();
         boolean ascending = velocity.y > 0.02;
+        
+        // Check if rider is commanding ascend (takes priority over altitude)
+        boolean riderAscending = wyvern.isVehicle() && wyvern.isGoingUp();
 
-        // Always flap when ascending
-        if (ascending) return 1;
+        // Always flap when ascending (velocity OR rider command)
+        if (ascending || riderAscending) return 1;
 
         // Use altitude threshold for glide/flap decision
         if (altitude > 35.0) {
