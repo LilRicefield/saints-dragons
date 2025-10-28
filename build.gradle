@@ -2,8 +2,8 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
-    id 'org.spongepowered.mixin' version '0.7.+'
+    id 'net.minecraftforge.gradle' version '6.0.25'
+    id 'org.spongepowered.mixin' version '0.7.38'
 }
 
 version = '0.1.1'
@@ -60,7 +60,7 @@ minecraft {
         data {
             workingDirectory project.file('run-data')
 
-            args '--mod', 'saintsdragons', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
         }
     }
 }
