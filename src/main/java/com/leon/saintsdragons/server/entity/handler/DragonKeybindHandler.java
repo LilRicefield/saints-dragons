@@ -49,27 +49,15 @@ public class DragonKeybindHandler {
                     var chosen = dragon.getPrimaryAttackAbility();
 
                     if (chosen != null && dragon.combatManager.canStart(chosen)) {
-                        // For dragons without continuous pitch state (like Cindervane), preserve pitch during attack
-                        // Only set rotation if we're not actively ascending/descending
-                        boolean preservePitch = dragon.isGoingUp() || dragon.isGoingDown();
-                        
-                        if (!preservePitch) {
-                            // Align wyvern to rider's current view just before triggering the animation
-                            float yaw = rider.getYRot();
-                            float pitch = rider.getXRot();
-                            if (pitch > 35f) pitch = 35f;
-                            if (pitch < -35f) pitch = -35f;
-                            dragon.setYRot(yaw);
-                            dragon.yBodyRot = yaw;
-                            dragon.yHeadRot = yaw;
-                            dragon.setXRot(pitch);
-                        } else {
-                            // Only sync yaw, preserve pitch
-                            float yaw = rider.getYRot();
-                            dragon.setYRot(yaw);
-                            dragon.yBodyRot = yaw;
-                            dragon.yHeadRot = yaw;
-                        }
+                        // Align wyvern to rider's current view just before triggering the animation
+                        float yaw = rider.getYRot();
+                        float pitch = rider.getXRot();
+                        if (pitch > 35f) pitch = 35f;
+                        if (pitch < -35f) pitch = -35f;
+                        dragon.setYRot(yaw);
+                        dragon.yBodyRot = yaw;
+                        dragon.yHeadRot = yaw;
+                        dragon.setXRot(pitch);
 
                         dragon.combatManager.tryUseAbility(chosen);
                     }

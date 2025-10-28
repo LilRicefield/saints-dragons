@@ -204,10 +204,8 @@ public class CindervaneAnimationHandler {
 
     public void setupActionController(AnimationController<Cindervane> controller) {
         // Explicit animation triggers
-        controller.triggerableAnim("bite_ground",
-                RawAnimation.begin().thenPlay("animation.cindervane.bite_ground"));
-        controller.triggerableAnim("bite_air",
-                RawAnimation.begin().thenPlay("animation.cindervane.bite_air"));
+        controller.triggerableAnim("bite",
+                RawAnimation.begin().thenPlay("animation.cindervane.bite"));
         controller.triggerableAnim("magma_blast",
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
         controller.triggerableAnim("eat",

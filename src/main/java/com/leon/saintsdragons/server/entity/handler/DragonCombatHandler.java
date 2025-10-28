@@ -195,6 +195,12 @@ public class DragonCombatHandler {
         return overlayAbility != null && overlayAbility.getAbilityType() == abilityType && overlayAbility.isUsing();
     }
 
+    /**
+     * Check if there's an active overlay ability
+     */
+    public boolean hasActiveOverlay() {
+        return overlayAbility != null && overlayAbility.isUsing();
+    }
     
     /**
      * Clears all combat states - used when mounting or transitioning states
