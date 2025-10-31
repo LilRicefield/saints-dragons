@@ -33,7 +33,7 @@ public class SaintsDragonsConfig {
         BUILDER.comment("Configure spawn rates and group sizes for all dragons");
 
         // Raevyx
-        BUILDER.comment("Raevyx (Lightning Dragon) - Spawns in mountains and peaks");
+        BUILDER.comment("Raevyx");
         RAEVYX_SPAWN_WEIGHT = BUILDER
                 .comment("Spawn weight (0 = disabled, higher = more common)")
                 .defineInRange("raevyxSpawnWeight", 1, 0, 100);
@@ -45,7 +45,7 @@ public class SaintsDragonsConfig {
                 .defineInRange("raevyxMaxGroupSize", 1, 1, 10);
 
         // Stegonaut
-        BUILDER.comment("Stegonaut (Primitive Drake) - Spawns in forests and taigas");
+        BUILDER.comment("Stegonaut");
         STEGONAUT_SPAWN_WEIGHT = BUILDER
                 .comment("Spawn weight (0 = disabled, higher = more common)")
                 .defineInRange("stegonautSpawnWeight", 1, 0, 100);
@@ -57,7 +57,7 @@ public class SaintsDragonsConfig {
                 .defineInRange("stegonautMaxGroupSize", 2, 1, 10);
 
         // Cindervane
-        BUILDER.comment("Cindervane (Amphithere) - Spawns in savannas and badlands");
+        BUILDER.comment("Cindervane");
         CINDERVANE_SPAWN_WEIGHT = BUILDER
                 .comment("Spawn weight (0 = disabled, higher = more common)")
                 .defineInRange("cindervaneSpawnWeight", 1, 0, 100);
@@ -69,7 +69,7 @@ public class SaintsDragonsConfig {
                 .defineInRange("cindervaneMaxGroupSize", 1, 1, 10);
 
         // Nulljaw
-        BUILDER.comment("Nulljaw (Rift Drake) - Semi-aquatic, spawns in plains and near water");
+        BUILDER.comment("Nulljaw");
         NULLJAW_SPAWN_WEIGHT = BUILDER
                 .comment("Spawn weight (0 = disabled, higher = more common)")
                 .defineInRange("nulljawSpawnWeight", 1, 0, 100);
