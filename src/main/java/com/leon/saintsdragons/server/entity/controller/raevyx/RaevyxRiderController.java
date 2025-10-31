@@ -18,12 +18,6 @@ public record RaevyxRiderController(Raevyx wyvern) {
     // ===== SEAT TUNING CONSTANTS =====
     // Baseline vertical offset relative to wyvern height
     private static final double SEAT_BASE_FACTOR = 0.50D; // 0.0..1.0 of bbHeight
-    // Additional vertical lift to avoid clipping
-    private static final double SEAT_LIFT = 0.05D;
-    // Forward/back relative to body (blocks). +forward = toward head, - = toward tail
-    private static final double SEAT_FORWARD = 4.5D;
-    // Sideways relative to body (blocks). +side = to the wyvern's right, - = left
-    private static final double SEAT_SIDE = 0.00D;
 
     // No head-follow offsets; keep static body seat
     // ===== FLIGHT VERTICAL RATES =====

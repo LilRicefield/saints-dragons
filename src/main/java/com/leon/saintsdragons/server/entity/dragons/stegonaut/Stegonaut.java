@@ -62,10 +62,11 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
+    private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
     // Passive aura that applies resistance and absorption to allies
     private final StegonautPassiveBuffAbility passiveBuffAbility =
             new StegonautPassiveBuffAbility(this);
-    
+
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
 
@@ -537,8 +538,12 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
     }
-    
-    
+
+    public com.leon.saintsdragons.server.entity.sleep.DragonRestManager getRestManager() {
+        return restManager;
+    }
+
+
     /**
      * Play random grumble sounds for personality
      */
@@ -1133,6 +1138,9 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
 
         // Save sit progress for animation state
         tag.putFloat("SitProgress", sitProgress);
+
+        // Save rest state manager
+        restManager.save(tag);
     }
     
     @Override
@@ -1172,6 +1180,9 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Align baseline command state before restoring extra behaviors
         refreshCommandState();
         this.setOrderedToSit(restoredOrderedSit);
+
+        // Restore rest state manager (animation restoration not needed yet - Stegonaut doesn't have animation state system)
+        restManager.load(tag);
 
         // Load play dead state
         playingDead = tag.getBoolean("PlayingDead");

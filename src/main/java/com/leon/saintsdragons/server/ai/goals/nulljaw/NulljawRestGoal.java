@@ -1,33 +1,28 @@
 package com.leon.saintsdragons.server.ai.goals.nulljaw;
 
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.sleep.DragonRestState;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 
 /**
- * Casual rest goal for Nulljaw. Plays the full down → sit → fall_asleep → sleep → wake_up → sit → up sequence
- * for wild dragons so they don't snap between poses.
+ * Casual rest goal for Nulljaw - makes wild dragons sleep with full animation cycle.
+ * Animation sequence: down → sit → fall_asleep → sleep → wake_up → sit → up → idle
+ * Now uses persistent DragonRestManager so state survives save/load.
  */
 public class NulljawRestGoal extends Goal {
 
     private final Nulljaw drake;
-    private int restingTicks;
-    private int restDuration;
     private int retryCooldown;
 
-    private enum RestState {
-        SITTING_DOWN,
-        SITTING,
-        FALLING_ASLEEP,
-        SLEEPING,
-        WAKING_UP,
-        SITTING_AFTER,
-        STANDING_UP
-    }
-
-    private RestState state;
-    private int stateTimer;
+    // Normal timing constants
+    private static final int SIT_PAUSE = 20;          // 1s pause before falling asleep
+    private static final int SLEEP_MIN = 80;          // 4s minimum sleep duration
+    private static final int SLEEP_MAX = 160;         // 8s maximum sleep duration
+    private static final int WAKE_PAUSE = 20;         // 1s pause after waking
+    private static final int RETRY_COOLDOWN_MIN = 200; // 10s minimum cooldown
+    private static final int RETRY_COOLDOWN_MAX = 400; // 20s maximum cooldown
 
     public NulljawRestGoal(Nulljaw drake) {
         this.drake = drake;
@@ -41,6 +36,11 @@ public class NulljawRestGoal extends Goal {
             return false;
         }
 
+        // If already in a rest cycle (e.g., loaded from save), continue it
+        if (drake.getRestManager().isResting()) {
+            return true;
+        }
+
         if (drake.isTame()) return false;
         if (drake.isSleepLocked()) return false;
         if (drake.isInWaterOrBubble() || drake.isInLava()) return false;
@@ -49,25 +49,32 @@ public class NulljawRestGoal extends Goal {
         if (drake.isSwimming()) return false;
         if (drake.getActiveAbility() != null) return false;
 
+        // Random chance to rest (about 0.05% chance per second when idle)
         return drake.getRandom().nextFloat() < 0.0005F;
     }
 
     @Override
     public boolean canContinueToUse() {
-        if (state == null) return false;
-        boolean safe = !drake.isInWaterOrBubble() && drake.getTarget() == null && !drake.isAggressive();
-        boolean sequenceComplete = state == RestState.STANDING_UP && stateTimer > drake.getSitUpAnimationTicks() + 5;
-        return safe && !sequenceComplete;
+        // Continue until rest manager completes the cycle
+        boolean safeToRest = !drake.isInWaterOrBubble() && drake.getTarget() == null && !drake.isAggressive();
+        return drake.getRestManager().isResting() && safeToRest;
     }
 
     @Override
     public void start() {
-        restDuration = 80 + drake.getRandom().nextInt(81); // 4-8 seconds
-        restingTicks = 0;
-        stateTimer = 0;
+        var restManager = drake.getRestManager();
 
-        state = RestState.SITTING_DOWN;
-        drake.setOrderedToSit(true);
+        // If already resting (loaded from save), don't restart
+        if (restManager.isResting()) {
+            // Resume from saved state
+            return;
+        }
+
+        // Start new rest cycle with normal sleep duration (4-8 seconds)
+        int sleepDuration = SLEEP_MIN + drake.getRandom().nextInt(SLEEP_MAX - SLEEP_MIN);
+        restManager.startRest(sleepDuration);
+
+        drake.setOrderedToSit(true); // Triggers down animation
         drake.getNavigation().stop();
     }
 
@@ -75,85 +82,104 @@ public class NulljawRestGoal extends Goal {
     public void tick() {
         if (drake.level().isClientSide) return;
 
-        stateTimer++;
+        var restManager = drake.getRestManager();
+        DragonRestState state = restManager.getCurrentState();
+
+        // Stop navigation and stay still
         drake.getNavigation().stop();
         drake.setDeltaMovement(0, drake.getDeltaMovement().y, 0);
 
-        if (state == RestState.SITTING_DOWN || state == RestState.SITTING) {
+        // Ensure dragon stays sitting ONLY during initial sit-down and sitting states
+        if (state == DragonRestState.SITTING_DOWN || state == DragonRestState.SITTING) {
             if (!drake.isOrderedToSit()) {
                 drake.setOrderedToSit(true);
             }
         }
 
+        // State machine for animation sequence
         switch (state) {
-            case SITTING_DOWN -> {
-                if (stateTimer > drake.getSitDownAnimationTicks() + 5 && !drake.isInSitTransition()) {
-                    state = RestState.SITTING;
-                    stateTimer = 0;
+            case SITTING_DOWN:
+                // Wait for down → sit animation (33 ticks + small buffer)
+                if (restManager.getStateTimer() > 38 && !drake.isInSitTransition()) {
+                    restManager.advanceState();
                 }
-            }
-            case SITTING -> {
-                if (stateTimer > 20) {
-                    state = RestState.FALLING_ASLEEP;
-                    stateTimer = 0;
-                    drake.startSleepEnter();
+                break;
+
+            case SITTING:
+                // Pause in sit before falling asleep (1 second)
+                if (restManager.getStateTimer() > SIT_PAUSE) {
+                    restManager.advanceState();
+                    drake.startSleepEnter(); // Triggers fall_asleep animation
                 }
-            }
-            case FALLING_ASLEEP -> {
-                if ((drake.isSleeping() && !drake.isSleepTransitioning())
-                        || stateTimer > drake.getFallAsleepAnimationTicks() + 5) {
-                    state = RestState.SLEEPING;
-                    stateTimer = 0;
-                    restingTicks = 0;
+                break;
+
+            case FALLING_ASLEEP:
+                // Wait for fall_asleep animation (2.5s = 50 ticks + buffer)
+                if ((drake.isSleeping() && !drake.isSleepTransitioning()) || restManager.getStateTimer() > 55) {
+                    restManager.advanceState();
                 }
-            }
-            case SLEEPING -> {
-                restingTicks++;
-                if (restingTicks >= restDuration) {
-                    state = RestState.WAKING_UP;
-                    stateTimer = 0;
-                    drake.startSleepExit();
+                break;
+
+            case SLEEPING:
+                // Sleep for the duration, then wake up
+                restManager.incrementRestingTicks();
+                if (restManager.getRestingTicks() >= restManager.getRestDuration()) {
+                    restManager.advanceState();
+                    drake.startSleepExit(); // Triggers wake_up animation
                     drake.setOrderedToSit(true);
                 }
-            }
-            case WAKING_UP -> {
-                if (stateTimer > drake.getWakeUpAnimationTicks() + 5) {
-                    state = RestState.SITTING_AFTER;
-                    stateTimer = 0;
+                break;
+
+            case WAKING_UP:
+                // Wait for wake_up animation (40 ticks + buffer)
+                if (restManager.getStateTimer() > 45) {
+                    restManager.advanceState();
                     drake.setOrderedToSit(true);
                 }
-            }
-            case SITTING_AFTER -> {
-                if (stateTimer > 20) {
-                    state = RestState.STANDING_UP;
-                    stateTimer = 0;
-                    drake.setOrderedToSit(false);
+                break;
+
+            case SITTING_AFTER:
+                // Pause after waking (1 second)
+                if (restManager.getStateTimer() > WAKE_PAUSE) {
+                    restManager.advanceState();
+                    drake.setOrderedToSit(false); // Trigger stand up animation
                 }
-            }
-            case STANDING_UP -> {
-                // Wait for the stand-up animation to complete; goal ends via canContinueToUse
-            }
+                break;
+
+            case STANDING_UP:
+                // Wait for up animation to complete
+                if (restManager.getStateTimer() > 45) {
+                    restManager.advanceState(); // Returns to IDLE
+                }
+                break;
+
+            default:
+                break;
         }
+
+        // Tick the rest manager timer
+        restManager.tick();
     }
 
     @Override
     public void stop() {
-        if (state != RestState.STANDING_UP) {
+        var restManager = drake.getRestManager();
+
+        // Emergency cleanup - force stand up if interrupted mid-cycle
+        if (restManager.isResting() && restManager.getCurrentState() != DragonRestState.STANDING_UP) {
             if (drake.isSleeping() || drake.isSleepTransitioning()) {
                 drake.startSleepExit();
             }
             drake.setOrderedToSit(false);
+            restManager.stopRest(); // Clear rest state
         }
 
-        retryCooldown = 200 + drake.getRandom().nextInt(201);
-        restingTicks = 0;
-        restDuration = 0;
-        stateTimer = 0;
-        state = null;
+        // Cooldown before next rest (10-20 seconds)
+        retryCooldown = RETRY_COOLDOWN_MIN + drake.getRandom().nextInt(RETRY_COOLDOWN_MAX - RETRY_COOLDOWN_MIN);
     }
 
     @Override
     public boolean isInterruptable() {
-        return true;
+        return true; // Can be interrupted by threats
     }
 }

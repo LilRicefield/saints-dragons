@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.sleep.DragonRestState;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
@@ -8,27 +9,12 @@ import java.util.EnumSet;
 /**
  * Casual rest goal for Raevyx - makes wild dragons sleep with full animation cycle.
  * Animation sequence: down → sit → fall_asleep → sleep → wake_up → sit → up → idle
- * Prevents T-pose by properly transitioning through sitting before sleeping.
+ * Now uses persistent DragonRestManager so state survives save/load.
  */
 public class RaevyxRestGoal extends Goal {
 
     private final Raevyx wyvern;
-    private int restingTicks;
-    private int restDuration;
     private int retryCooldown;
-
-    // State tracking for animation sequence
-    private enum RestState {
-        SITTING_DOWN,    // Playing down → sit animation
-        SITTING,         // In sit idle, waiting to sleep
-        FALLING_ASLEEP,  // Transitioning fall_asleep → sleep
-        SLEEPING,        // In sleep loop
-        WAKING_UP,       // Transitioning wake_up → sit
-        SITTING_AFTER,   // Back in sit after waking
-        STANDING_UP      // Playing up → idle animation
-    }
-    private RestState state;
-    private int stateTimer;
 
     public RaevyxRestGoal(Raevyx wyvern) {
         this.wyvern = wyvern;
@@ -37,16 +23,17 @@ public class RaevyxRestGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        // Cooldown between rest attempts
         if (retryCooldown > 0) {
             retryCooldown--;
             return false;
         }
 
-        // Only wild (untamed) dragons rest casually
-        if (wyvern.isTame()) return false;
+        // If already in a rest cycle (e.g., loaded from save), continue it
+        if (wyvern.getRestManager().isResting()) {
+            return true;
+        }
 
-        // Don't rest if busy with other things
+        if (wyvern.isTame()) return false;
         if (wyvern.isOrderedToSit()) return false;
         if (wyvern.isSleepLocked()) return false;
         if (wyvern.isInWaterOrBubble() || wyvern.isInLava()) return false;
@@ -60,21 +47,25 @@ public class RaevyxRestGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        // Continue until we've completed the full sequence
-        boolean safeToRest = !wyvern.isInWaterOrBubble() && wyvern.getTarget() == null;
-        boolean sequenceComplete = (state == RestState.STANDING_UP && stateTimer > 20); // After stand up animation
-        return !sequenceComplete && safeToRest;
+        // Continue until rest manager completes the cycle
+        boolean safeToRest = !wyvern.isInWaterOrBubble() && wyvern.getTarget() == null && !wyvern.isAggressive();
+        return wyvern.getRestManager().isResting() && safeToRest;
     }
 
     @Override
     public void start() {
-        // Random rest duration: 100-200 ticks (5-10 seconds) - for the SLEEPING phase
-        restDuration = 100 + wyvern.getRandom().nextInt(101);
-        restingTicks = 0;
-        stateTimer = 0;
+        var restManager = wyvern.getRestManager();
 
-        // Start with sitting down animation (down → sit)
-        state = RestState.SITTING_DOWN;
+        // If already resting (loaded from save), don't restart
+        if (restManager.isResting()) {
+            // Resume from saved state
+            return;
+        }
+
+        // Start new rest cycle with random sleep duration (5-10 seconds)
+        int sleepDuration = 100 + wyvern.getRandom().nextInt(101);
+        restManager.startRest(sleepDuration);
+
         wyvern.setOrderedToSit(true); // Triggers down animation
         wyvern.getNavigation().stop();
     }
@@ -83,17 +74,17 @@ public class RaevyxRestGoal extends Goal {
     public void tick() {
         if (wyvern.level().isClientSide) return;
 
-        stateTimer++;
+        var restManager = wyvern.getRestManager();
+        DragonRestState state = restManager.getCurrentState();
 
         // Stop navigation and stay still
         wyvern.getNavigation().stop();
         wyvern.setDeltaMovement(0, wyvern.getDeltaMovement().y, 0);
 
         // Ensure dragon stays sitting ONLY during initial sit-down and sitting states
-        // DO NOT re-trigger sit during WAKING_UP or SITTING_AFTER (wake_up already transitions to sit)
-        if (state == RestState.SITTING_DOWN || state == RestState.SITTING) {
+        if (state == DragonRestState.SITTING_DOWN || state == DragonRestState.SITTING) {
             if (!wyvern.isOrderedToSit()) {
-                wyvern.setOrderedToSit(true); // Re-enforce sit if it got cleared somehow
+                wyvern.setOrderedToSit(true);
             }
         }
 
@@ -101,87 +92,82 @@ public class RaevyxRestGoal extends Goal {
         switch (state) {
             case SITTING_DOWN:
                 // Wait for down → sit animation (1.5s = 30 ticks, +5 buffer)
-                if (stateTimer > 35 && !wyvern.isInSitTransition()) {
-                    state = RestState.SITTING;
-                    stateTimer = 0;
+                if (restManager.getStateTimer() > 35 && !wyvern.isInSitTransition()) {
+                    restManager.advanceState();
                 }
                 break;
 
             case SITTING:
                 // Pause in sit idle before falling asleep (1 second)
-                if (stateTimer > 20) {
-                    state = RestState.FALLING_ASLEEP;
-                    stateTimer = 0;
-                    wyvern.startSleepEnter(); // Triggers fall_asleep → sleep
+                if (restManager.getStateTimer() > 20) {
+                    restManager.advanceState();
+                    wyvern.startSleepEnter(); // Triggers fall_asleep animation
                 }
                 break;
 
             case FALLING_ASLEEP:
                 // Wait for fall_asleep animation (2.5s = 50 ticks, +5 buffer)
-                // Use state check as primary, timer as fallback
-                if ((wyvern.isSleeping() && !wyvern.isSleepTransitioning()) || stateTimer > 55) {
-                    state = RestState.SLEEPING;
-                    stateTimer = 0;
-                    restingTicks = 0; // Start counting sleep duration
+                if ((wyvern.isSleeping() && !wyvern.isSleepTransitioning()) || restManager.getStateTimer() > 55) {
+                    restManager.advanceState();
                 }
                 break;
 
             case SLEEPING:
                 // Sleep for the duration, then wake up
-                restingTicks++;
-                if (restingTicks >= restDuration) {
-                    state = RestState.WAKING_UP;
-                    stateTimer = 0;
-                    wyvern.startSleepExit(); // Triggers wake_up → sit (with yawn!)
-                    // Keep sit flag true so wake_up can play (don't let dragon stand yet!)
+                restManager.incrementRestingTicks();
+                if (restManager.getRestingTicks() >= restManager.getRestDuration()) {
+                    restManager.advanceState();
+                    wyvern.startSleepExit(); // Triggers wake_up animation
                     wyvern.setOrderedToSit(true);
                 }
                 break;
 
             case WAKING_UP:
-                // Wait for wake_up animation (2.625s = 53 ticks, +5 buffer for safety)
-                // ONLY use timer - state checks fire too early!
-                if (stateTimer > 58) {
-                    state = RestState.SITTING_AFTER;
-                    stateTimer = 0;
-                    // Ensure still sitting after wake_up completes (wake_up ends in sit pose)
+                // Wait for wake_up animation (2.625s = 53 ticks, +5 buffer)
+                if (restManager.getStateTimer() > 58) {
+                    restManager.advanceState();
                     wyvern.setOrderedToSit(true);
                 }
                 break;
 
             case SITTING_AFTER:
                 // Pause in sit after waking (stretching moment, 1 second)
-                if (stateTimer > 20) {
-                    state = RestState.STANDING_UP;
-                    stateTimer = 0;
-                    wyvern.setOrderedToSit(false); // NOW trigger up → idle animation
+                if (restManager.getStateTimer() > 20) {
+                    restManager.advanceState();
+                    wyvern.setOrderedToSit(false); // Trigger stand up animation
                 }
                 break;
 
             case STANDING_UP:
-                // Wait for up animation (1.0s = 20 ticks, goal ends via canContinueToUse)
-                // Goal will end via canContinueToUse() after 20 tick timer
+                // Wait for up animation (1.0s = 20 ticks)
+                if (restManager.getStateTimer() > 20) {
+                    restManager.advanceState(); // Returns to IDLE
+                }
+                break;
+
+            default:
                 break;
         }
+
+        // Tick the rest manager timer
+        restManager.tick();
     }
 
     @Override
     public void stop() {
-        // Emergency cleanup - force stand up if interrupted
-        if (state != RestState.STANDING_UP) {
+        var restManager = wyvern.getRestManager();
+
+        // Emergency cleanup - force stand up if interrupted mid-cycle
+        if (restManager.isResting() && restManager.getCurrentState() != DragonRestState.STANDING_UP) {
             if (wyvern.isSleeping() || wyvern.isSleepTransitioning()) {
                 wyvern.startSleepExit();
             }
             wyvern.setOrderedToSit(false);
+            restManager.stopRest(); // Clear rest state
         }
 
         // Set cooldown before next rest (200-400 ticks = 10-20 seconds)
         retryCooldown = 200 + wyvern.getRandom().nextInt(201);
-
-        restingTicks = 0;
-        restDuration = 0;
-        stateTimer = 0;
-        state = null;
     }
 
     @Override

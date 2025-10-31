@@ -416,6 +416,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private final DragonKeybindHandler keybindHandler;
     private final RaevyxRiderController riderController;
     private final DragonSoundHandler soundHandler;
+    private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager;
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
@@ -481,6 +482,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.keybindHandler = new DragonKeybindHandler(this);
         this.riderController = new RaevyxRiderController(this);
         this.soundHandler = new DragonSoundHandler(this);
+        this.restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
 
         // Desynchronize ambient system across instances to avoid synchronized vocals/animations
         RandomSource rng = this.getRandom();
@@ -498,6 +500,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
+    }
+
+    public com.leon.saintsdragons.server.entity.sleep.DragonRestManager getRestManager() {
+        return restManager;
     }
 
     // Client-only: stash per-frame sampled locator world positions
@@ -2865,6 +2871,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tag.putInt("SleepCommandSnapshot", this.sleepCommandSnapshot);
         tag.putBoolean("ManualSitCommand", this.manualSitCommand);
 
+        // Persist rest state manager
+        restManager.save(tag);
+
         animationController.writeToNBT(tag);
     }
 
@@ -2913,6 +2922,30 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.sleepCancelTicks = Math.max(0, tag.getInt("SleepCancelTicks"));
         this.sleepLocked = tag.getBoolean("SleepLock");
         this.sleepCommandSnapshot = tag.getInt("SleepCommandSnapshot");
+
+        // Restore rest state manager and re-trigger animations based on loaded state
+        restManager.load(tag);
+        com.leon.saintsdragons.server.entity.sleep.DragonRestState restState = restManager.getCurrentState();
+        switch (restState) {
+            case SLEEPING -> {
+                setOrderedToSit(true);
+                animationHandler.triggerSleepAnimation();
+            }
+            case SITTING_DOWN, SITTING, SITTING_AFTER -> {
+                setOrderedToSit(true);
+            }
+            case FALLING_ASLEEP -> {
+                setOrderedToSit(true);
+                startSleepEnter();
+            }
+            case WAKING_UP -> {
+                setOrderedToSit(true);
+                startSleepExit();
+            }
+            case STANDING_UP -> {
+                setOrderedToSit(false);
+            }
+        }
 
         animationController.readFromNBT(tag);
 

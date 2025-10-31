@@ -130,6 +130,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
+    private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
 
     private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
@@ -1444,6 +1445,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         return soundHandler;
     }
 
+    public com.leon.saintsdragons.server.entity.sleep.DragonRestManager getRestManager() {
+        return restManager;
+    }
+
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
@@ -1627,6 +1632,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         super.addAdditionalSaveData(tag);
         tag.putInt("TimeFlying", timeFlying);
         saveRideableData(tag);
+        restManager.save(tag);
     }
 
     @Override
@@ -1648,7 +1654,31 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         groundTicks = 0; // Reset ground ticks on load
 
         this.setNoGravity(isFlying() || isHovering());
-        
+
+        // Restore rest state manager and re-trigger animations based on loaded state
+        restManager.load(tag);
+        com.leon.saintsdragons.server.entity.sleep.DragonRestState restState = restManager.getCurrentState();
+        switch (restState) {
+            case SLEEPING -> {
+                setOrderedToSit(true);
+                animationHandler.triggerSleepAnimation();
+            }
+            case SITTING_DOWN, SITTING, SITTING_AFTER -> {
+                setOrderedToSit(true);
+            }
+            case FALLING_ASLEEP -> {
+                setOrderedToSit(true);
+                startSleepEnter();
+            }
+            case WAKING_UP -> {
+                setOrderedToSit(true);
+                startSleepExit();
+            }
+            case STANDING_UP -> {
+                setOrderedToSit(false);
+            }
+        }
+
         // Force animation state sync after loading to prevent thrashing
         if (!level().isClientSide) {
             // Delay the sync slightly to ensure all systems are initialized
