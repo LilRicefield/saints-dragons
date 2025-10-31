@@ -6,11 +6,13 @@ import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRendere
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
 import com.leon.saintsdragons.client.renderer.nulljaw.NulljawRenderer;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.world.SDWorldRegistry;
 import com.leon.saintsdragons.server.command.DragonAllyCommand;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -30,7 +32,9 @@ import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import software.bernie.geckolib.GeckoLib;
 
@@ -51,10 +55,15 @@ public class SaintsDragons {
 
         GeckoLib.initialize();
 
+        // Register config
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SaintsDragonsConfig.SPEC, "saintsdragons.toml");
+
+        // Register deferred registries
         ModEntities.REGISTER.register(modBus);
         ModItems.REGISTER.register(modBus);
         ModSounds.REGISTER.register(modBus);
         ModParticles.REGISTER.register(modBus);
+        SDWorldRegistry.BIOME_MODIFIER_SERIALIZERS.register(modBus);
 
         modBus.addListener(this::onEntityAttributes);
         modBus.addListener(this::onRegisterRenderers);
@@ -130,7 +139,7 @@ public class SaintsDragons {
 
         event.register(
                 ModEntities.NULLJAW.get(),
-                SpawnPlacements.Type.IN_WATER,
+                SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Nulljaw::canSpawn,
                 SpawnPlacementRegisterEvent.Operation.AND
