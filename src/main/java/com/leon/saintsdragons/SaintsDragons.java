@@ -56,7 +56,6 @@ public class SaintsDragons {
         ModSounds.REGISTER.register(modBus);
         ModParticles.REGISTER.register(modBus);
 
-
         modBus.addListener(this::onEntityAttributes);
         modBus.addListener(this::onRegisterRenderers);
         modBus.addListener(this::onBuildCreativeTabContents);

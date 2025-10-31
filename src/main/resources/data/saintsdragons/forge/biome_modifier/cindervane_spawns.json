@@ -1,0 +1,12 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "#saintsdragons:has_cindervane",
+  "spawners": [
+    {
+      "type": "saintsdragons:cindervane",
+      "weight": 1,
+      "minCount": 1,
+      "maxCount": 1
+    }
+  ]
+}
