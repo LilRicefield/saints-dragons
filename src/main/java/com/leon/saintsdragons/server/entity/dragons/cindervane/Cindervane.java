@@ -268,31 +268,31 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     
-    // Rideable dragon data accessors specific to AmphithereEntity
-    private static final EntityDataAccessor<Boolean> DATA_FLYING = 
-            RideableDragonData.createFlyingAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Boolean> DATA_TAKEOFF = 
-            RideableDragonData.createTakeoffAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Boolean> DATA_HOVERING = 
-            RideableDragonData.createHoveringAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Boolean> DATA_LANDING = 
-            RideableDragonData.createLandingAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Boolean> DATA_RUNNING = 
-            RideableDragonData.createRunningAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = 
-            RideableDragonData.createGroundMoveStateAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = 
-            RideableDragonData.createFlightModeAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = 
-            RideableDragonData.createRiderForwardAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = 
-            RideableDragonData.createRiderStrafeAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_UP = 
-            RideableDragonData.createGoingUpAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = 
-            RideableDragonData.createGoingDownAccessor(Cindervane.class);
-    private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = 
-            RideableDragonData.createAcceleratingAccessor(Cindervane.class);
+    // Rideable dragon data accessors specific to Cindervane
+    private static final EntityDataAccessor<Boolean> DATA_FLYING =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_HOVERING =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_LANDING =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_RUNNING =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_GOING_UP =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =

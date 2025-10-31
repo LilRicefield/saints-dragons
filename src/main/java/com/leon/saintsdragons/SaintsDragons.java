@@ -56,7 +56,7 @@ public class SaintsDragons {
         GeckoLib.initialize();
 
         // Register config
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SaintsDragonsConfig.SPEC, "saintsdragons.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SaintsDragonsConfig.SPEC, "saintsdragonsspawning.toml");
 
         // Register deferred registries
         ModEntities.REGISTER.register(modBus);
