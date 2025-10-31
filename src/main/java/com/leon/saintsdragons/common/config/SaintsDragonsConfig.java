@@ -42,43 +42,43 @@ public class SaintsDragonsConfig {
                 .defineInRange("raevyxMinGroupSize", 1, 1, 10);
         RAEVYX_MAX_GROUP_SIZE = BUILDER
                 .comment("Maximum group size")
-                .defineInRange("raevyxMaxGroupSize", 1, 1, 10);
+                .defineInRange("raevyxMaxGroupSize", 2, 1, 10);
 
         // Stegonaut
         BUILDER.comment("Stegonaut");
         STEGONAUT_SPAWN_WEIGHT = BUILDER
                 .comment("Spawn weight (0 = disabled, higher = more common)")
-                .defineInRange("stegonautSpawnWeight", 1, 0, 100);
+                .defineInRange("stegonautSpawnWeight", 5, 0, 100);
         STEGONAUT_MIN_GROUP_SIZE = BUILDER
                 .comment("Minimum group size")
                 .defineInRange("stegonautMinGroupSize", 1, 1, 10);
         STEGONAUT_MAX_GROUP_SIZE = BUILDER
                 .comment("Maximum group size")
-                .defineInRange("stegonautMaxGroupSize", 2, 1, 10);
+                .defineInRange("stegonautMaxGroupSize", 4, 1, 10);
 
         // Cindervane
         BUILDER.comment("Cindervane");
         CINDERVANE_SPAWN_WEIGHT = BUILDER
                 .comment("Spawn weight (0 = disabled, higher = more common)")
-                .defineInRange("cindervaneSpawnWeight", 1, 0, 100);
+                .defineInRange("cindervaneSpawnWeight", 4, 0, 100);
         CINDERVANE_MIN_GROUP_SIZE = BUILDER
                 .comment("Minimum group size")
                 .defineInRange("cindervaneMinGroupSize", 1, 1, 10);
         CINDERVANE_MAX_GROUP_SIZE = BUILDER
                 .comment("Maximum group size")
-                .defineInRange("cindervaneMaxGroupSize", 1, 1, 10);
+                .defineInRange("cindervaneMaxGroupSize", 3, 1, 10);
 
         // Nulljaw
         BUILDER.comment("Nulljaw");
         NULLJAW_SPAWN_WEIGHT = BUILDER
                 .comment("Spawn weight (0 = disabled, higher = more common)")
-                .defineInRange("nulljawSpawnWeight", 1, 0, 100);
+                .defineInRange("nulljawSpawnWeight", 2, 0, 100);
         NULLJAW_MIN_GROUP_SIZE = BUILDER
                 .comment("Minimum group size")
                 .defineInRange("nulljawMinGroupSize", 1, 1, 10);
         NULLJAW_MAX_GROUP_SIZE = BUILDER
                 .comment("Maximum group size")
-                .defineInRange("nulljawMaxGroupSize", 1, 1, 10);
+                .defineInRange("nulljawMaxGroupSize", 2, 1, 10);
 
         BUILDER.pop();
         SPEC = BUILDER.build();

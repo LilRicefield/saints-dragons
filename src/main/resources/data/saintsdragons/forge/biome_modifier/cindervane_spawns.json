@@ -4,9 +4,9 @@
   "spawners": [
     {
       "type": "saintsdragons:cindervane",
-      "weight": 1,
+      "weight": 4,
       "minCount": 1,
-      "maxCount": 1
+      "maxCount": 3
     }
   ]
 }
