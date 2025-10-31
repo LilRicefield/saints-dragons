@@ -1,0 +1,12 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "#saintsdragons:has_stegonaut",
+  "spawners": [
+    {
+      "type": "saintsdragons:stegonaut",
+      "weight": 2,
+      "minCount": 1,
+      "maxCount": 2
+    }
+  ]
+}
