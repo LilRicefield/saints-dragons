@@ -111,6 +111,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     private final DragonKeybindHandler keybindHandler = new DragonKeybindHandler(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
     private final NulljawInteractionHandler interactionHandler = new NulljawInteractionHandler(this);
+    private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
     private final NulljawRiderController riderController;
     private final PathNavigation groundNavigation;
     private final DragonAmphibiousNavigation waterNavigation;
@@ -1382,27 +1383,35 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     }
 
     private void tickSleepTransition() {
+        // Handle sleep enter transition: sit_down → fall_asleep → sleep loop
         if (isSleepingEntering() && !level().isClientSide) {
+            // Check if sit_down animation is complete (sitProgress reached max)
             if (getSitProgress() >= maxSitTicks()) {
-                if (sleepTransitionTicks > getFallAsleepAnimationTicks()) {
+                // Sit down complete, now trigger fall_asleep if we haven't started the transition timer yet
+                if (sleepTransitionTicks == getFallAsleepAnimationTicks()) {
+                    // Just reached sitting position, trigger fall_asleep
                     animationHandler.triggerFallAsleepAnimation();
-                    sleepTransitionTicks = getFallAsleepAnimationTicks();
                 }
-            } else {
-                sleepTransitionTicks = getFallAsleepAnimationTicks() + 1;
-                return;
             }
         }
 
         if (sleepTransitionTicks > 0) {
             sleepTransitionTicks--;
+
+            // Trigger sleep animation 3 ticks BEFORE fall_asleep finishes for smooth blend
+            if (sleepTransitionTicks == 3 && isSleepingEntering() && !level().isClientSide) {
+                animationHandler.triggerSleepAnimation();
+            }
+
             if (sleepTransitionTicks == 0) {
                 if (isSleepingEntering()) {
+                    // fall_asleep animation finishing - mark as sleeping (animation already triggered)
                     setSleeping(true);
                     setSleepingEntering(false);
-                    animationHandler.triggerSleepAnimation();
                 } else if (isSleepingExiting()) {
+                    // wake_up finished: dragon is now sitting, will stand up via normal sit system
                     setSleepingExiting(false);
+                    // Start small ambient cooldown buffer (~0.5s)
                     sleepAmbientCooldownTicks = Math.max(sleepAmbientCooldownTicks, 10);
                 }
             }
@@ -1435,7 +1444,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     }
 
     public int getSitDownAnimationTicks() {
-        return 33;
+        return 33; // down animation is 1.6667s ≈ 33 ticks
     }
 
     public int getSitUpAnimationTicks() {
@@ -1443,11 +1452,18 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     }
 
     public int getFallAsleepAnimationTicks() {
-        return 37; // fall_asleep animation is 1.8333s ≈ 37 ticks
+        return 50; // fall_asleep animation is 2.5s = 50 ticks
     }
 
     public int getWakeUpAnimationTicks() {
-        return 38; // wake_up animation is 1.875s ≈ 38 ticks
+        return 40; // wake_up animation is 2.0s = 40 ticks
+    }
+
+    /**
+     * Get the persistent rest manager for save/load of rest state
+     */
+    public com.leon.saintsdragons.server.entity.sleep.DragonRestManager getRestManager() {
+        return restManager;
     }
 
     // ===== SLEEP SYSTEM =====
@@ -1522,7 +1538,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     public void startSleepEnter() {
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
         setSleepingEntering(true);
-        sleepTransitionTicks = getFallAsleepAnimationTicks() + 1;
+        sleepTransitionTicks = getFallAsleepAnimationTicks(); // Set to exact animation length
         if (!level().isClientSide) {
             enterSleepLock();
         }
@@ -1608,6 +1624,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         tag.putInt("SleepTransitionTicks", sleepTransitionTicks);
         tag.putInt("SleepAmbientCooldown", sleepAmbientCooldownTicks);
         tag.putInt("SleepReentryCooldown", sleepReentryCooldownTicks);
+
+        // Save persistent rest state
+        restManager.save(tag);
         tag.putInt("SleepCancelTicks", sleepCancelTicks);
         tag.putInt("SleepCommandSnapshot", sleepCommandSnapshot);
     }
@@ -1623,6 +1642,31 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         sleepTransitionTicks = tag.getInt("SleepTransitionTicks");
         sleepAmbientCooldownTicks = tag.getInt("SleepAmbientCooldown");
         sleepReentryCooldownTicks = tag.getInt("SleepReentryCooldown");
+
+        // Load persistent rest state
+        restManager.load(tag);
+
+        // Re-trigger animations based on loaded rest state
+        if (!level().isClientSide) {
+            var restState = restManager.getCurrentState();
+            switch (restState) {
+                case SITTING_DOWN, SITTING, SITTING_AFTER -> setOrderedToSit(true);
+                case FALLING_ASLEEP -> {
+                    setOrderedToSit(true);
+                    // Don't re-trigger fall_asleep here, let the state machine handle it
+                }
+                case SLEEPING -> {
+                    setOrderedToSit(true);
+                    // Re-trigger sleep loop animation
+                    animationHandler.triggerSleepAnimation();
+                }
+                case WAKING_UP -> {
+                    setOrderedToSit(true);
+                    // Don't re-trigger wake_up, let state machine handle it
+                }
+            }
+        }
+
         sleepCancelTicks = tag.getInt("SleepCancelTicks");
         sleepCommandSnapshot = tag.contains("SleepCommandSnapshot") ? tag.getInt("SleepCommandSnapshot") : -1;
         if (sleepLocked) {
