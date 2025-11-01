@@ -230,7 +230,7 @@
     ]
   },
   "raevyx_step": {
-    "subtitle": "Heavy footsteps",
+    "subtitle": "Reavyx steps",
     "sounds": [
       { "name": "saintsdragons:entity/raevyx/raevyx_step",
         "volume": 0.8,
@@ -244,26 +244,6 @@
       {
         "name": "saintsdragons:entity/raevyx/raevyx_flap",
         "volume": 1.0,
-        "pitch": 1.0
-      }
-    ]
-  },
-  "raevyx_step1": {
-    "subtitle": "Raevyx steps",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_step1",
-        "volume": 0.8,
-        "pitch": 1.0
-      }
-    ]
-  },
-  "raevyx_step2": {
-    "subtitle": "Raevyx steps",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_step2",
-        "volume": 0.8,
         "pitch": 1.0
       }
     ]
