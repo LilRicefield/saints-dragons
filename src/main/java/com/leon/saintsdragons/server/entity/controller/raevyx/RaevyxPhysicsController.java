@@ -9,7 +9,7 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
 /**
- * Clean animation controller for Raevyx - simple and maintainable
+ * Clean physics controller for Raevyx - simple and maintainable
  */
 public class RaevyxPhysicsController {
     private final Raevyx wyvern;
@@ -72,18 +72,6 @@ public class RaevyxPhysicsController {
         updatePhysicsEnvelopes();
     }
 
-    // 0=glide, 1=flap/forward, 2=hover, 3=takeoff, -1=ground/none
-    public int computeFlightModeForSync() {
-        if (!wyvern.isFlying()) return -1;
-        if (shouldPlayTakeoff()) return 3;
-        // Use same hysteresis tendencies as predicate: if flapping dominates → forward, else glide; hovering when hoveringFraction is significant
-        float hoverWeight = hoveringFraction;
-        float flapWeight = flappingFraction;
-        boolean hovering = hoverWeight > 0.35f; // slightly above predicate's exit
-        if (hovering) return 2;
-        boolean flap = flapWeight > 0.40f; // coarse threshold for sync
-        return flap ? 1 : 0;
-    }
     public PlayState handleMovementAnimation(AnimationState<Raevyx> state) {
         // Default transition length (safe baseline); override per-branch below
         state.getController().transitionLength(6);
@@ -146,6 +134,12 @@ public class RaevyxPhysicsController {
 
             boolean manualRiderControl = wyvern.isTame() && wyvern.isVehicle();
             if (manualRiderControl) {
+                // Check if actually moving to determine hover vs active flight
+                Vec3 vel = wyvern.getDeltaMovement();
+                boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
+                boolean isMovingVertically = Math.abs(vel.y) > 0.02;
+                boolean isStationary = !isMovingHorizontally && !isMovingVertically;
+
                 // GLIDE_DOWN - absolute priority, nothing overrides diving
                 if (wyvern.isGoingDown() && !wyvern.isRiderLandingBlendActive()) {
                     RawAnimation descend = GLIDE_DOWN;
@@ -157,8 +151,20 @@ public class RaevyxPhysicsController {
                     return PlayState.CONTINUE;
                 }
 
-                // SPRINT FLYING - second priority (after dive)
-                if (wyvern.isAccelerating()) {
+                // HOVER - second priority: truly stationary in air (no input or holding position)
+                if (isStationary) {
+                    RawAnimation hover = FLAP;
+                    if (currentFlightAnimation != hover) {
+                        state.getController().transitionLength(6);
+                        currentFlightAnimation = hover;
+                    }
+                    state.setAndContinue(hover);
+                    return PlayState.CONTINUE;
+                }
+
+                // SPRINT FLYING - third priority (after dive and hover)
+                // Only play sprint animation if actually moving
+                if (wyvern.isAccelerating() && isMovingHorizontally) {
                     RawAnimation sprint = SPRINT_FLAP;
                     if (currentFlightAnimation != sprint) {
                         state.getController().transitionLength(3);
@@ -168,7 +174,7 @@ public class RaevyxPhysicsController {
                     return PlayState.CONTINUE;
                 }
 
-                // ASCENDING - third priority
+                // ASCENDING - fourth priority
                 if (wyvern.isGoingUp()) {
                     RawAnimation upward = FLAP;
                     if (currentFlightAnimation != upward) {

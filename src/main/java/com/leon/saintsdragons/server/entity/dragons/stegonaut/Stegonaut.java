@@ -983,7 +983,15 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         playingDead = false;
         playDeadTicksRemaining = 0;
         this.entityData.set(DATA_PLAYING_DEAD, false);
-        this.triggerAnim("action", "clear_fake_death");
+
+        // Stop the fake_death animation loop by resetting the action controller
+        // This will let the movement controller take over again
+        this.getAnimatableInstanceCache().getManagerForId(this.getId()).getAnimationControllers()
+            .forEach((name, controller) -> {
+                if (name.equals("action")) {
+                    controller.forceAnimationReset();
+                }
+            });
 
         if (playDeadOriginalCommand >= 0) {
             this.setCommand(playDeadOriginalCommand);
@@ -1058,7 +1066,10 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         }
 
         if (playingDead) {
-            refreshPlayDeadPose();
+            // Only enforce play dead pose (stop movement), don't spam setOrderedToSit every tick
+            this.getNavigation().stop();
+            this.getMoveControl().setWantedPosition(this.getX(), this.getY(), this.getZ(), 0.0);
+            this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
 
             Raevyx threat = findLightningThreat();
             boolean threatNearby = threat != null && this.distanceToSqr(threat) <= PLAY_DEAD_DETECTION_RANGE_SQR;
