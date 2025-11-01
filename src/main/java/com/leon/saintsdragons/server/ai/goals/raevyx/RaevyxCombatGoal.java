@@ -17,7 +17,7 @@ public class RaevyxCombatGoal extends Goal {
     private final Raevyx wyvern;
     private final double biteRange = 3.0;
     private final double goreRange = 4.5;
-    private final double chaseSpeed = 2.0D;
+    private final double chaseSpeed = 1.40D;
     private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
     private double lastTargetX;

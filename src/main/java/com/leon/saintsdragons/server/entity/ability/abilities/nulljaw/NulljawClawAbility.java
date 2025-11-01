@@ -101,8 +101,10 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
                 applyHit(dragon, target);
             }
 
-            // Break blocks to clear path
-            breakBlocksInPath(dragon);
+            // Break blocks to clear path (rider-only feature)
+            if (dragon.isVehicle()) {
+                breakBlocksInPath(dragon);
+            }
 
             appliedHit = true;
         }
@@ -120,10 +122,6 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
 
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
         target.hurt(source, damage);
-
-        // Stronger knockback than bite
-        Vec3 push = dragon.getLookAngle().scale(0.5);
-        target.push(push.x, 0.15, push.z);
     }
 
     // ===== Block Breaking =====

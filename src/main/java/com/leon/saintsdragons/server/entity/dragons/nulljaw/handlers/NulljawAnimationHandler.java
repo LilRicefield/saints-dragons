@@ -157,6 +157,9 @@ public record NulljawAnimationHandler(Nulljaw drake) {
             boolean abilityActive = drake.getActiveAbility() != null;
             boolean riderControlled = drake.isVehicle() && drake.getControllingPassenger() instanceof Player player && drake.isOwnedBy(player);
 
+            // Check if drake is in aggressive combat (running toward target)
+            boolean isAggressive = drake.isAggressive() && isMovingLand;
+
             int baseTransition = MOVEMENT_TRANSITION_TICKS;
             if (riderControlled) {
                 baseTransition = Math.max(3, baseTransition - 2);
@@ -165,8 +168,8 @@ public record NulljawAnimationHandler(Nulljaw drake) {
                 baseTransition = Math.max(2, baseTransition - 1);
             }
 
-            if (groundState == 2) {
-                // Running state
+            if (groundState == 2 || isAggressive) {
+                // Running state (either rider-controlled or AI aggressive combat)
                 controller.transitionLength(baseTransition);
                 state.setAnimation(phaseTwo ? RUN2 : RUN);
             } else if (groundState == 1 || isMovingLand) {
