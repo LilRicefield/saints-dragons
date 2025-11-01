@@ -146,16 +146,7 @@ public class RaevyxPhysicsController {
 
             boolean manualRiderControl = wyvern.isTame() && wyvern.isVehicle();
             if (manualRiderControl) {
-                if (wyvern.isGoingUp()) {
-                    RawAnimation upward = FLAP;
-                    if (currentFlightAnimation != upward) {
-                        state.getController().transitionLength(4);
-                        currentFlightAnimation = upward;
-                    }
-                    state.setAndContinue(upward);
-                    return PlayState.CONTINUE;
-                }
-                // Only play glide_down if NOT in landing blend (landing blend takes priority)
+                // GLIDE_DOWN - absolute priority, nothing overrides diving
                 if (wyvern.isGoingDown() && !wyvern.isRiderLandingBlendActive()) {
                     RawAnimation descend = GLIDE_DOWN;
                     if (currentFlightAnimation != descend) {
@@ -163,6 +154,28 @@ public class RaevyxPhysicsController {
                         currentFlightAnimation = descend;
                     }
                     state.setAndContinue(descend);
+                    return PlayState.CONTINUE;
+                }
+
+                // SPRINT FLYING - second priority (after dive)
+                if (wyvern.isAccelerating()) {
+                    RawAnimation sprint = SPRINT_FLAP;
+                    if (currentFlightAnimation != sprint) {
+                        state.getController().transitionLength(3);
+                        currentFlightAnimation = sprint;
+                    }
+                    state.setAndContinue(sprint);
+                    return PlayState.CONTINUE;
+                }
+
+                // ASCENDING - third priority
+                if (wyvern.isGoingUp()) {
+                    RawAnimation upward = FLAP;
+                    if (currentFlightAnimation != upward) {
+                        state.getController().transitionLength(4);
+                        currentFlightAnimation = upward;
+                    }
+                    state.setAndContinue(upward);
                     return PlayState.CONTINUE;
                 }
             }

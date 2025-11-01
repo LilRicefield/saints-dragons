@@ -14,6 +14,7 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.cindervane.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.glide_down");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.cindervane.flap");
+    private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.cindervane.sprint_flap");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.cindervane.takeoff");
     private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.cindervane.landing");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.cindervane.walk");
@@ -64,11 +65,20 @@ public class CindervaneAnimationHandler {
                     state.setAndContinue(LANDING);
                     return PlayState.CONTINUE;
                 }
-                // Check if descending (takes priority over altitude-based, but not over landing blend)
+                // GLIDE_DOWN - third priority, absolute lock (nothing overrides diving)
                 else if (dragon.isGoingDown() && !dragon.isRiderLandingBlendActive()) {
                     state.getController().transitionLength(6);
                     state.setAndContinue(GLIDE_DOWN);
-                } else {
+                    return PlayState.CONTINUE;
+                }
+                // SPRINT FLYING - fourth priority (after dive)
+                else if (dragon.isAccelerating()) {
+                    state.getController().transitionLength(3);
+                    state.setAndContinue(SPRINT_FLAP);
+                    return PlayState.CONTINUE;
+                }
+                // Altitude-based animations (lowest priority)
+                else {
                     // Altitude-based animation when being ridden
                     // IMPORTANT: Use synced flight mode from entity data, not recalculated value
                     // Client-side getFlightMode() uses non-synced inHighAltitudeGlide flag

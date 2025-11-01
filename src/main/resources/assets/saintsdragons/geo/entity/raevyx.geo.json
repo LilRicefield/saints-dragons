@@ -7,8 +7,8 @@
 				"texture_width": 1024,
 				"texture_height": 1024,
 				"visible_bounds_width": 24,
-				"visible_bounds_height": 6.5,
-				"visible_bounds_offset": [0, 2.75, 0]
+				"visible_bounds_height": 14.5,
+				"visible_bounds_offset": [0, 6.75, 0]
 			},
 			"bones": [
 				{
@@ -288,7 +288,7 @@
 				{
 					"name": "neckstart",
 					"parent": "head",
-					"pivot": [0, 33.39, -12.6]
+					"pivot": [0, 35.39, -25.6]
 				},
 				{
 					"name": "neckstartController",
