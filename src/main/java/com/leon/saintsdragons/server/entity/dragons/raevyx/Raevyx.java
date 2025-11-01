@@ -4,8 +4,7 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
 //Custom stuff
-import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningArcData;
-import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
+import com.leon.saintsdragons.common.particle.raevyx.*;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxDodgeGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
@@ -61,7 +60,6 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.control.MoveControl;
-import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
@@ -139,10 +137,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     /** Entity data accessor for attack phase */
     public static final EntityDataAccessor<Integer> DATA_ATTACK_PHASE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
-
-    /** Entity data accessor for attack state (Cataclysm-style simple state system) */
-    public static final EntityDataAccessor<Integer> DATA_ATTACK_STATE =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
 
     /** Entity data accessor for screen shake amount */
@@ -354,12 +348,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     boolean dodging = false;
     int dodgeTicksLeft = 0;
     Vec3 dodgeVec = Vec3.ZERO;
-    // ===== NEW ATTACK STATE SYSTEM (Cataclysm-style) =====
-    /** Attack state timing counter */
-    public int attackTicks = 0;
-    
-    /** Attack cooldown timer */
-    public int attackCooldown = 0;
+
     private boolean allowGroundBeamDuringStorm = false;
     // Sit transition state
     // Track sit down/up animations separately from sitProgress (which is for sit pose interpolation)
@@ -544,7 +533,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     protected void defineSynchedData() {
         super.defineSynchedData();
         // Define Lightning Dragon specific data
-        this.entityData.define(DATA_ATTACK_STATE, ATTACK_STATE_IDLE);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
@@ -628,6 +616,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public <T extends DragonEntity> DragonAbility<T> getActiveAbility() {
         return (DragonAbility<T>) combatManager.getActiveAbility();
     }
+
+    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
+        return combatManager.isAbilityActive(abilityType);
+    }
+
     public boolean canUseAbility() {
         return !isBaby() && combatManager.canUseAbility();
     }
@@ -979,37 +972,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     
     // ===== NEW ATTACK STATE SYSTEM METHODS =====
     
-    /**
-     * Get the current attack state (Cataclysm-style simple state system)
-     */
-    public int getAttackState() {
-        return getIntegerData(DATA_ATTACK_STATE);
-    }
-    
-    /**
-     * Set the attack state and reset attack ticks
-     */
-    public void setAttackState(int state) {
-        this.attackTicks = 0;
-        setIntegerData(DATA_ATTACK_STATE, state);
-        // Broadcast entity event for animation triggers
-        this.level().broadcastEntityEvent(this, (byte) -state);
-    }
-    
-    /**
-     * Check if the wyvern is currently in an attack state (Cataclysm-style)
-     */
-    public boolean isInAttackState() {
-        return getAttackState() != ATTACK_STATE_IDLE;
-    }
-    
-    /**
-     * Check if the wyvern can start a new attack (not on cooldown)
-     */
-    public boolean canAttack() {
-        return !isBaby() && attackCooldown <= 0 && !isInAttackState();
-    }
-
     // ===== Lightning Dragon Specific Methods =====
     
     // Flight mode accessor for controllers (avoids accessing protected entityData outside entity)
@@ -1242,7 +1204,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tickRiderTakeoff();
         tickControllers();
         tickHurtSoundCooldown();
-        tickAttackState();
         tickWaterDisturbance();
         if (!level().isClientSide) {
             // When ridden and flying, never stay in 'hovering' unless explicitly landing or beaming or taking off
@@ -1417,19 +1378,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Cool down hurt sound throttle
         if (hurtSoundCooldown > 0) hurtSoundCooldown--;
     }
-    
-    private void tickAttackState() {
-        // Handle attack state timing (Cataclysm-style)
-        if (this.getAttackState() > ATTACK_STATE_IDLE) {
-            ++this.attackTicks;
-        }
-        
-        // Handle attack cooldown
-        if (attackCooldown > 0) {
-            --attackCooldown;
-        }
-    }
-    
+
     private void tickSound() {
         // Drive pending sound scheduling (both sides)
         this.getSoundHandler().tick();
@@ -1839,7 +1788,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         boolean moveGoalActive = this.goalSelector.getRunningGoals().anyMatch(wrapped -> {
             Goal goal = wrapped.getGoal();
-            return goal instanceof RaevyxFollowOwnerGoal || goal instanceof RaevyxMoveGoal;
+            return goal instanceof RaevyxFollowOwnerGoal || goal instanceof RaevyxCombatGoal;
         });
         if (moveGoalActive) {
             return;
@@ -2426,25 +2375,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.goalSelector.addGoal(7, new RaevyxFollowParentGoal(this, 1.15D));
         this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
 
-        // Combat goals (prioritized to avoid conflicts)
-        // Using new Cataclysm-style separated goal system focused on ground combat
-        // New separated combat system (ensure combat decision outranks chase)
-        this.goalSelector.addGoal(3, new RaevyxCombatGoal(this));          // Attack coordination
-        this.goalSelector.addGoal(4, new RaevyxMoveGoal(this, true, 1.4)); // Pure movement - yields when attacking
-        
-        // Attack execution goals (high priority, interrupt movement)
-        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, 3, 10, 4.0f));
-        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_WINDUP, 3, 8, 3.0f));
-        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, 3, 5, 4.0f));
-        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, 3, 3, 3.0f));
-        this.goalSelector.addGoal(10, new RaevyxAttackGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, 5, 5, 4.0f));
-        
-        // State transition goals
-        this.goalSelector.addGoal(11, new RaevyxStateGoal(this, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_WINDUP, ATTACK_STATE_HORN_ACTIVE, 10, 10));
-        this.goalSelector.addGoal(11, new RaevyxStateGoal(this, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_WINDUP, ATTACK_STATE_BITE_ACTIVE, 8, 8));
-        this.goalSelector.addGoal(11, new RaevyxStateGoal(this, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_HORN_ACTIVE, ATTACK_STATE_RECOVERY, 5, 5));
-        this.goalSelector.addGoal(11, new RaevyxStateGoal(this, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_BITE_ACTIVE, ATTACK_STATE_RECOVERY, 3, 3));
-        this.goalSelector.addGoal(11, new RaevyxStateGoal(this, ATTACK_STATE_RECOVERY, ATTACK_STATE_RECOVERY, ATTACK_STATE_IDLE, 5, 5));
+        // Combat goal - all-in-one system (movement + attack selection)
+        this.goalSelector.addGoal(3, new RaevyxCombatGoal(this));
 
         // Movement/idle
         // Unified sleep goal: high priority to preempt follow/wander, but calm() prevents overriding combat/aggro
@@ -2896,13 +2828,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public void handleEntityEvent(byte eventId) {
-        // Handle attack state events (Cataclysm-style)
-        if (eventId <= 0) {
-            // Attack state change event (negative values)
-            this.attackTicks = 0;
-            return;
-        }
-        
         if (eventId == 6) {
             // Failed taming - show smoke particles ONLY, no sitting behavior at all
             if (level().isClientSide) {

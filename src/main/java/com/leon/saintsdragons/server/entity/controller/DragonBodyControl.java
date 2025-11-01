@@ -20,10 +20,6 @@ public class DragonBodyControl extends BodyRotationControl {
     private final double[] histPosZ = new double[HISTORY_SIZE];
     private final float turnSpeed;
 
-    public DragonBodyControl(Mob entity) {
-        this(entity, 0.6f); // Default turn speed
-    }
-
     public DragonBodyControl(Mob entity, float turnSpeed) {
         super(entity);
         this.entity = entity;
