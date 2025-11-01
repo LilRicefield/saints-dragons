@@ -1125,6 +1125,16 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "nulljaw_phase1",
+					"locator": "mouth_origin"
+				},
+				"2.0": {
+					"effect": "nulljaw_step",
+					"locator": "frontLocator"
+				}
 			}
 		},
 		"animation.nulljaw.idle": {
