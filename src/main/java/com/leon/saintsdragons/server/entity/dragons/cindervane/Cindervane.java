@@ -418,7 +418,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             if (!this.isOrderedToSit() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
                 this.entityData.set(DATA_SIT_PROGRESS, 0f);
             }
-            boolean onGroundNow = this.onGround() || this.isInWater();
+            // Only consider SOLID ground, not water (water should not trigger landing)
+            boolean onGroundNow = this.onGround() && !this.isInWater();
 
             if (isFlying()) {
                 airTicks++;
@@ -481,6 +482,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         updateSittingProgress();
         tickSleepTransition();
         tickSleepCooldowns();
+        tickWaterSlicing();
 
         if (!level().isClientSide) {
             // Ensure sit animation is cleared for riders even if packets arrive late
@@ -815,8 +817,27 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (!level().hasChunkAt(pos)) {
             return Double.POSITIVE_INFINITY;
         }
+
+        // Use MOTION_BLOCKING_NO_LEAVES to find solid ground below water
         int groundY = this.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 pos.getX(), pos.getZ());
+
+        // Scan a column from slightly above dragon down to BELOW the heightmap (heightmap returns +1 above actual blocks)
+        int dragonY = (int) Math.floor(this.getY());
+        int scanTopY = dragonY + 3; // Check a bit above dragon (in case partially submerged)
+        int scanBottomY = Math.min(groundY - 1, dragonY - 15);  // Scan below heightmap to catch water
+
+        // Scan downward from above dragon to ground, checking for water at any height
+        for (int y = scanTopY; y >= scanBottomY; y--) {
+            BlockPos checkPos = new BlockPos(pos.getX(), y, pos.getZ());
+            BlockState checkState = level().getBlockState(checkPos);
+
+            if (!checkState.getFluidState().isEmpty()) {
+                // Water/lava detected in column - don't trigger landing
+                return Double.POSITIVE_INFINITY;
+            }
+        }
+
         return this.getY() - groundY;
     }
 
@@ -885,6 +906,87 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (screenShakeAmount > 0f) {
             screenShakeAmount = Math.max(0f, screenShakeAmount - 0.12F);
             this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+        }
+    }
+
+    // ===== WATER DISTURBANCE EFFECT (wing downforce) =====
+
+    // Tuneable constants
+    private static final double WATER_EFFECT_MAX_HEIGHT = 10.0;  // Max height above water to trigger effect
+    private static final double WATER_EFFECT_INTENSITY = 1.5;    // Multiplier for particle count (bigger = more splash)
+
+    /**
+     * Creates water disturbance effects when flying over water.
+     * Uses vanilla-style splash logic based on bounding box size.
+     * Bigger dragons automatically create bigger splashes!
+     */
+    private void tickWaterSlicing() {
+        // Only run on server side
+        if (level().isClientSide) return;
+
+        // Only when flying
+        if (!isFlying()) return;
+
+        // Get dragon position and bounding box
+        Vec3 pos = position();
+        AABB box = getBoundingBox();
+
+        // Check for water below (scan down from dragon position)
+        for (int checkDown = 0; checkDown < WATER_EFFECT_MAX_HEIGHT; checkDown++) {
+            BlockPos checkPos = new BlockPos(
+                (int) Math.floor(pos.x),
+                (int) Math.floor(pos.y) - checkDown,
+                (int) Math.floor(pos.z)
+            );
+
+            BlockState state = level().getBlockState(checkPos);
+
+            // Found water surface?
+            if (!state.getFluidState().isEmpty()) {
+                double waterY = checkPos.getY() + 1.0; // Top of water block
+
+                // === VANILLA-STYLE SPLASH BASED ON BOUNDING BOX SIZE ===
+                // Calculate bounding box dimensions
+                double boxWidth = box.getXsize();   // Width (X axis)
+                double boxLength = box.getZsize();  // Length (Z axis)
+
+                // Calculate particle count based on entity size (vanilla formula)
+                // Bigger bounding box = more particles
+                int particleCount = (int) Math.ceil((boxWidth + boxLength) / 2.0 * WATER_EFFECT_INTENSITY * 8.0);
+                particleCount = Math.min(particleCount, 50); // Cap to prevent lag
+
+                // Spawn particles around the perimeter of the bounding box
+                for (int i = 0; i < particleCount; i++) {
+                    // Random position within bounding box horizontal area
+                    double offsetX = (random.nextDouble() - 0.5) * boxWidth;
+                    double offsetZ = (random.nextDouble() - 0.5) * boxLength;
+
+                    double particleX = pos.x + offsetX;
+                    double particleZ = pos.z + offsetZ;
+
+                    // Spawn splash particles
+                    ((ServerLevel) level()).sendParticles(
+                        ParticleTypes.SPLASH,
+                        particleX, waterY, particleZ,
+                        1,
+                        offsetX * 0.2, 0.1, offsetZ * 0.2,  // Velocity based on offset (spreads outward)
+                        0.1
+                    );
+
+                    // Bubbles (fewer than splashes)
+                    if (random.nextFloat() < 0.3f) {
+                        ((ServerLevel) level()).sendParticles(
+                            ParticleTypes.BUBBLE_POP,
+                            particleX, waterY, particleZ,
+                            1,
+                            0.0, 0.0, 0.0,
+                            0.0
+                        );
+                    }
+                }
+
+                break; // Found water, stop scanning down
+            }
         }
     }
 

@@ -30,25 +30,24 @@ public record CindervaneRiderController(Cindervane dragon) {
     private static final double SEAT_1_FORWARD = 4.0D;  // Behind driver
     private static final double SEAT_1_SIDE = 0.00D;
 
-    // ===== FLIGHT VERTICAL RATES (SLOWER THAN LIGHTNING DRAGON) =====
-    // Up/down rates while flying controlled by keybinds - gliders are slower
-    private static final double ASCEND_RATE = 0.03D;  // Slower than Lightning Dragon (0.05D)
-    private static final double DESCEND_RATE = 0.06D;  // Deliberately gentle descent for glider feel
+    // ===== SIMPLIFIED ARCADE FLIGHT PHYSICS =====
+    // Speed multipliers relative to base FLYING_SPEED attribute
+    private static final double CRUISE_SPEED_MULT = 4.5;   // Slower base speed than Raevyx but value is almost same cuz we modify base speed(glider feel)
+    private static final double SPRINT_SPEED_MULT = 6.5;   // More modest sprint boost
 
-    // ===== AIR SPRINT / ACCELERATION TUNING (MUCH SLOWER FOR GLIDER) =====
-    // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
-    // Base cruise cap is intentionally lower; sprint raises cap and accel.
-    private static final double CRUISE_MAX_MULT = 14.0;
-    private static final double SPRINT_MAX_MULT = 28.0;    // Still far below Lightning Dragon's 55.5
-    private static final double AIR_ACCEL_MULT = 0.10;
-    private static final double SPRINT_ACCEL_MULT = 0.20;  // Slightly quicker sprint spool-up
-    private static final double AIR_DRAG = 0.035;           // Retain glider feel but with less bleed-off
-    
-    // ===== AMPHITHERE GLIDER MANEUVERABILITY =====
-    // Gliders have different turning characteristics - more graceful, less sharp
-    private static final double TURN_ACCEL_MULT = 0.06;   // Much less aggressive than Lightning Dragon (0.15)
-    private static final double MIN_TURN_SPEED = 0.15;     // Lower threshold than Lightning Dragon (0.3)
-    private static final double TURN_MOMENTUM_FACTOR = 0.95; // Much more momentum preservation than Lightning Dragon (0.8)
+    // Acceleration and drag
+    private static final double ACCELERATION = 0.12;        // Slightly slower acceleration than Raevyx
+    private static final double DRAG_WITH_INPUT = 0.06;    // Gentle deceleration while flying
+    private static final double DRAG_NO_INPUT = 0.45;      // Strong braking when coasting
+
+    // Strafe and vertical
+    private static final double STRAFE_POWER = 0.4;        // Slightly weaker strafe than Raevyx (glider feel)
+
+    // ===== VERTICAL PHYSICS (dive acceleration, no gravity) =====
+    private static final double ASCEND_THRUST = 0.06D;      // Slightly weaker climb than Raevyx
+    private static final double DESCEND_THRUST = 0.85D;     // Strong dive acceleration
+    private static final double TERMINAL_VELOCITY = 1.2D;   // Slower terminal velocity (wing drag)
+    private static final double VERTICAL_DRAG = 0.95D;      // Higher air resistance than Raevyx (massive wings)
 
     // ===== RIDING UTILITIES =====
 
@@ -71,10 +70,10 @@ public record CindervaneRiderController(Cindervane dragon) {
         if (dragon.isFlying()) {
             // Flying movement – NO pitch-based vertical movement.
             // Vertical is controlled exclusively by ascend/descend keybinds.
-            return new Vec3(player.xxa * 0.3F, 0.0F, player.zza * 0.8F * f); // Slower than Lightning Dragon
+            return new Vec3(player.xxa * 0.3F, 0.0F, player.zza * 0.8F * f);
         } else {
             // Ground movement - no vertical component, responsive controls
-            return new Vec3(player.xxa * 0.4F, 0.0D, player.zza * 0.7F * f); // Slower than Lightning Dragon
+            return new Vec3(player.xxa * 0.4F, 0.0D, player.zza * 0.7F * f);
         }
     }
 
@@ -147,6 +146,7 @@ public record CindervaneRiderController(Cindervane dragon) {
 
     /**
      * Handle rider movement - called from travel() method
+     * Simplified arcade physics for responsive, predictable glider-style flight
      */
     public void handleRiderMovement(Player player, Vec3 motion) {
         // Clear any AI navigation when being ridden
@@ -155,96 +155,94 @@ public record CindervaneRiderController(Cindervane dragon) {
         }
 
         if (dragon.isFlying()) {
-            // Directional input comes in local space via `motion` (strafe X, forward Z)
-            // We implement a throttle-based acceleration model with drag and speed caps.
-            final double base = dragon.getAttributeValue(Attributes.FLYING_SPEED);
+            // === SETUP ===
+            final double baseSpeed = dragon.getAttributeValue(Attributes.FLYING_SPEED);
             final boolean sprinting = dragon.isAccelerating();
-            final double accel = (sprinting ? SPRINT_ACCEL_MULT : AIR_ACCEL_MULT) * base;
-            final double maxSpeed = (sprinting ? SPRINT_MAX_MULT : CRUISE_MAX_MULT) * base;
+            final double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
 
-            // Current velocity split into horizontal and vertical
-            Vec3 cur = dragon.getDeltaMovement();
-            Vec3 horiz = new Vec3(cur.x, 0.0, cur.z);
+            // Get inputs (local space: motion.x = strafe, motion.z = forward)
+            double forwardInput = motion.z;
+            double strafeInput = motion.x;
 
-            // First apply horizontal drag (decay) to the carried velocity
-            horiz = horiz.scale(1.0 - AIR_DRAG);
+            // Current velocity
+            Vec3 currentVel = dragon.getDeltaMovement();
+            Vec3 horizontalVel = new Vec3(currentVel.x, 0.0, currentVel.z);
 
-            // Build desired heading from forward + strafe.
-            // Allow pure lateral thrust (strafe) even without forward input.
-            // Support backward movement by using full motion.z range
-            double forwardInput = motion.z;               // allow forward/backward movement
-            double strafeInput = motion.x;                // allow left/right
-
+            // === DIRECTIONAL CONTROL ===
+            // Convert input to world space
             float yawRad = (float) Math.toRadians(dragon.getYRot());
-            // Basis vectors
-            double fx = -Math.sin(yawRad);  // forward X
-            double fz =  Math.cos(yawRad);  // forward Z
-            double rx =  Math.cos(yawRad);  // right X
-            double rz =  Math.sin(yawRad);  // right Z
+            double forwardX = -Math.sin(yawRad);
+            double forwardZ = Math.cos(yawRad);
+            double strafeX = Math.cos(yawRad);
+            double strafeZ = Math.sin(yawRad);
 
-            // When moving forward/backward, give strafe less authority to keep heading stable.
-            // When not moving forward/backward, give strafe more authority for pure lateral movement.
-            double strafeWeight = Math.abs(forwardInput) > 0.2 ? 0.3 : 0.7; // Less aggressive than Lightning Dragon
-            double dx = fx * forwardInput + rx * (strafeInput * strafeWeight);
-            double dz = fz * forwardInput + rz * (strafeInput * strafeWeight);
-            double len = Math.hypot(dx, dz);
-            if (len > 1e-4) {
-                dx /= len; dz /= len;
-                // Scale thrust by overall input magnitude (so tiny taps give smaller accel)
-                double inputMag = Math.min(1.0, Math.hypot(Math.abs(forwardInput), Math.abs(strafeInput * strafeWeight)));
-                
-                // AMPHITHERE GLIDER MANEUVERABILITY
-                // Calculate current speed and direction for enhanced turning
-                double currentSpeed = Math.hypot(horiz.x, horiz.z);
-                Vec3 currentDirection = currentSpeed > 1e-4 ? new Vec3(horiz.x / currentSpeed, 0, horiz.z / currentSpeed) : Vec3.ZERO;
-                Vec3 desiredDirection = new Vec3(dx, 0, dz);
-                
-                // Calculate turn angle (dot product gives us the angle between vectors)
-                double turnAngle = currentSpeed > 1e-4 ? Math.acos(Math.max(-1, Math.min(1, currentDirection.dot(desiredDirection)))) : 0;
-                
-                // Glider turning - more graceful, less sharp than Lightning Dragon
-                double turnMultiplier = 1.0;
-                if (currentSpeed > MIN_TURN_SPEED && turnAngle > 0.1) { // Significant direction change
-                    // Gliders turn more gracefully - preserve more momentum
-                    turnMultiplier = TURN_MOMENTUM_FACTOR + (TURN_ACCEL_MULT * (1.0 - turnAngle / Math.PI));
-                    turnMultiplier = Math.max(0.4, Math.min(1.1, turnMultiplier)); // More conservative than Lightning Dragon
-                }
-                
-                // Apply glider maneuverability
-                double enhancedAccel = accel * turnMultiplier;
-                horiz = horiz.add(dx * enhancedAccel * inputMag, 0.0, dz * enhancedAccel * inputMag);
-            }
+            // Calculate target direction with constant strafe power
+            double targetDirX = forwardX * forwardInput + strafeX * strafeInput * STRAFE_POWER;
+            double targetDirZ = forwardZ * forwardInput + strafeZ * strafeInput * STRAFE_POWER;
+            double dirLength = Math.hypot(targetDirX, targetDirZ);
 
-            // Clamp horizontal speed to cap after drag and thrust
-            double speed = Math.hypot(horiz.x, horiz.z);
-            if (speed > maxSpeed) {
-                double s = maxSpeed / speed;
-                horiz = new Vec3(horiz.x * s, 0.0, horiz.z * s);
-            }
+            // === ARCADE PHYSICS WITH TWO MODES ===
+            Vec3 newHorizontalVel;
+            boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
 
-            // Vertical movement from rider input (decoupled from horizontal model)
-            double vy = cur.y;
-            if (dragon.isGoingUp()) {
-                vy += ASCEND_RATE;
-            } else if (dragon.isGoingDown()) {
-                vy -= DESCEND_RATE;
+            if (hasInput && dirLength > 0.01) {
+                // === ACTIVE FLYING: smooth acceleration with gentle drag ===
+                targetDirX /= dirLength;
+                targetDirZ /= dirLength;
+
+                // Target velocity in desired direction
+                Vec3 targetVelocity = new Vec3(targetDirX * targetSpeed, 0, targetDirZ * targetSpeed);
+
+                // Lerp current velocity toward target (acceleration)
+                newHorizontalVel = new Vec3(
+                    Mth.lerp(ACCELERATION, horizontalVel.x, targetVelocity.x),
+                    0,
+                    Mth.lerp(ACCELERATION, horizontalVel.z, targetVelocity.z)
+                );
+
+                // Apply gentle drag
+                newHorizontalVel = newHorizontalVel.scale(1.0 - DRAG_WITH_INPUT);
+
             } else {
-                // Mild vertical damping to stabilize when no vertical input
-                vy *= 0.985;
+                // === COASTING: strong braking for immediate stop ===
+                newHorizontalVel = horizontalVel.scale(1.0 - DRAG_NO_INPUT);
+
+                // Hard stop at very low speeds to prevent endless drift
+                if (newHorizontalVel.length() < 0.01) {
+                    newHorizontalVel = Vec3.ZERO;
+                }
             }
 
-            Vec3 next = new Vec3(horiz.x, vy, horiz.z);
-            // Final hard clamp on horizontal component before applying
-            double nextH = Math.hypot(next.x, next.z);
-            if (nextH > maxSpeed) {
-                double s = maxSpeed / nextH;
-                next = new Vec3(next.x * s, next.y, next.z * s);
+            // Final speed cap (single clamp, no double clamping)
+            double finalSpeed = newHorizontalVel.length();
+            if (finalSpeed > targetSpeed) {
+                newHorizontalVel = newHorizontalVel.scale(targetSpeed / finalSpeed);
             }
-            dragon.move(MoverType.SELF, next);
-            dragon.setDeltaMovement(next);
+
+            // === VERTICAL MOVEMENT (dive acceleration, no gravity) ===
+            double newVerticalVel = currentVel.y;
+
+            if (dragon.isGoingUp()) {
+                // Apply upward thrust
+                newVerticalVel += ASCEND_THRUST;
+            } else if (dragon.isGoingDown()) {
+                // Apply downward thrust - DIVES ACCELERATE!
+                newVerticalVel -= DESCEND_THRUST;
+            } else {
+                // Coasting - MASSIVE air resistance from huge wings
+                newVerticalVel *= VERTICAL_DRAG;
+            }
+
+            // Clamp to terminal velocity during dives
+            newVerticalVel = Mth.clamp(newVerticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
+
+            // === FINAL VELOCITY & MOVEMENT ===
+            Vec3 finalVelocity = new Vec3(newHorizontalVel.x, newVerticalVel, newHorizontalVel.z);
+            dragon.move(MoverType.SELF, finalVelocity);
+            dragon.setDeltaMovement(finalVelocity);
             dragon.calculateEntityAnimation(true);
 
-            // While airborne and ridden, continuously clear fall damage
+            // Clear fall damage while airborne
             player.fallDistance = 0.0F;
             dragon.fallDistance = 0.0F;
         }

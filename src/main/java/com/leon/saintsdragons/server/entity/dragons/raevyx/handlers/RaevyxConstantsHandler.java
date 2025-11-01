@@ -41,7 +41,10 @@ public class RaevyxConstantsHandler {
 
     /** Wing flapping animation */
     public static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.raevyx.flap");
-    
+
+    /** Sprint flapping animation (rider only) */
+    public static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.raevyx.sprint_flap");
+
     /** Landing animation */
     public static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.raevyx.landing");
     

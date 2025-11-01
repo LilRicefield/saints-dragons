@@ -20,25 +20,21 @@ public record RaevyxRiderController(Raevyx wyvern) {
     private static final double SEAT_BASE_FACTOR = 0.50D; // 0.0..1.0 of bbHeight
 
     // No head-follow offsets; keep static body seat
-    // ===== FLIGHT VERTICAL RATES =====
-    // Up/down rates while flying controlled by keybinds
-    private static final double ASCEND_RATE = 0.05D;
-    private static final double DESCEND_RATE = 0.5D;
 
-    // ===== AIR SPRINT / ACCELERATION TUNING =====
-    // These are relative to the entity's `Attributes.FLYING_SPEED` each tick.
-    // Base cruise cap is intentionally lower; sprint raises cap and accel.
-    private static final double CRUISE_MAX_MULT = 11.5;   // max horizontal blocks/tick relative to base speed
-    private static final double SPRINT_MAX_MULT = 55.5;   // top speed cap while accelerating
-    private static final double AIR_ACCEL_MULT = 0.085;    // accel per tick toward forward while holding W
-    private static final double SPRINT_ACCEL_MULT = 0.25; // accel per tick when accelerating
-    private static final double AIR_DRAG = 0.03;          // per-tick horizontal damping
-    
-    // ===== LIGHTNING DRAGON MANEUVERABILITY =====
-    // Enhanced turning capabilities for lightning wyvern's agility
-    private static final double TURN_ACCEL_MULT = 0.15;   // additional acceleration for direction changes
-    private static final double MIN_TURN_SPEED = 0.3;     // minimum speed to enable enhanced turning
-    private static final double TURN_MOMENTUM_FACTOR = 1.2; // how much momentum to preserve during turns
+    // ===== SIMPLIFIED FLIGHT PHYSICS =====
+    // Clean, responsive arcade-style flight controls
+    private static final double CRUISE_SPEED_MULT = 3.75;     // Normal flight speed multiplier
+    private static final double SPRINT_SPEED_MULT = 7.85;     // Sprint speed multiplier (80% faster)
+    private static final double ACCELERATION = 0.15;         // How quickly dragon reaches target speed
+    private static final double DRAG_WITH_INPUT = 0.08;      // Gentle drag when player is actively flying
+    private static final double DRAG_NO_INPUT = 0.5;         // Strong braking when player releases controls
+    private static final double STRAFE_POWER = 0.5;          // Strafe input strength (constant)
+
+    // ===== VERTICAL PHYSICS (dive acceleration only) =====
+    private static final double ASCEND_THRUST = 0.08D;       // Upward thrust when climbing
+    private static final double DESCEND_THRUST = 1.0D;       // Downward thrust when diving (accelerates)
+    private static final double TERMINAL_VELOCITY = 1.5D;    // Max falling speed
+    private static final double VERTICAL_DRAG = 0.92D;       // Damping when no vertical input (air resistance)
 
     // ===== RIDING UTILITIES =====
 
@@ -143,6 +139,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
     /**
      * Handle rider movement - called from travel() method
+     * CLEAN SIMPLIFIED PHYSICS - responsive arcade-style flight
      */
     public void handleRiderMovement(Player player, Vec3 motion) {
         // Clear any AI navigation when being ridden
@@ -151,96 +148,89 @@ public record RaevyxRiderController(Raevyx wyvern) {
         }
 
         if (wyvern.isFlying()) {
-            // Directional input comes in local space via `motion` (strafe X, forward Z)
-            // We implement a throttle-based acceleration model with drag and speed caps.
-            final double base = wyvern.getAttributeValue(Attributes.FLYING_SPEED);
+            // === SETUP ===
+            final double baseSpeed = wyvern.getAttributeValue(Attributes.FLYING_SPEED);
             final boolean sprinting = wyvern.isAccelerating();
-            final double accel = (sprinting ? SPRINT_ACCEL_MULT : AIR_ACCEL_MULT) * base;
-            final double maxSpeed = (sprinting ? SPRINT_MAX_MULT : CRUISE_MAX_MULT) * base;
+            final double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
 
-            // Current velocity split into horizontal and vertical
-            Vec3 cur = wyvern.getDeltaMovement();
-            Vec3 horiz = new Vec3(cur.x, 0.0, cur.z);
+            // Get current velocity (split horizontal and vertical for independent control)
+            Vec3 currentVelocity = wyvern.getDeltaMovement();
+            Vec3 horizontalVel = new Vec3(currentVelocity.x, 0.0, currentVelocity.z);
+            double currentSpeed = horizontalVel.length();
 
-            // First apply horizontal drag (decay) to the carried velocity
-            horiz = horiz.scale(1.0 - AIR_DRAG);
+            // === INPUT PROCESSING ===
+            double forwardInput = motion.z;   // W/S keys (-1 to 1)
+            double strafeInput = motion.x;    // A/D keys (-1 to 1)
+            boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
 
-            // Build desired heading from forward + strafe.
-            // Allow pure lateral thrust (strafe) even without forward input.
-            // Support backward movement by using full motion.z range
-            double forwardInput = motion.z;               // allow forward/backward movement
-            double strafeInput = motion.x;                // allow left/right
-
+            // Calculate world-space direction from player input
             float yawRad = (float) Math.toRadians(wyvern.getYRot());
-            // Basis vectors
-            double fx = -Math.sin(yawRad);  // forward X
-            double fz =  Math.cos(yawRad);  // forward Z
-            double rx =  Math.cos(yawRad);  // right X
-            double rz =  Math.sin(yawRad);  // right Z
+            double forwardX = -Math.sin(yawRad);
+            double forwardZ = Math.cos(yawRad);
+            double rightX = Math.cos(yawRad);
+            double rightZ = Math.sin(yawRad);
 
-            // When moving forward/backward, give strafe less authority to keep heading stable.
-            // When not moving forward/backward, give strafe more authority for pure lateral movement.
-            double strafeWeight = Math.abs(forwardInput) > 0.2 ? 0.35 : 0.8;
-            double dx = fx * forwardInput + rx * (strafeInput * strafeWeight);
-            double dz = fz * forwardInput + rz * (strafeInput * strafeWeight);
-            double len = Math.hypot(dx, dz);
-            if (len > 1e-4) {
-                dx /= len; dz /= len;
-                // Scale thrust by overall input magnitude (so tiny taps give smaller accel)
-                double inputMag = Math.min(1.0, Math.hypot(Math.abs(forwardInput), Math.abs(strafeInput * strafeWeight)));
-                
-                // LIGHTNING DRAGON ENHANCED MANEUVERABILITY
-                // Calculate current speed and direction for enhanced turning
-                double currentSpeed = Math.hypot(horiz.x, horiz.z);
-                Vec3 currentDirection = currentSpeed > 1e-4 ? new Vec3(horiz.x / currentSpeed, 0, horiz.z / currentSpeed) : Vec3.ZERO;
-                Vec3 desiredDirection = new Vec3(dx, 0, dz);
-                
-                // Calculate turn angle (dot product gives us the angle between vectors)
-                double turnAngle = currentSpeed > 1e-4 ? Math.acos(Math.max(-1, Math.min(1, currentDirection.dot(desiredDirection)))) : 0;
-                
-                // Enhanced turning for lightning wyvern - more responsive direction changes
-                double turnMultiplier = 1.0;
-                if (currentSpeed > MIN_TURN_SPEED && turnAngle > 0.1) { // Significant direction change
-                    // Lightning dragons can turn more sharply - reduce momentum penalty
-                    turnMultiplier = TURN_MOMENTUM_FACTOR + (TURN_ACCEL_MULT * (1.0 - turnAngle / Math.PI));
-                    turnMultiplier = Math.max(0.3, Math.min(1.2, turnMultiplier)); // Clamp for safety
-                }
-                
-                // Apply enhanced maneuverability
-                double enhancedAccel = accel * turnMultiplier;
-                horiz = horiz.add(dx * enhancedAccel * inputMag, 0.0, dz * enhancedAccel * inputMag);
-            }
+            // Combine forward and strafe (strafe is constant power now)
+            double targetDirX = forwardX * forwardInput + rightX * (strafeInput * STRAFE_POWER);
+            double targetDirZ = forwardZ * forwardInput + rightZ * (strafeInput * STRAFE_POWER);
+            double dirLength = Math.hypot(targetDirX, targetDirZ);
 
-            // Clamp horizontal speed to cap after drag and thrust
-            double speed = Math.hypot(horiz.x, horiz.z);
-            if (speed > maxSpeed) {
-                double s = maxSpeed / speed;
-                horiz = new Vec3(horiz.x * s, 0.0, horiz.z * s);
-            }
+            Vec3 newHorizontalVel;
 
-            // Vertical movement from rider input (decoupled from horizontal model)
-            double vy = cur.y;
-            if (wyvern.isGoingUp()) {
-                vy += ASCEND_RATE;
-            } else if (wyvern.isGoingDown()) {
-                vy -= DESCEND_RATE;
+            if (hasInput && dirLength > 0.01) {
+                // === ACTIVE FLYING (player is pressing keys) ===
+                // Normalize direction
+                targetDirX /= dirLength;
+                targetDirZ /= dirLength;
+
+                // Calculate target velocity vector
+                Vec3 targetVelocity = new Vec3(targetDirX * targetSpeed, 0, targetDirZ * targetSpeed);
+
+                // Smoothly accelerate toward target velocity
+                newHorizontalVel = new Vec3(
+                    Mth.lerp(ACCELERATION, horizontalVel.x, targetVelocity.x),
+                    0,
+                    Mth.lerp(ACCELERATION, horizontalVel.z, targetVelocity.z)
+                );
+
+                // Apply gentle drag for smooth cruising
+                newHorizontalVel = newHorizontalVel.scale(1.0 - DRAG_WITH_INPUT);
+
             } else {
-                // Mild vertical damping to stabilize when no vertical input
-                vy *= 0.98;
+                // === COASTING (player released keys) ===
+                // Apply strong braking for immediate stop feel
+                newHorizontalVel = horizontalVel.scale(1.0 - DRAG_NO_INPUT);
+
+                // Stop completely if speed is very low (prevents endless drift)
+                if (newHorizontalVel.length() < 0.01) {
+                    newHorizontalVel = Vec3.ZERO;
+                }
             }
 
-            Vec3 next = new Vec3(horiz.x, vy, horiz.z);
-            // Final hard clamp on horizontal component before applying
-            double nextH = Math.hypot(next.x, next.z);
-            if (nextH > maxSpeed) {
-                double s = maxSpeed / nextH;
-                next = new Vec3(next.x * s, next.y, next.z * s);
+            // === VERTICAL MOVEMENT (dive acceleration, no gravity) ===
+            double verticalVel = currentVelocity.y;
+
+            if (wyvern.isGoingUp()) {
+                // Apply upward thrust
+                verticalVel += ASCEND_THRUST;
+            } else if (wyvern.isGoingDown()) {
+                // Apply downward thrust - DIVES ACCELERATE!
+                verticalVel -= DESCEND_THRUST;
+            } else {
+                // Coasting - apply air resistance to slow vertical movement
+                verticalVel *= VERTICAL_DRAG;
             }
-            wyvern.move(MoverType.SELF, next);
-            wyvern.setDeltaMovement(next);
+
+            // Clamp to terminal velocity during dives
+            verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
+
+            // === APPLY MOVEMENT ===
+            Vec3 finalVelocity = new Vec3(newHorizontalVel.x, verticalVel, newHorizontalVel.z);
+            wyvern.move(MoverType.SELF, finalVelocity);
+            wyvern.setDeltaMovement(finalVelocity);
             wyvern.calculateEntityAnimation(true);
 
-            // While airborne and ridden, continuously clear fall damage
+            // Clear fall damage while flying
             player.fallDistance = 0.0F;
             wyvern.fallDistance = 0.0F;
         }

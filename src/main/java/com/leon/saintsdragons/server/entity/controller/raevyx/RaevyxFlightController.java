@@ -95,7 +95,10 @@ public class RaevyxFlightController {
                     var below = pos.below();
                     var bsBelow = level.getBlockState(below);
                     var bsAt = level.getBlockState(pos);
-                    boolean solidBelow = !bsBelow.isAir() && !bsBelow.getCollisionShape(level, below).isEmpty();
+                    // Solid ground must NOT be water/lava - only accept actual solid blocks
+                    boolean solidBelow = !bsBelow.isAir()
+                                      && !bsBelow.getCollisionShape(level, below).isEmpty()
+                                      && bsBelow.getFluidState().isEmpty(); // Exclude water/lava!
                     boolean freeAt = bsAt.getCollisionShape(level, pos).isEmpty();
                     boolean fluidOk = bsAt.getFluidState().isEmpty();
                     if (solidBelow && freeAt && fluidOk && isFlatEnough(pos)) {
