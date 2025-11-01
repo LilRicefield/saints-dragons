@@ -38,7 +38,7 @@ public class StegonautFollowOwnerGoal extends Goal {
         }
 
         // Never follow while playing dead
-        if (drake.isPlayingDead()) {
+        if (false) {
             return false;
         }
 
@@ -71,7 +71,7 @@ public class StegonautFollowOwnerGoal extends Goal {
         }
 
         // Suspend following while playing dead
-        if (drake.isPlayingDead()) {
+        if (false) {
             return false;
         }
 

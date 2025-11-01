@@ -38,7 +38,7 @@ public class StegonautNapGoal extends Goal {
         }
 
         // Don't nap if sitting, playing dead, or being ridden
-        if (drake.isOrderedToSit() || drake.isPlayingDead() || drake.isVehicle()) {
+        if (drake.isOrderedToSit() || false || drake.isVehicle()) {
             return false;
         }
 

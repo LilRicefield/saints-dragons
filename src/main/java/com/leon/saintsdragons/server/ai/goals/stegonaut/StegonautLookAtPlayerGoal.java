@@ -18,7 +18,7 @@ public class StegonautLookAtPlayerGoal extends LookAtPlayerGoal {
     @Override
     public boolean canUse() {
         // Don't look at players while playing dead
-        if (drake.isPlayingDead()) {
+        if (false) {
             return false;
         }
         return super.canUse();
@@ -27,7 +27,7 @@ public class StegonautLookAtPlayerGoal extends LookAtPlayerGoal {
     @Override
     public boolean canContinueToUse() {
         // Stop looking if start playing dead
-        if (drake.isPlayingDead()) {
+        if (false) {
             return false;
         }
         return super.canContinueToUse();
