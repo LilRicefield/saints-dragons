@@ -17,7 +17,6 @@ import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawSleepGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.*;
-import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -66,7 +65,18 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Nulljaw extends RideableDragonBase implements AquaticDragon, DragonControlStateHolder, ShakesScreen, SoundHandledDragon, DragonSleepCapable {
+public class Nulljaw extends RideableDragonBase implements AquaticDragon, ShakesScreen, SoundHandledDragon, DragonSleepCapable {
+
+    // Force-load abilities registry when this class is loaded
+    static {
+        // This triggers the static initializers in NulljawAbilities, registering all abilities
+        try {
+            Class.forName("com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities");
+            System.out.println("[Nulljaw] Abilities loaded successfully in static initializer!");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Failed to load Nulljaw abilities!", e);
+        }
+    }
 
     // ===== VOCAL ENTRIES =====
     // IMPORTANT: Keys MUST match animation trigger names registered in NulljawAnimationHandler
@@ -106,7 +116,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
 
     private final AnimatableInstanceCache animCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
-    private final DragonKeybindHandler keybindHandler = new DragonKeybindHandler(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
     private final NulljawInteractionHandler interactionHandler = new NulljawInteractionHandler(this);
     private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
@@ -129,7 +138,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     // Continuous swim roll angle for smooth banking (like Raevyx's flight banking)
     private float swimRollAngle = 0f;
     private float prevSwimRollAngle = 0f;
-    private byte controlState = 0;
     private boolean useLeftClawNext = true; // Toggles between left/right claw attacks
     // ===== SCREEN SHAKE SYSTEM =====
     private static final float SHAKE_DECAY_PER_TICK = 0.02F;
@@ -423,10 +431,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
     @Override
     protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
         // Mute vanilla footsteps; custom sounds handled via GeckoLib keyframes
-    }
-
-    public DragonKeybindHandler getKeybindHandler() {
-        return keybindHandler;
     }
 
     // ===== AMBIENT SOUND METHODS =====
@@ -824,6 +828,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         DragonAbilityType<?, ?> type = com.leon.saintsdragons.common.registry.AbilityRegistry.get(abilityName);
         if (type != null) {
             combatManager.tryUseAbility(type);
+        } else {
+            // Debug: log if ability type not found
+            System.out.println("[Nulljaw Debug] Ability '" + abilityName + "' not found in registry!");
         }
     }
 
@@ -1078,43 +1085,17 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         useLeftClawNext = !useLeftClawNext;
     }
 
-    // ===== CONTROL STATE SYSTEM =====
-
-    @Override
-    public byte getControlState() {
-        return controlState;
-    }
-
-    @Override
-    public void setControlState(byte controlState) {
-        this.controlState = controlState;
-        if (!level().isClientSide) {
-            keybindHandler.setControlState(controlState);
-        }
-    }
-
-    @Override
-    public boolean canPlayerModifyControlState(Player player) {
-        return player != null && this.isOwnedBy(player);
-    }
-
-    @Override
-    public byte buildClientControlState(boolean ascendDown, boolean descendDown, boolean attackDown, boolean primaryDown, boolean secondaryDown, boolean sneakDown) {
-        byte state = 0;
-        if (ascendDown) state |= 1;
-        if (descendDown) state |= 2;
-        if (attackDown) state |= 4;
-        if (primaryDown) state |= 8;
-        if (secondaryDown) state |= 16;
-        if (sneakDown) state |= 32;
-        return state;
-    }
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
         // Phase 2 uses fast bite2, Phase 1 uses normal bite
-        if (isPhaseTwoActive()) {
-            return new RiderAbilityBinding(NulljawAbilities.NULLJAW_BITE2_ID, RiderAbilityBinding.Activation.PRESS);
+        // Use phase 1 bite by default (safer for initial loads)
+        try {
+            if (isPhaseTwoActive()) {
+                return new RiderAbilityBinding(NulljawAbilities.NULLJAW_BITE2_ID, RiderAbilityBinding.Activation.PRESS);
+            }
+        } catch (Exception e) {
+            // Fallback to phase 1 bite if entity data isn't ready
         }
         return new RiderAbilityBinding(NulljawAbilities.NULLJAW_BITE_ID, RiderAbilityBinding.Activation.PRESS);
     }
