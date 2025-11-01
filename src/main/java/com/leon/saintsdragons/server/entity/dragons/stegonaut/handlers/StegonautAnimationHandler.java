@@ -31,11 +31,6 @@ public class StegonautAnimationHandler {
         // Set default transition length for smooth blending
         state.getController().transitionLength(8); // Smooth but not too slow
 
-        // Check if playing dead first - play dead animation takes highest priority
-        if (drake.isPlayingDead()) {
-            return handlePlayDeadAnimation(state);
-        }
-
         // Check if sleeping - sleep animation takes priority
         if (drake.isSleeping()) {
             return handleSleepAnimation(state);
@@ -58,29 +53,17 @@ public class StegonautAnimationHandler {
 
         return PlayState.CONTINUE;
     }
-    
-    /**
-     * Handle play dead animation - the actual fake_death animation plays on the action controller
-     * Movement controller should play the idle pose (not stop) to maintain base pose
-     */
-    private PlayState handlePlayDeadAnimation(AnimationState<Stegonaut> state) {
-        // While playing dead, maintain idle animation as base pose
-        // The fake_death looping animation on action controller will override this
-        state.getController().transitionLength(10);
-        state.setAndContinue(IDLE_ANIM);
-        return PlayState.CONTINUE;
-    }
-    
+
     /**
      * Handle sleep animation - simple and smooth
      */
     private PlayState handleSleepAnimation(AnimationState<Stegonaut> state) {
         // Set smooth transition to sleep animation
         state.getController().transitionLength(12); // Slower transition for sleep
-        
+
         // Always use sleep animation when sleeping
         state.setAndContinue(SLEEP_ANIM);
-        
+
         return PlayState.CONTINUE;
     }
     
@@ -122,11 +105,6 @@ public class StegonautAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));
         actionController.triggerableAnim("die",
                 RawAnimation.begin().thenPlay("animation.stegonaut.die"));
-
-        // Register fake death animation for lightning wyvern interaction
-        // fake_death loops while playing dead, clear_fake_death stops the loop
-        actionController.triggerableAnim("fake_death",
-                RawAnimation.begin().thenLoop("animation.stegonaut.fake_death"));
     }
     
     /**
