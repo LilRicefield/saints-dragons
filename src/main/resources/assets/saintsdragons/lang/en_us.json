@@ -102,6 +102,7 @@
   "key.saintsdragons.ability_primary": "Primary Ability",
   "key.saintsdragons.ability_secondary": "Secondary Ability",
   "key.saintsdragons.ability_tertiary": "Channel Ability",
+  "key.saintsdragons.toggle_melee": "Toggle Melee Mode",
   "key.saintsdragons.toggle_dragon_ui": "Toggle UI",
   
   "saintsdragons.ui.control.title": "Dragon Controls",
@@ -112,6 +113,7 @@
   "saintsdragons.ui.control.ability_primary": "Primary Ability",
   "saintsdragons.ui.control.ability_secondary": "Secondary Ability",
   "saintsdragons.ui.control.ability_tertiary": "Channel Ability",
+  "saintsdragons.ui.control.toggle_melee": "Toggle Melee",
   "saintsdragons.ui.control.ability_with_name": "%s (%s)",
   
   "saintsdragons.ability.raevyx_bite": "Lightning Bite",

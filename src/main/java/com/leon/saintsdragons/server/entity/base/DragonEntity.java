@@ -1014,4 +1014,3 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     public abstract Vec3 getMouthPosition();
 }
-

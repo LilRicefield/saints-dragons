@@ -1,87 +1,12 @@
 package com.leon.saintsdragons.server.entity.base;
 
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.entity.Entity;
-
 /**
  * Collective DATA fields and constants for all rideable dragons.
  * This class provides standardized EntityDataAccessor field definitions that each rideable dragon
  * can use to ensure consistent animation behavior and prevent thrashing issues.
- * 
  * Usage: Each entity should define its own EntityDataAccessor instances using these patterns.
  */
 public class RideableDragonData {
-    
-    // ===== CORE FLIGHT & MOVEMENT DATA PATTERNS (Essential for all rideable dragons) =====
-    
-    /** Helper method to create flying state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createFlyingAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
-    
-    /** Helper method to create takeoff state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createTakeoffAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
-    
-    /** Helper method to create hovering state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createHoveringAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
-    
-    /** Helper method to create landing state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createLandingAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
-    
-    /** Helper method to create running state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createRunningAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
-    
-    /** Helper method to create ground move state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Integer> createGroundMoveStateAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.INT);
-    }
-    
-    /** Helper method to create flight mode accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Integer> createFlightModeAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.INT);
-    }
-    
-    // ===== RIDER INPUT DATA PATTERNS (Critical for preventing animation thrashing) =====
-    
-    /** Helper method to create rider forward input accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Float> createRiderForwardAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.FLOAT);
-    }
-    
-    /** Helper method to create rider strafe input accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Float> createRiderStrafeAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.FLOAT);
-    }
-    
-    /** Helper method to create going up state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createGoingUpAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
-    
-    /** Helper method to create going down state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createGoingDownAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
-    
-    /** Helper method to create accelerating state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createAcceleratingAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
-
-    /** Helper method to create sleeping state accessor for a specific entity class */
-    public static <T extends Entity> EntityDataAccessor<Boolean> createSleepingAccessor(Class<T> entityClass) {
-        return SynchedEntityData.defineId(entityClass, EntityDataSerializers.BOOLEAN);
-    }
     
     // ===== ANIMATION THRESHOLDS (Standardized for consistent behavior) =====
     

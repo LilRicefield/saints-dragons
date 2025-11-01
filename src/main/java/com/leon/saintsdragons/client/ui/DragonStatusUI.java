@@ -20,6 +20,7 @@ public class DragonStatusUI {
     private final DragonHealthBar healthBar;
     private final DragonSpeedIndicator speedIndicator;
     private final DragonControlGuide controlGuide;
+    private final MeleeModeNotification meleeModeNotification;
     private int cachedScreenWidth = -1;
     private int cachedScreenHeight = -1;
 
@@ -38,6 +39,7 @@ public class DragonStatusUI {
         this.healthBar = new DragonHealthBar(0, 0);
         this.speedIndicator = new DragonSpeedIndicator(0, 0);
         this.controlGuide = new DragonControlGuide(0, 0);
+        this.meleeModeNotification = new MeleeModeNotification();
 
         elements.add(healthBar);
         elements.add(speedIndicator);
@@ -265,6 +267,13 @@ public class DragonStatusUI {
      */
     public boolean isVisible() {
         return visible;
+    }
+
+    /**
+     * Get the melee mode notification instance
+     */
+    public MeleeModeNotification getMeleeModeNotification() {
+        return meleeModeNotification;
     }
 
     /**

@@ -71,6 +71,8 @@ public class DragonControlGuide extends DragonUIElement {
             addAbilityEntry(rideable.getPrimaryRiderAbility(), DragonRideKeybinds.DRAGON_PRIMARY_ABILITY, "saintsdragons.ui.control.ability_primary", COLOR_ABILITY);
             addAbilityEntry(rideable.getSecondaryRiderAbility(), DragonRideKeybinds.DRAGON_SECONDARY_ABILITY, "saintsdragons.ui.control.ability_secondary", COLOR_ABILITY);
             addAbilityEntry(rideable.getTertiaryRiderAbility(), DragonRideKeybinds.DRAGON_TERTIARY_ABILITY, "saintsdragons.ui.control.ability_tertiary", COLOR_ABILITY);
+            // Add toggle melee entry
+            controls.add(ControlEntry.forKey(DragonRideKeybinds.DRAGON_TOGGLE_MELEE, Component.translatable("saintsdragons.ui.control.toggle_melee"), COLOR_ATTACK));
         }
 
         int lineSpacing = font.lineHeight + 2;

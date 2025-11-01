@@ -19,23 +19,32 @@ public class DragonUIEventHandler {
         if (minecraft.player == null) {
             return;
         }
-        
+
         DragonStatusUIManager manager = DragonStatusUIManager.getInstance();
         DragonStatusUI ui = manager.getDragonStatusUI();
-        
+
         if (ui.isVisible()) {
-            ui.render(event.getGuiGraphics(), 
-                     (int) minecraft.mouseHandler.xpos(), 
-                     (int) minecraft.mouseHandler.ypos(), 
+            ui.render(event.getGuiGraphics(),
+                     (int) minecraft.mouseHandler.xpos(),
+                     (int) minecraft.mouseHandler.ypos(),
                      event.getPartialTick());
         }
+
+        // Always render melee mode notification (independent of UI visibility)
+        int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+        int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+        ui.getMeleeModeNotification().render(event.getGuiGraphics(), screenWidth, screenHeight);
     }
     
     @SubscribeEvent
     public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
         if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) {
-            DragonStatusUIManager.getInstance().update();
+            DragonStatusUIManager manager = DragonStatusUIManager.getInstance();
+            manager.update();
             DragonUIKeybinds.handleKeybinds();
+
+            // Always tick melee mode notification
+            manager.getDragonStatusUI().getMeleeModeNotification().tick();
         }
     }
 }
