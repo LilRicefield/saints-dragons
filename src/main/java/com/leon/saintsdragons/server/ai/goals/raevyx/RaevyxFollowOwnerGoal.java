@@ -16,11 +16,11 @@ public class RaevyxFollowOwnerGoal extends Goal {
     private final Raevyx wyvern;
 
     // Distance constants - tuned for better behavior
-    private static final double START_FOLLOW_DIST = 15.0;
-    private static final double STOP_FOLLOW_DIST = 10.0; // Increased slightly to prevent constant state changes
-    private static final double TELEPORT_DIST = 2000.0;
-    private static final double RUN_DIST = 25.0;
-    private static final double FLIGHT_TRIGGER_DIST = 30.0;
+    private static final double START_FOLLOW_DIST = 5.0;
+    private static final double STOP_FOLLOW_DIST = 5.0; // Increased slightly to prevent constant state changes
+    private static final double TELEPORT_DIST = 500.0;
+    private static final double RUN_DIST = 15.0;
+    private static final double FLIGHT_TRIGGER_DIST = 20.0;
     private static final double FLIGHT_HEIGHT_DIFF = 8.0;
     private static final double LANDING_DISTANCE = 12.0; // Distance at which to start landing sequence
     private static final double HOVER_HEIGHT = 3.0; // Height above owner when hovering

@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Shared amphibious navigation that blends the vanilla {@link AmphibiousPathNavigation}
- * monitoring helpers modelled after Critters & Companions' otter navigator so large
- * semi-aquatic dragons avoid jitter when swimming.
+ * monitoring helpers modelled after Critters & Companions' otter navigator so large semiaquatic dragons avoid jitter when swimming.
  */
 public class DragonAmphibiousNavigation extends AmphibiousPathNavigation {
     private static final double MIN_PROGRESS_SQR = 0.35D * 0.35D;

@@ -45,7 +45,6 @@ public class DragonFlightMoveHelper extends MoveControl {
         this.velocityBlendRate = params.velocityBlendRate;
     }
 
-    // Default parameters for Lightning Dragon (fast, agile)
     private static FlightParameters getDefaultParameters() {
         return new FlightParameters(
             4.0F,    // maxYawChange
@@ -58,7 +57,7 @@ public class DragonFlightMoveHelper extends MoveControl {
         );
     }
 
-    // Flight parameters for different wyvern types
+    // Flight parameters for different types
     public static class FlightParameters {
         public final float maxYawChange;
         public final float maxPitchChange;
