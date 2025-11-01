@@ -9,7 +9,6 @@ import net.minecraftforge.network.simple.SimpleChannel;
 public class NetworkHandler {
     private static final String PROTOCOL_VERSION = "1";
     private static final int ID_RIDER_INPUT = 0;
-    private static final int ID_CONTROL_STATE = 1;
     private static final int ID_ALLY_MANAGEMENT = 2;
     private static final int ID_ALLY_LIST = 3;
     private static final int ID_ALLY_REQUEST = 4;
@@ -30,14 +29,6 @@ public class NetworkHandler {
                 .decoder(MessageDragonRideInput::decode)
                 .consumerNetworkThread(MessageDragonRideInput::handle)
                 .add();
-
-        // Message: Control state bitfield
-        INSTANCE.messageBuilder(MessageDragonControl.class, ID_CONTROL_STATE)
-                .encoder(MessageDragonControl::encode)
-                .decoder(MessageDragonControl::decode)
-                .consumerNetworkThread(MessageDragonControl::handle)
-                .add();
-
 
         // Message: Client->Server ally management (add/remove)
         INSTANCE.messageBuilder(MessageDragonAllyManagement.class, ID_ALLY_MANAGEMENT)

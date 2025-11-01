@@ -1,13 +1,11 @@
 package com.leon.saintsdragons.client;
 
 import com.leon.saintsdragons.common.network.DragonRiderAction;
-import com.leon.saintsdragons.common.network.MessageDragonControl;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding.Activation;
-import com.leon.saintsdragons.server.entity.interfaces.DragonControlStateHolder;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -128,14 +126,6 @@ public class DragonRideKeybinds {
         float forward = player.zza;
         float strafe = player.xxa;
         float yaw = player.getYRot();
-
-        if (dragon instanceof DragonControlStateHolder holder) {
-            byte desired = dragon.buildClientControlState(ascendDown, descendDown, attackDown, primaryDown, secondaryDown, sneakDown);
-            if (desired >= 0 && desired != holder.getControlState()) {
-                NetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(), new MessageDragonControl(dragon.getId(), desired));
-                holder.setControlState(desired);
-            }
-        }
 
         // Only send movement input when something actually changes (prevents spamming 20 packets/sec)
         boolean movementChanged = forward != lastForward ||

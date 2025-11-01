@@ -20,7 +20,6 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxFlightController;
-import com.leon.saintsdragons.server.entity.handler.DragonKeybindHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
@@ -92,7 +91,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //Just everything
 public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
-        DragonCombatCapable, DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, DragonControlStateHolder, ElectricalConductivityCapable {
+        DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, ElectricalConductivityCapable {
     // ===== ENTITY DATA ACCESSORS =====
 
     /** Entity data accessor for flying state */
@@ -396,7 +395,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private final RaevyxAnimationHandler animationHandler;
 
     // ===== SPECIALIZED HANDLER SYSTEMS =====
-    private final DragonKeybindHandler keybindHandler;
     private final RaevyxRiderController riderController;
     private final DragonSoundHandler soundHandler;
     private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager;
@@ -462,7 +460,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.animationHandler = new RaevyxAnimationHandler(this);
 
         // Initialize specialized handler systems
-        this.keybindHandler = new DragonKeybindHandler(this);
         this.riderController = new RaevyxRiderController(this);
         this.soundHandler = new DragonSoundHandler(this);
         this.restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
@@ -1092,28 +1089,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
 
-    // Control state system
-    private byte controlState = 0;
-
-    @Override
-    public byte getControlState() {
-        return controlState;
-    }
-
-    @Override
-    public void setControlState(byte controlState) {
-        this.controlState = controlState;  // Update local cached control state
-        // Only process keybind logic on the server
-        if (!level().isClientSide) {
-            keybindHandler.setControlState(controlState);
-        }
-    }
-
-    @Override
-    public boolean canPlayerModifyControlState(Player player) {
-        return player != null && this.isOwnedBy(player);
-    }
-
     // Riding utilities
     @Nullable
     public Player getRidingPlayer() {
@@ -1145,15 +1120,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     @Override
-    public byte buildClientControlState(boolean ascendDown, boolean descendDown, boolean attackDown, boolean primaryDown, boolean secondaryDown, boolean sneakDown) {
-        byte state = 0;
-        if (ascendDown) state |= 1;
-        if (descendDown) state |= 2;
-        if (attackDown) state |= 4;
-        if (primaryDown) state |= 8;
-        if (secondaryDown) state |= 16;
-        if (sneakDown) state |= 32;
-        return state;
+    public RiderAbilityBinding getAttackRiderAbility() {
+        return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
 
@@ -3043,7 +3011,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public void clearAllStatesForMounting() {
         // Clear combat states
         this.setTarget(null);
-        this.setAttacking(false);
         this.setBeaming(false);
         
         // Clear movement states
@@ -3457,52 +3424,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
         return false;
     }
-    
-    // ===== DRAGON COMBAT CAPABLE INTERFACE =====
-    
-    @Override
-    public double getMeleeRange() {
-        return 3.5; // Lightning dragons have longer reach
-    }
-    
-    @Override
-    public float getMeleeDamage() {
-        return 8.0f; // Lightning wyvern melee damage
-    }
-    
-    @Override
-    public boolean canMeleeAttack() {
-        return !isBeaming() && !isCharging() && getTarget() != null;
-    }
-    
-    @Override
-    public void performMeleeAttack(LivingEntity target) {
-        if (target != null && canMeleeAttack()) {
-            // Perform melee attack
-            target.hurt(this.damageSources().mobAttack(this), getMeleeDamage());
-            
-            // Lightning effect chance
-            if (getRandom().nextFloat() < 0.3f) {
-                playLightningEffect(target.position());
-            }
-        }
-    }
-    
-    @Override
-    public int getAttackCooldown() {
-        return 20; // 1 second cooldown
-    }
-    
-    @Override
-    public boolean isAttacking() {
-        return isBeaming() || isCharging();
-    }
-    
-    @Override
-    public void setAttacking(boolean attacking) {
-        setBeaming(attacking);
-    }
-    
+
     // ===== DRAGON FLIGHT CAPABLE INTERFACE =====
     @Override
     public float getFlightSpeed() {
