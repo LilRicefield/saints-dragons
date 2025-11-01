@@ -172,15 +172,24 @@ public class DragonRideKeybinds {
 
         // Handle melee toggle - only on press (not hold) and not on cooldown
         if (toggleMeleeDown && !wasToggleMeleeDown && meleeCooldownTicks == 0) {
-            sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
-            meleeCooldownTicks = 60; // 3 seconds at 20 ticks/second
+            // Check if dragon has secondary melee before sending toggle
+            if (dragon.hasSecondaryMelee()) {
+                sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
+                meleeCooldownTicks = 60; // 3 seconds at 20 ticks/second
 
-            // Trigger UI notification
-            int newMode = (dragon.getMeleeMode() + 1) % 2; // Calculate what the new mode will be
-            com.leon.saintsdragons.client.DragonStatusUIManager.getInstance()
-                .getDragonStatusUI()
-                .getMeleeModeNotification()
-                .showNotification(newMode);
+                // Trigger UI notification
+                int newMode = (dragon.getMeleeMode() + 1) % 2; // Calculate what the new mode will be
+                com.leon.saintsdragons.client.DragonStatusUIManager.getInstance()
+                    .getDragonStatusUI()
+                    .getMeleeModeNotification()
+                    .showNotification(newMode);
+            } else {
+                // Show "no secondary melee" message on client
+                player.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable("saintsdragons.message.no_secondary_melee"),
+                    true // Action bar
+                );
+            }
         }
 
         handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);

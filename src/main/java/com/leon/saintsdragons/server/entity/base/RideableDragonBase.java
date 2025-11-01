@@ -101,7 +101,26 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     protected void onRiderToggleMelee(Player player) {
+        // Check if this dragon has a secondary melee attack
+        if (!hasSecondaryMelee()) {
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable("saintsdragons.message.no_secondary_melee"),
+                    true // Action bar
+                );
+            }
+            return;
+        }
+
         toggleMeleeMode();
+    }
+
+    /**
+     * Override this to specify if the dragon has a secondary melee attack.
+     * Defaults to true - dragons without secondary melee should override and return false.
+     */
+    public boolean hasSecondaryMelee() {
+        return true;
     }
 
     protected void onRiderTakeoffRequest(Player player) {

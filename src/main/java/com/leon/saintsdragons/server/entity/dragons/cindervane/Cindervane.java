@@ -1572,6 +1572,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
+    public boolean hasSecondaryMelee() {
+        return false; // Cindervane only has bite, no secondary melee
+    }
+
+    @Override
     public DragonAbilityType<?, ?> getRoaringAbility() {
         return CindervaneAbilities.ROAR;
     }
