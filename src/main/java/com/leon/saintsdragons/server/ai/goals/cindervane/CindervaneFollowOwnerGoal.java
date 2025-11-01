@@ -15,10 +15,10 @@ import java.util.EnumSet;
 public class CindervaneFollowOwnerGoal extends Goal {
     private final Cindervane amphithere;
 
-    private static final double START_FOLLOW_DIST = 12.0;
+    private static final double START_FOLLOW_DIST = 8.8;
     private static final double STOP_FOLLOW_DIST = 8.0;
-    private static final double TELEPORT_DIST = 2000.0;
-    private static final double RUN_DIST = 18.0;
+    private static final double TELEPORT_DIST = 500.0;
+    private static final double RUN_DIST = 10.0;
     private static final double FLIGHT_TRIGGER_DIST = 24.0;
     private static final double FLIGHT_HEIGHT_DIFF = 6.0;
     private static final double LANDING_DISTANCE = 10.0;

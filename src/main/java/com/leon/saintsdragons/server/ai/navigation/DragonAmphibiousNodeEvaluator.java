@@ -15,8 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Amphibious evaluator that keeps the generous water handling from {@link DragonSwimNodeEvaluator}
  * while still allowing surface/ground traversal via the vanilla amphibious logic.
- *
- * Designed to be shared by all semi-aquatic dragons that rely on {@link DragonAmphibiousNavigation}.
+ * Designed to be shared by all semiaquatic dragons that rely on {@link DragonAmphibiousNavigation}.
  */
 public class DragonAmphibiousNodeEvaluator extends AmphibiousNodeEvaluator {
 
