@@ -1838,11 +1838,11 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "raevyx_step1",
+					"effect": "raevyx_step",
 					"locator": "rightfeetLocator"
 				},
 				"0.8": {
-					"effect": "raevyx_step2",
+					"effect": "raevyx_step",
 					"locator": "leftfeetLocator"
 				}
 			}
@@ -3008,11 +3008,11 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "raevyx_run_step1",
+					"effect": "raevyx_step",
 					"locator": "rightfeetLocator"
 				},
 				"0.6286": {
-					"effect": "raevyx_run_step2",
+					"effect": "raevyx_step",
 					"locator": "leftfeetLocator"
 				}
 			}

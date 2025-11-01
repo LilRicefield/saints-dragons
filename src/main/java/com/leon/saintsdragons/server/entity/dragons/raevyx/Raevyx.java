@@ -231,7 +231,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             .add("chuff", "action", "animation.raevyx.chuff", ModSounds.RAEVYX_CHUFF, 0.9f, 0.9f, 0.2f, false, false, false)
             .add("content", "action", "animation.raevyx.content", ModSounds.RAEVYX_CONTENT, 0.8f, 1.0f, 0.1f, true, false, true)
             .add("excited", "action", "", ModSounds.RAEVYX_EXCITED, 1.0f, 1.0f, 0.3f, false, false, false)  // Sound-only, no animation
-            .add("annoyed", "action", "animation.raevyx.annoyed", ModSounds.RAEVYX_ANNOYED, 1.0f, 0.9f, 0.2f, false, false, false)
             .add("growl_warning", "action", "", ModSounds.RAEVYX_GROWL_WARNING, 1.2f, 0.8f, 0.4f, false, false, false)  // Sound-only, no animation
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)

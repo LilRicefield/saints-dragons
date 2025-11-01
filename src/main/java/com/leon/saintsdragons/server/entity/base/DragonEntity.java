@@ -335,6 +335,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     @Override
+    protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+        // Mute vanilla step sounds - dragons use custom step sounds via animation keyframes
+        // Step sounds are handled by DragonSoundHandler -> DragonSoundProfile
+    }
+
+    @Override
     public boolean isInvulnerableTo(@NotNull DamageSource source) {
         // Check elemental immunities first
         DragonType dragonType = getDragonType();

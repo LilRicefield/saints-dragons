@@ -1085,6 +1085,16 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "cindervane_step",
+					"locator": "leftLocator"
+				},
+				"1.25": {
+					"effect": "cindervane_step",
+					"locator": "rightLocator"
+				}
 			}
 		},
 		"animation.cindervane.run": {
@@ -1672,6 +1682,16 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "cindervane_step",
+					"locator": "leftLocator"
+				},
+				"0.9295": {
+					"effect": "cindervane_step",
+					"locator": "rightLocator"
 				}
 			}
 		},

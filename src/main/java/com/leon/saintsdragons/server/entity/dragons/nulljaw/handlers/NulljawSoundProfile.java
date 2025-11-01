@@ -54,6 +54,10 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
                 playClientSound(dragon, ModSounds.NULLJAW_BITE.get(), 1.1f, 0.95f, 0.1f);
                 yield true;
             }
+            case "nulljaw_horngore" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_HORNGORE.get(), 1.2f, 0.9f, 0.2f);
+                yield true;
+            }
             case "nulljaw_roarclaw" -> {
                 playClientSound(dragon, ModSounds.NULLJAW_ROARCLAW.get(), 1.3f, 0.9f, 0.2f);
                 yield true;
