@@ -29,8 +29,8 @@ public class NulljawHornGoreAbility extends DragonAbility<Nulljaw> {
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 5),
-            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 4),
-            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 5)
+            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 6),
+            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 6)
     };
 
     // Track entities already hit during the ACTIVE window so we don't double hit in multi-tick ACTIVE

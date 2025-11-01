@@ -15,8 +15,8 @@ import java.util.EnumSet;
  */
 public class NulljawCombatGoal extends Goal {
     private static final double CHASE_SPEED = 1.5D;
-    private static final double BITE_RANGE = 2.8D;
-    private static final double HORN_RANGE = 4.6D;
+    private static final double BITE_RANGE = 3.5D;
+    private static final double HORN_RANGE = 4.5D;
     private static final int MIN_ATTACK_COOLDOWN_TICKS = 10;
 
     private final Nulljaw drake;
@@ -112,13 +112,6 @@ public class NulljawCombatGoal extends Goal {
             drake.combatManager.tryUseAbility(ability);
             attackCooldown = MIN_ATTACK_COOLDOWN_TICKS;
         }
-
-        if (shouldUseClaw()) {
-            DragonAbilityType<Nulljaw, ?> claw = NulljawAbilities.NULLJAW_CLAW;
-            if (drake.combatManager.canStart(claw)) {
-                drake.combatManager.tryUseAbility(claw);
-            }
-        }
     }
 
     private DragonAbilityType<Nulljaw, ?> choosePrimaryAttack(LivingEntity target) {
@@ -126,18 +119,20 @@ public class NulljawCombatGoal extends Goal {
         boolean phaseTwo = drake.isPhaseTwoActive();
 
         if (gap <= BITE_RANGE) {
+            // Phase 2: alternate between bite2 and claw
+            if (phaseTwo && drake.getRandom().nextBoolean()) {
+                return NulljawAbilities.NULLJAW_CLAW;
+            }
             return phaseTwo ? NulljawAbilities.NULLJAW_BITE2 : NulljawAbilities.NULLJAW_BITE;
         }
         if (gap <= HORN_RANGE) {
+            // Phase 2: alternate between horn gore and claw
+            if (phaseTwo && drake.getRandom().nextBoolean()) {
+                return NulljawAbilities.NULLJAW_CLAW;
+            }
             return NulljawAbilities.NULLJAW_HORN_GORE;
         }
         return null;
-    }
-
-    private boolean shouldUseClaw() {
-        return drake.isPhaseTwoActive()
-                && !drake.isVehicle()
-                && !drake.combatManager.isAbilityActive(NulljawAbilities.NULLJAW_CLAW);
     }
 
     private boolean isPerformingAttack() {

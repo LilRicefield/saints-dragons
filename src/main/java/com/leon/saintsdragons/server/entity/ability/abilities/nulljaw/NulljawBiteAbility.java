@@ -34,9 +34,9 @@ public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
     private static final double BITE_SWIPE_VERTICAL = 5.0;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(STARTUP, 3),
-            new AbilitySectionDuration(ACTIVE, 5),
-            new AbilitySectionDuration(RECOVERY, 4)
+            new AbilitySectionDuration(STARTUP, 5),
+            new AbilitySectionDuration(ACTIVE, 6),
+            new AbilitySectionDuration(RECOVERY, 6)
     };
 
     private boolean appliedHit;
