@@ -24,6 +24,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class RideableDragonBase extends DragonEntity implements RideableDragon, FlyingAnimal {
 
+    /** Entity data accessor for melee mode (0=primary melee, 1=secondary melee) */
+    private static final EntityDataAccessor<Integer> DATA_MELEE_MODE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(RideableDragonBase.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
     }
@@ -31,6 +35,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(DATA_MELEE_MODE, 0); // Default to primary melee (mode 0)
         defineRideableDragonData();
     }
 
@@ -90,8 +95,13 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             case STOP_ACCELERATE -> onRiderAccelerationStop(player);
             case ABILITY_USE -> { if (!locked) onRiderAbilityUse(player, abilityName); }
             case ABILITY_STOP -> { if (!locked) onRiderAbilityStop(player, abilityName); }
+            case TOGGLE_MELEE -> { if (!locked) onRiderToggleMelee(player); }
             default -> { }
         }
+    }
+
+    protected void onRiderToggleMelee(Player player) {
+        toggleMeleeMode();
     }
 
     protected void onRiderTakeoffRequest(Player player) {
@@ -146,6 +156,41 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     @Nullable
     public RiderAbilityBinding getAttackRiderAbility() {
         return null;
+    }
+
+    /**
+     * Get the current melee mode (0=primary, 1=secondary)
+     */
+    public int getMeleeMode() {
+        return this.entityData.get(DATA_MELEE_MODE);
+    }
+
+    /**
+     * Set the melee mode (0=primary, 1=secondary)
+     */
+    public void setMeleeMode(int mode) {
+        this.entityData.set(DATA_MELEE_MODE, Mth.clamp(mode, 0, 1));
+    }
+
+    /**
+     * Toggle between primary and secondary melee mode
+     */
+    public void toggleMeleeMode() {
+        setMeleeMode(getMeleeMode() == 0 ? 1 : 0);
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("MeleeMode", getMeleeMode());
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("MeleeMode")) {
+            setMeleeMode(tag.getInt("MeleeMode"));
+        }
     }
 
     public byte buildClientControlState(boolean ascendDown, boolean descendDown, boolean attackDown, boolean primaryDown, boolean secondaryDown, boolean sneakDown) {

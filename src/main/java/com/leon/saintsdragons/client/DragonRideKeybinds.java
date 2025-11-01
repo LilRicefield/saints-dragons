@@ -63,12 +63,23 @@ public class DragonRideKeybinds {
             "key.categories.saintsdragons"
     );
 
+    public static final KeyMapping DRAGON_TOGGLE_MELEE = new KeyMapping(
+            "key.saintsdragons.toggle_melee",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_X,
+            "key.categories.saintsdragons"
+    );
+
     private static boolean wasAscendPressed = false;
     private static boolean wasAccelerateDown = false;
     private static boolean wasTertiaryAbilityDown = false;
     private static boolean wasPrimaryAbilityDown = false;
     private static boolean wasSecondaryAbilityDown = false;
     private static boolean wasAttackDown = false;
+    private static boolean wasToggleMeleeDown = false;
+
+    // Melee toggle cooldown (3 seconds = 60 ticks)
+    private static int meleeCooldownTicks = 0;
 
     // Movement state tracking to avoid spamming movement packets
     private static float lastForward = 0f;
@@ -87,6 +98,7 @@ public class DragonRideKeybinds {
             event.register(DRAGON_TERTIARY_ABILITY);
             event.register(DRAGON_PRIMARY_ABILITY);
             event.register(DRAGON_SECONDARY_ABILITY);
+            event.register(DRAGON_TOGGLE_MELEE);
         }
     }
 
@@ -113,12 +125,18 @@ public class DragonRideKeybinds {
     }
 
     private static void handleGenericControls(LocalPlayer player, RideableDragonBase dragon) {
+        // Tick down the melee toggle cooldown
+        if (meleeCooldownTicks > 0) {
+            meleeCooldownTicks--;
+        }
+
         boolean ascendDown = DRAGON_ASCEND.isDown();
         boolean descendDown = DRAGON_DESCEND.isDown();
         boolean accelerateDown = DRAGON_ACCELERATE.isDown();
         boolean tertiaryDown = DRAGON_TERTIARY_ABILITY.isDown();
         boolean primaryDown = DRAGON_PRIMARY_ABILITY.isDown();
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
+        boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
         Minecraft mc = Minecraft.getInstance();
         boolean attackDown = mc.options.keyAttack.isDown();
         boolean sneakDown = mc.options.keyShift.isDown();
@@ -152,6 +170,19 @@ public class DragonRideKeybinds {
             sendInput(false, false, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
         }
 
+        // Handle melee toggle - only on press (not hold) and not on cooldown
+        if (toggleMeleeDown && !wasToggleMeleeDown && meleeCooldownTicks == 0) {
+            sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
+            meleeCooldownTicks = 60; // 3 seconds at 20 ticks/second
+
+            // Trigger UI notification
+            int newMode = (dragon.getMeleeMode() + 1) % 2; // Calculate what the new mode will be
+            com.leon.saintsdragons.client.DragonStatusUIManager.getInstance()
+                .getDragonStatusUI()
+                .getMeleeModeNotification()
+                .showNotification(newMode);
+        }
+
         handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
         handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
         handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
@@ -163,6 +194,7 @@ public class DragonRideKeybinds {
         wasPrimaryAbilityDown = primaryDown;
         wasSecondaryAbilityDown = secondaryDown;
         wasAttackDown = attackDown;
+        wasToggleMeleeDown = toggleMeleeDown;
     }
 
     private static void handleAbilityBinding(RiderAbilityBinding binding, boolean currentDown, boolean previousDown, float forward, float strafe, float yaw) {
@@ -200,6 +232,8 @@ public class DragonRideKeybinds {
         wasPrimaryAbilityDown = false;
         wasSecondaryAbilityDown = false;
         wasAttackDown = false;
+        wasToggleMeleeDown = false;
+        meleeCooldownTicks = 0;
         lastForward = 0f;
         lastStrafe = 0f;
         lastYaw = 0f;

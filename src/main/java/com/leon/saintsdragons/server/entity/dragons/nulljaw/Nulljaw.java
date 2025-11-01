@@ -270,6 +270,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
                     forceEndActiveAbility();
                 }
             }
+            case TOGGLE_MELEE -> {
+                if (!locked) {
+                    toggleMeleeMode();
+                }
+            }
             default -> { }
         }
     }
@@ -867,9 +872,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        // Rift Drake alternates between bite and horn gore attacks
-        // Use entity tick count to alternate between attacks (every 2 seconds)
-        boolean useHornGore = (tickCount / 40) % 2 == 1; // Switch every 2 seconds
+        // Use melee mode to switch between bite and horn gore
+        // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
+        boolean useHornGore = getMeleeMode() == 1;
 
         // Phase 2 uses bite2 (faster bite) instead of normal bite
         if (isPhaseTwoActive()) {
@@ -1088,9 +1093,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        // Left-click: Alternate between horn gore and bite/bite2
-        // 50% chance for horn gore, 50% for bite
-        if (getRandom().nextBoolean()) {
+        // Use melee mode to switch between horn gore and bite/bite2
+        // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
+        if (getMeleeMode() == 1) {
             return new RiderAbilityBinding(NulljawAbilities.NULLJAW_HORN_GORE_ID, RiderAbilityBinding.Activation.PRESS);
         } else {
             // Phase 2 uses bite2, Phase 1 uses bite

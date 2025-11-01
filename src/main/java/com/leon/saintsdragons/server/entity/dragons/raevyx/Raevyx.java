@@ -710,6 +710,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                     }
                 }
             }
+            case TOGGLE_MELEE -> {
+                if (!locked) {
+                    toggleMeleeMode();
+                }
+            }
             default -> { }
         }
     }
@@ -1120,7 +1125,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
+        // Use melee mode to switch between bite and horn gore
+        // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
+        if (getMeleeMode() == 0) {
+            return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
+        } else {
+            return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_HORN_GORE.getName(), RiderAbilityBinding.Activation.PRESS);
+        }
     }
 
 
@@ -3118,12 +3129,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        // Lightning Dragon alternates between bite and horn gore attacks
-        // Use entity tick count to alternate between attacks (every 2 seconds)
-        boolean useHornGore = (tickCount / 40) % 2 == 1; // Switch every 2 seconds
-        return useHornGore ? 
-            RaevyxAbilities.RAEVYX_HORN_GORE :
-            RaevyxAbilities.RAEVYX_BITE;
+        // Use melee mode to switch between bite and horn gore
+        // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
+        return getMeleeMode() == 0 ?
+            RaevyxAbilities.RAEVYX_BITE :
+            RaevyxAbilities.RAEVYX_HORN_GORE;
     }
 
     @Override
