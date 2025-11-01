@@ -85,13 +85,16 @@ public class CindervaneAnimationHandler {
                     int flightMode = dragon.getSyncedFlightMode();
 
                     if (flightMode == 0) {
-                        // High altitude glide
+                        // High altitude glide - long transition for smooth feel
+                        state.getController().transitionLength(12);
                         state.setAndContinue(GLIDE);
                     } else if (flightMode == 1) {
-                        // Low altitude flap
+                        // Low altitude flap - medium transition
+                        state.getController().transitionLength(6);
                         state.setAndContinue(FLAP);
                     } else {
-                        // Default to glide
+                        // Default to glide with long transition
+                        state.getController().transitionLength(12);
                         state.setAndContinue(GLIDE);
                     }
                 }
