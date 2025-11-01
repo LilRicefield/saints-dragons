@@ -14,7 +14,7 @@ import java.util.EnumSet;
  * Keeps the drake neutral until provoked, then selects the appropriate melee ability.
  */
 public class NulljawCombatGoal extends Goal {
-    private static final double CHASE_SPEED = 1.15D;
+    private static final double CHASE_SPEED = 1.5D;
     private static final double BITE_RANGE = 2.8D;
     private static final double HORN_RANGE = 4.6D;
     private static final int MIN_ATTACK_COOLDOWN_TICKS = 10;
@@ -54,10 +54,11 @@ public class NulljawCombatGoal extends Goal {
     @Override
     public void start() {
         this.attackCooldown = 0;
+        drake.setAggressive(true);
+
         LivingEntity target = drake.getTarget();
         if (target != null) {
             drake.getNavigation().moveTo(target, CHASE_SPEED);
-            drake.setAggressive(true);
         }
     }
 

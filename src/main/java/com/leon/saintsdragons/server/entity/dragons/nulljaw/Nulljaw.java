@@ -11,7 +11,6 @@ import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawLeaveWaterGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawMoveGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawRandomSwimGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawRestGoal;
@@ -350,12 +349,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         // Priority 2: Casual resting for wild dragons
         this.goalSelector.addGoal(2, new NulljawRestGoal(this));
 
-        // Priority 3-4: Combat abilities
+        // Priority 3-4: Combat abilities (CombatGoal handles both movement and attacks)
         this.goalSelector.addGoal(3, new NulljawAttackGoal(this));
         this.goalSelector.addGoal(4, new NulljawCombatGoal(this));
-
-        // Priority 5: Combat movement (chasing targets/fleeing)
-        this.goalSelector.addGoal(5, new NulljawMoveGoal(this, true, 1.3D));
 
         // Priority 6-7: Amphibious behavior (semi-aquatic patrol pattern)
         this.goalSelector.addGoal(6, new NulljawLeaveWaterGoal(this));
@@ -663,7 +659,20 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         }
         this.syncAnimState(s, getSyncedFlightMode());
     }
-    
+
+    /**
+     * Allow AI goals to set ground move state explicitly
+     */
+    public void setGroundMoveStateFromAI(int state) {
+        if (!this.level().isClientSide) {
+            int s = Mth.clamp(state, 0, 2);
+            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
+                this.entityData.set(DATA_GROUND_MOVE_STATE, s);
+                this.syncAnimState(s, getSyncedFlightMode());
+            }
+        }
+    }
+
     // ===== REQUIRED METHODS FROM RIDEABLEDRAGONBASE =====
     
     @Override
