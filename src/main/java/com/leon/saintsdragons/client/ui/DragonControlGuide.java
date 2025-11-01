@@ -85,8 +85,8 @@ public class DragonControlGuide extends DragonUIElement {
             if (key.getString().isEmpty()) {
                 continue;
             }
-            int keyWidth = font.width(key) + 6;
-            int functionWidth = font.width(control.functionText);
+            int keyWidth = control.getKeyWidth(font);
+            int functionWidth = control.getFunctionWidth(font);
             maxWidth = Math.max(maxWidth, keyWidth + functionWidth + 14);
         }
         this.width = maxWidth;
@@ -113,6 +113,10 @@ public class DragonControlGuide extends DragonUIElement {
         return Component.translatable("saintsdragons.ui.control.ability_with_name", slot, abilityName);
     }
 
+    // Cached title component and width
+    private Component cachedTitle = null;
+    private int cachedTitleWidth = -1;
+
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         if (!visible || dragon == null || dragon.isDeadOrDying() || controls.isEmpty()) {
@@ -120,9 +124,14 @@ public class DragonControlGuide extends DragonUIElement {
         }
 
         Font font = Minecraft.getInstance().font;
-        Component title = Component.translatable("saintsdragons.ui.control.title");
-        int titleWidth = font.width(title);
-        guiGraphics.drawString(font, title, x + (width - titleWidth) / 2, y + 2, TITLE_COLOR);
+
+        // Cache title component and width
+        if (cachedTitle == null) {
+            cachedTitle = Component.translatable("saintsdragons.ui.control.title");
+            cachedTitleWidth = font.width(cachedTitle);
+        }
+
+        guiGraphics.drawString(font, cachedTitle, x + (width - cachedTitleWidth) / 2, y + 2, TITLE_COLOR);
 
         int startY = y + 14;
         int lineSpacing = font.lineHeight + 2;
@@ -134,7 +143,7 @@ public class DragonControlGuide extends DragonUIElement {
                 continue;
             }
 
-            int keyWidth = font.width(keyComponent) + 6;
+            int keyWidth = control.getKeyWidth(font);
             int entryY = startY + i * lineSpacing;
 
             guiGraphics.fill(x + 2, entryY, x + 2 + keyWidth, entryY + font.lineHeight + 1, KEY_BG_DARK);
@@ -177,6 +186,11 @@ public class DragonControlGuide extends DragonUIElement {
         private final Component functionText;
         private final int color;
 
+        // Cached rendering values
+        private Component cachedKeyComponent = null;
+        private int cachedKeyWidth = -1;
+        private int cachedFunctionWidth = -1;
+
         private ControlEntry(KeyMapping keyMapping, Component functionText, int color) {
             this.keyMapping = keyMapping;
             this.functionText = functionText;
@@ -188,7 +202,24 @@ public class DragonControlGuide extends DragonUIElement {
         }
 
         Component getKeyComponent() {
-            return keyMapping != null ? keyMapping.getTranslatedKeyMessage() : Component.empty();
+            if (cachedKeyComponent == null) {
+                cachedKeyComponent = keyMapping != null ? keyMapping.getTranslatedKeyMessage() : Component.empty();
+            }
+            return cachedKeyComponent;
+        }
+
+        int getKeyWidth(Font font) {
+            if (cachedKeyWidth == -1) {
+                cachedKeyWidth = font.width(getKeyComponent()) + 6;
+            }
+            return cachedKeyWidth;
+        }
+
+        int getFunctionWidth(Font font) {
+            if (cachedFunctionWidth == -1) {
+                cachedFunctionWidth = font.width(functionText);
+            }
+            return cachedFunctionWidth;
         }
     }
 }
