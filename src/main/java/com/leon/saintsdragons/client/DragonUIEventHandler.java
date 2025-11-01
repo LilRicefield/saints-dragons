@@ -23,11 +23,9 @@ public class DragonUIEventHandler {
         DragonStatusUIManager manager = DragonStatusUIManager.getInstance();
         DragonStatusUI ui = manager.getDragonStatusUI();
 
+        // Render UI (health and speed only, no control guide)
         if (ui.isVisible()) {
-            ui.render(event.getGuiGraphics(),
-                     (int) minecraft.mouseHandler.xpos(),
-                     (int) minecraft.mouseHandler.ypos(),
-                     event.getPartialTick());
+            ui.render(event.getGuiGraphics(), -1, -1, event.getPartialTick());
         }
 
         // Always render melee mode notification (independent of UI visibility)

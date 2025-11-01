@@ -18,6 +18,13 @@ public class DragonHealthBar extends DragonUIElement {
     private float currentHealthPercent = 1.0f;
     private float targetHealthPercent = 1.0f;
     private long lastHealthUpdate = 0;
+
+    // Cached text rendering values
+    private String cachedHealthText = "";
+    private int cachedTextWidth = 0;
+    private float cachedHealth = -1;
+    private float cachedMaxHealth = -1;
+    private boolean cachedGender = false;
     
     public DragonHealthBar(int x, int y) {
         super(x, y, 18, 100); // Compact vertical health bar
@@ -49,18 +56,25 @@ public class DragonHealthBar extends DragonUIElement {
         
         // Render health text anchored to the left so longer values stay visible
         // Include gender symbol (♂/♀) for quick identification
-        String genderSymbol = dragon.isFemale() ? "♀" : "♂";
-        String healthText = String.format("%s %.0f/%.0f", genderSymbol, dragon.getHealth(), dragon.getMaxHealth());
+        // Cache the text to avoid expensive String.format() every frame
+        float currentHealth = dragon.getHealth();
+        float maxHealth = dragon.getMaxHealth();
+        boolean isFemale = dragon.isFemale();
 
-        int textWidth = minecraft.font.width(healthText);
+        if (currentHealth != cachedHealth || maxHealth != cachedMaxHealth || isFemale != cachedGender) {
+            String genderSymbol = isFemale ? "♀" : "♂";
+            cachedHealthText = String.format("%s %.0f/%.0f", genderSymbol, currentHealth, maxHealth);
+            cachedTextWidth = minecraft.font.width(cachedHealthText);
+            cachedHealth = currentHealth;
+            cachedMaxHealth = maxHealth;
+            cachedGender = isFemale;
+        }
 
-        int textX = Math.max(4, x - textWidth - 8);
-
+        int textX = Math.max(4, x - cachedTextWidth - 8);
         int textY = y + (height - minecraft.font.lineHeight) / 2;
 
-        guiGraphics.fill(textX - 2, textY - 2, textX + textWidth + 2, textY + minecraft.font.lineHeight + 2, 0x80000000);
-
-        guiGraphics.drawString(minecraft.font, healthText, textX, textY, 0xFFFFFF);
+        guiGraphics.fill(textX - 2, textY - 2, textX + cachedTextWidth + 2, textY + minecraft.font.lineHeight + 2, 0x80000000);
+        guiGraphics.drawString(minecraft.font, cachedHealthText, textX, textY, 0xFFFFFF);
 
         
 

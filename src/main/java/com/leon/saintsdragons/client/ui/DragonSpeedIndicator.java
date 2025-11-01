@@ -20,6 +20,11 @@ public class DragonSpeedIndicator extends DragonUIElement {
     private float maxSpeedMph = MIN_BASELINE_MPH;
     private float baselineMaxSpeedMph = MIN_BASELINE_MPH;
 
+    // Cached text rendering values
+    private String cachedSpeedText = "";
+    private int cachedSpeedTextWidth = 0;
+    private int cachedLastSpeed = -1;
+
     public DragonSpeedIndicator(int x, int y) {
         super(x, y, 120, 16); // Extended width for mph label
     }
@@ -61,14 +66,21 @@ public class DragonSpeedIndicator extends DragonUIElement {
             guiGraphics.fill(x + 2, y + 2, x + 2 + fillWidth, y + height - 2, color);
         }
 
-        // Speed text
+        // Speed text - cache to avoid String.format() every frame
         Font font = minecraft.font;
-        String speedText = String.format("%.0f mph", currentSpeedMph);
-        int textX = x + width - font.width(speedText) - 2;
-        int textY = y + (height - font.lineHeight) / 2;
-        guiGraphics.drawString(font, speedText, textX, textY, 0xFFFFFF);
+        int roundedSpeed = Math.round(currentSpeedMph);
 
-        // Label
+        if (roundedSpeed != cachedLastSpeed) {
+            cachedSpeedText = String.format("%.0f mph", currentSpeedMph);
+            cachedSpeedTextWidth = font.width(cachedSpeedText);
+            cachedLastSpeed = roundedSpeed;
+        }
+
+        int textX = x + width - cachedSpeedTextWidth - 2;
+        int textY = y + (height - font.lineHeight) / 2;
+        guiGraphics.drawString(font, cachedSpeedText, textX, textY, 0xFFFFFF);
+
+        // Label (constant string, no caching needed)
         guiGraphics.drawString(font, "Speed:", x + 2, textY, 0xCCCCCC);
 
         // Render drag handle when hovering
