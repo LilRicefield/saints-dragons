@@ -30,22 +30,6 @@ public class DragonSoundHandler {
             "die", 62
     );
     private final Map<String, Integer> vocalCooldowns = new HashMap<>();
-    // Step timing control for walk animation to match Blockbench keyframes precisely
-    private static final int WALK_STEP_SEPARATION_TICKS = 12; // 0.6s @ 20 TPS
-    private static final int RUN_STEP_SEPARATION_TICKS  = 10; // ~0.476s @ 20 TPS (0.5 of 0.9524s)
-    private long lastStep1Tick = Long.MIN_VALUE;
-    private long lastStep2Tick = Long.MIN_VALUE;
-
-    private static class PendingStep {
-        String key;      // "step1"/"step2" or "run_step1"/"run_step2"
-        String locator;
-        int ticksLeft;
-        PendingStep(String key, String locator, int ticksLeft) {
-            this.key = key; this.locator = locator; this.ticksLeft = ticksLeft;
-        }
-    }
-    private PendingStep pendingStep1 = null;
-    private PendingStep pendingStep2 = null;
     
     public DragonSoundHandler(DragonEntity dragon) {
         this.dragon = dragon;
@@ -53,21 +37,9 @@ public class DragonSoundHandler {
         this.profile = providedProfile != null ? providedProfile : DragonSoundProfile.EMPTY;
     }
 
-    /** Call every entity tick to process any pending delayed footsteps */
+    /** Call every entity tick to update cooldowns */
     public void tick() {
-        if (dragon.isDying()) { pendingStep1 = null; pendingStep2 = null; return; }
-        if (pendingStep1 != null) {
-            if (--pendingStep1.ticksLeft <= 0) {
-                actuallyPlayStep(pendingStep1.key, pendingStep1.locator);
-                pendingStep1 = null;
-            }
-        }
-        if (pendingStep2 != null) {
-            if (--pendingStep2.ticksLeft <= 0) {
-                actuallyPlayStep(pendingStep2.key, pendingStep2.locator);
-                pendingStep2 = null;
-            }
-        }
+        // Cooldown management only - no pending steps, we trust Blockbench timing
     }
     
     /**
@@ -278,68 +250,33 @@ public class DragonSoundHandler {
     
     /**
      * Wing flap sound with dynamic speed variation
+     * Delegates to profile for dragon-specific flap sounds
      */
     private void handleWingFlapSound(String key) {
         if (dragon.isStayOrSitMuted()) return;
         if (!dragon.level().isClientSide) return; // Client-side only
-        double flightSpeed = dragon.getCachedHorizontalSpeed();
-        float pitch = 1.0f + (float)(flightSpeed * 0.3f); // Higher pitch when flying faster
-        float volume = Math.max(0.6f, 0.9f + (float)(flightSpeed * 0.2f));
 
-        // Use custom flap sound (matches Blockbench keyframe label like "flap1")
+        // Let the profile handle it - each dragon has unique flap sounds
+        if (profile.handleWingFlapSound(this, dragon, key)) {
+            return;
+        }
+
+        // Fallback: play generic sound if profile doesn't handle it
+        double flightSpeed = dragon.getCachedHorizontalSpeed();
+        float pitch = 1.0f + (float)(flightSpeed * 0.3f);
+        float volume = Math.max(0.6f, 0.9f + (float)(flightSpeed * 0.2f));
         dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
-                ModSounds.RAEVYX_FLAP1.get(), SoundSource.NEUTRAL, volume, pitch, false);
+                SoundEvents.ENDER_DRAGON_FLAP, SoundSource.NEUTRAL, volume, pitch, false);
     }
     
     /**
-     * Dragon step sound with weight variation
+     * Dragon step sound - trusts Blockbench keyframe timing completely
+     * No delays, no spacing logic - plays immediately when keyframe fires
      */
     private void handleStepSound(String key, String locator) {
         if (dragon.isStayOrSitMuted()) return;
-        // Choose step variant based on keyframe name (e.g., "step1" vs "step2")
-        // Respect Blockbench spacing for walk and run
-        boolean running = dragon.isActuallyRunning() && !dragon.isFlying();
-        boolean walking = !running && dragon.isWalking() && !dragon.isFlying();
-        long now = dragon.tickCount;
-        if (key != null && key.endsWith("2")) {
-            // step2: left foot
-            if (walking || running) {
-                int desired = 0; // step2 is at 0.0 in both cases within the clip window
-                int delay = requiredDelayTicks(now - lastStep1Tick, desired);
-                String k2 = key.startsWith("run_step") ? "run_step2" : "step2";
-                if (delay > 0) {
-                    pendingStep2 = new PendingStep(k2, locator, delay);
-                } else {
-                    actuallyPlayStep(k2, locator);
-                }
-            } else {
-                String k2 = key.startsWith("run_step") ? "run_step2" : "step2";
-                actuallyPlayStep(k2, locator);
-            }
-        } else {
-            // step1: right foot
-            if (walking || running) {
-                int desired = walking ? WALK_STEP_SEPARATION_TICKS : RUN_STEP_SEPARATION_TICKS;
-                int delay = requiredDelayTicks(now - lastStep2Tick, desired);
-                assert key != null;
-                String k1 = key.startsWith("run_step") ? "run_step1" : "step1";
-                if (delay > 0) {
-                    pendingStep1 = new PendingStep(k1, locator, delay);
-                } else {
-                    actuallyPlayStep(k1, locator);
-                }
-            } else {
-                assert key != null;
-                String k1 = key.startsWith("run_step") ? "run_step1" : "step1";
-                actuallyPlayStep(k1, locator);
-            }
-        }
-    }
-
-    private int requiredDelayTicks(long deltaTicks, int desired) {
-        if (deltaTicks == Long.MIN_VALUE) return 0; // first time
-        if (deltaTicks < desired) return desired - (int)deltaTicks;
-        return 0;
+        // Trust Blockbench timing - play the sound immediately
+        actuallyPlayStep(key, locator);
     }
 
     private void actuallyPlayStep(String which, String locator) {
@@ -354,34 +291,19 @@ public class DragonSoundHandler {
         float volume = 0.65f * weight;
         float pitch = (0.9f + dragon.getRandom().nextFloat() * 0.2f) / weight;
         Vec3 at = resolveLocatorWorldPos(locator);
-        boolean isRun = which != null && which.startsWith("run_step");
-        boolean isSecond = which != null && which.endsWith("2");
 
         double x = at != null ? at.x : dragon.getX();
         double y = at != null ? at.y : dragon.getY();
         double z = at != null ? at.z : dragon.getZ();
 
-        if (isRun) {
-            if (isSecond) {
-                dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_RUN_STEP2.get(),
-                        SoundSource.NEUTRAL, volume, pitch, false);
-                lastStep2Tick = dragon.tickCount;
-            } else {
-                dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_RUN_STEP1.get(),
-                        SoundSource.NEUTRAL, volume, pitch, false);
-                lastStep1Tick = dragon.tickCount;
-            }
-        } else {
-            if (isSecond) {
-                dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_STEP2.get(),
-                        SoundSource.NEUTRAL, volume, pitch, false);
-                lastStep2Tick = dragon.tickCount;
-            } else {
-                dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_STEP1.get(),
-                        SoundSource.NEUTRAL, volume, pitch, false);
-                lastStep1Tick = dragon.tickCount;
-            }
+        // Let profile handle dragon-specific step sounds
+        if (profile.handleStepSound(this, dragon, which, locator, x, y, z, volume, pitch)) {
+            return;
         }
+
+        // Fallback: use generic step sound if profile doesn't handle it
+        dragon.level().playLocalSound(x, y, z, SoundEvents.GENERIC_SMALL_FALL,
+                SoundSource.NEUTRAL, volume, pitch, false);
     }
 
     /**
@@ -439,58 +361,26 @@ public class DragonSoundHandler {
     }
 
     /**
-     * Compute an approximate world position for a given locator name from the .geo.
-     * This uses static locator offsets and rotates them by the wyvern's body yaw.
-     * If the locator is unknown or null, returns null to fall back to the entity position.
+     * Get the world position for a locator from renderer-cached positions.
+     * Returns null if locator is not found (will fall back to entity position).
+     * NO hardcoded positions - each dragon's renderer calculates and caches these accurately.
      */
     public Vec3 resolveLocatorWorldPos(String locator) {
         if (locator == null || locator.isEmpty()) return null;
-        // Only compute for known locators. Values taken from raevyx.geo.json
-        // "leftfeetLocator":  [ 2.2, 0.05, 2.85]
-        // "rightfeetLocator": [-2.2, 0.05, 2.85]
-        // "mouth_origin":      [ 0.1, 8.7, -17.4]
-        double lx, ly, lz;
-        switch (locator) {
-            case "leftfeetLocator" -> {
-                lx = 2.2; ly = 0.05; lz = 2.85;
-            }
-            case "rightfeetLocator" -> {
-                lx = -2.2; ly = 0.05; lz = 2.85;
-            }
-            case "mouth_origin" -> {
-                Vec3 dynamic = dragon.getMouthPosition();
-                if (dynamic != null) {
-                    return dynamic;
-                }
-                // Lightning Dragon mouth position - fallback for both entities
-                // Primitive Drake will use renderer-sampled position when available
-                lx = 0.1; ly = 8.7; lz = -17.4;
-            }
-            case "bodyLocator" -> {
-                lx = 0.0; ly = 10.0; lz = 0.0;
-            }
-            default -> { return null; }
+
+        // Special case: mouth position may have dynamic getter
+        if ("mouth_origin".equals(locator)) {
+            Vec3 dynamic = dragon.getMouthPosition();
+            if (dynamic != null) return dynamic;
         }
 
-        // Prefer renderer-sampled exact position if available on client
+        // Use renderer-sampled position (calculated from actual animated bone matrices)
         Vec3 cached = dragon.getClientLocatorPosition(locator);
         if (cached != null) return cached;
 
-        // Fallback: Convert model-space units (pixels) into world units using wyvern's model scale
-        double modelScale = dragon.getBbWidth() / 4.5f; // Default wyvern width is 4.5f, adjust based on actual size
-        double sx = (lx / 16.0) * modelScale;
-        double sy = (ly / 16.0) * modelScale;
-        double sz = (lz / 16.0) * modelScale;
-
-        // Rotate around Y by the wyvern's body yaw
-        double yawDeg = dragon.yBodyRot;
-        double cy = Math.cos(Math.toRadians(yawDeg));
-        double syaw = Math.sin(Math.toRadians(yawDeg));
-        double rx = sx * cy - sz * syaw;
-        double rz = sx * syaw + sz * cy;
-
-        // Offset from current wyvern position
-        return new Vec3(dragon.getX() + rx, dragon.getY() + sy, dragon.getZ() + rz);
+        // No fallback - if renderer hasn't cached it, return null
+        // Sound will play at entity center position instead
+        return null;
     }
     
     /**

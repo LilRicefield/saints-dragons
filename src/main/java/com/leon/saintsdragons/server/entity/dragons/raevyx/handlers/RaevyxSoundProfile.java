@@ -110,6 +110,21 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         return VOCAL_WINDOWS.getOrDefault(key, -1);
     }
 
+    @Override
+    public boolean handleWingFlapSound(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        playWingFlap(handler, dragon, null);
+        return true;
+    }
+
+    @Override
+    public boolean handleStepSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator,
+                                   double x, double y, double z, float volume, float pitch) {
+        // Play the Raevyx step sound
+        dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_STEP.get(),
+                SoundSource.NEUTRAL, volume, pitch, false);
+        return true;
+    }
+
     private void playWingFlap(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 bodyPos = handler.resolveLocatorWorldPos(
                 locator != null && !locator.isEmpty() ? locator : "bodyLocator"
@@ -118,7 +133,7 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         float pitch = 1.0f + (float) (flightSpeed * 0.3f);
         float volume = Math.max(0.6f, 0.9f + (float) (flightSpeed * 0.2f));
 
-        playClientSound(dragon, bodyPos, ModSounds.RAEVYX_FLAP1.get(), volume, pitch);
+        playClientSound(dragon, bodyPos, ModSounds.RAEVYX_FLAP.get(), volume, pitch);
     }
 
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {

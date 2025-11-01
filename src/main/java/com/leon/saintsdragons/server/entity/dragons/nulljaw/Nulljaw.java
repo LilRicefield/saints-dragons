@@ -1088,16 +1088,21 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        // Phase 2 uses fast bite2, Phase 1 uses normal bite
-        // Use phase 1 bite by default (safer for initial loads)
-        try {
-            if (isPhaseTwoActive()) {
-                return new RiderAbilityBinding(NulljawAbilities.NULLJAW_BITE2_ID, RiderAbilityBinding.Activation.PRESS);
+        // Left-click: Alternate between horn gore and bite/bite2
+        // 50% chance for horn gore, 50% for bite
+        if (getRandom().nextBoolean()) {
+            return new RiderAbilityBinding(NulljawAbilities.NULLJAW_HORN_GORE_ID, RiderAbilityBinding.Activation.PRESS);
+        } else {
+            // Phase 2 uses bite2, Phase 1 uses bite
+            try {
+                if (isPhaseTwoActive()) {
+                    return new RiderAbilityBinding(NulljawAbilities.NULLJAW_BITE2_ID, RiderAbilityBinding.Activation.PRESS);
+                }
+            } catch (Exception e) {
+                // Fallback to phase 1 bite if entity data isn't ready
             }
-        } catch (Exception e) {
-            // Fallback to phase 1 bite if entity data isn't ready
+            return new RiderAbilityBinding(NulljawAbilities.NULLJAW_BITE_ID, RiderAbilityBinding.Activation.PRESS);
         }
-        return new RiderAbilityBinding(NulljawAbilities.NULLJAW_BITE_ID, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override

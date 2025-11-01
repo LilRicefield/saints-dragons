@@ -21,17 +21,17 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 /**
- * Phase 1 bite attack for the Rift Drake. Shorter range than Amphithere due to shorter neck.
+ * Phase 1 bite attack for the Nulljaw. AOE bite shorter range than horn gore.
  */
 public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
     private static final float BASE_DAMAGE = 40.0f;
-    private static final double BASE_RANGE = 7.5;
-    private static final double RIDDEN_RANGE_BONUS = 1.0;
-    private static final double SWIM_RANGE_BONUS = 8.0;
-    private static final double BITE_ANGLE_DEG = 90.0;     // Half-angle of bite cone
-    private static final double BITE_SWIPE_HORIZONTAL = 5.0;
+    private static final double BASE_RANGE = 5.5;          // Shorter than horn gore (7.0)
+    private static final double RIDDEN_RANGE_BONUS = 0.5;
+    private static final double SWIM_RANGE_BONUS = 2.0;     // Reduced from 8.0
+    private static final double BITE_ANGLE_DEG = 90.0;      // Half-angle of bite cone
+    private static final double BITE_SWIPE_HORIZONTAL = 4.0;
     private static final double BITE_SWIPE_HORIZONTAL_RIDDEN = 1.5;
-    private static final double BITE_SWIPE_VERTICAL = 5.0;
+    private static final double BITE_SWIPE_VERTICAL = 4.0;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 5),
@@ -69,29 +69,12 @@ public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
         if (section.sectionType == ACTIVE && !appliedHit) {
             Nulljaw dragon = getUser();
 
-            // Find primary target using Lightning Dragon's superior geometry
-            LivingEntity primary = findPrimaryTarget();
+            // AOE bite - hit ALL valid targets in range
+            List<LivingEntity> targets = findAllTargetsInCone();
 
-            // Fallback 1: use current target if within generous melee range
-            if (primary == null) {
-                LivingEntity t = dragon.getTarget();
-                if (t != null && t.isAlive()) {
-                    double d = t.distanceTo(dragon);
-                    if (d <= 5.2) {
-                        primary = t;
-                    }
-                }
-            }
-
-            // Fallback 2: short raycast from mouth along look direction
-            if (primary == null) {
-                boolean ridden = dragon.getControllingPassenger() != null;
-                double effectiveRange = getEffectiveRange();
-                primary = raycastTargetAlongMouth(effectiveRange + 2.0, ridden ? 2.0 : 1.0);
-            }
-
-            if (primary != null) {
-                applyHit(dragon, primary);
+            // Apply hit to all targets found
+            for (LivingEntity target : targets) {
+                applyHit(dragon, target);
             }
 
             appliedHit = true;
@@ -131,9 +114,9 @@ public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
         return range;
     }
 
-    // ===== Lightning Dragon's superior target finding =====
+    // ===== AOE target finding - hits ALL valid targets in cone =====
 
-    private LivingEntity findPrimaryTarget() {
+    private List<LivingEntity> findAllTargetsInCone() {
         Nulljaw dragon = getUser();
         Vec3 mouth = dragon.getMouthPosition();
         Vec3 look = dragon.getLookAngle().normalize();
@@ -150,8 +133,7 @@ public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
                 e -> e != dragon && e.isAlive() && e.attackable() && !dragon.isAlly(e));
 
         double cosLimit = Math.cos(Math.toRadians(BITE_ANGLE_DEG));
-        LivingEntity best = null;
-        double bestDist = Double.MAX_VALUE;
+        List<LivingEntity> validTargets = new java.util.ArrayList<>();
 
         for (LivingEntity e : candidates) {
             // Compute closest point on target's AABB to the mouth
@@ -177,12 +159,10 @@ public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
             }
             if (!(veryClose || goodAngle)) continue;
 
-            if (distToAabb < bestDist) {
-                bestDist = distToAabb;
-                best = e;
-            }
+            // Add ALL valid targets instead of picking just the closest
+            validTargets.add(e);
         }
-        return best;
+        return validTargets;
     }
 
     // ===== Geometry helpers =====
@@ -199,22 +179,5 @@ public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
         double cy = Mth.clamp(p.y, box.minY, box.maxY);
         double cz = Mth.clamp(p.z, box.minZ, box.maxZ);
         return new Vec3(cx, cy, cz);
-    }
-
-    private LivingEntity raycastTargetAlongMouth(double maxDistance, double inflateRadius) {
-        Nulljaw dragon = getUser();
-        Vec3 start = dragon.getMouthPosition();
-        Vec3 look = dragon.getLookAngle().normalize();
-        Vec3 end = start.add(look.scale(maxDistance));
-
-        AABB sweep = new AABB(start, end).inflate(inflateRadius);
-        var hit = ProjectileUtil.getEntityHitResult(dragon.level(), dragon, start, end, sweep,
-                e -> e instanceof LivingEntity le && e != dragon && e.isAlive() && le.attackable() && !dragon.isAlly(e),
-                (float)(maxDistance * maxDistance));
-
-        if (hit != null && hit.getEntity() instanceof LivingEntity le) {
-            return le;
-        }
-        return null;
     }
 }

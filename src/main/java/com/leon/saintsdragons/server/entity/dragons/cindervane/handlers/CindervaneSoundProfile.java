@@ -75,6 +75,7 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         }
 
         return false;
+
     }
 
     @Override
@@ -85,6 +86,15 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
     @Override
     public int getVocalAnimationWindowTicks(String key) {
         return VOCAL_WINDOWS.getOrDefault(key, -1);
+    }
+
+    @Override
+    public boolean handleStepSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator,
+                                   double x, double y, double z, float volume, float pitch) {
+        // Play the Cindervane step sound
+        dragon.level().playLocalSound(x, y, z, ModSounds.CINDERVANE_STEP.get(),
+                SoundSource.NEUTRAL, volume, pitch, false);
+        return true;
     }
 
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {

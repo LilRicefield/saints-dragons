@@ -19,8 +19,6 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");
     public static final RegistryObject<SoundEvent> STEGONAUT_GRUMBLE_2 = registerSound("stegonaut_grumble2");
     public static final RegistryObject<SoundEvent> STEGONAUT_GRUMBLE_3 = registerSound("stegonaut_grumble3");
-    public static final RegistryObject<SoundEvent> STEGONAUT_SCARED = registerSound("stegonaut_scared");
-    public static final RegistryObject<SoundEvent> STEGONAUT_RELIEVED = registerSound("stegonaut_relieved");
     public static final RegistryObject<SoundEvent> STEGONAUT_HURT = registerSound("stegonaut_hurt");
     public static final RegistryObject<SoundEvent> STEGONAUT_DIE = registerSound("stegonaut_die");
 
@@ -30,20 +28,16 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> RAEVYX_SNORT = registerSound("raevyx_snort");
     public static final RegistryObject<SoundEvent> RAEVYX_CHUFF = registerSound("raevyx_chuff");
     public static final RegistryObject<SoundEvent> RAEVYX_CONTENT = registerSound("raevyx_content");
-    public static final RegistryObject<SoundEvent> RAEVYX_ANNOYED = registerSound("raevyx_annoyed");
     public static final RegistryObject<SoundEvent> RAEVYX_EXCITED = registerSound("raevyx_excited");
     public static final RegistryObject<SoundEvent> RAEVYX_ROAR = registerSound("raevyx_roar");
     public static final RegistryObject<SoundEvent> RAEVYX_SUMMON_STORM = registerSound("raevyx_summon_storm");
     public static final RegistryObject<SoundEvent> RAEVYX_GROWL_WARNING = registerSound("raevyx_growl_warning");
+    public static final RegistryObject<SoundEvent> RAEVYX_STEP = registerSound("raevyx_step");
     public static final RegistryObject<SoundEvent> RAEVYX_HURT = registerSound("raevyx_hurt");
     public static final RegistryObject<SoundEvent> RAEVYX_BITE = registerSound("raevyx_bite");
     public static final RegistryObject<SoundEvent> RAEVYX_HORNGORE = registerSound("raevyx_horngore");
     public static final RegistryObject<SoundEvent> RAEVYX_DIE = registerSound("raevyx_die");
-    public static final RegistryObject<SoundEvent> RAEVYX_FLAP1 = registerSound("raevyx_flap1");
-    public static final RegistryObject<SoundEvent> RAEVYX_STEP1 = registerSound("raevyx_step1");
-    public static final RegistryObject<SoundEvent> RAEVYX_STEP2 = registerSound("raevyx_step2");
-    public static final RegistryObject<SoundEvent> RAEVYX_RUN_STEP1 = registerSound("raevyx_run_step1");
-    public static final RegistryObject<SoundEvent> RAEVYX_RUN_STEP2 = registerSound("raevyx_run_step2");
+    public static final RegistryObject<SoundEvent> RAEVYX_FLAP = registerSound("raevyx_flap");
     public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_1 = registerSound("raevyx_grumble_1");
     public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_2 = registerSound("raevyx_grumble_2");
     public static final RegistryObject<SoundEvent> RAEVYX_GRUMBLE_3 = registerSound("raevyx_grumble_3");
@@ -53,7 +47,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> BABY_RAEVYX_DIE = registerSound("baby_raevyx_die");
 
 
-    // ===== AMPHITHERE SOUNDS =====
+    // ===== CINDERVANE =====
     public static final RegistryObject<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");
     public static final RegistryObject<SoundEvent> CINDERVANE_GRUMBLE_2 = registerSound("cindervane_grumble2");
     public static final RegistryObject<SoundEvent> CINDERVANE_GRUMBLE_3 = registerSound("cindervane_grumble3");
@@ -61,6 +55,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> CINDERVANE_HURT = registerSound("cindervane_hurt");
     public static final RegistryObject<SoundEvent> CINDERVANE_BITE = registerSound("cindervane_bite");
     public static final RegistryObject<SoundEvent> CINDERVANE_DIE = registerSound("cindervane_die");
+    public static final RegistryObject<SoundEvent> CINDERVANE_STEP = registerSound("cindervane_step");
 
     // NULLJAW
     public static final RegistryObject<SoundEvent> NULLJAW_GRUMBLE_1 = registerSound("nulljaw_grumble1");
@@ -73,6 +68,7 @@ public final class ModSounds {
     public static final RegistryObject<SoundEvent> NULLJAW_STEP = registerSound("nulljaw_step");
     public static final RegistryObject<SoundEvent> NULLJAW_CLAW = registerSound("nulljaw_claw");
     public static final RegistryObject<SoundEvent> NULLJAW_BITE = registerSound("nulljaw_bite");
+    public static final RegistryObject<SoundEvent> NULLJAW_HORNGORE = registerSound("nulljaw_horngore");
 
 
     /**

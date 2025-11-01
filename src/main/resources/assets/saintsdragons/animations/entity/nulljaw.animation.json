@@ -16645,6 +16645,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "nulljaw_horngore",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.nulljaw.claw_left": {

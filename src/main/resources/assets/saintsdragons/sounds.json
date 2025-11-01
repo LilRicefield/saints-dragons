@@ -79,16 +79,6 @@
       }
     ]
   },
-  "raevyx_annoyed": {
-    "subtitle": "Raevyx sounds annoyed",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_annoyed",
-        "volume": 1.0,
-        "pitch": 1.0
-      }
-    ]
-  },
   "raevyx_excited": {
     "subtitle": "Raevyx sounds excited",
     "sounds": [
@@ -105,6 +95,16 @@
       {
         "name": "saintsdragons:entity/raevyx/raevyx_roar",
         "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_step": {
+    "subtitle": "Cindervane steps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_step",
+        "volume": 1.2,
         "pitch": 1.0
       }
     ]
@@ -232,15 +232,17 @@
   "raevyx_step": {
     "subtitle": "Heavy footsteps",
     "sounds": [
-      { "name": "saintsdragons:entity/raevyx/raevyx_step1", "volume": 0.8, "pitch": 1.0 },
-      { "name": "saintsdragons:entity/raevyx/raevyx_step2", "volume": 0.8, "pitch": 1.0 }
+      { "name": "saintsdragons:entity/raevyx/raevyx_step",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
     ]
   },
   "raevyx_flap1": {
     "subtitle": "Wings flap",
     "sounds": [
       {
-        "name": "saintsdragons:entity/raevyx/raevyx_flap1",
+        "name": "saintsdragons:entity/raevyx/raevyx_flap",
         "volume": 1.0,
         "pitch": 1.0
       }
@@ -261,26 +263,6 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_step2",
-        "volume": 0.8,
-        "pitch": 1.0
-      }
-    ]
-  },
-  "raevyx_run_step1": {
-    "subtitle": "Raevyx runs",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_run_step1",
-        "volume": 0.8,
-        "pitch": 1.0
-      }
-    ]
-  },
-  "raevyx_run_step2": {
-    "subtitle": "Raevyx runs",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_run_step2",
         "volume": 0.8,
         "pitch": 1.0
       }
@@ -322,26 +304,6 @@
       {
         "name": "saintsdragons:entity/stegonaut/stegonaut_grumble3",
         "volume": 1.0,
-        "pitch": 1.0
-      }
-    ]
-  },
-  "stegonaut_scared": {
-    "subtitle": "Stegonaut is scared",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/stegonaut/stegonaut_scared",
-        "volume": 1.2,
-        "pitch": 1.0
-      }
-    ]
-  },
-  "stegonaut_relieved": {
-    "subtitle": "Stegonaut sighs with relief",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/stegonaut/stegonaut_relieved",
-        "volume": 0.8,
         "pitch": 1.0
       }
     ]
@@ -461,6 +423,16 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/nulljaw/nulljaw_bite",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_horngore": {
+    "subtitle": "Nulljaw gores with horn",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_horngore",
         "volume": 1.0,
         "pitch": 1.0
       }
