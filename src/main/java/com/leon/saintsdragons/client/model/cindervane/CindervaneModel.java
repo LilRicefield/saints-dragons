@@ -38,7 +38,6 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     }
 
     /**
-     * Applies smooth body rotation using AstemirLib's deviation approach.
      * bodyRotDeviation tracks the difference between head and body rotation.
      * This creates the natural "head leads, body follows" behavior.
      */
