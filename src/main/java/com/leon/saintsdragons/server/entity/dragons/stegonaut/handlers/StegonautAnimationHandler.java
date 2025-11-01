@@ -60,16 +60,15 @@ public class StegonautAnimationHandler {
     }
     
     /**
-     * Handle play dead animation - takes priority over all other animations
+     * Handle play dead animation - the actual fake_death animation plays on the action controller
+     * Movement controller should play the idle pose (not stop) to maintain base pose
      */
     private PlayState handlePlayDeadAnimation(AnimationState<Stegonaut> state) {
-        // Set smooth transition to play dead animation
-        state.getController().transitionLength(15); // Slower transition for dramatic effect
-        
-        // While playing dead, the movement controller should NOT play any movement animations
-        // The fake_death animation is handled by the action controller
-        // Just return STOP to prevent any movement animations from playing
-        return PlayState.STOP;
+        // While playing dead, maintain idle animation as base pose
+        // The fake_death looping animation on action controller will override this
+        state.getController().transitionLength(10);
+        state.setAndContinue(IDLE_ANIM);
+        return PlayState.CONTINUE;
     }
     
     /**
@@ -125,10 +124,9 @@ public class StegonautAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.stegonaut.die"));
 
         // Register fake death animation for lightning wyvern interaction
+        // fake_death loops while playing dead, clear_fake_death stops the loop
         actionController.triggerableAnim("fake_death",
                 RawAnimation.begin().thenLoop("animation.stegonaut.fake_death"));
-        actionController.triggerableAnim("clear_fake_death",
-                RawAnimation.begin().thenWait(1));
     }
     
     /**

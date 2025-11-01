@@ -54,6 +54,12 @@ public class CindervaneAnimationHandler {
         if (dragon.isVehicle()) {
             state.getController().transitionLength(4);
             if (dragon.isFlying()) {
+                // Check if actually moving to determine hover vs active flight
+                var vel = dragon.getDeltaMovement();
+                boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
+                boolean isMovingVertically = Math.abs(vel.y) > 0.02;
+                boolean isStationary = !isMovingHorizontally && !isMovingVertically;
+
                 // Check for takeoff first (highest priority)
                 if (dragon.getSyncedFlightMode() == 3) {
                     state.setAndContinue(TAKEOFF);
@@ -71,8 +77,15 @@ public class CindervaneAnimationHandler {
                     state.setAndContinue(GLIDE_DOWN);
                     return PlayState.CONTINUE;
                 }
-                // SPRINT FLYING - fourth priority (after dive)
-                else if (dragon.isAccelerating()) {
+                // HOVER - fourth priority: truly stationary in air
+                else if (isStationary) {
+                    state.getController().transitionLength(6);
+                    state.setAndContinue(FLAP);
+                    return PlayState.CONTINUE;
+                }
+                // SPRINT FLYING - fifth priority (after dive and hover)
+                // Only play sprint animation if actually moving
+                else if (dragon.isAccelerating() && isMovingHorizontally) {
                     state.getController().transitionLength(3);
                     state.setAndContinue(SPRINT_FLAP);
                     return PlayState.CONTINUE;
