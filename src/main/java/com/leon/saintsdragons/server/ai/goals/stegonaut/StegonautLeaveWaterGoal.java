@@ -62,11 +62,6 @@ public class StegonautLeaveWaterGoal extends Goal {
         pathCooldown = 0;
         forcedStandDuringEscape = false;
 
-        // Stop playing dead so the drake can actually move out of danger.
-        if (drake.isPlayingDead()) {
-            drake.clearPlayDeadGoal();
-        }
-
         // Temporarily override sitting so the drake is free to walk out of water.
         if (drake.isOrderedToSit()) {
             forcedStandDuringEscape = true;

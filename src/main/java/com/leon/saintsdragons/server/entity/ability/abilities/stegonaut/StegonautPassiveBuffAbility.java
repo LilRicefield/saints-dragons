@@ -47,7 +47,7 @@ public class StegonautPassiveBuffAbility {
         }
         tickCounter = 0;
 
-        if (!drake.isAlive() || drake.isPlayingDead()) {
+        if (!drake.isAlive()) {
             clearTrackedBuffs(serverLevel);
             return;
         }

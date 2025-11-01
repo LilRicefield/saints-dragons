@@ -183,6 +183,8 @@
   "saintsdragons.message.easter_egg.herobrine": "Do not turn around. You're not supposed to be here.",
   "entity.saintsdragons.cindervane.passenger_needs_owner": "The owner needs to mount it first before you can do it.",
   "entity.saintsdragons.cindervane.seats_full": "Sorry, but the seats are full.",
-  "entity.saintsdragons.cindervane.mount_occupied": "Uh... you shouldn't be here."
+  "entity.saintsdragons.cindervane.mount_occupied": "Uh... you shouldn't be here.",
+  "ui.saintsdragons.melee_mode.primary": "Bite Mode",
+  "ui.saintsdragons.melee_mode.secondary": "Horn Gore Mode"
 }
 

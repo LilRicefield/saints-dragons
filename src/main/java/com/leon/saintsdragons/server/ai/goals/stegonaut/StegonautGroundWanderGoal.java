@@ -31,7 +31,7 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
         }
 
         // Don't wander while playing dead
-        if (drake.isPlayingDead()) {
+        if (false) {
             return false;
         }
 
@@ -69,7 +69,7 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
         }
 
         // Stop if playing dead
-        if (drake.isPlayingDead()) {
+        if (false) {
             return false;
         }
 

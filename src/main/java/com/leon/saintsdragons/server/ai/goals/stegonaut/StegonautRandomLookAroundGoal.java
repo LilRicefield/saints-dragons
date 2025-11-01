@@ -17,7 +17,7 @@ public class StegonautRandomLookAroundGoal extends RandomLookAroundGoal {
     @Override
     public boolean canUse() {
         // Don't look around while playing dead
-        if (drake.isPlayingDead()) {
+        if (false) {
             return false;
         }
         return super.canUse();
@@ -26,7 +26,7 @@ public class StegonautRandomLookAroundGoal extends RandomLookAroundGoal {
     @Override
     public boolean canContinueToUse() {
         // Stop looking around if start playing dead
-        if (drake.isPlayingDead()) {
+        if (false) {
             return false;
         }
         return super.canContinueToUse();
