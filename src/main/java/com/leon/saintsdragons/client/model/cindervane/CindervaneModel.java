@@ -125,6 +125,9 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         bone.setRotX(snapshot.getRotX() + headDeltaX * weight);
         bone.setRotY(snapshot.getRotY() + headDeltaY * weight);
     }
+    // Tail drag state for frame-to-frame smoothing (prevents snapping on sprint transitions)
+    private float prevTailDragVelocity = 0f;
+
     /**
      * Applies tail drag effect based on turning speed (yaw velocity).
      * Works for both wild and ridden dragons - tail swings with turn direction.
@@ -136,7 +139,13 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         // Clamp velocity to prevent tail from going crazy during rapid movements
         velocity = Mth.clamp(velocity, -30.0, 30.0); // Max ~30 degrees of tail swing
 
-        float velocityRad = (float)(velocity * Mth.DEG_TO_RAD);
+        // Apply additional client-side smoothing to prevent snapping during sprint transitions
+        // Server-side yawVelocity smoothing (0.25f) isn't enough for visual smoothness
+        float targetVelocity = (float) velocity;
+        float smoothedVelocity = Mth.lerp(0.15f, prevTailDragVelocity, targetVelocity); // Heavy smoothing
+        prevTailDragVelocity = smoothedVelocity;
+
+        float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
 
         // Tail swings with increasing intensity toward tip
         applyTailBoneRotation("tail1", velocityRad * 1.0f);
