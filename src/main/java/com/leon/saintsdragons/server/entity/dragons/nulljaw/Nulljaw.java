@@ -6,7 +6,6 @@ import com.leon.saintsdragons.server.ai.navigation.DragonAmphibiousNavigation;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimMoveControl;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawAttackGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFollowOwnerGoal;
@@ -349,9 +348,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Dragon
         // Priority 2: Casual resting for wild dragons
         this.goalSelector.addGoal(2, new NulljawRestGoal(this));
 
-        // Priority 3-4: Combat abilities (CombatGoal handles both movement and attacks)
-        this.goalSelector.addGoal(3, new NulljawAttackGoal(this));
-        this.goalSelector.addGoal(4, new NulljawCombatGoal(this));
+        // Priority 3: Combat abilities (CombatGoal handles both movement and attacks)
+        this.goalSelector.addGoal(3, new NulljawCombatGoal(this));
 
         // Priority 6-7: Amphibious behavior (semi-aquatic patrol pattern)
         this.goalSelector.addGoal(6, new NulljawLeaveWaterGoal(this));

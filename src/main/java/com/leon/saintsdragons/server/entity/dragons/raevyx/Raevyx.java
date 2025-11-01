@@ -131,14 +131,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
 
-    /** Entity data accessor for attack kind */
-    public static final EntityDataAccessor<Integer> DATA_ATTACK_KIND =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
-
-    /** Entity data accessor for attack phase */
-    public static final EntityDataAccessor<Integer> DATA_ATTACK_PHASE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
-
     /** Entity data accessor for screen shake amount */
     public static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
