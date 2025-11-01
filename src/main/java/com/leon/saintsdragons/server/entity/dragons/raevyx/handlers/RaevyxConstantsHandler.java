@@ -65,29 +65,9 @@ public class RaevyxConstantsHandler {
     public static final double RUN_SPEED = 0.45D;
 
     // ===== AI CONSTANTS =====
-    
+
     /** Time to live for aggression tracking (in ticks) */
     public static final int AGGRO_TTL_TICKS = 200; // ~10s
-    
-    // ===== ATTACK STATE CONSTANTS =====
-    
-    /** Attack state: Idle/moving */
-    public static final int ATTACK_STATE_IDLE = 0;
-    
-    /** Attack state: Horn gore windup */
-    public static final int ATTACK_STATE_HORN_WINDUP = 1;
-    
-    /** Attack state: Horn gore active */
-    public static final int ATTACK_STATE_HORN_ACTIVE = 2;
-    
-    /** Attack state: Bite windup */
-    public static final int ATTACK_STATE_BITE_WINDUP = 3;
-    
-    /** Attack state: Bite active */
-    public static final int ATTACK_STATE_BITE_ACTIVE = 4;
-    
-    /** Attack state: Recovery cooldown */
-    public static final int ATTACK_STATE_RECOVERY = 5;
 
     // Private constructor to prevent instantiation
     private RaevyxConstantsHandler() {
