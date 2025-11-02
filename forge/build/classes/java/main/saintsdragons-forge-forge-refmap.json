@@ -1,0 +1,14 @@
+{
+  "mappings": {
+    "com/leon/saintsdragons/mixin/client/EntityRendererMixin": {
+      "getFov": "Lnet/minecraft/client/renderer/GameRenderer;m_109141_(Lnet/minecraft/client/Camera;FZ)D"
+    }
+  },
+  "data": {
+    "named:intermediary": {
+      "com/leon/saintsdragons/mixin/client/EntityRendererMixin": {
+        "getFov": "Lnet/minecraft/client/renderer/GameRenderer;m_109141_(Lnet/minecraft/client/Camera;FZ)D"
+      }
+    }
+  }
+}

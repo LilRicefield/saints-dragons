@@ -1,0 +1,107 @@
+plugins {
+    id 'com.github.johnrengelman.shadow'
+}
+
+loom {
+    forge {
+        mixinConfig "saintsdragons.mixins.json"
+    }
+
+    runs {
+        client {
+            client()
+            setConfigName("Forge Client")
+            ideConfigGenerated(true)
+            runDir("../run")
+            programArgs("--username", "DevPlayer")
+        }
+        server {
+            server()
+            setConfigName("Forge Server")
+            ideConfigGenerated(true)
+            runDir("../run")
+            programArgs("--nogui")
+        }
+    }
+}
+
+architectury {
+    platformSetupLoomIde()
+    forge()
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentForge.extendsFrom common
+
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+repositories {
+    maven {
+        url = "https://api.modrinth.com/maven"
+    }
+    maven {
+        name = 'GeckoLib'
+        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content {
+            includeGroupByRegex("software\\.bernie.*")
+            includeGroup("com.eliotlash.mclib")
+        }
+    }
+    maven { url "https://cursemaven.com" }
+}
+
+dependencies {
+    mappings loom.officialMojangMappings()
+
+    forge "net.minecraftforge:forge:${rootProject.minecraft_version}-${rootProject.forge_version}"
+
+    // Common module
+    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
+    shadowBundle project(path: ':common', configuration: 'transformProductionForge')
+
+    // GeckoLib Forge
+    modImplementation "software.bernie.geckolib:geckolib-forge-${rootProject.minecraft_version}:${rootProject.geckolib_version}"
+    forgeRuntimeLibrary("com.eliotlash.mclib:mclib:20")
+}
+
+processResources {
+    inputs.property 'version', project.version
+
+    filesMatching('META-INF/mods.toml') {
+        expand version: project.version
+    }
+}
+
+shadowJar {
+    exclude "fabric.mod.json"
+    exclude "architectury.common.json"
+
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = "dev-shadow"
+}
+
+remapJar {
+    archiveFileName.set("saintsdragons-${project.version}+forge-${rootProject.minecraft_version}.jar")
+    inputFile.set(shadowJar.archiveFile)
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ["src/main/java", "../src/main/java"]
+        resources.srcDirs = [
+                "src/main/resources",
+                "../src/main/resources",
+                "../src/generated/resources"
+        ]
+    }
+}
