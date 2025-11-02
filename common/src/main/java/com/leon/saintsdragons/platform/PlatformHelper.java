@@ -1,0 +1,34 @@
+package com.leon.saintsdragons.platform;
+
+import java.util.function.Supplier;
+
+/**
+ * Entry point for platform specific functionality exposed to common code.
+ */
+public interface PlatformHelper {
+    RegistryHelper getRegistryHelper();
+
+    NetworkHelper getNetworkHelper();
+
+    ConfigHelper getConfigHelper();
+
+    /**
+     * Execute the supplied runnable if the environment is a physical client.
+     */
+    void runOnClient(Runnable runnable);
+
+    /**
+     * Execute the supplied supplier lazily on the physical client and return the value or {@code null} otherwise.
+     */
+    <T> T callOnClient(Supplier<T> supplier);
+
+    /**
+     * @return {@code true} when running in a development environment.
+     */
+    boolean isDevelopmentEnvironment();
+
+    /**
+     * @return {@code true} if the given mod id is loaded in the current environment.
+     */
+    boolean isModLoaded(String modId);
+}
