@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:husbandry/tame_an_animal",
+  "display": {
+    "icon": {
+      "item": "minecraft:salmon"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.tame_raevyx.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.tame_raevyx.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "tame_raevyx": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 300
+  }
+}

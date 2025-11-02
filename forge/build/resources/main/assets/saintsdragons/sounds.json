@@ -1,0 +1,421 @@
+{
+  "baby_raevyx_hurt": {
+    "subtitle": "Raevyx chirps hurtfully",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/baby_raevyx_hurt",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_grumble_1": {
+    "subtitle": "Raevyx grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble1",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_grumble_2": {
+    "subtitle": "Raevyx grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble2",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_grumble_3": {
+    "subtitle": "Raevyx grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_grumble3",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_purr": {
+    "subtitle": "Raevyx purrs contentedly",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_purr",
+        "volume": 0.7,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_snort": {
+    "subtitle": "Raevyx snorts",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_snort",
+        "volume": 0.9,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_chuff": {
+    "subtitle": "Raevyx chuffs",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_chuff",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_content": {
+    "subtitle": "Raevyx sounds content",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_content",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_excited": {
+    "subtitle": "Raevyx sounds excited",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_excited",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_roar": {
+    "subtitle": "Raevyx roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_roar",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_step": {
+    "subtitle": "Cindervane steps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_step",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_grumble1": {
+    "subtitle": "Cindervane grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_grumble1",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_grumble2": {
+    "subtitle": "Cindervane grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_grumble2",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_grumble3": {
+    "subtitle": "Cindervane grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_grumble3",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_roar": {
+    "subtitle": "Cindervane roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_roar",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_hurt": {
+    "subtitle": "Cindervane screeches in pain",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_hurt",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_bite": {
+    "subtitle": "Cindervane bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_bite",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_die": {
+    "subtitle": "Cindervane dies",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_die",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_bite": {
+    "subtitle": "Raevyx bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_bite",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_horngore": {
+    "subtitle": "Raevyx gores with horn",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_horngore",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_growl_warning": {
+    "subtitle": "Raevyx growls menacingly",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_growl_warning",
+        "volume": 1.1,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_hurt": {
+    "subtitle": "Raevyx hurt",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_hurt",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_die": {
+    "subtitle": "Raevyx dies",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_die",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_step": {
+    "subtitle": "Reavyx steps",
+    "sounds": [
+      { "name": "saintsdragons:entity/raevyx/raevyx_step",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_flap": {
+    "subtitle": "Wings flap",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_flap",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_summon_storm": {
+    "subtitle": "Storm gathers",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_grumble1": {
+    "subtitle": "Stegonaut grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_grumble1",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_grumble2": {
+    "subtitle": "Stegonaut grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_grumble2",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_grumble3": {
+    "subtitle": "Stegonaut grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_grumble3",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_die": {
+    "subtitle": "Stegonaut dies",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_die",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_hurt": {
+    "subtitle": "Stegonaut hurts",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_hurt",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_grumble1": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble1",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_grumble2": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble2",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_grumble3": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble3",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_phase1": {
+    "subtitle": "Nulljaw reverts phase",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_phase1",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_phase2": {
+    "subtitle": "Nulljaw switches phase",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2",
+        "volume": 3.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_roar": {
+    "subtitle": "Nulljaw roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_roar",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_roarclaw": {
+    "subtitle": "Nulljaw slashes while roaring",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_roarclaw",
+        "volume": 1.4,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_step": {
+    "subtitle": "Nulljaw steps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_step",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_claw": {
+    "subtitle": "Nulljaw slashes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_claw",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_bite": {
+    "subtitle": "Nulljaw bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_bite",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_horngore": {
+    "subtitle": "Nulljaw gores with horn",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_horngore",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  }
+}

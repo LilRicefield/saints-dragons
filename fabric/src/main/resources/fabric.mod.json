@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "saintsdragons",
+  "version": "${version}",
+  "name": "Saint's Dragons",
+  "description": "Fabric port scaffold for Saint's Dragons. Full feature parity will arrive once the common module migration is complete.",
+  "license": "LGPLv3",
+  "entrypoints": {
+    "main": [
+      "com.leon.saintsdragons.fabric.SaintsDragonsFabric"
+    ],
+    "client": [
+      "com.leon.saintsdragons.fabric.SaintsDragonsFabricClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "minecraft": "~${minecraft_version}"
+  }
+}
