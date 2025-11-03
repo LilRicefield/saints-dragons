@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.fabric.client.event;
 
-import com.leon.saintsdragons.fabric.mixin.fabric.CameraAccessor;
+import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
