@@ -69,6 +69,8 @@ processResources {
                 fabric_api_version: rootProject.fabric_api_version
         )
     }
+
+    from(project(":common").file("src/main/resources/saintsdragons.accesswidener"))
 }
 
 shadowJar {
@@ -87,9 +89,12 @@ sourcesJar {
 
 sourceSets {
     main {
-        java {
-            srcDirs = ['src/main/java', 'src/main/resources']
-        }
+        java.srcDirs = ['src/main/java']
+        resources.srcDirs = [
+                'src/main/resources',
+                '../common/src/main/resources',
+                '../common/src/generated/resources'
+        ]
     }
 }
 
