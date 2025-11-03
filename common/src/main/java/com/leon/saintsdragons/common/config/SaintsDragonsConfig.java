@@ -35,7 +35,7 @@ public final class SaintsDragonsConfig {
         STEGONAUT_MIN_GROUP_SIZE = builder.defineInt("stegonautMinGroupSize", 1, 1, 10);
         STEGONAUT_MAX_GROUP_SIZE = builder.defineInt("stegonautMaxGroupSize", 4, 1, 10);
 
-        CINDERVANE_SPAWN_WEIGHT = builder.defineInt("cindervaneSpawnWeight", 4, 0, 100);
+        CINDERVANE_SPAWN_WEIGHT = builder.defineInt("cindervaneSpawnWeight", 3, 0, 100);
         CINDERVANE_MIN_GROUP_SIZE = builder.defineInt("cindervaneMinGroupSize", 1, 1, 10);
         CINDERVANE_MAX_GROUP_SIZE = builder.defineInt("cindervaneMaxGroupSize", 3, 1, 10);
 
