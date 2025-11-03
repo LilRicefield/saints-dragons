@@ -8,8 +8,6 @@
     "EntityRendererMixin"
   ],
   "mixins": [
-    "EntityRendererMixin",
-    "CameraMixin"
   ],
   "injectors": {
     "defaultRequire": 1

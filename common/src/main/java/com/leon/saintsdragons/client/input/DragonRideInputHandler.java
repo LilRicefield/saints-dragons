@@ -104,6 +104,8 @@ public final class DragonRideInputHandler {
         for (KeyMapping mapping : ALL_KEYS) {
             registrar.accept(mapping);
         }
+        // Ensure Minecraft rebuilds its key->binding lookup so our keys respond immediately (Fabric needs this).
+        KeyMapping.resetMapping();
     }
 
     public static void clientTick() {
@@ -128,9 +130,11 @@ public final class DragonRideInputHandler {
             meleeCooldownTicks--;
         }
 
-        boolean ascendDown = DRAGON_ASCEND.isDown();
-        boolean descendDown = DRAGON_DESCEND.isDown();
-        boolean accelerateDown = DRAGON_ACCELERATE.isDown();
+        // Check both dragon keybinds AND vanilla keybinds that might overlap
+        // This ensures compatibility on Fabric where keybind conflicts don't auto-trigger both
+        boolean ascendDown = DRAGON_ASCEND.isDown() || mc.options.keyJump.isDown();
+        boolean descendDown = DRAGON_DESCEND.isDown() || mc.options.keyShift.isDown();
+        boolean accelerateDown = DRAGON_ACCELERATE.isDown() || mc.options.keySprint.isDown();
         boolean tertiaryDown = DRAGON_TERTIARY_ABILITY.isDown();
         boolean primaryDown = DRAGON_PRIMARY_ABILITY.isDown();
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
@@ -261,4 +265,3 @@ public final class DragonRideInputHandler {
         lastDescendDown = false;
     }
 }
-
