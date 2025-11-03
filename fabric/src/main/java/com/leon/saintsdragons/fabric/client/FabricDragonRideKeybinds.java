@@ -12,7 +12,10 @@ public final class FabricDragonRideKeybinds {
     }
 
     public static void init() {
+        // Register keybinds (resetMapping is already called in DragonRideInputHandler.registerKeys)
         DragonRideInputHandler.registerKeys(KeyBindingHelper::registerKeyBinding);
+
+        // Register tick event for handling input
         ClientTickEvents.END_CLIENT_TICK.register(client -> DragonRideInputHandler.clientTick());
     }
 }
