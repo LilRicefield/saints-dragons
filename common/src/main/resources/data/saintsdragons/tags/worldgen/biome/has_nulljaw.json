@@ -3,9 +3,29 @@
   "values": [
     "minecraft:plains",
     "minecraft:meadow",
-    "minecraft:windswept_hills",
     "minecraft:sunflower_plains",
-    "minecraft:cherry_grove",
-    {"id": "biomeswevegone:lush_stacks", "required":  false}
+    "minecraft:stony_shore",
+    "minecraft:beach",
+    "minecraft:swamp",
+    "minecraft:river",
+    "minecraft:ocean",
+    "minecraft:lukewarm_ocean",
+    "minecraft:warm_ocean",
+    "minecraft:deep_ocean",
+    "minecraft:deep_lukewarm_ocean",
+    "minecraft:deep_warm_ocean",
+    "minecraft:savanna_plateau",
+    {"id": "alexscaves:abyssal_chasm", "required": false},
+    {"id": "biomeswevegone:lush_stacks", "required":  false},
+    {"id": "biomesoplenty:floodplain", "required":  false},
+    {"id": "biomesoplenty:marsh", "required":  false},
+    {"id": "biomesoplenty:mediterranean_forest", "required":  false},
+    {"id": "terralith:warm_river", "required":  false},
+    {"id": "terralith:temperate_highlands", "required":  false},
+    {"id": "terralith:orchid_swamp", "required":  false},
+    {"id": "terralith:haze_mountain", "required":  false},
+    {"id": "terralith:tropical_jungle", "required":  false},
+    {"id": "terralith:brushland", "required":  false},
+    {"id": "terralith:gravel_beach", "required":  false}
   ]
 }
