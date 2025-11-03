@@ -59,4 +59,11 @@ public final class NulljawAbilities {
 
     public static final DragonAbilityType<Nulljaw, DieAbility<Nulljaw>> DIE =
             AbilityRegistry.register(new DragonAbilityType<>(NULLJAW_DIE_ID, DieAbility::new));
+
+    /**
+     * No-op hook to trigger class loading for static registration.
+     */
+    public static void init() {
+        // Intentionally empty
+    }
 }

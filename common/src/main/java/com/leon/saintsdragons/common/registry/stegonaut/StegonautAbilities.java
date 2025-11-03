@@ -20,4 +20,11 @@ public final class StegonautAbilities {
 
     public static final DragonAbilityType<Stegonaut, DieAbility<Stegonaut>> STEGONAUT_DIE =
             AbilityRegistry.register(new DragonAbilityType<>(STEGONAUT_DIE_ID, DieAbility::new));
+
+    /**
+     * No-op hook to trigger class loading for static registration.
+     */
+    public static void init() {
+        // Intentionally empty
+    }
 }
