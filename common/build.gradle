@@ -2,6 +2,10 @@ architectury {
     common rootProject.enabled_platform.split(',')
 }
 
+loom {
+    accessWidenerPath = file("src/main/resources/saintsdragons.accesswidener")
+}
+
 repositories {
     maven {
         name = 'GeckoLib'

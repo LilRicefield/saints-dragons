@@ -57,6 +57,7 @@ dependencies {
 
 processResources {
     exclude('META-INF/mods.toml')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     inputs.property 'version', project.version
 
@@ -80,14 +81,15 @@ remapJar {
     inputFile.set(shadowJar.archiveFile)
 }
 
+sourcesJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 sourceSets {
     main {
-        java.srcDirs = ['src/main/java']
-        resources.srcDirs = [
-                'src/main/resources',
-                '../src/main/resources',
-                '../src/generated/resources'
-        ]
+        java {
+            srcDirs = ['src/main/java', 'src/main/resources']
+        }
     }
 }
 

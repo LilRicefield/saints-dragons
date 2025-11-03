@@ -4,6 +4,7 @@ plugins {
 
 loom {
     forge {
+        mixinConfig "saintsdragons-common.mixins.json"
         mixinConfig "saintsdragons.mixins.json"
     }
 
@@ -76,6 +77,7 @@ dependencies {
 
 processResources {
     inputs.property 'version', project.version
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     filesMatching('META-INF/mods.toml') {
         expand version: project.version
@@ -93,15 +95,4 @@ shadowJar {
 remapJar {
     archiveFileName.set("saintsdragons-${project.version}+forge-${rootProject.minecraft_version}.jar")
     inputFile.set(shadowJar.archiveFile)
-}
-
-sourceSets {
-    main {
-        java.srcDirs = ["src/main/java", "../src/main/java"]
-        resources.srcDirs = [
-                "src/main/resources",
-                "../src/main/resources",
-                "../src/generated/resources"
-        ]
-    }
 }

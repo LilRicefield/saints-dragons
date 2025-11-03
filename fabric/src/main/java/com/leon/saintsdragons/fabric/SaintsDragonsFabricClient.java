@@ -1,15 +1,19 @@
 package com.leon.saintsdragons.fabric;
 
+import com.leon.saintsdragons.client.ClientProxy;
+import com.leon.saintsdragons.client.init.CommonClientModEvents;
+import com.leon.saintsdragons.fabric.client.FabricDragonRideKeybinds;
+import com.leon.saintsdragons.fabric.client.particle.FabricParticleRegistry;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 
-/**
- * Temporary Fabric client hook. Client-side setup will be wired in after the
- * shared client code is moved into the common module.
- */
 public final class SaintsDragonsFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        System.out.println("[Saint's Dragons] Fabric client hook loaded – functionality pending.");
+        CommonClientModEvents.registerEntityRenderers(EntityRendererRegistry::register);
+        FabricParticleRegistry.registerParticleFactories();
+        FabricDragonRideKeybinds.init();
+        new ClientProxy().clientInit();
     }
 }

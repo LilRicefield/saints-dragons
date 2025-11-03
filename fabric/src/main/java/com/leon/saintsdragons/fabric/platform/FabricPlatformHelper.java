@@ -6,6 +6,10 @@ import com.leon.saintsdragons.platform.PlatformHelper;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 
 import java.util.function.Supplier;
 
@@ -52,5 +56,24 @@ public final class FabricPlatformHelper implements PlatformHelper {
     @Override
     public boolean isModLoaded(String modId) {
         return FabricLoader.getInstance().isModLoaded(modId);
+    }
+
+    @Override
+    public Item createSpawnEgg(Supplier<? extends EntityType<? extends Mob>> entityType,
+                               int primaryColor,
+                               int secondaryColor,
+                               Item.Properties properties) {
+        return new SpawnEggItem(entityType.get(), primaryColor, secondaryColor, properties);
+    }
+
+    @Override
+    public net.minecraft.core.particles.SimpleParticleType createSimpleParticle(boolean overrideLimiter) {
+        return new SimpleParticleTypeImpl(overrideLimiter);
+    }
+
+    private static final class SimpleParticleTypeImpl extends net.minecraft.core.particles.SimpleParticleType {
+        private SimpleParticleTypeImpl(boolean overrideLimiter) {
+            super(overrideLimiter);
+        }
     }
 }

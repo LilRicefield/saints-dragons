@@ -26,7 +26,7 @@ public final class FabricRegistryHelper implements RegistryHelper {
 
         @Override
         public <I extends T> Supplier<I> register(String name, Supplier<I> supplier) {
-            ResourceLocation id = ResourceLocation.fromNamespaceAndPath(modId, name);
+            ResourceLocation id = new ResourceLocation(modId, name);
             I value = supplier.get();
             Registry.register(registry, id, value);
             return () -> value;

@@ -36,7 +36,7 @@ public final class ForgeNetworkHelper implements NetworkHelper {
                 .encoder(encoder::encode)
                 .decoder(decoder::decode)
                 .consumerMainThread((message, contextSupplier) -> {
-                    ServerPlayer sender = contextSupplier.getSender();
+                    ServerPlayer sender = contextSupplier.get().getSender();
                     if (sender != null) {
                         handler.handle(message, sender);
                     }

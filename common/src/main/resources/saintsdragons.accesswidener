@@ -1,0 +1,4 @@
+accessWidener v2 named
+
+# Allow access to ParticleEngine's texture atlas for custom particle rendering
+accessible field net/minecraft/client/particle/ParticleEngine textureAtlas Lnet/minecraft/client/renderer/texture/TextureAtlas;
