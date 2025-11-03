@@ -1,1 +1,22 @@
-/build/, /.gradle/, /run/, /run-data/, /.idea/, /*.iml, /.vscode/
+.gradle/
+**/.gradle/
+.idea/
+.vscode/
+.claude/
+CLAUDE.md
+nul
+*.iml
+build/
+**/build/
+run/
+**/run/
+run-data/
+**/run-data/
+
+# Module build artifacts
+common/build/
+fabric/build/
+forge/build/
+
+# IDE/tooling output
+bin/
