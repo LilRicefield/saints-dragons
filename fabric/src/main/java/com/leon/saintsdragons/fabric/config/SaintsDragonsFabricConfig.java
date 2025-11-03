@@ -39,7 +39,7 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
-    public int cindervaneSpawnWeight = 4;
+    public int cindervaneSpawnWeight = 3;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
