@@ -3,7 +3,7 @@
   "id": "saintsdragons",
   "version": "${version}",
   "name": "Saint's Dragons",
-  "description": "Fabric port scaffold for Saint's Dragons. Full feature parity will arrive once the common module migration is complete.",
+  "description": "Adds animated, AI-driven dragons or wyverns or whatever the heck you wanna call them flying reptiles to Minecraft.",
   "license": "LGPLv3",
   "entrypoints": {
     "main": [
@@ -21,8 +21,10 @@
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": ">=${fabric_api_version}",
-    "cloth-config": ">=${cloth_config_version}",
     "minecraft": "~${minecraft_version}",
     "geckolib": ">=4.8.1"
+  },
+  "suggests": {
+    "cloth-config": ">=${cloth_config_version}"
   }
 }
