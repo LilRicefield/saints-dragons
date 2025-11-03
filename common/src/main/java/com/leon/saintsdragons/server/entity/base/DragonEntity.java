@@ -100,6 +100,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public final com.leon.saintsdragons.util.math.SmoothValue yawVelocity =
             com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
 
+    // Client-only visual smoothing caches (avoid renderer singleton state bleed)
+    private float clientTailDragVelocity = 0f;
+
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
@@ -140,6 +143,21 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.define(DATA_BODY_DEVIATION, 0.0f);
         this.entityData.define(DATA_PITCH_DEVIATION, 0.0f);
         this.entityData.define(DATA_YAW_VELOCITY, 0.0f);
+    }
+
+    /**
+     * Smooths tail drag velocity per entity on the client, preventing renderer-wide leakage.
+     */
+    public float smoothTailDragVelocity(float targetDegrees) {
+        this.clientTailDragVelocity = Mth.lerp(0.15f, this.clientTailDragVelocity, targetDegrees);
+        return this.clientTailDragVelocity;
+    }
+
+    /**
+     * Resets the cached tail drag smoothing value (e.g., when the entity respawns).
+     */
+    public void resetTailDragVelocity() {
+        this.clientTailDragVelocity = 0f;
     }
 
     public DragonGender getGender() {
