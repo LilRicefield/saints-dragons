@@ -81,7 +81,8 @@ public interface DragonSoundProfile {
         return false;
     }
 
-    default void handleVocal(DragonSoundHandler handler, DragonEntity dragon, String key) {
+    default boolean handleVocal(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        return false;
     }
 
     default boolean allowOverlap(String locator) {

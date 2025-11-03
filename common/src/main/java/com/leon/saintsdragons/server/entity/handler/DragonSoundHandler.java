@@ -190,8 +190,41 @@ public class DragonSoundHandler {
         }
         startCooldown(vocalKey);
         DragonSoundProfile profile = dragon.getSoundProfile();
-        if (profile != null) {
-            profile.handleVocal(this, dragon, vocalKey);
+        if (profile != null && profile.handleVocal(this, dragon, vocalKey)) {
+            return;
+        }
+
+        DragonEntity.VocalEntry entry = resolveVocalEntry(profile, vocalKey);
+        if (entry == null || entry.soundSupplier() == null) {
+            return;
+        }
+        if (!entry.allowDuringSleep() && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+            return;
+        }
+        if (!entry.allowWhenSitting() && dragon.isStayOrSitMuted()) {
+            return;
+        }
+
+        float pitch = entry.basePitch();
+        if (entry.pitchVariance() != 0f) {
+            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+        }
+
+        Vec3 at = resolveLocatorWorldPos("mouth_origin");
+        double x = at != null ? at.x : dragon.getX();
+        double y = at != null ? at.y : dragon.getY();
+        double z = at != null ? at.z : dragon.getZ();
+
+        net.minecraft.sounds.SoundEvent sound = entry.soundSupplier().get();
+        if (sound == null) {
+            return;
+        }
+
+        Level level = dragon.level();
+        if (level.isClientSide) {
+            level.playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, entry.volume(), pitch, false);
+        } else {
+            level.playSound(null, x, y, z, sound, SoundSource.NEUTRAL, entry.volume(), pitch);
         }
     }
 
@@ -211,6 +244,35 @@ public class DragonSoundHandler {
         level.playSound(null, pos.x, pos.y, pos.z, SoundEvents.GENERIC_BIG_FALL, SoundSource.NEUTRAL,
                 dragon.isBaby() ? 0.5f : 0.9f,
                 dragon.getRandom().nextFloat() * 0.2f + 0.9f);
+    }
+
+    private DragonEntity.VocalEntry resolveVocalEntry(DragonSoundProfile profile, String key) {
+        DragonEntity.VocalEntry entry = dragon.getVocalEntries().get(key);
+        if (entry != null) {
+            return entry;
+        }
+        if (profile != null) {
+            entry = profile.getFallbackVocalEntry(key);
+            if (entry != null) {
+                return entry;
+            }
+        }
+        int underscore = key.indexOf('_');
+        while (underscore > 0) {
+            String suffix = key.substring(underscore + 1);
+            entry = dragon.getVocalEntries().get(suffix);
+            if (entry != null) {
+                return entry;
+            }
+            if (profile != null) {
+                entry = profile.getFallbackVocalEntry(suffix);
+                if (entry != null) {
+                    return entry;
+                }
+            }
+            underscore = key.indexOf('_', underscore + 1);
+        }
+        return null;
     }
 
     public DragonSoundProfile getProfile() {
