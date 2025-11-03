@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
+import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.fabric.client.event.FabricClientEventHandler;
 import net.minecraft.client.Camera;
 import org.spongepowered.asm.mixin.Mixin;
