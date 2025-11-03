@@ -1,106 +1,62 @@
 package com.leon.saintsdragons.fabric.platform;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricConfig;
 import com.leon.saintsdragons.platform.ConfigHelper;
-import me.shedaniel.autoconfig.AutoConfig;
-import me.shedaniel.autoconfig.ConfigHolder;
-import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
+import net.fabricmc.loader.api.FabricLoader;
 
-import java.util.function.IntSupplier;
-
+/**
+ * Fabric config helper that optionally hooks into Cloth Config.
+ */
 public final class FabricConfigHelper implements ConfigHelper {
-    private static volatile ConfigHolder<SaintsDragonsFabricConfig> holder;
+    private final ConfigHelper delegate = createDelegate();
 
     @Override
     public ConfigBuilder commonBuilder(String fileName) {
-        return new FabricBuilder();
+        return delegate.commonBuilder(fileName);
     }
 
-    private static ConfigHolder<SaintsDragonsFabricConfig> holder() {
-        ConfigHolder<SaintsDragonsFabricConfig> current = holder;
-        if (current == null) {
-            synchronized (FabricConfigHelper.class) {
-                current = holder;
-                if (current == null) {
-                    AutoConfig.register(SaintsDragonsFabricConfig.class, Toml4jConfigSerializer::new);
-                    current = AutoConfig.getConfigHolder(SaintsDragonsFabricConfig.class);
-                    holder = current;
-                }
+    private static ConfigHelper createDelegate() {
+        if (FabricLoader.getInstance().isModLoaded("cloth-config")) {
+            try {
+                return FabricClothConfigHelper.create();
+            } catch (Throwable throwable) {
+                SaintsDragonsCommon.LOGGER.error("[Fabric] Failed to initialise Cloth Config integration; falling back to defaults", throwable);
             }
+        } else {
+            SaintsDragonsCommon.LOGGER.info("[Fabric] Cloth Config not detected; using default spawn config values");
         }
-        return current;
+        return new FabricDefaultConfigHelper();
     }
 
-    private static final class FabricBuilder implements ConfigBuilder {
-        private FabricBuilder() {
-            holder(); // Ensure the config is registered before values are defined.
-        }
-
+    /**
+     * Default implementation that just returns the provided defaults without persistence.
+     */
+    private static final class FabricDefaultConfigHelper implements ConfigHelper {
         @Override
-        public void push(String category) {
-            // Categories are handled via annotations in the config data class.
+        public ConfigBuilder commonBuilder(String fileName) {
+            return new DefaultBuilder();
         }
 
-        @Override
-        public void pop() {
-            // No-op: see push.
-        }
-
-        @Override
-        public IntValue defineInt(String key, int defaultValue, int min, int max) {
-            IntSupplier supplier = supplierForKey(key, defaultValue);
-            return new FabricIntValue(supplier, min, max);
-        }
-
-        @Override
-        public void build() {
-            holder().save();
-        }
-    }
-
-    private static IntSupplier supplierForKey(String key, int defaultValue) {
-        return switch (key) {
-            case "raevyxSpawnWeight" -> () -> holder().getConfig().raevyxSpawnWeight;
-            case "raevyxMinGroupSize" -> () -> holder().getConfig().raevyxMinGroupSize;
-            case "raevyxMaxGroupSize" -> () -> holder().getConfig().raevyxMaxGroupSize;
-            case "stegonautSpawnWeight" -> () -> holder().getConfig().stegonautSpawnWeight;
-            case "stegonautMinGroupSize" -> () -> holder().getConfig().stegonautMinGroupSize;
-            case "stegonautMaxGroupSize" -> () -> holder().getConfig().stegonautMaxGroupSize;
-            case "cindervaneSpawnWeight" -> () -> holder().getConfig().cindervaneSpawnWeight;
-            case "cindervaneMinGroupSize" -> () -> holder().getConfig().cindervaneMinGroupSize;
-            case "cindervaneMaxGroupSize" -> () -> holder().getConfig().cindervaneMaxGroupSize;
-            case "nulljawSpawnWeight" -> () -> holder().getConfig().nulljawSpawnWeight;
-            case "nulljawMinGroupSize" -> () -> holder().getConfig().nulljawMinGroupSize;
-            case "nulljawMaxGroupSize" -> () -> holder().getConfig().nulljawMaxGroupSize;
-            default -> {
-                SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config key '{}'; using default {}", key, defaultValue);
-                yield () -> defaultValue;
+        private static final class DefaultBuilder implements ConfigBuilder {
+            @Override
+            public void push(String category) {
+                // No-op
             }
-        };
-    }
 
-    private static final class FabricIntValue implements IntValue {
-        private final IntSupplier supplier;
-        private final int min;
-        private final int max;
-
-        private FabricIntValue(IntSupplier supplier, int min, int max) {
-            this.supplier = supplier;
-            this.min = min;
-            this.max = max;
-        }
-
-        @Override
-        public int get() {
-            int value = supplier.getAsInt();
-            if (value < min) {
-                return min;
+            @Override
+            public void pop() {
+                // No-op
             }
-            if (value > max) {
-                return max;
+
+            @Override
+            public IntValue defineInt(String key, int defaultValue, int min, int max) {
+                return () -> Math.max(min, Math.min(max, defaultValue));
             }
-            return value;
+
+            @Override
+            public void build() {
+                // Nothing to persist
+            }
         }
     }
 }
