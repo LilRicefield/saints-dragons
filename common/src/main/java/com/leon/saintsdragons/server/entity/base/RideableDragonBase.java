@@ -519,6 +519,17 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     public abstract void setRunning(boolean running);
 
     /**
+     * Force the sit progress to a specific value and sync it. Intended for platform handlers that
+     * need to restore animation state (e.g., after reconnect).
+     */
+    public void forceSitProgress(float value) {
+        float clamped = net.minecraft.util.Mth.clamp(value, 0f, maxSitTicks());
+        this.sitProgress = clamped;
+        this.prevSitProgress = clamped;
+        this.entityData.set(DATA_SIT_PROGRESS, clamped);
+    }
+
+    /**
      * Persist the common rideable dragon state to NBT so every dragon saves the same baseline data.
      */
     protected void saveRideableData(CompoundTag tag) {
