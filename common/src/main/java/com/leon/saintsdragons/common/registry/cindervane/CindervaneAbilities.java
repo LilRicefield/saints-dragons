@@ -41,5 +41,11 @@ public final class CindervaneAbilities {
 
     public static final DragonAbilityType<Cindervane, DieAbility<Cindervane>> DIE =
             AbilityRegistry.register(new DragonAbilityType<>(DIE_ID, DieAbility::new));
-}
 
+    /**
+     * No-op hook to trigger class loading for static registration.
+     */
+    public static void init() {
+        // Intentionally empty
+    }
+}

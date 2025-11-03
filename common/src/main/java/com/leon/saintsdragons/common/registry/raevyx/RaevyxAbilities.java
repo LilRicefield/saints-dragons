@@ -47,4 +47,11 @@ public final class RaevyxAbilities {
 
     public static final DragonAbilityType<Raevyx, DieAbility<Raevyx>> BABY_DIE =
             AbilityRegistry.register(new DragonAbilityType<>("baby_raevyx_die", DieAbility::new));
+
+    /**
+     * No-op hook that ensures the class is loaded and static fields are initialised.
+     */
+    public static void init() {
+        // Intentionally empty
+    }
 }

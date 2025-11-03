@@ -6,6 +6,10 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
+import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
+import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +33,13 @@ public final class SaintsDragonsCommon {
         ModItems.register();
         ModSounds.register();
         ModParticles.register();
+
+        // Ensure ability registries are loaded on both logical sides.
+        RaevyxAbilities.init();
+        NulljawAbilities.init();
+        CindervaneAbilities.init();
+        StegonautAbilities.init();
+
         NetworkHandler.register();
     }
 }
