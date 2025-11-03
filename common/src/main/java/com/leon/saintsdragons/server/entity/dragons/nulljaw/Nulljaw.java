@@ -22,9 +22,12 @@ import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import com.leon.saintsdragons.server.entity.controller.nulljaw.NulljawRiderController;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -49,6 +52,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -892,7 +896,31 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     public static boolean canSpawn(EntityType<Nulljaw> type, LevelAccessor level, MobSpawnType reason, BlockPos pos, net.minecraft.util.RandomSource random) {
-        return level.getFluidState(pos).isSource() || level.getFluidState(pos.below()).isSource();
+        if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) {
+            return false;
+        }
+
+        FluidState fluidAtPos = level.getFluidState(pos);
+        if (fluidAtPos.is(FluidTags.WATER) && fluidAtPos.isSource()) {
+            return true;
+        }
+
+        FluidState fluidBelow = level.getFluidState(pos.below());
+        if (fluidBelow.is(FluidTags.WATER) && fluidBelow.isSource()) {
+            return true;
+        }
+
+        MutableBlockPos cursor = new MutableBlockPos();
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                cursor.set(pos.getX() + dx, pos.getY() - 1, pos.getZ() + dz);
+                FluidState nearby = level.getFluidState(cursor);
+                if (nearby.is(FluidTags.WATER) && nearby.isSource()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void enterSwimState() {
