@@ -166,7 +166,9 @@ public class DragonFlightMoveHelper extends MoveControl {
 
         // Combat bias: fly a bit faster when we have a live target and are airborne
         var target = mob.getTarget();
-        if (dragon.isFlying() && target != null && target.isAlive()) {
+        boolean isFlying = (dragon instanceof com.leon.saintsdragons.server.entity.base.DragonEntity baseDragon)
+                && baseDragon.isFlying();
+        if (isFlying && target != null && target.isAlive()) {
             targetSpeedFactor *= 1.12f; // modest global boost in combat
         }
 
