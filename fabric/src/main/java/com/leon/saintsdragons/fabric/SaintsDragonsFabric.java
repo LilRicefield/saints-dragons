@@ -3,6 +3,7 @@ package com.leon.saintsdragons.fabric;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.fabric.world.FabricDragonSpawns;
+import com.leon.saintsdragons.fabric.server.FabricServerEvents;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
@@ -17,6 +18,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         SaintsDragonsCommon.init();
+        FabricServerEvents.init();
 
         CommonModEvents.registerEntityAttributes((type, builder) ->
                 FabricDefaultAttributeRegistry.register(type, builder.build()));
