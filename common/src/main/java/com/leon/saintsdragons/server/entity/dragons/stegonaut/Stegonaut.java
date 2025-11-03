@@ -282,7 +282,14 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     @Override
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob other) {
         // Simple breeding - just spawn a new Primitive Drake
-        return ModEntities.STEGONAUT.get().create(level);
+        Stegonaut baby = ModEntities.STEGONAUT.get().create(level);
+        if (baby != null) {
+            // Position the baby near the parent to prevent Y=0 spawning
+            net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
+            double spawnY = safePos != null ? safePos.getY() : this.getY();
+            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
+        }
+        return baby;
     }
 
     public static boolean canSpawnHere(EntityType<? extends Stegonaut> type,

@@ -87,6 +87,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
     private boolean isRespawning = false;
 
+    // Flag to prevent respawn logic from triggering on newly spawned babies (from spawn eggs/breeding)
+    protected int skipRespawnTicks = 0;
+
     // AstemirLib-style smooth rotation deviations (mirrored on both sides)
     // Smooths the DELTA (how much rotation changed) not the absolute rotation
     public final com.leon.saintsdragons.util.math.SmoothValue bodyRotDeviation =
@@ -201,7 +204,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                 this.moveTo(this.getX(), safePos.getY(), this.getZ(), this.getYRot(), this.getXRot());
             }
         }
-
         return data;
     }
 
@@ -639,6 +641,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     @Override
     public void tick() {
         super.tick();
+
+        // Decrement skip respawn counter
+        if (skipRespawnTicks > 0) {
+            skipRespawnTicks--;
+        }
         tickAbilities();
 
         // Update rotation deviations (Hybrid approach for ridden dragons)
@@ -898,14 +905,28 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // Detect baby->adult or adult->baby transition
         // Skip if:
         // - Already in the middle of a respawn (prevents infinite recursion)
-        // - Entity isn't in a world yet (prevents discarding newly created babies during initialization)
-        if (wasBaby != isNowBaby && !level().isClientSide && !isRespawning) {
+        // - Skip flag is set (newly spawned babies from spawn eggs/breeding)
+        // - Entity has never been added to world (getId() returns -1 for entities not yet added)
+        if (wasBaby != isNowBaby && !level().isClientSide && !isRespawning && this.getId() != -1 && skipRespawnTicks == 0) {
+
             // Set flag to prevent re-entrancy when newEntity.load() calls setAge()
             isRespawning = true;
 
             // NUCLEAR OPTION: GeckoLib caches animations on the client renderer, and there's
             // no clean way to invalidate that cache. So we force the entity to "respawn"
             // by saving its state, removing it, and spawning a fresh copy.
+
+            // Cache the world reference BEFORE any modifications (important!)
+            Level world = this.level();
+
+            // Cache position, rotation, and UUID before saving NBT
+            double posX = this.getX();
+            double posY = this.getY();
+            double posZ = this.getZ();
+            float yaw = this.getYRot();
+            float pitch = this.getXRot();
+            java.util.UUID oldUUID = this.getUUID();
+            boolean wasTamed = this.isTame();
 
             // Save current state
             CompoundTag nbt = new CompoundTag();
@@ -919,27 +940,29 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
             // Create fresh entity with updated data
             @SuppressWarnings("unchecked")
-            DragonEntity newEntity = (DragonEntity) this.getType().create(this.level());
+            DragonEntity newEntity = (DragonEntity) this.getType().create(world);
             if (newEntity != null) {
                 newEntity.load(nbt);  // Reads IsRespawning=true, preventing another respawn when setAge() is called
-                newEntity.setPos(this.getX(), this.getY(), this.getZ());
-                newEntity.setYRot(this.getYRot());
-                newEntity.setXRot(this.getXRot());
+
+                // Force set the cached position and rotation (overrides any bad NBT data)
+                newEntity.setPos(posX, posY, posZ);
+                newEntity.setYRot(yaw);
+                newEntity.setXRot(pitch);
 
                 // Preserve UUID if tamed (important for ownership)
-                if (this.isTame()) {
-                    newEntity.setUUID(this.getUUID());
+                if (wasTamed) {
+                    newEntity.setUUID(oldUUID);
                 }
 
                 // Clear the respawning flag now that the process is complete
                 newEntity.isRespawning = false;
 
-                // Remove old entity and spawn new one
+                // IMPORTANT: Add new entity BEFORE removing old one to prevent "already removed" errors
+                world.addFreshEntity(newEntity);
                 this.discard();
-                this.level().addFreshEntity(newEntity);
 
                 // Visual/sound feedback for the transformation
-                this.level().broadcastEntityEvent(newEntity, (byte) 7); // Hearts
+                world.broadcastEntityEvent(newEntity, (byte) 7); // Hearts
             }
 
             // Note: We don't reset the flag on old entity because it's about to be discarded anyway
@@ -967,7 +990,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * non-fluid surface with air above is located. Returns null if no such surface is found.
      */
     @Nullable
-    private net.minecraft.core.BlockPos findSafeBabySpawnPos(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos start) {
+    protected net.minecraft.core.BlockPos findSafeBabySpawnPos(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos start) {
         if (level == null || start == null) return null;
         net.minecraft.core.BlockPos.MutableBlockPos cursor = start.mutable();
         int minY = level.getMinBuildHeight();

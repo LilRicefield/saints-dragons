@@ -1731,7 +1731,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob partner) {
-        return ModEntities.CINDERVANE.get().create(level);
+        Cindervane baby = ModEntities.CINDERVANE.get().create(level);
+        if (baby != null) {
+            // Position the baby near the parent to prevent Y=0 spawning
+            net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
+            double spawnY = safePos != null ? safePos.getY() : this.getY();
+            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
+        }
+        return baby;
     }
 
     @Override

@@ -3323,7 +3323,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 baby.setOwnerUUID(ownerId);
                 baby.setTame(true);
             }
+
+            // IMPORTANT: Set skip flag BEFORE calling setAge to prevent respawn logic
+            baby.skipRespawnTicks = 5; // Skip respawn for 5 ticks (enough for vanilla to finish spawning)
             baby.setAge(-24000);
+
+            // Position the baby near the parent (this is called when spawn egg is used on adult)
+            // Find safe ground position to prevent spawning mid-air
+            net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
+            double spawnY = safePos != null ? safePos.getY() : this.getY();
+            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
         }
         return baby;
     }
