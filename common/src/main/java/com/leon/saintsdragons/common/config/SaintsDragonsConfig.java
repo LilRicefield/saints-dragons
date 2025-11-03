@@ -47,6 +47,10 @@ public final class SaintsDragonsConfig {
         builder.build();
     }
 
+    public static void bootstrap() {
+        // Trigger class loading to ensure platform config registration runs during mod init.
+    }
+
     private SaintsDragonsConfig() {
     }
 }

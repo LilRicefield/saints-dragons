@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
@@ -26,6 +27,7 @@ public final class SaintsDragonsCommon {
     }
 
     public static void init() {
+        SaintsDragonsConfig.bootstrap();
         // GeckoLib data tickets MUST be registered first (before entities use them)
         DragonAnimTickets.bootstrap();
 
