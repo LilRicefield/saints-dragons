@@ -16981,11 +16981,6 @@
 		"animation.raevyx.landing": {
 			"loop": true,
 			"bones": {
-				"body": {
-					"rotation": {
-						"vector": [-22.5, 0, 0]
-					}
-				},
 				"neckstartController": {
 					"rotation": {
 						"vector": [-17.5, 0, 0]

@@ -51,6 +51,11 @@ public final class FabricServerEvents {
         dragon.setAccelerating(false);
         dragon.setLastRiderForward(0f);
         dragon.setLastRiderStrafe(0f);
+
+        // Ensure pose-dependent animations (like sit loops) resume immediately on the client.
+        if (dragon.isOrderedToSit()) {
+            dragon.forceSitProgress(dragon.maxSitTicks());
+        }
     }
 
     private static void handlePlayerDisconnect(ServerPlayer player) {
@@ -65,6 +70,10 @@ public final class FabricServerEvents {
         dragon.setPersistenceRequired();
         dragon.getNavigation().stop();
         dragon.setAccelerating(false);
+
+        if (dragon.isOrderedToSit()) {
+            dragon.forceSitProgress(dragon.maxSitTicks());
+        }
     }
 
     private static RideableDragonBase findMountedDragon(ServerPlayer player) {
