@@ -2,7 +2,8 @@ package com.leon.saintsdragons.fabric.platform;
 
 import com.leon.saintsdragons.platform.NetworkHelper;
 import net.fabricmc.api.EnvType;
-import net.fabricmc.fabric.api.networking.v1.ClientPlayNetworking;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -10,6 +11,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
@@ -57,21 +59,21 @@ public final class FabricNetworkHelper implements NetworkHelper {
                                         ClientboundHandler<T> handler) {
         bindings.put(type, new Binding<>(id, encoder, Direction.CLIENTBOUND));
         if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
-            ClientPlayNetworking.registerGlobalReceiver(id, (client, handlerAccessor, buf, responseSender) -> {
-                T message = decoder.decode(buf);
-                client.execute(() -> handler.handle(message));
-            });
+            ClientAccess.register(id, decoder, handler);
         }
     }
 
     @Override
     public void sendToServer(Object message) {
+        if (FabricLoader.getInstance().getEnvironmentType() != EnvType.CLIENT) {
+            throw new IllegalStateException("Client-only networking method invoked on a non-client environment");
+        }
         Binding<Object> binding = bindingFor(message);
         if (binding.direction != Direction.SERVERBOUND) {
             throw new IllegalStateException("Attempted to send clientbound packet to server: " + message.getClass());
         }
         FriendlyByteBuf buffer = createBuffer(binding, message);
-        ClientPlayNetworking.send(binding.id, buffer);
+        ClientAccess.send(binding.id, buffer);
     }
 
     @Override
@@ -98,14 +100,14 @@ public final class FabricNetworkHelper implements NetworkHelper {
 
     @Override
     public void sendToDimension(Level level, Object message) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
         Binding<Object> binding = bindingFor(message);
         if (binding.direction != Direction.CLIENTBOUND) {
             throw new IllegalStateException("Attempted to send serverbound packet to dimension: " + message.getClass());
         }
-        if (level.getServer() == null) {
-            return;
-        }
-        for (ServerPlayer player : PlayerLookup.world(level)) {
+        for (ServerPlayer player : PlayerLookup.world(serverLevel)) {
             FriendlyByteBuf buffer = createBuffer(binding, message);
             ServerPlayNetworking.send(player, binding.id, buffer);
         }
@@ -127,5 +129,23 @@ public final class FabricNetworkHelper implements NetworkHelper {
         PacketEncoder<Object> encoder = (PacketEncoder<Object>) binding.encoder;
         encoder.encode(message, buffer);
         return buffer;
+    }
+
+    @Environment(EnvType.CLIENT)
+    private static final class ClientAccess {
+        private ClientAccess() {}
+
+        private static <T> void register(ResourceLocation id,
+                                         PacketDecoder<T> decoder,
+                                         ClientboundHandler<T> handler) {
+            ClientPlayNetworking.registerGlobalReceiver(id, (client, handlerAccessor, buf, responseSender) -> {
+                T message = decoder.decode(buf);
+                client.execute(() -> handler.handle(message));
+            });
+        }
+
+        private static void send(ResourceLocation id, FriendlyByteBuf buffer) {
+            ClientPlayNetworking.send(id, buffer);
+        }
     }
 }

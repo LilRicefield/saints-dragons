@@ -31,4 +31,17 @@ public interface PlatformHelper {
      * @return {@code true} if the given mod id is loaded in the current environment.
      */
     boolean isModLoaded(String modId);
+
+    /**
+     * Create a platform-appropriate spawn egg item.
+     */
+    net.minecraft.world.item.Item createSpawnEgg(java.util.function.Supplier<? extends net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.Mob>> entityType,
+                                                 int primaryColor,
+                                                 int secondaryColor,
+                                                 net.minecraft.world.item.Item.Properties properties);
+
+    /**
+     * Create a simple particle type (constructor is protected in vanilla).
+     */
+    net.minecraft.core.particles.SimpleParticleType createSimpleParticle(boolean overrideLimiter);
 }

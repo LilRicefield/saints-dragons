@@ -1,7 +1,19 @@
 package com.leon.saintsdragons.platform;
 
-/**
- * Placeholder for future cross-platform configuration support.
- */
 public interface ConfigHelper {
+    ConfigBuilder commonBuilder(String fileName);
+
+    interface ConfigBuilder {
+        void push(String category);
+
+        void pop();
+
+        IntValue defineInt(String key, int defaultValue, int min, int max);
+
+        void build();
+    }
+
+    interface IntValue {
+        int get();
+    }
 }

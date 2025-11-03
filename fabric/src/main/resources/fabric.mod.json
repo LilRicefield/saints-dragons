@@ -13,9 +13,15 @@
       "com.leon.saintsdragons.fabric.SaintsDragonsFabricClient"
     ]
   },
+  "mixins": [
+    "saintsdragons-common.mixins.json",
+    "saintsdragons.mixins.json"
+  ],
+  "accessWidener": "saintsdragons.accesswidener",
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": ">=${fabric_api_version}",
-    "minecraft": "~${minecraft_version}"
+    "minecraft": "~${minecraft_version}",
+    "geckolib": ">=4.8.1"
   }
 }

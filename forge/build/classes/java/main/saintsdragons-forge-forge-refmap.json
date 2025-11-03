@@ -1,13 +1,15 @@
 {
   "mappings": {
-    "com/leon/saintsdragons/mixin/client/EntityRendererMixin": {
-      "getFov": "Lnet/minecraft/client/renderer/GameRenderer;m_109141_(Lnet/minecraft/client/Camera;FZ)D"
+    "com/leon/saintsdragons/forge/mixin/client/CameraMixin": {
+      "getMaxZoom": "m_90566_(D)D",
+      "move": "m_90568_(DDD)V"
     }
   },
   "data": {
     "named:intermediary": {
-      "com/leon/saintsdragons/mixin/client/EntityRendererMixin": {
-        "getFov": "Lnet/minecraft/client/renderer/GameRenderer;m_109141_(Lnet/minecraft/client/Camera;FZ)D"
+      "com/leon/saintsdragons/forge/mixin/client/CameraMixin": {
+        "getMaxZoom": "m_90566_(D)D",
+        "move": "m_90568_(DDD)V"
       }
     }
   }

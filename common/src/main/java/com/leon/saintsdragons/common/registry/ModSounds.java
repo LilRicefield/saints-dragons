@@ -1,0 +1,80 @@
+package com.leon.saintsdragons.common.registry;
+
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.platform.RegistryHelper;
+import com.leon.saintsdragons.platform.Services;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.sounds.SoundEvent;
+
+import java.util.function.Supplier;
+
+public final class ModSounds {
+    private static final RegistryHelper.RegistryWrapper<SoundEvent> REGISTER =
+            Services.PLATFORM.getRegistryHelper()
+                    .create(Registries.SOUND_EVENT, () -> BuiltInRegistries.SOUND_EVENT, SaintsDragonsCommon.MOD_ID);
+
+    // Stegonaut
+    public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");
+    public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_2 = registerSound("stegonaut_grumble2");
+    public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_3 = registerSound("stegonaut_grumble3");
+    public static final Supplier<SoundEvent> STEGONAUT_HURT = registerSound("stegonaut_hurt");
+    public static final Supplier<SoundEvent> STEGONAUT_DIE = registerSound("stegonaut_die");
+
+    // Raevyx
+    public static final Supplier<SoundEvent> RAEVYX_PURR = registerSound("raevyx_purr");
+    public static final Supplier<SoundEvent> RAEVYX_SNORT = registerSound("raevyx_snort");
+    public static final Supplier<SoundEvent> RAEVYX_CHUFF = registerSound("raevyx_chuff");
+    public static final Supplier<SoundEvent> RAEVYX_CONTENT = registerSound("raevyx_content");
+    public static final Supplier<SoundEvent> RAEVYX_EXCITED = registerSound("raevyx_excited");
+    public static final Supplier<SoundEvent> RAEVYX_ROAR = registerSound("raevyx_roar");
+    public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM = registerSound("raevyx_summon_storm");
+    public static final Supplier<SoundEvent> RAEVYX_GROWL_WARNING = registerSound("raevyx_growl_warning");
+    public static final Supplier<SoundEvent> RAEVYX_STEP = registerSound("raevyx_step");
+    public static final Supplier<SoundEvent> RAEVYX_HURT = registerSound("raevyx_hurt");
+    public static final Supplier<SoundEvent> RAEVYX_BITE = registerSound("raevyx_bite");
+    public static final Supplier<SoundEvent> RAEVYX_HORNGORE = registerSound("raevyx_horngore");
+    public static final Supplier<SoundEvent> RAEVYX_DIE = registerSound("raevyx_die");
+    public static final Supplier<SoundEvent> RAEVYX_FLAP = registerSound("raevyx_flap");
+    public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_1 = registerSound("raevyx_grumble_1");
+    public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_2 = registerSound("raevyx_grumble_2");
+    public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_3 = registerSound("raevyx_grumble_3");
+
+    // Baby Raevyx
+    public static final Supplier<SoundEvent> BABY_RAEVYX_HURT = registerSound("baby_raevyx_hurt");
+    public static final Supplier<SoundEvent> BABY_RAEVYX_DIE = registerSound("baby_raevyx_die");
+
+    // Cindervane
+    public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");
+    public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_2 = registerSound("cindervane_grumble2");
+    public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_3 = registerSound("cindervane_grumble3");
+    public static final Supplier<SoundEvent> CINDERVANE_ROAR = registerSound("cindervane_roar");
+    public static final Supplier<SoundEvent> CINDERVANE_HURT = registerSound("cindervane_hurt");
+    public static final Supplier<SoundEvent> CINDERVANE_BITE = registerSound("cindervane_bite");
+    public static final Supplier<SoundEvent> CINDERVANE_DIE = registerSound("cindervane_die");
+    public static final Supplier<SoundEvent> CINDERVANE_STEP = registerSound("cindervane_step");
+
+    // Nulljaw
+    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_1 = registerSound("nulljaw_grumble1");
+    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_2 = registerSound("nulljaw_grumble2");
+    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_3 = registerSound("nulljaw_grumble3");
+    public static final Supplier<SoundEvent> NULLJAW_PHASE1 = registerSound("nulljaw_phase1");
+    public static final Supplier<SoundEvent> NULLJAW_PHASE2 = registerSound("nulljaw_phase2");
+    public static final Supplier<SoundEvent> NULLJAW_ROAR = registerSound("nulljaw_roar");
+    public static final Supplier<SoundEvent> NULLJAW_ROARCLAW = registerSound("nulljaw_roarclaw");
+    public static final Supplier<SoundEvent> NULLJAW_STEP = registerSound("nulljaw_step");
+    public static final Supplier<SoundEvent> NULLJAW_CLAW = registerSound("nulljaw_claw");
+    public static final Supplier<SoundEvent> NULLJAW_BITE = registerSound("nulljaw_bite");
+    public static final Supplier<SoundEvent> NULLJAW_HORNGORE = registerSound("nulljaw_horngore");
+
+    private ModSounds() {
+    }
+
+    private static Supplier<SoundEvent> registerSound(String name) {
+        return REGISTER.register(name, () -> SoundEvent.createVariableRangeEvent(SaintsDragonsCommon.rl(name)));
+    }
+
+    public static void register() {
+        REGISTER.register();
+    }
+}
