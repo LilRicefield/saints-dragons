@@ -21,6 +21,9 @@
     {"id": "biomesoplenty:volcanic_plains", "required":  false},
     {"id": "biomesoplenty:scrubland", "required":  false},
     {"id": "biomesoplenty:shrubland", "required":  false},
-    {"id": "biomesoplenty:tundra", "required":  false}
+    {"id": "biomesoplenty:tundra", "required":  false},
+    {"id": "terralith:skylands", "required":  false},
+    {"id": "terralith:volcanic_peaks", "required":  false},
+    {"id": "terralith:brushland", "required":  false}
   ]
 }
