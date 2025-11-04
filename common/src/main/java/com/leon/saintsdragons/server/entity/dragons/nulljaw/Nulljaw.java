@@ -22,11 +22,9 @@ import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import com.leon.saintsdragons.server.entity.controller.nulljaw.NulljawRiderController;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -47,6 +45,7 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -395,6 +394,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        System.out.println("[Nulljaw] registerControllers invoked on client?=" + this.level().isClientSide);
         AnimationController<Nulljaw> movementController =
                 new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
         AnimationController<Nulljaw> swimController =
@@ -895,32 +895,33 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         combatManager.forceEndAbility(abilityType);
     }
 
-    public static boolean canSpawn(EntityType<Nulljaw> type, LevelAccessor level, MobSpawnType reason, BlockPos pos, net.minecraft.util.RandomSource random) {
-        if (!level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) {
+    public static boolean canSpawnHere(EntityType<? extends Nulljaw> type,
+                                       LevelAccessor level,
+                                       MobSpawnType spawnType,
+                                       BlockPos pos,
+                                       RandomSource random) {
+        if (!Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random)) {
             return false;
         }
 
-        FluidState fluidAtPos = level.getFluidState(pos);
-        if (fluidAtPos.is(FluidTags.WATER) && fluidAtPos.isSource()) {
-            return true;
-        }
+        // Allow amphibious spawning: valid on solid ground OR in water
+        boolean fluidHere = !level.getFluidState(pos).isEmpty();
 
-        FluidState fluidBelow = level.getFluidState(pos.below());
-        if (fluidBelow.is(FluidTags.WATER) && fluidBelow.isSource()) {
-            return true;
+        if (!fluidHere) {
+            // Land: require sturdy ground and free feet/head
+            BlockPos below = pos.below();
+            boolean solidGround = level.getBlockState(below).isFaceSturdy(level, below, Direction.UP);
+            boolean feetFree = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
+            boolean headFree = level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
+            return solidGround && feetFree && headFree;
+        } else {
+            // Water: require water at feet and head positions for clearance
+            FluidState feet = level.getFluidState(pos);
+            FluidState head = level.getFluidState(pos.above());
+            boolean feetWater = !feet.isEmpty() && feet.isSource();
+            boolean headWater = !head.isEmpty();
+            return feetWater && headWater;
         }
-
-        MutableBlockPos cursor = new MutableBlockPos();
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
-                cursor.set(pos.getX() + dx, pos.getY() - 1, pos.getZ() + dz);
-                FluidState nearby = level.getFluidState(cursor);
-                if (nearby.is(FluidTags.WATER) && nearby.isSource()) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private void enterSwimState() {
