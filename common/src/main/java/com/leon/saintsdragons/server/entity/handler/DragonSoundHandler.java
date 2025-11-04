@@ -182,6 +182,8 @@ public class DragonSoundHandler {
     }
 
     public void playVocal(String vocalKey) {
+        String side = dragon.level().isClientSide ? "CLIENT" : "SERVER";
+        
         if (dragon.isRemoved() || dragon.isDeadOrDying()) {
             return;
         }
@@ -205,35 +207,32 @@ public class DragonSoundHandler {
             return;
         }
 
+        // DEBUG: Log when playVocal is called
+        com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+            "[{}] playVocal called: vocal='{}', dragon='{}' at ({}, {}, {})",
+            side, vocalKey, dragon.getName().getString(), 
+            (int)dragon.getX(), (int)dragon.getY(), (int)dragon.getZ()
+        );
+
         // Trigger the animation if this vocal has one
         if (entry.animationId() != null && !entry.animationId().isEmpty()) {
             String controllerId = entry.controllerId() != null && !entry.controllerId().isEmpty() 
                 ? entry.controllerId() 
                 : "action"; // Default to "action" controller if not specified
             dragon.triggerAnim(controllerId, vocalKey);
+            com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                "[{}] Animation triggered: controller='{}', key='{}'",
+                side, controllerId, vocalKey
+            );
         }
 
-        float pitch = entry.basePitch();
-        if (entry.pitchVariance() != 0f) {
-            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
-        }
-
-        Vec3 at = resolveLocatorWorldPos("mouth_origin");
-        double x = at != null ? at.x : dragon.getX();
-        double y = at != null ? at.y : dragon.getY();
-        double z = at != null ? at.z : dragon.getZ();
-
-        net.minecraft.sounds.SoundEvent sound = entry.soundSupplier().get();
-        if (sound == null) {
-            return;
-        }
-
-        Level level = dragon.level();
-        if (level.isClientSide) {
-            level.playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, entry.volume(), pitch, false);
-        } else {
-            level.playSound(null, x, y, z, sound, SoundSource.NEUTRAL, entry.volume(), pitch);
-        }
+        // IMPORTANT: playVocal should ONLY trigger animations!
+        // Sounds are played by the animation keyframes via handleAnimationSound on the client.
+        // This allows proper locator positioning (mouth_origin, etc.) from the animation JSON.
+        com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+            "[{}] playVocal complete - animation triggered, sound will play from keyframes",
+            side
+        );
     }
 
     public void playClientSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
