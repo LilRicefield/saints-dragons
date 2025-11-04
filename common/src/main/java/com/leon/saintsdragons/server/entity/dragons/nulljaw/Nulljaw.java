@@ -394,7 +394,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        System.out.println("[Nulljaw] registerControllers invoked on client?=" + this.level().isClientSide);
         AnimationController<Nulljaw> movementController =
                 new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
         AnimationController<Nulljaw> swimController =
