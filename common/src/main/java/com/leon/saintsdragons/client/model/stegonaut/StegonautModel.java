@@ -12,13 +12,25 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     public StegonautModel() {
         super(SaintsDragonsCommon.rl("stegonaut"), "head");
     }
+    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/stegonaut.geo.json");
+    private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/stegonaut.animation.json");
     private static final ResourceLocation MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/stegonaut/stegonaut.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/stegonaut/stegonaut_female.png");
+
+    @Override
+    public ResourceLocation getModelResource(Stegonaut entity) {
+        return MODEL;
+    }
 
     @Override
     public ResourceLocation getTextureResource(Stegonaut entity) {
         // TODO: Add baby texture variant
         return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
+    }
+
+    @Override
+    public ResourceLocation getAnimationResource(Stegonaut entity) {
+        return ANIM;
     }
 
     @Override

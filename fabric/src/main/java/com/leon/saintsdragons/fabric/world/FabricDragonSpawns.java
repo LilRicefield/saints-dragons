@@ -19,8 +19,10 @@ public final class FabricDragonSpawns {
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_stegonaut"));
     private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_CINDERVANE =
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_cindervane"));
-    private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_NULLJAW =
-            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw"));
+    private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_NULLJAW_LAND =
+            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw_land"));
+    private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_NULLJAW_WATER =
+            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw_water"));
 
     private FabricDragonSpawns() {
     }
@@ -54,7 +56,13 @@ public final class FabricDragonSpawns {
         }
 
         if (SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get() > 0) {
-            registerSpawn(HAS_NULLJAW,
+            registerSpawn(HAS_NULLJAW_LAND,
+                    MobCategory.CREATURE,
+                    ModEntities.NULLJAW.get(),
+                    SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
+                    SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
+                    SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get());
+            registerSpawn(HAS_NULLJAW_WATER,
                     MobCategory.CREATURE,
                     ModEntities.NULLJAW.get(),
                     SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),

@@ -13,6 +13,8 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
  * The "head" bone parents all neck bones, so we distribute rotation across the neck chain.
  */
 public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
+    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/nulljaw.geo.json");
+    private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/nulljaw.animation.json");
     private static final ResourceLocation MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/nulljaw/nulljaw.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/nulljaw/nulljaw_female.png");
 
@@ -22,9 +24,19 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     }
 
     @Override
+    public ResourceLocation getModelResource(Nulljaw entity) {
+        return MODEL;
+    }
+
+    @Override
     public ResourceLocation getTextureResource(Nulljaw entity) {
         // TODO: Add baby texture variant
         return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
+    }
+
+    @Override
+    public ResourceLocation getAnimationResource(Nulljaw entity) {
+        return ANIM;
     }
 
     @Override

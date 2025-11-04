@@ -13,6 +13,8 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         super(SaintsDragonsCommon.rl("cindervane"), "head");
     }
 
+    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/cindervane.geo.json");
+    private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/cindervane.animation.json");
     private static final ResourceLocation MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_female.png");
 
@@ -32,9 +34,19 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     }
 
     @Override
+    public ResourceLocation getModelResource(Cindervane entity) {
+        return MODEL;
+    }
+
+    @Override
     public ResourceLocation getTextureResource(Cindervane entity) {
         // TODO: Add baby texture variant
         return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
+    }
+
+    @Override
+    public ResourceLocation getAnimationResource(Cindervane entity) {
+        return ANIM;
     }
 
     /**

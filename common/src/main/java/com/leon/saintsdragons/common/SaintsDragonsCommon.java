@@ -12,6 +12,7 @@ import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
 import net.minecraft.resources.ResourceLocation;
+import software.bernie.geckolib.GeckoLib;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,8 @@ public final class SaintsDragonsCommon {
     }
 
     public static void init() {
+        // Initialize GeckoLib runtime (required for animations)
+        GeckoLib.initialize();
         SaintsDragonsConfig.bootstrap();
         // GeckoLib data tickets MUST be registered first (before entities use them)
         DragonAnimTickets.bootstrap();
