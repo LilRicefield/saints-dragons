@@ -205,6 +205,14 @@ public class DragonSoundHandler {
             return;
         }
 
+        // Trigger the animation if this vocal has one
+        if (entry.animationId() != null && !entry.animationId().isEmpty()) {
+            String controllerId = entry.controllerId() != null && !entry.controllerId().isEmpty() 
+                ? entry.controllerId() 
+                : "action"; // Default to "action" controller if not specified
+            dragon.triggerAnim(controllerId, vocalKey);
+        }
+
         float pitch = entry.basePitch();
         if (entry.pitchVariance() != 0f) {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
