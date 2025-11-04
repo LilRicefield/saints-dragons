@@ -185,6 +185,37 @@
   "entity.saintsdragons.cindervane.seats_full": "Sorry, but the seats are full.",
   "entity.saintsdragons.cindervane.mount_occupied": "Uh... you shouldn't be here.",
   "ui.saintsdragons.melee_mode.primary": "Bite Mode",
-  "ui.saintsdragons.melee_mode.secondary": "Horn Gore Mode"
+  "ui.saintsdragons.melee_mode.secondary": "Horn Gore Mode",
+  
+  "text.autoconfig.saintsdragonsspawning.title": "Saint's Dragons Config",
+  "text.autoconfig.saintsdragonsspawning.category.spawning": "Dragon Spawning",
+  
+  "text.autoconfig.saintsdragonsspawning.option.raevyxSpawnWeight": "Raevyx Spawn Weight",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxSpawnWeight.@Tooltip": "How often Raevyx spawns (0 = disabled, higher = more common)",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxMinGroupSize": "Raevyx Min Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxMinGroupSize.@Tooltip": "Minimum number of Raevyx that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxMaxGroupSize": "Raevyx Max Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxMaxGroupSize.@Tooltip": "Maximum number of Raevyx that spawn together",
+  
+  "text.autoconfig.saintsdragonsspawning.option.stegonautSpawnWeight": "Stegonaut Spawn Weight",
+  "text.autoconfig.saintsdragonsspawning.option.stegonautSpawnWeight.@Tooltip": "How often Stegonaut spawns (0 = disabled, higher = more common)",
+  "text.autoconfig.saintsdragonsspawning.option.stegonautMinGroupSize": "Stegonaut Min Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.stegonautMinGroupSize.@Tooltip": "Minimum number of Stegonaut that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.stegonautMaxGroupSize": "Stegonaut Max Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.stegonautMaxGroupSize.@Tooltip": "Maximum number of Stegonaut that spawn together",
+  
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneSpawnWeight": "Cindervane Spawn Weight",
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneSpawnWeight.@Tooltip": "How often Cindervane spawns (0 = disabled, higher = more common)",
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneMinGroupSize": "Cindervane Min Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneMinGroupSize.@Tooltip": "Minimum number of Cindervane that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize": "Cindervane Max Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize.@Tooltip": "Maximum number of Cindervane that spawn together",
+  
+  "text.autoconfig.saintsdragonsspawning.option.nulljawSpawnWeight": "Nulljaw Spawn Weight",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawSpawnWeight.@Tooltip": "How often Nulljaw spawns (0 = disabled, higher = more common)",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawMinGroupSize": "Nulljaw Min Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawMinGroupSize.@Tooltip": "Minimum number of Nulljaw that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawMaxGroupSize": "Nulljaw Max Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawMaxGroupSize.@Tooltip": "Maximum number of Nulljaw that spawn together"
 }
 

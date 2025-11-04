@@ -11,6 +11,9 @@
     ],
     "client": [
       "com.leon.saintsdragons.fabric.SaintsDragonsFabricClient"
+    ],
+    "modmenu": [
+      "com.leon.saintsdragons.fabric.SaintsDragonsModMenuIntegration"
     ]
   },
   "mixins": [
