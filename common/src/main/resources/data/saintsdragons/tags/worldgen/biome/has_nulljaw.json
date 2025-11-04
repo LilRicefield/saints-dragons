@@ -13,7 +13,6 @@
     "minecraft:warm_ocean",
     "minecraft:deep_ocean",
     "minecraft:deep_lukewarm_ocean",
-    "minecraft:deep_warm_ocean",
     "minecraft:savanna_plateau",
     {"id": "alexscaves:abyssal_chasm", "required": false},
     {"id": "biomeswevegone:lush_stacks", "required":  false},

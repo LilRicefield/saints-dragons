@@ -28,10 +28,8 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_stegonaut"));
     private static final TagKey<Biome> HAS_CINDERVANE =
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_cindervane"));
-    private static final TagKey<Biome> HAS_NULLJAW_LAND =
-            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw_land"));
-    private static final TagKey<Biome> HAS_NULLJAW_WATER =
-            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw_water"));
+    private static final TagKey<Biome> HAS_NULLJAW =
+            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw"));
 
     private AddDragonsBiomeModifier() {
     }
@@ -70,7 +68,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_NULLJAW_LAND) || biome.is(HAS_NULLJAW_WATER)) {
+            if (biome.is(HAS_NULLJAW)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.NULLJAW.get(),

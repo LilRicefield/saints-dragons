@@ -5,6 +5,7 @@
   "name": "Saint's Dragons",
   "description": "Adds animated, AI-driven dragons or wyverns or whatever the heck you wanna call them flying reptiles to Minecraft.",
   "license": "LGPLv3",
+  "icon": "assets/saintsdragons/saintsdragons.png",
   "entrypoints": {
     "main": [
       "com.leon.saintsdragons.fabric.SaintsDragonsFabric"

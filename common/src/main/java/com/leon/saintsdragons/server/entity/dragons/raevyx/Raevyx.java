@@ -1176,6 +1176,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tickHurtSoundCooldown();
         tickWaterDisturbance();
         if (!level().isClientSide) {
+            // Spawn babies on first tick (after parent is positioned)
+            spawnBabiesIfNeeded();
+            
             // When ridden and flying, never stay in 'hovering' unless explicitly landing or beaming or taking off
             if (isFlying() && getControllingPassenger() != null) {
                 if (!isLanding() && !isBeaming() && !isTakeoff() && isHovering()) {
@@ -2251,7 +2254,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
      * Family group spawning: When a wild Raevyx spawns naturally, it has a 60% chance
      * to spawn with 2-3 baby hatchlings, creating a family group.
      */
-    @Override
+    private boolean shouldSpawnBabies = false;
+    private int babiesToSpawn = 0;
+
     @Nullable
     public SpawnGroupData finalizeSpawn(
             @Nonnull net.minecraft.world.level.ServerLevelAccessor level,
@@ -2269,44 +2274,54 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             if (spawnData == null || !(spawnData instanceof RaevyxFamilyData)) {
                 // 60% chance to spawn with babies
                 if (this.random.nextFloat() < 0.6F) {
-                    int babyCount = 2 + this.random.nextInt(2); // 2 or 3 babies
-
                     // Mark this as a family spawn (false = don't spawn baby via vanilla logic)
                     spawnData = new RaevyxFamilyData(false);
-
-                    for (int i = 0; i < babyCount; i++) {
-                        Raevyx baby = ModEntities.RAEVYX.get().create(level.getLevel());
-                        if (baby != null) {
-                            // Set baby properties
-                            baby.setBaby(true);
-                            baby.setAge(-24000); // Standard baby age
-                            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
-
-                            // Position baby VERY close to parent to avoid chunk boundary issues
-                            double angle = (Math.PI * 2.0 * i) / babyCount;
-                            double distance = 1.0 + this.random.nextDouble() * 0.5; // 1-1.5 blocks away (very close)
-                            double offsetX = Math.cos(angle) * distance;
-                            double offsetZ = Math.sin(angle) * distance;
-
-                            baby.moveTo(
-                                    this.getX() + offsetX,
-                                    this.getY(),
-                                    this.getZ() + offsetZ,
-                                    this.random.nextFloat() * 360.0F,
-                                    0.0F
-                            );
-
-                            // Finalize and add to world
-                            // Pass the family data to prevent recursive baby spawning
-                            baby.finalizeSpawn(level, difficulty, MobSpawnType.CHUNK_GENERATION, spawnData, null);
-                            level.addFreshEntity(baby);
-                        }
-                    }
+                    
+                    // Schedule baby spawning for first tick (when parent is positioned)
+                    this.shouldSpawnBabies = true;
+                    this.babiesToSpawn = 2 + this.random.nextInt(2); // 2 or 3 babies
                 }
             }
         }
 
         return spawnData;
+    }
+    
+    private void spawnBabiesIfNeeded() {
+        if (!shouldSpawnBabies || babiesToSpawn <= 0) {
+            return;
+        }
+        
+        shouldSpawnBabies = false;
+        
+        for (int i = 0; i < babiesToSpawn; i++) {
+            Raevyx baby = ModEntities.RAEVYX.get().create(level());
+            if (baby != null) {
+                // Set baby properties
+                baby.setBaby(true);
+                baby.setAge(-24000); // Standard baby age
+                baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+
+                // Position baby VERY close to parent (parent is now positioned!)
+                double angle = (Math.PI * 2.0 * i) / babiesToSpawn;
+                double distance = 1.0 + this.random.nextDouble() * 0.5; // 1-1.5 blocks away (very close)
+                double offsetX = Math.cos(angle) * distance;
+                double offsetZ = Math.sin(angle) * distance;
+
+                baby.moveTo(
+                        this.getX() + offsetX,
+                        this.getY(),
+                        this.getZ() + offsetZ,
+                        this.random.nextFloat() * 360.0F,
+                        0.0F
+                );
+
+                // Add to world
+                level().addFreshEntity(baby);
+            }
+        }
+        
+        babiesToSpawn = 0;
     }
 
     /**
