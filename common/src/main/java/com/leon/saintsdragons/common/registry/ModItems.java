@@ -51,6 +51,14 @@ public final class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> IGNIVORUS_SPAWN_EGG =
+            REGISTER.register("ignivorus_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.IGNIVORUS,
+                            0xFF4500, 0x8B0000,
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> DRAGON_ALLY_BOOK =
             REGISTER.register("dragon_ally_book",
                     () -> new DragonAllyBookItem(

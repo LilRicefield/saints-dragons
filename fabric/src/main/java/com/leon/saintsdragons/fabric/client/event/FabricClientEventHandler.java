@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
@@ -26,6 +27,10 @@ public class FabricClientEventHandler {
     // Cindervane takeoff camera zoom transition
     private static float cindervaneCameraZoom = 15F; // Base zoom
     private static float cindervaneCameraZoomTarget = 15F;
+
+    // Ignivorus camera zoom transition
+    private static float ignivorusCameraZoom = 25F; // Base zoom
+    private static float ignivorusCameraZoomTarget = 25F;
 
     /**
      * Initialize the client event handler.
@@ -92,6 +97,28 @@ public class FabricClientEventHandler {
             // Reset zoom when not riding Cindervane
             cindervaneCameraZoom = 15F;
             cindervaneCameraZoomTarget = 15F;
+        }
+
+        // Dragon riding camera adjustments - Ignivorus
+        if (player.isPassenger() && player.getVehicle() instanceof Ignivorus ignivorus && camera.isDetached()) {
+            // Determine target zoom based on flight state
+            boolean isFlying = ignivorus.isFlying();
+
+            // Flying: zoom to 20F, grounded: 12F base
+            ignivorusCameraZoomTarget = isFlying ? 20F : 12F;
+
+            // Smooth transition
+            float blendRate = 0.05F;
+            ignivorusCameraZoom += (ignivorusCameraZoomTarget - ignivorusCameraZoom) * blendRate;
+
+            // Apply the smoothed zoom using the mixin accessor
+            CameraAccessor cameraAccessor = (CameraAccessor) camera;
+            double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(ignivorusCameraZoom);
+            cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+        } else if (!(player.getVehicle() instanceof Ignivorus)) {
+            // Reset zoom when not riding Ignivorus
+            ignivorusCameraZoom = 25F;
+            ignivorusCameraZoomTarget = 25F;
         }
 
         // Nulljaw camera zoom

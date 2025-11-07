@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -51,6 +52,13 @@ public final class ModEntities {
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("nulljaw"));
+
+    public static final Supplier<EntityType<Ignivorus>> IGNIVORUS =
+            REGISTER.register("ignivorus", () -> EntityType.Builder.of(Ignivorus::new, MobCategory.CREATURE)
+                    .sized(3.0F, 2.5F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .build("ignivorus"));
 
     public static final Supplier<EntityType<RaevyxLightningChainEntity>> RAEVYX_LIGHTNING_CHAIN =
             REGISTER.register("raevyx_lightning_chain", () -> EntityType.Builder.<RaevyxLightningChainEntity>of(RaevyxLightningChainEntity::new, MobCategory.MISC)
