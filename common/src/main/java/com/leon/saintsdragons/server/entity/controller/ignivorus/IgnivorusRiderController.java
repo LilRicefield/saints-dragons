@@ -19,9 +19,13 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     // ===== SEAT TUNING CONSTANTS =====
     private static final double SEAT_BASE_FACTOR = 0.50D;
 
+    // ===== GROUND MOVEMENT SPEEDS =====
+    private static final float WALK_SPEED_MULT = 0.8F;   // Walking speed multiplier
+    private static final float RUN_SPEED_MULT = 1.6F;    // Running/sprinting speed multiplier
+
     // ===== FLIGHT PHYSICS =====
-    private static final double CRUISE_SPEED_MULT = 4.0;
-    private static final double SPRINT_SPEED_MULT = 7.0;
+    private static final double CRUISE_SPEED_MULT = 8.5;
+    private static final double SPRINT_SPEED_MULT = 12.5;
     private static final double ACCELERATION = 0.15;
     private static final double DRAG_WITH_INPUT = 0.08;
     private static final double DRAG_NO_INPUT = 0.5;
@@ -100,9 +104,9 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         } else {
             float baseSpeed = (float) dragon.getAttributeValue(Attributes.MOVEMENT_SPEED);
             if (dragon.isAccelerating()) {
-                return baseSpeed * 0.7F;
+                return baseSpeed * RUN_SPEED_MULT;
             } else {
-                return baseSpeed * 0.5F;
+                return baseSpeed * WALK_SPEED_MULT;
             }
         }
     }
@@ -157,10 +161,8 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
             double verticalVel = currentVelocity.y;
 
-            // Auto-ascend during takeoff phase to ensure we get airborne
-            if (dragon.isTakeoff() && dragon.timeFlying < 15) {
-                verticalVel += ASCEND_THRUST * 1.5;
-            } else if (dragon.isGoingUp()) {
+            // Vertical control - hold Spacebar to climb, L-Alt to descend
+            if (dragon.isGoingUp()) {
                 verticalVel += ASCEND_THRUST;
             } else if (dragon.isGoingDown()) {
                 verticalVel -= DESCEND_THRUST;
@@ -244,8 +246,8 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         dragon.setHovering(false);
         dragon.setLanding(false);
 
-        // Give strong upward launch velocity for takeoff
+        // No automatic boost - player must hold Spacebar to climb
         Vec3 current = dragon.getDeltaMovement();
-        dragon.setDeltaMovement(current.x, Math.max(current.y, 0.5D), current.z);
+        dragon.setDeltaMovement(current.x, current.y, current.z);
     }
 }

@@ -29,8 +29,8 @@ public class FabricClientEventHandler {
     private static float cindervaneCameraZoomTarget = 15F;
 
     // Ignivorus camera zoom transition
-    private static float ignivorusCameraZoom = 25F; // Base zoom
-    private static float ignivorusCameraZoomTarget = 25F;
+    private static float ignivorusCameraZoom = 30F; // Base zoom
+    private static float ignivorusCameraZoomTarget = 30F;
 
     /**
      * Initialize the client event handler.
@@ -104,8 +104,8 @@ public class FabricClientEventHandler {
             // Determine target zoom based on flight state
             boolean isFlying = ignivorus.isFlying();
 
-            // Flying: zoom to 20F, grounded: 12F base
-            ignivorusCameraZoomTarget = isFlying ? 20F : 12F;
+
+            ignivorusCameraZoomTarget = isFlying ? 40F : 25F;
 
             // Smooth transition
             float blendRate = 0.05F;
@@ -117,8 +117,8 @@ public class FabricClientEventHandler {
             cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom when not riding Ignivorus
-            ignivorusCameraZoom = 25F;
-            ignivorusCameraZoomTarget = 25F;
+            ignivorusCameraZoom = 30F;
+            ignivorusCameraZoomTarget = 30F;
         }
 
         // Nulljaw camera zoom

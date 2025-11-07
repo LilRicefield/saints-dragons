@@ -17,7 +17,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
 
     public IgnivorusModel() {
-        super(SaintsDragonsCommon.rl("ignivorus"), "head");
+        super(SaintsDragonsCommon.rl("ignivorus"), "headLookControl");
     }
 
     @Override
@@ -73,7 +73,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     }
 
     private void applyNeckFollow() {
-        var headOpt = getBone("head");
+        var headOpt = getBone("headLookControl");
         if (headOpt.isEmpty()) return;
 
         GeoBone head = headOpt.get();

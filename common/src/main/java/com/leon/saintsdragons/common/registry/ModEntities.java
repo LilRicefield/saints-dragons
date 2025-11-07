@@ -55,7 +55,7 @@ public final class ModEntities {
 
     public static final Supplier<EntityType<Ignivorus>> IGNIVORUS =
             REGISTER.register("ignivorus", () -> EntityType.Builder.of(Ignivorus::new, MobCategory.CREATURE)
-                    .sized(3.0F, 2.5F)
+                    .sized(8.0F, 6.0F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("ignivorus"));

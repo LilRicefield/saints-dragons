@@ -458,35 +458,51 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private void tickBankingLogic() {
         prevBankAngle = bankAngle;
 
+        // Reset banking when not flying - instant snap back
         if (!isFlying()) {
-            bankSmoothedYaw = 0f;
-            bankHoldTicks = 0;
-            bankDir = 0;
-            bankAngle = Mth.lerp(0.2f, bankAngle, 0f);
+            if (bankDir != 0 || bankAngle != 0f || bankSmoothedYaw != 0f) {
+                bankDir = 0;
+                bankSmoothedYaw = 0f;
+                bankHoldTicks = 0;
+                bankAngle = 0f;
+                prevBankAngle = 0f;
+            }
             return;
         }
 
-        float yawChange = getYRot() - yRotO;
-        yawChange = Mth.wrapDegrees(yawChange);
+        // Exponential smoothing on yaw delta to avoid jitter, wrap to account for crossing 360 -> 0
+        float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
+        bankSmoothedYaw = bankSmoothedYaw * 0.70f + yawChange * 0.30f; // More reactive than before, less than Raevyx
 
-        bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;
+        // Convert smoothed yaw delta into a banking roll
+        float targetAngle = Mth.clamp(bankSmoothedYaw * 4.5f, -45f, 45f); // More dramatic than before, less than Raevyx
 
-        int newDir = 0;
-        if (bankSmoothedYaw > 0.4f) newDir = 1;
-        else if (bankSmoothedYaw < -0.4f) newDir = -1;
-
-        if (newDir != bankDir) {
-            bankDir = newDir;
-            bankHoldTicks = 0;
-        } else if (newDir != 0) {
-            bankHoldTicks++;
+        // Ease toward the new target
+        bankAngle = Mth.lerp(0.28f, bankAngle, targetAngle); // Snappier than before, less snappy than Raevyx
+        if (Math.abs(bankAngle) < 0.01f) {
+            bankAngle = 0f;
         }
 
-        if (bankHoldTicks > 3 && bankDir != 0) {
-            float targetAngle = bankDir * Math.min(Math.abs(bankSmoothedYaw) * 2.5f, 25f);
-            bankAngle = Mth.lerp(0.15f, bankAngle, targetAngle);
+        // Update coarse direction for animation fallbacks
+        float enter = 12.0f; // Higher threshold than Raevyx (less sensitive)
+        float exit = 5.0f;   // Higher threshold than Raevyx (less sensitive)
+
+        int desiredDir = bankDir;
+        if (bankAngle > enter) desiredDir = 1;
+        else if (bankAngle < -enter) desiredDir = -1;
+        else if (Math.abs(bankAngle) < exit) desiredDir = 0;  // banking_off when flying straight
+
+        if (desiredDir != bankDir) {
+            // If transitioning to "off" (0), use very short hold time for instant reset
+            int holdTime = (desiredDir == 0) ? 1 : 2;
+            if (bankHoldTicks >= holdTime) {
+                bankDir = desiredDir;
+                bankHoldTicks = 0;
+            } else {
+                bankHoldTicks++;
+            }
         } else {
-            bankAngle = Mth.lerp(0.2f, bankAngle, 0f);
+            bankHoldTicks = Math.min(bankHoldTicks + 1, 10);
         }
     }
 
