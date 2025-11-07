@@ -39,7 +39,7 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
 
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 2.0f * scale;
+        this.shadowRadius = 5.0f * scale;
 
         this.lastBakedModel = model;
         enableTrackingForBones(model);
