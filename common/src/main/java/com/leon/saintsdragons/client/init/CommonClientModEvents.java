@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.init;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.client.renderer.cindervane.CindervaneMagmaBlockRenderer;
 import com.leon.saintsdragons.client.renderer.cindervane.CindervaneRenderer;
+import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusRenderer;
 import com.leon.saintsdragons.client.renderer.nulljaw.NulljawRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
@@ -24,6 +25,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.STEGONAUT.get(), StegonautRenderer::new);
         registrar.register(ModEntities.CINDERVANE.get(), CindervaneRenderer::new);
         registrar.register(ModEntities.NULLJAW.get(), NulljawRenderer::new);
+        registrar.register(ModEntities.IGNIVORUS.get(), IgnivorusRenderer::new);
         registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneMagmaBlockRenderer::new);
     }
 

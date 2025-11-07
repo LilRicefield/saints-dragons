@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.command.DragonAllyCommand;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -38,6 +39,7 @@ public final class CommonModEvents {
         registrar.accept(ModEntities.STEGONAUT.get(), Stegonaut.createAttributes());
         registrar.accept(ModEntities.CINDERVANE.get(), Cindervane.createAttributes());
         registrar.accept(ModEntities.NULLJAW.get(), Nulljaw.createAttributes());
+        registrar.accept(ModEntities.IGNIVORUS.get(), Ignivorus.createAttributes());
     }
 
     public static void registerCreativeTabEntries(CreativeTabRegistrar registrar) {
@@ -45,6 +47,7 @@ public final class CommonModEvents {
         registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.STEGONAUT_SPAWN_EGG);
         registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.CINDERVANE_SPAWN_EGG);
         registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.NULLJAW_SPAWN_EGG);
+        registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.IGNIVORUS_SPAWN_EGG);
 
         registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.DRAGON_ALLY_BOOK);
         registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.STEGONAUT_BINDER);
@@ -77,6 +80,12 @@ public final class CommonModEvents {
                 SpawnPlacements.Type.NO_RESTRICTIONS,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Nulljaw::canSpawnHere
+        );
+        registrar.register(
+                ModEntities.IGNIVORUS.get(),
+                SpawnPlacements.Type.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Ignivorus::canSpawnHere
         );
     }
 

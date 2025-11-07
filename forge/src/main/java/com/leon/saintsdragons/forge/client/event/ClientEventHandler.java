@@ -2,6 +2,7 @@ package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
@@ -26,6 +27,10 @@ public class ClientEventHandler {
     // Cindervane takeoff camera zoom transition
     private static float cindervaneCameraZoom = 15F; // Base zoom
     private static float cindervaneCameraZoomTarget = 15F;
+
+    // Ignivorus camera zoom transition
+    private static float ignivorusCameraZoom = 35F; // Base zoom
+    private static float ignivorusCameraZoomTarget = 35F;
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
@@ -71,6 +76,26 @@ public class ClientEventHandler {
             // Reset zoom when not riding Cindervane
             cindervaneCameraZoom = 15F;
             cindervaneCameraZoomTarget = 15F;
+        }
+
+        // Ignivorus camera zoom adjustments
+        if (player.isPassenger() && player.getVehicle() instanceof Ignivorus ignivorus && event.getCamera().isDetached()) {
+            // Determine target zoom based on flight state
+            boolean isFlying = ignivorus.isFlying();
+
+            // Flying: zoom to 20F, grounded: 12F base
+            ignivorusCameraZoomTarget = isFlying ? 20F : 12F;
+
+            // Smooth transition
+            float blendRate = 0.05F;
+            ignivorusCameraZoom += (ignivorusCameraZoomTarget - ignivorusCameraZoom) * blendRate;
+
+            // Apply the smoothed zoom
+            event.getCamera().move(-event.getCamera().getMaxZoom(ignivorusCameraZoom), 0, 0);
+        } else if (!(player.getVehicle() instanceof Ignivorus)) {
+            // Reset zoom when not riding Ignivorus
+            ignivorusCameraZoom = 35F;
+            ignivorusCameraZoomTarget = 35F;
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof Nulljaw && event.getCamera().isDetached()) {
