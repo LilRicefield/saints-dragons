@@ -47,13 +47,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final float APPEAR_TICKS = 5f;      // ~0.25s
     private static final float DISAPPEAR_TICKS = 6f;   // ~0.3s
 
-    // No beam origin offsets; lock to mouth to avoid drift
-
-    // Local-space fine alignment (applied AFTER rotations so it follows the head)
-    // Positive X = beam's right, Positive Y = up, Positive Z = forward along the beam
-    private static final float LOCAL_OFFSET_LEFT = 1.5F;  // nudge left a touch
-    private static final float LOCAL_OFFSET_UP    =  1.5F;
-    private static final float LOCAL_OFFSET_FWD   =  4.0F;  // small forward bias if z-fighting occurs (e.g., 0.01F)
+    // No local offsets needed - beamBone position from model is already accurate
 
     public RaevyxLightningBeamLayer() { super(null); }
 
@@ -73,8 +67,12 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             state.disappear = 0f;
             state.appear = Mth.clamp(state.appear + (1f / APPEAR_TICKS), 0f, 1f);
 
-            // Use math-based mouth origin to ensure stable following
-            mouthWorld = animatable.computeHeadMouthOrigin(partialTick);
+            // Use bone-based beam origin (follows head/neck animations perfectly!)
+            mouthWorld = animatable.getClientLocatorPosition("beamBoneOrigin");
+            if (mouthWorld == null) {
+                // Fallback to math calculation if bone position not available yet
+                mouthWorld = animatable.computeHeadMouthOrigin(partialTick);
+            }
 
             // Predict visual beam end and clamp to neck capability
             net.minecraft.world.phys.Vec3 predictedEnd = predictBeamEnd(animatable, mouthWorld, partialTick);
@@ -135,9 +133,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         poseStack.mulPose(Axis.YP.rotationDegrees(((Mth.PI / 2F) - yRot) * Mth.RAD_TO_DEG));
         poseStack.mulPose(Axis.XP.rotationDegrees((-(Mth.PI / 2F) + xRot) * Mth.RAD_TO_DEG));
         poseStack.mulPose(Axis.ZP.rotationDegrees(45));
-        // Apply local-space alignment so offset stays glued to the head orientation
-        poseStack.translate(LOCAL_OFFSET_LEFT, LOCAL_OFFSET_UP, LOCAL_OFFSET_FWD);
-        
+
         // Apply appear/disappear scaling
         float visScale = beaming ? easeOutCubic(state.appear) : (1f - state.disappear);
         visScale = Mth.clamp(visScale, 0f, 1f);

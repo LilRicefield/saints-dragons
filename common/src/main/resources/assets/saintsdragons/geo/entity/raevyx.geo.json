@@ -399,6 +399,11 @@
 					}
 				},
 				{
+					"name": "beamBone",
+					"parent": "head1Controller",
+					"pivot": [0, 30.78391, -86.08879]
+				},
+				{
 					"name": "pharynx",
 					"parent": "head1Controller",
 					"pivot": [0, 36.34121, -84.37976],

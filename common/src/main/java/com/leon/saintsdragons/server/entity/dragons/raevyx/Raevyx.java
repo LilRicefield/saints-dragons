@@ -1433,16 +1433,27 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             updateBeamOffsets(aimDir);
         }
 
-        Vec3 desiredLook = start.add(aimDir.scale(6.0));
-        // Unified smoothing for both client and server to prevent jitter
-        double alpha = 0.35D;
-        beamLookLerp = beamLookLerp == null
-                ? desiredLook
-                : beamLookLerp.add(desiredLook.subtract(beamLookLerp).scale(alpha));
+        // Calculate desired rotation from aim direction (like Tremorzilla)
+        float desiredYaw = (float)(Math.atan2(-aimDir.x, aimDir.z) * (180.0 / Math.PI));
+        float desiredPitch = (float)(-Math.atan2(aimDir.y, Math.sqrt(aimDir.x * aimDir.x + aimDir.z * aimDir.z)) * (180.0 / Math.PI));
 
-        float yawSpeed = Math.max(90.0F, (float)this.getHeadRotSpeed());
-        float pitchRange = (float)this.getMaxHeadXRot();
-        this.getLookControl().setLookAt(beamLookLerp.x, beamLookLerp.y, beamLookLerp.z, yawSpeed, pitchRange);
+        // DIRECTLY UPDATE HEAD ROTATION for smooth beam tracking
+        // Head rotates fast to follow player's look direction
+        float headYawSpeed = 15.0F;  // degrees per tick
+        float headPitchSpeed = 12.0F;
+
+        this.yHeadRot = Mth.approachDegrees(this.yHeadRot, desiredYaw, headYawSpeed);
+        this.setXRot(Mth.approachDegrees(this.getXRot(), desiredPitch, headPitchSpeed));
+
+        // Rotate body to assist if head is turning too far from body center
+        // This prevents the neck from over-extending
+        float yawDiff = Mth.degreesDifferenceAbs(desiredYaw, Mth.wrapDegrees(this.yBodyRot));
+        if (yawDiff > MAX_BEAM_YAW_DEG * 0.6F) {  // If head rotation exceeds 60% of max range
+            // Smoothly rotate body to help reduce neck strain
+            float bodyRotSpeed = 8.0F;
+            this.setYRot(Mth.approachDegrees(this.getYRot(), desiredYaw, bodyRotSpeed));
+            this.yBodyRot = Mth.approachDegrees(this.yBodyRot, desiredYaw, bodyRotSpeed);
+        }
     }
 
     public Vec3 getBeamAimDirection() {

@@ -100,6 +100,7 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         model.getBone("head").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("heightController").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("passengerBone").ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone("beamBone").ifPresent(b -> b.setTrackingMatrices(true));
     }
 
     private void sampleAndStashLocatorsAccurate(Raevyx entity) {
@@ -129,7 +130,11 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
             if (world != null) entity.setClientLocatorPosition("passengerLocator", world);
         });
-        // No beam_origin sampling required; beam uses computeHeadMouthOrigin()
+        // Sample beam bone position for accurate beam origin (follows head/neck animations perfectly)
+        this.lastBakedModel.getBone("beamBone").ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f); // Use bone pivot directly
+            if (world != null) entity.setClientLocatorPosition("beamBoneOrigin", world);
+        });
     }
 
     private static net.minecraft.world.phys.Vec3 transformLocator(software.bernie.geckolib.cache.object.GeoBone bone,
