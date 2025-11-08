@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.forge.client;
+package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.DragonStatusUIManager;
 import com.mojang.blaze3d.platform.InputConstants;

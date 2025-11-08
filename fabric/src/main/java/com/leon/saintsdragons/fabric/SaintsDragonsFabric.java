@@ -23,17 +23,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
         CommonModEvents.registerEntityAttributes((type, builder) ->
                 FabricDefaultAttributeRegistry.register(type, builder.build()));
 
-        CommonModEvents.registerSpawnPlacements(new CommonModEvents.SpawnPlacementRegistrar() {
-            @Override
-            public <T extends Mob> void register(
-                    EntityType<T> type,
-                    SpawnPlacements.Type placementType,
-                    Heightmap.Types heightmap,
-                    SpawnPlacements.SpawnPredicate<T> predicate
-            ) {
-                SpawnPlacements.register(type, placementType, heightmap, predicate);
-            }
-        });
+        CommonModEvents.registerSpawnPlacements(SpawnPlacements::register);
         FabricDragonSpawns.register();
 
         CommonModEvents.registerCreativeTabEntries((tab, itemSupplier) ->
