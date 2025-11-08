@@ -1458,8 +1458,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         float headYawSpeed = 15.0F;  // degrees per tick
         float headPitchSpeed = 12.0F;
 
+        // Yaw uses approachDegrees (wraps around 360)
         this.yHeadRot = Mth.approachDegrees(this.yHeadRot, desiredYaw, headYawSpeed);
-        this.setXRot(Mth.approachDegrees(this.getXRot(), desiredPitch, headPitchSpeed));
+
+        // Pitch uses simple lerp (doesn't wrap, clamped to -90/+90)
+        float currentPitch = this.getXRot();
+        float pitchDelta = desiredPitch - currentPitch;
+        float pitchChange = Mth.clamp(pitchDelta, -headPitchSpeed, headPitchSpeed);
+        this.setXRot(currentPitch + pitchChange);
 
         // Rotate body to assist if head is turning too far from body center
         // This prevents the neck from over-extending
@@ -1552,12 +1558,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         float headYaw = this.yHeadRot;
         float headPitch = this.getXRot();
 
+        // Calculate errors - keep it simple and symmetric for both yaw and pitch
         float yawErrDeg = net.minecraft.util.Mth.degreesDifference(headYaw, desiredYawDeg);
-        float pitchErrDeg = desiredPitchDeg - headPitch;
+        float pitchErrDeg = desiredPitchDeg - headPitch;  // Simple subtraction, same as yaw uses degreesDifference
 
+        // Clamp the ERRORS, not the angles
         float clampedYawErr = net.minecraft.util.Mth.clamp(yawErrDeg, -MAX_BEAM_YAW_DEG, MAX_BEAM_YAW_DEG);
         float clampedPitchErr = net.minecraft.util.Mth.clamp(pitchErrDeg, -MAX_BEAM_PITCH_DEG, MAX_BEAM_PITCH_DEG);
 
+        // Apply clamped errors to current angles
         float finalYaw = headYaw + clampedYawErr;
         float finalPitch = headPitch + clampedPitchErr;
 
@@ -2079,6 +2088,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     @Override
+    protected DragonAbilityType<?, ?> getDeathAbilityType() {
+        return isBaby() ? RaevyxAbilities.BABY_DIE : RaevyxAbilities.DIE;
+    }
+
+    @Override
     protected void onSuccessfulDamage(DamageSource source, float amount) {
         if (isDying()) {
             return;
@@ -2547,11 +2561,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public boolean hurt(@Nonnull DamageSource damageSource, float amount) {
-        // During dying sequence, ignore all damage except the final generic kill used by DieAbility
+        // During dying sequence, ignore all damage (entity is already dead, playing death animation)
         if (isDying()) {
-            if (damageSource.is(DamageTypes.GENERIC_KILL)) {
-                return super.hurt(damageSource, amount);
-            }
             return false;
         }
         // Immune to lightning damage
@@ -2565,12 +2576,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
         if (damageSource.is(DamageTypes.FALL)) {
             return false;
-        }
-
-        // Intercept lethal damage to play custom death ability first
-        DragonAbilityType<?, ?> dieAbility = isBaby() ? RaevyxAbilities.BABY_DIE : RaevyxAbilities.DIE;
-        if (handleLethalDamage(damageSource, amount, dieAbility)) {
-            return true;
         }
 
         // Store previous flying state to restore if being ridden

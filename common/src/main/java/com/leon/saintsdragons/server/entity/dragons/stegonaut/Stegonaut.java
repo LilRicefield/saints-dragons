@@ -233,31 +233,17 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
-        // During dying sequence, ignore all damage except the final generic kill used by DieAbility
+        // During dying sequence, ignore all damage (entity is already dead, playing death animation)
         if (isDying()) {
-            if (source.is(DamageTypes.GENERIC_KILL)) {
-                return super.hurt(source, amount);
-            }
             return false;
-        }
-
-        // Intercept lethal damage to play custom death ability first
-        if (handleLethalDamage(source, amount, StegonautAbilities.STEGONAUT_DIE)) {
-            return true;
         }
 
         return super.hurt(source, amount);
     }
 
     @Override
-    protected void tickDeath() {
-        // Override vanilla death animation to prevent rotation/flop
-        // Just increment death time without the rotation animation
-        ++this.deathTime;
-        if (this.deathTime >= 20) {
-            this.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
-            this.dropExperience();
-        }
+    protected DragonAbilityType<?, ?> getDeathAbilityType() {
+        return StegonautAbilities.STEGONAUT_DIE;
     }
 
     @Override

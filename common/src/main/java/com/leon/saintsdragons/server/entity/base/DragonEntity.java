@@ -24,6 +24,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
@@ -82,6 +83,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     // Death sequence management
     private boolean dying = false;
+    private DamageSource killDataCause;
+    private int killDataRecentlyHit;
+    private Player killDataAttackingPlayer;
     private boolean genderInitialized = false;
 
     // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
@@ -325,6 +329,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return null;
     }
 
+    /**
+     * Get the death ability type for this dragon.
+     * Override this to specify which death ability to use (e.g., baby vs adult death animations).
+     */
+    protected DragonAbilityType<?, ?> getDeathAbilityType() {
+        return null;
+    }
+
     protected void onSuccessfulDamage(DamageSource source, float amount) {
         if (level().isClientSide || isDying()) {
             return;
@@ -395,6 +407,69 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     /**
+     * Override die() to store kill data and trigger death ability (Mowzie-style).
+     * This is called by vanilla when health reaches 0.
+     */
+    @Override
+    public void die(@NotNull DamageSource cause) {
+        if (!this.dead) {
+            // Store kill data for proper loot/XP drops after animation
+            killDataCause = cause;
+            killDataRecentlyHit = this.lastHurtByPlayerTime;
+            killDataAttackingPlayer = this.lastHurtByPlayer;
+
+            // Mark as dying to prevent hurt ability interrupts
+            dying = true;
+
+            // Trigger death ability based on age
+            DragonAbilityType<?, ?> deathAbility = getDeathAbilityType();
+            if (deathAbility != null && !level().isClientSide) {
+                combatManager.tryUseAbility(deathAbility);
+            }
+        }
+        super.die(cause);
+    }
+
+    /**
+     * Override tickDeath() to delay entity removal until death animation completes (Mowzie-style).
+     * Vanilla tickDeath() increments deathTime and removes the entity after 20 ticks.
+     * We extend this to match our death animation duration.
+     */
+    @Override
+    protected void tickDeath() {
+        ++this.deathTime;
+        int deathDuration = getDeathAnimationDurationTicks();
+
+        if (this.deathTime >= deathDuration && !this.level().isClientSide()) {
+            // Restore kill data for proper loot table context
+            this.lastHurtByPlayer = killDataAttackingPlayer;
+            this.lastHurtByPlayerTime = killDataRecentlyHit;
+
+            // Drop loot with proper kill credit
+            if (killDataCause != null) {
+                this.dropAllDeathLoot(killDataCause);
+            }
+
+            // Broadcast death event and remove entity
+            this.level().broadcastEntityEvent(this, (byte)60);
+            this.remove(Entity.RemovalReason.KILLED);
+        }
+    }
+
+    /**
+     * Prevent loot drops during hurt() damage - wait for tickDeath() to handle it properly.
+     * This ensures loot drops only after the death animation completes.
+     */
+    @Override
+    protected void dropAllDeathLoot(@NotNull DamageSource source) {
+        if (deathTime > 0 && deathTime < getDeathAnimationDurationTicks()) {
+            // Still playing death animation - don't drop yet
+            return;
+        }
+        super.dropAllDeathLoot(source);
+    }
+
+    /**
      * Get the dragon type for this entity.
      * Used for elemental damage calculations and type-specific behavior.
      */
@@ -450,77 +525,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return 62;
     }
 
-
-    // ===== DEATH SEQUENCE HELPERS =====
-
-    /**
-     * Begin the standard death sequence for this wyvern.
-     * Sets the wyvern invulnerable, marks it as dying, and starts the death ability.
-     *
-     * @param deathAbility The death ability type to activate
-     */
-    protected final void beginStandardDeathSequence(DragonAbilityType<?, ?> deathAbility) {
-        if (level().isClientSide || dying) {
-            return;
-        }
-
-        setInvulnerable(true);
-        dying = true;
-
-        if (!canUseAbility()) {
-            combatManager.forceEndActiveAbility();
-        }
-
-        tryActivateAbilityUnchecked(deathAbility);
-    }
-
-    /**
-     * Complete the standard death sequence.
-     * Resets the dying flag and invulnerability.
-     * Call this when the death ability finishes if you need cleanup.
-     */
-    protected final void completeStandardDeathSequence() {
-        dying = false;
-        setInvulnerable(false);
-    }
-
-    /**
-     * Helper to activate an ability without type-checking (used internally for death abilities).
-     */
-    @SuppressWarnings("unchecked")
-    private void tryActivateAbilityUnchecked(DragonAbilityType<?, ?> type) {
-        combatManager.tryUseAbility((DragonAbilityType<DragonEntity, ?>) type);
-    }
-
-    /**
-     * Handle lethal damage by starting the death sequence.
-     * Call this from your wyvern's hurt() override to intercept lethal damage.
-     *
-     * @param source The damage source
-     * @param amount The damage amount
-     * @param deathAbility The death ability to play
-     * @return true if lethal damage was intercepted and death sequence started
-     */
-    protected final boolean handleLethalDamage(DamageSource source, float amount,
-                                               DragonAbilityType<?, ?> deathAbility) {
-        if (level().isClientSide || dying) {
-            return false;
-        }
-
-        if (getHealth() - amount > 0.0f) {
-            return false;
-        }
-
-        beginStandardDeathSequence(deathAbility);
-        // If the death ability actually started, swallow the damage event.
-        boolean abilityStarted = combatManager.isAbilityActive(deathAbility);
-        if (!abilityStarted) {
-            // Ability failed to start - unwind the invulnerable and dying flags
-            completeStandardDeathSequence();
-            return false;
-        }
-        return true;
-    }
 
     /**
      * Register a bite sound key for animation controllers.

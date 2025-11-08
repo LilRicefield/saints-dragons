@@ -55,12 +55,7 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     @Override
     protected void endSection(DragonAbilitySection section) {
-        // After death animation completes, actually kill the wyvern
-        if (!getLevel().isClientSide) {
-            // Remove invulnerability and kill the wyvern
-            getUser().setInvulnerable(false);
-            getUser().hurt(getLevel().damageSources().genericKill(), Float.MAX_VALUE);
-        }
+        // Animation complete - tickDeath() will handle entity removal and loot drops
         complete();
     }
 

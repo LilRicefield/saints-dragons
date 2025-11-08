@@ -29,7 +29,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final ResourceLocation FEMALE_INNER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/female_lightning_beam_inner.png");
     private static final ResourceLocation FEMALE_OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/female_lightning_beam_outer.png");
     // Beam tuning constants - adjust these to change beam appearance
-    private static final float BASE_BEAM_WIDTH = 0.30F;        // Base width of the beam
+    private static final float BASE_BEAM_WIDTH = 0.45F;        // Base width of the beam
     private static final float OUTER_BEAM_BONUS = 0.15F;      // Extra width for outer glow layer
     private static final float INNER_SPEED_MULTIPLIER = 0.25F; // Animation speed for inner beam
     private static final float OUTER_SPEED_MULTIPLIER = 0.25F; // Animation speed for outer beam
@@ -233,7 +233,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             }
         }
 
-        final double MAX_DISTANCE = 32.0; // blocks
+        final double MAX_DISTANCE = 24.0; // blocks
         net.minecraft.world.phys.Vec3 tentativeEnd = mouthWorld.add(aimDir.scale(MAX_DISTANCE));
         var hit = dragon.level().clip(new net.minecraft.world.level.ClipContext(
                 mouthWorld,
