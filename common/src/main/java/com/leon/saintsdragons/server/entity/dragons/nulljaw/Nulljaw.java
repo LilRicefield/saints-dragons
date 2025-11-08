@@ -229,6 +229,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     @Override
+    public boolean canTakeoff() {
+        return false; // Nulljaw is a ground/aquatic dragon, cannot fly
+    }
+
+    @Override
     protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
         if (locked) {
             setGoingUp(false);
@@ -236,8 +241,19 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             return;
         }
         boolean inWater = this.isSwimming() || this.isInWaterOrBubble();
-        setGoingUp(inWater && goingUp);
-        setGoingDown(inWater && goingDown);
+
+        // In water: allow vertical movement
+        if (inWater) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+        } else {
+            // On land: trigger jump when space is pressed
+            setGoingUp(false);
+            setGoingDown(false);
+            if (goingUp && this.onGround()) {
+                handleJumpRequest();
+            }
+        }
     }
 
     @Override
@@ -956,89 +972,93 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     private void updateSwimOrientationState() {
-        if (level().isClientSide) {
-            return;
-        }
+        // Server-only: Update synced swim turn and pitch states
+        if (!level().isClientSide) {
+            int desiredTurn = this.entityData.get(DATA_SWIM_TURN);
+            int desiredPitchState = this.entityData.get(DATA_SWIM_PITCH);
 
-        int desiredTurn = this.entityData.get(DATA_SWIM_TURN);
-        int desiredPitchState = this.entityData.get(DATA_SWIM_PITCH);
+            boolean riderControlled = this.isTame()
+                    && this.isVehicle()
+                    && this.getControllingPassenger() instanceof Player player
+                    && this.isOwnedBy(player)
+                    && this.isInWaterOrBubble();
 
-        boolean riderControlled = this.isTame()
-                && this.isVehicle()
-                && this.getControllingPassenger() instanceof Player player
-                && this.isOwnedBy(player)
-                && this.isInWaterOrBubble();
+            if (riderControlled) {
+                float yawDelta = Mth.wrapDegrees(this.getYRot() - this.yRotO);
+                swimTurnSmoothedYaw = swimTurnSmoothedYaw * 0.6F + yawDelta * 0.4F;
+                float enter = 0.35F;
+                float exit = 0.12F;
 
-        if (riderControlled) {
-            float yawDelta = Mth.wrapDegrees(this.getYRot() - this.yRotO);
-            swimTurnSmoothedYaw = swimTurnSmoothedYaw * 0.6F + yawDelta * 0.4F;
-            float enter = 0.35F;
-            float exit = 0.12F;
-
-            int targetState = swimTurnState;
-            if (swimTurnSmoothedYaw > enter) {
-                targetState = -1;
-            } else if (swimTurnSmoothedYaw < -enter) {
-                targetState = 1;
-            } else if (Math.abs(swimTurnSmoothedYaw) < exit) {
-                targetState = 0;
-            }
-
-            swimTurnState = targetState;
-            desiredTurn = swimTurnState;
-
-            if (this.isGoingUp()) {
-                desiredPitchState = -1;
-                swimPitchStateTicks = 6;
-            } else if (this.isGoingDown()) {
-                desiredPitchState = 1;
-                swimPitchStateTicks = 6;
-            } else if (desiredPitchState != 0) {
-                if (swimPitchStateTicks > 0) {
-                    swimPitchStateTicks--;
-                } else {
-                    desiredPitchState = 0;
+                int targetState = swimTurnState;
+                if (swimTurnSmoothedYaw > enter) {
+                    targetState = -1;
+                } else if (swimTurnSmoothedYaw < -enter) {
+                    targetState = 1;
+                } else if (Math.abs(swimTurnSmoothedYaw) < exit) {
+                    targetState = 0;
                 }
-            }
-        } else {
-            swimTurnSmoothedYaw *= 0.5F;
-            if (Math.abs(swimTurnSmoothedYaw) < 0.05F) {
-                swimTurnState = 0;
-            }
-            desiredTurn = swimTurnState;
 
-            if (desiredPitchState != 0) {
-                if (++swimPitchStateTicks > 4) {
-                    desiredPitchState = 0;
-                    swimPitchStateTicks = 0;
+                swimTurnState = targetState;
+                desiredTurn = swimTurnState;
+
+                if (this.isGoingUp()) {
+                    desiredPitchState = -1;
+                    swimPitchStateTicks = 6;
+                } else if (this.isGoingDown()) {
+                    desiredPitchState = 1;
+                    swimPitchStateTicks = 6;
+                } else if (desiredPitchState != 0) {
+                    if (swimPitchStateTicks > 0) {
+                        swimPitchStateTicks--;
+                    } else {
+                        desiredPitchState = 0;
+                    }
                 }
             } else {
-                swimPitchStateTicks = 0;
+                swimTurnSmoothedYaw *= 0.5F;
+                if (Math.abs(swimTurnSmoothedYaw) < 0.05F) {
+                    swimTurnState = 0;
+                }
+                desiredTurn = swimTurnState;
+
+                if (desiredPitchState != 0) {
+                    if (++swimPitchStateTicks > 4) {
+                        desiredPitchState = 0;
+                        swimPitchStateTicks = 0;
+                    }
+                } else {
+                    swimPitchStateTicks = 0;
+                }
+            }
+
+            if (this.entityData.get(DATA_SWIM_TURN) != desiredTurn) {
+                this.entityData.set(DATA_SWIM_TURN, desiredTurn);
+            }
+
+            if (this.entityData.get(DATA_SWIM_PITCH) != desiredPitchState) {
+                this.entityData.set(DATA_SWIM_PITCH, desiredPitchState);
             }
         }
 
-        if (this.entityData.get(DATA_SWIM_TURN) != desiredTurn) {
-            this.entityData.set(DATA_SWIM_TURN, desiredTurn);
-        }
-
-        if (this.entityData.get(DATA_SWIM_PITCH) != desiredPitchState) {
-            this.entityData.set(DATA_SWIM_PITCH, desiredPitchState);
-        }
-
-        // Calculate continuous swim roll angle (like Raevyx's banking)
+        // Client + Server: Calculate continuous swim roll angle (like Raevyx's banking)
         prevSwimRollAngle = swimRollAngle;
 
         // Reset when not swimming or controls locked
         if (!isSwimming() || areRiderControlsLocked()) {
             swimRollAngle = 0f;
             prevSwimRollAngle = 0f;
+            swimTurnSmoothedYaw = 0f;
             return;
         }
 
+        // Calculate yaw velocity for banking (works on both client and server)
+        float yawDelta = Mth.wrapDegrees(this.getYRot() - this.yRotO);
+        swimTurnSmoothedYaw = swimTurnSmoothedYaw * 0.6F + yawDelta * 0.4F;
+
         // Convert smoothed yaw delta into a roll angle
         float targetAngle = Mth.clamp(swimTurnSmoothedYaw * 40.0f, -60f, 60f); // More roll than Raevyx
-        // Ease toward the new target
-        swimRollAngle = Mth.lerp(0.25f, swimRollAngle, targetAngle);
+        // Ease toward the new target (more responsive than before)
+        swimRollAngle = Mth.lerp(0.40f, swimRollAngle, targetAngle); // Increased from 0.25f to 0.40f
         if (Math.abs(swimRollAngle) < 0.01f) {
             swimRollAngle = 0f;
         }

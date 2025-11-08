@@ -76,6 +76,15 @@ public class RaevyxPhysicsController {
         // Default transition length (safe baseline); override per-branch below
         state.getController().transitionLength(6);
 
+        // HIGHEST PRIORITY: Swimming overrides EVERYTHING (flying, walking, dying, etc.)
+        // When dragon touches water, immediately switch to swim animation
+        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
+        if (inWater) {
+            state.getController().transitionLength(4); // Quick transition into water
+            state.setAndContinue(SWIM);
+            return PlayState.CONTINUE;
+        }
+
         // PRIORITY: Handle dying and sleeping FIRST (applies to both baby and adult)
         if (wyvern.isDying() || wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()) {
             return PlayState.STOP;

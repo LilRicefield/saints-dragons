@@ -167,7 +167,8 @@ public final class DragonRideInputHandler {
             sendInput(ascendDown, descendDown, action, null, forward, strafe, yaw);
         }
 
-        if (ascendDown && !wasAscendPressed && !dragon.isFlying()) {
+        // Only send takeoff request for dragons that can fly
+        if (ascendDown && !wasAscendPressed && !dragon.isFlying() && dragon.canTakeoff()) {
             sendInput(false, false, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
         }
 

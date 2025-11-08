@@ -652,6 +652,22 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+
+        // WATER OVERRIDES LOCK - must always allow vertical input in water!
+        if (inWater) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+            return;
+        }
+
+        if (locked) {
+            setGoingUp(false);
+            setGoingDown(false);
+            return;
+        }
+
+        // Allow vertical input when flying
         if (this.isFlying()) {
             setGoingUp(goingUp);
             setGoingDown(goingDown);
@@ -1883,8 +1899,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private void tickBankingLogic() {
         prevBankAngle = bankAngle;
 
-        // Reset banking when not flying or when controls are locked - instant snap back
-        if (areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
+        // Reset banking when in water, not flying, or when controls are locked - instant snap back
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
             if (bankDir != 0 || bankAngle != 0f || bankSmoothedYaw != 0f) {
                 bankDir = 0;
                 bankSmoothedYaw = 0f;
@@ -1993,8 +2010,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     
     private void tickPitchingLogic() {
         tickRiderLandingBlendTimer();
-        // Reset pitching when not flying or when controls are locked - INSTANT reset
-        if (areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
+        // Reset pitching when in water, not flying, or when controls are locked - INSTANT reset
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
             if (pitchDir != 0) {
                 pitchDir = 0;
                 pitchSmoothedPitch = 0f;
@@ -2192,6 +2210,29 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             return;
         }
 
+        // Check if in water (prioritize water handling over flight)
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+
+        // WATER OVERRIDE: If in water, clear ALL states that might block movement
+        if (inWater) {
+            if (!level().isClientSide) {
+                // Exit flight mode if flying
+                if (isFlying()) {
+                    this.setFlying(false);
+                    this.setTakeoff(false);
+                    this.setHovering(false);
+                    this.setLanding(false);
+                    this.switchToGroundNavigation();
+                }
+
+
+                // Ensure vertical input works
+                if (this.isVehicle()) {
+                    // Vertical input is handled in applyRiderVerticalInput
+                }
+            }
+        }
+
         // Riding logic
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
             // Clear any AI navigation when being ridden
@@ -2202,7 +2243,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             // Let tickRidden handle rotation smoothly
             // No instant rotation here - all handled in tickRidden for responsiveness
 
-            if (isFlying()) {
+            if (inWater) {
+                // WATER ALWAYS TAKES PRIORITY - swimming handler
+                handleWaterSwimming(motion);
+            } else if (isFlying()) {
                 // Delegate flying movement to rider controller for consistency
                 this.riderController.handleRiderMovement(player, motion);
             } else {
@@ -2211,7 +2255,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
         } else {
             // Normal AI movement
-            if (isFlying()) {
+            if (inWater) {
+                // AI in water - just use vanilla swimming for now
+                super.travel(motion);
+            } else if (isFlying()) {
                 // AI flight movement
                 flightController.handleFlightTravel(motion);
             } else {
@@ -2220,6 +2267,94 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
         }
 
+    }
+
+    /**
+     * Handles swimming movement for Raevyx when in water.
+     * Raevyx is not aquatic, so it swims slowly and gradually sinks.
+     * Player must hold spacebar to swim upward.
+     * Can breach the surface to take off if moving upward with enough speed.
+     */
+    private void handleWaterSwimming(Vec3 input) {
+        Vec3 velocity = this.getDeltaMovement();
+
+        // Raevyx swims much slower than Nulljaw (not aquatic)
+        double swimSpeed = 0.4D; // Slow base speed
+        if (isAccelerating()) {
+            swimSpeed *= 1.3D; // Slight boost when sprinting
+        }
+
+        // Calculate desired movement based on input
+        Vec3 desired = getSwimVec3(input, swimSpeed, velocity);
+
+        // Blend toward desired velocity (less responsive than flight)
+        Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.15D));
+
+        // Apply drag
+        double dragFactor = 0.88D; // More drag than in air
+        blended = blended.multiply(dragFactor, 0.92D, dragFactor);
+
+        // Vertical movement: gradual sinking unless player is actively swimming up
+        double dy = blended.y;
+        if (isGoingUp()) {
+            // Swimming up - slow ascent
+            dy = Math.min(swimSpeed * 0.6D, dy + 0.08D);
+        } else if (isGoingDown()) {
+            // Swimming down - faster descent
+            dy = Math.max(-swimSpeed * 0.8D, dy - 0.12D);
+        } else {
+            // Not holding up/down: gradual sinking (Raevyx is not buoyant)
+            dy -= 0.03D; // Sink slowly
+        }
+
+        blended = new Vec3(blended.x, dy, blended.z);
+
+        this.setDeltaMovement(blended);
+        this.move(MoverType.SELF, this.getDeltaMovement());
+
+        // AFTER movement, check for breach attempt
+        // If at surface with good upward velocity, allow takeoff
+        boolean atSurface = !this.isUnderWater(); // Head above water
+        boolean tryingToAscend = isGoingUp();
+        double currentVelY = this.getDeltaMovement().y;
+
+        if (atSurface && tryingToAscend && currentVelY > 0.0D && !this.isFlying()) {
+            // Breach the surface and start flying!
+            if (!level().isClientSide) {
+                this.setFlying(true);
+                this.setTakeoff(true);
+                this.setHovering(false);
+                this.setLanding(false);
+                this.switchToAirNavigation();
+
+                // Give upward boost for breach
+                this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
+
+                // Trigger takeoff in flight controller
+                this.flightController.shouldTakeoff();
+                this.riderTakeoffTicks = 40;
+            }
+        }
+    }
+
+    /**
+     * Convert rider input into world-space swimming movement vector
+     */
+    private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed, Vec3 velocity) {
+        double strafe = wishDir.x;
+        double forward = wishDir.z;
+        float yawRad = this.getYRot() * ((float)Math.PI / 180F);
+        double sin = Math.sin(yawRad);
+        double cos = Math.cos(yawRad);
+
+        double worldX = strafe * cos - forward * sin;
+        double worldZ = forward * cos + strafe * sin;
+
+        double dx = worldX * 0.6D * swimSpeed; // Reduced from Nulljaw's 0.85
+        double dz = worldZ * 0.6D * swimSpeed;
+
+        // Y is handled in handleWaterSwimming
+        return new Vec3(dx, 0, dz);
     }
 
     // ===== RANGED ATTACK IMPLEMENTATION =====
