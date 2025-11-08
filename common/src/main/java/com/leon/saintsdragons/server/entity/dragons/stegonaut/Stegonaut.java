@@ -228,7 +228,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
 
     @Override
     public int getDeathAnimationDurationTicks() {
-        return 75; // 3.75s - matches primitive drake death animation length
+        return 65; // - matches death animation length
     }
 
     @Override
