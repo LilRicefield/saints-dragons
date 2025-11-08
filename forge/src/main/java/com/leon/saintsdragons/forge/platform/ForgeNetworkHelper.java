@@ -14,16 +14,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ForgeNetworkHelper implements NetworkHelper {
     private static final String PROTOCOL_VERSION = "1";
-    private final SimpleChannel channel;
+    private SimpleChannel channel;
     private final AtomicInteger nextId = new AtomicInteger();
 
     public ForgeNetworkHelper() {
-        this.channel = NetworkRegistry.newSimpleChannel(
-                ResourceLocation.fromNamespaceAndPath(SaintsDragonsCommon.MOD_ID, "main"),
-                () -> PROTOCOL_VERSION,
-                PROTOCOL_VERSION::equals,
-                PROTOCOL_VERSION::equals
-        );
+        // Lazy initialization - defer channel creation until first use
+        // to avoid ServiceConfigurationError during early class loading
+    }
+
+    private SimpleChannel getChannel() {
+        if (channel == null) {
+            channel = NetworkRegistry.newSimpleChannel(
+                    ResourceLocation.fromNamespaceAndPath(SaintsDragonsCommon.MOD_ID, "main"),
+                    () -> PROTOCOL_VERSION,
+                    PROTOCOL_VERSION::equals,
+                    PROTOCOL_VERSION::equals
+            );
+        }
+        return channel;
     }
 
     @Override
@@ -32,7 +40,7 @@ public final class ForgeNetworkHelper implements NetworkHelper {
                                         PacketEncoder<T> encoder,
                                         PacketDecoder<T> decoder,
                                         ServerboundHandler<T> handler) {
-        channel.messageBuilder(type, nextId.getAndIncrement())
+        getChannel().messageBuilder(type, nextId.getAndIncrement())
                 .encoder(encoder::encode)
                 .decoder(decoder::decode)
                 .consumerMainThread((message, contextSupplier) -> {
@@ -50,7 +58,7 @@ public final class ForgeNetworkHelper implements NetworkHelper {
                                         PacketEncoder<T> encoder,
                                         PacketDecoder<T> decoder,
                                         ClientboundHandler<T> handler) {
-        channel.messageBuilder(type, nextId.getAndIncrement())
+        getChannel().messageBuilder(type, nextId.getAndIncrement())
                 .encoder(encoder::encode)
                 .decoder(decoder::decode)
                 .consumerMainThread((message, contextSupplier) -> handler.handle(message))
@@ -59,21 +67,21 @@ public final class ForgeNetworkHelper implements NetworkHelper {
 
     @Override
     public void sendToServer(Object message) {
-        channel.sendToServer(message);
+        getChannel().sendToServer(message);
     }
 
     @Override
     public void sendToPlayer(ServerPlayer player, Object message) {
-        channel.send(PacketDistributor.PLAYER.with(() -> player), message);
+        getChannel().send(PacketDistributor.PLAYER.with(() -> player), message);
     }
 
     @Override
     public void sendToTracking(Entity entity, Object message) {
-        channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
+        getChannel().send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
     }
 
     @Override
     public void sendToDimension(Level level, Object message) {
-        channel.send(PacketDistributor.DIMENSION.with(level::dimension), message);
+        getChannel().send(PacketDistributor.DIMENSION.with(level::dimension), message);
     }
 }
