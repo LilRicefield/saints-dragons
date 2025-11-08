@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.forge.client.particle;
+package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningParticle;
