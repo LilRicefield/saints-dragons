@@ -5,23 +5,37 @@ import com.leon.saintsdragons.platform.Services;
 
 public final class SaintsDragonsConfig {
 
-    public static final ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
-    public static final ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
-    public static final ConfigHelper.IntValue RAEVYX_MAX_GROUP_SIZE;
+    public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue RAEVYX_MAX_GROUP_SIZE;
 
-    public static final ConfigHelper.IntValue STEGONAUT_SPAWN_WEIGHT;
-    public static final ConfigHelper.IntValue STEGONAUT_MIN_GROUP_SIZE;
-    public static final ConfigHelper.IntValue STEGONAUT_MAX_GROUP_SIZE;
+    public static ConfigHelper.IntValue STEGONAUT_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue STEGONAUT_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue STEGONAUT_MAX_GROUP_SIZE;
 
-    public static final ConfigHelper.IntValue CINDERVANE_SPAWN_WEIGHT;
-    public static final ConfigHelper.IntValue CINDERVANE_MIN_GROUP_SIZE;
-    public static final ConfigHelper.IntValue CINDERVANE_MAX_GROUP_SIZE;
+    public static ConfigHelper.IntValue CINDERVANE_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue CINDERVANE_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue CINDERVANE_MAX_GROUP_SIZE;
 
-    public static final ConfigHelper.IntValue NULLJAW_SPAWN_WEIGHT;
-    public static final ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
-    public static final ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
+    public static ConfigHelper.IntValue NULLJAW_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
 
-    static {
+    private static volatile boolean initialized = false;
+
+    public static void bootstrap() {
+        // Double-checked locking to ensure safe initialization and prevent race conditions
+        if (!initialized) {
+            synchronized (SaintsDragonsConfig.class) {
+                if (!initialized) {
+                    initializeConfig();
+                    initialized = true;
+                }
+            }
+        }
+    }
+
+    private static void initializeConfig() {
         ConfigHelper.ConfigBuilder builder = Services.PLATFORM.getConfigHelper()
                 .commonBuilder("saintsdragonsspawning.toml");
 
@@ -45,10 +59,6 @@ public final class SaintsDragonsConfig {
 
         builder.pop();
         builder.build();
-    }
-
-    public static void bootstrap() {
-        // Trigger class loading to ensure platform config registration runs during mod init.
     }
 
     private SaintsDragonsConfig() {

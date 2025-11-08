@@ -16,22 +16,32 @@ import net.minecraftforge.common.ForgeSpawnEggItem;
 import java.util.function.Supplier;
 
 public final class ForgePlatformHelper implements PlatformHelper {
-    private final ForgeRegistryHelper registryHelper = new ForgeRegistryHelper();
-    private final ForgeNetworkHelper networkHelper = new ForgeNetworkHelper();
-    private final ForgeConfigHelper configHelper = new ForgeConfigHelper();
+    // Lazy initialization to avoid ServiceConfigurationError during early class loading
+    private ForgeRegistryHelper registryHelper;
+    private ForgeNetworkHelper networkHelper;
+    private ForgeConfigHelper configHelper;
 
     @Override
     public RegistryHelper getRegistryHelper() {
+        if (registryHelper == null) {
+            registryHelper = new ForgeRegistryHelper();
+        }
         return registryHelper;
     }
 
     @Override
     public NetworkHelper getNetworkHelper() {
+        if (networkHelper == null) {
+            networkHelper = new ForgeNetworkHelper();
+        }
         return networkHelper;
     }
 
     @Override
     public ConfigHelper getConfigHelper() {
+        if (configHelper == null) {
+            configHelper = new ForgeConfigHelper();
+        }
         return configHelper;
     }
 
