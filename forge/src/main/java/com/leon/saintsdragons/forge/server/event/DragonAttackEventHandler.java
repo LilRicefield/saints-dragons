@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.forge.server.entity.handler;
+package com.leon.saintsdragons.forge.server.event;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;

@@ -6,7 +6,6 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
