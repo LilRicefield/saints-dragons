@@ -123,6 +123,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return true;
     }
 
+    /**
+     * Override this to specify if the dragon can take off (i.e., is flight-capable).
+     * Defaults to true - ground-only/aquatic dragons should override and return false.
+     */
+    public boolean canTakeoff() {
+        return true;
+    }
+
     protected void onRiderTakeoffRequest(Player player) {
     }
 

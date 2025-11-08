@@ -124,18 +124,32 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     
     /**
      * Handles banking animation based on bank direction
+     * Disabled when in water - swimming has its own movement animations
      */
     public PlayState bankingPredicate(AnimationState<Raevyx> state) {
+        // Disable banking when in water
+        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
+        if (inWater) {
+            return PlayState.STOP;
+        }
+
         state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_off"));
         return PlayState.CONTINUE;
     }
-    
+
     /**
      * Handles pitching animation based on pitch direction
+     * Disabled when in water - swimming has its own movement animations
      */
     public PlayState pitchingPredicate(AnimationState<Raevyx> state) {
+        // Disable pitching when in water
+        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
+        if (inWater) {
+            return PlayState.STOP;
+        }
+
         double pitchDir = wyvern.getPitchDirection();
-        
+
         if (pitchDir > 0) {
             state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.pitching_down"));
         } else if (pitchDir < 0) {

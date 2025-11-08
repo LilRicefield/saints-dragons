@@ -47,9 +47,12 @@ public class RaevyxConstantsHandler {
 
     /** Landing animation */
     public static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.raevyx.landing");
-    
+
     /** Dodge animation */
     public static final RawAnimation DODGE = RawAnimation.begin().thenPlay("animation.raevyx.dodge");
+
+    /** Swim animation (overrides all others when in water) */
+    public static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.raevyx.swim");
 
     // ===== MODEL CONSTANTS =====
     
