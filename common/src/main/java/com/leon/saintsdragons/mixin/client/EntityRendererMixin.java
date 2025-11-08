@@ -25,16 +25,17 @@ public class EntityRendererMixin {
     private void modifyFOV(Camera camera, float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Double> cir) {
         Minecraft mc = Minecraft.getInstance();
         double targetFOVMultiplier = 1.0;
-        if (mc.player != null && (mc.player.getVehicle() instanceof Raevyx raevyx || mc.player.getVehicle() instanceof Cindervane amphithere || mc.player.getVehicle() instanceof Nulljaw nulljaw)) {
+        if (mc.player != null && mc.player.getVehicle() != null) {
             boolean isAccelerating = false;
             boolean isFlying = false;
             double currentSpeed = 0;
             double maxSpeed = 0;
-            
+
+            // Check vehicle type and extract stats - no variable shadowing
             if (mc.player.getVehicle() instanceof Raevyx raevyx) {
                 isAccelerating = raevyx.isAccelerating();
                 isFlying = raevyx.isFlying();
-                
+
                 if (isAccelerating) {
                     if (isFlying) {
                         // Flying sprint - use flying speed attributes
@@ -46,30 +47,34 @@ public class EntityRendererMixin {
                         maxSpeed = raevyx.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7; // Ground sprint multiplier
                     }
                 }
-            } else if (mc.player.getVehicle() instanceof Cindervane amphithereDragon) {
-                isAccelerating = amphithereDragon.isAccelerating();
-                isFlying = amphithereDragon.isFlying();
-                
+            } else if (mc.player.getVehicle() instanceof Cindervane cindervane) {
+                isAccelerating = cindervane.isAccelerating();
+                isFlying = cindervane.isFlying();
+
                 if (isAccelerating) {
                     if (isFlying) {
                         // Flying sprint - use flying speed attributes
-                        currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
-                        maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.0; // SPRINT_MAX_MULT
+                        currentSpeed = cindervane.getDeltaMovement().horizontalDistance();
+                        maxSpeed = cindervane.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.0; // SPRINT_MAX_MULT
                     } else {
                         // Ground sprint - use movement speed attributes
-                        currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
-                        maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.6; // Ground sprint multiplier
+                        currentSpeed = cindervane.getDeltaMovement().horizontalDistance();
+                        maxSpeed = cindervane.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.6; // Ground sprint multiplier
                     }
                 }
             } else if (mc.player.getVehicle() instanceof Nulljaw nulljaw) {
                 isAccelerating = nulljaw.isAccelerating();
                 isFlying = false; // Rift Drake doesn't fly
-                
+
                 if (isAccelerating) {
                     // Ground sprint - use movement speed attributes
                     currentSpeed = nulljaw.getDeltaMovement().horizontalDistance();
                     maxSpeed = nulljaw.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 1.0; // Ground sprint multiplier
                 }
+            } else {
+                // Not riding a dragon - reset FOV
+                saint_sDragons$currentFOVMultiplier = 1.0;
+                return;
             }
             
             if (isAccelerating && maxSpeed > 0) {

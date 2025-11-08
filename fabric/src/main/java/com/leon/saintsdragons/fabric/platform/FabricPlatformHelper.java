@@ -14,22 +14,32 @@ import net.minecraft.world.item.SpawnEggItem;
 import java.util.function.Supplier;
 
 public final class FabricPlatformHelper implements PlatformHelper {
-    private final FabricRegistryHelper registryHelper = new FabricRegistryHelper();
-    private final FabricNetworkHelper networkHelper = new FabricNetworkHelper();
-    private final FabricConfigHelper configHelper = new FabricConfigHelper();
+    // Lazy initialization to avoid ServiceConfigurationError during early class loading
+    private FabricRegistryHelper registryHelper;
+    private FabricNetworkHelper networkHelper;
+    private FabricConfigHelper configHelper;
 
     @Override
     public RegistryHelper getRegistryHelper() {
+        if (registryHelper == null) {
+            registryHelper = new FabricRegistryHelper();
+        }
         return registryHelper;
     }
 
     @Override
     public NetworkHelper getNetworkHelper() {
+        if (networkHelper == null) {
+            networkHelper = new FabricNetworkHelper();
+        }
         return networkHelper;
     }
 
     @Override
     public ConfigHelper getConfigHelper() {
+        if (configHelper == null) {
+            configHelper = new FabricConfigHelper();
+        }
         return configHelper;
     }
 
