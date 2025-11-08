@@ -21,7 +21,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
     // ===== GROUND MOVEMENT SPEEDS =====
     private static final float WALK_SPEED_MULT = 0.8F;   // Walking speed multiplier
-    private static final float RUN_SPEED_MULT = 1.6F;    // Running/sprinting speed multiplier
+    private static final float RUN_SPEED_MULT = 2.2F;    // Running/sprinting speed multiplier
 
     // ===== FLIGHT PHYSICS =====
     private static final double CRUISE_SPEED_MULT = 8.5;
