@@ -236,6 +236,8 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
         controller.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.cindervane.eat"));
+        controller.triggerableAnim("die",
+                RawAnimation.begin().thenPlay("animation.cindervane.die"));
 
         // Sleep sequence animations
         controller.triggerableAnim("down", SIT_DOWN);

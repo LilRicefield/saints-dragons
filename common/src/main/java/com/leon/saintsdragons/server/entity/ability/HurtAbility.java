@@ -65,8 +65,18 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             getUser().triggerAnim(controllerId, animationTrigger);
         }
 
-        if (!getLevel().isClientSide && manualVocalKey != null && getUser() instanceof SoundHandledDragon soundHandled) {
-            soundHandled.getSoundHandler().playVocal(manualVocalKey);
+        // Play hurt sound directly (playVocal() doesn't work - same issue as death sounds)
+        if (!getLevel().isClientSide && manualVocalKey != null) {
+            T dragon = getUser();
+            DragonEntity.VocalEntry hurtEntry = dragon.getVocalEntries().get(manualVocalKey);
+            if (hurtEntry != null && hurtEntry.soundSupplier() != null) {
+                net.minecraft.sounds.SoundEvent sound = hurtEntry.soundSupplier().get();
+                float volume = hurtEntry.volume();
+                float pitch = hurtEntry.basePitch() + (dragon.getRandom().nextFloat() - 0.5f) * hurtEntry.pitchVariance() * 2f;
+
+                // Play sound directly (bypasses playVocal which only triggers animations)
+                dragon.playSound(sound, volume, pitch);
+            }
         }
     }
 
