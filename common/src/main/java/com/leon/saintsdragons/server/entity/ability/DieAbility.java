@@ -33,7 +33,7 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         // Use ability ID to look up vocal entry (matches the pattern)
         String abilityId = this.getAbilityType().getName();
 
-        // Trigger death animation using wyvern-specific metadata when available
+        // Trigger death animation using specific metadata when available
         String controllerId = "action";
         VocalEntry deathEntry = dragon.getVocalEntries().get(abilityId);
         if (deathEntry != null && deathEntry.controllerId() != null) {
@@ -46,10 +46,28 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
             animationTrigger = "baby_die";
         }
         dragon.triggerAnim(controllerId, animationTrigger);
+    }
 
-        // Play death sound manually using ability ID as vocal key
-        if (!getLevel().isClientSide && dragon instanceof SoundHandledDragon soundDragon) {
-            soundDragon.getSoundHandler().playVocal(abilityId);
+    @Override
+    public void tickUsing() {
+        super.tickUsing();
+
+        // Manually trigger death sound at tick 1 (like Mowzie's Mobs)
+        // Must play directly via playSound() - playVocal() is blocked by isDeadOrDying() check!
+        if (getTicksInSection() == 1 && !getLevel().isClientSide) {
+            T dragon = getUser();
+            String abilityId = this.getAbilityType().getName();
+
+            // Look up the vocal entry to get the sound event
+            VocalEntry deathEntry = dragon.getVocalEntries().get(abilityId);
+            if (deathEntry != null && deathEntry.soundSupplier() != null) {
+                net.minecraft.sounds.SoundEvent sound = deathEntry.soundSupplier().get();
+                float volume = deathEntry.volume();
+                float pitch = deathEntry.basePitch() + (dragon.getRandom().nextFloat() - 0.5f) * deathEntry.pitchVariance() * 2f;
+
+                // Play sound directly (bypasses vocal system's isDeadOrDying check)
+                dragon.playSound(sound, volume, pitch);
+            }
         }
     }
 
