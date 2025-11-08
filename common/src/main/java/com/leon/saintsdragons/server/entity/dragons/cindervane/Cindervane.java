@@ -121,7 +121,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             .add("roar_ground", "actions", "animation.cindervane.roar_ground", ModSounds.CINDERVANE_ROAR, 1.5f, 0.9f, 0.05f, false, false, false)
             .add("roar_air", "actions", "animation.cindervane.roar_air", ModSounds.CINDERVANE_ROAR, 1.5f, 1.05f, 0.05f, false, false, false)
             .add("cindervane_hurt", "hurt", "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, false, false)
-            .add("cindervane_die", "action", "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
+            .add("cindervane_die", "actions", "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
             .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -1588,7 +1588,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public int getDeathAnimationDurationTicks() {
-        return 95; // 4.75s - matches amphithere death animation length
+        return 87; // 4.3333s - matches Cindervane death animation length
     }
 
     // Death handling now uses base class helpers

@@ -3250,7 +3250,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Setup animation triggers via animation handler
         animationHandler.setupActionController(actionController);
 
-        // Dedicated controller for instant hurt/die reactions (no transition easing)
+        // Dedicated controller for instant hurt reactions (no transition easing)
         AnimationController<Raevyx> HurtController =
                 new AnimationController<>(this, "hurt", 3, state -> PlayState.STOP);
         HurtController.triggerableAnim("raevyx_hurt",
