@@ -116,6 +116,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int pitchHoldTicks = 0;
     private int pitchDir = 0;
 
+    // Sitting transition state (1.88 seconds = 38 ticks for both down and up animations)
+    private int sitTransitionTicks = 0;
+    private boolean isSittingDown = false;
+    private boolean isStandingUp = false;
+
     // Client locator cache
     private final Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -179,6 +184,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         super.tick();
         physicsController.tick();
 
+        // Update client-side sit progress
+        if (level().isClientSide) {
+            prevSitProgress = sitProgress;
+            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
+        }
+
         // Update air/ground time
         if (isFlying()) {
             airTicks++;
@@ -204,6 +215,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         // Update banking and pitching for animations
         tickBankingLogic();
         tickPitchingLogic();
+
+        // Update sitting progress
+        updateSittingProgress();
     }
 
     @Override
@@ -557,6 +571,82 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
+    private void updateSittingProgress() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        // Tick down sit transition animations
+        if (sitTransitionTicks > 0) {
+            sitTransitionTicks--;
+            if (sitTransitionTicks == 0) {
+                // Transition animation finished
+                isSittingDown = false;
+                isStandingUp = false;
+            }
+        }
+
+        if (this.isOrderedToSit()) {
+            // Trigger sit down animation when starting from standing OR interrupting stand-up
+            if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
+                animationHandler.triggerSitDownAnimation();
+                isSittingDown = true;
+                isStandingUp = false;
+                sitTransitionTicks = getSitDownAnimationTicks();
+            }
+
+            // Increment sitProgress smoothly
+            if (sitProgress < maxSitTicks()) {
+                sitProgress++;
+                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+            }
+        } else {
+            // Not ordered to sit - handle standing up
+            if (this.isVehicle()) {
+                // Instantly reset when ridden
+                if (sitProgress != 0f) {
+                    sitProgress = 0f;
+                    prevSitProgress = 0f;
+                    this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                    isSittingDown = false;
+                    isStandingUp = false;
+                    sitTransitionTicks = 0;
+                }
+            } else if (sitProgress > 0f) {
+                // Trigger sit up animation when at max sitting OR interrupting sit-down
+                if ((sitProgress == maxSitTicks() || isSittingDown) && !isStandingUp) {
+                    animationHandler.triggerSitUpAnimation();
+                    isStandingUp = true;
+                    isSittingDown = false;
+                    sitTransitionTicks = getSitUpAnimationTicks();
+                }
+
+                // Decrement sitProgress (same speed as increment for Ignivorus)
+                sitProgress--;
+                if (sitProgress < 0f) {
+                    sitProgress = 0f;
+                }
+                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+            }
+        }
+    }
+
+    /**
+     * Get the duration of the sit down animation in ticks.
+     * Ignivorus sit down animation is 1.88 seconds (38 ticks at 20 TPS)
+     */
+    public int getSitDownAnimationTicks() {
+        return 38;
+    }
+
+    /**
+     * Get the duration of the sit up animation in ticks.
+     * Ignivorus sit up animation is 1.88 seconds (38 ticks at 20 TPS)
+     */
+    public int getSitUpAnimationTicks() {
+        return 38;
+    }
+
     public float getBankAngleDegrees(float partialTick) {
         return Mth.lerp(partialTick, prevBankAngle, bankAngle);
     }
@@ -569,7 +659,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // Movement controller handles idle/walk/run/flight animations
+        // Movement controller handles idle/walk/run/flight/sit animations
         AnimationController<Ignivorus> movementController =
             new AnimationController<>(this, "movement", 5, animationHandler::handleMovementAnimation);
 
@@ -580,7 +670,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         AnimationController<Ignivorus> pitchingController =
             new AnimationController<>(this, "pitching", 6, animationHandler::pitchingPredicate);
 
-        controllers.add(movementController, bankingController, pitchingController);
+        // Action controller for triggerable animations (sit transitions, etc.)
+        AnimationController<Ignivorus> actionController =
+            new AnimationController<>(this, "action", 5, state -> software.bernie.geckolib.core.object.PlayState.STOP);
+
+        // Register sit transition animations
+        actionController.triggerableAnim("sit_down",
+            software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.ignivorus.down"));
+        actionController.triggerableAnim("sit_up",
+            software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.ignivorus.up"));
+
+        controllers.add(movementController, bankingController, pitchingController, actionController);
     }
 
     @Override

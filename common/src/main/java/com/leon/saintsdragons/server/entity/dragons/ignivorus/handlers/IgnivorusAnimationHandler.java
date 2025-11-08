@@ -15,29 +15,60 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.ignivorus.run");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.take_off");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.ignivorus.glide");
+    private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.ignivorus.glide_down");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.flap");
+    private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.sprint_flap");
+    private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.ignivorus.sit");
+    private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.ignivorus.down");
+    private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.ignivorus.up");
 
     /**
-     * Main animation predicate - handles idle, walk, run, fly animations
+     * Main animation predicate - handles idle, walk, run, fly, and sit animations
      */
     public PlayState handleMovementAnimation(AnimationState<Ignivorus> state) {
         state.getController().transitionLength(8); // Smooth transitions
 
+        // Check for sitting - highest priority after flying
+        if (!dragon.isFlying() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
+            state.setAndContinue(SIT);
+            return PlayState.CONTINUE;
+        }
+
         if (dragon.isFlying()) {
-            // Check for takeoff animation (30 ticks = 1.5s to match animation length)
+            // Check for takeoff animation (highest priority)
             if (dragon.isTakeoff() || dragon.timeFlying < 30) {
                 state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
             }
 
-            // Flight mode determines animation: 0=glide, 1=flap, 2=hover, 3=takeoff
+            // Check velocity for movement detection
+            var vel = dragon.getDeltaMovement();
+            boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
+
+            // GLIDE_DOWN - second priority (diving/descending)
+            if (dragon.isGoingDown()) {
+                state.getController().transitionLength(6);
+                state.setAndContinue(GLIDE_DOWN);
+                return PlayState.CONTINUE;
+            }
+
+            // SPRINT_FLAP - third priority (accelerating flight)
+            if (dragon.isAccelerating() && isMovingHorizontally) {
+                state.getController().transitionLength(3);
+                state.setAndContinue(SPRINT_FLAP);
+                return PlayState.CONTINUE;
+            }
+
+            // Altitude-based animations (lowest priority)
+            // Flight mode: 0=glide, 1=flap
             int flightMode = dragon.getFlightMode();
             if (flightMode == 0) {
-                // High altitude gliding
+                // High altitude gliding - long smooth transition
                 state.getController().transitionLength(12);
                 state.setAndContinue(GLIDE);
             } else {
-                // Active flapping (low altitude or accelerating)
+                // Low altitude flapping - normal transition
+                state.getController().transitionLength(6);
                 state.setAndContinue(FLAP);
             }
         } else if (state.isMoving()) {
@@ -77,5 +108,21 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.pitching_off"));
         }
         return PlayState.CONTINUE;
+    }
+
+    /**
+     * Trigger the sit down animation (idle → sit transition)
+     * Animation: "down" (38 ticks / 1.88 seconds)
+     */
+    public void triggerSitDownAnimation() {
+        dragon.triggerAnim("action", "sit_down");
+    }
+
+    /**
+     * Trigger the sit up animation (sit → idle transition)
+     * Animation: "up" (38 ticks / 1.88 seconds)
+     */
+    public void triggerSitUpAnimation() {
+        dragon.triggerAnim("action", "sit_up");
     }
 }
