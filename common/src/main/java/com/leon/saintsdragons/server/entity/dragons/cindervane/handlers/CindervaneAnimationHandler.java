@@ -35,6 +35,7 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation PITCH_UP = RawAnimation.begin().thenLoop("animation.cindervane.pitching_up");
     private static final RawAnimation PITCH_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.pitching_down");
     private static final RawAnimation PITCH_OFF = RawAnimation.begin().thenLoop("animation.cindervane.pitching_off");
+    private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.cindervane.swim");
 
 
     private final Cindervane dragon;
@@ -49,6 +50,15 @@ public class CindervaneAnimationHandler {
         // While dying or sleeping (including transitions), suppress movement animations entirely; action controller plays die/sleep clips
         if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepTransitioning()) {
             return PlayState.STOP;
+        }
+
+        boolean inWater = dragon.isInWater() || dragon.isInWaterOrBubble();
+
+        if (inWater) {
+            state.getController().transitionLength(6);
+            state.setAndContinue(SWIM);
+            state.getController().setAnimationSpeed(1.0f);
+            return PlayState.CONTINUE;
         }
 
         if (dragon.isVehicle()) {
@@ -201,6 +211,9 @@ public class CindervaneAnimationHandler {
     }
 
     public PlayState bankingPredicate(AnimationState<Cindervane> state) {
+        if (dragon.isInWater() || dragon.isInWaterOrBubble()) {
+            return PlayState.STOP;
+        }
         state.getController().transitionLength(8); // Longer transitions for smoother banking
         float smoothDir = dragon.getSmoothBankDirection();
 
@@ -215,6 +228,9 @@ public class CindervaneAnimationHandler {
     }
 
     public PlayState pitchingPredicate(AnimationState<Cindervane> state) {
+        if (dragon.isInWater() || dragon.isInWaterOrBubble()) {
+            return PlayState.STOP;
+        }
         state.getController().transitionLength(4);
         int dir = dragon.getPitchDirection();
 
