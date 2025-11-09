@@ -17,6 +17,7 @@ public class StegonautAnimationHandler {
     // Animation constants
     private static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.idle");
     private static final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.walk");
+    private static final RawAnimation SWIM_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.swim");
     private static final RawAnimation SLEEP_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sleep");
     private static final RawAnimation SIT_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sit");
 
@@ -84,6 +85,13 @@ public class StegonautAnimationHandler {
         if (drake.isSleeping()) {
             state.getController().transitionLength(12); // Slower transition for sleep
             state.setAndContinue(SLEEP_ANIM);
+            return PlayState.CONTINUE;
+        }
+
+        // Swimming has higher priority than ground loops
+        if (drake.isInWaterOrBubble()) {
+            state.getController().transitionLength(6);
+            state.setAndContinue(SWIM_ANIM);
             return PlayState.CONTINUE;
         }
 
@@ -172,4 +180,3 @@ public class StegonautAnimationHandler {
         return PlayState.STOP;
     }
 }
-
