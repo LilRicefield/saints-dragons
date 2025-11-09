@@ -13,7 +13,7 @@ import net.minecraft.world.level.pathfinder.Node;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Amphibious evaluator that keeps the generous water handling from {@link DragonSwimNodeEvaluator}
+ * Amphibious evaluator that keeps the generous water handling
  * while still allowing surface/ground traversal via the vanilla amphibious logic.
  * Designed to be shared by all semiaquatic dragons that rely on {@link DragonAmphibiousNavigation}.
  */

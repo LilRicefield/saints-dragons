@@ -3,7 +3,6 @@ package com.leon.saintsdragons.server.entity.sleep;
 /**
  * Enum representing the rest/sleep state machine for dragons.
  * This is saved to NBT so dragons can resume their rest cycle after world reload.
- *
  * Animation sequence: IDLE → SITTING_DOWN → SITTING → FALLING_ASLEEP → SLEEPING →
  *                     WAKING_UP → SITTING_AFTER → STANDING_UP → IDLE
  */
