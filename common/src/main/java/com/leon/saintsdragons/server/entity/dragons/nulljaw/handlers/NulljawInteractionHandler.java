@@ -58,6 +58,17 @@ public record NulljawInteractionHandler(Nulljaw drake) {
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack food) {
+        // Check feeding cooldown to prevent spam-feeding
+        if (!drake.canFeed()) {
+            if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.nulljaw.still_eating", drake.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         if (!drake.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
                 food.shrink(1);
@@ -65,6 +76,9 @@ public record NulljawInteractionHandler(Nulljaw drake) {
 
             // Trigger eat animation
             drake.triggerAnim("action", "eat");
+
+            // Set feeding cooldown (2.5 seconds * 20 ticks/second = 50 ticks)
+            drake.setFeedingCooldown(50);
 
             float healAmount = 5.0F;
             float newHealth = Math.min(drake.getHealth() + healAmount, drake.getMaxHealth());
@@ -97,7 +111,18 @@ public record NulljawInteractionHandler(Nulljaw drake) {
         if (!drake.isFood(itemstack)) {
             return InteractionResult.PASS;
         }
-        
+
+        // Check feeding cooldown to prevent spam-feeding
+        if (!drake.canFeed()) {
+            if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.nulljaw.still_eating", drake.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         // Taming logic must be server-only to avoid client-only visual state changes
         if (!drake.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
@@ -106,6 +131,9 @@ public record NulljawInteractionHandler(Nulljaw drake) {
 
             // Trigger eat animation
             drake.triggerAnim("action", "eat");
+
+            // Set feeding cooldown (2.5 seconds * 20 ticks/second = 50 ticks)
+            drake.setFeedingCooldown(50);
 
             // Rift Drakes have a 1 in 8 chance of taming (easier than Lightning Dragons)
             if (drake.getRandom().nextInt(8) == 0) {
@@ -131,12 +159,29 @@ public record NulljawInteractionHandler(Nulljaw drake) {
      */
     private InteractionResult handleTamedInteraction(Player player, ItemStack itemstack, InteractionHand hand) {
         if (drake.isFood(itemstack) && drake.getHealth() < drake.getMaxHealth()) {
+            // Check feeding cooldown to prevent spam-feeding
+            if (!drake.canFeed()) {
+                if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.nulljaw.still_eating", drake.getName()),
+                        true
+                    );
+                }
+                return InteractionResult.CONSUME;
+            }
+
             // Feed the drake to heal it
             if (!drake.level().isClientSide) {
                 if (!player.getAbilities().instabuild) {
                     itemstack.shrink(1);
                 }
-                
+
+                // Trigger eat animation
+                drake.triggerAnim("action", "eat");
+
+                // Set feeding cooldown (2.5 seconds * 20 ticks/second = 50 ticks)
+                drake.setFeedingCooldown(50);
+
                 float healAmount = 10.0f; // Heal 5 hearts per fish
                 float oldHealth = drake.getHealth();
                 float newHealth = Math.min(oldHealth + healAmount, drake.getMaxHealth());

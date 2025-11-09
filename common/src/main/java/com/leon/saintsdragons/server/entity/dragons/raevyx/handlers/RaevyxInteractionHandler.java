@@ -41,7 +41,18 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
         if (!wyvern.isFood(itemstack)) {
             return InteractionResult.PASS;
         }
-        
+
+        // Check feeding cooldown to prevent spam-feeding
+        if (!wyvern.canFeed()) {
+            if (!wyvern.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.raevyx.still_eating", wyvern.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         // Taming logic must be server-only to avoid client-only visual state changes
         if (!wyvern.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
@@ -51,13 +62,16 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             // Trigger eat animation
             wyvern.triggerAnim("action", "eat");
 
+            // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
+            wyvern.setFeedingCooldown(61);
+
             if (wyvern.getRandom().nextInt(10) == 0) {
                 // Successful taming
                 wyvern.tame(player);
                 wyvern.setOrderedToSit(true);
                 wyvern.setCommandManual(1); // Set command to Sit (1) to match the sitting state
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 7);
-                
+
                 // Trigger advancement for taming Lightning Dragon
                 triggerTamingAdvancement(player);
             } else {
@@ -65,7 +79,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 6);
             }
         }
-        
+
         return InteractionResult.sidedSuccess(wyvern.level().isClientSide);
     }
     
@@ -114,6 +128,17 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
     private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
         boolean client = wyvern.level().isClientSide;
 
+        // Check feeding cooldown to prevent spam-feeding
+        if (!wyvern.canFeed()) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.raevyx.still_eating", wyvern.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         if (wyvern.isBaby()) {
             sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_too_young");
             return InteractionResult.sidedSuccess(client);
@@ -137,6 +162,9 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             // Trigger eat animation
             wyvern.triggerAnim("action", "eat");
 
+            // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
+            wyvern.setFeedingCooldown(61);
+
             wyvern.setInLove(player);
             sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_ready");
         }
@@ -148,6 +176,17 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
      * Handle feeding tamed dragons for healing or growth.
      */
     private InteractionResult handleFeeding(Player player, ItemStack itemstack) {
+        // Check feeding cooldown to prevent spam-feeding
+        if (!wyvern.canFeed()) {
+            if (!wyvern.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.raevyx.still_eating", wyvern.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         if (!wyvern.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
@@ -155,6 +194,9 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
 
             // Trigger eat animation
             wyvern.triggerAnim("action", "eat");
+
+            // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
+            wyvern.setFeedingCooldown(61);
 
             // Babies: speed up growth instead of healing
             if (wyvern.isBaby()) {

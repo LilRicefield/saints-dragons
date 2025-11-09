@@ -117,6 +117,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
             SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
 
+    /** Entity data accessor for feeding cooldown ticks */
+    private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
+            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
+
     private final AnimatableInstanceCache animCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
@@ -157,6 +161,17 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private boolean sleepLocked = false;
     private int sleepCommandSnapshot = -1;
     private boolean wasVehicleLastTick = false;
+
+    // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
+
+    public boolean canFeed() {
+        int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
+        return cooldownTicks <= 0;
+    }
+
+    public void setFeedingCooldown(int ticks) {
+        this.entityData.set(DATA_FEEDING_COOLDOWN, ticks);
+    }
 
     public Nulljaw(EntityType<? extends Nulljaw> type, Level level) {
         super(type, level);
@@ -320,6 +335,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
+        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
     
     @Override
@@ -525,6 +541,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         updateSittingProgress();
         tickSleepTransition();
         tickSleepCooldowns();
+        tickFeedingCooldown();
 
         // Handle ambient sounds (server-side only)
         if (!level().isClientSide) {
@@ -1470,6 +1487,14 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         if (sleepCancelTicks > 0) sleepCancelTicks--;
     }
 
+    private void tickFeedingCooldown() {
+        int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
+        if (cooldownTicks > 0) {
+            cooldownTicks--;
+            this.entityData.set(DATA_FEEDING_COOLDOWN, cooldownTicks);
+        }
+    }
+
     // ===== SIT TRANSITION HELPERS =====
 
     public boolean isInSitTransition() {
@@ -1675,6 +1700,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         restManager.save(tag);
         tag.putInt("SleepCancelTicks", sleepCancelTicks);
         tag.putInt("SleepCommandSnapshot", sleepCommandSnapshot);
+
+        // Persist feeding cooldown (synced via entity data but saved for redundancy)
+        tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
     }
 
     @Override
@@ -1691,6 +1719,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
         // Load persistent rest state
         restManager.load(tag);
+
+        // Restore feeding cooldown (synced via entity data but loaded for redundancy)
+        if (tag.contains("FeedingCooldownTicks")) {
+            this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
+        }
 
         // Re-trigger animations based on loaded rest state
         if (!level().isClientSide) {

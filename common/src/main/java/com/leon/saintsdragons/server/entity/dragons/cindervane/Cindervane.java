@@ -187,6 +187,17 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private boolean sleepLocked = false;
     private int sleepCommandSnapshot = -1;
 
+    // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
+
+    public boolean canFeed() {
+        int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
+        return cooldownTicks <= 0;
+    }
+
+    public void setFeedingCooldown(int ticks) {
+        this.entityData.set(DATA_FEEDING_COOLDOWN, ticks);
+    }
+
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -307,6 +318,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
 
+    /** Entity data accessor for feeding cooldown ticks */
+    private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
+
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -318,6 +333,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
+        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
 
     @Override
@@ -482,6 +498,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         updateSittingProgress();
         tickSleepTransition();
         tickSleepCooldowns();
+        tickFeedingCooldown();
         tickWaterSlicing();
 
         if (!level().isClientSide) {
@@ -1734,6 +1751,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         tag.putInt("TimeFlying", timeFlying);
         saveRideableData(tag);
         restManager.save(tag);
+
+        // Persist feeding cooldown (synced via entity data but saved for redundancy)
+        tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
     }
 
     @Override
@@ -1755,6 +1775,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         groundTicks = 0; // Reset ground ticks on load
 
         this.setNoGravity(isFlying() || isHovering());
+
+        // Restore feeding cooldown (synced via entity data but loaded for redundancy)
+        if (tag.contains("FeedingCooldownTicks")) {
+            this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
+        }
 
         // Restore rest state manager and re-trigger animations based on loaded state
         restManager.load(tag);
@@ -2054,6 +2079,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
         if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
         if (sleepCancelTicks > 0) sleepCancelTicks--;
+    }
+
+    private void tickFeedingCooldown() {
+        int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
+        if (cooldownTicks > 0) {
+            cooldownTicks--;
+            this.entityData.set(DATA_FEEDING_COOLDOWN, cooldownTicks);
+        }
     }
 
     // ===== SLEEP STATE ACCESSORS =====

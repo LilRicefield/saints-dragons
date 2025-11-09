@@ -41,6 +41,17 @@ public class CindervaneInteractionHandler {
             return InteractionResult.PASS;
         }
 
+        // Check feeding cooldown to prevent spam-feeding
+        if (!dragon.canFeed()) {
+            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.cindervane.still_eating", dragon.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         if (!dragon.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
                 heldItem.shrink(1);
@@ -48,6 +59,9 @@ public class CindervaneInteractionHandler {
 
             // Trigger eat animation
             dragon.triggerAnim("actions", "eat");
+
+            // Set feeding cooldown (2.2083 seconds * 20 ticks/second = 44 ticks)
+            dragon.setFeedingCooldown(44);
 
             if (dragon.getRandom().nextInt(5) == 0) {
                 dragon.tame(player);
@@ -172,6 +186,17 @@ public class CindervaneInteractionHandler {
      * Handle feeding the dragon for healing
      */
     private InteractionResult handleFeeding(Player player, ItemStack food) {
+        // Check feeding cooldown to prevent spam-feeding
+        if (!dragon.canFeed()) {
+            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.cindervane.still_eating", dragon.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         if (!dragon.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
                 food.shrink(1);
@@ -179,6 +204,9 @@ public class CindervaneInteractionHandler {
 
             // Trigger eat animation
             dragon.triggerAnim("actions", "eat");
+
+            // Set feeding cooldown (2.2083 seconds * 20 ticks/second = 44 ticks)
+            dragon.setFeedingCooldown(44);
 
             float healAmount = 5.0F;
             float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
