@@ -148,6 +148,7 @@
   "entity.saintsdragons.raevyx.fed_partial": "%s is being healed...",
   "entity.saintsdragons.raevyx.baby_fed": "%s is growing stronger!",
   "entity.saintsdragons.raevyx.baby_grown": "%s has grown into an adult!",
+  "entity.saintsdragons.raevyx.still_eating": "%s is still eating...",
   "entity.saintsdragons.raevyx.breeding_too_young": "%s is too young to breed",
   "entity.saintsdragons.raevyx.breeding_cooling_down": "%s is not ready to breed yet",
   "entity.saintsdragons.raevyx.breeding_already_ready": "%s is already ready to breed",
@@ -161,8 +162,10 @@
   "entity.saintsdragons.stegonaut.busy_playing_dead": "%s is currently doing something \"important\".",
   "entity.saintsdragons.cindervane.fed": "%s is fully healed!",
   "entity.saintsdragons.cindervane.fed_partial": "%s is being healed...",
+  "entity.saintsdragons.cindervane.still_eating": "%s is still eating...",
   "entity.saintsdragons.nulljaw.fed": "%s is fully healed!",
   "entity.saintsdragons.nulljaw.fed_partial": "%s is being healed...",
+  "entity.saintsdragons.nulljaw.still_eating": "%s is still eating...",
   
   "saintsdragons.message.ally.success": "Successfully managed ally %s",
   "saintsdragons.message.ally.invalid_username": "Invalid username! Must be 3-16 characters, letters/numbers/underscores only, and appropriate content",

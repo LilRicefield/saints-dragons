@@ -202,6 +202,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
+    /** Entity data accessor for feeding cooldown ticks */
+    public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+
     // ===== OTHER CONSTANTS =====
 
     public static final float MAX_BEAM_YAW_DEG = 40.0f;
@@ -363,6 +367,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private int postLoadAirStabilizeTicks = 0; // counts down after world load if we saved while flying
     private int followFailsafeCooldown = 0;
     private int postStandUnlockTicks = 0;
+
+    // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
+
+    public boolean canFeed() {
+        int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
+        return cooldownTicks <= 0;
+    }
+
+    public void setFeedingCooldown(int ticks) {
+        this.entityData.set(DATA_FEEDING_COOLDOWN, ticks);
+    }
 
     // Rider takeoff request timer: while > 0, flight controller treats state as takeoff
     private int riderTakeoffTicks = 0;
@@ -536,6 +551,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.define(DATA_BEAM_START_Y, 0f);
         this.entityData.define(DATA_BEAM_START_Z, 0f);
         this.entityData.define(DATA_SLEEPING, false);
+        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
 
     @Override
@@ -1212,6 +1228,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             tickSuperchargeVfx();
             tickSleepTransition();
             tickSleepCooldowns();
+            tickFeedingCooldown();
             tickMountingState();
             tickFollowFailsafe();
             if (postStandUnlockTicks > 0) {
@@ -1904,7 +1921,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
         if (sleepCancelTicks > 0) sleepCancelTicks--;
     }
-    
+
+    private void tickFeedingCooldown() {
+        int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
+        if (cooldownTicks > 0) {
+            cooldownTicks--;
+            this.entityData.set(DATA_FEEDING_COOLDOWN, cooldownTicks);
+        }
+    }
+
     private void tickBankingLogic() {
         prevBankAngle = bankAngle;
 
@@ -3034,6 +3059,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tag.putInt("SleepCommandSnapshot", this.sleepCommandSnapshot);
         tag.putBoolean("ManualSitCommand", this.manualSitCommand);
 
+        // Persist feeding cooldown (synced via entity data but saved for redundancy)
+        tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
+
         // Persist rest state manager
         restManager.save(tag);
 
@@ -3085,6 +3113,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.sleepCancelTicks = Math.max(0, tag.getInt("SleepCancelTicks"));
         this.sleepLocked = tag.getBoolean("SleepLock");
         this.sleepCommandSnapshot = tag.getInt("SleepCommandSnapshot");
+
+        // Restore feeding cooldown (synced via entity data but loaded for redundancy)
+        if (tag.contains("FeedingCooldownTicks")) {
+            this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
+        }
 
         // Restore rest state manager and re-trigger animations based on loaded state
         restManager.load(tag);
