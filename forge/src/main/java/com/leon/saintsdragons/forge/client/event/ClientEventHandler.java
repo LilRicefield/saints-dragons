@@ -28,8 +28,8 @@ public class ClientEventHandler {
     private static float cindervaneCameraZoomTarget = 15F;
 
     // Ignivorus camera zoom transition
-    private static float ignivorusCameraZoom = 20F; // Base zoom
-    private static float ignivorusCameraZoomTarget = 20F;
+    private static float ignivorusCameraZoom = 10F; // Base zoom
+    private static float ignivorusCameraZoomTarget = 15F;
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
@@ -82,7 +82,7 @@ public class ClientEventHandler {
             // Determine target zoom based on flight state
             boolean isFlying = ignivorus.isFlying();
 
-            ignivorusCameraZoomTarget = isFlying ? 30 : 20F;
+            ignivorusCameraZoomTarget = 15F;
 
             // Smooth transition
             float blendRate = 0.05F;
@@ -92,8 +92,8 @@ public class ClientEventHandler {
             event.getCamera().move(-event.getCamera().getMaxZoom(ignivorusCameraZoom), 0, 0);
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom when not riding Ignivorus
-            ignivorusCameraZoom = 20F;
-            ignivorusCameraZoomTarget = 20F;
+            ignivorusCameraZoom = 10F;
+            ignivorusCameraZoomTarget = 15F;
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof Nulljaw && event.getCamera().isDetached()) {

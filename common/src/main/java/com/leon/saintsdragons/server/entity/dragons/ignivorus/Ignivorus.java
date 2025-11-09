@@ -86,6 +86,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_FIRE_BREATH_PROGRESS =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_FIRE_START_SET =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_FIRE_START_X =
@@ -122,6 +124,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public int timeFlying = 0;
     private int airTicks;
     public int groundTicks;
+
+    private static final float MAX_FIRE_YAW_DEG = 70.0F;
+    private static final float MAX_FIRE_PITCH_DEG = 45.0F;
+    private Vec3 fireAimDir;
 
     // Banking animation state
     private float bankSmoothedYaw = 0f;
@@ -177,6 +183,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_FIRE_BREATHING, false);
+        this.entityData.define(DATA_FIRE_BREATH_PROGRESS, 0);
         this.entityData.define(DATA_FIRE_START_SET, false);
         this.entityData.define(DATA_FIRE_START_X, 0F);
         this.entityData.define(DATA_FIRE_START_Y, 0F);
@@ -260,9 +267,33 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
+    protected float getRiderLockPitchMin() {
+        return -70.0F;
+    }
+
+    @Override
+    protected float getRiderLockPitchMax() {
+        return 45.0F;
+    }
+
+    @Override
     protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         riderController.tickRidden(player, travelVector);
+        if (isBreathingFire()) {
+                Vec3 start = getFireBreathStartAnchor(1.0f);
+                if (start == null) {
+                    start = getEyePosition();
+                }
+                Vec3 aim = refreshFireAimDirection(start, true);
+                if (aim != null) {
+                    applyFireLook(aim);
+                } else {
+                    copyRiderLook(player);
+                }
+        } else {
+            resetFireAimDirection();
+        }
     }
 
     @Override
@@ -534,6 +565,26 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public void setBreathingFire(boolean breathing) {
         this.entityData.set(DATA_FIRE_BREATHING, breathing);
+        if (!breathing) {
+            resetFireAimDirection();
+            setFireBreathProgress(0);
+        }
+    }
+
+    /**
+     * Gets the fire breath stream progress (0-40).
+     * Used for animating the stream extending over time.
+     */
+    public int getFireBreathProgress() {
+        return this.entityData.get(DATA_FIRE_BREATH_PROGRESS);
+    }
+
+    /**
+     * Sets the fire breath stream progress (0-40).
+     * 0 = no stream, 40 = full range stream.
+     */
+    public void setFireBreathProgress(int progress) {
+        this.entityData.set(DATA_FIRE_BREATH_PROGRESS, Mth.clamp(progress, 0, 40));
     }
 
     public void syncFireBreathPath(@Nullable Vec3 start, @Nullable Vec3 end) {
@@ -576,6 +627,107 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return clientBone;
         }
         return computeFireBoneFallback(partialTicks);
+    }
+
+    public Vec3 refreshFireAimDirection(Vec3 start, boolean smooth) {
+        Vec3 desired = computeRawFireAimDirection(start);
+        if (desired == null) {
+            resetFireAimDirection();
+            return null;
+        }
+        Vec3 clamped = clampFireDirection(desired);
+        if (clamped == null) {
+            resetFireAimDirection();
+            return null;
+        }
+
+        if (fireAimDir == null) {
+            fireAimDir = clamped;
+        } else if (smooth) {
+            double blend = 0.35D;
+            fireAimDir = fireAimDir.add(clamped.subtract(fireAimDir).scale(blend));
+            double len = fireAimDir.length();
+            if (len > 1.0E-6) {
+                fireAimDir = fireAimDir.scale(1.0 / len);
+            } else {
+                fireAimDir = clamped;
+            }
+        } else {
+            fireAimDir = clamped;
+        }
+        return fireAimDir;
+    }
+
+    private Vec3 computeRawFireAimDirection(Vec3 start) {
+        Entity controller = this.getControllingPassenger();
+        if (controller instanceof LivingEntity rider) {
+            Vec3 look = rider.getLookAngle();
+            if (look.lengthSqr() > 1.0E-6) {
+                return look.normalize();
+            }
+        }
+
+        LivingEntity target = this.getTarget();
+        if (target != null && target.isAlive()) {
+            Vec3 aimPoint = target.getEyePosition().add(0.0D, -0.2D, 0.0D);
+            Vec3 toward = aimPoint.subtract(start);
+            if (toward.lengthSqr() > 1.0E-6) {
+                return toward.normalize();
+            }
+        }
+
+        Vec3 fallback = Vec3.directionFromRotation(this.getXRot(), this.yHeadRot);
+        return fallback.lengthSqr() > 1.0E-6 ? fallback.normalize() : null;
+    }
+
+    private Vec3 clampFireDirection(Vec3 desiredDir) {
+        if (desiredDir == null || desiredDir.lengthSqr() < 1.0E-6) {
+            return null;
+        }
+        Vec3 dir = desiredDir.normalize();
+        float desiredYaw = (float) (Math.atan2(-dir.x, dir.z) * (180.0F / Math.PI));
+        float desiredPitch = (float) (-Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * (180.0F / Math.PI));
+
+        float headYaw = this.yHeadRot;
+        float headPitch = this.getXRot();
+
+        float yawErr = Mth.degreesDifference(headYaw, desiredYaw);
+        float pitchErr = desiredPitch - headPitch;
+
+        float finalYaw = headYaw + Mth.clamp(yawErr, -MAX_FIRE_YAW_DEG, MAX_FIRE_YAW_DEG);
+        float finalPitch = headPitch + Mth.clamp(pitchErr, -MAX_FIRE_PITCH_DEG, MAX_FIRE_PITCH_DEG);
+
+        Vec3 finalDir = Vec3.directionFromRotation(finalPitch, finalYaw);
+        return finalDir.lengthSqr() > 1.0E-6 ? finalDir.normalize() : null;
+    }
+
+    private void applyFireLook(Vec3 aimDir) {
+        if (aimDir == null) {
+            return;
+        }
+        float desiredYaw = (float) (Math.atan2(-aimDir.x, aimDir.z) * (180.0 / Math.PI));
+        float desiredPitch = (float) (-Math.atan2(aimDir.y, Math.sqrt(aimDir.x * aimDir.x + aimDir.z * aimDir.z)) * (180.0 / Math.PI));
+
+        float headYawSpeed = 12.0F;
+        float headPitchSpeed = 9.0F;
+
+        this.yHeadRot = Mth.approachDegrees(this.yHeadRot, desiredYaw, headYawSpeed);
+
+        float currentPitch = this.getXRot();
+        float pitchDelta = desiredPitch - currentPitch;
+        float pitchChange = Mth.clamp(pitchDelta, -headPitchSpeed, headPitchSpeed);
+        this.setXRot(currentPitch + pitchChange);
+
+        float yawDiff = Mth.degreesDifferenceAbs(desiredYaw, Mth.wrapDegrees(this.yBodyRot));
+        if (yawDiff > MAX_FIRE_YAW_DEG * 0.65F) {
+            float bodySpeed = 6.0F;
+            this.setYRot(Mth.approachDegrees(this.getYRot(), desiredYaw, bodySpeed));
+            this.yBodyRot = Mth.approachDegrees(this.yBodyRot, desiredYaw, bodySpeed);
+        }
+    }
+
+    private void resetFireAimDirection() {
+        fireAimDir = null;
     }
 
     private Vec3 computeFireBoneFallback(float partialTicks) {

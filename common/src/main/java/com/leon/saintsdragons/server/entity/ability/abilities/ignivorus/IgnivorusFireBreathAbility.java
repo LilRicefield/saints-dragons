@@ -6,8 +6,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
@@ -26,10 +24,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     private static final int STARTUP_TICKS = 18;
-    private static final int ACTIVE_TICKS = 200;
+    private static final int ACTIVE_TICKS = 400;
     private static final int COOLDOWN_TICKS = 40;
 
-    private static final double MAX_RANGE = 36.0D;
+    private static final double MAX_RANGE = 128.0D;  // Must match layer's MAX_VISUAL_DISTANCE!
     private static final double IMPACT_RADIUS = 1.25D;
     private static final float BASE_DAMAGE = 4.0F;
     private static final int FIRE_DURATION_SECONDS = 3;
@@ -51,6 +49,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         }
         if (section.sectionType == STARTUP) {
             getUser().setBreathingFire(false);
+            getUser().setFireBreathProgress(0);  // Reset progress on startup
             getUser().clearFireBreathPath();
         } else if (section.sectionType == ACTIVE) {
             getUser().setBreathingFire(true);
@@ -71,6 +70,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     @Override
     public void interrupt() {
         getUser().setBreathingFire(false);
+        getUser().setFireBreathProgress(0);  // Reset progress on interrupt
         getUser().clearFireBreathPath();
         super.interrupt();
     }
@@ -95,52 +95,48 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         }
 
         Ignivorus dragon = getUser();
+
+        // Increment stream progress for extending animation (0-40, like Ice & Fire)
+        int currentProgress = dragon.getFireBreathProgress();
+        if (currentProgress < 40) {
+            dragon.setFireBreathProgress(currentProgress + 1);
+        }
+
         Vec3 origin = dragon.getFireBreathStartAnchor(1.0f);
         if (origin == null) {
             dragon.clearFireBreathPath();
             return;
         }
 
-        Vec3 aim = computeAimDirection(dragon, origin);
+        Vec3 aim = dragon.refreshFireAimDirection(origin, false);
         if (aim == null || aim.lengthSqr() < 1.0E-6) {
             dragon.clearFireBreathPath();
             return;
         }
 
         Vec3 impact = traceImpact(dragon, origin, aim);
+
         dragon.syncFireBreathPath(origin, impact);
 
-        if (dragon.level() instanceof ServerLevel serverLevel) {
-        double sizeScale = Math.max(0.8D, dragon.getBbWidth());
-        float damage = computeDamage(dragon, sizeScale);
-        double radius = IMPACT_RADIUS * sizeScale;
-        DragonDestructionManager.applyFireBreathImpact(serverLevel, dragon, impact, radius, damage, FIRE_DURATION_SECONDS);
-    }
+        // Only apply destruction when stream has extended (progress > 10)
+        // This prevents instant block burning at full range
+        if (currentProgress > 10 && dragon.level() instanceof ServerLevel serverLevel) {
+            double sizeScale = Math.max(0.8D, dragon.getBbWidth());
+            float damage = computeDamage(dragon, sizeScale);
+            double radius = IMPACT_RADIUS * sizeScale;
+
+            // Calculate current impact point based on progress (0-40 → 0.0-1.0)
+            double progressRatio = Math.min(1.0, currentProgress / 40.0);
+            Vec3 currentImpact = origin.add(impact.subtract(origin).scale(progressRatio));
+
+            DragonDestructionManager.applyFireBreathImpact(serverLevel, dragon, currentImpact, radius, damage, FIRE_DURATION_SECONDS);
+        }
     }
 
     private static float computeDamage(Ignivorus dragon, double sizeScale) {
         double attackValue = dragon.getAttributeValue(Attributes.ATTACK_DAMAGE);
         float scaled = (float) (BASE_DAMAGE + attackValue * 0.25F);
         return scaled * (float) (0.65D + (sizeScale * 0.2D));
-    }
-
-    @Nullable
-    private static Vec3 computeAimDirection(Ignivorus dragon, Vec3 origin) {
-        // Use dragon's head rotation for fire direction (like Raevyx beam)
-        // This makes fire visually match where the dragon's head is facing
-
-        LivingEntity target = dragon.getTarget();
-        if (target != null && target.isAlive()) {
-            Vec3 targetPos = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
-            Vec3 dir = targetPos.subtract(origin);
-            if (dir.lengthSqr() > 1.0E-6) {
-                return dir.normalize();
-            }
-        }
-
-        // Always use dragon's head rotation (not rider's look angle)
-        Vec3 dragonAim = Vec3.directionFromRotation(dragon.getXRot(), dragon.yHeadRot);
-        return dragonAim.lengthSqr() > 1.0E-6 ? dragonAim.normalize() : null;
     }
 
     private Vec3 traceImpact(Ignivorus dragon, Vec3 origin, Vec3 direction) {

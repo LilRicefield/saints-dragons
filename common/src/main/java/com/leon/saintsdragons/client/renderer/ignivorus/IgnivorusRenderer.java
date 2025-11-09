@@ -1,7 +1,8 @@
 package com.leon.saintsdragons.client.renderer.ignivorus;
 
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
-import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusFireBreathLayer;
+import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusFireConeLayer;
+import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusMouthSmokeLayer;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -21,7 +22,8 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
 
     public IgnivorusRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new IgnivorusModel());
-        this.addRenderLayer(new IgnivorusFireBreathLayer());
+        this.addRenderLayer(new IgnivorusMouthSmokeLayer());
+        this.addRenderLayer(new IgnivorusFireConeLayer());
     }
 
     @Override
