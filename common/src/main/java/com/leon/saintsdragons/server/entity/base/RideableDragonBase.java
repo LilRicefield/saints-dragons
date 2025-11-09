@@ -56,8 +56,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     public void handleRiderNetworkInput(ServerPlayer player, MessageDragonRideInput msg) {
         boolean locked = isRiderInputLocked(player);
         applyRiderVerticalInput(player, msg.goingUp(), msg.goingDown(), locked);
-        applyRiderMovementInput(player, msg.forward(), msg.strafe(), msg.yaw(), locked);
         handleRiderAction(player, msg.action(), msg.abilityName(), locked);
+        applyRiderMovementInput(player, msg.forward(), msg.strafe(), msg.yaw(), locked);
     }
 
     protected boolean isRiderInputLocked(Player player) {
