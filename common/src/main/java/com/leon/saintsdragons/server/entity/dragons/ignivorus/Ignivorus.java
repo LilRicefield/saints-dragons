@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
-import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -84,6 +84,25 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
+    private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_FIRE_START_SET =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_FIRE_START_X =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_START_Y =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_START_Z =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_FIRE_END_SET =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_FIRE_END_X =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_END_Y =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_FIRE_END_Z =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+
     private static final double MODEL_SCALE = 1.0D;
 
     // Vocal entries (placeholder - sounds to be added later)
@@ -157,6 +176,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
+        this.entityData.define(DATA_FIRE_BREATHING, false);
+        this.entityData.define(DATA_FIRE_START_SET, false);
+        this.entityData.define(DATA_FIRE_START_X, 0F);
+        this.entityData.define(DATA_FIRE_START_Y, 0F);
+        this.entityData.define(DATA_FIRE_START_Z, 0F);
+        this.entityData.define(DATA_FIRE_END_SET, false);
+        this.entityData.define(DATA_FIRE_END_X, 0F);
+        this.entityData.define(DATA_FIRE_END_Y, 0F);
+        this.entityData.define(DATA_FIRE_END_Z, 0F);
     }
 
     @Override
@@ -261,6 +289,57 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
+    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
+        if (action == null) {
+            return;
+        }
+        switch (action) {
+            case TAKEOFF_REQUEST -> requestRiderTakeoff();
+            case ACCELERATE -> setAccelerating(true);
+            case STOP_ACCELERATE -> setAccelerating(false);
+            case ABILITY_USE -> {
+                if (!locked && abilityName != null && !abilityName.isEmpty()) {
+                    useRidingAbility(abilityName);
+                }
+            }
+            case ABILITY_STOP -> {
+                if (abilityName != null && !abilityName.isEmpty()) {
+                    forceEndActiveAbility();
+                }
+            }
+            default -> { }
+        }
+    }
+
+    public void useRidingAbility(String abilityName) {
+        if (abilityName == null || abilityName.isEmpty()) {
+            return;
+        }
+        Entity controller = this.getControllingPassenger();
+        if (!(controller instanceof LivingEntity living)) {
+            return;
+        }
+        if (this.isTame() && controller instanceof Player player && !this.isOwnedBy(player)) {
+            return;
+        }
+        var type = AbilityRegistry.get(abilityName);
+        if (type != null) {
+            this.combatManager.tryUseAbility(type);
+        }
+    }
+
+    public void forceEndActiveAbility() {
+        this.combatManager.forceEndActiveAbility();
+        clearFireBreathPath();
+        setBreathingFire(false);
+    }
+
+    @Override
+    public RiderAbilityBinding getTertiaryRiderAbility() {
+        return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID, RiderAbilityBinding.Activation.HOLD);
+    }
+
+    @Override
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
         return riderController.getDismountLocationForPassenger(passenger);
     }
@@ -287,6 +366,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (!isFlying() && onGround()) {
             riderController.requestRiderTakeoff();
         }
+    }
+
+    public void requestRiderTakeoff() {
+        riderController.requestRiderTakeoff();
     }
 
     @Override
@@ -410,6 +493,106 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.set(DATA_FLIGHT_MODE, mode);
     }
 
+    public boolean isBreathingFire() {
+        return this.entityData.get(DATA_FIRE_BREATHING);
+    }
+
+    public void setBreathingFire(boolean breathing) {
+        this.entityData.set(DATA_FIRE_BREATHING, breathing);
+    }
+
+    public void syncFireBreathPath(@Nullable Vec3 start, @Nullable Vec3 end) {
+        setFireBreathStart(start);
+        setFireBreathTarget(end);
+    }
+
+    public void clearFireBreathPath() {
+        setFireBreathStart(null);
+        setFireBreathTarget(null);
+    }
+
+    @Nullable
+    public Vec3 getFireBreathStart() {
+        if (!this.entityData.get(DATA_FIRE_START_SET)) {
+            return null;
+        }
+        return new Vec3(
+            this.entityData.get(DATA_FIRE_START_X),
+            this.entityData.get(DATA_FIRE_START_Y),
+            this.entityData.get(DATA_FIRE_START_Z)
+        );
+    }
+
+    @Nullable
+    public Vec3 getFireBreathTarget() {
+        if (!this.entityData.get(DATA_FIRE_END_SET)) {
+            return null;
+        }
+        return new Vec3(
+            this.entityData.get(DATA_FIRE_END_X),
+            this.entityData.get(DATA_FIRE_END_Y),
+            this.entityData.get(DATA_FIRE_END_Z)
+        );
+    }
+
+    public Vec3 getFireBreathStartAnchor(float partialTicks) {
+        Vec3 clientBone = getClientLocatorPosition("fireBoneOrigin");
+        if (clientBone != null) {
+            return clientBone;
+        }
+        return computeFireBoneFallback(partialTicks);
+    }
+
+    private Vec3 computeFireBoneFallback(float partialTicks) {
+        double x = Mth.lerp(partialTicks, this.xo, this.getX());
+        double y = Mth.lerp(partialTicks, this.yo, this.getY());
+        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
+
+        float yawDeg = Mth.lerp(partialTicks, this.yHeadRotO, this.yHeadRot);
+        float pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
+
+        double yaw = Math.toRadians(yawDeg);
+        double pitch = Math.toRadians(pitchDeg);
+
+        double localRight = 0.0D;
+        double localUp = (7.5D / 16.0D) * MODEL_SCALE;
+        double localForward = (18.0D / 16.0D) * MODEL_SCALE;
+
+        double cp = Math.cos(pitch);
+        double sp = Math.sin(pitch);
+        double pitchedUp = localUp * cp - localForward * sp;
+        double pitchedForward = localUp * sp + localForward * cp;
+
+        double cy = Math.cos(yaw);
+        double sy = Math.sin(yaw);
+        double offX = localRight * cy - pitchedForward * sy;
+        double offZ = localRight * sy + pitchedForward * cy;
+
+        return new Vec3(x + offX, y + pitchedUp, z + offZ);
+    }
+
+    private void setFireBreathStart(@Nullable Vec3 pos) {
+        if (pos == null) {
+            this.entityData.set(DATA_FIRE_START_SET, false);
+            return;
+        }
+        this.entityData.set(DATA_FIRE_START_SET, true);
+        this.entityData.set(DATA_FIRE_START_X, (float) pos.x);
+        this.entityData.set(DATA_FIRE_START_Y, (float) pos.y);
+        this.entityData.set(DATA_FIRE_START_Z, (float) pos.z);
+    }
+
+    private void setFireBreathTarget(@Nullable Vec3 pos) {
+        if (pos == null) {
+            this.entityData.set(DATA_FIRE_END_SET, false);
+            return;
+        }
+        this.entityData.set(DATA_FIRE_END_SET, true);
+        this.entityData.set(DATA_FIRE_END_X, (float) pos.x);
+        this.entityData.set(DATA_FIRE_END_Y, (float) pos.y);
+        this.entityData.set(DATA_FIRE_END_Z, (float) pos.z);
+    }
+
     // ===== UTILITY METHODS =====
 
     @Override
@@ -426,8 +609,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        // No abilities yet - just testing flight and animations
-        return null;
+        return IgnivorusAbilities.IGNIVORUS_FIRE_BREATH;
     }
 
     // ===== ENTITY DATA ACCESSOR GETTERS =====
@@ -723,11 +905,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        this.combatManager.saveToNBT(tag);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        this.combatManager.loadFromNBT(tag);
     }
 
     // ===== SPAWN PLACEMENT =====
