@@ -72,20 +72,16 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 state.setAndContinue(FLAP);
             }
         } else {
-            // Ground movement - check velocity directly for multiplayer sync
-            var vel = dragon.getDeltaMovement();
-            boolean isMovingOnGround = vel.horizontalDistanceSqr() > 0.001;
+            // Ground movement - use DATA_GROUND_MOVE_STATE as single source of truth
+            // This value is set by:
+            // - applyRiderMovementInput() when ridden
+            // - setGroundMoveStateFromAI() when AI-controlled
+            int groundState = dragon.getEntityData().get(dragon.DATA_GROUND_MOVE_STATE);
 
-            if (isMovingOnGround) {
-                // Check if running/sprinting
-                if (dragon.isAccelerating() || dragon.isRunning()) {
-                    state.setAndContinue(RUN);
-                } else {
-                    state.setAndContinue(WALK);
-                }
-            } else {
-                // Standing still
-                state.setAndContinue(IDLE);
+            switch (groundState) {
+                case 2 -> state.setAndContinue(RUN);   // Running/sprinting
+                case 1 -> state.setAndContinue(WALK);  // Walking
+                default -> state.setAndContinue(IDLE); // Idle/stopped
             }
         }
         return PlayState.CONTINUE;

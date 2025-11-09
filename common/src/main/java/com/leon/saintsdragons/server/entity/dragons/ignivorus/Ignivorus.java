@@ -289,6 +289,28 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
+        // Apply deadzone and store input
+        float fwd = applyInputDeadzone(forward);
+        float str = applyInputDeadzone(strafe);
+        setLastRiderForward(fwd);
+        setLastRiderStrafe(str);
+
+        // Update ground move state for multiplayer sync
+        if (!isFlying()) {
+            int moveState = 0; // idle
+            float magnitude = Math.abs(fwd) + Math.abs(str);
+            if (magnitude > 0.05f) {
+                moveState = this.isAccelerating() ? 2 : 1; // run : walk
+            }
+            // Only update if changed (avoid unnecessary network packets)
+            if (this.getEntityData().get(DATA_GROUND_MOVE_STATE) != moveState) {
+                this.getEntityData().set(DATA_GROUND_MOVE_STATE, moveState);
+            }
+        }
+    }
+
+    @Override
     protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
         if (action == null) {
             return;
@@ -308,6 +330,19 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 }
             }
             default -> { }
+        }
+    }
+
+    /**
+     * Allows AI goals to explicitly set ground move state for multiplayer sync.
+     * Called by AI goals when the dragon is walking, running, or stopping.
+     */
+    public void setGroundMoveStateFromAI(int state) {
+        if (!this.level().isClientSide) {
+            int s = Mth.clamp(state, 0, 2); // 0=idle, 1=walk, 2=run
+            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
+                this.entityData.set(DATA_GROUND_MOVE_STATE, s);
+            }
         }
     }
 
