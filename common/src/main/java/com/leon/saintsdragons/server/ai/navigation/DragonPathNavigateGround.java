@@ -117,12 +117,15 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
 
     @Override
     protected boolean hasValidPathType(@Nonnull BlockPathTypes pathType) {
-        if (pathType == BlockPathTypes.WATER) {
-            return false; // Dragons avoid water paths
-        } else if (pathType == BlockPathTypes.LAVA) {
-            return false; // Dragons avoid lava paths
-        } else {
-            return pathType != BlockPathTypes.OPEN;
+        if (pathType == BlockPathTypes.LAVA) {
+            return false; // Dragons avoid lava paths entirely
         }
+
+        if (pathType == BlockPathTypes.WATER) {
+            // Permit water nodes only when the mob is already submerged so it can path out.
+            return this.mob.isInWaterOrBubble();
+        }
+
+        return pathType != BlockPathTypes.OPEN;
     }
 }
