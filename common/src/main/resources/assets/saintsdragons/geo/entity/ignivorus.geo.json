@@ -516,6 +516,11 @@
 					]
 				},
 				{
+					"name": "fireBone",
+					"parent": "head",
+					"pivot": [-0.06603, 59.45, -245.05]
+				},
+				{
 					"name": "leftfrontleg",
 					"parent": "heightController",
 					"pivot": [31.37147, 62.5, -48],

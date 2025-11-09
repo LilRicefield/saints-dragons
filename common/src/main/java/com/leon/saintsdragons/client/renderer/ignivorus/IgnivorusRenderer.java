@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.renderer.ignivorus;
 
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
+import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusFireBreathLayer;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -13,11 +14,14 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
+    private static final String FIRE_BONE = "fireBone";
+    private static final String PASSENGER_BONE = "passengerBone";
 
     private BakedGeoModel lastBakedModel;
 
     public IgnivorusRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new IgnivorusModel());
+        this.addRenderLayer(new IgnivorusFireBreathLayer());
     }
 
     @Override
@@ -49,7 +53,11 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     }
 
     private void enableTrackingForBones(BakedGeoModel model) {
-        model.getBone("passengerBone").ifPresent(b -> b.setTrackingMatrices(true));
+        if (model == null) {
+            return;
+        }
+        model.getBone(PASSENGER_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(FIRE_BONE).ifPresent(b -> b.setTrackingMatrices(true));
     }
 
     @Override
@@ -57,14 +65,23 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
-        if (this.lastBakedModel != null) {
-            this.lastBakedModel.getBone("passengerBone").ifPresent(b -> {
-                net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
-                if (world != null) {
-                    entity.setClientLocatorPosition("passengerLocator", world);
-                }
-            });
+        if (this.lastBakedModel == null) {
+            return;
         }
+
+        this.lastBakedModel.getBone(PASSENGER_BONE).ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+            if (world != null) {
+                entity.setClientLocatorPosition("passengerLocator", world);
+            }
+        });
+
+        this.lastBakedModel.getBone(FIRE_BONE).ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
+            if (world != null) {
+                entity.setClientLocatorPosition("fireBoneOrigin", world);
+            }
+        });
     }
 
     private net.minecraft.world.phys.Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
