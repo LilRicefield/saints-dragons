@@ -64,6 +64,7 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
@@ -1123,6 +1124,33 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+
+        if (inWater) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+            return;
+        }
+
+        if (locked) {
+            setGoingUp(false);
+            setGoingDown(false);
+            return;
+        }
+
+
+        if (inWater) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+            return;
+        }
+
+        if (locked) {
+            setGoingUp(false);
+            setGoingDown(false);
+            return;
+        }
+
         if (this.isFlying()) {
             setGoingUp(goingUp);
             setGoingDown(goingDown);
@@ -1278,6 +1306,18 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     
     @Override
     public void travel(@NotNull Vec3 motion) {
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+
+        if (inWater && !level().isClientSide) {
+            if (isFlying()) {
+                this.setFlying(false);
+                this.setTakeoff(false);
+                this.setHovering(false);
+                this.setLanding(false);
+                this.switchToGroundNavigation();
+            }
+        }
+
         // Riding logic
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
             // Clear any AI navigation when being ridden
@@ -1285,17 +1325,69 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 this.getNavigation().stop();
             }
 
-            if (isFlying()) {
+            if (inWater) {
+                handleWaterSwimming(motion);
+            } else if (isFlying()) {
                 // Delegate flying movement to rider controller for consistency
                 this.riderController.handleRiderMovement(player, motion);
             } else {
                 // Ground movement - use vanilla system which calls getRiddenInput()
                 super.travel(motion);
             }
-        } else {
-            // Normal AI movement
-            super.travel(motion);
+            return;
         }
+
+        // Normal AI movement
+        super.travel(motion);
+    }
+
+    /**
+     * Handles rider-controlled swimming when the Cindervane is submerged.
+     * Mimics Raevyx behaviour: slow horizontal movement, gradual sinking, manual ascend/descend.
+     */
+    private void handleWaterSwimming(Vec3 input) {
+        Vec3 velocity = this.getDeltaMovement();
+
+        double swimSpeed = 0.4D;
+        if (isAccelerating()) {
+            swimSpeed *= 1.3D;
+        }
+
+        Vec3 desired = getSwimVec3(input, swimSpeed, velocity);
+        Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.15D));
+
+        double dragFactor = 0.88D;
+        blended = blended.multiply(dragFactor, 0.92D, dragFactor);
+
+        double dy = blended.y;
+        if (isGoingUp()) {
+            dy = Math.min(swimSpeed * 0.6D, dy + 0.08D);
+        } else if (isGoingDown()) {
+            dy = Math.max(-swimSpeed * 0.8D, dy - 0.12D);
+        } else {
+            dy -= 0.03D;
+        }
+
+        blended = new Vec3(blended.x, dy, blended.z);
+
+        this.setDeltaMovement(blended);
+        this.move(MoverType.SELF, this.getDeltaMovement());
+    }
+
+    private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed, Vec3 velocity) {
+        double strafe = wishDir.x;
+        double forward = wishDir.z;
+        float yawRad = this.getYRot() * ((float) Math.PI / 180F);
+        double sin = Math.sin(yawRad);
+        double cos = Math.cos(yawRad);
+
+        double worldX = strafe * cos - forward * sin;
+        double worldZ = forward * cos + strafe * sin;
+
+        double dx = worldX * 0.6D * swimSpeed;
+        double dz = worldZ * 0.6D * swimSpeed;
+
+        return new Vec3(dx, 0.0D, dz);
     }
 
     public void switchToAirNavigation() {
@@ -1906,7 +1998,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public boolean canTakeoff() {
-        return !this.isBaby() && !this.isOrderedToSit() && this.isAlive() && (this.onGround() || this.isInWater());
+        return !this.isBaby()
+                && !this.isOrderedToSit()
+                && this.isAlive()
+                && !this.isInWaterOrBubble()
+                && !this.isInLava()
+                && this.onGround();
     }
 
     @Override

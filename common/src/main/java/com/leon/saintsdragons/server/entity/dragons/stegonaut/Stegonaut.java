@@ -4,7 +4,6 @@ import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautPassiveBuffAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -27,7 +26,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.AgeableMob;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -35,13 +33,11 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -150,7 +146,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     
     @Override
     protected void registerGoals() {
-        // Basic AI goals - simple and cute!
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(0, new StegonautSleepGoal(this)); // Highest priority - nighttime sleep only
         this.goalSelector.addGoal(1, new StegonautLeaveWaterGoal(this, 1.15D)); // Emergency priority - get out of water fast
@@ -163,7 +158,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     }
 
     @Override
-    protected net.minecraft.world.entity.ai.navigation.PathNavigation createNavigation(net.minecraft.world.level.Level level) {
+    protected net.minecraft.world.entity.ai.navigation.@NotNull PathNavigation createNavigation(net.minecraft.world.level.@NotNull Level level) {
         // Use custom DragonPathNavigateGround for smoother pathfinding with shortcutting
         // Prevents jerky stop-at-every-waypoint behavior, especially during flee/wander
         return new DragonPathNavigateGround(this, level);
@@ -546,9 +541,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         }
 
         // Play/animate if we chose one
-        if (vocalKey != null) {
-            this.getSoundHandler().playVocal(vocalKey);
-        }
+        this.getSoundHandler().playVocal(vocalKey);
     }
 
     /**
@@ -721,10 +714,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
 
         // Handle rest state transitions and trigger animations (server-side only)
         if (!level().isClientSide) {
-            // DEBUG: Log every 2 seconds to verify tick() is running after load
-            if (tickCount % 40 == 0) {
-                System.out.println("[DEBUG] Stegonaut tick() running - tickCount: " + tickCount + " | sitProgress: " + sitProgress + " | isOrderedToSit: " + isOrderedToSit());
-            }
             handleRestStateTransitions();
         }
 
@@ -756,18 +745,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
      */
     private void handleRestStateTransitions() {
         var restState = restManager.getCurrentState();
-
-        // DEBUG: Log rest state every second
-        if (tickCount % 20 == 0 && restState != com.leon.saintsdragons.server.entity.sleep.DragonRestState.IDLE) {
-            System.out.println("[DEBUG] Stegonaut rest state: " + restState +
-                " | sleepTransitionTicks: " + sleepTransitionTicks +
-                " | sitProgress: " + sitProgress + "/" + maxSitTicks() +
-                " | isOrderedToSit: " + isOrderedToSit() +
-                " | sleeping: " + sleeping +
-                " | isSittingDown: " + isSittingDown +
-                " | isStandingUp: " + isStandingUp);
-        }
-
         // Tick down transition timer
         if (sleepTransitionTicks > 0) {
             sleepTransitionTicks--;
@@ -777,7 +754,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         if (this.isOrderedToSit()) {
             // Trigger sit down animation when starting from standing (sitProgress == 0)
             if (sitProgress == 0f && !isSittingDown && restState == com.leon.saintsdragons.server.entity.sleep.DragonRestState.IDLE) {
-                System.out.println("[DEBUG] Triggering sit_down animation");
                 animationController.triggerSitDownAnimation();
                 isSittingDown = true;
                 isStandingUp = false;
@@ -786,7 +762,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         } else if (sitProgress > 0f) {
             // Trigger sit up animation when standing up from sitting
             if (sitProgress >= maxSitTicks() - 1 && !isStandingUp && restState == com.leon.saintsdragons.server.entity.sleep.DragonRestState.IDLE) {
-                System.out.println("[DEBUG] Triggering sit_up animation");
                 animationController.triggerSitUpAnimation();
                 isStandingUp = true;
                 isSittingDown = false;
@@ -797,11 +772,9 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Clear sitting/standing flags when transition completes
         if (sleepTransitionTicks == 0) {
             if (isSittingDown && sitProgress >= maxSitTicks()) {
-                System.out.println("[DEBUG] Clearing isSittingDown flag");
                 isSittingDown = false;
             }
             if (isStandingUp && sitProgress == 0f) {
-                System.out.println("[DEBUG] Clearing isStandingUp flag");
                 isStandingUp = false;
             }
         }
@@ -819,7 +792,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             case FALLING_ASLEEP:
                 // Trigger fall_asleep animation when transitioning from sit to sleep
                 if (sleepTransitionTicks == 0) {
-                    System.out.println("[DEBUG] Triggering fall_asleep animation");
                     animationController.triggerFallAsleepAnimation();
                     sleepTransitionTicks = 38; // 1.88 seconds
                 }
@@ -828,7 +800,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             case SLEEPING:
                 // Trigger sleep loop when fall_asleep completes
                 if (sleepTransitionTicks == 0 && !sleeping) {
-                    System.out.println("[DEBUG] Triggering sleep loop animation");
                     animationController.triggerSleepAnimation();
                     sleepTransitionTicks = -1; // Mark as triggered (don't repeat)
                 }
@@ -837,7 +808,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             case WAKING_UP:
                 // Trigger wake_up animation when transitioning from sleep to sit
                 if (sleepTransitionTicks == 0) {
-                    System.out.println("[DEBUG] Triggering wake_up animation");
                     animationController.triggerWakeUpAnimation();
                     sleepTransitionTicks = 38; // 1.88 seconds
                 }
@@ -1024,13 +994,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
 
         // Save rest state manager
         restManager.save(tag);
-
-        // DEBUG: Log what we're saving
-        System.out.println("[DEBUG] SAVING Stegonaut - RestState: " + restManager.getCurrentState() +
-            " | sleepTransitionTicks: " + sleepTransitionTicks +
-            " | sitProgress: " + sitProgress +
-            " | isOrderedToSit: " + isOrderedToSit() +
-            " | sleeping: " + sleeping);
     }
     
     @Override
@@ -1079,16 +1042,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Restore rest state manager and trigger appropriate animation
         restManager.load(tag);
         com.leon.saintsdragons.server.entity.sleep.DragonRestState restState = restManager.getCurrentState();
-
-        // DEBUG: Log what we loaded
-        System.out.println("[DEBUG] LOADING Stegonaut - RestState: " + restState +
-            " | sleepTransitionTicks: " + sleepTransitionTicks +
-            " | sitProgress: " + sitProgress +
-            " | isOrderedToSit: " + isOrderedToSit() +
-            " | sleeping: " + sleeping +
-            " | isSittingDown: " + isSittingDown +
-            " | isStandingUp: " + isStandingUp +
-            " | isTame: " + isTame());
 
         switch (restState) {
             case SLEEPING:
