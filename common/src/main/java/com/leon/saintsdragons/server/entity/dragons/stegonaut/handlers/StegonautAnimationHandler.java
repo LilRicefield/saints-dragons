@@ -19,9 +19,52 @@ public class StegonautAnimationHandler {
     private static final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.walk");
     private static final RawAnimation SLEEP_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sleep");
     private static final RawAnimation SIT_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sit");
+
+    // Rest transition animations (one-shot)
+    private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.stegonaut.down");
+    private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.stegonaut.up");
+    private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.stegonaut.fall_asleep");
+    private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.stegonaut.wake_up");
     
     public StegonautAnimationHandler(Stegonaut drake) {
         this.drake = drake;
+    }
+
+    // ===== ANIMATION TRIGGER HELPERS =====
+
+    /**
+     * Triggers the sit down transition animation
+     */
+    public void triggerSitDownAnimation() {
+        drake.triggerAnim("action", "sit_down");
+    }
+
+    /**
+     * Triggers the stand up transition animation
+     */
+    public void triggerSitUpAnimation() {
+        drake.triggerAnim("action", "sit_up");
+    }
+
+    /**
+     * Triggers the fall asleep transition animation (sit → sleep)
+     */
+    public void triggerFallAsleepAnimation() {
+        drake.triggerAnim("action", "fall_asleep");
+    }
+
+    /**
+     * Triggers the sleep loop animation
+     */
+    public void triggerSleepAnimation() {
+        drake.triggerAnim("action", "sleep");
+    }
+
+    /**
+     * Triggers the wake up transition animation (sleep → sit)
+     */
+    public void triggerWakeUpAnimation() {
+        drake.triggerAnim("action", "wake_up");
     }
     
     /**
@@ -31,15 +74,31 @@ public class StegonautAnimationHandler {
         // Set default transition length for smooth blending
         state.getController().transitionLength(8); // Smooth but not too slow
 
-        // Check if sleeping - sleep animation takes priority
+        // PRIORITY: Handle dying and rest transitions FIRST
+        // During these states, action controller handles the animations
+        if (drake.isDying() || drake.isSleepTransitioning() || drake.isInRestTransition()) {
+            return PlayState.STOP;
+        }
+
+        // Check if sleeping - play sleep loop
         if (drake.isSleeping()) {
-            return handleSleepAnimation(state);
+            state.getController().transitionLength(12); // Slower transition for sleep
+            state.setAndContinue(SLEEP_ANIM);
+            return PlayState.CONTINUE;
         }
 
         // Check for sitting - use sit progress system to avoid desync
-        if (drake.isOrderedToSit() || drake.getSitProgress() > 0.5f) {
+        // Only play SIT loop when FULLY sat down
+        float sitProgress = drake.getSitProgress();
+        float maxSit = drake.maxSitTicks();
+
+        if (sitProgress >= maxSit) {
+            // Fully sitting - play SIT loop
             state.setAndContinue(SIT_ANIM);
             return PlayState.CONTINUE;
+        } else if (sitProgress > 0f) {
+            // In transition (either sitting down or standing up) - let action controller handle it
+            return PlayState.STOP;
         }
 
         // Use the improved movement state detection
@@ -54,18 +113,6 @@ public class StegonautAnimationHandler {
         return PlayState.CONTINUE;
     }
 
-    /**
-     * Handle sleep animation - simple and smooth
-     */
-    private PlayState handleSleepAnimation(AnimationState<Stegonaut> state) {
-        // Set smooth transition to sleep animation
-        state.getController().transitionLength(12); // Slower transition for sleep
-
-        // Always use sleep animation when sleeping
-        state.setAndContinue(SLEEP_ANIM);
-
-        return PlayState.CONTINUE;
-    }
     
     
     /**
@@ -105,6 +152,13 @@ public class StegonautAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));
         actionController.triggerableAnim("die",
                 RawAnimation.begin().thenPlay("animation.stegonaut.die"));
+
+        // Rest transition animations (sit ↔ idle, sit ↔ sleep)
+        actionController.triggerableAnim("sit_down", SIT_DOWN);
+        actionController.triggerableAnim("sit_up", SIT_UP);
+        actionController.triggerableAnim("fall_asleep", FALL_ASLEEP);
+        actionController.triggerableAnim("sleep", SLEEP_ANIM);
+        actionController.triggerableAnim("wake_up", WAKE_UP);
     }
     
     /**
