@@ -126,13 +126,8 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     @Nullable
     private static Vec3 computeAimDirection(Ignivorus dragon, Vec3 origin) {
-        Player rider = dragon.getRidingPlayer();
-        if (rider != null) {
-            Vec3 look = rider.getLookAngle();
-            if (look.lengthSqr() > 1.0E-6) {
-                return look.normalize();
-            }
-        }
+        // Use dragon's head rotation for fire direction (like Raevyx beam)
+        // This makes fire visually match where the dragon's head is facing
 
         LivingEntity target = dragon.getTarget();
         if (target != null && target.isAlive()) {
@@ -143,8 +138,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             }
         }
 
-        Vec3 fallback = Vec3.directionFromRotation(dragon.getXRot(), dragon.yHeadRot);
-        return fallback.lengthSqr() > 1.0E-6 ? fallback.normalize() : null;
+        // Always use dragon's head rotation (not rider's look angle)
+        Vec3 dragonAim = Vec3.directionFromRotation(dragon.getXRot(), dragon.yHeadRot);
+        return dragonAim.lengthSqr() > 1.0E-6 ? dragonAim.normalize() : null;
     }
 
     private Vec3 traceImpact(Ignivorus dragon, Vec3 origin, Vec3 direction) {

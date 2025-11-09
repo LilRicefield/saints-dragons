@@ -71,16 +71,22 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(FLAP);
             }
-        } else if (state.isMoving()) {
-            // Ground movement - check if running/sprinting
-            if (dragon.isAccelerating() || dragon.isRunning()) {
-                state.setAndContinue(RUN);
-            } else {
-                state.setAndContinue(WALK);
-            }
         } else {
-            // Standing still
-            state.setAndContinue(IDLE);
+            // Ground movement - check velocity directly for multiplayer sync
+            var vel = dragon.getDeltaMovement();
+            boolean isMovingOnGround = vel.horizontalDistanceSqr() > 0.001;
+
+            if (isMovingOnGround) {
+                // Check if running/sprinting
+                if (dragon.isAccelerating() || dragon.isRunning()) {
+                    state.setAndContinue(RUN);
+                } else {
+                    state.setAndContinue(WALK);
+                }
+            } else {
+                // Standing still
+                state.setAndContinue(IDLE);
+            }
         }
         return PlayState.CONTINUE;
     }

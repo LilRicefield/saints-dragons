@@ -554,9 +554,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         double yaw = Math.toRadians(yawDeg);
         double pitch = Math.toRadians(pitchDeg);
 
-        double localRight = 0.0D;
-        double localUp = (7.5D / 16.0D) * MODEL_SCALE;
-        double localForward = (18.0D / 16.0D) * MODEL_SCALE;
+        // FireBone position in model: [-0.06603, 59.45, -245.05] pixels
+        // Converted to blocks (÷16) and applied to local coordinate system
+        double localRight = (-0.06603D / 16.0D) * MODEL_SCALE;  // ≈0 (centered)
+        double localUp = (59.45D / 16.0D) * MODEL_SCALE;        // 3.716 blocks up
+        double localForward = (245.05D / 16.0D) * MODEL_SCALE;  // 15.316 blocks forward
 
         double cp = Math.cos(pitch);
         double sp = Math.sin(pitch);
