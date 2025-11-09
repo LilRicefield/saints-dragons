@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.stegonaut;
 
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,8 +14,8 @@ import java.util.EnumSet;
 import java.util.List;
 
 /**
- * Simple flee behavior for Stegonaut - runs away from Raevyx and other Stegonauts.
- * Replaces the problematic play-dead mechanic with straightforward avoidance.
+ * Simple flee behavior for Stegonaut - runs away from Raevyx and Nulljaw (predators).
+ * Based on vanilla Minecraft's AvoidEntityGoal pattern.
  */
 public class StegonautFleeFromPredatorsGoal extends Goal {
     private final Stegonaut stegonaut;
@@ -141,12 +142,19 @@ public class StegonautFleeFromPredatorsGoal extends Goal {
         fleeTimer++;
 
         // Continue fleeing away from the threat
+        // Only recalculate if we've stopped moving or every 3 seconds (less janky than every second)
         if (threatEntity != null && threatEntity.isAlive()) {
-            // Occasionally recalculate flee path
-            if (fleeTimer % 20 == 0) {
+            PathNavigation nav = stegonaut.getNavigation();
+
+            // Recalculate path if: navigation stopped OR threat got closer OR every 3 seconds
+            boolean shouldRecalculate = !nav.isInProgress() ||
+                                       stegonaut.distanceToSqr(threatEntity) < 25.0 || // Threat within 5 blocks
+                                       fleeTimer % 60 == 0; // Every 3 seconds
+
+            if (shouldRecalculate) {
                 Vec3 fleePos = DefaultRandomPos.getPosAway(stegonaut, 16, 7, threatEntity.position());
                 if (fleePos != null) {
-                    stegonaut.getNavigation().moveTo(fleePos.x, fleePos.y, fleePos.z, fleeSpeed);
+                    nav.moveTo(fleePos.x, fleePos.y, fleePos.z, fleeSpeed);
                 }
             }
         }
@@ -165,15 +173,11 @@ public class StegonautFleeFromPredatorsGoal extends Goal {
             return true;
         }
 
-        // Flee from other Stegonauts (territorial behavior)
-        if (entity instanceof Stegonaut otherStegonaut) {
-            // Don't flee from self or if both are tamed
-            if (otherStegonaut == stegonaut) {
-                return false;
-            }
-            // If tamed, don't flee from other tamed stegonauts
-            if (stegonaut.isTame() && otherStegonaut.isTame()) {
-                return false;
+        // Flee from Nulljaw (aquatic predator)
+        if (entity instanceof Nulljaw nulljaw) {
+            // If tamed, only flee from wild Nulljaw
+            if (stegonaut.isTame()) {
+                return !nulljaw.isTame();
             }
             return true;
         }

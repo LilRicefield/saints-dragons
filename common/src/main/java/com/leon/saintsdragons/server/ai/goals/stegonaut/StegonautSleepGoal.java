@@ -33,27 +33,52 @@ public class StegonautSleepGoal extends Goal {
             return false;
         }
 
-        // If already in a rest cycle (e.g., loaded from save), continue it
+        // Check if it's nighttime first
+        long dayTime = drake.level().getDayTime() % 24000;
+        boolean isNight = dayTime >= 13000 && dayTime < 23000;
+
+        // If already in a rest cycle (e.g., loaded from save), only continue if it's still night
+        // This prevents SleepGoal from stealing RestGoal's daytime rest cycles
         if (drake.getRestManager().isResting()) {
-            return true;
+            if (isNight) {
+                return true;
+            } else {
+                return false;
+            }
         }
 
         if (drake.isOrderedToSit()) return false;
         if (drake.isDying() || drake.isVehicle()) return false;
         if (drake.getTarget() != null || drake.isAggressive()) return false;
 
-        // Sleep at night
-        long dayTime = drake.level().getDayTime() % 24000;
-        boolean isNight = dayTime >= 13000 && dayTime < 23000;
+        // Only start new sleep cycle at night
         if (!isNight) return false;
+
+        // Tamed drakes sleep when their owner is sleeping
+        if (drake.isTame() && drake.getOwner() != null) {
+            boolean ownerSleeping = drake.getOwner().isSleeping();
+            // Check if owner is nearby (within 10 blocks)
+            boolean ownerNearby = drake.distanceToSqr(drake.getOwner()) < 100.0;
+
+            if (ownerSleeping && ownerNearby) {
+                return true;
+            }
+        }
 
         // Check if daytime nap was queued
         if (drake.consumeDayNapQueued()) {
             return true;
         }
 
-        // Random chance to sleep at night
-        return drake.getRandom().nextFloat() < 0.001f;
+        // Wild drakes sleep randomly at night
+        if (!drake.isTame()) {
+            boolean randomSleep = drake.getRandom().nextFloat() < 0.001f;
+            if (randomSleep) {
+            }
+            return randomSleep;
+        }
+
+        return false;
     }
 
     @Override
@@ -64,7 +89,16 @@ public class StegonautSleepGoal extends Goal {
         long dayTime = drake.level().getDayTime() % 24000;
         boolean isNight = dayTime >= 13000 && dayTime < 23000;
 
-        return drake.getRestManager().isResting() && safeToRest && isNight;
+        // For tamed drakes, wake up if owner wakes up
+        if (drake.isTame() && drake.getOwner() != null) {
+            boolean ownerSleeping = drake.getOwner().isSleeping();
+            if (!ownerSleeping) {
+                return false;
+            }
+        }
+
+        boolean shouldContinue = drake.getRestManager().isResting() && safeToRest && isNight;{}
+        return shouldContinue;
     }
 
     @Override
@@ -98,6 +132,7 @@ public class StegonautSleepGoal extends Goal {
 
         var restManager = drake.getRestManager();
         DragonRestState state = restManager.getCurrentState();
+        DragonRestState prevState = state;
 
         // Stop navigation and stay still
         drake.getNavigation().stop();
@@ -114,26 +149,27 @@ public class StegonautSleepGoal extends Goal {
         long dayTime = drake.level().getDayTime() % 24000;
         boolean isNight = dayTime >= 13000 && dayTime < 23000;
 
-        // State machine for simple sleep cycle
+        // State machine for full sleep cycle
+        // All transition animations are 1.88 seconds = 38 ticks
         switch (state) {
             case SITTING_DOWN:
-                // Wait for down → sit animation (simple, ~30 ticks)
-                if (restManager.getStateTimer() > 35) {
+                // Wait for down → sit animation (38 ticks + 2 tick buffer)
+                if (restManager.getStateTimer() > 40) {
                     restManager.advanceState();
                 }
                 break;
 
             case SITTING:
-                // Brief pause before falling asleep
-                if (restManager.getStateTimer() > 10) {
+                // Brief pause before falling asleep (1 second)
+                if (restManager.getStateTimer() > 20) {
                     restManager.advanceState();
                     drake.startSleepEnter(); // Triggers fall_asleep animation
                 }
                 break;
 
             case FALLING_ASLEEP:
-                // Wait for fall_asleep animation
-                if ((drake.isSleeping() && !drake.isSleepTransitioning()) || restManager.getStateTimer() > 50) {
+                // Wait for fall_asleep animation (38 ticks + 2 tick buffer)
+                if ((drake.isSleeping() && !drake.isSleepTransitioning()) || restManager.getStateTimer() > 40) {
                     restManager.advanceState();
                 }
                 break;
@@ -151,24 +187,24 @@ public class StegonautSleepGoal extends Goal {
                 break;
 
             case WAKING_UP:
-                // Wait for wake_up animation
-                if (restManager.getStateTimer() > 45) {
+                // Wait for wake_up animation (38 ticks + 2 tick buffer)
+                if (restManager.getStateTimer() > 40) {
                     restManager.advanceState();
                     drake.setOrderedToSit(true);
                 }
                 break;
 
             case SITTING_AFTER:
-                // Brief pause after waking
-                if (restManager.getStateTimer() > 10) {
+                // Brief pause after waking (1 second)
+                if (restManager.getStateTimer() > 20) {
                     restManager.advanceState();
                     drake.setOrderedToSit(false); // Trigger stand up animation
                 }
                 break;
 
             case STANDING_UP:
-                // Wait for up animation
-                if (restManager.getStateTimer() > 30) {
+                // Wait for up animation (38 ticks + 2 tick buffer)
+                if (restManager.getStateTimer() > 40) {
                     restManager.advanceState(); // Returns to IDLE
                 }
                 break;
