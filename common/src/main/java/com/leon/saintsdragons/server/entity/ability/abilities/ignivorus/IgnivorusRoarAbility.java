@@ -63,6 +63,10 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
             Ignivorus dragon = getUser();
             dragon.triggerAnim("action", "roar");
             dragon.lockAbilities(STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS);
+
+            // Trigger screen shake for the roar (intensity 1.8F for ~72 ticks at 0.025/tick decay)
+            dragon.triggerScreenShake(1.8F);
+
             soundQueued = true;
             wavesSpawned = 0;
         }

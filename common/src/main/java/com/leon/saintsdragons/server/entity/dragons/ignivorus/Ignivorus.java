@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -51,7 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
-public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon {
+public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -112,6 +113,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final EntityDataAccessor<Float> DATA_FIRE_END_Z =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
 
+    private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+
     private static final double MODEL_SCALE = 1.0D;
 
     // Vocal entries (placeholder - sounds to be added later)
@@ -147,6 +151,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int bankDir = 0;
     private float bankAngle = 0f;
     private float prevBankAngle = 0f;
+
+    // Screen shake system
+    private static final float SHAKE_DECAY_PER_TICK = 0.025F;
+    private float prevScreenShakeAmount = 0.0F;
+    private float screenShakeAmount = 0.0F;
 
     // Pitching animation state
     private float pitchSmoothedPitch = 0f;
@@ -204,6 +213,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_FIRE_END_X, 0F);
         this.entityData.define(DATA_FIRE_END_Y, 0F);
         this.entityData.define(DATA_FIRE_END_Z, 0F);
+        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
     }
 
     @Override
@@ -230,6 +240,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public void tick() {
         super.tick();
         physicsController.tick();
+        tickScreenShake();
 
         // Update client-side sit progress
         if (level().isClientSide) {
@@ -1208,5 +1219,56 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         boolean feetFree = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
         boolean headFree = level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
         return solidGround && feetFree && headFree;
+    }
+
+    // ===== SCREEN SHAKE SYSTEM =====
+
+    private void tickScreenShake() {
+        // Client side: just read the synced value from entity data
+        if (level().isClientSide) {
+            prevScreenShakeAmount = screenShakeAmount;
+            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+            return;
+        }
+
+        // Server side: decay and update entity data
+        prevScreenShakeAmount = screenShakeAmount;
+        if (screenShakeAmount > 0.0F) {
+            float newAmount = Math.max(0.0F, screenShakeAmount - SHAKE_DECAY_PER_TICK);
+            screenShakeAmount = newAmount;
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, newAmount);
+        } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        }
+    }
+
+    @Override
+    public float getScreenShakeAmount(float partialTicks) {
+        float currentAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+        return prevScreenShakeAmount + (currentAmount - prevScreenShakeAmount) * partialTicks;
+    }
+
+    @Override
+    public double getShakeDistance() {
+        return 30.0; // Larger shake radius for ground-pounding roar
+    }
+
+    @Override
+    public boolean canFeelShake(Entity player) {
+        // Allow screen shake regardless of whether player is on ground
+        // This is important for dragon riding scenarios
+        return true;
+    }
+
+    public void triggerScreenShake(float intensity) {
+        float clamped = Math.max(0.0F, intensity);
+        if (clamped <= 0.0F) {
+            return;
+        }
+        if (level().isClientSide) {
+            return;
+        }
+        screenShakeAmount = Math.max(screenShakeAmount, clamped);
+        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
     }
 }
