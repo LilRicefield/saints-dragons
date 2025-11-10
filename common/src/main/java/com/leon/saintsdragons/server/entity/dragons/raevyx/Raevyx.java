@@ -810,6 +810,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return new Vec3(x + offX, y + up, z + offZ);
     }
 
+    public Vec3 getBeamStartAnchor(float partialTicks) {
+        Vec3 clientBone = getClientLocatorPosition("beamBoneOrigin");
+        if (clientBone != null) {
+            return clientBone;
+        }
+        return computeHeadMouthOrigin(partialTicks);
+    }
+
     public void forceEndActiveAbility() {
         combatManager.forceEndActiveAbility();
     }
@@ -818,6 +826,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public void setBeaming(boolean beaming) {
         boolean wasBeaming = getBooleanData(DATA_BEAMING);
         setBooleanData(DATA_BEAMING, beaming);
+        if (!beaming) {
+            clearBeamPath();
+        }
         if (!beaming || !wasBeaming) {
             resetBeamAim();
         }
@@ -881,6 +892,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 getFloatData(DATA_BEAM_START_Y),
                 getFloatData(DATA_BEAM_START_Z)
         );
+    }
+
+    public void syncBeamPath(@Nullable Vec3 start, @Nullable Vec3 end) {
+        setBeamStartPosition(start);
+        setBeamEndPosition(end);
+    }
+
+    public void clearBeamPath() {
+        setBeamStartPosition(null);
+        setBeamEndPosition(null);
     }
 
 
@@ -1479,49 +1500,20 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             return;
         }
 
-        Vec3 start = getBeamStartPosition();
-        if (start == null) {
-            start = computeHeadMouthOrigin(1.0f);
-        }
+        Vec3 start = getBeamStartAnchor(1.0f);
         if (start == null) {
             resetBeamAim();
             return;
         }
 
-        Vec3 aimDir = refreshBeamAimDirection(start, true);
+        boolean riderControlled = getControllingPassenger() != null;
+        Vec3 aimDir = refreshBeamAimDirection(start, riderControlled);
         if (aimDir == null) {
             beamAimDir = Vec3.directionFromRotation(this.getXRot(), this.yHeadRot).normalize();
             aimDir = beamAimDir;
             updateBeamOffsets(aimDir);
         }
-
-        // Calculate desired rotation from aim direction (like Tremorzilla)
-        float desiredYaw = (float)(Math.atan2(-aimDir.x, aimDir.z) * (180.0 / Math.PI));
-        float desiredPitch = (float)(-Math.atan2(aimDir.y, Math.sqrt(aimDir.x * aimDir.x + aimDir.z * aimDir.z)) * (180.0 / Math.PI));
-
-        // DIRECTLY UPDATE HEAD ROTATION for smooth beam tracking
-        // Head rotates fast to follow player's look direction
-        float headYawSpeed = 15.0F;  // degrees per tick
-        float headPitchSpeed = 12.0F;
-
-        // Yaw uses approachDegrees (wraps around 360)
-        this.yHeadRot = Mth.approachDegrees(this.yHeadRot, desiredYaw, headYawSpeed);
-
-        // Pitch uses simple lerp (doesn't wrap, clamped to -90/+90)
-        float currentPitch = this.getXRot();
-        float pitchDelta = desiredPitch - currentPitch;
-        float pitchChange = Mth.clamp(pitchDelta, -headPitchSpeed, headPitchSpeed);
-        this.setXRot(currentPitch + pitchChange);
-
-        // Rotate body to assist if head is turning too far from body center
-        // This prevents the neck from over-extending
-        float yawDiff = Mth.degreesDifferenceAbs(desiredYaw, Mth.wrapDegrees(this.yBodyRot));
-        if (yawDiff > MAX_BEAM_YAW_DEG * 0.6F) {  // If head rotation exceeds 60% of max range
-            // Smoothly rotate body to help reduce neck strain
-            float bodyRotSpeed = 8.0F;
-            this.setYRot(Mth.approachDegrees(this.getYRot(), desiredYaw, bodyRotSpeed));
-            this.yBodyRot = Mth.approachDegrees(this.yBodyRot, desiredYaw, bodyRotSpeed);
-        }
+        applyBeamLook(aimDir);
     }
 
     public Vec3 getBeamAimDirection() {
@@ -1618,6 +1610,31 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         Vec3 finalDir = Vec3.directionFromRotation(finalPitch, finalYaw);
         return finalDir.lengthSqr() > 1.0E-6 ? finalDir.normalize() : null;
+    }
+
+    private void applyBeamLook(@Nullable Vec3 aimDir) {
+        if (aimDir == null) {
+            return;
+        }
+        float desiredYaw = (float)(Math.atan2(-aimDir.x, aimDir.z) * (180.0 / Math.PI));
+        float desiredPitch = (float)(-Math.atan2(aimDir.y, Math.sqrt(aimDir.x * aimDir.x + aimDir.z * aimDir.z)) * (180.0 / Math.PI));
+
+        float headYawSpeed = 15.0F;
+        float headPitchSpeed = 12.0F;
+
+        this.yHeadRot = Mth.approachDegrees(this.yHeadRot, desiredYaw, headYawSpeed);
+
+        float currentPitch = this.getXRot();
+        float pitchDelta = desiredPitch - currentPitch;
+        float pitchChange = Mth.clamp(pitchDelta, -headPitchSpeed, headPitchSpeed);
+        this.setXRot(currentPitch + pitchChange);
+
+        float yawDiff = Mth.degreesDifferenceAbs(desiredYaw, Mth.wrapDegrees(this.yBodyRot));
+        if (yawDiff > MAX_BEAM_YAW_DEG * 0.6F) {
+            float bodyRotSpeed = 8.0F;
+            this.setYRot(Mth.approachDegrees(this.getYRot(), desiredYaw, bodyRotSpeed));
+            this.yBodyRot = Mth.approachDegrees(this.yBodyRot, desiredYaw, bodyRotSpeed);
+        }
     }
 
     private void resetBeamAim() {
@@ -3597,6 +3614,21 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 // On ground: block takeoff/vertical motion entirely
                 this.setGoingUp(false);
                 this.setGoingDown(false);
+            }
+        }
+
+        if (isBeaming()) {
+            Vec3 start = getBeamStartAnchor(1.0f);
+            if (start == null) {
+                resetBeamAim();
+                copyRiderLook(player);
+            } else {
+                Vec3 aim = refreshBeamAimDirection(start, true);
+                if (aim != null) {
+                    applyBeamLook(aim);
+                } else {
+                    copyRiderLook(player);
+                }
             }
         }
     }

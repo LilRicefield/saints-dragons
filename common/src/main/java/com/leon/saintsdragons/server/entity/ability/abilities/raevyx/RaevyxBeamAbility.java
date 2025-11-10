@@ -19,6 +19,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 400)
     };
+    private static final double MAX_BEAM_RANGE = 128.0D;
     
     private boolean hasBeamFired = false; // Track if beam has been fired this activation
     private boolean beamStartPlayed = false;
@@ -63,6 +64,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (section.sectionType == AbilitySectionType.ACTIVE) {
             Raevyx wyvern = getUser();
             wyvern.setBeaming(false);
+            wyvern.clearBeamPath();
             triggerBeamStop(wyvern);
             hasBeamFired = false;
         }
@@ -73,6 +75,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         // Ensure beaming visuals stop even if interrupted mid-startup or active
         Raevyx wyvern = getUser();
         wyvern.setBeaming(false);
+        wyvern.clearBeamPath();
         triggerBeamStop(wyvern);
         hasBeamFired = false; // Reset for next use
         super.interrupt();
@@ -86,8 +89,11 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         Raevyx wyvern = getUser();
         if (wyvern.level().isClientSide) return; // server-side authority only
 
-        // Update beam visual positions every tick
-        updateBeamPositions(wyvern);
+        BeamPath path = computeBeamPath(wyvern);
+        if (path == null) {
+            return;
+        }
+
         // Actively align body toward target while beaming so the whole wyvern faces the enemy
         var tgt = wyvern.getTarget();
         if (tgt != null && tgt.isAlive()) {
@@ -110,11 +116,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
         
         // Deal continuous damage every tick while beam is active
-        var start = wyvern.getBeamStartPosition();
-        var end = wyvern.getBeamEndPosition();
-        if (start != null && end != null) {
-            damageAlongBeam(wyvern, start, end);
-        }
+        damageAlongBeam(wyvern, path.origin(), path.impact());
     }
 
     private void triggerBeamStop(Raevyx wyvern) {
@@ -127,39 +129,46 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
     private void fireBeamOnce() {
         Raevyx wyvern = getUser();
-        updateBeamPositions(wyvern);
-        
-        var start = wyvern.getBeamStartPosition();
-        var end = wyvern.getBeamEndPosition();
-        if (start != null && end != null) {
-            damageAlongBeam(wyvern, start, end);
+        BeamPath path = computeBeamPath(wyvern);
+        if (path != null) {
+            damageAlongBeam(wyvern, path.origin(), path.impact());
         }
     }
     
-    private void updateBeamPositions(Raevyx wyvern) {
-        // Compute mouth origin from head yaw/pitch each tick and sync to clients
-        var start = wyvern.computeHeadMouthOrigin(1.0f);
-        wyvern.setBeamStartPosition(start);
-
-        // Reuse the entity's beaming aim direction so visuals, neck, and damage align.
-        net.minecraft.world.phys.Vec3 aimDir = wyvern.refreshBeamAimDirection(start, true);
-        if (aimDir == null) {
-            aimDir = net.minecraft.world.phys.Vec3.directionFromRotation(wyvern.getXRot(), wyvern.yHeadRot).normalize();
+    private BeamPath computeBeamPath(Raevyx wyvern) {
+        net.minecraft.world.phys.Vec3 origin = wyvern.getBeamStartAnchor(1.0f);
+        if (origin == null) {
+            wyvern.clearBeamPath();
+            return null;
         }
 
-        // Raycast along aim to determine endpoint
-        final double MAX_DISTANCE = 128.0; // blocks
-        var tentativeEnd = start.add(aimDir.scale(MAX_DISTANCE));
+        net.minecraft.world.phys.Vec3 aimDir = wyvern.refreshBeamAimDirection(origin, false);
+        if (aimDir == null || aimDir.lengthSqr() < 1.0E-6) {
+            wyvern.clearBeamPath();
+            return null;
+        }
 
-        var hit = wyvern.level().clip(new net.minecraft.world.level.ClipContext(
-                start,
-                tentativeEnd,
+        net.minecraft.world.phys.Vec3 impact = traceBeamImpact(wyvern, origin, aimDir);
+        wyvern.syncBeamPath(origin, impact);
+        return new BeamPath(origin, impact);
+    }
+
+    private net.minecraft.world.phys.Vec3 traceBeamImpact(Raevyx wyvern,
+                                                         net.minecraft.world.phys.Vec3 origin,
+                                                         net.minecraft.world.phys.Vec3 aimDir) {
+        var reach = origin.add(aimDir.scale(MAX_BEAM_RANGE));
+        var context = new net.minecraft.world.level.ClipContext(
+                origin,
+                reach,
                 net.minecraft.world.level.ClipContext.Block.COLLIDER,
                 net.minecraft.world.level.ClipContext.Fluid.NONE,
                 wyvern
-        ));
-        var end = hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? hit.getLocation() : tentativeEnd;
-        wyvern.setBeamEndPosition(end);
+        );
+        var hit = wyvern.level().clip(context);
+        if (hit == null || hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+            return reach;
+        }
+        return hit.getLocation();
     }
 
     private void damageAlongBeam(Raevyx wyvern, net.minecraft.world.phys.Vec3 start, net.minecraft.world.phys.Vec3 end) {
@@ -202,4 +211,6 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         // Use the comprehensive ally system from DragonEntity
         return wyvern.isAlly(other);
     }
+
+    private record BeamPath(net.minecraft.world.phys.Vec3 origin, net.minecraft.world.phys.Vec3 impact) {}
 }
