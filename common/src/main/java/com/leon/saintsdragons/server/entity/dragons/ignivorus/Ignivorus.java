@@ -1041,15 +1041,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         AnimationController<Ignivorus> pitchingController =
             new AnimationController<>(this, "pitching", 6, animationHandler::pitchingPredicate);
 
-        // Action controller for triggerable animations (sit transitions, etc.)
+        // Action controller for triggerable animations (sit transitions, fire breath, etc.)
         AnimationController<Ignivorus> actionController =
             new AnimationController<>(this, "action", 5, state -> software.bernie.geckolib.core.object.PlayState.STOP);
 
-        // Register sit transition animations
-        actionController.triggerableAnim("sit_down",
-            software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.ignivorus.down"));
-        actionController.triggerableAnim("sit_up",
-            software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.ignivorus.up"));
+        // Register all action animations via handler
+        animationHandler.setupActionController(actionController);
 
         controllers.add(movementController, bankingController, pitchingController, actionController);
     }
