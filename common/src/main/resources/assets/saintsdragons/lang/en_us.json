@@ -8,12 +8,14 @@
   "item.saintsdragons.stegonaut_spawn_egg": "Stegonaut Spawn Egg",
   "item.saintsdragons.cindervane_spawn_egg": "Cindervane Spawn Egg",
   "item.saintsdragons.nulljaw_spawn_egg": "Nulljaw Spawn Egg",
+  "item.saintsdragons.ignivorus_spawn_egg": "Ignivorus Spawn Egg",
   
   "entity.saintsdragons.raevyx": "Raevyx",
   "entity.saintsdragons.raevyx_lightning_chain": "Raevyx's Lightning Chain",
   "entity.saintsdragons.stegonaut": "Stegonaut",
   "entity.saintsdragons.cindervane": "Cindervane",
   "entity.saintsdragons.nulljaw": "Nulljaw",
+  "entity.saintsdragons.ignivorus": "Ignivorus",
   
   "saintsdragons.gui.dragon_ally.title": "Dragon Ally Management",
   "saintsdragons.gui.dragon_ally.username_input": "Enter username...",
@@ -146,6 +148,8 @@
   
   "entity.saintsdragons.raevyx.fed": "%s is fully healed!",
   "entity.saintsdragons.raevyx.fed_partial": "%s is being healed...",
+  "entity.saintsdragons.ignivorus.fed": "%s is fully healed!",
+  "entity.saintsdragons.ignivorus.fed_partial": "%s is being healed...",
   "entity.saintsdragons.raevyx.baby_fed": "%s is growing stronger!",
   "entity.saintsdragons.raevyx.baby_grown": "%s has grown into an adult!",
   "entity.saintsdragons.raevyx.still_eating": "%s is still eating...",

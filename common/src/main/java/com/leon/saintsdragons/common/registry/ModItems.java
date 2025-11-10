@@ -55,7 +55,7 @@ public final class ModItems {
             REGISTER.register("ignivorus_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(
                             ModEntities.IGNIVORUS,
-                            0xFF4500, 0x8B0000,
+                            0x0A0A0A, 0x5A5A5A,
                             new Item.Properties()
                     ));
 
