@@ -27,7 +27,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private static final int ACTIVE_TICKS = 400;
     private static final int COOLDOWN_TICKS = 40;
 
-    private static final double MAX_RANGE = 128.0D;  // Must match layer's MAX_VISUAL_DISTANCE!
+    private static final double MAX_RANGE = 64.0D;  // Must match layer's MAX_VISUAL_DISTANCE!
     private static final double IMPACT_RADIUS = 1.25D;
     private static final float BASE_DAMAGE = 4.0F;
     private static final int FIRE_DURATION_SECONDS = 3;
