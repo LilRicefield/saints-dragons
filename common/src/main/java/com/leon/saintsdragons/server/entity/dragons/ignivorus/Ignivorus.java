@@ -406,6 +406,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
+    public RiderAbilityBinding getAttackRiderAbility() {
+        // Bite ability triggered by left-click (attack key)
+        return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_BITE_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
         return riderController.getDismountLocationForPassenger(passenger);
     }
@@ -798,7 +804,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return IgnivorusAbilities.IGNIVORUS_FIRE_BREATH;
+        // Bite is the primary melee attack for AI combat
+        return IgnivorusAbilities.IGNIVORUS_BITE;
     }
 
     // ===== ENTITY DATA ACCESSOR GETTERS =====
