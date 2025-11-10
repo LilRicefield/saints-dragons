@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.client.Camera;
@@ -25,7 +26,7 @@ public class EntityRendererMixin {
     private void modifyFOV(Camera camera, float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Double> cir) {
         Minecraft mc = Minecraft.getInstance();
         double targetFOVMultiplier = 1.0;
-        if (mc.player != null && (mc.player.getVehicle() instanceof Raevyx raevyx || mc.player.getVehicle() instanceof Cindervane amphithere || mc.player.getVehicle() instanceof Nulljaw nulljaw)) {
+        if (mc.player != null && mc.player.getVehicle() != null) {
             boolean isAccelerating = false;
             boolean isFlying = false;
             double currentSpeed = 0;
@@ -64,12 +65,28 @@ public class EntityRendererMixin {
             } else if (mc.player.getVehicle() instanceof Nulljaw nulljaw) {
                 isAccelerating = nulljaw.isAccelerating();
                 isFlying = false; // Rift Drake doesn't fly
-                
+
                 if (isAccelerating) {
                     // Ground sprint - use movement speed attributes
                     currentSpeed = nulljaw.getDeltaMovement().horizontalDistance();
                     maxSpeed = nulljaw.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 1.0; // Ground sprint multiplier
                 }
+            } else if (mc.player.getVehicle() instanceof Ignivorus ignivorus) {
+                isAccelerating = ignivorus.isAccelerating();
+                isFlying = ignivorus.isFlying();
+
+                if (isAccelerating) {
+                    if (isFlying) {
+                        currentSpeed = ignivorus.getDeltaMovement().horizontalDistance();
+                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.5; // Rider sprint multiplier
+                    } else {
+                        currentSpeed = ignivorus.getDeltaMovement().horizontalDistance();
+                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 2.2; // Ground sprint multiplier
+                    }
+                }
+            } else {
+                saint_sDragons$currentFOVMultiplier = 1.0;
+                return;
             }
             
             if (isAccelerating && maxSpeed > 0) {
