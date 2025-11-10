@@ -76,30 +76,25 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
         boolean flying = wyvern.isFlying();
 
-        // Simple yaw alignment - DragonBodyControl + bodyRotDeviation handle smoothing
-        float yawDiff = Math.abs(player.getYRot() - wyvern.getYRot());
-        if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
-            float currentYaw = wyvern.getYRot();
-            float targetYaw = player.getYRot();
-            float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-            float blend = flying ? 0.35f : 0.28f; // Slightly more responsive when flying
-            float newYaw = currentYaw + (rawDiff * blend);
+        // Always sync yaw with player's look direction (like Ignivorus)
+        // This ensures spectators see smooth head tracking even when dragon is standing still
+        float currentYaw = wyvern.getYRot();
+        float targetYaw = player.getYRot();
+        float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
+        float blend = flying ? 0.35f : 0.28f; // Slightly more responsive when flying
+        float newYaw = currentYaw + (rawDiff * blend);
 
-            // Set rotation - don't manually set old values, let vanilla interpolate
-            wyvern.setYRot(newYaw);
-            wyvern.yBodyRot = newYaw;
-            wyvern.yHeadRot = newYaw;
+        // Set rotation - syncs immediately to all clients
+        wyvern.setYRot(newYaw);
+        wyvern.yBodyRot = newYaw;
+        wyvern.yHeadRot = newYaw;
 
-            // Simple pitch for flight
-            if (flying) {
-                float targetPitch = Mth.clamp(player.getXRot() * 0.55f, -35.0f, 30.0f);
-                wyvern.setXRot(targetPitch);
-            } else {
-                wyvern.setXRot(0.0F);
-            }
-
-            // Force entity to be dirty for network sync
-            wyvern.setDeltaMovement(wyvern.getDeltaMovement());
+        // Pitch control
+        if (flying) {
+            float targetPitch = Mth.clamp(player.getXRot() * 0.55f, -35.0f, 30.0f);
+            wyvern.setXRot(targetPitch);
+        } else {
+            wyvern.setXRot(0.0F);
         }
 
         // Extra safety: if we just touched ground, ensure rider has no fall damage

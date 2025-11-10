@@ -90,30 +90,25 @@ public record CindervaneRiderController(Cindervane dragon) {
 
         boolean flying = dragon.isFlying();
 
-        // Simple yaw/pitch alignment - DragonBodyControl + bodyRotDeviation handle smoothing
-        float yawDiff = Math.abs(player.getYRot() - dragon.getYRot());
-        if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
-            float currentYaw = dragon.getYRot();
-            float targetYaw = player.getYRot();
-            float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-            float blend = flying ? 0.30f : 0.25f; // Glider feel - slower than Raevyx
-            float newYaw = currentYaw + (rawDiff * blend);
+        // Always sync yaw with player's look direction (like Ignivorus)
+        // This ensures spectators see smooth head tracking even when dragon is standing still
+        float currentYaw = dragon.getYRot();
+        float targetYaw = player.getYRot();
+        float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
+        float blend = flying ? 0.30f : 0.25f; // Glider feel - slower than Raevyx
+        float newYaw = currentYaw + (rawDiff * blend);
 
-            // Set rotation - don't manually set old values, let vanilla interpolate
-            dragon.setYRot(newYaw);
-            dragon.yBodyRot = newYaw;
-            dragon.yHeadRot = newYaw;
+        // Set rotation - syncs immediately to all clients
+        dragon.setYRot(newYaw);
+        dragon.yBodyRot = newYaw;
+        dragon.yHeadRot = newYaw;
 
-            // Simple pitch for flight
-            if (flying) {
-                float targetPitch = Mth.clamp(player.getXRot() * 0.4f, -35.0f, 30.0f);
-                dragon.setXRot(targetPitch);
-            } else {
-                dragon.setXRot(0.0F);
-            }
-
-            // Force entity to be dirty for network sync
-            dragon.setDeltaMovement(dragon.getDeltaMovement());
+        // Pitch control
+        if (flying) {
+            float targetPitch = Mth.clamp(player.getXRot() * 0.4f, -35.0f, 30.0f);
+            dragon.setXRot(targetPitch);
+        } else {
+            dragon.setXRot(0.0F);
         }
 
         // Extra safety: if we just touched ground, ensure rider has no fall damage
