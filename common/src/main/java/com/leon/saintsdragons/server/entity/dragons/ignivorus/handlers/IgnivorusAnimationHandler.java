@@ -139,6 +139,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         actionController.triggerableAnim("sit_up",
             RawAnimation.begin().thenPlay("animation.ignivorus.up"));
 
+        // Bite ability animation
+        actionController.triggerableAnim("bite",
+            RawAnimation.begin().thenPlay("animation.ignivorus.bite"));
+
         // Fire breath ability animations
         // Start animation plays for ~75ms (4 ticks) before actual fire spawns
         actionController.triggerableAnim("fire_breath_start",
