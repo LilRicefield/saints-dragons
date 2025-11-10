@@ -60,6 +60,8 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private int lifetimeTicks = 36;
     private int livedTicks;
     private final java.util.Set<UUID> hitEntities = new java.util.HashSet<>();
+    private boolean rotationLocked = false; // Lock rotation after initial setup
+    private float lockedHeadYaw = 0.0f; // Store head rotation since setter doesn't work
 
     public IgnivorusMagmaPillarEntity(EntityType<? extends IgnivorusMagmaPillarEntity> type, Level level) {
         super(type, level);
@@ -71,10 +73,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
                                       int warmupTicks, int lifetimeTicks) {
         this(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), level);
         setPos(pos);
-        float yaw = (owner != null ? owner.getYRot() : 0f) + 180.0f;
-        setYRot(yaw);
-        setYHeadRot(yaw);
-        setYBodyRot(yaw);
         this.owner = owner;
         this.ownerUUID = owner != null ? owner.getUUID() : null;
         this.impactDamage = impactDamage;
@@ -83,6 +81,14 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         this.lifetimeTicks = lifetimeTicks;
         setStage(stageIndex);
         setVisualScale(1.0f + stageIndex * 0.2f);
+
+        // Set rotation AFTER all other initialization, then lock it
+        // Snap to nearest cardinal direction (0°, 90°, 180°, 270°) for consistent appearance
+        float ownerYaw = owner != null ? owner.getYRot() : 0f;
+        float yaw = Math.round(ownerYaw / 90.0f) * 90.0f;
+
+        initializeRotation(yaw);
+        this.rotationLocked = true; // Lock rotation from now on
     }
 
     @Override
@@ -142,6 +148,54 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             if (livedTicks >= lifetimeTicks) {
                 discard();
             }
+        }
+    }
+
+    @Override
+    public void setYRot(float yaw) {
+        // Only allow rotation changes before lock
+        if (!rotationLocked) {
+            super.setYRot(yaw);
+        }
+    }
+
+    @Override
+    public void setXRot(float pitch) {
+        // Always lock pitch to 0 (vertical pillars)
+        if (!rotationLocked) {
+            super.setXRot(0.0f);
+        }
+    }
+
+    @Override
+    public void setYBodyRot(float yaw) {
+        // Only allow before lock
+        if (!rotationLocked) {
+            super.setYBodyRot(yaw);
+        }
+    }
+
+    @Override
+    public void setYHeadRot(float yaw) {
+        // Only allow before lock
+        if (!rotationLocked) {
+            super.setYHeadRot(yaw);
+        }
+    }
+
+    @Override
+    public float getYHeadRot() {
+        // Return our locked head rotation instead of the entity's default
+        return rotationLocked ? lockedHeadYaw : super.getYHeadRot();
+    }
+
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, boolean teleport) {
+        // Prevent client interpolation from overriding rotation
+        if (rotationLocked) {
+            super.lerpTo(x, y, z, lockedHeadYaw, 0.0f, steps, teleport);
+        } else {
+            super.lerpTo(x, y, z, yRot, xRot, steps, teleport);
         }
     }
 
@@ -267,6 +321,11 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
                 hitEntities.add(new UUID(uuidArray[i], uuidArray[i + 1]));
             }
         }
+
+        if (tag.contains("LockedYaw")) {
+            initializeRotation(tag.getFloat("LockedYaw"));
+        }
+        this.rotationLocked = tag.getBoolean("RotationLocked");
     }
 
     @Override
@@ -281,6 +340,8 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         if (ownerUUID != null) {
             tag.putUUID("Owner", ownerUUID);
         }
+        tag.putBoolean("RotationLocked", rotationLocked);
+        tag.putFloat("LockedYaw", lockedHeadYaw);
 
         // Save hit entities
         long[] uuidArray = new long[hitEntities.size() * 2];
@@ -295,6 +356,14 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     @Override
     public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);
+    }
+
+    @Override
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        float yaw = packet.getYRot();
+        initializeRotation(yaw);
+        this.rotationLocked = true;
     }
 
     @Override
@@ -315,5 +384,14 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return animationCache;
+    }
+
+    private void initializeRotation(float yaw) {
+        super.setYRot(yaw);
+        super.setYBodyRot(yaw);
+        super.setYHeadRot(yaw);
+        this.lockedHeadYaw = yaw;
+        this.yRotO = yaw;
+        this.xRotO = 0.0f;
     }
 }

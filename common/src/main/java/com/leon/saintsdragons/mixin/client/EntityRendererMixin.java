@@ -1,8 +1,9 @@
 package com.leon.saintsdragons.mixin.client;
 
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -70,6 +71,19 @@ public class EntityRendererMixin {
                     // Ground sprint - use movement speed attributes
                     currentSpeed = nulljaw.getDeltaMovement().horizontalDistance();
                     maxSpeed = nulljaw.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 1.0; // Ground sprint multiplier
+                }
+            } else if (mc.player.getVehicle() instanceof Ignivorus ignivorus) {
+                isAccelerating = ignivorus.isAccelerating();
+                isFlying = ignivorus.isFlying();
+
+                if (isAccelerating) {
+                    if (isFlying) {
+                        currentSpeed = ignivorus.getDeltaMovement().horizontalDistance();
+                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.5; // Matches rider sprint multiplier
+                    } else {
+                        currentSpeed = ignivorus.getDeltaMovement().horizontalDistance();
+                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 2.2; // Ground sprint multiplier
+                    }
                 }
             } else {
                 // Not riding a dragon - reset FOV
