@@ -1091,13 +1091,26 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        saveRideableData(tag);  // Save flight state (flying, hovering, takeoff, etc.)
+        tag.putInt("TimeFlying", timeFlying);  // Save flying duration
         this.combatManager.saveToNBT(tag);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        loadRideableData(tag);  // Restore flight state
+        this.timeFlying = tag.getInt("TimeFlying");  // Restore flying duration
         this.combatManager.loadFromNBT(tag);
+    }
+
+    @Override
+    protected void applyLoadedFlightState(boolean flying, boolean takeoff, boolean hovering, boolean landing) {
+        // Apply loaded flight state to entity data accessors
+        setFlying(flying);
+        setTakeoff(takeoff);
+        setHovering(hovering);
+        setLanding(landing);
     }
 
     // ===== SPAWN PLACEMENT =====
