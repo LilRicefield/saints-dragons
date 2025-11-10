@@ -1,18 +1,23 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusPhysicsController;
+import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
-import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -23,6 +28,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -39,6 +45,7 @@ import net.minecraft.world.item.Items;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +115,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final double MODEL_SCALE = 1.0D;
 
     // Vocal entries (placeholder - sounds to be added later)
-    private static final Map<String, VocalEntry> VOCAL_ENTRIES = Map.of();
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES =
+            new DragonEntity.VocalEntryBuilder()
+                    .add("ignivorus_roar", "action", "animation.ignivorus.roar",
+                            ModSounds.IGNIVORUS_ROAR, 1.8f, 0.85f, 0.15f,
+                            false, false, false)
+                    .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
@@ -1050,6 +1062,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         // Movement controller handles idle/walk/run/flight/sit animations
         AnimationController<Ignivorus> movementController =
             new AnimationController<>(this, "movement", 5, animationHandler::handleMovementAnimation);
+        movementController.setSoundKeyframeHandler(this::onAnimationSound);
 
         // Banking and pitching controllers for flight dynamics
         AnimationController<Ignivorus> bankingController =
@@ -1064,8 +1077,50 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Register all action animations via handler
         animationHandler.setupActionController(actionController);
+        actionController.setSoundKeyframeHandler(this::onAnimationSound);
 
         controllers.add(movementController, bankingController, pitchingController, actionController);
+    }
+
+    private void onAnimationSound(SoundKeyframeEvent<Ignivorus> event) {
+        if (!level().isClientSide) {
+            return;
+        }
+
+        Object data = event.getKeyframeData();
+        String key = extractSoundKey(data);
+        String controllerName = event.getController() != null ? event.getController().getName() : "unknown";
+
+        // Ignore step sounds from non-movement controllers to prevent duplicates
+        if (key != null && key.contains("ignivorus_step") && !"movement".equals(controllerName)) {
+            return;
+        }
+
+        soundHandler.handleAnimationSound(this, data, event.getController());
+    }
+
+    private String extractSoundKey(Object data) {
+        if (data == null) {
+            return null;
+        }
+        try {
+            Object value = data.getClass().getMethod("getSound").invoke(data);
+            return value instanceof String ? ((String) value).toLowerCase(java.util.Locale.ROOT) : null;
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
+    }
+
+    private String extractLocator(Object data) {
+        if (data == null) {
+            return null;
+        }
+        try {
+            Object value = data.getClass().getMethod("getLocator").invoke(data);
+            return value instanceof String ? (String) value : null;
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
     }
 
     @Override
@@ -1078,6 +1133,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonSoundProfile getSoundProfile() {
+        return IgnivorusSoundProfile.INSTANCE;
     }
 
     @Override

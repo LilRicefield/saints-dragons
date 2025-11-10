@@ -492,10 +492,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // === ANIMATION LOGIC (every tick for smooth visuals) ===
         tickBankingLogic();
         tickPitchingLogic();
+        tickScreenShake(); // Both sides: client reads, server decays
 
         // === CLIENT-SIDE ONLY ===
         if (level().isClientSide) {
-            tickScreenShake();
             return; // Early exit for client - nothing else needed
         }
 
@@ -528,11 +528,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             initializeAnimationState();
         }
 
+        // === SERVER-SIDE: EVERY TICK (precise timing needed) ===
+        tickFeedingCooldown();
+        tickSleepTransition();
+        tickSleepCooldowns();
+
         // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
         if (tickCount % 5 == 0) {
-            tickSleepTransition();
-            tickSleepCooldowns();
-            tickFeedingCooldown();
             handleAmbientSounds();
         }
 
@@ -932,10 +934,20 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     private void tickScreenShake() {
+        // Client side: just read the synced value from entity data
+        if (level().isClientSide) {
+            prevScreenShakeAmount = screenShakeAmount;
+            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+            return;
+        }
+
+        // Server side: decay and update entity data
         prevScreenShakeAmount = screenShakeAmount;
         if (screenShakeAmount > 0f) {
             screenShakeAmount = Math.max(0f, screenShakeAmount - 0.12F);
             this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+        } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         }
     }
 

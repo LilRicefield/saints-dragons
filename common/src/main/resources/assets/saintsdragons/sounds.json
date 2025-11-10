@@ -408,12 +408,32 @@
       }
     ]
   },
-  "nulljaw_horngore": {
-    "subtitle": "Nulljaw gores with horn",
+  "ignivorus_bite": {
+    "subtitle": "Ignivorus bites",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_horngore",
+        "name": "saintsdragons:entity/ignivorus/ignivorus_bite",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_roar": {
+    "subtitle": "Ignivorus roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_roar",
         "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_step": {
+    "subtitle": "Ignivorus steps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_step",
+        "volume": 0.25,
         "pitch": 1.0
       }
     ]

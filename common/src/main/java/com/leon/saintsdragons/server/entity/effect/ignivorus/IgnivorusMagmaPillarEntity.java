@@ -43,7 +43,7 @@ import java.util.UUID;
 public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private static final RawAnimation EMERGE_ANIMATION =
             RawAnimation.begin().thenPlay("animation.ignivorus_magma_pillar.emerge");
-    private static final EntityDimensions BASE_DIMENSIONS = EntityDimensions.scalable(1.6F, 5.5F);
+    private static final EntityDimensions BASE_DIMENSIONS = EntityDimensions.scalable(5.5F, 5.5F);
 
     private static final EntityDataAccessor<Integer> DATA_STAGE =
             SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.INT);
@@ -59,7 +59,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private int warmupTicks = 6;
     private int lifetimeTicks = 36;
     private int livedTicks;
-    private boolean damageApplied;
+    private final java.util.Set<UUID> hitEntities = new java.util.HashSet<>();
 
     public IgnivorusMagmaPillarEntity(EntityType<? extends IgnivorusMagmaPillarEntity> type, Level level) {
         super(type, level);
@@ -71,7 +71,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
                                       int warmupTicks, int lifetimeTicks) {
         this(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), level);
         setPos(pos);
-        float yaw = (owner != null ? owner.getYRot() : 0f) - 180.0f;
+        float yaw = (owner != null ? owner.getYRot() : 0f) + 180.0f;
         setYRot(yaw);
         setYHeadRot(yaw);
         setYBodyRot(yaw);
@@ -135,7 +135,8 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             spawnClientEffects();
         } else {
             resolveOwner();
-            if (!damageApplied && livedTicks >= warmupTicks) {
+            // Apply damage every tick after warmup until pillar despawns
+            if (livedTicks >= warmupTicks) {
                 applyImpact();
             }
             if (livedTicks >= lifetimeTicks) {
@@ -157,7 +158,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         if (!(level() instanceof ServerLevel server)) {
             return;
         }
-        damageApplied = true;
 
         double radius = 1.6D * getVisualScale();
         double height = 4.0D + getVisualScale() * 2.0D;
@@ -171,6 +171,10 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             if (target == owner) {
                 return false;
             }
+            // Skip if already hit
+            if (hitEntities.contains(target.getUUID())) {
+                return false;
+            }
             return owner == null || !owner.isAlly(target);
         });
 
@@ -178,7 +182,12 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
                 ? damageSources().mobAttack(owner)
                 : damageSources().hotFloor();
 
+        boolean firstHit = hitEntities.isEmpty() && !hits.isEmpty();
+
         for (LivingEntity target : hits) {
+            // Mark as hit to prevent multiple damage ticks
+            hitEntities.add(target.getUUID());
+
             target.hurt(source, impactDamage);
             target.setSecondsOnFire(4);
 
@@ -197,10 +206,13 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             }
         }
 
-        server.sendParticles(ParticleTypes.LAVA, getX(), getY() + 2.0D, getZ(), 20,
-                0.6D, 1.2D, 0.6D, 0.05D);
-        server.playSound(null, blockPosition(), ModSounds.IGNIVORUS_MAGMA_PILLAR.get(), SoundSource.HOSTILE,
-                1.4F, 0.8F + server.random.nextFloat() * 0.2F);
+        // Only play effects/sounds on the first hit to avoid spam
+        if (firstHit) {
+            server.sendParticles(ParticleTypes.LAVA, getX(), getY() + 2.0D, getZ(), 20,
+                    0.6D, 1.2D, 0.6D, 0.05D);
+            server.playSound(null, blockPosition(), ModSounds.IGNIVORUS_MAGMA_PILLAR.get(), SoundSource.HOSTILE,
+                    1.4F, 0.8F + server.random.nextFloat() * 0.2F);
+        }
     }
 
     private void spawnClientEffects() {
@@ -241,11 +253,19 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         warmupTicks = tag.getInt("Warmup");
         impactDamage = tag.getFloat("ImpactDamage");
         knockbackStrength = tag.getDouble("Knockback");
-        damageApplied = tag.getBoolean("DamageApplied");
         setStage(tag.getInt("Stage"));
         setVisualScale(tag.getFloat("Scale"));
         if (tag.hasUUID("Owner")) {
             ownerUUID = tag.getUUID("Owner");
+        }
+
+        // Load hit entities
+        hitEntities.clear();
+        if (tag.contains("HitEntities")) {
+            long[] uuidArray = tag.getLongArray("HitEntities");
+            for (int i = 0; i < uuidArray.length; i += 2) {
+                hitEntities.add(new UUID(uuidArray[i], uuidArray[i + 1]));
+            }
         }
     }
 
@@ -256,21 +276,29 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         tag.putInt("Warmup", warmupTicks);
         tag.putFloat("ImpactDamage", impactDamage);
         tag.putDouble("Knockback", knockbackStrength);
-        tag.putBoolean("DamageApplied", damageApplied);
         tag.putInt("Stage", getStage());
         tag.putFloat("Scale", getVisualScale());
         if (ownerUUID != null) {
             tag.putUUID("Owner", ownerUUID);
         }
+
+        // Save hit entities
+        long[] uuidArray = new long[hitEntities.size() * 2];
+        int i = 0;
+        for (UUID uuid : hitEntities) {
+            uuidArray[i++] = uuid.getMostSignificantBits();
+            uuidArray[i++] = uuid.getLeastSignificantBits();
+        }
+        tag.putLongArray("HitEntities", uuidArray);
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);
     }
 
     @Override
-    public EntityDimensions getDimensions(@NotNull Pose pose) {
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
         return BASE_DIMENSIONS.scale(getVisualScale());
     }
 

@@ -1207,10 +1207,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tickBankingLogic();
         tickPitchingLogic();
         tickRunningTime();
+        tickScreenShake(); // Both sides: client reads, server decays
 
         // === CLIENT-SIDE ONLY ===
         if (level().isClientSide) {
-            tickScreenShake();
             tickSound();
             return; // Early exit for client - nothing else needed
         }
@@ -1240,14 +1240,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             tickWaterDisturbance();
         }
 
+        // === SERVER-SIDE: EVERY TICK (precise timing needed) ===
+        tickFeedingCooldown();
+        tickSleepTransition();
+        tickSleepCooldowns();
+
         // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
         if (tickCount % 5 == 0) {
             tickSuperchargeTimer();
             tickTempInvulnTimer();
             tickSuperchargeVfx();
-            tickSleepTransition();
-            tickSleepCooldowns();
-            tickFeedingCooldown();
             tickMountingState();
             tickFollowFailsafe();
             handleAmbientSounds();
@@ -1306,11 +1308,20 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // ===== TICK SUBMETHODS =====
     
     private void tickScreenShake() {
-        // Update screen shake interpolation
+        // Client side: just read the synced value from entity data
+        if (level().isClientSide) {
+            prevScreenShakeAmount = screenShakeAmount;
+            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
+            return;
+        }
+
+        // Server side: decay and update entity data
         prevScreenShakeAmount = screenShakeAmount;
         if (screenShakeAmount > 0) {
             screenShakeAmount = Math.max(0, screenShakeAmount - 0.34F);
             this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
+        } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
+            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         }
     }
 
