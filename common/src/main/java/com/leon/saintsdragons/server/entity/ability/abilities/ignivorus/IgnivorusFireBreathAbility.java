@@ -20,10 +20,15 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Continuous fire-breath ability for Ignivorus.
  * Holds while the rider presses the tertiary key (default: G) and
  * applies block ignition + entity damage along the rider's look direction.
+ *
+ * Animation flow (similar to Raevyx beam):
+ * - STARTUP (4 ticks/75ms): Plays fire_breath_starts animation, NO fire cone yet
+ * - ACTIVE (400 ticks): Loops fire_breathing animation, fire cone renders
  */
 public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
-    private static final int STARTUP_TICKS = 18;
+    // Animation timing: 75ms startup matches fire_breath_starts animation duration
+    private static final int STARTUP_TICKS = 4;  // ~75ms (was 18, now synced to animation)
     private static final int ACTIVE_TICKS = 400;
     private static final int COOLDOWN_TICKS = 40;
 
@@ -37,6 +42,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         new AbilitySectionDuration(ACTIVE, ACTIVE_TICKS)
     };
 
+    // Animation state tracking (follows Raevyx pattern)
+    private boolean breathStartPlayed = false;
+    private boolean breathLoopActive = false;
+
     public IgnivorusFireBreathAbility(DragonAbilityType<Ignivorus, IgnivorusFireBreathAbility> type,
                                       Ignivorus user) {
         super(type, user, TRACK, COOLDOWN_TICKS);
@@ -47,12 +56,23 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         if (section == null) {
             return;
         }
+
+        Ignivorus dragon = getUser();
+
         if (section.sectionType == STARTUP) {
-            getUser().setBreathingFire(false);
-            getUser().setFireBreathProgress(0);  // Reset progress on startup
-            getUser().clearFireBreathPath();
+            // Play startup animation but don't show fire cone yet
+            breathStartPlayed = true;
+            breathLoopActive = false;
+            dragon.setBreathingFire(false);  // NO fire cone during startup
+            dragon.setFireBreathProgress(0);  // Reset progress
+            dragon.clearFireBreathPath();
+            dragon.triggerAnim("action", "fire_breath_start");  // Play 75ms start animation
+
         } else if (section.sectionType == ACTIVE) {
-            getUser().setBreathingFire(true);
+            // Start showing fire cone and loop breathing animation
+            dragon.setBreathingFire(true);  // NOW spawn fire cone
+            dragon.triggerAnim("action", "fire_breathing");  // Loop breathing animation
+            breathLoopActive = true;
         }
     }
 
@@ -61,18 +81,35 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         if (section == null) {
             return;
         }
+
         if (section.sectionType == ACTIVE) {
-            getUser().setBreathingFire(false);
-            getUser().clearFireBreathPath();
+            Ignivorus dragon = getUser();
+            dragon.setBreathingFire(false);
+            dragon.clearFireBreathPath();
+            triggerBreathStop(dragon);
         }
     }
 
     @Override
     public void interrupt() {
-        getUser().setBreathingFire(false);
-        getUser().setFireBreathProgress(0);  // Reset progress on interrupt
-        getUser().clearFireBreathPath();
+        Ignivorus dragon = getUser();
+        dragon.setBreathingFire(false);
+        dragon.setFireBreathProgress(0);  // Reset progress on interrupt
+        dragon.clearFireBreathPath();
+        triggerBreathStop(dragon);
         super.interrupt();
+    }
+
+    /**
+     * Triggers the fire breath stop animation to cleanly exit the breathing loop.
+     * Only plays if breath was actually active (start or loop played).
+     */
+    private void triggerBreathStop(Ignivorus dragon) {
+        if (breathLoopActive || breathStartPlayed) {
+            dragon.triggerAnim("action", "fire_breath_stop");
+        }
+        breathStartPlayed = false;
+        breathLoopActive = false;
     }
 
     @Override

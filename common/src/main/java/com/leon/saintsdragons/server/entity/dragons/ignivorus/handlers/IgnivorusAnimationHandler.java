@@ -127,4 +127,27 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     public void triggerSitUpAnimation() {
         dragon.triggerAnim("action", "sit_up");
     }
+
+    /**
+     * Sets up all GeckoLib animation triggers for the action controller.
+     * Follows the same pattern as Raevyx for consistent ability animation handling.
+     */
+    public void setupActionController(AnimationController<Ignivorus> actionController) {
+        // Sit transition animations
+        actionController.triggerableAnim("sit_down",
+            RawAnimation.begin().thenPlay("animation.ignivorus.down"));
+        actionController.triggerableAnim("sit_up",
+            RawAnimation.begin().thenPlay("animation.ignivorus.up"));
+
+        // Fire breath ability animations
+        // Start animation plays for ~75ms (4 ticks) before actual fire spawns
+        actionController.triggerableAnim("fire_breath_start",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_start"));
+        // Loop animation for continuous fire breathing
+        actionController.triggerableAnim("fire_breathing",
+            RawAnimation.begin().thenLoop("animation.ignivorus.fire_breathing"));
+        // Stop animation to cleanly exit the breathing loop
+        actionController.triggerableAnim("fire_breath_stop",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
+    }
 }
