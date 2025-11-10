@@ -26,11 +26,12 @@ public enum DragonType {
 
     /**
      * Fire element - flame attacks, heat affinity
-     * Immune to fire/lava, benefits from hot biomes (Nether, desert)
+     * Immune to ALL fire damage types (fire, lava, magma blocks)
+     * Benefits from hot biomes (Nether, desert)
      */
     FIRE("fire", Element.FIRE, Cindervane.class, ModEntities.CINDERVANE,
         ElementalProfile.builder(Element.FIRE)
-            .immuneTo(DamageTypeTags.IS_FIRE)
+            .immuneTo(DamageTypeTags.IS_FIRE)  // Covers fire, lava, magma blocks, etc.
             .build()),
 
     /**
@@ -48,6 +49,18 @@ public enum DragonType {
     PHYSICAL_SUPPORT("physical", Element.NONE, Stegonaut.class, ModEntities.STEGONAUT,
         ElementalProfile.builder(Element.NONE)
             .resistantTo(DamageTypeTags.IS_FALL, 0.3f)  // Sturdy, reduced fall damage
+            .build()),
+
+    /**
+     * Fire element - massive fire-breathing dragon
+     * Immune to ALL fire damage types:
+     * - Fire (in_fire, on_fire)
+     * - Lava (lava pools, lava buckets)
+     * - Hot floor (magma blocks)
+     */
+    IGNIVORUS("ignivorus", Element.FIRE, com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus.class, ModEntities.IGNIVORUS,
+        ElementalProfile.builder(Element.FIRE)
+            .immuneTo(DamageTypeTags.IS_FIRE)  // Covers fire, lava, magma blocks, etc.
             .build());
 
     private final String name;
