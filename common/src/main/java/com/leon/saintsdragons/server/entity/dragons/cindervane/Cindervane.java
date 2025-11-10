@@ -485,55 +485,67 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     public void tick() {
+        // === CORE TICK (every tick) ===
         super.tick();
+        physicsController.tick(); // Physics/flight - needs every tick for smooth movement
 
-        // Tick physics controller to update flight mode computation
-        physicsController.tick();
-
-        tickSittingState();
+        // === ANIMATION LOGIC (every tick for smooth visuals) ===
         tickBankingLogic();
         tickPitchingLogic();
+
+        // === CLIENT-SIDE ONLY ===
+        if (level().isClientSide) {
+            tickScreenShake();
+            return; // Early exit for client - nothing else needed
+        }
+
+        // === SERVER-SIDE: EVERY TICK (lightweight or critical) ===
+        tickSittingState();
         tickRiderTakeoff();
         tickMountedState();
-        tickScreenShake();
         updateSittingProgress();
-        tickSleepTransition();
-        tickSleepCooldowns();
-        tickFeedingCooldown();
         tickWaterSlicing();
+        handleFireBodyCrash();
 
-        if (!level().isClientSide) {
-            // Ensure sit animation is cleared for riders even if packets arrive late
-            if (isVehicle() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
-                this.entityData.set(DATA_SIT_PROGRESS, 0f);
-            }
-            if (targetCooldown > 0) {
-                targetCooldown--;
-            }
-            handleFireBodyCrash();
-            // Update timeFlying counter
-            if (isFlying()) {
-                timeFlying++;
-            } else {
-                timeFlying = 0;
-            }
-            handleAmbientSounds();
+        // Ensure sit animation is cleared for riders even if packets arrive late
+        if (isVehicle() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
+            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+        }
 
-            // Wake up if sleeping and conditions changed
-            if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
-                if (this.getTarget() != null || this.isAggressive()) {
-                    wakeUpImmediately();
-                    suppressSleep(200);
-                } else if (this.isInWaterOrBubble() || this.isInLava()) {
-                    wakeUpImmediately();
-                    suppressSleep(200);
-                }
-            }
+        if (targetCooldown > 0) {
+            targetCooldown--;
+        }
+
+        // Update timeFlying counter
+        if (isFlying()) {
+            timeFlying++;
+        } else {
+            timeFlying = 0;
         }
 
         // Initialize animation state on first tick after loading to prevent thrashing
-        if (!level().isClientSide && this.tickCount == 1) {
+        if (this.tickCount == 1) {
             initializeAnimationState();
+        }
+
+        // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
+        if (tickCount % 5 == 0) {
+            tickSleepTransition();
+            tickSleepCooldowns();
+            tickFeedingCooldown();
+            handleAmbientSounds();
+        }
+
+        // === SERVER-SIDE: SLEEP WAKE-UP LOGIC ===
+        // Wake up if sleeping and conditions changed
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
+            if (this.getTarget() != null || this.isAggressive()) {
+                wakeUpImmediately();
+                suppressSleep(200);
+            } else if (this.isInWaterOrBubble() || this.isInLava()) {
+                wakeUpImmediately();
+                suppressSleep(200);
+            }
         }
 
         tickClientSideUpdates();

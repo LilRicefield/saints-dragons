@@ -460,7 +460,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Start with ground navigation
         this.navigation = this.groundNav;
         this.moveControl = new MoveControl(this);
-        // lookControl inherited from DragonEntity (uses DragonLookControl)
 
         // Pathfinding setup
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
@@ -835,6 +834,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private float beamPitchOffsetRad = 0.0f;
 
     public void setBeamEndPosition(@org.jetbrains.annotations.Nullable Vec3 pos) {
+
         if (pos == null) {
             this.entityData.set(DATA_BEAM_END_SET, false);
         } else {
@@ -882,6 +882,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 getFloatData(DATA_BEAM_START_Z)
         );
     }
+
 
     // ===== NAVIGATION SWITCHING =====
     public void switchToAirNavigation() {
@@ -1197,32 +1198,50 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // ===== MAIN TICK METHOD =====
     @Override
     public void tick() {
+        // === CORE TICK (every tick) ===
         animationController.tick();
         super.tick();
-        tickScreenShake();
+        tickControllers(); // Physics/flight - needs every tick for smooth movement
+
+        // === ANIMATION LOGIC (every tick for smooth visuals) ===
+        tickBankingLogic();
+        tickPitchingLogic();
+        tickRunningTime();
+
+        // === CLIENT-SIDE ONLY ===
+        if (level().isClientSide) {
+            tickScreenShake();
+            tickSound();
+            return; // Early exit for client - nothing else needed
+        }
+
+        // === SERVER-SIDE: EVERY TICK (lightweight or critical) ===
         tickSittingState();
-        tickSound();
         tickPostLoadStabilization();
         tickRiderTakeoff();
-        tickControllers();
         tickHurtSoundCooldown();
-        tickWaterDisturbance();
-        if (!level().isClientSide) {
-            // Spawn babies on first tick (after parent is positioned)
-            spawnBabiesIfNeeded();
-            
-            // When ridden and flying, never stay in 'hovering' unless explicitly landing or beaming or taking off
-            if (isFlying() && getControllingPassenger() != null) {
-                if (!isLanding() && !isBeaming() && !isTakeoff() && isHovering()) {
-                    setHovering(false);
-                }
+        spawnBabiesIfNeeded(); // Has internal check, only spawns once
+
+        // When ridden and flying, never stay in 'hovering' unless explicitly landing/beaming/takeoff
+        if (isFlying() && getControllingPassenger() != null) {
+            if (!isLanding() && !isBeaming() && !isTakeoff() && isHovering()) {
+                setHovering(false);
             }
+        }
+
+        if (postStandUnlockTicks > 0) {
+            postStandUnlockTicks--;
+        }
+
+        // === SERVER-SIDE: EVERY 2 TICKS (input/movement - slight delay acceptable) ===
+        if (tickCount % 2 == 0) {
             tickRiderControlLock();
             tickRiderControlLockMovement();
-            handleAmbientSounds();
-            // no-op
+            tickWaterDisturbance();
         }
-        if (!level().isClientSide) {
+
+        // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
+        if (tickCount % 5 == 0) {
             tickSuperchargeTimer();
             tickTempInvulnTimer();
             tickSuperchargeVfx();
@@ -1231,17 +1250,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             tickFeedingCooldown();
             tickMountingState();
             tickFollowFailsafe();
-            if (postStandUnlockTicks > 0) {
-                postStandUnlockTicks--;
-            }
+            handleAmbientSounds();
         }
-        
-        // Update banking and pitching logic every tick
-        tickBankingLogic();
-        tickPitchingLogic();
 
+        // === SERVER-SIDE: SLEEP WAKE-UP LOGIC ===
         // Wake up if mounted or target appears/aggression
-        if (!level().isClientSide && (isSleeping() || isSleepingEntering() || isSleepingExiting())) {
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
             if (this.isVehicle()) {
                 wakeUpImmediately();
                 // Clear all states when mounted to ensure full control
@@ -1261,17 +1275,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         // Use RideableDragonBase animation state management for normal ticks
-        if (!level().isClientSide && !(isSleeping() || isSleepingEntering() || isSleepingExiting())) {
+        if (!(isSleeping() || isSleepingEntering() || isSleepingExiting())) {
             super.tickAnimationStates();
         }
 
+        // === SERVER-SIDE: DODGE & BEAM TRACKING (every tick for smooth control) ===
         // Handle dodge movement first
-        if (!level().isClientSide && this.isDodging()) {
+        if (this.isDodging()) {
             handleDodgeMovement();
             return;
         }
 
-        tickRunningTime();
+        // Beam head tracking - needs every tick for smooth aiming
         tickBeamLook();
 
         if (!level().isClientSide && isBaby()) {
@@ -1444,9 +1459,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
     
     // Steer the head/neck chain toward the active beam so VFX and rig stay aligned.
+    // When NOT beaming, allow vanilla head tracking to work normally.
     private void tickBeamLook() {
         if (!isBeaming()) {
             resetBeamAim();
+            // Don't return early - let vanilla head tracking work!
+            // Minecraft will automatically sync yHeadRot based on rider's look direction
             return;
         }
 
