@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -75,6 +76,15 @@ public final class ModEntities {
                     .fireImmune()
                     .noSummon()
                     .build("cindervane_magma_block"));
+
+    public static final Supplier<EntityType<IgnivorusMagmaPillarEntity>> IGNIVORUS_MAGMA_PILLAR =
+            REGISTER.register("ignivorus_magma_pillar", () -> EntityType.Builder.<IgnivorusMagmaPillarEntity>of(IgnivorusMagmaPillarEntity::new, MobCategory.MISC)
+                    .sized(1.8F, 5.5F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("ignivorus_magma_pillar"));
 
     private ModEntities() {
     }

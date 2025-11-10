@@ -67,6 +67,10 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> NULLJAW_BITE = registerSound("nulljaw_bite");
     public static final Supplier<SoundEvent> NULLJAW_HORNGORE = registerSound("nulljaw_horngore");
 
+    // Ignivorus
+    public static final Supplier<SoundEvent> IGNIVORUS_ROAR = registerSound("ignivorus_roar");
+    public static final Supplier<SoundEvent> IGNIVORUS_MAGMA_PILLAR = registerSound("ignivorus_magma_pillar");
+
     private ModSounds() {
     }
 

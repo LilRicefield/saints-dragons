@@ -153,5 +153,11 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Stop animation to cleanly exit the breathing loop
         actionController.triggerableAnim("fire_breath_stop",
             RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
+
+        // Roar animations (ground/air variants)
+        actionController.triggerableAnim("roar_ground",
+            RawAnimation.begin().thenPlay("animation.ignivorus.roar_ground"));
+        actionController.triggerableAnim("roar_air",
+            RawAnimation.begin().thenPlay("animation.ignivorus.roar_air"));
     }
 }

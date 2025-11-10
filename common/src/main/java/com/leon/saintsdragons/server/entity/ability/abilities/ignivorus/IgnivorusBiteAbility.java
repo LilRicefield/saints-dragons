@@ -23,18 +23,22 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 /**
- * Powerful bite attack for Ignivorus. Deals fire damage with armor penetration.
+ * Powerful AoE bite attack for Ignivorus. Deals fire damage with armor penetration.
  * Triggers on left-click (attack key) when ridden.
+ *
+ * Hits ALL entities in a sphere around the mouth (fireBone position).
+ * Range is calculated based on the fireBone position (pivot: -0.06603, 59.45, -245.05)
+ * which places the mouth ~15.3 blocks forward from the dragon's origin.
  */
 public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
     // 50 health base damage with 5 armor points ignored
     private static final float BASE_DAMAGE = 50.0f;
     private static final float ARMOR_PENETRATION = 5.0f; // Armor points bypassed
 
-    private static final double BASE_RANGE = 12.0; // Massive dragon = longer reach
-    private static final double RIDDEN_RANGE_BONUS = 8.0; // Extra range when ridden for precision
-    private static final double AIR_RANGE_BONUS = 2.0; // Bonus range when flying
-    private static final double HIT_ANGLE_COS = Math.cos(Math.toRadians(80.0)); // Wide cone for large head
+    // AoE radius around the mouth position
+    private static final double BASE_AOE_RADIUS = 5.0; // Base sphere radius
+    private static final double RIDDEN_RADIUS_BONUS = 2.0; // Extra radius when ridden
+    private static final double AIR_RADIUS_BONUS = 1.0; // Bonus radius when flying
 
     // Animation timing: startup → active hitframe → recovery
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
@@ -106,17 +110,14 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
             }
         }
 
-        // Apply fire damage with armor penetration
-        // In Minecraft, armor penetration is handled by using specific damage sources
-        // We'll use inFire damage source which bypasses some armor
-        DamageSource source = dragon.level().damageSources().inFire();
+        // Apply damage as a direct melee hit so even fire-immune bosses (e.g. Wardens) take it,
+        // then layer the burning effect separately.
+        DamageSource physicalSource = dragon.level().damageSources().mobAttack(dragon);
 
-        // Calculate armor penetration
-        // Base damage calculation: damage - (armor * armorToughness)
-        // We effectively increase damage to compensate for ARMOR_PENETRATION points
+        // Approximate armor penetration by boosting the raw hit damage.
         float armorPenDamage = damage + ARMOR_PENETRATION;
 
-        target.hurt(source, armorPenDamage);
+        target.hurt(physicalSource, armorPenDamage);
 
         // Set target on fire for extra burn damage (3 seconds)
         target.setSecondsOnFire(3);
@@ -129,70 +130,43 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
     private List<LivingEntity> selectTargets() {
         Ignivorus dragon = getUser();
 
-        // Calculate effective range based on state
-        double range = BASE_RANGE;
+        // Calculate AoE radius dynamically based on state
+        double radius = BASE_AOE_RADIUS;
         if (dragon.getControllingPassenger() != null) {
-            range += RIDDEN_RANGE_BONUS;
+            radius += RIDDEN_RADIUS_BONUS;
         }
         if (dragon.isFlying()) {
-            range += AIR_RANGE_BONUS;
+            radius += AIR_RADIUS_BONUS;
         }
 
-        // Create cone-shaped detection area
-        Vec3 origin = dragon.getMouthPosition();
-        Vec3 look = dragon.getLookAngle().normalize();
-        Vec3 end = origin.add(look.scale(range));
-        AABB sweep = new AABB(origin, end).inflate(2.5, 2.0, 2.5); // Wide area for large dragon
+        // Get mouth position (fireBone - already ~15.3 blocks forward from dragon center)
+        Vec3 mouthPos = dragon.getMouthPosition();
 
-        // Find all valid targets in area
-        List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, sweep,
-                entity -> entity != dragon && entity.isAlive() && entity.attackable() && !dragon.isAlly(entity));
+        // Create spherical detection area around the mouth
+        // Inflate equally in all directions to create a sphere
+        AABB detectionBox = new AABB(mouthPos, mouthPos).inflate(radius);
 
-        final double effectiveRange = range;
-        List<LivingEntity> results = new ArrayList<>();
-
-        // Filter by cone angle and distance, prioritize closest targets
-        candidates.stream()
-                .map(entity -> {
-                    Vec3 center = entity.getBoundingBox().getCenter();
-                    Vec3 toward = center.subtract(origin);
-                    double distanceSqr = toward.lengthSqr();
-
-                    if (distanceSqr < 1.0e-6) {
-                        // Target is on top of mouth - always hit
-                        return new TargetScore(entity, 1.0, 0.0);
+        // Find ALL valid targets in the sphere - no angle restriction!
+        double finalRadius = radius;
+        double finalRadius1 = radius;
+        List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, detectionBox,
+                entity -> {
+                    if (entity == dragon || !entity.isAlive() || !entity.attackable() || dragon.isAlly(entity)) {
+                        return false;
                     }
 
-                    Vec3 dir = toward.normalize();
-                    double dot = dir.dot(look);
-
-                    // Check if target is within cone angle
-                    if (dot < HIT_ANGLE_COS) {
-                        // Allow close targets even if outside cone
-                        double closeEnough = center.distanceToSqr(origin);
-                        if (closeEnough > (effectiveRange * effectiveRange * 0.5)) {
-                            return null; // Too far and not in cone
-                        }
-                    }
-
-                    return new TargetScore(entity, dot, distanceSqr);
-                })
-                .filter(Objects::nonNull)
-                .sorted(Comparator
-                        .comparingDouble(TargetScore::dot).reversed()    // Prefer targets in front
-                        .thenComparingDouble(TargetScore::distanceSqr))  // Then by distance
-                .map(TargetScore::entity)
-                .forEach(entity -> {
-                    if (!results.contains(entity)) {
-                        results.add(entity);
-                    }
+                    // Additional sphere check - make sure they're within the actual radius
+                    // This catches entities whose AABB intersects the box but center is outside
+                    Vec3 entityCenter = entity.getBoundingBox().getCenter();
+                    double distSqr = entityCenter.distanceToSqr(mouthPos);
+                    return distSqr <= (finalRadius * finalRadius1);
                 });
 
-        return results;
-    }
+        // Sort by distance (closest first) for consistent behavior
+        candidates.sort(Comparator.comparingDouble(e ->
+            e.getBoundingBox().getCenter().distanceToSqr(mouthPos)
+        ));
 
-    /**
-     * Helper record for scoring targets by angle and distance
-     */
-    private record TargetScore(LivingEntity entity, double dot, double distanceSqr) {}
+        return candidates;
+    }
 }
