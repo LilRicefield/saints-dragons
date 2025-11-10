@@ -6,14 +6,15 @@
 				"identifier": "geometry.unknown",
 				"texture_width": 16,
 				"texture_height": 16,
-				"visible_bounds_width": 7,
-				"visible_bounds_height": 7,
-				"visible_bounds_offset": [0, -2.5, 0]
+				"visible_bounds_width": 9,
+				"visible_bounds_height": 11,
+				"visible_bounds_offset": [0, -0.5, 0]
 			},
 			"bones": [
 				{
 					"name": "root",
 					"pivot": [0, 0, 0],
+					"rotation": [0, 180, 0],
 					"cubes": [
 						{"origin": [-12, -23, -13], "size": [24, 48, 26], "pivot": [0, 0, 0], "rotation": [40, 0, 0], "uv": [-46, -24]},
 						{"origin": [-10, -23, -9], "size": [20, 102, 18], "pivot": [0, 0, 0], "rotation": [40, 0, 0], "uv": [-34, -16]}

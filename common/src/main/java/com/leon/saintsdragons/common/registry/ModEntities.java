@@ -79,7 +79,7 @@ public final class ModEntities {
 
     public static final Supplier<EntityType<IgnivorusMagmaPillarEntity>> IGNIVORUS_MAGMA_PILLAR =
             REGISTER.register("ignivorus_magma_pillar", () -> EntityType.Builder.<IgnivorusMagmaPillarEntity>of(IgnivorusMagmaPillarEntity::new, MobCategory.MISC)
-                    .sized(1.8F, 5.5F)
+                    .sized(5.5F, 5.5F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .fireImmune()

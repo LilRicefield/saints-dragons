@@ -30,6 +30,7 @@ public class DragonSoundHandler {
             "die", 62
     );
     private final Map<String, Integer> vocalCooldowns = new HashMap<>();
+    private long lastStepTick = -100; // Track last step sound tick for cooldown
 
     public DragonSoundHandler(DragonEntity dragon) {
         this.dragon = dragon;
@@ -283,5 +284,13 @@ public class DragonSoundHandler {
 
     public Vec3 resolveLocatorWorldPos(String locator) {
         return resolveLocator(locator);
+    }
+
+    public long getLastStepTick() {
+        return lastStepTick;
+    }
+
+    public void setLastStepTick(long tick) {
+        this.lastStepTick = tick;
     }
 }

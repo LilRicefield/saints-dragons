@@ -36,9 +36,9 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
     private static final int FIRST_WAVE_TICK = STARTUP_TICKS + 2;
     private static final int WAVE_INTERVAL_TICKS = 6;
 
-    private static final double LANE_SPACING = 6.0D;
-    private static final double BASE_FORWARD_OFFSET = 8.0D;
-    private static final double FORWARD_STEP = 5.0D;
+    private static final double LANE_SPACING = 5.0D;
+    private static final double BASE_FORWARD_OFFSET = 20.0D;
+    private static final double FORWARD_STEP = 10.0D;
 
     private static final float BASE_DAMAGE = 18.0f;
     private static final float DAMAGE_PER_WAVE = 4.0f;
@@ -61,8 +61,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
         }
         if (section.sectionType == STARTUP) {
             Ignivorus dragon = getUser();
-            String trigger = dragon.isFlying() ? "roar_air" : "roar_ground";
-            dragon.triggerAnim("action", trigger);
+            dragon.triggerAnim("action", "roar");
             dragon.lockAbilities(STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS);
             soundQueued = true;
             wavesSpawned = 0;
@@ -150,6 +149,10 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
     @Override
     public boolean tryAbility() {
         Ignivorus dragon = getUser();
-        return dragon != null && !dragon.isBaby() && super.tryAbility();
+        return dragon != null
+                && !dragon.isBaby()
+                && !dragon.isFlying()
+                && dragon.onGround()
+                && super.tryAbility();
     }
 }

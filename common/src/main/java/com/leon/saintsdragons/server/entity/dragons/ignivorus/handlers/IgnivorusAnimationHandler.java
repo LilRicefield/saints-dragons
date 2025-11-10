@@ -19,14 +19,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.flap");
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.sprint_flap");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.ignivorus.sit");
-    private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.ignivorus.down");
-    private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.ignivorus.up");
 
     /**
      * Main animation predicate - handles idle, walk, run, fly, and sit animations
      */
     public PlayState handleMovementAnimation(AnimationState<Ignivorus> state) {
-        state.getController().transitionLength(8); // Smooth transitions
+        // Reduced transition to prevent overlapping step sounds during animation changes
+        state.getController().transitionLength(3);
 
         // Check for sitting - highest priority after flying
         if (!dragon.isFlying() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
@@ -154,10 +153,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         actionController.triggerableAnim("fire_breath_stop",
             RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
 
-        // Roar animations (ground/air variants)
-        actionController.triggerableAnim("roar_ground",
-            RawAnimation.begin().thenPlay("animation.ignivorus.roar_ground"));
-        actionController.triggerableAnim("roar_air",
-            RawAnimation.begin().thenPlay("animation.ignivorus.roar_air"));
+        // Roar animation
+        actionController.triggerableAnim("roar",
+            RawAnimation.begin().thenPlay("animation.ignivorus.roar"));
     }
 }
