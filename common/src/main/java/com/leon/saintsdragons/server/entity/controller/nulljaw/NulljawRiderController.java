@@ -71,28 +71,20 @@ public record NulljawRiderController(Nulljaw drake) {
         
         // Clear target when being ridden to prevent AI interference
         drake.setTarget(null);
-        
-        // Make drake responsive to player look direction
-        // Smooth turning handled by DragonBodyControl + bodyRotDeviation system
-        float yawDiff = Math.abs(player.getYRot() - drake.getYRot());
-        if (player.zza != 0 || player.xxa != 0 || yawDiff > 5.0f) {
-            float currentYaw = drake.getYRot();
-            float targetYaw = player.getYRot();
-            float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
-            float blend = 0.28f;
-            float newYaw = currentYaw + (rawDiff * blend);
-            
-            // Set rotation
-            drake.setYRot(newYaw);
-            drake.setXRot(0.0F);
-            
-            // Force entity to be dirty for network sync
-            drake.setDeltaMovement(drake.getDeltaMovement());
-            
-            // Update body and head rotation
-            drake.yBodyRot = newYaw;
-            drake.yHeadRot = newYaw;
-        }
+
+        // Always sync yaw with player's look direction (like Ignivorus)
+        // This ensures spectators see smooth head tracking even when drake is standing still
+        float currentYaw = drake.getYRot();
+        float targetYaw = player.getYRot();
+        float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
+        float blend = 0.28f;
+        float newYaw = currentYaw + (rawDiff * blend);
+
+        // Set rotation - syncs immediately to all clients
+        drake.setYRot(newYaw);
+        drake.yBodyRot = newYaw;
+        drake.yHeadRot = newYaw;
+        drake.setXRot(0.0F);
     }
 
     /**
