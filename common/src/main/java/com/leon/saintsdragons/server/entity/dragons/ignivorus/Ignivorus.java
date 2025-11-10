@@ -401,6 +401,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
+    public RiderAbilityBinding getPrimaryRiderAbility() {
+        return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
     public RiderAbilityBinding getTertiaryRiderAbility() {
         return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID, RiderAbilityBinding.Activation.HOLD);
     }
@@ -792,7 +797,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public Vec3 getMouthPosition() {
-        // Simple fallback: return eye position
+        // Use the fireBone position as the mouth position (same bone used for fire breath)
+        Vec3 fireBone = getFireBreathStartAnchor(1.0f);
+        if (fireBone != null) {
+            return fireBone;
+        }
+        // Fallback to eye position if bone position unavailable
         return this.getEyePosition();
     }
 
