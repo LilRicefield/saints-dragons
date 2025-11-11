@@ -168,9 +168,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final double MODEL_SCALE = 1.0D;
 
     // ===== ALTITUDE-BASED FLYING SYSTEM (like Raevyx) =====
-    private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
-    private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
-    private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
+    public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
+    public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
+    public static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
+    public static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
+    public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
+    public static final int RIDER_WATER_SCAN_RADIUS = 2;
+    public static final int RIDER_WATER_SCAN_DEPTH = 8;
 
     // ===== RIDER LANDING BLEND SYSTEM =====
     private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.0D; // Trigger landing animation at this altitude
