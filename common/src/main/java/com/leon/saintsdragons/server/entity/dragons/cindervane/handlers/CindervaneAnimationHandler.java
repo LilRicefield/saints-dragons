@@ -6,7 +6,6 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
-import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.GROUND_IDLE;
 
 /**
  * Lightweight animation helper for the Amphithere.
@@ -52,7 +51,7 @@ public class CindervaneAnimationHandler {
         // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
         // Wait for entity data to sync from server before processing animations
         if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
-            state.setAndContinue(GROUND_IDLE);
+            state.setAndContinue(IDLE);
             return PlayState.CONTINUE;
         }
 

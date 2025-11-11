@@ -227,6 +227,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private int horizontalSpeedCacheTime = -1;
     private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
+    private static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
+    private static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
+    private static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
+    private static final int RIDER_WATER_SCAN_RADIUS = 2;
     private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.5D;
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
@@ -1064,6 +1068,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                         Mth.floor(this.getX()), Mth.floor(this.getZ()));
                 double altitudeAboveTerrain = this.getY() - groundY;
 
+                // Force gliding when skimming water or ground effect altitude
+                if (shouldGlideNearWaterSurface() || altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD) {
+                    inHighAltitudeGlide = false;
+                    return 0;
+                }
+
                 // Hysteresis: Enter glide at 40 blocks, exit at 30 blocks
                 if (inHighAltitudeGlide) {
                     // Already gliding - stay in glide until we drop below exit threshold
@@ -1453,6 +1463,45 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 break; // Found water, stop scanning down
             }
         }
+    }
+
+    private boolean shouldGlideNearWaterSurface() {
+        if (!isFlying()) {
+            return false;
+        }
+        // Quick altitude gate so we only scan when close to ocean level
+        if (this.getY() > RIDER_WATER_SURFACE_LEVEL + RIDER_WATER_SURFACE_TOLERANCE) {
+            return false;
+        }
+
+        if (level() == null) {
+            return false;
+        }
+
+        int baseX = Mth.floor(getX());
+        int baseY = Mth.floor(getY());
+        int baseZ = Mth.floor(getZ());
+        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+
+        for (int dx = -RIDER_WATER_SCAN_RADIUS; dx <= RIDER_WATER_SCAN_RADIUS; dx++) {
+            for (int dz = -RIDER_WATER_SCAN_RADIUS; dz <= RIDER_WATER_SCAN_RADIUS; dz++) {
+                for (int dy = 0; dy < WATER_EFFECT_MAX_HEIGHT; dy++) {
+                    checkPos.set(baseX + dx, baseY - dy, baseZ + dz);
+                    if (!level().hasChunkAt(checkPos)) {
+                        continue;
+                    }
+                    BlockState state = level().getBlockState(checkPos);
+                    if (!state.getFluidState().isEmpty()) {
+                        double surfaceY = checkPos.getY() + 1.0;
+                        if (Math.abs(this.getY() - surfaceY) <= RIDER_WATER_SURFACE_TOLERANCE) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     private void tickHurtSoundCooldown() {
