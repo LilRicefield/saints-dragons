@@ -1254,9 +1254,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             postStandUnlockTicks--;
         }
 
+        // Rider control locks must tick every server tick to match animation timings
+        tickRiderControlLock();
+
         // === SERVER-SIDE: EVERY 2 TICKS (input/movement - slight delay acceptable) ===
         if (tickCount % 2 == 0) {
-            tickRiderControlLock();
             tickRiderControlLockMovement();
             tickWaterDisturbance();
         }
@@ -1806,7 +1808,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // If there's no rider anymore, release the lock so AI can resume
         if (getControllingPassenger() == null) {
-            riderControlLockTicks = 0;
+            clearRiderControlLock();
             return;
         }
 
@@ -3456,10 +3458,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
     }
 
+    public void clearRiderControlLock() {
+        if (riderControlLockTicks > 0 || this.entityData.get(DATA_RIDER_LOCKED)) {
+            riderControlLockTicks = 0;
+            this.entityData.set(DATA_RIDER_LOCKED, false);
+        }
+    }
+
     // While > 0, only takeoff is locked (allows running/movement during roar)
     private int takeoffLockTicks = 0;
     public boolean isTakeoffLocked() { return takeoffLockTicks > 0; }
     public void lockTakeoff(int ticks) { this.takeoffLockTicks = Math.max(this.takeoffLockTicks, Math.max(0, ticks)); }
+    public void clearTakeoffLock() { this.takeoffLockTicks = 0; }
     private void tickTakeoffLock() { if (takeoffLockTicks > 0) takeoffLockTicks--; }
 
     // ===== RECENT AGGRO TRACKING (for roar lightning targeting) =====

@@ -408,6 +408,16 @@
       }
     ]
   },
+  "nulljaw_horngore": {
+    "subtitle": "Nulljaw gores with horn",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_horngore",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ignivorus_bite": {
     "subtitle": "Ignivorus bites",
     "sounds": [

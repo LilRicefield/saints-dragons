@@ -88,4 +88,24 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
             }
         }
     }
+
+    @Override
+    protected void endSection(DragonAbilitySection section) {
+        if (section != null && section.sectionType == AbilitySectionType.STARTUP) {
+            releaseLocks();
+        }
+    }
+
+    @Override
+    public void end() {
+        releaseLocks();
+        super.end();
+    }
+
+    private void releaseLocks() {
+        getUser().clearTakeoffLock();
+        if (isGroundCast) {
+            getUser().clearRiderControlLock();
+        }
+    }
 }

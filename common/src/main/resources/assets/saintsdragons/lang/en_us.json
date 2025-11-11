@@ -81,6 +81,9 @@
   "saintsdragons.command.ally.list.empty": "No allies set",
   "saintsdragons.command.ally.clear.success": "Cleared all allies for %s",
   "saintsdragons.command.ally.not_dragon": "Entity %s is not a dragon",
+  "saintsdragons.command.tame.success": "Tamed %s for %s",
+  "saintsdragons.command.tame.not_found": "No dragon with id %s is currently loaded",
+  "saintsdragons.command.tame.already": "%s is already tamed for that player",
   
   "advancement.saintsdragons.tame_raevyx.title": "Bleeding Bolt",
   "advancement.saintsdragons.tame_raevyx.description": "Tame a Raevyx. Zeus who?",
@@ -191,8 +194,8 @@
   "entity.saintsdragons.cindervane.passenger_needs_owner": "The owner needs to mount it first before you can do it.",
   "entity.saintsdragons.cindervane.seats_full": "Sorry, but the seats are full.",
   "entity.saintsdragons.cindervane.mount_occupied": "Uh... you shouldn't be here.",
-  "ui.saintsdragons.melee_mode.primary": "Bite Mode",
-  "ui.saintsdragons.melee_mode.secondary": "Horn Gore Mode",
+  "ui.saintsdragons.melee_mode.primary": "Primary Melee",
+  "ui.saintsdragons.melee_mode.secondary": "Secondary Melee",
   
   "text.autoconfig.saintsdragonsspawning.title": "Saint's Dragons Config",
   "text.autoconfig.saintsdragonsspawning.category.spawning": "Dragon Spawning",
