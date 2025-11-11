@@ -43,6 +43,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
@@ -117,6 +120,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
 
     private static final double MODEL_SCALE = 1.0D;
+
+    public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
+    public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
+    public static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
+    public static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
+    public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
+    public static final int RIDER_WATER_SCAN_RADIUS = 2;
+    public static final int RIDER_WATER_SCAN_DEPTH = 8;
 
     // Vocal entries (placeholder - sounds to be added later)
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
@@ -281,6 +292,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         // Update banking and pitching for animations
         tickBankingLogic();
         tickPitchingLogic();
+
+        if (!level().isClientSide) {
+            tickTerrainClearing();
+        }
 
         // Update sitting progress
         updateSittingProgress();
@@ -992,6 +1007,47 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
         } else {
             pitchHoldTicks = Math.min(pitchHoldTicks + 1, 20);
+        }
+    }
+
+    private void tickTerrainClearing() {
+        if (level().isClientSide || this.isBaby() || !this.isAlive()) {
+            return;
+        }
+        if (!level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+            return;
+        }
+
+        AABB bounds = this.getBoundingBox().inflate(-0.05);
+        int minX = Mth.floor(bounds.minX);
+        int maxX = Mth.floor(bounds.maxX);
+        int minZ = Mth.floor(bounds.minZ);
+        int maxZ = Mth.floor(bounds.maxZ);
+        int baseY = Mth.floor(bounds.minY);
+        int minBreakY = baseY + 1;
+        int maxY = Mth.floor(bounds.maxY);
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minBreakY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    cursor.set(x, y, z);
+                    if (!level().hasChunkAt(cursor)) {
+                        continue;
+                    }
+
+                    BlockState state = level().getBlockState(cursor);
+                    if (state.isAir() || !state.getFluidState().isEmpty()) {
+                        continue;
+                    }
+                    if (state.getDestroySpeed(level(), cursor) < 0 || state.hasBlockEntity()) {
+                        continue;
+                    }
+
+                    level().destroyBlock(cursor, true, this);
+                }
+            }
         }
     }
 
