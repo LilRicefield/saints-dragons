@@ -76,6 +76,13 @@ public class RaevyxPhysicsController {
         // Default transition length (safe baseline); override per-branch below
         state.getController().transitionLength(6);
 
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        // Wait for entity data to sync from server before processing animations
+        if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
+            state.setAndContinue(GROUND_IDLE);
+            return PlayState.CONTINUE;
+        }
+
         // HIGHEST PRIORITY: Swimming overrides EVERYTHING (flying, walking, dying, etc.)
         // When dragon touches water, immediately switch to swim animation
         boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();

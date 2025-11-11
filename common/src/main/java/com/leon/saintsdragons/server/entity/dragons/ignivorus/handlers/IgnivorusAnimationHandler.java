@@ -27,6 +27,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Reduced transition to prevent overlapping step sounds during animation changes
         state.getController().transitionLength(3);
 
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        // Wait for entity data to sync from server before processing animations
+        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
+            state.setAndContinue(IDLE);
+            return PlayState.CONTINUE;
+        }
+
         // Check for sitting - highest priority after flying
         if (!dragon.isFlying() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
             state.setAndContinue(SIT);

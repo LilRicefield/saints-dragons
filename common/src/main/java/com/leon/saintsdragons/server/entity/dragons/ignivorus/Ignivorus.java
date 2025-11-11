@@ -162,6 +162,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int pitchHoldTicks = 0;
     private int pitchDir = 0;
 
+    // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
+    private int clientAnimInitTicks = 0;
+    private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
+
     // Sitting transition state (1.88 seconds = 38 ticks for both down and up animations)
     private int sitTransitionTicks = 0;
     private boolean isSittingDown = false;
@@ -244,6 +248,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Update client-side sit progress
         if (level().isClientSide) {
+            // Increment animation initialization counter (prevents T-pose on rejoin with shaders)
+            if (clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
+                clientAnimInitTicks++;
+            }
             prevSitProgress = sitProgress;
             sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
         }
@@ -385,6 +393,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
             default -> { }
         }
+    }
+
+    // Animation initialization system (fixes T-pose on world rejoin with shaders)
+    public boolean isClientAnimationReady() {
+        return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
     }
 
     /**

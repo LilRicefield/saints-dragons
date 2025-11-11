@@ -158,6 +158,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private int pitchHoldTicks = 0;
     private int pitchDir = 0;
 
+    // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
+    private int clientAnimInitTicks = 0;
+    private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
+
     private float prevScreenShakeAmount = 0f;
     private float screenShakeAmount = 0f;
 
@@ -496,6 +500,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         // === CLIENT-SIDE ONLY ===
         if (level().isClientSide) {
+            // Increment animation initialization counter (prevents T-pose on rejoin with shaders)
+            if (clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
+                clientAnimInitTicks++;
+            }
             return; // Early exit for client - nothing else needed
         }
 
@@ -842,6 +850,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public boolean isRiderLandingBlendActive() {
         return this.entityData.get(DATA_RIDER_LANDING_BLEND);
+    }
+
+    // Animation initialization system (fixes T-pose on world rejoin with shaders)
+    public boolean isClientAnimationReady() {
+        return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
     }
 
     private double getAltitudeAboveTerrain() {
