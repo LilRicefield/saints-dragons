@@ -1018,20 +1018,50 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
 
-        AABB bounds = this.getBoundingBox().inflate(-0.05);
+        // Only break blocks when moving OR being ridden (prevent stationary destruction when wild)
+        boolean isBeingRidden = this.isVehicle();
+        Vec3 velocity = this.getDeltaMovement();
+        double speed = velocity.horizontalDistanceSqr();
+
+        // If not being ridden, require movement. If being ridden, always break blocks (rider controls movement)
+        if (!isBeingRidden && speed < 0.01) {
+            return; // Not moving enough to break blocks
+        }
+
+        int tickInterval = isBeingRidden ? 1 : 3;
+        if (this.tickCount % tickInterval != 0) {
+            return;
+        }
+
+        AABB rawBounds = this.getBoundingBox();
+        AABB bounds = rawBounds.inflate(0.1); // include the collision skin so collisions still get cleared
+        if (isBeingRidden) {
+            Vec3 planarVelocity = new Vec3(velocity.x, 0.0, velocity.z);
+            if (planarVelocity.lengthSqr() > 0.0004) {
+                double reach = isBeingRidden ? 1.1 : 0.6;
+                Vec3 forwardProbe = planarVelocity.normalize().scale(reach); // push ahead further when ridden for instant clearing
+                bounds = bounds.expandTowards(forwardProbe.x, 0.0, forwardProbe.z);
+            }
+        }
         int minX = Mth.floor(bounds.minX);
         int maxX = Mth.floor(bounds.maxX);
         int minZ = Mth.floor(bounds.minZ);
         int maxZ = Mth.floor(bounds.maxZ);
-        int baseY = Mth.floor(bounds.minY);
-        int minBreakY = baseY + 1;
+        int baseY = Mth.floor(rawBounds.minY);
+        int minBreakY = baseY + 1;  // Start above the feet
         int maxY = Mth.floor(bounds.maxY);
 
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int brokenThisTick = 0;
+        int maxBreakPerTick = isBeingRidden ? 24 : 8; // mounted dragons chew through more blocks instantly
 
         for (int x = minX; x <= maxX; x++) {
             for (int y = minBreakY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
+                    if (brokenThisTick >= maxBreakPerTick) {
+                        return; // Hit the limit for this tick
+                    }
+
                     cursor.set(x, y, z);
                     if (!level().hasChunkAt(cursor)) {
                         continue;
@@ -1041,11 +1071,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     if (state.isAir() || !state.getFluidState().isEmpty()) {
                         continue;
                     }
-                    if (state.getDestroySpeed(level(), cursor) < 0 || state.hasBlockEntity()) {
-                        continue;
+
+                    // Skip indestructible blocks and block entities
+                    float hardness = state.getDestroySpeed(level(), cursor);
+                    if (hardness < 0 || hardness > 5.0F || state.hasBlockEntity()) {
+                        continue; // Skip bedrock, obsidian-like blocks, and tile entities
                     }
 
                     level().destroyBlock(cursor, true, this);
+                    brokenThisTick++;
                 }
             }
         }
