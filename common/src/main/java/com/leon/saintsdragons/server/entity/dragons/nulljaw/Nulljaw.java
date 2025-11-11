@@ -75,7 +75,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         // This triggers the static initializers in NulljawAbilities, registering all abilities
         try {
             Class.forName("com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities");
-            System.out.println("[Nulljaw] Abilities loaded successfully in static initializer!");
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("Failed to load Nulljaw abilities!", e);
         }
