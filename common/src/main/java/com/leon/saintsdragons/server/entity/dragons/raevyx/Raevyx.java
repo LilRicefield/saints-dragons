@@ -1303,6 +1303,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tickFeedingCooldown();
         tickSleepTransition();
         tickSleepCooldowns();
+        handleAmbientSounds();
 
         // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
         if (tickCount % 5 == 0) {
@@ -1311,7 +1312,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             tickSuperchargeVfx();
             tickMountingState();
             tickFollowFailsafe();
-            handleAmbientSounds();
         }
 
         // === SERVER-SIDE: SLEEP WAKE-UP LOGIC ===
