@@ -682,12 +682,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         // Suppress ambient sounds during transitions to prevent animation snapping
         if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0) {
-            ambientSoundTimer = 0;
             return;
         }
 
         if (getActiveAbility() != null || isBreathingFire() || this.getTarget() != null) {
-            ambientSoundTimer = 0;
             return;
         }
 
