@@ -104,7 +104,11 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     private int sleepTransitionTicks = 0; // Countdown timer for transition animations
     private boolean isSittingDown = false; // Currently playing sit_down animation
     private boolean isStandingUp = false; // Currently playing sit_up animation
-    
+
+    // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
+    private int clientAnimInitTicks = 0;
+    private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
+
     // Synced sleep state for client-side animation
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING = 
             net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
@@ -672,6 +676,11 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Tick sound handler
         soundHandler.tick();
 
+        // Increment animation initialization counter on client (prevents T-pose on rejoin with shaders)
+        if (level().isClientSide && clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
+            clientAnimInitTicks++;
+        }
+
         // Handle ambient sounds (server-side only)
         if (!level().isClientSide) {
             handleAmbientSounds();
@@ -834,6 +843,11 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         if (!sleeping && napCooldown <= 0) {
             napTicks = 1200 + getRandom().nextInt(1200); // 1-2 minutes
         }
+    }
+
+    // Animation initialization system (fixes T-pose on world rejoin with shaders)
+    public boolean isClientAnimationReady() {
+        return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
     }
 
     public boolean isDayNapQueued() {

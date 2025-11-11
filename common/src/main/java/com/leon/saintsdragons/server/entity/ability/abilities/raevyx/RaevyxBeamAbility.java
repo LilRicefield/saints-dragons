@@ -39,6 +39,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             beamLoopActive = false;
             beamStartPlayed = true;
             Raevyx wyvern = getUser();
+            wyvern.setBeamGlowActive(true);
             wyvern.setBeaming(false);
             wyvern.triggerAnim("action", "lightning_beam_start");
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
@@ -64,6 +65,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (section.sectionType == AbilitySectionType.ACTIVE) {
             Raevyx wyvern = getUser();
             wyvern.setBeaming(false);
+            wyvern.setBeamGlowActive(false);
             wyvern.clearBeamPath();
             triggerBeamStop(wyvern);
             hasBeamFired = false;
@@ -75,6 +77,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         // Ensure beaming visuals stop even if interrupted mid-startup or active
         Raevyx wyvern = getUser();
         wyvern.setBeaming(false);
+        wyvern.setBeamGlowActive(false);
         wyvern.clearBeamPath();
         triggerBeamStop(wyvern);
         hasBeamFired = false; // Reset for next use

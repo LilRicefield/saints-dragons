@@ -113,14 +113,22 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     }
 
     public PlayState movementPredicate(AnimationState<Nulljaw> state) {
+        var controller = state.getController();
+        controller.setAnimationSpeed(1.0F);
+
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        // Wait for entity data to sync from server before processing animations
+        if (drake.level().isClientSide && !drake.isClientAnimationReady()) {
+            state.setAndContinue(IDLE);
+            return PlayState.CONTINUE;
+        }
+
         boolean isSwimming = drake.isSwimming();
         boolean isInWater = drake.isInWater();
         boolean isNavigating = drake.getNavigation().isInProgress() && drake.getNavigation().getPath() != null;
         double horizontalSpeedSq = drake.getDeltaMovement().horizontalDistanceSqr();
         double totalSpeedSq = drake.getDeltaMovement().lengthSqr();
         boolean isMovingLand = state.isMoving() || horizontalSpeedSq > 0.008D;
-        var controller = state.getController();
-        controller.setAnimationSpeed(1.0F);
 
         // Check swimming state - use isInWater as a fallback if isSwimming isn't synced yet
         if (isSwimming || isInWater) {

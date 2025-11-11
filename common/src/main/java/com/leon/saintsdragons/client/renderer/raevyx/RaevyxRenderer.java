@@ -17,6 +17,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxLightningBeamLayer;
+import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxGlowLayer;
 
 @Environment(EnvType.CLIENT)
 public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
@@ -27,7 +28,8 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
 
     public RaevyxRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new RaevyxModel());
-        // Attach beam render layer
+        // Attach beam render layers (glow + beam)
+        this.addRenderLayer(new RaevyxGlowLayer(this));
         this.addRenderLayer(new RaevyxLightningBeamLayer());
     }
 

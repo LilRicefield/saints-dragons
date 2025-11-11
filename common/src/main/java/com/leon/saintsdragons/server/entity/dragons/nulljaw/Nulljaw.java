@@ -162,6 +162,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private int sleepCommandSnapshot = -1;
     private boolean wasVehicleLastTick = false;
 
+    // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
+    private int clientAnimInitTicks = 0;
+    private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
+
     // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
 
     public boolean canFeed() {
@@ -216,6 +220,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     public boolean areRiderControlsLocked() {
         return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
+    }
+
+    // Animation initialization system (fixes T-pose on world rejoin with shaders)
+    public boolean isClientAnimationReady() {
+        return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
     }
 
     public void lockRiderControls(int ticks) {
@@ -535,6 +544,12 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     public void tick() {
         super.tick();
         soundHandler.tick();
+
+        // Increment animation initialization counter on client (prevents T-pose on rejoin with shaders)
+        if (level().isClientSide && clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
+            clientAnimInitTicks++;
+        }
+
         tickSittingState();
         tickMountedState();
         tickScreenShake();

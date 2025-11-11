@@ -138,6 +138,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public static final EntityDataAccessor<Boolean> DATA_BEAMING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
+    /** Tracks whether the emissive glow layer should be active (beam startup/active) */
+    public static final EntityDataAccessor<Boolean> DATA_BEAM_GLOW =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
     /** Entity data accessor for rider landing blend active state */
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
@@ -343,6 +347,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     int dodgeTicksLeft = 0;
     Vec3 dodgeVec = Vec3.ZERO;
 
+    // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
+    private int clientAnimInitTicks = 0;
+    private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
+
     private boolean allowGroundBeamDuringStorm = false;
     // Sit transition state
     // Track sit down/up animations separately from sitProgress (which is for sit pose interpolation)
@@ -537,6 +545,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Define Lightning Dragon specific data
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
+        this.entityData.define(DATA_BEAM_GLOW, false);
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
         this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
@@ -832,6 +841,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (!beaming || !wasBeaming) {
             resetBeamAim();
         }
+    }
+
+    public boolean isBeamGlowActive() {
+        return this.entityData.get(DATA_BEAM_GLOW);
+    }
+
+    public void setBeamGlowActive(boolean active) {
+        this.entityData.set(DATA_BEAM_GLOW, active);
     }
 
     // (No client/server rider anchor fields; seat uses math-based head-space anchor)
@@ -1216,6 +1233,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.hasImpulse = true;
     }
 
+    // Animation initialization system (fixes T-pose on world rejoin with shaders)
+    public boolean isClientAnimationReady() {
+        return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
+    }
+
     // ===== MAIN TICK METHOD =====
     @Override
     public void tick() {
@@ -1232,6 +1254,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // === CLIENT-SIDE ONLY ===
         if (level().isClientSide) {
+            // Increment animation initialization counter (prevents T-pose on rejoin with shaders)
+            if (clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
+                clientAnimInitTicks++;
+            }
             tickSound();
             return; // Early exit for client - nothing else needed
         }
