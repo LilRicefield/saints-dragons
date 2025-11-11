@@ -40,6 +40,10 @@ public class CindervaneFollowOwnerGoal extends Goal {
             return false;
         }
 
+        if (amphithere.isVehicle() || amphithere.isPassenger()) {
+            return false;
+        }
+
         // Don't start following while sitting down (but standing up is OK)
         if (amphithere.isSittingDownAnimation()) {
             return false;
@@ -80,6 +84,10 @@ public class CindervaneFollowOwnerGoal extends Goal {
             return false;
         }
 
+        if (amphithere.isVehicle() || amphithere.isPassenger()) {
+            return false;
+        }
+
         if (amphithere.getTarget() != null && amphithere.getTarget().isAlive()) {
             return false;
         }
@@ -109,6 +117,15 @@ public class CindervaneFollowOwnerGoal extends Goal {
     public void tick() {
         LivingEntity owner = amphithere.getOwner();
         if (owner == null) {
+            return;
+        }
+
+        if (amphithere.isVehicle() || amphithere.isPassenger()) {
+            // Mounted dragons ignore autonomous follow logic to avoid fighting rider inputs
+            amphithere.getNavigation().stop();
+            amphithere.setRunning(false);
+            amphithere.setGroundMoveStateFromAI(0);
+            resetPathTracking();
             return;
         }
 
