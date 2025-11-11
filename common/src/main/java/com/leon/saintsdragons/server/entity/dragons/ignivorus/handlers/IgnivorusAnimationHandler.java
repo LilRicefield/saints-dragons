@@ -97,6 +97,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
      * Banking animation based on turn direction
      */
     public PlayState bankingPredicate(AnimationState<Ignivorus> state) {
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
+            state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.banking_off"));
+            return PlayState.CONTINUE;
+        }
+
         // Simple version - can expand later
         state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.banking_off"));
         return PlayState.CONTINUE;
@@ -106,6 +112,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
      * Pitching animation based on pitch direction
      */
     public PlayState pitchingPredicate(AnimationState<Ignivorus> state) {
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
+            state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.pitching_off"));
+            return PlayState.CONTINUE;
+        }
+
         double pitchDir = dragon.getPitchDirection();
 
         if (pitchDir > 0) {
