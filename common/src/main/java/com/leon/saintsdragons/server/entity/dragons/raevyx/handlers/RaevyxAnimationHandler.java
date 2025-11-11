@@ -127,6 +127,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
      * Disabled when in water - swimming has its own movement animations
      */
     public PlayState bankingPredicate(AnimationState<Raevyx> state) {
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
+            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_off"));
+            return PlayState.CONTINUE;
+        }
+
         // Disable banking when in water
         boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
         if (inWater) {
@@ -142,6 +148,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
      * Disabled when in water - swimming has its own movement animations
      */
     public PlayState pitchingPredicate(AnimationState<Raevyx> state) {
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
+            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.pitching_off"));
+            return PlayState.CONTINUE;
+        }
+
         // Disable pitching when in water
         boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
         if (inWater) {

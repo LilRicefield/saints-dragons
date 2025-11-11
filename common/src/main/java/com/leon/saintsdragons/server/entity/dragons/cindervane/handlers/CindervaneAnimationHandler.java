@@ -220,6 +220,12 @@ public class CindervaneAnimationHandler {
     }
 
     public PlayState bankingPredicate(AnimationState<Cindervane> state) {
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
+            state.setAndContinue(BANK_OFF);
+            return PlayState.CONTINUE;
+        }
+
         if (dragon.isInWater() || dragon.isInWaterOrBubble()) {
             return PlayState.STOP;
         }
@@ -237,6 +243,12 @@ public class CindervaneAnimationHandler {
     }
 
     public PlayState pitchingPredicate(AnimationState<Cindervane> state) {
+        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
+        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
+            state.setAndContinue(PITCH_OFF);
+            return PlayState.CONTINUE;
+        }
+
         if (dragon.isInWater() || dragon.isInWaterOrBubble()) {
             return PlayState.STOP;
         }
