@@ -139,6 +139,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     .add("ignivorus_roar", "action", "animation.ignivorus.roar",
                             ModSounds.IGNIVORUS_ROAR, 1.8f, 0.85f, 0.15f,
                             false, false, false)
+                    .add("ignivorus_hurt", "hurt", "animation.ignivorus.hurt",
+                            ModSounds.IGNIVORUS_HURT, 1.6f, 0.95f, 0.1f,
+                            true, true, true)
+                    .add("ignivorus_die", "action", "animation.ignivorus.die",
+                            ModSounds.IGNIVORUS_DIE, 1.8f, 0.9f, 0.05f,
+                            false, true, true)
                     .build();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -966,6 +972,28 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return IgnivorusAbilities.IGNIVORUS_FIRE_BREATH;
     }
 
+    @Override
+    protected DragonAbilityType<?, ?> getHurtAbilityType() {
+        return IgnivorusAbilities.IGNIVORUS_HURT;
+    }
+
+    @Override
+    protected DragonAbilityType<?, ?> getDeathAbilityType() {
+        return IgnivorusAbilities.IGNIVORUS_DIE;
+    }
+
+    @Override
+    public int getDeathAnimationDurationTicks() {
+        return 80; // 4 seconds to match the die animation length
+    }
+
+    @Override
+    public void onDeathAbilityStarted() {
+        setBreathingFire(false);
+        clearFireBreathPath();
+        super.onDeathAbilityStarted();
+    }
+
     // ===== ENTITY DATA ACCESSOR GETTERS =====
 
     @Override
@@ -1286,11 +1314,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         AnimationController<Ignivorus> actionController =
             new AnimationController<>(this, "action", 5, state -> software.bernie.geckolib.core.object.PlayState.STOP);
 
+        AnimationController<Ignivorus> hurtController =
+            new AnimationController<>(this, "hurt", 3, state -> software.bernie.geckolib.core.object.PlayState.STOP);
+        hurtController.triggerableAnim("ignivorus_hurt",
+            software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
+        hurtController.setSoundKeyframeHandler(this::onAnimationSound);
+
         // Register all action animations via handler
         animationHandler.setupActionController(actionController);
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
 
-        controllers.add(movementController, bankingController, pitchingController, actionController);
+        controllers.add(movementController, bankingController, pitchingController, hurtController, actionController);
     }
 
     private void onAnimationSound(SoundKeyframeEvent<Ignivorus> event) {

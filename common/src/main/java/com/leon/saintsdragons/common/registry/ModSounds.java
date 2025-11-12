@@ -78,6 +78,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_STEP = registerSound("ignivorus_step");
     public static final Supplier<SoundEvent> IGNIVORUS_MAGMA_PILLAR = registerSound("ignivorus_magma_pillar");
     public static final Supplier<SoundEvent> IGNIVORUS_BODY_SLAM = registerSound("ignivorus_body_slam");
+    public static final Supplier<SoundEvent> IGNIVORUS_HURT = registerSound("ignivorus_hurt");
+    public static final Supplier<SoundEvent> IGNIVORUS_DIE = registerSound("ignivorus_die");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_START = registerSound("ignivorus_fire_breath_start");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATHING = registerSound("ignivorus_fire_breathing");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_END = registerSound("ignivorus_fire_breath_end");
