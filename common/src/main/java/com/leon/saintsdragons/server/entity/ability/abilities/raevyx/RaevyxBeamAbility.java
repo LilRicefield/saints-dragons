@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -42,6 +43,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             wyvern.setBeamGlowActive(true);
             wyvern.setBeaming(false);
             wyvern.triggerAnim("action", "lightning_beam_start");
+            if (!wyvern.level().isClientSide) {
+                float pitch = 0.9f + wyvern.getRandom().nextFloat() * 0.2f;
+                wyvern.playSound(ModSounds.RAEVYX_LIGHTNING_BEAM_START.get(), 1.8f, pitch);
+            }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             // Enter beaming window; visuals/damage enabled during ACTIVE only
             Raevyx wyvern = getUser();
@@ -125,6 +130,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private void triggerBeamStop(Raevyx wyvern) {
         if (beamLoopActive || beamStartPlayed) {
             wyvern.triggerAnim("action", "lightning_beam_stop");
+            if (!wyvern.level().isClientSide) {
+                float pitch = 0.95f + wyvern.getRandom().nextFloat() * 0.15f;
+                wyvern.playSound(ModSounds.RAEVYX_LIGHTNING_BEAM_STOP.get(), 1.6f, pitch);
+            }
         }
         beamLoopActive = false;
         beamStartPlayed = false;
