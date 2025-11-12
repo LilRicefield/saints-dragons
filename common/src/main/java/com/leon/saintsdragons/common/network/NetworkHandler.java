@@ -67,6 +67,14 @@ public final class NetworkHandler {
                 MessageDragonAllyDelta::decode,
                 MessageDragonAllyDelta::handle
         );
+
+        NETWORK.registerClientbound(
+                MessageDragonMeleeMode.class,
+                id("dragon_melee_mode"),
+                MessageDragonMeleeMode::encode,
+                MessageDragonMeleeMode::decode,
+                MessageDragonMeleeMode::handle
+        );
     }
 
     public static void sendToServer(Object message) {

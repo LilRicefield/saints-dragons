@@ -1,7 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
-import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
@@ -21,6 +22,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -30,7 +32,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -95,6 +96,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
@@ -152,6 +155,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public int timeFlying = 0;
     private int airTicks;
     public int groundTicks;
+    private int riderControlLockTicks;
 
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 45.0F;
@@ -219,6 +223,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
+        this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_FIRE_BREATHING, false);
         this.entityData.define(DATA_FIRE_BREATH_PROGRESS, 0);
         this.entityData.define(DATA_FIRE_START_SET, false);
@@ -255,6 +260,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public void tick() {
         super.tick();
+        tickRiderControlLock();
         physicsController.tick();
         tickScreenShake();
 
@@ -311,6 +317,40 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
         Vec3 input = riderController.getRiddenInput(player, deltaIn);
         return super.getRiddenInput(player, input);
+    }
+
+    private void tickRiderControlLock() {
+        if (riderControlLockTicks > 0) {
+            riderControlLockTicks--;
+            if (riderControlLockTicks <= 0) {
+                this.entityData.set(DATA_RIDER_LOCKED, false);
+            }
+        }
+    }
+
+    public boolean areRiderControlsLocked() {
+        return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
+    }
+
+    public void lockRiderControls(int ticks) {
+        riderControlLockTicks = Math.max(riderControlLockTicks, Math.max(0, ticks));
+        this.entityData.set(DATA_RIDER_LOCKED, true);
+        this.setAccelerating(false);
+        this.setLastRiderForward(0.0F);
+        this.setLastRiderStrafe(0.0F);
+        this.setGroundMoveStateFromRider(0);
+        this.setGoingUp(false);
+        this.setGoingDown(false);
+        this.setDeltaMovement(Vec3.ZERO);
+        if (!this.level().isClientSide) {
+            this.getNavigation().stop();
+            this.setTarget(null);
+        }
+    }
+
+    @Override
+    protected boolean isRiderInputLocked(Player player) {
+        return areRiderControlsLocked();
     }
 
     @Override
@@ -397,6 +437,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             case TAKEOFF_REQUEST -> requestRiderTakeoff();
             case ACCELERATE -> setAccelerating(true);
             case STOP_ACCELERATE -> setAccelerating(false);
+            case TOGGLE_MELEE -> {
+                if (!locked) {
+                    onRiderToggleMelee(player);
+                }
+            }
             case ABILITY_USE -> {
                 if (!locked && abilityName != null && !abilityName.isEmpty()) {
                     useRidingAbility(abilityName);
@@ -426,6 +471,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
                 this.entityData.set(DATA_GROUND_MOVE_STATE, s);
             }
+        }
+    }
+
+    public void setGroundMoveStateFromRider(int state) {
+        int s = Mth.clamp(state, 0, 2);
+        if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
+            this.entityData.set(DATA_GROUND_MOVE_STATE, s);
         }
     }
 
@@ -464,8 +516,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        // Bite ability triggered by left-click (attack key)
-        return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_BITE_ID, RiderAbilityBinding.Activation.PRESS);
+        String abilityId = getMeleeMode() == 1
+                ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM_ID
+                : IgnivorusAbilities.IGNIVORUS_BITE_ID;
+        return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
@@ -491,8 +545,25 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     // ===== RIDER INPUT HANDLERS =====
 
     @Override
+    protected void onRiderToggleMelee(Player player) {
+        if ((isFlying() || isTakeoff() || isLanding() || isHovering()) && player instanceof ServerPlayer serverPlayer && !level().isClientSide) {
+            serverPlayer.displayClientMessage(
+                    Component.translatable("saintsdragons.message.ignivorus_secondary_ground_only"),
+                    true
+            );
+            syncMeleeMode(serverPlayer);
+            return;
+        }
+        super.onRiderToggleMelee(player);
+        if (!level().isClientSide) {
+            syncMeleeMode(player);
+        }
+    }
+
+    @Override
     protected void onRiderTakeoffRequest(Player player) {
         if (!isFlying() && onGround()) {
+            enforcePrimaryMeleeForFlight(player);
             riderController.requestRiderTakeoff();
         }
     }
@@ -560,6 +631,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (wasFlying != flying) {
             this.setAccelerating(false);
             if (flying) {
+                enforcePrimaryMeleeForFlight(getControllingPassenger() instanceof Player p ? p : null);
                 switchNavigation(true);
                 setRunning(false);
             } else {
@@ -866,9 +938,23 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        // Bite is the primary melee attack for AI combat
-        return IgnivorusAbilities.IGNIVORUS_BITE;
+        return getMeleeMode() == 1 ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM : IgnivorusAbilities.IGNIVORUS_BITE;
     }
+
+    private void enforcePrimaryMeleeForFlight(@Nullable Player rider) {
+        if (level().isClientSide || getMeleeMode() == 0) {
+            return;
+        }
+        setMeleeMode(0);
+        syncMeleeMode(rider);
+    }
+
+    private void syncMeleeMode(@Nullable Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            NetworkHandler.sendToPlayer(serverPlayer, new MessageDragonMeleeMode(getMeleeMode()));
+        }
+    }
+
 
     @Override
     public DragonAbilityType<?, ?> getRoaringAbility() {

@@ -192,6 +192,7 @@
   "saintsdragons.message.ally.is_owner": "Must you try? You are the owner of this dragon.",
   "saintsdragons.message.ally.inappropriate_content": "Trying to be funny?",
   "saintsdragons.message.no_secondary_melee": "This dragon has no secondary melee attack",
+  "saintsdragons.message.ignivorus_secondary_ground_only": "Ignivorus can only body slam while on the ground.",
   
   "saintsdragons.message.easter_egg.notch": "Yes, he created this game. But he's not on this server!",
   "saintsdragons.message.easter_egg.jeb_": "The lead developer! But he's busy working on the next update.",
