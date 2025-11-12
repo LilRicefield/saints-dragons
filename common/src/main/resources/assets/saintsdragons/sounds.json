@@ -39,6 +39,38 @@
       }
     ]
   },
+  "raevyx_lightning_beam_start": {
+    "subtitle": "Raevyx charges lightning",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_lightning_beam_start",
+        "volume": 1.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_lightning_beaming": {
+    "subtitle": "Raevyx fires a lightning beam",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_lightning_beaming",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "stream": true,
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "raevyx_lightning_beam_stop": {
+    "subtitle": "Raevyx vents lightning",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_lightning_beam_stop",
+        "volume": 1.6,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_purr": {
     "subtitle": "Raevyx purrs contentedly",
     "sounds": [

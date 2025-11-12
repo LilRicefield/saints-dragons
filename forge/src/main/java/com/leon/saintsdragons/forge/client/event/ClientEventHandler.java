@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
+import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -140,7 +141,9 @@ public class ClientEventHandler {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-        IgnivorusFireBreathSoundController.tick(Minecraft.getInstance());
+        Minecraft minecraft = Minecraft.getInstance();
+        RaevyxLightningBeamSoundController.tick(minecraft);
+        IgnivorusFireBreathSoundController.tick(minecraft);
     }
 
     // DISABLED: Let vanilla render the passenger normally for now
