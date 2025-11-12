@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -67,6 +68,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             dragon.setFireBreathProgress(0);  // Reset progress
             dragon.clearFireBreathPath();
             dragon.triggerAnim("action", "fire_breath_start");  // Play 75ms start animation
+            if (!dragon.level().isClientSide) {
+                float pitch = 0.92f + dragon.getRandom().nextFloat() * 0.15f;
+                dragon.playSound(ModSounds.IGNIVORUS_FIRE_BREATH_START.get(), 2.0f, pitch);
+            }
 
         } else if (section.sectionType == ACTIVE) {
             // Start showing fire cone and loop breathing animation
@@ -107,6 +112,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private void triggerBreathStop(Ignivorus dragon) {
         if (breathLoopActive || breathStartPlayed) {
             dragon.triggerAnim("action", "fire_breath_stop");
+            if (!dragon.level().isClientSide) {
+                float pitch = 0.92f + dragon.getRandom().nextFloat() * 0.15f;
+                dragon.playSound(ModSounds.IGNIVORUS_FIRE_BREATH_END.get(), 2.0f, pitch);
+            }
         }
         breathStartPlayed = false;
         breathLoopActive = false;

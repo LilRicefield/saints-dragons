@@ -487,5 +487,37 @@
         "pitch": 1.0
       }
     ]
+  },
+  "ignivorus_fire_breath_start": {
+    "subtitle": "Ignivorus inhales fire",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_fire_breath_start",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_fire_breathing": {
+    "subtitle": "Ignivorus breathes fire",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_fire_breathing",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "stream": true,
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "ignivorus_fire_breath_end": {
+    "subtitle": "Ignivorus exhales the last flames",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_fire_breath_end",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
   }
 }
