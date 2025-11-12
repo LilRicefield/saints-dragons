@@ -1,8 +1,10 @@
 package com.leon.saintsdragons.client.network;
 
+import com.leon.saintsdragons.client.DragonStatusUIManager;
 import com.leon.saintsdragons.client.screen.DragonAllyScreen;
 import com.leon.saintsdragons.common.network.MessageDragonAllyDelta;
 import com.leon.saintsdragons.common.network.MessageDragonAllyList;
+import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -28,5 +30,16 @@ public final class ClientPacketHandlers {
                 allyScreen.removeAlly(message.username());
             }
         }
+    }
+
+    public static void handleMeleeMode(MessageDragonMeleeMode message) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+        DragonStatusUIManager.getInstance()
+                .getDragonStatusUI()
+                .getMeleeModeNotification()
+                .showNotification(message.mode());
     }
 }
