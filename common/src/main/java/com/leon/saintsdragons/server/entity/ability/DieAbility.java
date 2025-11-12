@@ -44,6 +44,8 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         String animationTrigger = "die";
         if (abilityId.startsWith("baby_")) {
             animationTrigger = "baby_die";
+        } else if ("nulljaw_die".equals(abilityId)) {
+            animationTrigger = "nulljaw_die";
         }
         dragon.triggerAnim(controllerId, animationTrigger);
     }

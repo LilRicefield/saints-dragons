@@ -36,6 +36,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             case "cindervane_hurt" -> "cindervane_hurt";
             case "raevyx_hurt" -> "raevyx_hurt";
             case "baby_raevyx_hurt" -> "baby_raevyx_hurt";
+            case "nulljaw_hurt" -> "nulljaw_hurt";
             default -> "hurt";
         };
     }
@@ -51,6 +52,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
     private static String resolveControllerId(String abilityId) {
         return switch (abilityId) {
             case "cindervane_hurt", "raevyx_hurt", "baby_raevyx_hurt" -> "hurt";
+            case "nulljaw_hurt" -> "hurt";
             default -> DEFAULT_CONTROLLER;
         };
     }
@@ -97,5 +99,4 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
         return true;
     }
 }
-
 

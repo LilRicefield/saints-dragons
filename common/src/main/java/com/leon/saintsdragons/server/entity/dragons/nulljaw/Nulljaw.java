@@ -86,6 +86,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             .add("grumble1", "action", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
             .add("grumble2", "action", "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
             .add("grumble3", "action", "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("nulljaw_hurt", "hurt", "animation.nulljaw.hurt", ModSounds.NULLJAW_HURT, 1.1f, 0.95f, 0.1f, false, true, true)
+            .add("nulljaw_die", "hurt", "animation.nulljaw.die", ModSounds.NULLJAW_DIE, 1.35f, 0.9f, 0.05f, false, true, true)
             .build();
 
     // ===== AMBIENT SOUND SYSTEM =====
@@ -440,14 +442,18 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
                 new AnimationController<>(this, "swim_direction", 4, animationHandler::swimDirectionPredicate);
         AnimationController<Nulljaw> actions =
                 new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
+        AnimationController<Nulljaw> hurtController =
+                new AnimationController<>(this, "hurt", 1, animationHandler::hurtPredicate);
 
         animationHandler.configureMovementBlend(movementController);
         animationHandler.configureSwimBlend(swimController);
+        animationHandler.setupHurtController(hurtController);
 
         // Sound keyframes
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         swimController.setSoundKeyframeHandler(this::onAnimationSound);
         actions.setSoundKeyframeHandler(this::onAnimationSound);
+        hurtController.setSoundKeyframeHandler(this::onAnimationSound);
 
         // Setup animation triggers
         animationHandler.setupActionController(actions);
@@ -455,6 +461,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         controllers.add(movementController);
         controllers.add(swimController);
         controllers.add(actions);
+        controllers.add(hurtController);
     }
 
     @Override
@@ -469,6 +476,21 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     @Override
     public DragonSoundProfile getSoundProfile() {
         return NulljawSoundProfile.INSTANCE;
+    }
+
+    @Override
+    protected DragonAbilityType<?, ?> getHurtAbilityType() {
+        return NulljawAbilities.HURT;
+    }
+
+    @Override
+    protected DragonAbilityType<?, ?> getDeathAbilityType() {
+        return NulljawAbilities.DIE;
+    }
+
+    @Override
+    public int getDeathAnimationDurationTicks() {
+        return 56; // 2.7917 seconds
     }
 
     @Override
