@@ -2002,7 +2002,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     
     private void tickSuperchargeVfx() {
         // Supercharge VFX: periodic arcs/sparks around the body
-        if ((isSupercharged() || this.level().isThundering()) && superchargeVfxCooldown-- <= 0) {
+        if (isSupercharged() && this.level().isThundering() && superchargeVfxCooldown-- <= 0) {
             spawnSuperchargeVfx();
             superchargeVfxCooldown = 6 + this.random.nextInt(6); // pulse every ~0.3-0.6s
         }
