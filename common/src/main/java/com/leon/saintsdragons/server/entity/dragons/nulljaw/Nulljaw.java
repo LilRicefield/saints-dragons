@@ -1536,34 +1536,32 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     public boolean isInSitTransition() {
         return isSittingDown || isStandingUp;
     }
-
     public boolean isSittingDownAnimation() {
         return isSittingDown;
     }
-
     public boolean isStandingUpAnimation() {
         return isStandingUp;
     }
 
     @Override
     public float maxSitTicks() {
-        return 33.0F; // down animation is 1.6667s = 33 ticks
+        return 38.0F; // down animation is 1.88s = 38 ticks
     }
 
     public int getSitDownAnimationTicks() {
-        return 33; // down animation is 1.6667s ≈ 33 ticks
+        return 38; // down animation is 1.88s = 38 ticks
     }
 
     public int getSitUpAnimationTicks() {
-        return 40; // up animation is 2.0s = 40 ticks
+        return 38; // up animation is 1.88s = 38 ticks
     }
 
     public int getFallAsleepAnimationTicks() {
-        return 50; // fall_asleep animation is 2.5s = 50 ticks
+        return 38; // fall_asleep animation is 1.88s = 38 ticks
     }
 
     public int getWakeUpAnimationTicks() {
-        return 40; // wake_up animation is 2.0s = 40 ticks
+        return 38; // up animation is 1.88s = 38 ticks
     }
 
     /**

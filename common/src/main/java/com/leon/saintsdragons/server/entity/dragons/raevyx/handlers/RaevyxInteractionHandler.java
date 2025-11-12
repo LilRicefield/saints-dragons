@@ -253,9 +253,12 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (!wyvern.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 // Determine which transition is happening
                 boolean sittingDown = wyvern.isSittingDownAnimation();
+                boolean standingUp = wyvern.isStandingUpAnimation();
                 String messageKey = sittingDown
                     ? "entity.saintsdragons.raevyx.sitting_down"
-                    : "entity.saintsdragons.raevyx.standing_up";
+                    : standingUp
+                        ? "entity.saintsdragons.raevyx.standing_up"
+                        : "entity.saintsdragons.raevyx.transitioning";
 
                 serverPlayer.displayClientMessage(
                     Component.translatable(messageKey, wyvern.getName()),
