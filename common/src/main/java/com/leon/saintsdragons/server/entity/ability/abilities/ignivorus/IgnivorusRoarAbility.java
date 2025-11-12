@@ -49,6 +49,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
 
     private boolean soundQueued;
     private int wavesSpawned;
+    private boolean cosmeticMode; // True when roaring mid-flight (no pillars/damage)
 
     public IgnivorusRoarAbility(DragonAbilityType<Ignivorus, IgnivorusRoarAbility> type, Ignivorus user) {
         super(type, user, TRACK, 80);
@@ -98,6 +99,10 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
 
         if (section.sectionType != ACTIVE || dragon.level().isClientSide) {
             return;
+        }
+
+        if (cosmeticMode) {
+            return; // Flying roar: animation & sound only, no pillars
         }
 
         int totalTicks = getTicksInUse();
@@ -153,10 +158,22 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
     @Override
     public boolean tryAbility() {
         Ignivorus dragon = getUser();
-        return dragon != null
-                && !dragon.isBaby()
-                && !dragon.isFlying()
-                && dragon.onGround()
-                && super.tryAbility();
+        if (dragon == null || dragon.isBaby()) {
+            return false;
+        }
+
+        boolean allowCosmetic = dragon.isFlying();
+        boolean grounded = dragon.onGround();
+
+        if (!allowCosmetic && !grounded) {
+            return false;
+        }
+
+        cosmeticMode = allowCosmetic;
+        boolean success = super.tryAbility();
+        if (!success) {
+            cosmeticMode = false;
+        }
+        return success;
     }
 }

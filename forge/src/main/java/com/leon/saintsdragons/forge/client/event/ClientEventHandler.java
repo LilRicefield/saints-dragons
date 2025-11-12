@@ -82,7 +82,7 @@ public class ClientEventHandler {
             // Determine target zoom based on flight state
             boolean isFlying = ignivorus.isFlying();
 
-            ignivorusCameraZoomTarget = isFlying ? 35 : 15F;
+            ignivorusCameraZoomTarget = isFlying ? 45 : 15F;
 
             // Smooth transition
             float blendRate = 0.05F;

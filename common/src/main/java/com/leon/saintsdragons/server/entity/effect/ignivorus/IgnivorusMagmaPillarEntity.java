@@ -43,12 +43,17 @@ import java.util.UUID;
 public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private static final RawAnimation EMERGE_ANIMATION =
             RawAnimation.begin().thenPlay("animation.ignivorus_magma_pillar.emerge");
+    private static final RawAnimation SUBSIDE_ANIMATION =
+            RawAnimation.begin().thenPlay("animation.ignivorus_magma_pillar.subside");
+    private static final int SUBSIDE_DURATION_TICKS = 9; // Matches 0.416s subside animation
     private static final EntityDimensions BASE_DIMENSIONS = EntityDimensions.scalable(5.5F, 5.5F);
 
     private static final EntityDataAccessor<Integer> DATA_STAGE =
             SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_SCALE =
             SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_SUBSIDING =
+            SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 
@@ -59,6 +64,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private int warmupTicks = 6;
     private int lifetimeTicks = 36;
     private int livedTicks;
+    private int subsideTicks;
     private final java.util.Set<UUID> hitEntities = new java.util.HashSet<>();
     private boolean rotationLocked = false; // Lock rotation after initial setup
     private float lockedHeadYaw = 0.0f; // Store head rotation since setter doesn't work
@@ -95,6 +101,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     protected void defineSynchedData() {
         this.entityData.define(DATA_STAGE, 0);
         this.entityData.define(DATA_SCALE, 1.0f);
+        this.entityData.define(DATA_SUBSIDING, false);
     }
 
     public void setStage(int stage) {
@@ -131,6 +138,18 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         this.lifetimeTicks = lifetimeTicks;
     }
 
+    public boolean isSubsiding() {
+        return this.entityData.get(DATA_SUBSIDING);
+    }
+
+    private void beginSubside() {
+        if (isSubsiding()) {
+            return;
+        }
+        this.subsideTicks = 0;
+        this.entityData.set(DATA_SUBSIDING, true);
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -139,14 +158,24 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
 
         if (level().isClientSide) {
             spawnClientEffects();
-        } else {
+        }
+
+        if (isSubsiding()) {
+            subsideTicks++;
+            if (!level().isClientSide && subsideTicks >= SUBSIDE_DURATION_TICKS) {
+                discard();
+            }
+            return;
+        }
+
+        if (!level().isClientSide) {
             resolveOwner();
-            // Apply damage every tick after warmup until pillar despawns
+            // Apply damage every tick after warmup until pillar begins subsiding
             if (livedTicks >= warmupTicks) {
                 applyImpact();
             }
             if (livedTicks >= lifetimeTicks) {
-                discard();
+                beginSubside();
             }
         }
     }
@@ -326,6 +355,10 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             initializeRotation(tag.getFloat("LockedYaw"));
         }
         this.rotationLocked = tag.getBoolean("RotationLocked");
+        this.subsideTicks = Math.max(0, tag.getInt("SubsideTicks"));
+        if (tag.contains("Subsiding")) {
+            this.entityData.set(DATA_SUBSIDING, tag.getBoolean("Subsiding"));
+        }
     }
 
     @Override
@@ -342,6 +375,8 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         }
         tag.putBoolean("RotationLocked", rotationLocked);
         tag.putFloat("LockedYaw", lockedHeadYaw);
+        tag.putBoolean("Subsiding", isSubsiding());
+        tag.putInt("SubsideTicks", subsideTicks);
 
         // Save hit entities
         long[] uuidArray = new long[hitEntities.size() * 2];
@@ -377,7 +412,11 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     }
 
     private <E extends GeoEntity> PlayState animationPredicate(AnimationState<E> state) {
-        state.getController().setAnimation(EMERGE_ANIMATION);
+        if (isSubsiding()) {
+            state.getController().setAnimation(SUBSIDE_ANIMATION);
+        } else {
+            state.getController().setAnimation(EMERGE_ANIMATION);
+        }
         return PlayState.CONTINUE;
     }
 

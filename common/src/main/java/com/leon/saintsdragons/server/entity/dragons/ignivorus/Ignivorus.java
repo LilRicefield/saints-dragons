@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusPhysicsController;
@@ -864,9 +865,19 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
+    public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         // Bite is the primary melee attack for AI combat
         return IgnivorusAbilities.IGNIVORUS_BITE;
+    }
+
+    @Override
+    public DragonAbilityType<?, ?> getRoaringAbility() {
+        return IgnivorusAbilities.IGNIVORUS_ROAR;
+    }
+
+    @Override
+    public DragonAbilityType<?, ?> getChannelingAbility() {
+        return IgnivorusAbilities.IGNIVORUS_FIRE_BREATH;
     }
 
     // ===== ENTITY DATA ACCESSOR GETTERS =====

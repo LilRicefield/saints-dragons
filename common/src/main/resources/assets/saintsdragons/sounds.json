@@ -458,6 +458,16 @@
       }
     ]
   },
+  "ignivorus_magma_pillar": {
+    "subtitle": "Magma pillars emerge",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_magma_pillar",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ignivorus_step": {
     "subtitle": "Ignivorus steps",
     "sounds": [
