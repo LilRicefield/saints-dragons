@@ -237,6 +237,24 @@ public class CindervaneInteractionHandler {
      * Handle command cycling (Follow/Sit/Wander).
      */
     private InteractionResult handleCommandCycling(Player player) {
+        if (dragon.isInSitTransition()) {
+            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                String messageKey;
+                if (dragon.isSittingDownAnimation()) {
+                    messageKey = "entity.saintsdragons.cindervane.sitting_down";
+                } else if (dragon.isStandingUpAnimation()) {
+                    messageKey = "entity.saintsdragons.cindervane.standing_up";
+                } else {
+                    messageKey = "entity.saintsdragons.cindervane.transitioning";
+                }
+                serverPlayer.displayClientMessage(
+                        Component.translatable(messageKey, dragon.getName()),
+                        true
+                );
+            }
+            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        }
+
         // Get current command and cycle to next
         int currentCommand = dragon.getCommand();
         int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander

@@ -230,6 +230,24 @@ public record NulljawInteractionHandler(Nulljaw drake) {
 
 
     private InteractionResult handleCommandCycling(Player player) {
+        if (drake.isInSitTransition()) {
+            if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                String messageKey;
+                if (drake.isSittingDownAnimation()) {
+                    messageKey = "entity.saintsdragons.nulljaw.sitting_down";
+                } else if (drake.isStandingUpAnimation()) {
+                    messageKey = "entity.saintsdragons.nulljaw.standing_up";
+                } else {
+                    messageKey = "entity.saintsdragons.nulljaw.transitioning";
+                }
+                serverPlayer.displayClientMessage(
+                        Component.translatable(messageKey, drake.getName()),
+                        true
+                );
+            }
+            return InteractionResult.sidedSuccess(drake.level().isClientSide);
+        }
+
         // Get current command and cycle to next
         int currentCommand = drake.getCommand();
         int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
