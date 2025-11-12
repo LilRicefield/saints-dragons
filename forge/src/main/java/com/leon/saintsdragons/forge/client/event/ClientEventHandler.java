@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.client.event;
 
+import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -12,6 +13,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ViewportEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -131,6 +133,14 @@ public class ClientEventHandler {
             randomTremorOffsets[1] = (Math.random() - 0.5) * 2.0;
             randomTremorOffsets[2] = (Math.random() - 0.5) * 2.0;
         }
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        IgnivorusFireBreathSoundController.tick(Minecraft.getInstance());
     }
 
     // DISABLED: Let vanilla render the passenger normally for now
