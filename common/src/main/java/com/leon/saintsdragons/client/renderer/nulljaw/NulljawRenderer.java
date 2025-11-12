@@ -21,6 +21,11 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
     }
 
     @Override
+    protected float getDeathMaxRotation(Nulljaw entity) {
+        return 0.0F;
+    }
+
+    @Override
     public void preRender(@NotNull PoseStack poseStack,
                           Nulljaw entity,
                           BakedGeoModel model,

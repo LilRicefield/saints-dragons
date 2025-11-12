@@ -170,7 +170,7 @@
     ]
   },
   "cindervane_die": {
-    "subtitle": "Cindervane dies",
+    "subtitle": "Cindervane dying",
     "sounds": [
       {
         "name": "saintsdragons:entity/cindervane/cindervane_die",
@@ -220,7 +220,7 @@
     ]
   },
   "raevyx_die": {
-    "subtitle": "Raevyx dies",
+    "subtitle": "Raevyx dying",
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_die",
@@ -289,7 +289,7 @@
     ]
   },
   "stegonaut_die": {
-    "subtitle": "Stegonaut dies",
+    "subtitle": "Stegonaut dying",
     "sounds": [
       {
         "name": "saintsdragons:entity/stegonaut/stegonaut_die",
@@ -413,6 +413,26 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/nulljaw/nulljaw_horngore",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_hurt": {
+    "subtitle": "Nulljaw gets hurt",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_hurt",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_die": {
+    "subtitle": "Nulljaw dying",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_die",
         "volume": 1.0,
         "pitch": 1.0
       }
