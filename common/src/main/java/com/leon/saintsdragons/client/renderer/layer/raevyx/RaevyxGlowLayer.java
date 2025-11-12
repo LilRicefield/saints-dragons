@@ -21,6 +21,8 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 public class RaevyxGlowLayer extends GeoRenderLayer<Raevyx> {
     private static final ResourceLocation GLOW_TEXTURE =
             SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_glow.png");
+    private static final ResourceLocation FEMALE_GLOW_TEXTURE =
+            SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_female_glow.png");
 
     public RaevyxGlowLayer(GeoRenderer<Raevyx> renderer) {
         super(renderer);
@@ -42,9 +44,8 @@ public class RaevyxGlowLayer extends GeoRenderLayer<Raevyx> {
         // Faster pulse: 0.25F = ~1.25 seconds per cycle (was 0.12F = ~2.6 seconds)
         float pulse = pulseBase + pulseSwing * (0.5f + 0.5f * Mth.sin(ticks * 0.25F));
 
-        // Use entityTranslucent instead of eyes() to support alpha blending
-        // We pass max light (0xF000F0) to make it fullbright/emissive
-        RenderType glowType = RenderType.entityTranslucent(GLOW_TEXTURE);
+        ResourceLocation texture = animatable.isFemale() ? FEMALE_GLOW_TEXTURE : GLOW_TEXTURE;
+        RenderType glowType = RenderType.entityTranslucent(texture);
         VertexConsumer glowBuffer = bufferSource.getBuffer(glowType);
 
         getRenderer().reRender(

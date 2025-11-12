@@ -17,6 +17,7 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 import net.minecraft.util.Mth;
 import java.util.Map;
 import java.util.WeakHashMap;
+import org.joml.Vector3f;
 
 /**
  * - Draws a multi-layered cylindrical beam with inner core and outer glow
@@ -28,12 +29,29 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final ResourceLocation OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/lightning_beam_outer.png");
     private static final ResourceLocation FEMALE_INNER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/female_lightning_beam_inner.png");
     private static final ResourceLocation FEMALE_OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/female_lightning_beam_outer.png");
+    private static final ResourceLocation[] MALE_STORM_FRAMES = buildStormFrames("lightning_storm_", 8);
+    // Female export only shipped a subset of frames, so build a looping sequence that reuses what exists.
+    private static final ResourceLocation[] FEMALE_STORM_SEQUENCE = new ResourceLocation[]{
+            particle("female_lightning_storm_0"),
+            particle("female_lightning_storm_3"),
+            particle("female_lightning_storm_5"),
+            particle("female_lightning_storm_6"),
+            particle("female_lightning_storm_7"),
+            particle("female_lightning_storm_6"),
+            particle("female_lightning_storm_5"),
+            particle("female_lightning_storm_3")
+    };
     // Beam tuning constants - adjust these to change beam appearance
     private static final float BASE_BEAM_WIDTH = 0.45F;        // Base width of the beam
     private static final float OUTER_BEAM_BONUS = 0.15F;      // Extra width for outer glow layer
     private static final float INNER_SPEED_MULTIPLIER = 0.25F; // Animation speed for inner beam
     private static final float OUTER_SPEED_MULTIPLIER = 0.25F; // Animation speed for outer beam
     private static final float BEAM_SHAKE_INTENSITY = 0.01F; // Intensity of beam shake effect
+    private static final float LIGHTNING_SQUARE_PADDING = 0.1F;
+    private static final float LIGHTNING_SEGMENT_LENGTH = 1.6F;
+    private static final float LIGHTNING_SEGMENT_GAP = 0.45F;
+    private static final float LIGHTNING_FRAME_INTERVAL_TICKS = 2.0F;
+
     // No end-caps; beam is a tubular mesh only
 
     // Per-entity visual state for appear/disappear easing
@@ -146,6 +164,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, true, innerTex);
         // Render outer beam
         renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, false, outerTex);
+        renderLightningStormLayer(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, visScale);
 
         poseStack.popPose();
 
@@ -243,5 +262,107 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
                 dragon
         ));
         return hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? hit.getLocation() : tentativeEnd;
+    }
+
+    private void renderLightningStormLayer(Raevyx entity, PoseStack poseStack, MultiBufferSource source,
+                                           float partialTicks, float baseWidth, float length, float visibility) {
+        if (visibility <= 0.0F) {
+            return;
+        }
+        float width = baseWidth + LIGHTNING_SQUARE_PADDING;
+        float totalLength = Math.max(0.001F, length);
+        float segmentLen = Math.max(0.25F, Math.min(LIGHTNING_SEGMENT_LENGTH, totalLength));
+        float cursor = 0.0F;
+        int segmentIndex = 0;
+        while (cursor < totalLength) {
+            float remaining = totalLength - cursor;
+            float currentLen = Math.min(segmentLen, remaining);
+            float alphaPulse = 0.65F + 0.35F * Mth.sin((entity.tickCount + partialTicks + segmentIndex * 3.5F) * 0.45F);
+            float alpha = Mth.clamp(visibility * alphaPulse, 0.05F, 1.0F);
+            ResourceLocation texture = getStormFrameTexture(entity, partialTicks + segmentIndex * 0.25F);
+            poseStack.pushPose();
+            poseStack.translate(0.0F, 0.0F, cursor);
+            if ((segmentIndex & 1) == 1) {
+                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+            }
+            renderLightningSegment(texture, poseStack, source, width, currentLen, alpha);
+            poseStack.popPose();
+            cursor += currentLen + LIGHTNING_SEGMENT_GAP;
+            segmentIndex++;
+        }
+    }
+
+    private void renderLightningSegment(ResourceLocation texture, PoseStack poseStack, MultiBufferSource source,
+                                        float width, float length, float alpha) {
+        VertexConsumer consumer = source.getBuffer(RenderType.entityTranslucent(texture));
+        PoseStack.Pose pose = poseStack.last();
+        Matrix4f matrix4f = pose.pose();
+        Matrix3f normalMatrix = pose.normal();
+        renderLightningPlane(consumer, matrix4f, normalMatrix, width, 0.0F, length, alpha, true, true);
+        renderLightningPlane(consumer, matrix4f, normalMatrix, -width, 0.0F, length, alpha, true, false);
+        renderLightningPlane(consumer, matrix4f, normalMatrix, width, 0.0F, length, alpha, false, true);
+        renderLightningPlane(consumer, matrix4f, normalMatrix, -width, 0.0F, length, alpha, false, false);
+    }
+
+    private static ResourceLocation getStormFrameTexture(Raevyx entity, float partialTicks) {
+        float ticks = (entity.tickCount + partialTicks) / LIGHTNING_FRAME_INTERVAL_TICKS;
+        if (entity.isFemale()) {
+            int idx = (int) (ticks % FEMALE_STORM_SEQUENCE.length);
+            return FEMALE_STORM_SEQUENCE[idx];
+        }
+        int idx = (int) (ticks % MALE_STORM_FRAMES.length);
+        return MALE_STORM_FRAMES[idx];
+    }
+
+    private void renderLightningPlane(VertexConsumer consumer, Matrix4f poseMatrix, Matrix3f normalMatrix,
+                                      float fixedCoord, float zStart, float zEnd, float alpha, boolean axisX, boolean positive) {
+        float half = Math.max(0.001F, Math.abs(fixedCoord));
+        float u0 = 0.0F;
+        float u1 = 1.0F;
+        float v0 = 0.0F;
+        float v1 = 1.0F;
+
+        Vector3f normalVec;
+        if (axisX) {
+            normalVec = new Vector3f(positive ? 1.0F : -1.0F, 0.0F, 0.0F);
+            normalMatrix.transform(normalVec);
+            float x = fixedCoord;
+            float yMin = -half;
+            float yMax = half;
+            consumer.vertex(poseMatrix, x, yMin, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v0)
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+            consumer.vertex(poseMatrix, x, yMin, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v1)
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+            consumer.vertex(poseMatrix, x, yMax, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v1)
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+            consumer.vertex(poseMatrix, x, yMax, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v0)
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+        } else {
+            normalVec = new Vector3f(0.0F, positive ? 1.0F : -1.0F, 0.0F);
+            normalMatrix.transform(normalVec);
+            float y = fixedCoord;
+            float xMin = -half;
+            float xMax = half;
+            consumer.vertex(poseMatrix, xMin, y, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v0)
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+            consumer.vertex(poseMatrix, xMin, y, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v1)
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+            consumer.vertex(poseMatrix, xMax, y, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v1)
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+            consumer.vertex(poseMatrix, xMax, y, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v0)
+                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+        }
+    }
+
+    private static ResourceLocation[] buildStormFrames(String prefix, int count) {
+        ResourceLocation[] frames = new ResourceLocation[count];
+        for (int i = 0; i < count; i++) {
+            frames[i] = particle(prefix + i);
+        }
+        return frames;
+    }
+
+    private static ResourceLocation particle(String path) {
+        return SaintsDragonsCommon.rl("textures/particle/raevyx/" + path + ".png");
     }
 }
