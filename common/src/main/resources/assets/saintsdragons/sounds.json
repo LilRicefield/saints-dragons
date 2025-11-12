@@ -520,6 +520,26 @@
       }
     ]
   },
+  "ignivorus_hurt": {
+    "subtitle": "Ignivorus bellows in pain",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_hurt",
+        "volume": 1.6,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_die": {
+    "subtitle": "Ignivorus collapses",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_die",
+        "volume": 1.7,
+        "pitch": 0.95
+      }
+    ]
+  },
   "ignivorus_fire_breath_start": {
     "subtitle": "Ignivorus inhales fire",
     "sounds": [

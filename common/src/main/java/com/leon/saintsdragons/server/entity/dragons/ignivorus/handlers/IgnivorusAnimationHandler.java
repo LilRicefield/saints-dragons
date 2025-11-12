@@ -179,5 +179,9 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Roar animation
         actionController.triggerableAnim("roar",
             RawAnimation.begin().thenPlay("animation.ignivorus.roar"));
+
+        // Death animation
+        actionController.triggerableAnim("die",
+            RawAnimation.begin().thenPlay("animation.ignivorus.die"));
     }
 }

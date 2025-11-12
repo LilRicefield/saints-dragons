@@ -37,6 +37,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             case "raevyx_hurt" -> "raevyx_hurt";
             case "baby_raevyx_hurt" -> "baby_raevyx_hurt";
             case "nulljaw_hurt" -> "nulljaw_hurt";
+            case "ignivorus_hurt" -> "ignivorus_hurt";
             default -> "hurt";
         };
     }
@@ -44,14 +45,14 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
     private static String resolveManualVocalKey(String abilityId) {
         return switch (abilityId) {
             case "stegonaut_hurt" -> "hurt";
-            case "hurt", "cindervane_hurt", "raevyx_hurt", "baby_raevyx_hurt" -> abilityId; // Manual audio fallback when animation lacks audio
+            case "hurt", "cindervane_hurt", "raevyx_hurt", "baby_raevyx_hurt", "ignivorus_hurt" -> abilityId; // Manual audio fallback when animation lacks audio
             default -> null;                      // Other dragons rely on keyframed audio
         };
     }
 
     private static String resolveControllerId(String abilityId) {
         return switch (abilityId) {
-            case "cindervane_hurt", "raevyx_hurt", "baby_raevyx_hurt" -> "hurt";
+            case "cindervane_hurt", "raevyx_hurt", "baby_raevyx_hurt", "ignivorus_hurt" -> "hurt";
             case "nulljaw_hurt" -> "hurt";
             default -> DEFAULT_CONTROLLER;
         };
@@ -99,4 +100,3 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
         return true;
     }
 }
-
