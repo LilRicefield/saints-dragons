@@ -28,6 +28,7 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);  // Smooth body rotation like Nulljaw/Raevyx
             applyBankingRoll(entity, animationState);
+            applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden
             applyNeckFollow();
             applyTailDrag(entity, partialTick);
         }
@@ -94,6 +95,47 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         // Set directly from snapshot + bank angle (no lerp with previous frame's bone rotation)
         // This prevents sync bleeding between multiple dragons rendering in the same frame
         body.setRotZ(snap.getRotZ() + bankAngleRad);
+    }
+
+    /**
+     * Lean neck and head into the banking direction when being ridden.
+     * Similar to tail drag but inverted - neck leans INTO the turn instead of dragging behind.
+     * This creates a natural "looking into the turn" effect during flight.
+     */
+    private void applyNeckBankingLean(Cindervane entity, float partialTick) {
+        // Only apply when being ridden and banking
+        if (!entity.isVehicle() || !entity.isFlying()) {
+            return;
+        }
+
+        // Get the banking angle (-90 to +90 degrees)
+        float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
+
+        // Convert to radians and scale
+        // Bank right → head turns left (opposite direction, like counter-steering)
+        // So we NEGATE the banking angle
+        // Scale: 45° bank = ~30° neck lean total
+        float neckLeanRad = -(bankAngleDeg / 45.0f) * 30.0f * Mth.DEG_TO_RAD;
+
+        // Apply with increasing intensity toward the head (like tail but reversed hierarchy)
+        applyNeckBoneRotation("neck1", neckLeanRad * 0.5f);  // Base of neck - subtle
+        applyNeckBoneRotation("neck2", neckLeanRad * 1.0f);  // Mid neck - medium
+        applyNeckBoneRotation("skull", neckLeanRad * 1.25f);   // Head - most pronounced
+    }
+
+    /**
+     * Helper to apply Y-rotation to a neck bone.
+     * ADDS to current rotation (preserves animation) instead of replacing it.
+     */
+    private void applyNeckBoneRotation(String boneName, float rotationY) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone bone = boneOpt.get();
+        // Add to current rotation (which includes animation) instead of setting from snapshot
+        bone.setRotY(bone.getRotY() + rotationY);
     }
 
     /**

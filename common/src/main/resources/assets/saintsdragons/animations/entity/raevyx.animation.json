@@ -3501,6 +3501,11 @@
 						}
 					}
 				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"neck3Controller": {
 					"rotation": {
 						"0.0": {
@@ -3621,6 +3626,16 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"head1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"leftshoulderController": {
@@ -3988,12 +4003,6 @@
 					},
 					"position": {
 						"0.0": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"0.4167": {
 							"post": {
 								"vector": [0, 0, 0]
 							},
@@ -5157,6 +5166,11 @@
 						}
 					}
 				},
+				"head1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftleg": {
 					"rotation": {
 						"0.0": {
@@ -6065,6 +6079,21 @@
 						}
 					}
 				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck3Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"head1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"phalanges1": {
 					"rotation": {
 						"0.0": {
@@ -6790,6 +6819,43 @@
 						}
 					}
 				},
+				"neck1Controller": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"0.625": {
+							"post": {
+								"vector": [6.25, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"1.25": {
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck3Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck4Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"head1Controller": {
 					"rotation": {
 						"0.0": {
@@ -6918,28 +6984,6 @@
 				"phalanges4": {
 					"rotation": {
 						"vector": [-0.9525, -9.89303, -2.50666]
-					}
-				},
-				"neck1LookControl": {
-					"rotation": {
-						"0.0": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"0.625": {
-							"post": {
-								"vector": [6.25, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
-						},
-						"1.25": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
-						}
 					}
 				},
 				"neck2LookControl": {
@@ -16804,6 +16848,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"head1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"rightshoulderController": {
