@@ -26,9 +26,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Powerful AoE bite attack for Ignivorus. Deals fire damage with armor penetration.
  * Triggers on left-click (attack key) when ridden.
  *
- * Hits ALL entities in a sphere around the mouth (fireBone position).
- * Range is calculated based on the fireBone position (pivot: -0.06603, 59.45, -245.05)
- * which places the mouth ~15.3 blocks forward from the dragon's origin.
+ * Hits ALL entities in a sphere around the mouth (mouth_origin locator from .geo file).
+ * Range is calculated based on the mouth_origin bone position in the animated model.
  */
 public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
     // 50 health base damage with 5 armor points ignored
@@ -139,7 +138,7 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
             radius += AIR_RADIUS_BONUS;
         }
 
-        // Get mouth position (fireBone - already ~15.3 blocks forward from dragon center)
+        // Get mouth position from mouth_origin locator in .geo file (with fallback)
         Vec3 mouthPos = dragon.getMouthPosition();
 
         // Create spherical detection area around the mouth

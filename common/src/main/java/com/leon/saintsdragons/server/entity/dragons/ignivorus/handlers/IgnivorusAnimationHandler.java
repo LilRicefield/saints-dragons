@@ -41,8 +41,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         }
 
         if (dragon.isFlying()) {
+            // Get synced flight mode from physics controller
+            // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, -1 = ground
+            int syncedMode = dragon.getFlightMode();
+
             // Check for takeoff animation (highest priority)
-            if (dragon.isTakeoff() || dragon.timeFlying < 30) {
+            if (syncedMode == 3 || dragon.isTakeoff() || dragon.timeFlying < 30) {
+                state.getController().transitionLength(4);
                 state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
             }
@@ -51,31 +56,46 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             var vel = dragon.getDeltaMovement();
             boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
 
-            // GLIDE_DOWN - second priority (diving/descending)
-            if (dragon.isGoingDown()) {
+            // GLIDE_DOWN - only for RIDER diving (not AI flight)
+            // This prevents AI dragons from always playing glide_down
+            if (dragon.isVehicle() && dragon.isGoingDown()) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(GLIDE_DOWN);
                 return PlayState.CONTINUE;
             }
 
-            // SPRINT_FLAP - third priority (accelerating flight)
+            // SPRINT_FLAP - accelerating flight
             if (dragon.isAccelerating() && isMovingHorizontally) {
                 state.getController().transitionLength(3);
                 state.setAndContinue(SPRINT_FLAP);
                 return PlayState.CONTINUE;
             }
 
-            // Altitude-based animations (lowest priority)
-            // Flight mode: 0=glide, 1=flap
-            int flightMode = dragon.getFlightMode();
-            if (flightMode == 0) {
-                // High altitude gliding - long smooth transition
-                state.getController().transitionLength(12);
-                state.setAndContinue(GLIDE);
-            } else {
-                // Low altitude flapping - normal transition
+            // ASCENDING - always flap when going up (rider or AI)
+            if (dragon.isGoingUp() || vel.y > 0.02) {
+                state.getController().transitionLength(4);
+                state.setAndContinue(FLAP);
+                return PlayState.CONTINUE;
+            }
+
+            // HOVER/LANDING - stationary in air
+            if (syncedMode == 2 || dragon.isHovering() || dragon.isLanding()) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(FLAP);
+                return PlayState.CONTINUE;
+            }
+
+            // FLAP vs GLIDE based on physics controller
+            // Mode 1 = FLAP (low altitude or needs lift)
+            // Mode 0 = GLIDE (high altitude, can glide)
+            if (syncedMode == 1) {
+                // Flapping for lift (low altitude)
+                state.getController().transitionLength(4);
+                state.setAndContinue(FLAP);
+            } else {
+                // Gliding at high altitude (GLIDE_DOWN is only for riders)
+                state.getController().transitionLength(12);
+                state.setAndContinue(GLIDE);
             }
         } else {
             // Ground movement - use DATA_GROUND_MOVE_STATE as single source of truth
