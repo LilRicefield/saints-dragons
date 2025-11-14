@@ -15,6 +15,11 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     // Offset from bone pivot for rider positioning (adjust as needed)
     private static final float PASSENGER_SEAT0_X = 0.0f, PASSENGER_SEAT0_Y = -3.0f, PASSENGER_SEAT0_Z = 0.0f;
     private static final float PASSENGER_SEAT1_X = 0.0f, PASSENGER_SEAT1_Y = -3.0f, PASSENGER_SEAT1_Z = 0.0f;
+    private static final String MOUTH_LOCATOR_NAME = "mouth_origin";
+    private static final String MOUTH_BONE = "jawController";
+    private static final float MOUTH_OFFSET_X = 0.0f;
+    private static final float MOUTH_OFFSET_Y = 1.5f;
+    private static final float MOUTH_OFFSET_Z = -9.0f;
 
     private BakedGeoModel lastBakedModel;
 
@@ -58,6 +63,7 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         // Enable tracking for both passenger seat bones
         model.getBone("passengerBone1").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("passengerBone2").ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(MOUTH_BONE).ifPresent(b -> b.setTrackingMatrices(true));
     }
     @Override
     public void render(@NotNull Cindervane entity, float entityYaw, float partialTick,
@@ -79,6 +85,14 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
                 net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_SEAT1_X, PASSENGER_SEAT1_Y, PASSENGER_SEAT1_Z);
                 if (world != null) {
                     entity.setClientLocatorPosition("passengerSeat1", world);
+                }
+            });
+
+            // Sample accurate mouth locator from jaw controller so bite abilities originate at the model mouth
+            this.lastBakedModel.getBone(MOUTH_BONE).ifPresent(b -> {
+                net.minecraft.world.phys.Vec3 world = transformLocator(b, MOUTH_OFFSET_X, MOUTH_OFFSET_Y, MOUTH_OFFSET_Z);
+                if (world != null) {
+                    entity.setClientLocatorPosition(MOUTH_LOCATOR_NAME, world);
                 }
             });
         }

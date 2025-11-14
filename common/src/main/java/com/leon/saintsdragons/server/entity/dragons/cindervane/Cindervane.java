@@ -1817,6 +1817,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public Vec3 getMouthPosition() {
+        Vec3 locator = getClientLocatorPosition("mouth_origin");
+        if (locator != null) {
+            return locator;
+        }
         return computeMouthOrigin(1.0f);
     }
 

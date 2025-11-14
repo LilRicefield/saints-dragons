@@ -167,6 +167,12 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private int clientAnimInitTicks = 0;
     private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
 
+    // Derived from mouth_origin locator in rift_drake.geo (Z negative means forward in model space)
+    private static final double MODEL_SCALE = 1.0D;
+    private static final double MOUTH_OFFSET_RIGHT = (0.0D / 16.0D) * MODEL_SCALE;
+    private static final double MOUTH_OFFSET_UP = (10.25D / 16.0D) * MODEL_SCALE;
+    private static final double MOUTH_OFFSET_FORWARD = (24.0D / 16.0D) * MODEL_SCALE;
+
     // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
 
     public boolean canFeed() {
@@ -884,7 +890,35 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public Vec3 getMouthPosition() {
-        return this.position().add(0, this.getBbHeight() * 0.8, 0);
+        Vec3 locator = getClientLocatorPosition("mouth_origin");
+        if (locator != null) {
+            return locator;
+        }
+        return computeMouthPositionFallback();
+    }
+
+    private Vec3 computeMouthPositionFallback() {
+        double x = this.getX();
+        double y = this.getY();
+        double z = this.getZ();
+
+        float yawDeg = this.yHeadRot;
+        float pitchDeg = this.getXRot();
+
+        double yaw = Math.toRadians(yawDeg);
+        double pitch = Math.toRadians(pitchDeg);
+
+        double cp = Math.cos(pitch);
+        double sp = Math.sin(pitch);
+        double pitchedUp = MOUTH_OFFSET_UP * cp - MOUTH_OFFSET_FORWARD * sp;
+        double pitchedForward = MOUTH_OFFSET_UP * sp + MOUTH_OFFSET_FORWARD * cp;
+
+        double cy = Math.cos(yaw);
+        double sy = Math.sin(yaw);
+        double offX = MOUTH_OFFSET_RIGHT * cy - pitchedForward * sy;
+        double offZ = MOUTH_OFFSET_RIGHT * sy + pitchedForward * cy;
+
+        return new Vec3(x + offX, y + pitchedUp, z + offZ);
     }
 
     public void useRidingAbility(String abilityName) {
