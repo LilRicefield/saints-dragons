@@ -47,8 +47,10 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
 
     @Override
     public boolean canUse() {
-        if (!getUser().onGround() || getUser().isInWater()) {
-            return false; // Phase shift requires firm footing
+        Nulljaw user = getUser();
+        boolean underwater = user.isInWaterOrBubble();
+        if (!underwater && !user.onGround()) {
+            return false;
         }
         return super.canUse();
     }
@@ -65,7 +67,7 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
             }
             phaseToggleApplied = false;
             nextShakeIndex = 0;
-            getUser().triggerAnim("action", "phase2");
+            getUser().triggerAnim("action", resolvePhaseAnimation(true));
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (enteringPhaseTwo) {
                 if (!phaseToggleApplied) {
@@ -78,7 +80,7 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
 
                 // Play phase 1 sound only when reverting (instant case)
                 if (!newPhase) {
-                    getUser().triggerAnim("action", "phase1");
+                    getUser().triggerAnim("action", resolvePhaseAnimation(false));
                     getUser().lockRiderControls(60);
                     if (!getLevel().isClientSide) {
                         getLevel().playSound(null, getUser().getX(), getUser().getY(), getUser().getZ(),
@@ -115,4 +117,11 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
         }
     }
 
+    private String resolvePhaseAnimation(boolean enteringPhaseTwo) {
+        boolean underwater = getUser().isInWaterOrBubble();
+        if (underwater) {
+            return enteringPhaseTwo ? "phase2_underwater" : "phase1_underwater";
+        }
+        return enteringPhaseTwo ? "phase2" : "phase1";
+    }
 }
