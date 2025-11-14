@@ -34,11 +34,11 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
                 playClientSound(dragon, ModSounds.NULLJAW_GRUMBLE_3.get(), 1.5f, 0.95f, 0.1f);
                 yield true;
             }
-            case "nulljaw_phase2" -> {
+            case "nulljaw_phase2", "nulljaw_phase2_underwater" -> {
                 playClientSound(dragon, ModSounds.NULLJAW_PHASE2.get(), 2.5f, 0.9f, 0.2f);
                 yield true;
             }
-            case "nulljaw_phase1" -> {
+            case "nulljaw_phase1", "nulljaw_phase1_underwater" -> {
                 playClientSound(dragon, ModSounds.NULLJAW_PHASE1.get(), 1.4f, 0.9f, 0.2f);
                 yield true;
             }

@@ -67,6 +67,10 @@ public record NulljawAnimationHandler(Nulljaw drake) {
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase1"));
         actionController.triggerableAnim("phase2",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase2"));
+        actionController.triggerableAnim("phase1_underwater",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase1_underwater"));
+        actionController.triggerableAnim("phase2_underwater",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_underwater"));
 
         // Phase 1 melee attack (works both on ground and underwater)
         actionController.triggerableAnim("bite",
