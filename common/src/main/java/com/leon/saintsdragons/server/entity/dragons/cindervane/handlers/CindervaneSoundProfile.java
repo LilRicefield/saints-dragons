@@ -97,6 +97,15 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         return true;
     }
 
+    @Override
+    public boolean handleWingFlapSound(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        float volume = dragon.isBaby() ? 0.6f : 1.1f;
+        float pitch = 0.98f + (dragon.getRandom().nextFloat() - 0.5f) * 0.1f;
+        dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                ModSounds.CINDERVANE_FLAP.get(), SoundSource.NEUTRAL, volume, pitch, false);
+        return true;
+    }
+
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
         DragonEntity.VocalEntry entry = dragon.getVocalEntries().get(vocalKey);
         if (entry == null) {

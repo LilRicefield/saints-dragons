@@ -1996,7 +1996,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public void setTakeoff(boolean takeoff) {
+        boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
+        if (takeoff && !wasTakeoff && !level().isClientSide) {
+            float pitch = 0.95f + this.getRandom().nextFloat() * 0.1f;
+            this.playSound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, pitch);
+        }
     }
 
     @Override
