@@ -225,7 +225,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
         };
         this.navigation = this.groundNav;
-        this.moveControl = new DragonFlightMoveHelper(this);
+        this.moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this); // Start with ground control
         this.usingAirNav = false;
 
         this.riderController = new IgnivorusRiderController(this);
@@ -279,6 +279,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFollowOwnerGoal(this));
+        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
+        this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundWanderGoal(this, 1.0, 120));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
     }
 
@@ -653,9 +656,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public void switchNavigation(boolean flying) {
         if (flying && !usingAirNav) {
             this.navigation = this.airNav;
+            this.moveControl = new DragonFlightMoveHelper(this);
             this.usingAirNav = true;
         } else if (!flying && usingAirNav) {
             this.navigation = this.groundNav;
+            this.moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
             this.usingAirNav = false;
         }
     }
@@ -830,6 +835,36 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return computeFireBoneFallback(partialTicks);
     }
 
+    private Vec3 computeFireBoneFallback(float partialTicks) {
+        double x = Mth.lerp(partialTicks, this.xo, this.getX());
+        double y = Mth.lerp(partialTicks, this.yo, this.getY());
+        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
+
+        float yawDeg = Mth.lerp(partialTicks, this.yHeadRotO, this.yHeadRot);
+        float pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
+
+        double yaw = Math.toRadians(yawDeg);
+        double pitch = Math.toRadians(pitchDeg);
+
+        // FireBone position in model: [-0.06603, 59.45, -245.05] pixels
+        // Converted to blocks (÷16) and applied to local coordinate system
+        double localRight = (-0.06603D / 16.0D) * MODEL_SCALE;  // ≈0 (centered)
+        double localUp = (59.45D / 16.0D) * MODEL_SCALE;        // 3.716 blocks up
+        double localForward = (245.05D / 16.0D) * MODEL_SCALE;  // 15.316 blocks forward
+
+        double cp = Math.cos(pitch);
+        double sp = Math.sin(pitch);
+        double pitchedUp = localUp * cp - localForward * sp;
+        double pitchedForward = localUp * sp + localForward * cp;
+
+        double cy = Math.cos(yaw);
+        double sy = Math.sin(yaw);
+        double offX = localRight * cy - pitchedForward * sy;
+        double offZ = localRight * sy + pitchedForward * cy;
+
+        return new Vec3(x + offX, y + pitchedUp, z + offZ);
+    }
+
     public Vec3 refreshFireAimDirection(Vec3 start, boolean smooth) {
         Vec3 desired = computeRawFireAimDirection(start);
         if (desired == null) {
@@ -931,35 +966,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         fireAimDir = null;
     }
 
-    private Vec3 computeFireBoneFallback(float partialTicks) {
-        double x = Mth.lerp(partialTicks, this.xo, this.getX());
-        double y = Mth.lerp(partialTicks, this.yo, this.getY());
-        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
-
-        float yawDeg = Mth.lerp(partialTicks, this.yHeadRotO, this.yHeadRot);
-        float pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
-
-        double yaw = Math.toRadians(yawDeg);
-        double pitch = Math.toRadians(pitchDeg);
-
-        // FireBone position in model: [-0.06603, 59.45, -245.05] pixels
-        // Converted to blocks (÷16) and applied to local coordinate system
-        double localRight = (-0.06603D / 16.0D) * MODEL_SCALE;  // ≈0 (centered)
-        double localUp = (59.45D / 16.0D) * MODEL_SCALE;        // 3.716 blocks up
-        double localForward = (245.05D / 16.0D) * MODEL_SCALE;  // 15.316 blocks forward
-
-        double cp = Math.cos(pitch);
-        double sp = Math.sin(pitch);
-        double pitchedUp = localUp * cp - localForward * sp;
-        double pitchedForward = localUp * sp + localForward * cp;
-
-        double cy = Math.cos(yaw);
-        double sy = Math.sin(yaw);
-        double offX = localRight * cy - pitchedForward * sy;
-        double offZ = localRight * sy + pitchedForward * cy;
-
-        return new Vec3(x + offX, y + pitchedUp, z + offZ);
-    }
 
     private void setFireBreathStart(@Nullable Vec3 pos) {
         if (pos == null) {
@@ -987,13 +993,43 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public Vec3 getMouthPosition() {
-        // Use the fireBone position as the mouth position (same bone used for fire breath)
-        Vec3 fireBone = getFireBreathStartAnchor(1.0f);
-        if (fireBone != null) {
-            return fireBone;
+        // Use the mouth_origin locator from the .geo file
+        Vec3 mouthLocator = getClientLocatorPosition("mouth_origin");
+        if (mouthLocator != null) {
+            return mouthLocator;
         }
-        // Fallback to eye position if bone position unavailable
-        return this.getEyePosition();
+        // Fallback calculation using mouth_origin position from model
+        return computeMouthPositionFallback();
+    }
+
+    private Vec3 computeMouthPositionFallback() {
+        double x = this.getX();
+        double y = this.getY();
+        double z = this.getZ();
+
+        float yawDeg = this.yHeadRot;
+        float pitchDeg = this.getXRot();
+
+        double yaw = Math.toRadians(yawDeg);
+        double pitch = Math.toRadians(pitchDeg);
+
+        // mouth_origin position in model - use same as fireBone for now
+        // (You can adjust these coordinates if mouth_origin is in a different position)
+        double localRight = (-0.06603D / 16.0D) * MODEL_SCALE;
+        double localUp = (59.45D / 16.0D) * MODEL_SCALE;
+        double localForward = (245.05D / 16.0D) * MODEL_SCALE;
+
+        double cp = Math.cos(pitch);
+        double sp = Math.sin(pitch);
+        double pitchedUp = localUp * cp - localForward * sp;
+        double pitchedForward = localUp * sp + localForward * cp;
+
+        double cy = Math.cos(yaw);
+        double sy = Math.sin(yaw);
+        double offX = localRight * cy - pitchedForward * sy;
+        double offZ = localRight * sy + pitchedForward * cy;
+
+        return new Vec3(x + offX, y + pitchedUp, z + offZ);
     }
 
     @Override
@@ -1476,6 +1512,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         saveRideableData(tag);  // Save flight state (flying, hovering, takeoff, etc.)
         tag.putInt("TimeFlying", timeFlying);  // Save flying duration
         this.combatManager.saveToNBT(tag);
+        this.physicsController.writeToNBT(tag);  // Save physics envelope state
     }
 
     @Override
@@ -1484,6 +1521,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         loadRideableData(tag);  // Restore flight state
         this.timeFlying = tag.getInt("TimeFlying");  // Restore flying duration
         this.combatManager.loadFromNBT(tag);
+        this.physicsController.readFromNBT(tag);  // Restore physics envelope state
     }
 
     @Override
@@ -1493,6 +1531,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         setTakeoff(takeoff);
         setHovering(hovering);
         setLanding(landing);
+    }
+
+    // ===== FALL DAMAGE IMMUNITY =====
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float fallMultiplier, @NotNull net.minecraft.world.damagesource.DamageSource source) {
+        // Immune to fall damage when flying, taking off, or landing
+        if (this.isFlying() || this.isTakeoff() || this.isLanding()) {
+            return false;
+        }
+        return super.causeFallDamage(fallDistance, fallMultiplier, source);
     }
 
     // ===== SPAWN PLACEMENT =====
