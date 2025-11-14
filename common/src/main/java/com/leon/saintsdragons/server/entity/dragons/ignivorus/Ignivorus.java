@@ -24,6 +24,7 @@ import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -139,6 +140,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     .add("ignivorus_roar", "action", "animation.ignivorus.roar",
                             ModSounds.IGNIVORUS_ROAR, 1.8f, 0.85f, 0.15f,
                             false, false, false)
+                    .add("ignivorus_grumble1", "action", "animation.ignivorus.grumble1",
+                            ModSounds.IGNIVORUS_GRUMBLE_1, 1.1f, 0.95f, 0.08f,
+                            true, false, true)
+                    .add("ignivorus_grumble2", "action", "animation.ignivorus.grumble2",
+                            ModSounds.IGNIVORUS_GRUMBLE_2, 1.15f, 1.0f, 0.08f,
+                            true, false, true)
+                    .add("ignivorus_grumble3", "action", "animation.ignivorus.grumble3",
+                            ModSounds.IGNIVORUS_GRUMBLE_3, 1.2f, 0.9f, 0.08f,
+                            true, false, true)
                     .add("ignivorus_hurt", "hurt", "animation.ignivorus.hurt",
                             ModSounds.IGNIVORUS_HURT, 1.6f, 0.95f, 0.1f,
                             true, true, true)
@@ -179,6 +189,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private float prevScreenShakeAmount = 0.0F;
     private float screenShakeAmount = 0.0F;
 
+    // Ambient vocals
+    private int ambientSoundTimer;
+    private int nextAmbientSoundDelay;
+    private static final int MIN_AMBIENT_DELAY = 180;
+    private static final int MAX_AMBIENT_DELAY = 520;
+
     // Pitching animation state
     private float pitchSmoothedPitch = 0f;
     private int pitchHoldTicks = 0;
@@ -212,6 +228,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.usingAirNav = false;
 
         this.riderController = new IgnivorusRiderController(this);
+        resetAmbientSoundTimer();
     }
 
     @Override
@@ -250,12 +267,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public static AttributeSupplier.Builder createAttributes() {
         return createMobAttributes()
-            .add(Attributes.MAX_HEALTH, 100.0D)
+            .add(Attributes.MAX_HEALTH, 300.0D)
             .add(Attributes.MOVEMENT_SPEED, 0.25D)
             .add(Attributes.FLYING_SPEED, 0.4D)
             .add(Attributes.ATTACK_DAMAGE, 15.0D)
             .add(Attributes.FOLLOW_RANGE, 48.0D)
-            .add(Attributes.ARMOR, 4.0D);
+            .add(Attributes.ARMOR, 4.0D)
+            .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
     }
 
     @Override
@@ -266,6 +284,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public void tick() {
         super.tick();
+        soundHandler.tick();
         tickRiderControlLock();
         physicsController.tick();
         tickScreenShake();
@@ -308,6 +327,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         if (!level().isClientSide) {
             tickTerrainClearing();
+            handleAmbientSounds();
         }
 
         // Update sitting progress
@@ -332,6 +352,40 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 this.entityData.set(DATA_RIDER_LOCKED, false);
             }
         }
+    }
+
+    private void handleAmbientSounds() {
+        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning()) {
+            return;
+        }
+        if (getTarget() != null || getActiveAbility() != null || isBreathingFire()) {
+            return;
+        }
+        if (isOrderedToSit() || this.isStayOrSitMuted()) {
+            return;
+        }
+
+        if (ambientSoundTimer < nextAmbientSoundDelay) {
+            ambientSoundTimer++;
+            return;
+        }
+
+        playAmbientGrumble();
+        resetAmbientSoundTimer();
+    }
+
+    private void playAmbientGrumble() {
+        float roll = this.getRandom().nextFloat();
+        String vocalKey = roll < 0.34f ? "ignivorus_grumble1"
+                : (roll < 0.67f ? "ignivorus_grumble2" : "ignivorus_grumble3");
+        this.getSoundHandler().playVocal(vocalKey);
+    }
+
+    private void resetAmbientSoundTimer() {
+        RandomSource random = getRandom();
+        ambientSoundTimer = 0;
+        int range = Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(range);
     }
 
     public boolean areRiderControlsLocked() {
@@ -647,7 +701,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public void setTakeoff(boolean takeoff) {
+        boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
+        if (takeoff && !wasTakeoff && !level().isClientSide) {
+            float pitch = 0.9f + this.getRandom().nextFloat() * 0.15f;
+            this.playSound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.4f, pitch);
+        }
     }
 
     public void setHovering(boolean hovering) {

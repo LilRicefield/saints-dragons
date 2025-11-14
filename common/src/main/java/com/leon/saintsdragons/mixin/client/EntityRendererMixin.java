@@ -79,7 +79,7 @@ public class EntityRendererMixin {
                 if (isAccelerating) {
                     if (isFlying) {
                         currentSpeed = ignivorus.getDeltaMovement().horizontalDistance();
-                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.5; // Matches rider sprint multiplier
+                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 30.5; // Matches rider sprint multiplier
                     } else {
                         currentSpeed = ignivorus.getDeltaMovement().horizontalDistance();
                         maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 2.2; // Ground sprint multiplier
