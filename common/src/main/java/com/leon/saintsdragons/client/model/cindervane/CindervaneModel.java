@@ -5,8 +5,10 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
+import software.bernie.geckolib.model.data.EntityModelData;
 
 public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     public CindervaneModel() {
@@ -190,8 +192,8 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         head.setRotY(snapshot.getRotY());
 
         // Two neck controls: base gets a lighter amount, tip gets the majority for smoother motion
-        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.4f);
-        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.6f);
+        applyNeckBoneFollow("neck1", headDeltaX, headDeltaY, 0.4f);
+        applyNeckBoneFollow("neck2", headDeltaX, headDeltaY, 0.6f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -246,3 +248,5 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     }
 
 }
+
+
