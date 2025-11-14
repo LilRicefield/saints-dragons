@@ -280,13 +280,8 @@
 					}
 				},
 				{
-					"name": "head",
-					"parent": "hip",
-					"pivot": [0, 32.34, -23.1]
-				},
-				{
 					"name": "neckstart",
-					"parent": "head",
+					"parent": "hip",
 					"pivot": [0, 35.39, -25.6]
 				},
 				{
@@ -307,11 +302,6 @@
 				{
 					"name": "neck1Controller",
 					"parent": "neck1",
-					"pivot": [0, 36.75, -38.01]
-				},
-				{
-					"name": "neck1LookControl",
-					"parent": "neck1Controller",
 					"pivot": [0, 36.75, -38.01],
 					"cubes": [
 						{"origin": [-6.51, 29.4436, -50.81173], "size": [13.02, 13.23, 16.8], "uv": [274, 472]},
@@ -321,17 +311,12 @@
 				},
 				{
 					"name": "neck2",
-					"parent": "neck1LookControl",
+					"parent": "neck1Controller",
 					"pivot": [0, 36.99184, -50.32062]
 				},
 				{
 					"name": "neck2Controller",
 					"parent": "neck2",
-					"pivot": [0, 36.99192, -50.32062]
-				},
-				{
-					"name": "neck2LookControl",
-					"parent": "neck2Controller",
 					"pivot": [0, 36.99192, -50.32062],
 					"cubes": [
 						{"origin": [-5.67, 31.21133, -60.7682], "size": [11.34, 10.71, 15.75], "uv": [480, 42]},
@@ -341,17 +326,12 @@
 				},
 				{
 					"name": "neck3",
-					"parent": "neck2LookControl",
+					"parent": "neck2Controller",
 					"pivot": [0, 37.62192, -60.50562]
 				},
 				{
 					"name": "neck3Controller",
 					"parent": "neck3",
-					"pivot": [0, 37.62184, -60.50562]
-				},
-				{
-					"name": "neck3LookControl",
-					"parent": "neck3Controller",
 					"pivot": [0, 37.62184, -60.50562],
 					"cubes": [
 						{"origin": [-4.62, 33.07937, -70.53581], "size": [9.24, 8.4, 12.39], "uv": [494, 162]},
@@ -361,30 +341,25 @@
 				},
 				{
 					"name": "neck4",
-					"parent": "neck3LookControl",
+					"parent": "neck3Controller",
 					"pivot": [0, 37.36391, -70.10879]
 				},
 				{
 					"name": "neck4Controller",
 					"parent": "neck4",
-					"pivot": [0, 37.36404, -70.10892]
-				},
-				{
-					"name": "neck4LookControl",
-					"parent": "neck4Controller",
 					"pivot": [0, 37.36404, -70.10892],
 					"cubes": [
 						{"origin": [-4.41, 33.61121, -78.70976], "size": [8.82, 7.77, 9.45], "uv": [496, 273]}
 					]
 				},
 				{
-					"name": "head1",
-					"parent": "neck4LookControl",
+					"name": "head",
+					"parent": "neck4Controller",
 					"pivot": [0, 37.78391, -78.08879]
 				},
 				{
 					"name": "head1Controller",
-					"parent": "head1",
+					"parent": "head",
 					"pivot": [0, 37.78391, -78.08892],
 					"cubes": [
 						{"origin": [-4.08, 36.13121, -106.63976], "size": [8.16, 5.04, 23.73], "uv": [50, 453]},

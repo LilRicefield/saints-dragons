@@ -13784,6 +13784,11 @@
 						}
 					}
 				},
+				"head1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftshoulderController": {
 					"rotation": {
 						"0.0": {

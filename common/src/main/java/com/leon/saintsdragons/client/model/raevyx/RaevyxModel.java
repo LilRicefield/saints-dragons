@@ -2,11 +2,12 @@ package com.leon.saintsdragons.client.model.raevyx;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.constant.DataTickets;
+import software.bernie.geckolib.model.data.EntityModelData;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 /**
  * Raevyx (Lightning Dragon) model using GeckoLib's built-in head tracking system.
@@ -27,7 +28,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
     public RaevyxModel() {
         // Defaulted paths under entity/ and built-in head rotation for "head" bone
-        super(SaintsDragonsCommon.rl("raevyx"),"head");
+        super(SaintsDragonsCommon.rl("raevyx"),"head1Controller");
     }
 
     @Override
@@ -65,9 +66,9 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);  // Same as Nulljaw/Stegonaut
             applyBankingRoll(entity, animationState);
-            applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden (flying)
-            applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
-            applyNeckFollow(entity, animationState);
+            applyNeckFollow(entity, animationState);   // Base head tracking first (uses animation snapshot)
+            applyNeckBankingLean(entity, partialTick); // Then layer procedural leans so they add on top
+            applyGroundNeckTurn(entity, partialTick);  // Same for ground turning
             applyTailDrag(entity, partialTick);
         }
     }
@@ -196,25 +197,28 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
      * Simple version like Nulljaw - no special beaming logic.
      */
     private void applyNeckFollow(Raevyx entity, AnimationState<Raevyx> state) {
-        var headOpt = getBone("head");
+        var headOpt = getBone("head1Controller");
         if (headOpt.isEmpty()) return;
+
+        EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) {
+            return;
+        }
 
         GeoBone head = headOpt.get();
 
-        // Get how much GeckoLib rotated the parent "head" bone
-        float headDeltaX = head.getRotX() - head.getInitialSnapshot().getRotX();
-        float headDeltaY = head.getRotY() - head.getInitialSnapshot().getRotY();
+        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
 
-        // COUNTER-ROTATE the parent "head" bone so it doesn't rotate rigidly
-        // We'll redistribute this rotation across the neck segments instead
-        head.setRotX(head.getInitialSnapshot().getRotX());
-        head.setRotY(head.getInitialSnapshot().getRotY());
+        // Remove the procedural look rotation from the head itself so the animation pose stays intact.
+        head.setRotX(head.getRotX() - lookPitchRad);
+        head.setRotY(head.getRotY() - lookYawRad);
 
         // Now distribute the rotation across neck segments (4 segments for Raevyx)
-        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.20f);  // Base
-        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.25f);  // Lower-mid
-        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.30f);  // Upper-mid
-        applyNeckBoneFollow("neck4LookControl", headDeltaX, headDeltaY, 0.35f);  // Tip
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, lookYawRad, 0.20f);  // Base
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, lookYawRad, 0.25f);  // Lower-mid
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, lookYawRad, 0.30f);  // Upper-mid
+        applyNeckBoneFollow("neck4Controller", lookPitchRad, lookYawRad, 0.35f);  // Tip
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -222,15 +226,12 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         if (boneOpt.isEmpty()) return;
 
         GeoBone bone = boneOpt.get();
-        var snap = bone.getInitialSnapshot();
-
-        // Apply weighted portion of the head's rotation
+        // Apply weighted portion of the head's rotation on top of the animated pose
         float addX = headDeltaX * weight;
         float addY = headDeltaY * weight;
 
-        // Set directly from snapshot (no lerp to avoid cross-entity sync)
-        bone.setRotX(snap.getRotX() + addX);
-        bone.setRotY(snap.getRotY() + addY);
+        bone.setRotX(bone.getRotX() + addX);
+        bone.setRotY(bone.getRotY() + addY);
     }
 
     /**

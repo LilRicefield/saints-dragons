@@ -5,8 +5,10 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
+import software.bernie.geckolib.model.data.EntityModelData;
 
 /**
  * Ignivorus model using GeckoLib's built-in head tracking system
@@ -44,9 +46,9 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
+            applyNeckFollow(animationState);
             applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden (flying)
             applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
-            applyNeckFollow();
             applyTailDrag(entity, partialTick);
         }
     }
@@ -144,21 +146,29 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    private void applyNeckFollow() {
-        var headOpt = getBone("headLookControl");
-        if (headOpt.isEmpty()) return;
+    private void applyNeckFollow(AnimationState<Ignivorus> state) {
+        var controllerOpt = getBone("headLookControl");
+        if (controllerOpt.isEmpty()) {
+            return;
+        }
 
-        GeoBone head = headOpt.get();
-        float headDeltaX = head.getRotX() - head.getInitialSnapshot().getRotX();
-        float headDeltaY = head.getRotY() - head.getInitialSnapshot().getRotY();
+        EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) {
+            return;
+        }
 
-        head.setRotX(head.getInitialSnapshot().getRotX());
-        head.setRotY(head.getInitialSnapshot().getRotY());
+        GeoBone controller = controllerOpt.get();
+        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
 
-        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.15f);
-        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.20f);
-        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.25f);
-        applyNeckBoneFollow("neck4LookControl", headDeltaX, headDeltaY, 0.30f);
+        controller.setRotX(controller.getRotX() - lookPitchRad);
+        controller.setRotY(controller.getRotY() - lookYawRad);
+
+        applyNeckBoneFollow("neck1", lookPitchRad, lookYawRad, 0.35f);
+        applyNeckBoneFollow("neck2", lookPitchRad, lookYawRad, 0.40f);
+        applyNeckBoneFollow("neck3", lookPitchRad, lookYawRad, 0.45f);
+        applyNeckBoneFollow("neck4", lookPitchRad, lookYawRad, 0.50f);
+        applyNeckBoneFollow("head", lookPitchRad, lookYawRad, 0.60f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -166,9 +176,10 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         if (boneOpt.isEmpty()) return;
 
         GeoBone bone = boneOpt.get();
-        var snap = bone.getInitialSnapshot();
-        bone.setRotX(snap.getRotX() + headDeltaX * weight);
-        bone.setRotY(snap.getRotY() + headDeltaY * weight);
+        float addX = headDeltaX * weight;
+        float addY = headDeltaY * weight;
+        bone.setRotX(bone.getRotX() + addX);
+        bone.setRotY(bone.getRotY() + addY);
     }
 
     private void applyTailDrag(Ignivorus entity, float partialTick) {
@@ -191,3 +202,5 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 }
+
+
