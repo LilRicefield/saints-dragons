@@ -5525,6 +5525,11 @@
 						"vector": [15, 0, 0]
 					}
 				},
+				"neck2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftforearm": {
 					"rotation": {
 						"vector": [0, -20, 0]
@@ -5538,6 +5543,11 @@
 				"leftarm": {
 					"rotation": {
 						"vector": [0, 62.5, 52.5]
+					}
+				},
+				"skull": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"jaw": {
@@ -5558,11 +5568,6 @@
 				"rightinnerphalanges": {
 					"rotation": {
 						"vector": [0, 72.5, 0]
-					}
-				},
-				"neck1Controller": {
-					"rotation": {
-						"vector": [2.5, 0, 0]
 					}
 				},
 				"neckController2": {
