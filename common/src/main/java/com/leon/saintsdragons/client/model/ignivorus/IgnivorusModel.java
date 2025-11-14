@@ -44,6 +44,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
+            applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden
             applyNeckFollow();
             applyTailDrag(entity, partialTick);
         }
@@ -70,6 +71,48 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
         body.setRotZ(snap.getRotZ() + bankAngleRad);
+    }
+
+    /**
+     * Lean neck into the banking direction when being ridden.
+     * Bank right → head turns left (opposite direction).
+     * Uses the structural neck bones (neck1-4, head) with keyframes to prevent crazy spinning.
+     */
+    private void applyNeckBankingLean(Ignivorus entity, float partialTick) {
+        // Only apply when being ridden and banking
+        if (!entity.isVehicle() || !entity.isFlying()) {
+            return;
+        }
+
+        // Get the banking angle (-90 to +90 degrees)
+        float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
+
+        // Convert to radians and scale
+        // Bank right → head turns left (opposite direction)
+        // Scale: 45° bank = ~32° neck lean total (between Cindervane and Raevyx)
+        float neckLeanRad = -(bankAngleDeg / 45.0f) * 32.0f * Mth.DEG_TO_RAD;
+
+        // Apply with increasing intensity toward the head (4 neck segments + head)
+        applyNeckBoneRotation("neck1", neckLeanRad * 0.4f);  // Base - subtle
+        applyNeckBoneRotation("neck2", neckLeanRad * 0.41f);  // Lower-mid
+        applyNeckBoneRotation("neck3", neckLeanRad * 0.42f);  // Upper-mid
+        applyNeckBoneRotation("neck4", neckLeanRad * 0.43f);  // Near head
+        applyNeckBoneRotation("head", neckLeanRad * 0.44f);   // Head - most pronounced
+    }
+
+    /**
+     * Helper to apply Y-rotation to a neck bone for banking lean.
+     * ADDS to current rotation (preserves animation keyframes) instead of replacing it.
+     */
+    private void applyNeckBoneRotation(String boneName, float rotationY) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone bone = boneOpt.get();
+        // Add to current rotation (which includes animation keyframes) instead of setting from snapshot
+        bone.setRotY(bone.getRotY() + rotationY);
     }
 
     private void applyNeckFollow() {
