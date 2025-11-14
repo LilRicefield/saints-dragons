@@ -151,6 +151,26 @@
       }
     ]
   },
+  "cindervane_flap": {
+    "subtitle": "Cindervane beats its wings",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_flap",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_takeoff": {
+    "subtitle": "Cindervane launches upward",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_takeoff",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
   "cindervane_grumble1": {
     "subtitle": "Cindervane grumbles",
     "sounds": [
