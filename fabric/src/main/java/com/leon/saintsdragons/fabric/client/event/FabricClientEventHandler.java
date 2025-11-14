@@ -40,6 +40,12 @@ public class FabricClientEventHandler {
     private static float ignivorusCameraZoom = 15F; // Base zoom
     private static float ignivorusCameraZoomTarget = 15F;
 
+    // Ignivorus camera shift smoothing (banking response)
+    private static double ignivorusCameraShift = 0.0;
+
+    // Shared vertical camera shift for ascending/descending (both dragons)
+    private static double verticalCameraShift = 0.0;
+
     /**
      * Initialize the client event handler.
      * Call this from your client mod initializer.
@@ -96,17 +102,31 @@ public class FabricClientEventHandler {
             double shiftBlendRate = 0.15;
             raevyxCameraShift += (targetCameraShift - raevyxCameraShift) * shiftBlendRate;
 
+            // Calculate vertical camera shift based on ascending/descending
+            double targetVerticalShift = 0.0;
+            if (isFlying) {
+                if (raevyx.isGoingUp()) {
+                    targetVerticalShift = 1.2; // Subtle upward shift when ascending
+                } else if (raevyx.isGoingDown()) {
+                    targetVerticalShift = -1.2; // Subtle downward shift when descending
+                }
+            }
+            // Smooth vertical shift
+            double verticalBlendRate = 0.12; // Slightly slower than lateral for smoother feel
+            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+
             // Apply the smoothed zoom and lateral shift using the mixin accessor
             CameraAccessor cameraAccessor = (CameraAccessor) camera;
             double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(raevyxCameraZoom);
             cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
-            // Apply lateral shift
-            cameraAccessor.saintsdragons$invokeMove(0, 0, raevyxCameraShift);
+            // Apply lateral and vertical shifts
+            cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, raevyxCameraShift);
         } else {
             // Reset zoom and shift when not riding Raevyx
             raevyxCameraZoom = 10F;
             raevyxCameraZoomTarget = 10F;
             raevyxCameraShift = 0.0;
+            verticalCameraShift = 0.0;
         }
 
         // Dragon riding camera adjustments - Cindervane
@@ -132,15 +152,25 @@ public class FabricClientEventHandler {
                 double velocity = cindervane.getDeltaMovement().horizontalDistance();
                 double velocityFactor = Math.min(velocity * 2.0, 1.5); // Cap at 1.5x
 
-                // Convert bank angle to shift: positive bank (right) = shift right
-                // Scale: at 45° bank with full velocity, shift ~3.5 blocks
-                // Negative sign to match banking direction properly
-                targetCameraShift = -(bankAngle / 45.0) * 3.5 * velocityFactor;
+                targetCameraShift = -(bankAngle / 45.0) * 5.5 * velocityFactor;
             }
 
             // Smooth the camera shift for gradual, natural movement
             double shiftBlendRate = 0.15; // Faster response than zoom for snappy feel
             cindervaneCameraShift += (targetCameraShift - cindervaneCameraShift) * shiftBlendRate;
+
+            // Calculate vertical camera shift based on ascending/descending
+            double targetVerticalShift = 0.0;
+            if (isFlying) {
+                if (cindervane.isGoingUp()) {
+                    targetVerticalShift = 1.2; // Subtle upward shift when ascending
+                } else if (cindervane.isGoingDown()) {
+                    targetVerticalShift = -1.2; // Subtle downward shift when descending
+                }
+            }
+            // Smooth vertical shift
+            double verticalBlendRate = 0.12; // Slightly slower than lateral for smoother feel
+            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
 
             // Apply the smoothed zoom and lateral shift using the mixin accessor
             CameraAccessor cameraAccessor = (CameraAccessor) camera;
@@ -148,13 +178,14 @@ public class FabricClientEventHandler {
 
             // Move camera: back (zoom), no vertical, lateral shift based on banking
             cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
-            // Apply lateral shift (strafe direction perpendicular to view)
-            cameraAccessor.saintsdragons$invokeMove(0, 0, cindervaneCameraShift);
+            // Apply lateral and vertical shifts
+            cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, cindervaneCameraShift);
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
             cindervaneCameraZoom = 15F;
             cindervaneCameraZoomTarget = 15F;
             cindervaneCameraShift = 0.0;
+            verticalCameraShift = 0.0;
         }
 
         // Dragon riding camera adjustments - Ignivorus
@@ -162,21 +193,56 @@ public class FabricClientEventHandler {
             // Determine target zoom based on flight state
             boolean isFlying = ignivorus.isFlying();
 
-
             ignivorusCameraZoomTarget = isFlying ? 30F : 15F;
 
             // Smooth transition
             float blendRate = 0.05F;
             ignivorusCameraZoom += (ignivorusCameraZoomTarget - ignivorusCameraZoom) * blendRate;
 
+            // Calculate camera shift based on banking (only when flying)
+            double targetCameraShift = 0.0;
+            if (isFlying) {
+                // Get interpolated bank angle (-90 to +90 degrees)
+                float bankAngle = ignivorus.getBankAngleDegrees(partialTicks);
+
+                // Calculate lateral shift magnitude based on bank angle and velocity
+                double velocity = ignivorus.getDeltaMovement().horizontalDistance();
+                double velocityFactor = Math.min(velocity * 2.0, 1.5); // Cap at 1.5x
+
+                // Convert bank angle to shift
+                // Scale: at 45° bank with full velocity, shift ~4.5 blocks (between Cindervane and Raevyx)
+                targetCameraShift = -(bankAngle / 45.0) * 6.5 * velocityFactor;
+            }
+
+            // Smooth the camera shift for gradual, natural movement
+            double shiftBlendRate = 0.15;
+            ignivorusCameraShift += (targetCameraShift - ignivorusCameraShift) * shiftBlendRate;
+
+            // Calculate vertical camera shift based on ascending/descending
+            double targetVerticalShift = 0.0;
+            if (isFlying) {
+                if (ignivorus.isGoingUp()) {
+                    targetVerticalShift = 1.2; // Subtle upward shift when ascending
+                } else if (ignivorus.isGoingDown()) {
+                    targetVerticalShift = -1.2; // Subtle downward shift when descending
+                }
+            }
+            // Smooth vertical shift
+            double verticalBlendRate = 0.12;
+            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+
             // Apply the smoothed zoom using the mixin accessor
             CameraAccessor cameraAccessor = (CameraAccessor) camera;
             double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(ignivorusCameraZoom);
             cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+            // Apply lateral and vertical shifts
+            cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, ignivorusCameraShift);
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
-            // Reset zoom when not riding Ignivorus
+            // Reset zoom and shift when not riding Ignivorus
             ignivorusCameraZoom = 15F;
             ignivorusCameraZoomTarget = 15F;
+            ignivorusCameraShift = 0.0;
+            verticalCameraShift = 0.0;
         }
 
         // Nulljaw camera zoom
