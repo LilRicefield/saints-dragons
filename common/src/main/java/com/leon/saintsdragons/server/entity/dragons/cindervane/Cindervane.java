@@ -777,7 +777,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         prevBankAngle = bankAngle;
 
         // Apply banking to all flying Cindervanes (ridden and wild)
-        boolean shouldBank = isFlying() && !isLanding() && !isHovering() && !isOrderedToSit();
+        boolean shouldBank = isFlying() && !isLanding() && !isHovering()
+                && (!isOrderedToSit() || riderOverridesSittingCommand());
 
         // Reset banking when not flying - instant snap back
         if (!shouldBank) {
@@ -891,7 +892,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private void tickPitchingLogic() {
         tickRiderLandingBlendTimer();
         // Reset pitching when not flying or when controls are locked - INSTANT reset
-        if (!isFlying() || isLanding() || isHovering() || isOrderedToSit()) {
+        if (!isFlying() || isLanding() || isHovering() || (isOrderedToSit() && !riderOverridesSittingCommand())) {
             if (pitchDir != 0) {
                 pitchDir = 0;
                 pitchSmoothedPitch = 0f;
@@ -2004,6 +2005,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
+    private boolean riderOverridesSittingCommand() {
+        return this.isVehicle() && this.getControllingPassenger() instanceof Player;
+    }
+
     @Override
     public boolean isHovering() {
         return this.entityData.get(DATA_HOVERING);
@@ -2042,12 +2047,20 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public boolean canTakeoff() {
-        return !this.isBaby()
-                && !this.isOrderedToSit()
-                && this.isAlive()
-                && !this.isInWaterOrBubble()
-                && !this.isInLava()
-                && this.onGround();
+        if (this.isBaby() || !this.isAlive()) {
+            return false;
+        }
+        if (this.isInWaterOrBubble() || this.isInLava()) {
+            return false;
+        }
+        if (!this.onGround()) {
+            return false;
+        }
+        boolean riderOverride = this.isVehicle() && this.getControllingPassenger() instanceof Player;
+        if (!riderOverride && this.isOrderedToSit()) {
+            return false;
+        }
+        return true;
     }
 
     @Override
