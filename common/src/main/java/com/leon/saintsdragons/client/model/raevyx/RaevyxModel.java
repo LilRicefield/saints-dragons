@@ -141,8 +141,8 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.1f);  // Base - subtle
         applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.2f);  // Lower-mid
         applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.3f);  // Upper-mid
-        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.4f);  // Near head
-        applyNeckBoneRotation("head1Controller", neckLeanRad * 0.42f);   // Head - most pronounced
+        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.32f);  // Near head
+        applyNeckBoneRotation("head1Controller", neckLeanRad * 0.35f);   // Head - most pronounced
     }
 
     /**
