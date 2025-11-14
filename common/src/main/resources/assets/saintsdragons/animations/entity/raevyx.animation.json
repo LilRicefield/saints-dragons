@@ -3649,6 +3649,12 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
+						"1.1667": {
+							"post": {
+								"vector": [15.40009, 37.3081, 6.62353]
+							},
+							"lerp_mode": "catmullrom"
+						},
 						"1.4167": {
 							"post": {
 								"vector": [1.91699, 37.45817, -16.85]
@@ -3817,6 +3823,12 @@
 							},
 							"lerp_mode": "catmullrom"
 						},
+						"1.1667": {
+							"post": {
+								"vector": [13.44928, -14.24594, -14.98645]
+							},
+							"lerp_mode": "catmullrom"
+						},
 						"1.4167": {
 							"post": {
 								"vector": [6.58913, -6.42804, 3.10238]
@@ -3940,6 +3952,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "raevyx_takeoff",
+					"locator": "bodyLocator"
 				}
 			}
 		},
@@ -8409,6 +8427,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "raevyx_lightning_beam_start",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.raevyx.lightning_beaming": {
@@ -8841,6 +8865,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "raevyx_lightning_beaming",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.raevyx.lightning_beam_stop": {
@@ -9043,6 +9073,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "raevyx_lightning_beam_stop",
+					"locator": "mouth_origin"
 				}
 			}
 		},

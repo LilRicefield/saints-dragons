@@ -183,5 +183,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Death animation
         actionController.triggerableAnim("die",
             RawAnimation.begin().thenPlay("animation.ignivorus.die"));
+
+        // Ambient grumbles
+        actionController.triggerableAnim("ignivorus_grumble1",
+            RawAnimation.begin().thenPlay("animation.ignivorus.grumble1"));
+        actionController.triggerableAnim("ignivorus_grumble2",
+            RawAnimation.begin().thenPlay("animation.ignivorus.grumble2"));
+        actionController.triggerableAnim("ignivorus_grumble3",
+            RawAnimation.begin().thenPlay("animation.ignivorus.grumble3"));
     }
 }

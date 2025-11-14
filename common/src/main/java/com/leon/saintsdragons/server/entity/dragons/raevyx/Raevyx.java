@@ -980,7 +980,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public void setTakeoff(boolean takeoff) {
         if (takeoff && this.isBaby()) takeoff = false;
+        boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
+        if (takeoff && !wasTakeoff && !level().isClientSide) {
+            float pitch = 0.94f + this.getRandom().nextFloat() * 0.12f;
+            this.playSound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch);
+        }
     }
 
     public void setHovering(boolean hovering) {

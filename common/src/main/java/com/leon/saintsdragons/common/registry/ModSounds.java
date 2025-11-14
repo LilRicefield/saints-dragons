@@ -39,6 +39,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_1 = registerSound("raevyx_grumble_1");
     public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_2 = registerSound("raevyx_grumble_2");
     public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_3 = registerSound("raevyx_grumble_3");
+    public static final Supplier<SoundEvent> RAEVYX_TAKEOFF = registerSound("raevyx_takeoff");
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAM_START = registerSound("raevyx_lightning_beam_start");
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAMING = registerSound("raevyx_lightning_beaming");
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAM_STOP = registerSound("raevyx_lightning_beam_stop");
@@ -83,6 +84,11 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_START = registerSound("ignivorus_fire_breath_start");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATHING = registerSound("ignivorus_fire_breathing");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_END = registerSound("ignivorus_fire_breath_end");
+    public static final Supplier<SoundEvent> IGNIVORUS_TAKEOFF = registerSound("ignivorus_takeoff");
+    public static final Supplier<SoundEvent> IGNIVORUS_FLAP = registerSound("ignivorus_flap");
+    public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_1 = registerSound("ignivorus_grumble1");
+    public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_2 = registerSound("ignivorus_grumble2");
+    public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_3 = registerSound("ignivorus_grumble3");
 
     private ModSounds() {
     }

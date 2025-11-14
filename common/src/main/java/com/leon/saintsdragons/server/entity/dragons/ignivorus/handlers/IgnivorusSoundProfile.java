@@ -49,10 +49,31 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
             playStep(handler, dragon, locator, 1.0f, 0.85f);
             return true;
         }
+        if ("ignivorus_grumble1".equals(key)) {
+            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_GRUMBLE_1.get(), 1.1f, 0.95f, 0.05f);
+            return true;
+        }
+        if ("ignivorus_grumble2".equals(key)) {
+            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_GRUMBLE_2.get(), 1.15f, 1.0f, 0.05f);
+            return true;
+        }
+        if ("ignivorus_grumble3".equals(key)) {
+            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_GRUMBLE_3.get(), 1.2f, 0.9f, 0.05f);
+            return true;
+        }
         if ("ignivorus_roar".equals(key)) {
             return true; // Roar ability plays the synced audio
         }
         return false;
+    }
+
+    @Override
+    public boolean handleWingFlapSound(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        float volume = dragon.isBaby() ? 0.7f : 1.2f;
+        float pitch = 0.95f + (dragon.getRandom().nextFloat() - 0.5f) * 0.1f;
+        dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                ModSounds.IGNIVORUS_FLAP.get(), SoundSource.NEUTRAL, volume, pitch, false);
+        return true;
     }
 
     @Override

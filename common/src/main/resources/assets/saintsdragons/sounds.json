@@ -39,6 +39,16 @@
       }
     ]
   },
+  "raevyx_takeoff": {
+    "subtitle": "Raevyx launches into the air",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_takeoff",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_lightning_beam_start": {
     "subtitle": "Raevyx charges lightning",
     "sounds": [
@@ -568,6 +578,56 @@
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_fire_breath_end",
         "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_grumble1": {
+    "subtitle": "Ignivorus grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_grumble1",
+        "volume": 1.2,
+        "pitch": 0.95
+      }
+    ]
+  },
+  "ignivorus_grumble2": {
+    "subtitle": "Ignivorus grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_grumble2",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_grumble3": {
+    "subtitle": "Ignivorus grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_grumble3",
+        "volume": 1.3,
+        "pitch": 0.9
+      }
+    ]
+  },
+  "ignivorus_takeoff": {
+    "subtitle": "Ignivorus launches skyward",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_takeoff",
+        "volume": 1.4,
+        "pitch": 0.95
+      }
+    ]
+  },
+  "ignivorus_flap": {
+    "subtitle": "Ignivorus beats its wings",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_flap",
+        "volume": 1.2,
         "pitch": 1.0
       }
     ]
