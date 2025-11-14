@@ -65,7 +65,8 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);  // Same as Nulljaw/Stegonaut
             applyBankingRoll(entity, animationState);
-            applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden
+            applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden (flying)
+            applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
             applyNeckFollow(entity, animationState);
             applyTailDrag(entity, partialTick);
         }
@@ -143,6 +144,34 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.3f);  // Upper-mid
         applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.32f);  // Near head
         applyNeckBoneRotation("head1Controller", neckLeanRad * 0.35f);   // Head - most pronounced
+    }
+
+    /**
+     * Turn neck in the direction of ground turning based on yaw velocity.
+     * Head leans INTO the turn direction when walking/running on ground.
+     */
+    private void applyGroundNeckTurn(Raevyx entity, float partialTick) {
+        // Only apply when on ground (not flying)
+        if (entity.isFlying()) {
+            return;
+        }
+
+        // Use yaw velocity to determine turn direction and magnitude
+        double velocity = entity.yawVelocity.get(partialTick);
+
+        // Clamp to prevent excessive rotation
+        velocity = Mth.clamp(velocity, -25.0, 25.0);
+
+        // Convert to radians - head turns IN the direction of the turn (opposite of tail drag)
+        // So we NEGATE the velocity
+        float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
+
+        // Apply with same values as banking lean (4 neck segments)
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.1f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 0.2f);
+        applyNeckBoneRotation("neck3Controller", turnRad * 0.3f);
+        applyNeckBoneRotation("neck4Controller", turnRad * 0.32f);
+        applyNeckBoneRotation("head1Controller", turnRad * 0.35f);
     }
 
     /**

@@ -4870,6 +4870,11 @@
 						}
 					}
 				},
+				"skull": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"bone12": {
 					"rotation": {
 						"0.0": {
@@ -12126,6 +12131,11 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"skull": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -17830,6 +17840,11 @@
 						}
 					}
 				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1": {
 					"rotation": {
 						"0.0": {
@@ -17876,6 +17891,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"bone9": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail4": {
@@ -18042,6 +18062,21 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"jaw": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"pharynx": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"leftfrontleg": {
@@ -18248,6 +18283,11 @@
 						}
 					}
 				},
+				"rightfronttoe2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftbackleg": {
 					"rotation": {
 						"0.0": {
@@ -18288,6 +18328,11 @@
 						}
 					}
 				},
+				"leftbackankle": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftbackfeet": {
 					"rotation": {
 						"0.0": {
@@ -18302,6 +18347,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"leftbacktoe3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"rightbackleg": {
@@ -18374,6 +18424,16 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"rightbacktoe1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightbacktoe3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"neck1LookControl": {

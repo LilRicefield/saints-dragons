@@ -28,7 +28,8 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);  // Smooth body rotation like Nulljaw/Raevyx
             applyBankingRoll(entity, animationState);
-            applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden
+            applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden (flying)
+            applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
             applyNeckFollow();
             applyTailDrag(entity, partialTick);
         }
@@ -121,6 +122,32 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         applyNeckBoneRotation("neck1", neckLeanRad * 0.5f);  // Base of neck - subtle
         applyNeckBoneRotation("neck2", neckLeanRad * 1.0f);  // Mid neck - medium
         applyNeckBoneRotation("skull", neckLeanRad * 1.25f);   // Head - most pronounced
+    }
+
+    /**
+     * Turn neck in the direction of ground turning based on yaw velocity.
+     * Head leans INTO the turn direction when walking/running on ground.
+     */
+    private void applyGroundNeckTurn(Cindervane entity, float partialTick) {
+        // Only apply when on ground (not flying)
+        if (entity.isFlying()) {
+            return;
+        }
+
+        // Use yaw velocity to determine turn direction and magnitude
+        double velocity = entity.yawVelocity.get(partialTick);
+
+        // Clamp to prevent excessive rotation
+        velocity = Mth.clamp(velocity, -25.0, 25.0);
+
+        // Convert to radians - head turns IN the direction of the turn (opposite of tail drag)
+        // So we NEGATE the velocity
+        float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
+
+        // Apply with increasing intensity toward the head
+        applyNeckBoneRotation("neck1", turnRad * 0.5f);
+        applyNeckBoneRotation("neck2", turnRad * 1.0f);
+        applyNeckBoneRotation("skull", turnRad * 1.25f);
     }
 
     /**

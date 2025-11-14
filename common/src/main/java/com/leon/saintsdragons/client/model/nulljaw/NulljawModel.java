@@ -52,6 +52,7 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         if (entity.isAlive() && entity.isSwimming()) {
             applySwimRoll(entity, animationState);
         }
+        applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
         applyTailDrag(entity, partialTick);
         // Distribute head rotation across neck segments
         applyNeckFollow(entity, animationState);
@@ -81,6 +82,7 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         root.setRotY(snap.getRotY() - deviationRad);
     }
 
+
     /**
      * Applies dynamic swim roll to the body bone for smooth underwater banking.
      * Similar to Raevyx's flight banking but adapted for swimming mechanics.
@@ -98,6 +100,43 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
 
         // Add to whatever the animation already set (don't use snapshot - we want to layer on top)
         body.setRotZ(body.getRotZ() + swimRollRad);
+    }
+
+    /**
+     * Turn neck in the direction of ground turning based on yaw velocity.
+     * Head leans INTO the turn direction when walking/running on ground.
+     */
+    private void applyGroundNeckTurn(Nulljaw entity, float partialTick) {
+        // Use yaw velocity to determine turn direction and magnitude
+        double velocity = entity.yawVelocity.get(partialTick);
+
+        // Clamp to prevent excessive rotation
+        velocity = Mth.clamp(velocity, -25.0, 25.0);
+
+        // Convert to radians - head turns IN the direction of the turn (opposite of tail drag)
+        // So we NEGATE the velocity
+        float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
+
+        // Apply with increasing intensity toward the head (3 neck segments + skull)
+        applyNeckBoneRotation("neck1", turnRad * 0.4f);
+        applyNeckBoneRotation("neck2", turnRad * 0.42f);
+        applyNeckBoneRotation("neck3", turnRad * 0.44f);
+        applyNeckBoneRotation("skull", turnRad * 0.46f);
+    }
+
+    /**
+     * Helper to apply Y-rotation to a neck bone for ground turning.
+     * ADDS to current rotation (preserves animation) instead of replacing it.
+     */
+    private void applyNeckBoneRotation(String boneName, float rotationY) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone bone = boneOpt.get();
+        // Add to current rotation (which includes animation) instead of setting from snapshot
+        bone.setRotY(bone.getRotY() + rotationY);
     }
 
     /**
