@@ -12,7 +12,8 @@ import software.bernie.geckolib.model.data.EntityModelData;
 
 public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     public CindervaneModel() {
-        super(SaintsDragonsCommon.rl("cindervane"), "head");
+        // Use non-existent bone so GeckoLib doesn't override animation keyframes
+        super(SaintsDragonsCommon.rl("cindervane"), "skullController");
     }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/cindervane.geo.json");
@@ -30,9 +31,9 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);  // Smooth body rotation like Nulljaw/Raevyx
             applyBankingRoll(entity, animationState);
+            applyNeckFollow(animationState);  // Base head tracking first (uses EntityModelData)
             applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden (flying)
             applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
-            applyNeckFollow();
             applyTailDrag(entity, partialTick);
         }
     }
@@ -123,7 +124,7 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         // Apply with increasing intensity toward the head (like tail but reversed hierarchy)
         applyNeckBoneRotation("neck1", neckLeanRad * 0.5f);  // Base of neck - subtle
         applyNeckBoneRotation("neck2", neckLeanRad * 1.0f);  // Mid neck - medium
-        applyNeckBoneRotation("skull", neckLeanRad * 1.25f);   // Head - most pronounced
+        applyNeckBoneRotation("skullController", neckLeanRad * 1.25f);   // Head - most pronounced
     }
 
     /**
@@ -149,7 +150,6 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         // Apply with increasing intensity toward the head
         applyNeckBoneRotation("neck1", turnRad * 0.5f);
         applyNeckBoneRotation("neck2", turnRad * 1.0f);
-        applyNeckBoneRotation("skull", turnRad * 1.25f);
     }
 
     /**
@@ -168,45 +168,35 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     }
 
     /**
-     * Softly distributes head look rotations across the neck segments so the
-     * turn feels organic instead of hinging on a single joint.
+     * Distributes head rotation across neck segments using EntityModelData.
+     * Mirrors Raevyx's approach exactly - preserves animation keyframes.
      */
-    private void applyNeckFollow() {
-        var headOpt = getBone("head");
-        if (headOpt.isEmpty()) {
+    private void applyNeckFollow(AnimationState<Cindervane> state) {
+        EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) {
             return;
         }
 
-        GeoBone head = headOpt.get();
-        var snapshot = head.getInitialSnapshot();
+        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
 
-        float headDeltaX = head.getRotX() - snapshot.getRotX();
-        float headDeltaY = head.getRotY() - snapshot.getRotY();
-
-        // Limit how far the neck blend can push the segments (roughly 20–25 deg each axis)
-        headDeltaX = Mth.clamp(headDeltaX, -0.35f, 0.35f);
-        headDeltaY = Mth.clamp(headDeltaY, -0.45f, 0.45f);
-
-        // Reset the head bone so only the neck segments provide the visible rotation
-        head.setRotX(snapshot.getRotX());
-        head.setRotY(snapshot.getRotY());
-
-        // Two neck controls: base gets a lighter amount, tip gets the majority for smoother motion
-        applyNeckBoneFollow("neck1", headDeltaX, headDeltaY, 0.4f);
-        applyNeckBoneFollow("neck2", headDeltaX, headDeltaY, 0.6f);
+        applyNeckBoneFollow("neck1", lookPitchRad, lookYawRad, 0.35f);
+        applyNeckBoneFollow("neck2", lookPitchRad, lookYawRad, 0.55f);
+        applyNeckBoneFollow("neck3", lookPitchRad, lookYawRad, 0.70f);
+        applyNeckBoneFollow("skullController", lookPitchRad, lookYawRad, 0.80f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
         var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
+        if (boneOpt.isEmpty()) return;
 
         GeoBone bone = boneOpt.get();
-        var snapshot = bone.getInitialSnapshot();
+        // Apply weighted portion of the head's rotation on top of the animated pose
+        float addX = headDeltaX * weight;
+        float addY = headDeltaY * weight;
 
-        bone.setRotX(snapshot.getRotX() + headDeltaX * weight);
-        bone.setRotY(snapshot.getRotY() + headDeltaY * weight);
+        bone.setRotX(bone.getRotX() + addX);
+        bone.setRotY(bone.getRotY() + addY);
     }
     /**
      * Applies tail drag effect based on turning speed (yaw velocity).
@@ -248,5 +238,4 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     }
 
 }
-
 

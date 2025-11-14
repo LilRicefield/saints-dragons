@@ -19,7 +19,8 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
 
     public IgnivorusModel() {
-        super(SaintsDragonsCommon.rl("ignivorus"), "headLookControl");
+        // Use non-existent bone so GeckoLib doesn't override animation keyframes
+        super(SaintsDragonsCommon.rl("ignivorus"), "headController");
     }
 
     @Override
@@ -46,7 +47,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
-            applyNeckFollow(animationState);
+            applyNeckFollow(entity, animationState);  // Base head tracking first (uses EntityModelData)
             applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden (flying)
             applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
             applyTailDrag(entity, partialTick);
@@ -100,7 +101,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         applyNeckBoneRotation("neck2", neckLeanRad * 0.41f);  // Lower-mid
         applyNeckBoneRotation("neck3", neckLeanRad * 0.42f);  // Upper-mid
         applyNeckBoneRotation("neck4", neckLeanRad * 0.43f);  // Near head
-        applyNeckBoneRotation("head", neckLeanRad * 0.44f);   // Head - most pronounced
+        applyNeckBoneRotation("headController", neckLeanRad * 0.44f);   // Head - most pronounced
     }
 
     /**
@@ -146,29 +147,38 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    private void applyNeckFollow(AnimationState<Ignivorus> state) {
-        var controllerOpt = getBone("headLookControl");
-        if (controllerOpt.isEmpty()) {
-            return;
-        }
+    /**
+     * Distributes head rotation across neck segments using EntityModelData.
+     * Mirrors Raevyx's approach exactly - preserves animation keyframes.
+     */
+    private void applyNeckFollow(Ignivorus entity, AnimationState<Ignivorus> state) {
+        var headOpt = getBone("headController");
+        if (headOpt.isEmpty()) return;
 
         EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) {
             return;
         }
 
-        GeoBone controller = controllerOpt.get();
+        GeoBone head = headOpt.get();
+
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
 
-        controller.setRotX(controller.getRotX() - lookPitchRad);
-        controller.setRotY(controller.getRotY() - lookYawRad);
+        // When being ridden, skip pitch to prevent neck snapping during ascent/descent
+        if (entity.isVehicle()) {
+            lookPitchRad = 0.0f;
+        }
 
-        applyNeckBoneFollow("neck1", lookPitchRad, lookYawRad, 0.35f);
-        applyNeckBoneFollow("neck2", lookPitchRad, lookYawRad, 0.40f);
-        applyNeckBoneFollow("neck3", lookPitchRad, lookYawRad, 0.45f);
-        applyNeckBoneFollow("neck4", lookPitchRad, lookYawRad, 0.50f);
-        applyNeckBoneFollow("head", lookPitchRad, lookYawRad, 0.60f);
+        // Remove the procedural look rotation from the head itself so the animation pose stays intact
+        head.setRotX(head.getRotX() - lookPitchRad);
+        head.setRotY(head.getRotY() - lookYawRad);
+
+        // Distribute rotation across neck segments (4 segments for Ignivorus)
+        applyNeckBoneFollow("neck1", lookPitchRad, lookYawRad, 0.20f);
+        applyNeckBoneFollow("neck2", lookPitchRad, lookYawRad, 0.25f);
+        applyNeckBoneFollow("neck3", lookPitchRad, lookYawRad, 0.30f);
+        applyNeckBoneFollow("neck4", lookPitchRad, lookYawRad, 0.35f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -176,8 +186,10 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         if (boneOpt.isEmpty()) return;
 
         GeoBone bone = boneOpt.get();
+        // Apply weighted portion of the head's rotation on top of the animated pose
         float addX = headDeltaX * weight;
         float addY = headDeltaY * weight;
+
         bone.setRotX(bone.getRotX() + addX);
         bone.setRotY(bone.getRotY() + addY);
     }
@@ -202,5 +214,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 }
+
+
 
 

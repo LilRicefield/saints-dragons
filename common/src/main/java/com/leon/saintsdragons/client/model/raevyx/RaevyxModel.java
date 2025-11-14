@@ -140,11 +140,11 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 35.0f * Mth.DEG_TO_RAD;
 
         // Apply with increasing intensity toward the head (4 neck segments)
-        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.1f);  // Base - subtle
-        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.2f);  // Lower-mid
-        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.3f);  // Upper-mid
-        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.32f);  // Near head
-        applyNeckBoneRotation("head1Controller", neckLeanRad * 0.35f);   // Head - most pronounced
+        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.15f);  // Base - subtle
+        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.20f);  // Lower-mid
+        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.25f);  // Upper-mid
+        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.30f);  // Near head
+        applyNeckBoneRotation("head1Controller", neckLeanRad * 0.32f);   // Head - most pronounced
     }
 
     /**
