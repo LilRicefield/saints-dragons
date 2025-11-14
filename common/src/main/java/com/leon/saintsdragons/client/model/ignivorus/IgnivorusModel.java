@@ -129,7 +129,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         applyNeckBoneRotation("neck2", turnRad * 0.41f);
         applyNeckBoneRotation("neck3", turnRad * 0.42f);
         applyNeckBoneRotation("neck4", turnRad * 0.43f);
-        applyNeckBoneRotation("head", turnRad * 0.44f);
+        applyNeckBoneRotation("headController", turnRad * 0.44f);
     }
 
     /**
@@ -165,14 +165,15 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
 
-        // When being ridden, skip pitch to prevent neck snapping during ascent/descent
-        if (entity.isVehicle()) {
-            lookPitchRad = 0.0f;
-        }
-
         // Remove the procedural look rotation from the head itself so the animation pose stays intact
         head.setRotX(head.getRotX() - lookPitchRad);
         head.setRotY(head.getRotY() - lookYawRad);
+
+        // When being ridden, skip pitch distribution to prevent neck snapping during ascent/descent
+        // Only apply yaw for horizontal head looking
+        if (entity.isVehicle()) {
+            lookPitchRad = 0.0f;
+        }
 
         // Distribute rotation across neck segments (4 segments for Ignivorus)
         applyNeckBoneFollow("neck1", lookPitchRad, lookYawRad, 0.20f);
