@@ -21779,7 +21779,7 @@
 			}
 		},
 		"animation.ignivorus.ultimate_start": {
-			"animation_length": 1.25,
+			"animation_length": 1.4583,
 			"bones": {
 				"hip": {
 					"rotation": {
@@ -23136,7 +23136,7 @@
 			}
 		},
 		"animation.ignivorus.ultimate": {
-			"animation_length": 5.4167,
+			"animation_length": 5.6667,
 			"bones": {
 				"hip": {
 					"rotation": {
@@ -25584,7 +25584,7 @@
 			}
 		},
 		"animation.ignivorus.ultimate_end": {
-			"animation_length": 1.25,
+			"animation_length": 1.4583,
 			"bones": {
 				"hip": {
 					"rotation": {

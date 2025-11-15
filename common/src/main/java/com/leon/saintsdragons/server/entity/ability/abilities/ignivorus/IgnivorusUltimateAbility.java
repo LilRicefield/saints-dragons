@@ -41,6 +41,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     };
 
     private boolean lockedControls;
+    private boolean startAnimPlayed;
+    private boolean loopAnimPlayed;
+    private boolean endAnimPlayed;
 
     public IgnivorusUltimateAbility(DragonAbilityType<Ignivorus, IgnivorusUltimateAbility> type,
                                     Ignivorus user) {
@@ -77,14 +80,39 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             dragon.setTakeoff(false);
             dragon.setDeltaMovement(Vec3.ZERO);
 
-            // Play chained animation (start -> loop -> end) through a single trigger
-            dragon.triggerAnim("action", "ultimate_sequence");
+            // Reset animation tracking flags
+            startAnimPlayed = false;
+            loopAnimPlayed = false;
+            endAnimPlayed = false;
+
+            // Play ONLY the first animation (start)
+            dragon.triggerAnim("action", "ultimate_start");
+            startAnimPlayed = true;
         }
     }
 
     @Override
     public void tickUsing() {
-        // Future gameplay effects (shockwave, damage) can hook into START_END_TICK / LOOP_END_TICK here.
+        DragonAbilitySection section = getCurrentSection();
+        if (section == null || section.sectionType != STARTUP) {
+            return;
+        }
+
+        Ignivorus dragon = getUser();
+        int ticks = getTicksInSection();
+
+        // Manually trigger each animation when the previous one finishes
+        // This prevents gaps/flickers between animations
+
+        if (!loopAnimPlayed && ticks >= START_END_TICK) {
+            dragon.triggerAnim("action", "ultimate");
+            loopAnimPlayed = true;
+        }
+
+        if (!endAnimPlayed && ticks >= LOOP_END_TICK) {
+            dragon.triggerAnim("action", "ultimate_end");
+            endAnimPlayed = true;
+        }
     }
 
     @Override

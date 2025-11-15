@@ -34,6 +34,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
+        // CRITICAL: Stop movement controller when controls are locked (e.g., during ultimate)
+        // This prevents idle/walk animations from competing with action controller animations
+        if (dragon.areRiderControlsLocked()) {
+            return PlayState.STOP;
+        }
+
         // Check for sitting - highest priority after flying
         if (!dragon.isFlying() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
             state.setAndContinue(SIT);
@@ -123,6 +129,11 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
+        // Stop banking when controls are locked
+        if (dragon.areRiderControlsLocked()) {
+            return PlayState.STOP;
+        }
+
         // Simple version - can expand later
         state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.banking_off"));
         return PlayState.CONTINUE;
@@ -136,6 +147,11 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
             state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.pitching_off"));
             return PlayState.CONTINUE;
+        }
+
+        // Stop pitching when controls are locked
+        if (dragon.areRiderControlsLocked()) {
+            return PlayState.STOP;
         }
 
         double pitchDir = dragon.getPitchDirection();
@@ -200,12 +216,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         actionController.triggerableAnim("roar",
             RawAnimation.begin().thenPlay("animation.ignivorus.roar"));
 
-        // Ultimate sequence animation (start -> loop -> end chained together)
-        actionController.triggerableAnim("ultimate_sequence",
-            RawAnimation.begin()
-                    .thenPlay("animation.ignivorus.ultimate_start")
-                    .thenPlay("animation.ignivorus.ultimate")
-                    .thenPlay("animation.ignivorus.ultimate_end"));
+        // Ultimate ability animations (triggered separately in sequence, like Raevyx sleep)
+        actionController.triggerableAnim("ultimate_start",
+            RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start"));
+        actionController.triggerableAnim("ultimate",
+            RawAnimation.begin().thenPlay("animation.ignivorus.ultimate"));
+        actionController.triggerableAnim("ultimate_end",
+            RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end"));
 
         // Death animation
         actionController.triggerableAnim("die",
