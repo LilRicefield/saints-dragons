@@ -616,6 +616,26 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -1182,6 +1202,26 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -1708,6 +1748,26 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -2227,6 +2287,26 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -2547,6 +2627,26 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -2721,6 +2821,16 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"headController": {
@@ -2961,6 +3071,26 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}
@@ -3256,6 +3386,26 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}
@@ -3747,6 +3897,26 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}
