@@ -27,6 +27,7 @@ public class EntityRendererMixin {
         Minecraft mc = Minecraft.getInstance();
         double targetFOVMultiplier = 1.0;
         if (mc.player != null && mc.player.getVehicle() != null) {
+            Ignivorus ignivorusVehicle = mc.player.getVehicle() instanceof Ignivorus iv ? iv : null;
             boolean isAccelerating = false;
             boolean isFlying = false;
             double currentSpeed = 0;
@@ -89,6 +90,14 @@ public class EntityRendererMixin {
                 // Not riding a dragon - reset FOV
                 saint_sDragons$currentFOVMultiplier = 1.0;
                 return;
+            }
+
+            if (ignivorusVehicle != null) {
+                float zoom = ignivorusVehicle.getUltimateCameraZoom(partialTicks);
+                if (zoom > 0.001F) {
+                    double cinematicMultiplier = 1.0 + (zoom * 0.35);
+                    targetFOVMultiplier = Math.max(targetFOVMultiplier, cinematicMultiplier);
+                }
             }
             
             if (isAccelerating && maxSpeed > 0) {

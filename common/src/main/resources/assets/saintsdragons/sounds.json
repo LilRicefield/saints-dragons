@@ -673,5 +673,16 @@
         "attenuation_distance": 96
       }
     ]
+  },
+  "ignivorus_ultimate_end": {
+    "subtitle": "Ignivorus calms the inferno",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_ultimate_end",
+        "volume": 2.0,
+        "pitch": 0.95,
+        "attenuation_distance": 64
+      }
+    ]
   }
 }
