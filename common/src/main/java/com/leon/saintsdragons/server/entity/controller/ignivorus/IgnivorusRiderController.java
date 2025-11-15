@@ -23,6 +23,10 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     private static final float WALK_SPEED_MULT = 0.75F;
     private static final float RUN_SPEED_MULT = 2.0F;
 
+    // ===== LANDING LOGIC =====
+    private static final double LANDING_HEIGHT_TRIGGER = 4.0D; // Blocks above ground to start landing animation
+    private static final int MAX_GROUND_CHECK_DISTANCE = 10; // Max blocks to check below dragon
+
     // ===== FLIGHT PHYSICS =====
     private static final double CRUISE_SPEED_MULT = 8.5;
     private static final double SPRINT_SPEED_MULT = 12.5;
@@ -85,17 +89,63 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             dragon.setXRot(0.0F);
         }
 
-        // Auto-land when descending near ground (but not during takeoff animation)
-        if (flying && dragon.onGround() && !dragon.isGoingUp() && !dragon.isTakeoff()) {
-            dragon.setFlying(false);
-            dragon.setLanding(false);
-            dragon.setTakeoff(false);
+        // Landing logic for riders
+        if (flying && !dragon.isTakeoff()) {
+            double distanceToGround = getDistanceToGround();
+            boolean nearGround = distanceToGround >= 0 && distanceToGround <= LANDING_HEIGHT_TRIGGER;
+            boolean atWaterSurface = isNearWaterSurface();
+
+            // Trigger landing animation when close to ground, descending, and not at water surface
+            if (nearGround && dragon.isGoingDown() && !atWaterSurface && !dragon.isLanding()) {
+                dragon.setLanding(true);
+            }
+
+            // Complete landing when touching ground
+            if (dragon.onGround()) {
+                dragon.setFlying(false);
+                dragon.setLanding(false);
+                dragon.setTakeoff(false);
+            }
         }
 
         if (dragon.onGround()) {
             player.fallDistance = 0.0F;
             dragon.fallDistance = 0.0F;
         }
+    }
+
+    /**
+     * Check distance to solid ground below the dragon
+     * @return Distance in blocks, or -1 if no ground found within MAX_GROUND_CHECK_DISTANCE
+     */
+    private double getDistanceToGround() {
+        var level = dragon.level();
+        if (level == null) return -1;
+
+        net.minecraft.core.BlockPos dragonPos = dragon.blockPosition();
+        int startY = dragonPos.getY();
+
+        for (int checkY = startY; checkY > startY - MAX_GROUND_CHECK_DISTANCE && checkY >= level.getMinBuildHeight(); checkY--) {
+            net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos(dragonPos.getX(), checkY, dragonPos.getZ());
+            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(checkPos);
+
+            // Check if it's a solid block (not air, not water, not lava)
+            if (!state.isAir() && state.getFluidState().isEmpty() && state.isSolidRender(level, checkPos)) {
+                // Found solid ground, return distance
+                return dragon.getY() - (checkY + 1); // +1 because we want distance to top of block
+            }
+        }
+
+        return -1; // No ground found
+    }
+
+    /**
+     * Check if dragon is near water surface level (Y=62)
+     * @return true if within tolerance of water surface
+     */
+    private boolean isNearWaterSurface() {
+        double dragonY = dragon.getY();
+        return Math.abs(dragonY - Ignivorus.RIDER_WATER_SURFACE_LEVEL) <= Ignivorus.RIDER_WATER_SURFACE_TOLERANCE;
     }
 
     public float getRiddenSpeed(Player rider) {

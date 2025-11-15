@@ -52,6 +52,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 import net.minecraft.nbt.CompoundTag;
@@ -154,6 +155,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
     private static final double WATER_EFFECT_MAX_HEIGHT = 8.0D;
     private static final double WATER_EFFECT_INTENSITY = 1.15D;
+    private static final double LANDING_TRIGGER_ALTITUDE = 6.0D;
+    private static final double LANDING_RELEASE_ALTITUDE = 8.5D;
+    private static final double LANDING_DESCENT_SPEED = -0.02D;
+    private static final int LANDING_HYSTERESIS_TICKS = 6;
 
     // Vocal entries (placeholder - sounds to be added later)
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
@@ -193,6 +198,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int airTicks;
     public int groundTicks;
     private int riderControlLockTicks;
+    private int landingApproachTicks;
 
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 45.0F;
@@ -385,6 +391,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         // Update banking and pitching for animations
         tickBankingLogic();
         tickPitchingLogic();
+        tickLandingLogic();
 
         if (!level().isClientSide) {
             tickTerrainClearing();
@@ -1438,6 +1445,63 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         } else {
             pitchHoldTicks = Math.min(pitchHoldTicks + 1, 20);
         }
+    }
+
+    private void tickLandingLogic() {
+        if (!isFlying()) {
+            if (isLanding()) {
+                setLanding(false);
+            }
+            landingApproachTicks = 0;
+            return;
+        }
+
+        double altitude = getAltitudeAboveTerrain();
+        Vec3 motion = getDeltaMovement();
+        boolean descending = motion.y <= LANDING_DESCENT_SPEED;
+        boolean nearGround = altitude != Double.POSITIVE_INFINITY && altitude <= LANDING_TRIGGER_ALTITUDE;
+
+        if (nearGround && descending && !isVehicle()) {
+            if (landingApproachTicks < LANDING_HYSTERESIS_TICKS) {
+                landingApproachTicks++;
+            }
+            if (landingApproachTicks >= LANDING_HYSTERESIS_TICKS && !isLanding()) {
+                setLanding(true);
+            }
+        } else {
+            landingApproachTicks = 0;
+            if (isLanding()) {
+                boolean tooHigh = altitude == Double.POSITIVE_INFINITY || altitude > LANDING_RELEASE_ALTITUDE;
+                boolean ascending = motion.y > 0.05D;
+                if (tooHigh || ascending || onGround()) {
+                    setLanding(false);
+                }
+            }
+        }
+
+        if (isLanding() && onGround()) {
+            setLanding(false);
+        }
+    }
+
+    private double getAltitudeAboveTerrain() {
+        BlockPos pos = this.blockPosition();
+        if (!level().hasChunkAt(pos)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        int groundY = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
+        int dragonY = Mth.floor(this.getY());
+        int scanBottom = Math.min(groundY, dragonY - 12);
+
+        for (int y = dragonY; y >= scanBottom; y--) {
+            BlockPos check = new BlockPos(pos.getX(), y, pos.getZ());
+            if (!this.level().getFluidState(check).isEmpty()) {
+                return Double.POSITIVE_INFINITY;
+            }
+        }
+
+        return this.getY() - groundY;
     }
 
     private void tickWaterDisturbance() {
