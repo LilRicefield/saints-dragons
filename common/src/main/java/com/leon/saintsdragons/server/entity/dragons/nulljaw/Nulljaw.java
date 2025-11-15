@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.DragonAmphibiousNavigation;
@@ -36,6 +38,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.BreathAirGoal;
@@ -128,6 +133,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private final NulljawInteractionHandler interactionHandler = new NulljawInteractionHandler(this);
     private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
     private final NulljawRiderController riderController;
+    private double configuredWalkSpeed = 0.14D;
+    private double configuredRunSpeed = 0.28D;
+    private double configuredSwimSpeed = 1.45D;
     private final PathNavigation groundNavigation;
     private final DragonAmphibiousNavigation waterNavigation;
     private final MoveControl landMoveControl;
@@ -204,6 +212,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         RandomSource rng = this.getRandom();
         this.ambientSoundTimer = rng.nextInt(80);
         this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+        if (!level.isClientSide) {
+            applyConfiguredAttributes();
+        }
     }
 
     private void tickRiderControlLock() {
@@ -330,9 +341,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     public static AttributeSupplier.Builder createAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         return TamableAnimal.createLivingAttributes()
-                .add(Attributes.MAX_HEALTH, 250.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.28D)
+                .add(Attributes.MAX_HEALTH, config.maxHealth())
+                .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.5D)
                 .add(Attributes.ARMOR, 8.0D)
@@ -664,9 +676,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public double getSwimSpeed() {
-        double baseSpeed = 1.45D; // Slightly faster baseline than default aquatic dragons
+        double baseSpeed = configuredSwimSpeed;
         if (this.isVehicle()) {
-            baseSpeed += 0.2D; // Give riders a bit more responsiveness
+            baseSpeed += 0.2D; // Give riders a bit more responsiveness when mounted
         }
         return baseSpeed;
     }
@@ -699,6 +711,38 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
      */
     public InteractionResult superMobInteract(Player player, InteractionHand hand) {
         return super.mobInteract(player, hand);
+    }
+
+    private void applyConfiguredAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
+        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
+        setAttributeBase(Attributes.ARMOR, config.armor());
+        configuredRunSpeed = Math.max(0.01D, config.movementSpeed());
+        configuredWalkSpeed = config.extraDouble("walk_speed", configuredRunSpeed * 0.5D);
+        configuredSwimSpeed = config.extraDouble("swim_speed", 1.45D);
+        if (this.getHealth() > config.maxHealth()) {
+            this.setHealth((float) config.maxHealth());
+        }
+    }
+
+    private void setAttributeBase(Attribute attribute, double value) {
+        AttributeInstance instance = this.getAttribute(attribute);
+        if (instance != null) {
+            instance.setBaseValue(value);
+        }
+    }
+
+    public double getConfiguredWalkSpeed() {
+        return configuredWalkSpeed;
+    }
+
+    public double getConfiguredRunSpeed() {
+        return configuredRunSpeed;
+    }
+
+    public double getConfiguredSwimSpeed() {
+        return configuredSwimSpeed;
     }
     
     @Override

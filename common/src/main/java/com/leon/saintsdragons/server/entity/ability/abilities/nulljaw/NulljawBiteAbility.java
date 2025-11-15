@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -24,7 +26,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Phase 1 bite attack for the Nulljaw. AOE bite shorter range than horn gore.
  */
 public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
-    private static final float BASE_DAMAGE = 40.0f;
+    private static final float DEFAULT_DAMAGE = 40.0f;
+    private static final float DEFAULT_ATTACK_DAMAGE = 10.0f;
     private static final double BASE_RANGE = 5.5;          // Shorter than horn gore (7.0)
     private static final double RIDDEN_RANGE_BONUS = 0.5;
     private static final double SWIM_RANGE_BONUS = 2.0;     // Reduced from 8.0
@@ -82,12 +85,12 @@ public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
     }
 
     private void applyHit(Nulljaw dragon, LivingEntity target) {
-        float damage = BASE_DAMAGE;
+        float damage = resolveBaseDamage();
         AttributeInstance attackAttr = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (attackAttr != null) {
+        if (attackAttr != null && DEFAULT_ATTACK_DAMAGE > 0.0f) {
             double value = attackAttr.getValue();
             if (value > 0) {
-                damage = (float) value;
+                damage *= value / DEFAULT_ATTACK_DAMAGE;
             }
         }
 
@@ -179,5 +182,11 @@ public class NulljawBiteAbility extends DragonAbility<Nulljaw> {
         double cy = Mth.clamp(p.y, box.minY, box.maxY);
         double cz = Mth.clamp(p.z, box.minZ, box.maxZ);
         return new Vec3(cx, cy, cz);
+    }
+
+    private float resolveBaseDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.NULLJAW_ID)
+                .abilityDamage("bite_phase1", DEFAULT_DAMAGE);
     }
 }

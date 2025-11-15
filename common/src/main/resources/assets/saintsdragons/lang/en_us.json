@@ -287,6 +287,16 @@
   "config.saintsdragons.attributes.raevyx.flying_speed": "Flying Speed",
   "config.saintsdragons.attributes.raevyx.bite_damage": "Bite Damage",
   "config.saintsdragons.attributes.raevyx.beam_damage": "Lightning Beam Damage",
-  "config.saintsdragons.attributes.raevyx.horn_damage": "Horn Gore Damage"
+  "config.saintsdragons.attributes.raevyx.horn_damage": "Horn Gore Damage",
+  "config.saintsdragons.attributes.nulljaw": "Nulljaw Attributes",
+  "config.saintsdragons.attributes.nulljaw.max_health": "Max Health",
+  "config.saintsdragons.attributes.nulljaw.armor": "Armor",
+  "config.saintsdragons.attributes.nulljaw.run_speed": "Run Speed",
+  "config.saintsdragons.attributes.nulljaw.walk_speed": "Walk Speed",
+  "config.saintsdragons.attributes.nulljaw.swim_speed": "Swim Speed",
+  "config.saintsdragons.attributes.nulljaw.bite_phase1": "Bite Damage (Phase 1)",
+  "config.saintsdragons.attributes.nulljaw.bite_phase2": "Bite Damage (Phase 2)",
+  "config.saintsdragons.attributes.nulljaw.horn_phase1": "Horn Gore Damage (Phase 1)",
+  "config.saintsdragons.attributes.nulljaw.horn_phase2": "Horn Gore Damage (Phase 2)"
 }
 

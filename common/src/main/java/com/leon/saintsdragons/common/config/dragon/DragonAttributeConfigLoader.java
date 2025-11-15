@@ -29,6 +29,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final ResourceLocation CINDERVANE_ID = SaintsDragonsCommon.rl("cindervane");
     public static final ResourceLocation RAEVYX_ID = SaintsDragonsCommon.rl("raevyx");
+    public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
 
@@ -44,6 +45,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         Map<ResourceLocation, DragonAttributeConfig> base = new HashMap<>();
         base.put(CINDERVANE_ID, cindervaneDefaults());
         base.put(RAEVYX_ID, raevyxDefaults());
+        base.put(NULLJAW_ID, nulljawDefaults());
         this.defaults = ImmutableMap.copyOf(base);
         this.configs = this.defaults;
     }
@@ -57,7 +59,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "bite", DragonAbilityOverride.ofDamage(12.0D),
                         "magma_volley", DragonAbilityOverride.ofDamage(20.0D)
-                )
+                ),
+                Map.of()
         );
     }
 
@@ -71,6 +74,26 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "bite", DragonAbilityOverride.ofDamage(15.0D),
                         "lightning_beam", DragonAbilityOverride.ofDamage(35.0D),
                         "horn_gore", DragonAbilityOverride.ofDamage(15.0D)
+                ),
+                Map.of()
+        );
+    }
+
+    private static DragonAttributeConfig nulljawDefaults() {
+        return new DragonAttributeConfig(
+                250.0D,
+                8.0D,
+                0.28D,
+                0.0D,
+                Map.of(
+                        "bite_phase1", DragonAbilityOverride.ofDamage(40.0D),
+                        "bite_phase2", DragonAbilityOverride.ofDamage(50.0D),
+                        "horn_gore_phase1", DragonAbilityOverride.ofDamage(16.0D),
+                        "horn_gore_phase2", DragonAbilityOverride.ofDamage(20.8D)
+                ),
+                Map.of(
+                        "walk_speed", 0.14D,
+                        "swim_speed", 1.45D
                 )
         );
     }
@@ -193,6 +216,11 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 abilitiesJson.add(key, abilityJson);
             });
             json.add("abilities", abilitiesJson);
+        }
+        if (!config.extraDoubles().isEmpty()) {
+            JsonObject extraJson = new JsonObject();
+            config.extraDoubles().forEach(extraJson::addProperty);
+            json.add("extra", extraJson);
         }
 
         return json;
