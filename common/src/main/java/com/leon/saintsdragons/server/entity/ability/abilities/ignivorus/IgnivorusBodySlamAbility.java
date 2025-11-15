@@ -89,8 +89,8 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
             return;
         }
 
-        double inflateXZ = Math.max(1.5D, dragon.getBbWidth()) * 0.75D;
-        double inflateY = Math.max(1.5D, dragon.getBbHeight() * 0.35D);
+        double inflateXZ = Math.max(1.5D, dragon.getBbWidth()) * 1.75D;
+        double inflateY = Math.max(1.5D, dragon.getBbHeight() * 1.75D);
         AABB slamArea = dragon.getBoundingBox().inflate(inflateXZ, inflateY, inflateXZ);
 
         List<LivingEntity> targets = server.getEntitiesOfClass(LivingEntity.class, slamArea,
