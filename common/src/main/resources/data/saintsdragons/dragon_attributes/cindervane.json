@@ -1,0 +1,14 @@
+{
+  "max_health": 80.0,
+  "armor": 4.0,
+  "movement_speed": 0.45,
+  "flying_speed": 0.6,
+  "abilities": {
+    "bite": {
+      "damage": 12.0
+    },
+    "magma_volley": {
+      "damage": 20.0
+    }
+  }
+}

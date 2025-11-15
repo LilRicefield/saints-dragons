@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -34,7 +35,7 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
     private static final double VELOCITY_DOWN = -0.15D;
     private static final double VELOCITY_FORWARD = 0.55D;
     private static final double MAGMA_IMPACT_RADIUS = 7.0D;
-    private static final float IMPACT_DAMAGE = 20.0F;
+    private static final float DEFAULT_IMPACT_DAMAGE = 20.0F;
 
     private int ticksSinceVolley;
     private int volleysFired;
@@ -97,10 +98,16 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
             Vec3 spawnPos = mouth.add(direction.scale(SPAWN_FORWARD_OFFSET));
 
             CindervaneMagmaBlockEntity block = new CindervaneMagmaBlockEntity(server, spawnPos,
-                    dragon, MAGMA_IMPACT_RADIUS, IMPACT_DAMAGE, MAGMA_BLOCK_LIFETIME);
+                    dragon, MAGMA_IMPACT_RADIUS, resolveImpactDamage(), MAGMA_BLOCK_LIFETIME);
             block.setDeltaMovement(direction.scale(VELOCITY_FORWARD).add(0.0D, VELOCITY_DOWN, 0.0D));
             server.addFreshEntity(block);
         }
+    }
+
+    private float resolveImpactDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID)
+                .abilityDamage("magma_volley", DEFAULT_IMPACT_DAMAGE);
     }
 
 }

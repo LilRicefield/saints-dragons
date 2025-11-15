@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.platform;
 
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 /**
@@ -44,4 +45,9 @@ public interface PlatformHelper {
      * Create a simple particle type (constructor is protected in vanilla).
      */
     net.minecraft.core.particles.SimpleParticleType createSimpleParticle(boolean overrideLimiter);
+
+    /**
+     * @return root directory where config files should be stored (e.g., .minecraft/config).
+     */
+    Path getConfigDirectory();
 }

@@ -259,6 +259,26 @@
   "text.autoconfig.saintsdragonsspawning.option.stegonautAdditionalBiomes.@Tooltip": "Extra biomes where Stegonaut can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
 
   "text.autoconfig.saintsdragonsspawning.option.cindervaneAdditionalBiomes": "Cindervane Additional Biomes",
-  "text.autoconfig.saintsdragonsspawning.option.cindervaneAdditionalBiomes.@Tooltip": "Extra biomes where Cindervane can spawn (e.g., minecraft:desert, terralith:volcanic_crater)"
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneAdditionalBiomes.@Tooltip": "Extra biomes where Cindervane can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
+
+  "config.saintsdragons.title": "Saints & Dragons Settings",
+  "config.saintsdragons.category.spawning": "Spawning",
+  "config.saintsdragons.category.attributes": "Dragon Attributes",
+  "config.saintsdragons.spawn.raevyx": "Raevyx Spawns",
+  "config.saintsdragons.spawn.stegonaut": "Stegonaut Spawns",
+  "config.saintsdragons.spawn.cindervane": "Cindervane Spawns",
+  "config.saintsdragons.spawn.nulljaw": "Nulljaw Spawns",
+  "config.saintsdragons.spawn.ignivorus": "Ignivorus Spawns",
+  "config.saintsdragons.spawn.weight": "Spawn Weight",
+  "config.saintsdragons.spawn.min_group": "Min Group Size",
+  "config.saintsdragons.spawn.max_group": "Max Group Size",
+  "config.saintsdragons.spawn.additional_biomes": "Additional Biomes",
+  "config.saintsdragons.attributes.cindervane": "Cindervane Attributes",
+  "config.saintsdragons.attributes.cindervane.max_health": "Max Health",
+  "config.saintsdragons.attributes.cindervane.armor": "Armor",
+  "config.saintsdragons.attributes.cindervane.movement_speed": "Movement Speed",
+  "config.saintsdragons.attributes.cindervane.flying_speed": "Flying Speed",
+  "config.saintsdragons.attributes.cindervane.bite_damage": "Bite Damage",
+  "config.saintsdragons.attributes.cindervane.volley_damage": "Magma Volley Damage"
 }
 
