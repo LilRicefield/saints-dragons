@@ -649,7 +649,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public boolean isFood(@NotNull ItemStack stack) {
         // Fire dragon likes cooked meat
-        return stack.is(Items.COOKED_BEEF) || stack.is(Items.COOKED_PORKCHOP);
+        return stack.is(Items.SALMON) ||
+               stack.is(Items.COD) ||
+               stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
     public void setCommandManual(int command) {

@@ -55,6 +55,7 @@ public final class CommonModEvents {
         registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.RAEVYX_BINDER);
         registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.CINDERVANE_BINDER);
         registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.NULLJAW_BINDER);
+        registrar.accept(CreativeModeTabs.FOOD_AND_DRINKS, ModItems.HEARTY_DRAGON_MEAL);
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegistrar registrar) {

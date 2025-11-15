@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ECE",
+    "SES",
+    "ECE"
+  ],
+  "key": {
+    "E": {
+      "item": "minecraft:egg"
+    },
+    "S": {
+      "item": "minecraft:salmon"
+    },
+    "C": {
+      "item": "minecraft:cod"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:hearty_dragon_meal",
+    "count": 6
+  }
+}

@@ -44,8 +44,11 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 itemstack.shrink(1);
             }
 
-            // 10% chance to tame per feeding
-            if (dragon.getRandom().nextInt(10) == 0) {
+            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            int tameRoll = hearty ? 6 : 15; // hearty meal improves taming odds
+
+            // 1 in tameRoll chance to tame per feeding
+            if (dragon.getRandom().nextInt(tameRoll) == 0) {
                 // Successful taming
                 dragon.tame(player);
                 dragon.setOrderedToSit(true);
@@ -97,7 +100,8 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
 
             // Heal the dragon
             float currentHealth = dragon.getHealth();
-            float healAmount = 10.0F;
+            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            float healAmount = hearty ? 30.0F : 10.0F;
             float newHealth = Math.min(currentHealth + healAmount, dragon.getMaxHealth());
             dragon.setHealth(newHealth);
 

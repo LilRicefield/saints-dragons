@@ -3146,7 +3146,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public boolean isFood(@Nonnull ItemStack stack) {
-        return stack.is(Items.SALMON) || stack.is(Items.COD);
+        return stack.is(Items.SALMON) ||
+                stack.is(Items.COD) ||
+                stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
 

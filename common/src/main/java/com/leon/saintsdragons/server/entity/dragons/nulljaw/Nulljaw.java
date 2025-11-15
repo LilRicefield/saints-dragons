@@ -704,9 +704,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     @Override
     public boolean isFood(@Nonnull net.minecraft.world.item.ItemStack stack) {
         // Rift Drakes prefer fish like other dragons
-        return stack.is(net.minecraft.world.item.Items.COD) || 
-               stack.is(net.minecraft.world.item.Items.SALMON) || 
-               stack.is(net.minecraft.world.item.Items.TROPICAL_FISH);
+        return stack.is(net.minecraft.world.item.Items.COD) ||
+               stack.is(net.minecraft.world.item.Items.SALMON) ||
+               stack.is(net.minecraft.world.item.Items.TROPICAL_FISH) ||
+               stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
     @Override

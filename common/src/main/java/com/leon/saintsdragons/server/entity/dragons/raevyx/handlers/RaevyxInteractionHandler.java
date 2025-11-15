@@ -65,7 +65,10 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             wyvern.setFeedingCooldown(61);
 
-            if (wyvern.getRandom().nextInt(10) == 0) {
+            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            int tameRoll = hearty ? 6 : 15; // hearty meal improves taming odds
+
+            if (wyvern.getRandom().nextInt(tameRoll) == 0) {
                 // Successful taming
                 wyvern.tame(player);
                 wyvern.setOrderedToSit(true);
@@ -198,22 +201,21 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             wyvern.setFeedingCooldown(61);
 
+            boolean heartyMeal = itemstack.getItem() == com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get();
+
             // Babies: speed up growth instead of healing
             if (wyvern.isBaby()) {
-                // Age baby by a fixed amount per feeding (same as vanilla animals)
-                // 10% of base growth time = 2400 ticks = 2 minutes saved per fish
+                int growthTicks = heartyMeal ? 4800 : 2400; // hearty meal doubles growth bonus
                 int currentAge = wyvern.getAge();
-                int newAge = Math.min(0, currentAge + 2400); // Cap at 0 (adult)
+                int newAge = Math.min(0, currentAge + growthTicks);
                 wyvern.setAge(newAge);
 
-                // Play eating sound and particles
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 6); // Eating sound
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 7); // Hearts particles
 
-                // Send feedback message with remaining time
                 if (player instanceof ServerPlayer serverPlayer) {
                     int remainingTicks = Math.abs(newAge);
-                    int remainingMinutes = remainingTicks / 1200; // 1200 ticks = 1 minute
+                    int remainingMinutes = remainingTicks / 1200;
                     String messageKey = (newAge == 0)
                         ? "entity.saintsdragons.raevyx.baby_grown"
                         : "entity.saintsdragons.raevyx.baby_fed";
@@ -224,16 +226,16 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 }
             } else {
                 // Adults: heal when fed
-                float healAmount = 10.0f; // Heal 5 hearts per fish
+                float healAmount = heartyMeal ? 28.0f : 10.0f; // hearty meal heals more
                 float oldHealth = wyvern.getHealth();
                 float newHealth = Math.min(oldHealth + healAmount, wyvern.getMaxHealth());
                 wyvern.setHealth(newHealth);
 
-                // Play eating sound and particles
+                // Slight taming bump on hearty meal even when already tamed is harmless; skip here.
+
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 6); // Eating sound
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 7); // Hearts particles
 
-                // Send appropriate feedback message
                 sendFeedingMessage(player, newHealth);
             }
         }

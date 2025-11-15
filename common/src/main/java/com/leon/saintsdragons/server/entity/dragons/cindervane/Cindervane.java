@@ -1852,7 +1852,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public boolean isFood(@Nonnull ItemStack stack) {
-        return stack.is(Items.COD) || stack.is(Items.SALMON) || stack.is(Items.TROPICAL_FISH) || stack.is(Items.CHICKEN);
+        return stack.is(Items.COD) ||
+               stack.is(Items.SALMON) ||
+               stack.is(Items.CHICKEN) ||
+               stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
     @Override
