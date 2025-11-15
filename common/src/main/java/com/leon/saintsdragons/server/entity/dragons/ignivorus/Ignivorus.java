@@ -125,6 +125,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
 
+    private static final EntityDataAccessor<Boolean> DATA_CINEMATIC_ZOOM_ACTIVE =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+
     private static final double MODEL_SCALE = 1.0D;
 
     public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
@@ -189,6 +192,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
     private float prevScreenShakeAmount = 0.0F;
     private float screenShakeAmount = 0.0F;
+
+    private float cinematicZoomProgress = 0.0F;
+    private float prevCinematicZoomProgress = 0.0F;
 
     // Ambient vocals
     private int ambientSoundTimer;
@@ -259,6 +265,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_FIRE_END_Y, 0F);
         this.entityData.define(DATA_FIRE_END_Z, 0F);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
     }
 
     @Override
@@ -292,6 +299,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         tickRiderControlLock();
         physicsController.tick();
         tickScreenShake();
+        tickCinematicZoom();
 
         // Update client-side sit progress
         if (level().isClientSide) {
@@ -415,6 +423,24 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public void clearRiderControlLock() {
         riderControlLockTicks = 0;
         this.entityData.set(DATA_RIDER_LOCKED, false);
+    }
+
+    private void tickCinematicZoom() {
+        prevCinematicZoomProgress = cinematicZoomProgress;
+        boolean active = this.entityData.get(DATA_CINEMATIC_ZOOM_ACTIVE);
+        float target = active ? 1.0F : 0.0F;
+        cinematicZoomProgress = Mth.lerp(0.12F, cinematicZoomProgress, target);
+        if (Math.abs(cinematicZoomProgress - target) < 0.01F) {
+            cinematicZoomProgress = target;
+        }
+    }
+
+    public void setUltimateCameraZoomActive(boolean active) {
+        this.entityData.set(DATA_CINEMATIC_ZOOM_ACTIVE, active);
+    }
+
+    public float getUltimateCameraZoom(float partialTicks) {
+        return Mth.lerp(partialTicks, prevCinematicZoomProgress, cinematicZoomProgress);
     }
 
     @Override

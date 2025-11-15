@@ -107,6 +107,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             dragon.setLanding(false);
             dragon.setTakeoff(false);
             dragon.setDeltaMovement(Vec3.ZERO);
+            dragon.setUltimateCameraZoomActive(true);
 
             // Reset animation tracking flags
             startAnimPlayed = false;
@@ -212,6 +213,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             getUser().clearRiderControlLock();
             lockedControls = false;
         }
+        getUser().setUltimateCameraZoomActive(false);
     }
 
     private void triggerRingExplosion(boolean openingPulse) {
