@@ -15,10 +15,10 @@ public class IgnivorusFollowOwnerGoal extends Goal {
     private final Ignivorus dragon;
 
     // Distance constants
-    private static final double START_FOLLOW_DIST = 5.0;
-    private static final double STOP_FOLLOW_DIST = 5.0;
+    private static final double START_FOLLOW_DIST = 20.0;
+    private static final double STOP_FOLLOW_DIST = 16.0;
     private static final double TELEPORT_DIST = 500.0;
-    private static final double RUN_DIST = 15.0;
+    private static final double RUN_DIST = 25.0;
     private static final double FLIGHT_TRIGGER_DIST = 20.0;
     private static final double FLIGHT_HEIGHT_DIFF = 8.0;
     private static final double LANDING_DISTANCE = 12.0;
