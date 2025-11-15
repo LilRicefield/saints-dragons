@@ -1,10 +1,13 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -22,7 +25,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Works in both phase 1 and phase 2.
  */
 public class NulljawHornGoreAbility extends DragonAbility<Nulljaw> {
-    private static final float GORE_DAMAGE = 16.0f;
+    private static final float DEFAULT_PHASE1_DAMAGE = 16.0f;
+    private static final float DEFAULT_PHASE2_DAMAGE = 20.8f;
+    private static final float DEFAULT_ATTACK_DAMAGE = 10.0f;
     private static final double GORE_RANGE = 7.0;
     private static final double GORE_RANGE_RIDDEN = 8.5;
     private static final double GORE_ANGLE_DEG = 90.0; // half-angle
@@ -118,15 +123,21 @@ public class NulljawHornGoreAbility extends DragonAbility<Nulljaw> {
         Nulljaw dragon = getUser();
         DamageSource src = dragon.level().damageSources().mobAttack(dragon);
 
-        // Phase 2 deals more damage
-        float damageMultiplier = dragon.isPhaseTwoActive() ? 1.3f : 1.0f;
-
+        boolean phaseTwo = dragon.isPhaseTwoActive();
+        float configuredDamage = resolveBaseDamage(phaseTwo);
+        AttributeInstance attackAttr = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (attackAttr != null && DEFAULT_ATTACK_DAMAGE > 0.0f) {
+            double value = attackAttr.getValue();
+            if (value > 0) {
+                configuredDamage *= value / DEFAULT_ATTACK_DAMAGE;
+            }
+        }
         // Armor penetration: ignore 3 armor points when calculating effective damage
         // Phase 2 ignores 5 armor points (stronger penetration)
-        float armorPenetration = dragon.isPhaseTwoActive() ? 5.0f : 3.0f;
+        float armorPenetration = phaseTwo ? 5.0f : 3.0f;
         float armor = (float) target.getAttributeValue(Attributes.ARMOR);
         float toughness = (float) target.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
-        float desiredPostArmor = damageAfterArmor(GORE_DAMAGE * damageMultiplier, Math.max(0f, armor - armorPenetration), toughness);
+        float desiredPostArmor = damageAfterArmor(configuredDamage, Math.max(0f, armor - armorPenetration), toughness);
 
         // Find a raw damage value which, after the target's ACTUAL armor/toughness, equals desiredPostArmor
         float rawToDeal = solveRawDamageForPostArmor(desiredPostArmor, armor, toughness);
@@ -135,13 +146,13 @@ public class NulljawHornGoreAbility extends DragonAbility<Nulljaw> {
         // Very strong directional knockback away from drake head
         // Stronger than Lightning Dragon (2.0 base vs 1.4)
         Vec3 look = dragon.getLookAngle().normalize();
-        double strength = dragon.isPhaseTwoActive() ? 3.5 : 2.0; // Even stronger in phase 2
+        double strength = phaseTwo ? 3.5 : 2.0; // Even stronger in phase 2
         // knockback(strength, x, z): applies horizontal knockback opposite to (x,z)
         target.knockback((float) strength, -look.x, -look.z);
 
         // Higher vertical lift - significantly stronger than Lightning Dragon
         Vec3 dv = target.getDeltaMovement();
-        float verticalLift = dragon.isPhaseTwoActive() ? 0.9f : 0.5f; // Phase 2 launches enemies higher
+        float verticalLift = phaseTwo ? 0.9f : 0.5f; // Phase 2 launches enemies higher
         target.setDeltaMovement(dv.x, Math.max(dv.y, verticalLift), dv.z);
 
     }
@@ -182,5 +193,13 @@ public class NulljawHornGoreAbility extends DragonAbility<Nulljaw> {
     private boolean isAllied(Nulljaw dragon, Entity other) {
         // Use the comprehensive ally system from DragonEntity
         return dragon.isAlly(other);
+    }
+
+    private float resolveBaseDamage(boolean phaseTwo) {
+        String key = phaseTwo ? "horn_gore_phase2" : "horn_gore_phase1";
+        float fallback = phaseTwo ? DEFAULT_PHASE2_DAMAGE : DEFAULT_PHASE1_DAMAGE;
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.NULLJAW_ID)
+                .abilityDamage(key, fallback);
     }
 }

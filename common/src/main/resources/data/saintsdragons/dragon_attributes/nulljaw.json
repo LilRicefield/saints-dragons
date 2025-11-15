@@ -1,0 +1,24 @@
+{
+  "max_health": 250.0,
+  "armor": 8.0,
+  "movement_speed": 0.28,
+  "flying_speed": 0.0,
+  "abilities": {
+    "bite_phase1": {
+      "damage": 40.0
+    },
+    "bite_phase2": {
+      "damage": 50.0
+    },
+    "horn_gore_phase1": {
+      "damage": 16.0
+    },
+    "horn_gore_phase2": {
+      "damage": 20.8
+    }
+  },
+  "extra": {
+    "walk_speed": 0.14,
+    "swim_speed": 1.45
+  }
+}

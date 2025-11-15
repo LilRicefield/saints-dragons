@@ -17,6 +17,7 @@ public final class DragonAttributeConfig {
             0.0D,
             0.3D,
             0.3D,
+            Map.of(),
             Map.of()
     );
 
@@ -25,17 +26,20 @@ public final class DragonAttributeConfig {
     private final double movementSpeed;
     private final double flyingSpeed;
     private final Map<String, DragonAbilityOverride> abilities;
+    private final Map<String, Double> extraDoubles;
 
     public DragonAttributeConfig(double maxHealth,
                                  double armor,
                                  double movementSpeed,
                                  double flyingSpeed,
-                                 Map<String, DragonAbilityOverride> abilities) {
+                                 Map<String, DragonAbilityOverride> abilities,
+                                 Map<String, Double> extraDoubles) {
         this.maxHealth = maxHealth;
         this.armor = armor;
         this.movementSpeed = movementSpeed;
         this.flyingSpeed = flyingSpeed;
         this.abilities = Map.copyOf(abilities);
+        this.extraDoubles = Map.copyOf(extraDoubles);
     }
 
     public double maxHealth() {
@@ -63,6 +67,14 @@ public final class DragonAttributeConfig {
         return override != null ? override.damageOr(fallback) : fallback;
     }
 
+    public Map<String, Double> extraDoubles() {
+        return extraDoubles;
+    }
+
+    public double extraDouble(String key, double fallback) {
+        return extraDoubles.getOrDefault(key, fallback);
+    }
+
     public static DragonAttributeConfig merge(JsonObject json, @Nullable DragonAttributeConfig fallback) {
         DragonAttributeConfig base = fallback != null ? fallback : EMPTY;
 
@@ -83,7 +95,14 @@ public final class DragonAttributeConfig {
                 abilityMap.put(entry.getKey(), override);
             }
         }
+        Map<String, Double> extra = new HashMap<>(base.extraDoubles);
+        if (json.has("extra")) {
+            JsonObject extraJson = GsonHelper.getAsJsonObject(json, "extra");
+            for (Map.Entry<String, JsonElement> entry : extraJson.entrySet()) {
+                extra.put(entry.getKey(), GsonHelper.convertToDouble(entry.getValue(), entry.getKey()));
+            }
+        }
 
-        return new DragonAttributeConfig(maxHealth, armor, movementSpeed, flyingSpeed, abilityMap);
+        return new DragonAttributeConfig(maxHealth, armor, movementSpeed, flyingSpeed, abilityMap, extra);
     }
 }

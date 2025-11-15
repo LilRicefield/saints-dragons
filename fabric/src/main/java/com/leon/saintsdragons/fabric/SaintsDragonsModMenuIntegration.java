@@ -71,13 +71,28 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxBuffer.hornDamage = raevyxCurrent.abilityDamage("horn_gore",
                 raevyxDefaults.abilityDamage("horn_gore", 15.0D));
 
+        DragonAttributeConfig nulljawCurrent = loader.getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        DragonAttributeConfig nulljawDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        NulljawAttributeBuffer nulljawBuffer = new NulljawAttributeBuffer();
+        nulljawBuffer.maxHealth = nulljawCurrent.maxHealth();
+        nulljawBuffer.armor = nulljawCurrent.armor();
+        nulljawBuffer.runSpeed = nulljawCurrent.movementSpeed();
+        nulljawBuffer.walkSpeed = nulljawCurrent.extraDouble("walk_speed", nulljawBuffer.runSpeed * 0.5D);
+        nulljawBuffer.swimSpeed = nulljawCurrent.extraDouble("swim_speed", 1.45D);
+        nulljawBuffer.bitePhase1 = nulljawCurrent.abilityDamage("bite_phase1", 40.0D);
+        nulljawBuffer.bitePhase2 = nulljawCurrent.abilityDamage("bite_phase2", 50.0D);
+        nulljawBuffer.hornPhase1 = nulljawCurrent.abilityDamage("horn_gore_phase1", 16.0D);
+        nulljawBuffer.hornPhase2 = nulljawCurrent.abilityDamage("horn_gore_phase2", 20.8D);
+        raevyxBuffer.hornDamage = raevyxCurrent.abilityDamage("horn_gore",
+                raevyxDefaults.abilityDamage("horn_gore", 15.0D));
+
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
                 .setTitle(TITLE);
         builder.setTransparentBackground(true);
         builder.setSavingRunnable(() -> {
             holder.save();
-            persistDragonAttributes(cindervaneBuffer, raevyxBuffer);
+            persistDragonAttributes(cindervaneBuffer, raevyxBuffer, nulljawBuffer);
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
@@ -136,6 +151,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
         addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
         addRaevyxAttributes(attributes, entryBuilder, raevyxBuffer, raevyxDefaults);
+        addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
 
         return builder.build();
     }
@@ -276,6 +292,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.horn_damage"), buffer.hornDamage)
                 .setDefaultValue(defaults.abilityDamage("horn_gore", 15.0D))
                 .setMin(1.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.hornDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.horn_damage"), buffer.hornDamage)
+                .setDefaultValue(defaults.abilityDamage("horn_gore", 15.0D))
+                .setMin(1.0D)
                 .setMax(150.0D)
                 .setSaveConsumer(value -> buffer.hornDamage = value)
                 .build());
@@ -287,8 +309,76 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .build());
     }
 
+    private void addNulljawAttributes(ConfigCategory category,
+                                     ConfigEntryBuilder entryBuilder,
+                                     NulljawAttributeBuffer buffer,
+                                     DragonAttributeConfig defaults) {
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.max_health"), buffer.maxHealth)
+                .setDefaultValue(defaults.maxHealth())
+                .setMin(50.0D)
+                .setMax(5000.0D)
+                .setSaveConsumer(value -> buffer.maxHealth = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.armor"), buffer.armor)
+                .setDefaultValue(defaults.armor())
+                .setMin(0.0D)
+                .setMax(30.0D)
+                .setSaveConsumer(value -> buffer.armor = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.run_speed"), buffer.runSpeed)
+                .setDefaultValue(defaults.movementSpeed())
+                .setMin(0.05D)
+                .setMax(1.5D)
+                .setSaveConsumer(value -> buffer.runSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.walk_speed"), buffer.walkSpeed)
+                .setDefaultValue(defaults.extraDouble("walk_speed", defaults.movementSpeed() * 0.5D))
+                .setMin(0.01D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.walkSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.swim_speed"), buffer.swimSpeed)
+                .setDefaultValue(defaults.extraDouble("swim_speed", 1.45D))
+                .setMin(0.1D)
+                .setMax(5.0D)
+                .setSaveConsumer(value -> buffer.swimSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_phase1"), buffer.bitePhase1)
+                .setDefaultValue(defaults.abilityDamage("bite_phase1", 40.0D))
+                .setMin(1.0D)
+                .setMax(500.0D)
+                .setSaveConsumer(value -> buffer.bitePhase1 = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_phase2"), buffer.bitePhase2)
+                .setDefaultValue(defaults.abilityDamage("bite_phase2", 50.0D))
+                .setMin(1.0D)
+                .setMax(600.0D)
+                .setSaveConsumer(value -> buffer.bitePhase2 = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase1"), buffer.hornPhase1)
+                .setDefaultValue(defaults.abilityDamage("horn_gore_phase1", 16.0D))
+                .setMin(1.0D)
+                .setMax(300.0D)
+                .setSaveConsumer(value -> buffer.hornPhase1 = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase2"), buffer.hornPhase2)
+                .setDefaultValue(defaults.abilityDamage("horn_gore_phase2", 20.8D))
+                .setMin(1.0D)
+                .setMax(400.0D)
+                .setSaveConsumer(value -> buffer.hornPhase2 = value)
+                .build());
+
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.nulljaw"), rawEntries)
+                .setExpanded(false)
+                .build());
+    }
+
     private void persistDragonAttributes(CindervaneAttributeBuffer cindervaneBuffer,
-                                         RaevyxAttributeBuffer raevyxBuffer) {
+                                         RaevyxAttributeBuffer raevyxBuffer,
+                                         NulljawAttributeBuffer nulljawBuffer) {
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         Map<String, DragonAbilityOverride> abilities = new HashMap<>(current.abilities());
@@ -299,7 +389,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 cindervaneBuffer.armor,
                 cindervaneBuffer.movementSpeed,
                 cindervaneBuffer.flyingSpeed,
-                abilities
+                abilities,
+                Map.of()
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.CINDERVANE_ID, updated);
 
@@ -313,9 +404,28 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxBuffer.armor,
                 raevyxBuffer.movementSpeed,
                 raevyxBuffer.flyingSpeed,
-                raevyxAbilities
+                raevyxAbilities,
+                Map.of()
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.RAEVYX_ID, updatedRaevyx);
+
+        Map<String, DragonAbilityOverride> nulljawAbilities = new HashMap<>();
+        nulljawAbilities.put("bite_phase1", DragonAbilityOverride.ofDamage(nulljawBuffer.bitePhase1));
+        nulljawAbilities.put("bite_phase2", DragonAbilityOverride.ofDamage(nulljawBuffer.bitePhase2));
+        nulljawAbilities.put("horn_gore_phase1", DragonAbilityOverride.ofDamage(nulljawBuffer.hornPhase1));
+        nulljawAbilities.put("horn_gore_phase2", DragonAbilityOverride.ofDamage(nulljawBuffer.hornPhase2));
+        DragonAttributeConfig updatedNulljaw = new DragonAttributeConfig(
+                nulljawBuffer.maxHealth,
+                nulljawBuffer.armor,
+                nulljawBuffer.runSpeed,
+                0.0D,
+                nulljawAbilities,
+                Map.of(
+                        "walk_speed", nulljawBuffer.walkSpeed,
+                        "swim_speed", nulljawBuffer.swimSpeed
+                )
+        );
+        loader.overwriteConfig(DragonAttributeConfigLoader.NULLJAW_ID, updatedNulljaw);
     }
 
     private static final class CindervaneAttributeBuffer {
@@ -335,5 +445,17 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double biteDamage;
         double beamDamage;
         double hornDamage;
+    }
+
+    private static final class NulljawAttributeBuffer {
+        double maxHealth;
+        double armor;
+        double runSpeed;
+        double walkSpeed;
+        double swimSpeed;
+        double bitePhase1;
+        double bitePhase2;
+        double hornPhase1;
+        double hornPhase2;
     }
 }

@@ -31,7 +31,6 @@ public record NulljawRiderController(Nulljaw drake) {
     private static final double SEAT_SIDE = 0.00D;
 
     // ===== GROUND MOVEMENT TUNING =====
-    private static final double GROUND_SPEED_MULT = 0.50D;  // Base ground speed multiplier
     private static final double WATER_SPEED_MULT = 1.2D;  // Enhanced speed in water
 
     // ===== RIDING UTILITIES =====
@@ -101,15 +100,17 @@ public record NulljawRiderController(Nulljaw drake) {
      * Get the speed for ridden movement
      */
     public float getRiddenSpeed(Player player) {
-        float baseSpeed = (float) drake.getAttributeValue(Attributes.MOVEMENT_SPEED);
-        
         if (drake.isInWater()) {
             // Enhanced speed in water
-            float swimSpeed = (float) drake.getSwimSpeed();
-            return drake.isAccelerating() ? swimSpeed * (float)WATER_SPEED_MULT : swimSpeed;
+            double swimSpeed = drake.getConfiguredSwimSpeed();
+            double speed = drake.isAccelerating() ? swimSpeed * WATER_SPEED_MULT : swimSpeed;
+            return (float) speed;
         } else {
             // Ground movement with sprint capability
-            return drake.isAccelerating() ? baseSpeed * 1.0F : baseSpeed * (float)GROUND_SPEED_MULT;
+            double run = drake.getConfiguredRunSpeed();
+            double walk = drake.getConfiguredWalkSpeed();
+            double speed = drake.isAccelerating() ? run : walk;
+            return (float) speed;
         }
     }
 
