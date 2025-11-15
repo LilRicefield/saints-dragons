@@ -15,6 +15,11 @@ public class NulljawLeaveWaterGoal extends Goal {
     private final Nulljaw drake;
     private Vec3 targetPos;
     private final int executionChance = 30;
+    private int stuckTicks;
+    private int totalTicks;
+    private Vec3 lastPos;
+    private static final int MAX_STUCK_TICKS = 60; // 3 seconds without movement = stuck
+    private static final int MAX_TOTAL_TICKS = 400; // 20 seconds max attempt time
 
     public NulljawLeaveWaterGoal(Nulljaw drake) {
         this.drake = drake;
@@ -38,14 +43,30 @@ public class NulljawLeaveWaterGoal extends Goal {
     public void start() {
         if (targetPos != null) {
             drake.getNavigation().moveTo(targetPos.x, targetPos.y, targetPos.z, 1.0D);
+            stuckTicks = 0;
+            totalTicks = 0;
+            lastPos = drake.position();
         }
     }
 
     @Override
     public void tick() {
-        if (targetPos != null) {
+        totalTicks++;
+
+        // Check if drake is making progress
+        Vec3 currentPos = drake.position();
+        if (lastPos != null && currentPos.distanceToSqr(lastPos) < 0.01D) {
+            stuckTicks++;
+        } else {
+            stuckTicks = 0;
+        }
+        lastPos = currentPos;
+
+        // Refresh navigation path periodically to avoid getting stuck
+        if (targetPos != null && totalTicks % 40 == 0) {
             drake.getNavigation().moveTo(targetPos.x, targetPos.y, targetPos.z, 1.0D);
         }
+
         // Help with getting out of water when hitting walls
         if (this.drake.horizontalCollision && this.drake.isInWater()) {
             final float yawRad = drake.getYRot() * Mth.DEG_TO_RAD;
@@ -64,6 +85,24 @@ public class NulljawLeaveWaterGoal extends Goal {
             this.drake.getNavigation().stop();
             return false;
         }
+
+        // Stop if stuck for too long (spinning in place)
+        if (stuckTicks > MAX_STUCK_TICKS) {
+            this.drake.getNavigation().stop();
+            return false;
+        }
+
+        // Stop if taking too long overall (failed pathfinding)
+        if (totalTicks > MAX_TOTAL_TICKS) {
+            this.drake.getNavigation().stop();
+            return false;
+        }
+
+        // Stop if we've successfully left the water
+        if (!this.drake.isInWater()) {
+            return false;
+        }
+
         return !this.drake.getNavigation().isDone() && targetPos != null && !this.drake.level().getFluidState(BlockPos.containing(targetPos)).is(FluidTags.WATER);
     }
 
