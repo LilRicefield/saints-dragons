@@ -1,0 +1,24 @@
+{
+  "max_health": 300.0,
+  "armor": 4.0,
+  "movement_speed": 0.3,
+  "flying_speed": 0.4,
+  "abilities": {
+    "bite": {
+      "damage": 50.0
+    },
+    "body_slam": {
+      "damage": 40.0
+    },
+    "fire_breath": {
+      "damage": 4.0
+    },
+    "ultimate": {
+      "damage": 200.0
+    }
+  },
+  "extra": {
+    "attack_damage": 15.0,
+    "ultimate_penalty_health": 50.0
+  }
+}

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -119,7 +120,13 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
 
     private static float computeDamage(Ignivorus dragon) {
         double attack = dragon.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        return (float) (BASE_DAMAGE + attack * 0.75D);
+        return resolveBaseDamage() + (float) (attack * 0.75D);
+    }
+
+    private static float resolveBaseDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("body_slam", BASE_DAMAGE);
     }
 
     @Override

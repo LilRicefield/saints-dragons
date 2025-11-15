@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -29,6 +31,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -45,6 +51,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 import net.minecraft.nbt.CompoundTag;
@@ -246,6 +253,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         this.riderController = new IgnivorusRiderController(this);
         resetAmbientSoundTimer();
+        if (!level.isClientSide) {
+            applyConfiguredAttributes();
+        }
     }
 
     @Override
@@ -285,13 +295,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public static AttributeSupplier.Builder createAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        double attackDamage = config.extraDouble("attack_damage", 15.0D);
         return createMobAttributes()
-            .add(Attributes.MAX_HEALTH, 300.0D)
-            .add(Attributes.MOVEMENT_SPEED, 0.25D)
-            .add(Attributes.FLYING_SPEED, 0.4D)
-            .add(Attributes.ATTACK_DAMAGE, 15.0D)
+            .add(Attributes.MAX_HEALTH, config.maxHealth())
+            .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
+            .add(Attributes.FLYING_SPEED, config.flyingSpeed())
+            .add(Attributes.ATTACK_DAMAGE, attackDamage)
             .add(Attributes.FOLLOW_RANGE, 48.0D)
-            .add(Attributes.ARMOR, 4.0D)
+            .add(Attributes.ARMOR, config.armor())
             .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
     }
 
@@ -316,6 +328,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
 
+    }
+
+    @Override
+    public @Nullable SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level,
+                                                  @NotNull DifficultyInstance difficulty,
+                                                  @NotNull MobSpawnType spawnType,
+                                                  @Nullable SpawnGroupData spawnData,
+                                                  @Nullable CompoundTag dataTag) {
+        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
+        applyConfiguredAttributes();
+        return data;
     }
 
     @Override
@@ -841,6 +864,33 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public double getPreferredFlightAltitude() {
         return 20.0D; // Default altitude for flight AI
     }
+
+    private void applyConfiguredAttributes() {
+        if (this.level().isClientSide) {
+            return;
+        }
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        double attackDamage = config.extraDouble("attack_damage", 15.0D);
+
+        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
+        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
+        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
+        setAttributeBase(Attributes.ARMOR, config.armor());
+        setAttributeBase(Attributes.ATTACK_DAMAGE, attackDamage);
+
+        double maxHealth = config.maxHealth();
+        if (this.getHealth() > maxHealth) {
+            this.setHealth((float) maxHealth);
+        }
+    }
+
+    private void setAttributeBase(Attribute attribute, double value) {
+        AttributeInstance instance = this.getAttribute(attribute);
+        if (instance != null) {
+            instance.setBaseValue(value);
+        }
+    }
+
 
     @Override
     public boolean canTakeoff() {
@@ -1739,6 +1789,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
+        applyConfiguredAttributes();
     }
 
     @Override

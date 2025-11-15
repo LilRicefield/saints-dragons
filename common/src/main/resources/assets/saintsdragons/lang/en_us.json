@@ -297,6 +297,18 @@
   "config.saintsdragons.attributes.nulljaw.bite_phase1": "Bite Damage (Phase 1)",
   "config.saintsdragons.attributes.nulljaw.bite_phase2": "Bite Damage (Phase 2)",
   "config.saintsdragons.attributes.nulljaw.horn_phase1": "Horn Gore Damage (Phase 1)",
-  "config.saintsdragons.attributes.nulljaw.horn_phase2": "Horn Gore Damage (Phase 2)"
+  "config.saintsdragons.attributes.nulljaw.horn_phase2": "Horn Gore Damage (Phase 2)",
+  "config.saintsdragons.attributes.ignivorus": "Ignivorus Attributes",
+  "config.saintsdragons.attributes.ignivorus.max_health": "Max Health",
+  "config.saintsdragons.attributes.ignivorus.armor": "Armor",
+  "config.saintsdragons.attributes.ignivorus.walk_speed": "Walk Speed",
+  "config.saintsdragons.attributes.ignivorus.movement_speed": "Movement Speed",
+  "config.saintsdragons.attributes.ignivorus.flying_speed": "Flying Speed",
+  "config.saintsdragons.attributes.ignivorus.base_damage": "Base Damage",
+  "config.saintsdragons.attributes.ignivorus.bite_damage": "Bite Damage",
+  "config.saintsdragons.attributes.ignivorus.body_slam_damage": "Body Slam Damage",
+  "config.saintsdragons.attributes.ignivorus.fire_breath_damage": "Fire Breath Damage",
+  "config.saintsdragons.attributes.ignivorus.ultimate_damage": "Ultimate Damage",
+  "config.saintsdragons.attributes.ignivorus.ultimate_penalty": "Ultimate Health Penalty"
 }
 

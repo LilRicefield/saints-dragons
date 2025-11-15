@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -99,7 +100,7 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
 
     private void applyHit(Ignivorus dragon, LivingEntity target) {
         // Calculate base damage from attack attribute
-        float damage = BASE_DAMAGE;
+        float damage = resolveBiteDamage();
         AttributeInstance attackAttr = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
         if (attackAttr != null) {
             double value = attackAttr.getValue();
@@ -124,6 +125,12 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
         // Apply knockback based on look direction
         Vec3 push = dragon.getLookAngle().scale(dragon.isFlying() ? 0.4 : 0.25);
         target.push(push.x, dragon.isFlying() ? 0.2 : 0.08, push.z);
+    }
+
+    private float resolveBiteDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("bite", BASE_DAMAGE);
     }
 
     private List<LivingEntity> selectTargets() {

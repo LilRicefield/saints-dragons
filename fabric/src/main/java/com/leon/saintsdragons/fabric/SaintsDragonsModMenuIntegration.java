@@ -83,6 +83,29 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         nulljawBuffer.bitePhase2 = nulljawCurrent.abilityDamage("bite_phase2", 50.0D);
         nulljawBuffer.hornPhase1 = nulljawCurrent.abilityDamage("horn_gore_phase1", 16.0D);
         nulljawBuffer.hornPhase2 = nulljawCurrent.abilityDamage("horn_gore_phase2", 20.8D);
+
+        DragonAttributeConfig ignivorusCurrent = loader.getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        DragonAttributeConfig ignivorusDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        IgnivorusAttributeBuffer ignivorusBuffer = new IgnivorusAttributeBuffer();
+        ignivorusBuffer.maxHealth = ignivorusCurrent.maxHealth();
+        ignivorusBuffer.armor = ignivorusCurrent.armor();
+        ignivorusBuffer.movementSpeed = ignivorusCurrent.movementSpeed();
+        double ignivorusDefaultWalk = ignivorusDefaults.extraDouble("walk_speed",
+                ignivorusDefaults.movementSpeed() * 0.8D);
+        ignivorusBuffer.walkSpeed = ignivorusCurrent.extraDouble("walk_speed", ignivorusDefaultWalk);
+        ignivorusBuffer.flyingSpeed = ignivorusCurrent.flyingSpeed();
+        ignivorusBuffer.baseDamage = ignivorusCurrent.extraDouble("attack_damage",
+                ignivorusDefaults.extraDouble("attack_damage", 15.0D));
+        ignivorusBuffer.biteDamage = ignivorusCurrent.abilityDamage("bite",
+                ignivorusDefaults.abilityDamage("bite", 50.0D));
+        ignivorusBuffer.bodySlamDamage = ignivorusCurrent.abilityDamage("body_slam",
+                ignivorusDefaults.abilityDamage("body_slam", 40.0D));
+        ignivorusBuffer.fireBreathDamage = ignivorusCurrent.abilityDamage("fire_breath",
+                ignivorusDefaults.abilityDamage("fire_breath", 4.0D));
+        ignivorusBuffer.ultimateDamage = ignivorusCurrent.abilityDamage("ultimate",
+                ignivorusDefaults.abilityDamage("ultimate", 200.0D));
+        ignivorusBuffer.ultimatePenalty = ignivorusCurrent.extraDouble("ultimate_penalty_health",
+                ignivorusDefaults.extraDouble("ultimate_penalty_health", 50.0D));
         raevyxBuffer.hornDamage = raevyxCurrent.abilityDamage("horn_gore",
                 raevyxDefaults.abilityDamage("horn_gore", 15.0D));
 
@@ -92,7 +115,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         builder.setTransparentBackground(true);
         builder.setSavingRunnable(() -> {
             holder.save();
-            persistDragonAttributes(cindervaneBuffer, raevyxBuffer, nulljawBuffer);
+            persistDragonAttributes(cindervaneBuffer, raevyxBuffer, nulljawBuffer, ignivorusBuffer);
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
@@ -152,6 +175,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
         addRaevyxAttributes(attributes, entryBuilder, raevyxBuffer, raevyxDefaults);
         addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
+        addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
 
         return builder.build();
     }
@@ -295,13 +319,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.hornDamage = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.horn_damage"), buffer.hornDamage)
-                .setDefaultValue(defaults.abilityDamage("horn_gore", 15.0D))
-                .setMin(1.0D)
-                .setMax(150.0D)
-                .setSaveConsumer(value -> buffer.hornDamage = value)
-                .build());
-
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.raevyx"), rawEntries)
@@ -376,9 +393,88 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .build());
     }
 
+    private void addIgnivorusAttributes(ConfigCategory category,
+                                        ConfigEntryBuilder entryBuilder,
+                                        IgnivorusAttributeBuffer buffer,
+                                        DragonAttributeConfig defaults) {
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.max_health"), buffer.maxHealth)
+                .setDefaultValue(defaults.maxHealth())
+                .setMin(50.0D)
+                .setMax(2000.0D)
+                .setSaveConsumer(value -> buffer.maxHealth = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.armor"), buffer.armor)
+                .setDefaultValue(defaults.armor())
+                .setMin(0.0D)
+                .setMax(40.0D)
+                .setSaveConsumer(value -> buffer.armor = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.walk_speed"), buffer.walkSpeed)
+                .setDefaultValue(defaults.extraDouble("walk_speed", defaults.movementSpeed() * 0.8D))
+                .setMin(0.01D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.walkSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.movement_speed"), buffer.movementSpeed)
+                .setDefaultValue(defaults.movementSpeed())
+                .setMin(0.05D)
+                .setMax(1.5D)
+                .setSaveConsumer(value -> buffer.movementSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.flying_speed"), buffer.flyingSpeed)
+                .setDefaultValue(defaults.flyingSpeed())
+                .setMin(0.1D)
+                .setMax(3.0D)
+                .setSaveConsumer(value -> buffer.flyingSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.base_damage"), buffer.baseDamage)
+                .setDefaultValue(defaults.extraDouble("attack_damage", 15.0D))
+                .setMin(1.0D)
+                .setMax(300.0D)
+                .setSaveConsumer(value -> buffer.baseDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.bite_damage"), buffer.biteDamage)
+                .setDefaultValue(defaults.abilityDamage("bite", 50.0D))
+                .setMin(1.0D)
+                .setMax(500.0D)
+                .setSaveConsumer(value -> buffer.biteDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.body_slam_damage"), buffer.bodySlamDamage)
+                .setDefaultValue(defaults.abilityDamage("body_slam", 40.0D))
+                .setMin(1.0D)
+                .setMax(500.0D)
+                .setSaveConsumer(value -> buffer.bodySlamDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_damage"), buffer.fireBreathDamage)
+                .setDefaultValue(defaults.abilityDamage("fire_breath", 4.0D))
+                .setMin(0.1D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.fireBreathDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_damage"), buffer.ultimateDamage)
+                .setDefaultValue(defaults.abilityDamage("ultimate", 200.0D))
+                .setMin(10.0D)
+                .setMax(2000.0D)
+                .setSaveConsumer(value -> buffer.ultimateDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_penalty"), buffer.ultimatePenalty)
+                .setDefaultValue(defaults.extraDouble("ultimate_penalty_health", 50.0D))
+                .setMin(1.0D)
+                .setMax(500.0D)
+                .setSaveConsumer(value -> buffer.ultimatePenalty = value)
+                .build());
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.ignivorus"), rawEntries)
+                .setExpanded(false)
+                .build());
+    }
+
     private void persistDragonAttributes(CindervaneAttributeBuffer cindervaneBuffer,
                                          RaevyxAttributeBuffer raevyxBuffer,
-                                         NulljawAttributeBuffer nulljawBuffer) {
+                                         NulljawAttributeBuffer nulljawBuffer,
+                                         IgnivorusAttributeBuffer ignivorusBuffer) {
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         Map<String, DragonAbilityOverride> abilities = new HashMap<>(current.abilities());
@@ -426,6 +522,26 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.NULLJAW_ID, updatedNulljaw);
+
+        DragonAttributeConfig ignivorusCurrent = loader.getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        Map<String, DragonAbilityOverride> ignivorusAbilities = new HashMap<>(ignivorusCurrent.abilities());
+        ignivorusAbilities.put("bite", DragonAbilityOverride.ofDamage(ignivorusBuffer.biteDamage));
+        ignivorusAbilities.put("body_slam", DragonAbilityOverride.ofDamage(ignivorusBuffer.bodySlamDamage));
+        ignivorusAbilities.put("fire_breath", DragonAbilityOverride.ofDamage(ignivorusBuffer.fireBreathDamage));
+        ignivorusAbilities.put("ultimate", DragonAbilityOverride.ofDamage(ignivorusBuffer.ultimateDamage));
+        DragonAttributeConfig updatedIgnivorus = new DragonAttributeConfig(
+                ignivorusBuffer.maxHealth,
+                ignivorusBuffer.armor,
+                ignivorusBuffer.movementSpeed,
+                ignivorusBuffer.flyingSpeed,
+                ignivorusAbilities,
+                Map.of(
+                        "walk_speed", ignivorusBuffer.walkSpeed,
+                        "attack_damage", ignivorusBuffer.baseDamage,
+                        "ultimate_penalty_health", ignivorusBuffer.ultimatePenalty
+                )
+        );
+        loader.overwriteConfig(DragonAttributeConfigLoader.IGNIVORUS_ID, updatedIgnivorus);
     }
 
     private static final class CindervaneAttributeBuffer {
@@ -457,5 +573,19 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double bitePhase2;
         double hornPhase1;
         double hornPhase2;
+    }
+
+    private static final class IgnivorusAttributeBuffer {
+        double maxHealth;
+        double armor;
+        double walkSpeed;
+        double movementSpeed;
+        double flyingSpeed;
+        double baseDamage;
+        double biteDamage;
+        double bodySlamDamage;
+        double fireBreathDamage;
+        double ultimateDamage;
+        double ultimatePenalty;
     }
 }

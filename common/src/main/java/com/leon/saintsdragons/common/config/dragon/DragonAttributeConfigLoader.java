@@ -30,6 +30,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation CINDERVANE_ID = SaintsDragonsCommon.rl("cindervane");
     public static final ResourceLocation RAEVYX_ID = SaintsDragonsCommon.rl("raevyx");
     public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
+    public static final ResourceLocation IGNIVORUS_ID = SaintsDragonsCommon.rl("ignivorus");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
 
@@ -46,6 +47,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         base.put(CINDERVANE_ID, cindervaneDefaults());
         base.put(RAEVYX_ID, raevyxDefaults());
         base.put(NULLJAW_ID, nulljawDefaults());
+        base.put(IGNIVORUS_ID, ignivorusDefaults());
         this.defaults = ImmutableMap.copyOf(base);
         this.configs = this.defaults;
     }
@@ -94,6 +96,25 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "walk_speed", 0.14D,
                         "swim_speed", 1.45D
+                )
+        );
+    }
+
+    private static DragonAttributeConfig ignivorusDefaults() {
+        return new DragonAttributeConfig(
+                300.0D,
+                4.0D,
+                0.30D,
+                0.40D,
+                Map.of(
+                        "bite", DragonAbilityOverride.ofDamage(50.0D),
+                        "body_slam", DragonAbilityOverride.ofDamage(40.0D),
+                        "fire_breath", DragonAbilityOverride.ofDamage(4.0D),
+                        "ultimate", DragonAbilityOverride.ofDamage(200.0D)
+                ),
+                Map.of(
+                        "attack_damage", 15.0D,
+                        "ultimate_penalty_health", 50.0D
                 )
         );
     }
