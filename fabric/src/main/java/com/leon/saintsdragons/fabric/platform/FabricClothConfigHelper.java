@@ -7,7 +7,9 @@ import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 
+import java.util.List;
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 /**
  * Cloth Config-backed implementation. Only loaded if Cloth Config is present.
@@ -53,9 +55,20 @@ final class FabricClothConfigHelper implements ConfigHelper {
         }
 
         @Override
+        public void comment(String comment) {
+            // Comments handled via @Tooltip annotations in SaintsDragonsFabricConfig
+        }
+
+        @Override
         public IntValue defineInt(String key, int defaultValue, int min, int max) {
             IntSupplier supplier = supplierForKey(key, defaultValue);
             return new ClothIntValue(supplier, min, max);
+        }
+
+        @Override
+        public ListValue defineList(String key, List<String> defaultValue) {
+            Supplier<List<String>> supplier = listSupplierForKey(key, defaultValue);
+            return supplier::get;
         }
 
         @Override
@@ -78,8 +91,25 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "nulljawSpawnWeight" -> () -> holder().getConfig().nulljawSpawnWeight;
             case "nulljawMinGroupSize" -> () -> holder().getConfig().nulljawMinGroupSize;
             case "nulljawMaxGroupSize" -> () -> holder().getConfig().nulljawMaxGroupSize;
+            case "ignivorusSpawnWeight" -> () -> holder().getConfig().ignivorusSpawnWeight;
+            case "ignivorusMinGroupSize" -> () -> holder().getConfig().ignivorusMinGroupSize;
+            case "ignivorusMaxGroupSize" -> () -> holder().getConfig().ignivorusMaxGroupSize;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config key '{}'; using default {}", key, defaultValue);
+                yield () -> defaultValue;
+            }
+        };
+    }
+
+    private static Supplier<List<String>> listSupplierForKey(String key, List<String> defaultValue) {
+        return switch (key) {
+            case "raevyxAdditionalBiomes" -> () -> holder().getConfig().raevyxAdditionalBiomes;
+            case "stegonautAdditionalBiomes" -> () -> holder().getConfig().stegonautAdditionalBiomes;
+            case "cindervaneAdditionalBiomes" -> () -> holder().getConfig().cindervaneAdditionalBiomes;
+            case "nulljawAdditionalBiomes" -> () -> holder().getConfig().nulljawAdditionalBiomes;
+            case "ignivorusAdditionalBiomes" -> () -> holder().getConfig().ignivorusAdditionalBiomes;
+            default -> {
+                SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config list key '{}'; using default", key);
                 yield () -> defaultValue;
             }
         };

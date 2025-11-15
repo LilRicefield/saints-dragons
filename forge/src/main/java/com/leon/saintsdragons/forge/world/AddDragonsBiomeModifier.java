@@ -43,7 +43,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
         }
 
         try {
-            if (biome.is(HAS_RAEVYX)) {
+            if (biome.is(HAS_RAEVYX) || isInConfigBiomes(biome, SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.RAEVYX.get(),
@@ -52,7 +52,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_STEGONAUT)) {
+            if (biome.is(HAS_STEGONAUT) || isInConfigBiomes(biome, SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.STEGONAUT.get(),
@@ -61,7 +61,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_CINDERVANE)) {
+            if (biome.is(HAS_CINDERVANE) || isInConfigBiomes(biome, SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.CINDERVANE.get(),
@@ -70,7 +70,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_NULLJAW)) {
+            if (biome.is(HAS_NULLJAW) || isInConfigBiomes(biome, SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.NULLJAW.get(),
@@ -79,7 +79,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_IGNIVORUS)) {
+            if (biome.is(HAS_IGNIVORUS) || isInConfigBiomes(biome, SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.IGNIVORUS.get(),
@@ -89,6 +89,26 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
             }
         } catch (IllegalStateException e) {
             // Config not loaded yet during datagen or early worldgen, skip spawn modification
+        }
+    }
+
+    /**
+     * Check if a biome is in the configured additional biomes list
+     */
+    private static boolean isInConfigBiomes(Holder<Biome> biome, com.leon.saintsdragons.platform.ConfigHelper.ListValue configList) {
+        try {
+            net.minecraft.resources.ResourceLocation biomeId = biome.unwrapKey()
+                    .map(net.minecraft.resources.ResourceKey::location)
+                    .orElse(null);
+            if (biomeId == null) {
+                return false;
+            }
+
+            String biomeIdStr = biomeId.toString();
+            return configList.get().stream()
+                    .anyMatch(s -> s.equals(biomeIdStr));
+        } catch (Exception e) {
+            return false;
         }
     }
 
