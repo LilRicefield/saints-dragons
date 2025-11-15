@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
@@ -31,6 +32,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     // Animation timing: 75ms startup matches fire_breath_starts animation duration
     private static final int STARTUP_TICKS = 4;  // ~75ms (was 18, now synced to animation)
     private static final int ACTIVE_TICKS = 400;
+    private static final int WILD_ACTIVE_LIMIT_TICKS = 80; // 4 seconds max for wild dragons
     private static final int COOLDOWN_TICKS = 40;
 
     private static final double MAX_RANGE = 64.0D;  // Must match layer's MAX_VISUAL_DISTANCE!
@@ -59,6 +61,15 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         }
 
         Ignivorus dragon = getUser();
+
+        if (!dragon.isTame()) {
+            // Wild dragons shouldn't keep channeling without a living target
+            LivingEntity target = dragon.getTarget();
+            if (target == null || !target.isAlive() || getTicksInSection() >= WILD_ACTIVE_LIMIT_TICKS) {
+                interrupt();
+                return;
+            }
+        }
 
         if (section.sectionType == STARTUP) {
             // Play startup animation but don't show fire cone yet

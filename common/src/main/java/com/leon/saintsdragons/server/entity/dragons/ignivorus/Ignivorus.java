@@ -6,6 +6,8 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -30,6 +32,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.Entity;
@@ -294,10 +297,25 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void registerGoals() {
+        // Priority 1: Combat - highest priority when aggressive
+        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusCombatGoal(this));
+
+        // Priority 3: Follow owner
         this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFollowOwnerGoal(this));
+
+        // Priority 4: Flight patrol
         this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
+
+        // Priority 5: Ground wandering
         this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundWanderGoal(this, 1.0, 120));
+
+        // Priority 12: Look around when idle
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
+
+        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
+        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+
     }
 
     @Override
@@ -687,6 +705,19 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.combatManager.forceEndActiveAbility();
         clearFireBreathPath();
         setBreathingFire(false);
+    }
+
+    public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
+        combatManager.forceEndAbility(abilityType);
+        // Clear fire breath state if fire breath was cancelled
+        if (abilityType == IgnivorusAbilities.IGNIVORUS_FIRE_BREATH) {
+            clearFireBreathPath();
+            setBreathingFire(false);
+        }
+    }
+
+    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
+        return combatManager.isAbilityActive(abilityType);
     }
 
     @Override
