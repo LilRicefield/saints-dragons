@@ -872,6 +872,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return 20.0D; // Default altitude for flight AI
     }
 
+    /**
+     * Whether this Ignivorus can be stored inside a binder.
+     */
+    public boolean canBeBound() {
+        return !isFlying()
+                && !isDying()
+                && !isBreathingFire()
+                && !areRiderControlsLocked()
+                && getActiveAbility() == null;
+    }
+
     private void applyConfiguredAttributes() {
         if (this.level().isClientSide) {
             return;

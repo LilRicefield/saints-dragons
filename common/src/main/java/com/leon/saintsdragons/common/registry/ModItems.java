@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
+import com.leon.saintsdragons.common.item.IgnivorusBinderItem;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
@@ -96,6 +97,13 @@ public final class ModItems {
     public static final Supplier<Item> NULLJAW_BINDER =
             REGISTER.register("nulljaw_binder",
                     () -> new NulljawBinderItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(0)
+                    ));
+    public static final Supplier<Item> IGNIVORUS_BINDER =
+            REGISTER.register("ignivorus_binder",
+                    () -> new IgnivorusBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0)
