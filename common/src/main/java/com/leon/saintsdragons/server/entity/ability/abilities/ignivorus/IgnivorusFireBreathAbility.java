@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -192,8 +193,14 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     private static float computeDamage(Ignivorus dragon, double sizeScale) {
         double attackValue = dragon.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        float scaled = (float) (BASE_DAMAGE + attackValue * 0.25F);
+        float scaled = (float) (resolveBaseDamage() + attackValue * 0.25F);
         return scaled * (float) (0.65D + (sizeScale * 0.2D));
+    }
+
+    private static float resolveBaseDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("fire_breath", BASE_DAMAGE);
     }
 
     private Vec3 traceImpact(Ignivorus dragon, Vec3 origin, Vec3 direction) {

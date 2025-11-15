@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -161,8 +162,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             return;
         }
         float current = dragon.getHealth();
-        if (current > PENALTY_HEALTH) {
-            dragon.setHealth(PENALTY_HEALTH);
+        float penaltyHealth = resolvePenaltyHealth();
+        if (current > penaltyHealth) {
+            dragon.setHealth(penaltyHealth);
             sendPenaltyMessage();
         }
         penaltyApplied = true;
@@ -243,6 +245,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private void applyRingDamage(ServerLevel level, Vec3 center) {
         double radiusSqr = EXPLOSION_RADIUS * EXPLOSION_RADIUS;
         DamageSource source = level.damageSources().mobAttack(getUser());
+        float explosionDamage = resolveExplosionDamage();
 
         for (LivingEntity entity : level.getEntitiesOfClass(
                 LivingEntity.class,
@@ -253,11 +256,23 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 continue;
             }
 
-            entity.hurt(source, EXPLOSION_DAMAGE);
+            entity.hurt(source, explosionDamage);
             entity.setSecondsOnFire(EXPLOSION_FIRE_SECONDS);
 
             Vec3 knock = entity.position().subtract(center).normalize().scale(1.4D);
             entity.push(knock.x, 0.6D, knock.z);
         }
+    }
+
+    private float resolveExplosionDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("ultimate", EXPLOSION_DAMAGE);
+    }
+
+    private float resolvePenaltyHealth() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .extraDouble("ultimate_penalty_health", PENALTY_HEALTH);
     }
 }
