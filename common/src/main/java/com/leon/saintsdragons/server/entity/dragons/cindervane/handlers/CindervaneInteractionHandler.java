@@ -63,7 +63,10 @@ public class CindervaneInteractionHandler {
             // Set feeding cooldown (2.2083 seconds * 20 ticks/second = 44 ticks)
             dragon.setFeedingCooldown(44);
 
-            if (dragon.getRandom().nextInt(5) == 0) {
+            boolean hearty = heldItem.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            int tameRoll = hearty ? 10 : 20;
+
+            if (dragon.getRandom().nextInt(tameRoll) == 0) {
                 dragon.tame(player);
                 dragon.getNavigation().stop();
                 dragon.setOrderedToSit(true);
@@ -208,7 +211,8 @@ public class CindervaneInteractionHandler {
             // Set feeding cooldown (2.2083 seconds * 20 ticks/second = 44 ticks)
             dragon.setFeedingCooldown(44);
 
-            float healAmount = 5.0F;
+            boolean hearty = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            float healAmount = hearty ? 15.0F : 5.0F;
             float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
             boolean fullyHealed = newHealth >= dragon.getMaxHealth();
 

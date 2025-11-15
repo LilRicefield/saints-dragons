@@ -212,7 +212,8 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
                stack.is(net.minecraft.world.item.Items.CHICKEN) ||
                stack.is(net.minecraft.world.item.Items.MUTTON) ||
                stack.is(net.minecraft.world.item.Items.COD) ||
-               stack.is(net.minecraft.world.item.Items.SALMON);
+               stack.is(net.minecraft.world.item.Items.SALMON) ||
+               stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
     }
     
     @Override
@@ -410,8 +411,9 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             // Trigger eat animation
             this.triggerAnim("action", "eat");
 
-            // Heal the drake when fed
-            float healAmount = 8.0f; // Heal 4 hearts per food item
+            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            // Heal the drake when fed (hearty meal heals more)
+            float healAmount = hearty ? 18.0f : 8.0f; // Hearty meal: +7 hearts vs +4 hearts
             float oldHealth = this.getHealth();
             float newHealth = Math.min(oldHealth + healAmount, this.getMaxHealth());
             this.setHealth(newHealth);
@@ -1116,4 +1118,3 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         return !isSleeping() && !isDying();
     }
 }
-

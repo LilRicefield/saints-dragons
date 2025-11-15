@@ -4,10 +4,12 @@ import com.leon.saintsdragons.common.item.CindervaneBinderItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
+import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
@@ -97,6 +99,18 @@ public final class ModItems {
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0)
+                    ));
+
+    public static final Supplier<Item> HEARTY_DRAGON_MEAL =
+            REGISTER.register("hearty_dragon_meal",
+                    () -> new HeartyDragonMealItem(
+                            new Item.Properties()
+                                    .stacksTo(16)
+                                    .food(new FoodProperties.Builder()
+                                            .nutrition(10)       // heals dragons for a lot
+                                            .saturationMod(1.2f) // hearty saturation feel
+                                            .alwaysEat()         // dragons can eat even when "full"
+                                            .build())
                     ));
 
     private ModItems() {

@@ -135,8 +135,11 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             // Set feeding cooldown (2.5 seconds * 20 ticks/second = 50 ticks)
             drake.setFeedingCooldown(50);
 
-            // Rift Drakes have a 1 in 8 chance of taming (easier than Lightning Dragons)
-            if (drake.getRandom().nextInt(8) == 0) {
+            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            int tameRoll = hearty ? 5 : 15; // hearty meal makes taming ~60% easier (1/5 vs 1/8)
+
+            // Rift Drakes have a 1 in N chance of taming
+            if (drake.getRandom().nextInt(tameRoll) == 0) {
                 // Successful taming
                 drake.tame(player);
                 drake.setOrderedToSit(true);
@@ -182,7 +185,8 @@ public record NulljawInteractionHandler(Nulljaw drake) {
                 // Set feeding cooldown (2.5 seconds * 20 ticks/second = 50 ticks)
                 drake.setFeedingCooldown(50);
 
-                float healAmount = 10.0f; // Heal 5 hearts per fish
+                boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+                float healAmount = hearty ? 35.0f : 10.0f; // hearty meal heals more
                 float oldHealth = drake.getHealth();
                 float newHealth = Math.min(oldHealth + healAmount, drake.getMaxHealth());
                 drake.setHealth(newHealth);
