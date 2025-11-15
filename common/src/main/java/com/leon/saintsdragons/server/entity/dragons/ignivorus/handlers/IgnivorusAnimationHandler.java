@@ -14,6 +14,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.ignivorus.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.ignivorus.run");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.take_off");
+    private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.ignivorus.landing");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.ignivorus.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.ignivorus.glide_down");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.flap");
@@ -64,6 +65,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 return PlayState.CONTINUE;
             }
 
+            // Check for landing animation (second priority)
+            if (dragon.isLanding()) {
+                state.getController().transitionLength(1);
+                state.setAndContinue(LANDING);
+                return PlayState.CONTINUE;
+            }
+
             // Check velocity for movement detection
             var vel = dragon.getDeltaMovement();
             boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
@@ -90,8 +98,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 return PlayState.CONTINUE;
             }
 
-            // HOVER/LANDING - stationary in air
-            if (syncedMode == 2 || dragon.isHovering() || dragon.isLanding()) {
+            // HOVER - stationary in air
+            if (syncedMode == 2 || dragon.isHovering()) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(FLAP);
                 return PlayState.CONTINUE;
