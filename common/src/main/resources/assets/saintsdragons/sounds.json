@@ -651,5 +651,27 @@
         "pitch": 1.0
       }
     ]
+  },
+  "ignivorus_ultimate_start": {
+    "subtitle": "Ignivorus prepares ultimate attack",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_ultimate_start",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_ultimate": {
+    "subtitle": "Ignivorus unleashes ultimate power",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_ultimate",
+        "volume": 2.5,
+        "pitch": 1.0,
+        "stream": true,
+        "attenuation_distance": 96
+      }
+    ]
   }
 }

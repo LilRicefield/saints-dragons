@@ -200,6 +200,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         actionController.triggerableAnim("roar",
             RawAnimation.begin().thenPlay("animation.ignivorus.roar"));
 
+        // Ultimate sequence animation (start -> loop -> end chained together)
+        actionController.triggerableAnim("ultimate_sequence",
+            RawAnimation.begin()
+                    .thenPlay("animation.ignivorus.ultimate_start")
+                    .thenPlay("animation.ignivorus.ultimate")
+                    .thenPlay("animation.ignivorus.ultimate_end"));
+
         // Death animation
         actionController.triggerableAnim("die",
             RawAnimation.begin().thenPlay("animation.ignivorus.die"));

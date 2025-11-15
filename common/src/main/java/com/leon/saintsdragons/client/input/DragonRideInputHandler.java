@@ -130,6 +130,14 @@ public final class DragonRideInputHandler {
             meleeCooldownTicks--;
         }
 
+        // CLIENT-SIDE LOCK CHECK: Block all input if controls are locked
+        // This prevents client-side prediction from moving the dragon before server can block it
+        if (dragon.areRiderControlsLocked()) {
+            // Reset state tracking so we don't send stale inputs when unlocked
+            resetStateTracking();
+            return;
+        }
+
         // Check both dragon keybinds AND vanilla keybinds that might overlap
         // This ensures compatibility on Fabric where keybind conflicts don't auto-trigger both
         boolean ascendDown = DRAGON_ASCEND.isDown() || mc.options.keyJump.isDown();
