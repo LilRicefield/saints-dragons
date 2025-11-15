@@ -46,6 +46,9 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             int tameRoll = hearty ? 6 : 15; // hearty meal improves taming odds
+            if (hearty) {
+                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+            }
 
             // 1 in tameRoll chance to tame per feeding
             if (dragon.getRandom().nextInt(tameRoll) == 0) {
@@ -104,6 +107,9 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             float healAmount = hearty ? 30.0F : 10.0F;
             float newHealth = Math.min(currentHealth + healAmount, dragon.getMaxHealth());
             dragon.setHealth(newHealth);
+            if (hearty) {
+                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+            }
 
             // Play effects
             dragon.level().broadcastEntityEvent(dragon, (byte) 7); // Hearts

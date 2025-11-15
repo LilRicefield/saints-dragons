@@ -7,6 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
@@ -66,6 +68,9 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             wyvern.setFeedingCooldown(61);
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            if (hearty) {
+                wyvern.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+            }
             int tameRoll = hearty ? 6 : 15; // hearty meal improves taming odds
 
             if (wyvern.getRandom().nextInt(tameRoll) == 0) {
@@ -201,7 +206,10 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             wyvern.setFeedingCooldown(61);
 
-            boolean heartyMeal = itemstack.getItem() == com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get();
+            boolean heartyMeal = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            if (heartyMeal) {
+                wyvern.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+            }
 
             // Babies: speed up growth instead of healing
             if (wyvern.isBaby()) {
