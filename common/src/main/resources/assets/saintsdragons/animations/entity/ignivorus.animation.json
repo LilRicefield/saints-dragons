@@ -26624,6 +26624,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "ignivorus_ultimate_end",
+					"locator": "body_locator"
+				}
 			}
 		}
 	},

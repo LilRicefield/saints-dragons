@@ -8,6 +8,8 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
@@ -30,7 +32,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final int ULTIMATE_LOOP_TICKS = 108;      // 5.42s animation.ignivorus.ultimate
     private static final int ULTIMATE_END_TICKS = 28;        // 1.38s animation.ignivorus.ultimate_end
     private static final int TOTAL_SEQUENCE_TICKS = ULTIMATE_START_TICKS + ULTIMATE_LOOP_TICKS + ULTIMATE_END_TICKS;
-    private static final int COOLDOWN_TICKS = 20 * 60; // 60s cooldown
+    private static final int COOLDOWN_TICKS = 0;
 
     // Tick thresholds for animation transitions
     @SuppressWarnings("unused")
@@ -44,6 +46,13 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final int EXPLOSION_PARTICLE_POINTS = 32;
     private static final int LOOP_DAMAGE_INTERVAL = 5; // ticks between pulses while ultimate animation plays
     private static final int LOOP_DAMAGE_WARMUP = 20;  // delay before first pulse (ticks inside loop)
+    private static final float PENALTY_HEALTH = 50.0F;
+    private static final Component PENALTY_MESSAGE =
+            Component.translatable("saintsdragons.message.ignivorus.ultimate_penalty");
+    private static final Component REQUIREMENT_MESSAGE =
+            Component.translatable("saintsdragons.message.ignivorus.ultimate_requires_full_health");
+    private static final Component GROUND_MESSAGE =
+            Component.translatable("saintsdragons.message.ignivorus.ultimate_ground_only");
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, TOTAL_SEQUENCE_TICKS),
@@ -56,6 +65,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean loopAnimPlayed;
     private boolean endAnimPlayed;
     private int lastLoopDamageTick;
+    private boolean penaltyApplied;
 
     public IgnivorusUltimateAbility(DragonAbilityType<Ignivorus, IgnivorusUltimateAbility> type,
                                     Ignivorus user) {
@@ -63,15 +73,21 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     }
 
     @Override
-    public boolean canUse() {
+    public boolean tryAbility() {
         Ignivorus dragon = getUser();
         if (!dragon.onGround()) {
+            sendGroundMessage();
             return false;
         }
         if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff() || dragon.isLanding()) {
+            sendGroundMessage();
             return false;
         }
-        return super.canUse();
+        if (dragon.getHealth() < dragon.getMaxHealth()) {
+            sendRequirementMessage();
+            return false;
+        }
+        return super.tryAbility();
     }
 
     @Override
@@ -97,10 +113,12 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             loopAnimPlayed = false;
             endAnimPlayed = false;
             lastLoopDamageTick = -LOOP_DAMAGE_INTERVAL;
+            penaltyApplied = false;
 
             // Play ONLY the first animation (start)
             dragon.triggerAnim("action", "ultimate_start");
             startAnimPlayed = true;
+            applyPenaltyHealth(dragon);
         }
     }
 
@@ -134,6 +152,39 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         if (!endAnimPlayed && ticks >= LOOP_END_TICK) {
             dragon.triggerAnim("action", "ultimate_end");
             endAnimPlayed = true;
+        }
+    }
+
+    private void applyPenaltyHealth(Ignivorus dragon) {
+        if (penaltyApplied) {
+            return;
+        }
+        float current = dragon.getHealth();
+        if (current > PENALTY_HEALTH) {
+            dragon.setHealth(PENALTY_HEALTH);
+            sendPenaltyMessage();
+        }
+        penaltyApplied = true;
+    }
+
+    private void sendRequirementMessage() {
+        Player rider = getUser().getRidingPlayer();
+        if (rider != null) {
+            rider.displayClientMessage(REQUIREMENT_MESSAGE, true);
+        }
+    }
+
+    private void sendPenaltyMessage() {
+        Player rider = getUser().getRidingPlayer();
+        if (rider != null) {
+            rider.displayClientMessage(PENALTY_MESSAGE, true);
+        }
+    }
+
+    private void sendGroundMessage() {
+        Player rider = getUser().getRidingPlayer();
+        if (rider != null) {
+            rider.displayClientMessage(GROUND_MESSAGE, true);
         }
     }
 
