@@ -57,13 +57,27 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         cindervaneBuffer.volleyDamage = cindervaneCurrent.abilityDamage("magma_volley",
                 cindervaneDefaults.abilityDamage("magma_volley", 20.0D));
 
+        DragonAttributeConfig raevyxCurrent = loader.getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        DragonAttributeConfig raevyxDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        RaevyxAttributeBuffer raevyxBuffer = new RaevyxAttributeBuffer();
+        raevyxBuffer.maxHealth = raevyxCurrent.maxHealth();
+        raevyxBuffer.armor = raevyxCurrent.armor();
+        raevyxBuffer.movementSpeed = raevyxCurrent.movementSpeed();
+        raevyxBuffer.flyingSpeed = raevyxCurrent.flyingSpeed();
+        raevyxBuffer.biteDamage = raevyxCurrent.abilityDamage("bite",
+                raevyxDefaults.abilityDamage("bite", 15.0D));
+        raevyxBuffer.beamDamage = raevyxCurrent.abilityDamage("lightning_beam",
+                raevyxDefaults.abilityDamage("lightning_beam", 35.0D));
+        raevyxBuffer.hornDamage = raevyxCurrent.abilityDamage("horn_gore",
+                raevyxDefaults.abilityDamage("horn_gore", 15.0D));
+
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
                 .setTitle(TITLE);
         builder.setTransparentBackground(true);
         builder.setSavingRunnable(() -> {
             holder.save();
-            persistDragonAttributes(cindervaneBuffer);
+            persistDragonAttributes(cindervaneBuffer, raevyxBuffer);
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
@@ -121,6 +135,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
 
         ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
         addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
+        addRaevyxAttributes(attributes, entryBuilder, raevyxBuffer, raevyxDefaults);
 
         return builder.build();
     }
@@ -217,20 +232,90 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .build());
     }
 
-    private void persistDragonAttributes(CindervaneAttributeBuffer buffer) {
+    private void addRaevyxAttributes(ConfigCategory category,
+                                     ConfigEntryBuilder entryBuilder,
+                                     RaevyxAttributeBuffer buffer,
+                                     DragonAttributeConfig defaults) {
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.max_health"), buffer.maxHealth)
+                .setDefaultValue(defaults.maxHealth())
+                .setMin(10.0D)
+                .setMax(2000.0D)
+                .setSaveConsumer(value -> buffer.maxHealth = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.armor"), buffer.armor)
+                .setDefaultValue(defaults.armor())
+                .setMin(0.0D)
+                .setMax(40.0D)
+                .setSaveConsumer(value -> buffer.armor = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.movement_speed"), buffer.movementSpeed)
+                .setDefaultValue(defaults.movementSpeed())
+                .setMin(0.05D)
+                .setMax(1.5D)
+                .setSaveConsumer(value -> buffer.movementSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.flying_speed"), buffer.flyingSpeed)
+                .setDefaultValue(defaults.flyingSpeed())
+                .setMin(0.1D)
+                .setMax(3.0D)
+                .setSaveConsumer(value -> buffer.flyingSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.bite_damage"), buffer.biteDamage)
+                .setDefaultValue(defaults.abilityDamage("bite", 15.0D))
+                .setMin(1.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.biteDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.beam_damage"), buffer.beamDamage)
+                .setDefaultValue(defaults.abilityDamage("lightning_beam", 35.0D))
+                .setMin(1.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.beamDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.horn_damage"), buffer.hornDamage)
+                .setDefaultValue(defaults.abilityDamage("horn_gore", 15.0D))
+                .setMin(1.0D)
+                .setMax(150.0D)
+                .setSaveConsumer(value -> buffer.hornDamage = value)
+                .build());
+
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.raevyx"), rawEntries)
+                .setExpanded(false)
+                .build());
+    }
+
+    private void persistDragonAttributes(CindervaneAttributeBuffer cindervaneBuffer,
+                                         RaevyxAttributeBuffer raevyxBuffer) {
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         Map<String, DragonAbilityOverride> abilities = new HashMap<>(current.abilities());
-        abilities.put("bite", DragonAbilityOverride.ofDamage(buffer.biteDamage));
-        abilities.put("magma_volley", DragonAbilityOverride.ofDamage(buffer.volleyDamage));
+        abilities.put("bite", DragonAbilityOverride.ofDamage(cindervaneBuffer.biteDamage));
+        abilities.put("magma_volley", DragonAbilityOverride.ofDamage(cindervaneBuffer.volleyDamage));
         DragonAttributeConfig updated = new DragonAttributeConfig(
-                buffer.maxHealth,
-                buffer.armor,
-                buffer.movementSpeed,
-                buffer.flyingSpeed,
+                cindervaneBuffer.maxHealth,
+                cindervaneBuffer.armor,
+                cindervaneBuffer.movementSpeed,
+                cindervaneBuffer.flyingSpeed,
                 abilities
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.CINDERVANE_ID, updated);
+
+        DragonAttributeConfig raevyxCurrent = loader.getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        Map<String, DragonAbilityOverride> raevyxAbilities = new HashMap<>(raevyxCurrent.abilities());
+        raevyxAbilities.put("bite", DragonAbilityOverride.ofDamage(raevyxBuffer.biteDamage));
+        raevyxAbilities.put("lightning_beam", DragonAbilityOverride.ofDamage(raevyxBuffer.beamDamage));
+        raevyxAbilities.put("horn_gore", DragonAbilityOverride.ofDamage(raevyxBuffer.hornDamage));
+        DragonAttributeConfig updatedRaevyx = new DragonAttributeConfig(
+                raevyxBuffer.maxHealth,
+                raevyxBuffer.armor,
+                raevyxBuffer.movementSpeed,
+                raevyxBuffer.flyingSpeed,
+                raevyxAbilities
+        );
+        loader.overwriteConfig(DragonAttributeConfigLoader.RAEVYX_ID, updatedRaevyx);
     }
 
     private static final class CindervaneAttributeBuffer {
@@ -240,5 +325,15 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double flyingSpeed;
         double biteDamage;
         double volleyDamage;
+    }
+
+    private static final class RaevyxAttributeBuffer {
+        double maxHealth;
+        double armor;
+        double movementSpeed;
+        double flyingSpeed;
+        double biteDamage;
+        double beamDamage;
+        double hornDamage;
     }
 }

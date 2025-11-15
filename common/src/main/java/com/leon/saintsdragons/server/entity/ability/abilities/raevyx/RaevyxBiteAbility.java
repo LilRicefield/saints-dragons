@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -25,7 +26,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     // Tuning knobs
-    private static final float BITE_DAMAGE = 15.0f;
+    private static final float DEFAULT_BITE_DAMAGE = 15.0f;
     // Slightly larger reach to match large model scale and AI stop distance
     private static final double BITE_RANGE = 4.6;
     // Extra range when ridden to be more forgiving for small mobs
@@ -157,8 +158,14 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
         Raevyx wyvern = getUser();
         DamageSource src = wyvern.level().damageSources().mobAttack(wyvern);
         float mult = wyvern.getDamageMultiplier();
-        primary.hurt(src, BITE_DAMAGE * mult);
+        primary.hurt(src, resolveBiteDamage() * mult);
         wyvern.noteAggroFrom(primary);
+    }
+
+    private float resolveBiteDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
+                .abilityDamage("bite", DEFAULT_BITE_DAMAGE);
     }
 
     private void chainFrom(LivingEntity start) {

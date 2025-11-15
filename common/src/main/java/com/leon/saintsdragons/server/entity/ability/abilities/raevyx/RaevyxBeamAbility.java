@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -21,6 +22,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 400)
     };
     private static final double MAX_BEAM_RANGE = 128.0D;
+    private static final float DEFAULT_BEAM_DAMAGE = 35.0f;
     
     private boolean hasBeamFired = false; // Track if beam has been fired this activation
     private boolean beamStartPlayed = false;
@@ -188,12 +190,14 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
         final double STEP = 1.0;         // sample spacing
         final double BASE_RADIUS = 1.2;  // base affect radius around beam core
-        final float BASE_DAMAGE = 35.0f;  // base per-tick damage
+        final float configuredBaseDamage = (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
+                .abilityDamage("lightning_beam", DEFAULT_BEAM_DAMAGE);
         
         // Apply water conductivity bonuses
         var conductivity = wyvern.getConductivityState();
         final double RADIUS = BASE_RADIUS * conductivity.rangeMultiplier();
-        final float DAMAGE = BASE_DAMAGE * conductivity.damageMultiplier() * wyvern.getDamageMultiplier();
+        final float DAMAGE = configuredBaseDamage * conductivity.damageMultiplier() * wyvern.getDamageMultiplier();
 
         var delta = end.subtract(start);
         double len = delta.length();
