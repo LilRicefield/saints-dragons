@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -70,6 +71,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 dragon.setOrderedToSit(true);
                 dragon.setCommandManual(1); // Sit command
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7); // Hearts
+                triggerTamingAdvancement(player);
             } else {
                 // Failed taming attempt
                 dragon.level().broadcastEntityEvent(dragon, (byte) 6); // Smoke
@@ -218,5 +220,15 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
         }
 
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+    }
+
+    private void triggerTamingAdvancement(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            var advancement = serverPlayer.server.getAdvancements()
+                    .getAdvancement(SaintsDragonsCommon.rl("tame_ignivorus"));
+            if (advancement != null) {
+                serverPlayer.getAdvancements().award(advancement, "tame_ignivorus");
+            }
+        }
     }
 }

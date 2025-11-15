@@ -99,7 +99,10 @@
   "advancement.saintsdragons.tame_nulljaw.description": "Tame a Nulljaw, the abyss that bites back. Good job!",
   
   "advancement.saintsdragons.tame_stegonaut.title": "My Sturdy Friend",
-  "advancement.saintsdragons.tame_stegonaut.description": "Win over the Stegonaut with a single fish.",
+  "advancement.saintsdragons.tame_stegonaut.description": "Win over a Stegonaut with a single fish.",
+
+  "advancement.saintsdragons.tame_ignivorus.title": "Destruction Commence",
+  "advancement.saintsdragons.tame_ignivorus.description": "Earn the trust of an Ignivorus, the living calamity",
   
   "key.categories.saintsdragons": "Saint's Dragons",
   "key.saintsdragons.ascend": "Ascend",
