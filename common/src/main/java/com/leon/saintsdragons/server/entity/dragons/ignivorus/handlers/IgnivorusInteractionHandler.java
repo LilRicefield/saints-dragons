@@ -39,10 +39,23 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             return InteractionResult.PASS;
         }
 
+        if (!dragon.canFeed()) {
+            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.ignivorus.still_eating", dragon.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         if (!dragon.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
+
+            dragon.triggerAnim("action", "eat");
+            dragon.setFeedingCooldown(20);
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             int tameRoll = hearty ? 6 : 15; // hearty meal improves taming odds
@@ -96,10 +109,23 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
      * Handle feeding tamed dragons for healing.
      */
     private InteractionResult handleFeeding(Player player, ItemStack itemstack) {
+        if (!dragon.canFeed()) {
+            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.ignivorus.still_eating", dragon.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
         if (!dragon.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
+
+            dragon.triggerAnim("action", "eat");
+            dragon.setFeedingCooldown(20);
 
             // Heal the dragon
             float currentHealth = dragon.getHealth();

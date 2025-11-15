@@ -154,6 +154,7 @@
   "entity.saintsdragons.raevyx.fed_partial": "%s is being healed...",
   "entity.saintsdragons.ignivorus.fed": "%s is fully healed!",
   "entity.saintsdragons.ignivorus.fed_partial": "%s is being healed...",
+  "entity.saintsdragons.ignivorus.still_eating": "%s is still chewing!",
   "entity.saintsdragons.raevyx.baby_fed": "%s is growing stronger!",
   "entity.saintsdragons.raevyx.baby_grown": "%s has grown into an adult!",
   "entity.saintsdragons.raevyx.still_eating": "%s is still eating...",

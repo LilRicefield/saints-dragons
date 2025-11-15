@@ -19,6 +19,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.flap");
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.sprint_flap");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.ignivorus.sit");
+    private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.ignivorus.swim");
 
     /**
      * Main animation predicate - handles idle, walk, run, fly, and sit animations
@@ -43,6 +44,11 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Check for sitting - highest priority after flying
         if (!dragon.isFlying() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
             state.setAndContinue(SIT);
+            return PlayState.CONTINUE;
+        }
+
+        if (!dragon.isFlying() && dragon.isInWaterOrBubble()) {
+            state.setAndContinue(SWIM);
             return PlayState.CONTINUE;
         }
 
@@ -196,6 +202,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Bite ability animation
         actionController.triggerableAnim("bite",
             RawAnimation.begin().thenPlay("animation.ignivorus.bite"));
+        actionController.triggerableAnim("eat",
+            RawAnimation.begin().thenPlay("animation.ignivorus.eat"));
 
         // Body slam ability animation
         actionController.triggerableAnim("body_slam",

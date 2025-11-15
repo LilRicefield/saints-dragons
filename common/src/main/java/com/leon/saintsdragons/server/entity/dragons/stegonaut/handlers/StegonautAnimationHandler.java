@@ -82,17 +82,11 @@ public class StegonautAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        // PRIORITY: Handle dying and rest transitions FIRST
+        // PRIORITY: Handle dying, sleeping, and rest transitions FIRST
         // During these states, action controller handles the animations
-        if (drake.isDying() || drake.isSleepTransitioning() || drake.isInRestTransition()) {
+        // CRITICAL: Stop movement controller during ALL sleep states to prevent flickering
+        if (drake.isDying() || drake.isSleeping() || drake.isSleepTransitioning() || drake.isInRestTransition()) {
             return PlayState.STOP;
-        }
-
-        // Check if sleeping - play sleep loop
-        if (drake.isSleeping()) {
-            state.getController().transitionLength(12); // Slower transition for sleep
-            state.setAndContinue(SLEEP_ANIM);
-            return PlayState.CONTINUE;
         }
 
         // Swimming has higher priority than ground loops

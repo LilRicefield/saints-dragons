@@ -224,6 +224,11 @@ public class CindervaneAnimationHandler {
             return PlayState.CONTINUE;
         }
 
+        // Stop banking during sleep transitions
+        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
+            return PlayState.STOP;
+        }
+
         if (dragon.isInWater() || dragon.isInWaterOrBubble()) {
             return PlayState.STOP;
         }
@@ -245,6 +250,11 @@ public class CindervaneAnimationHandler {
         if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
             state.setAndContinue(PITCH_OFF);
             return PlayState.CONTINUE;
+        }
+
+        // Stop pitching during sleep transitions
+        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
+            return PlayState.STOP;
         }
 
         if (dragon.isInWater() || dragon.isInWaterOrBubble()) {
