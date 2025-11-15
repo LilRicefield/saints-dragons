@@ -5,6 +5,8 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
 //Custom stuff
 import com.leon.saintsdragons.common.particle.raevyx.*;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxDodgeGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
@@ -51,6 +53,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
@@ -92,6 +96,8 @@ import java.util.concurrent.ConcurrentHashMap;
 //Just everything
 public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
         DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, ElectricalConductivityCapable {
+    private static final double RUN_SPEED_RATIO = WALK_SPEED <= 0.0D ? 1.0D : RUN_SPEED / WALK_SPEED;
+
     // ===== ENTITY DATA ACCESSORS =====
 
     /** Entity data accessor for flying state */
@@ -417,6 +423,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     // ===== CONTROLLER INSTANCES =====
     public final RaevyxFlightController flightController;
+    private double configuredWalkSpeed = WALK_SPEED;
+    private double configuredRunSpeed = RUN_SPEED;
+
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
 
@@ -494,6 +503,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.ambientSoundTimer = rng.nextInt(80); // small random offset
         this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
 
+        if (!level.isClientSide) {
+            applyConfiguredAttributes();
+        }
     }
 
     @Override
@@ -532,13 +544,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     public static AttributeSupplier.Builder createAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         return TamableAnimal.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 180.0D)
-                .add(Attributes.MOVEMENT_SPEED, WALK_SPEED)
+                .add(Attributes.MAX_HEALTH, config.maxHealth())
+                .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
                 .add(Attributes.FOLLOW_RANGE, 80.0D)
-                .add(Attributes.FLYING_SPEED, 1.0D)
+                .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
-                .add(Attributes.ARMOR, 8.0D);
+                .add(Attributes.ARMOR, config.armor());
     }
 
     // Cooldown to prevent hurt sound spam when ridden or under rapid hits
@@ -1143,9 +1156,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         setBooleanData(DATA_RUNNING, running);
         if (running) {
             runningTicks = 0;
-            Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(RUN_SPEED);
-        } else {
-            Objects.requireNonNull(this.getAttribute(Attributes.MOVEMENT_SPEED)).setBaseValue(WALK_SPEED);
+        }
+        double targetSpeed = running ? configuredRunSpeed : configuredWalkSpeed;
+        AttributeInstance attr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attr != null) {
+            attr.setBaseValue(targetSpeed);
         }
     }
     
@@ -2597,7 +2612,36 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
         }
 
+        applyConfiguredAttributes();
         return spawnData;
+    }
+
+    private void applyConfiguredAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
+        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
+        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
+        setAttributeBase(Attributes.ARMOR, config.armor());
+
+        configuredWalkSpeed = config.movementSpeed();
+        configuredRunSpeed = configuredWalkSpeed * RUN_SPEED_RATIO;
+
+        AttributeInstance moveAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (moveAttr != null) {
+            moveAttr.setBaseValue(this.isRunning() ? configuredRunSpeed : configuredWalkSpeed);
+        }
+
+        double maxHealth = config.maxHealth();
+        if (this.getHealth() > maxHealth) {
+            this.setHealth((float) maxHealth);
+        }
+    }
+
+    private void setAttributeBase(Attribute attribute, double value) {
+        AttributeInstance instance = this.getAttribute(attribute);
+        if (instance != null) {
+            instance.setBaseValue(value);
+        }
     }
     
     private void spawnBabiesIfNeeded() {

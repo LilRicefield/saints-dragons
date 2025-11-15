@@ -1,0 +1,17 @@
+{
+  "max_health": 180.0,
+  "armor": 8.0,
+  "movement_speed": 0.25,
+  "flying_speed": 1.0,
+  "abilities": {
+    "bite": {
+      "damage": 15.0
+    },
+    "lightning_beam": {
+      "damage": 35.0
+    },
+    "horn_gore": {
+      "damage": 15.0
+    }
+  }
+}

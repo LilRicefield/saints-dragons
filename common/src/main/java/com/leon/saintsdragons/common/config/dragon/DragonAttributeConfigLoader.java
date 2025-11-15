@@ -28,6 +28,7 @@ import java.nio.file.Path;
 public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final ResourceLocation CINDERVANE_ID = SaintsDragonsCommon.rl("cindervane");
+    public static final ResourceLocation RAEVYX_ID = SaintsDragonsCommon.rl("raevyx");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
 
@@ -42,6 +43,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 .resolve("dragon_attributes");
         Map<ResourceLocation, DragonAttributeConfig> base = new HashMap<>();
         base.put(CINDERVANE_ID, cindervaneDefaults());
+        base.put(RAEVYX_ID, raevyxDefaults());
         this.defaults = ImmutableMap.copyOf(base);
         this.configs = this.defaults;
     }
@@ -55,6 +57,20 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "bite", DragonAbilityOverride.ofDamage(12.0D),
                         "magma_volley", DragonAbilityOverride.ofDamage(20.0D)
+                )
+        );
+    }
+
+    private static DragonAttributeConfig raevyxDefaults() {
+        return new DragonAttributeConfig(
+                180.0D,
+                8.0D,
+                0.25D,
+                1.0D,
+                Map.of(
+                        "bite", DragonAbilityOverride.ofDamage(15.0D),
+                        "lightning_beam", DragonAbilityOverride.ofDamage(35.0D),
+                        "horn_gore", DragonAbilityOverride.ofDamage(15.0D)
                 )
         );
     }

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -20,7 +21,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Simple horn gore melee: modest damage + strong knockback in front of head.
  */
 public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
-    private static final float GORE_DAMAGE = 15.0f;
+    private static final float DEFAULT_GORE_DAMAGE = 15.0f;
     private static final double GORE_RANGE = 6.5; // Increased from 3.8
     private static final double GORE_RANGE_RIDDEN = 8.0; // Increased from 5.2
     private static final double GORE_ANGLE_DEG = 90.0; // half-angle, increased from 75
@@ -126,7 +127,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
         float armorPenetration = isSupercharged ? 4.0f : 2.0f;
         float armor = (float) target.getAttributeValue(Attributes.ARMOR);
         float toughness = (float) target.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
-        float desiredPostArmor = damageAfterArmor(GORE_DAMAGE * mult, Math.max(0f, armor - armorPenetration), toughness);
+        float desiredPostArmor = damageAfterArmor(resolveGoreDamage() * mult, Math.max(0f, armor - armorPenetration), toughness);
 
         // Find a raw damage value which, after the target's ACTUAL armor/toughness, equals desiredPostArmor
         float rawToDeal = solveRawDamageForPostArmor(desiredPostArmor, armor, toughness);
@@ -182,5 +183,11 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     private boolean isAllied(Raevyx wyvern, Entity other) {
         // Use the comprehensive ally system from DragonEntity
         return wyvern.isAlly(other);
+    }
+
+    private float resolveGoreDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
+                .abilityDamage("horn_gore", DEFAULT_GORE_DAMAGE);
     }
 }
