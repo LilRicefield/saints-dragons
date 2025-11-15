@@ -6,6 +6,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
@@ -65,6 +67,9 @@ public class CindervaneInteractionHandler {
 
             boolean hearty = heldItem.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             int tameRoll = hearty ? 10 : 20;
+            if (hearty) {
+                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+            }
 
             if (dragon.getRandom().nextInt(tameRoll) == 0) {
                 dragon.tame(player);
@@ -217,6 +222,9 @@ public class CindervaneInteractionHandler {
             boolean fullyHealed = newHealth >= dragon.getMaxHealth();
 
             dragon.heal(healAmount);
+            if (hearty) {
+                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+            }
             dragon.level().broadcastEntityEvent(dragon, (byte) 7);
 
             // Send appropriate message

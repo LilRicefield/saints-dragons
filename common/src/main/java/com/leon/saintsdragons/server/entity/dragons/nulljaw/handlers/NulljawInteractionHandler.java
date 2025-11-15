@@ -7,6 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
@@ -137,6 +139,9 @@ public record NulljawInteractionHandler(Nulljaw drake) {
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             int tameRoll = hearty ? 5 : 15; // hearty meal makes taming ~60% easier (1/5 vs 1/8)
+            if (hearty) {
+                drake.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+            }
 
             // Rift Drakes have a 1 in N chance of taming
             if (drake.getRandom().nextInt(tameRoll) == 0) {
@@ -190,6 +195,9 @@ public record NulljawInteractionHandler(Nulljaw drake) {
                 float oldHealth = drake.getHealth();
                 float newHealth = Math.min(oldHealth + healAmount, drake.getMaxHealth());
                 drake.setHealth(newHealth);
+                if (hearty) {
+                    drake.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+                }
                 
                 // Show healing particles (green hearts)
                 drake.level().broadcastEntityEvent(drake, (byte) 7);
