@@ -21,6 +21,8 @@ public final class FabricDragonSpawns {
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_cindervane"));
     private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_NULLJAW =
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw"));
+    private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_IGNIVORUS =
+            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_ignivorus"));
 
     private FabricDragonSpawns() {
     }
@@ -60,6 +62,15 @@ public final class FabricDragonSpawns {
                     SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
                     SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
                     SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get());
+        }
+
+        if (SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.get() > 0) {
+            registerSpawn(HAS_IGNIVORUS,
+                    MobCategory.CREATURE,
+                    ModEntities.IGNIVORUS.get(),
+                    SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.get(),
+                    SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.get(),
+                    SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.get());
         }
     }
 

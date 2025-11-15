@@ -30,6 +30,8 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_cindervane"));
     private static final TagKey<Biome> HAS_NULLJAW =
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw"));
+    private static final TagKey<Biome> HAS_IGNIVORUS =
+            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_ignivorus"));
 
     private AddDragonsBiomeModifier() {
     }
@@ -75,6 +77,15 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
                         SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
                         SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get());
+            }
+
+            if (biome.is(HAS_IGNIVORUS)) {
+                addSpawn(builder,
+                        MobCategory.CREATURE,
+                        ModEntities.IGNIVORUS.get(),
+                        SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.get(),
+                        SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.get(),
+                        SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.get());
             }
         } catch (IllegalStateException e) {
             // Config not loaded yet during datagen or early worldgen, skip spawn modification

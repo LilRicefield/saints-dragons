@@ -21,6 +21,10 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
 
+    public static ConfigHelper.IntValue IGNIVORUS_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue IGNIVORUS_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue IGNIVORUS_MAX_GROUP_SIZE;
+
     private static volatile boolean initialized = false;
 
     public static void bootstrap() {
@@ -56,6 +60,10 @@ public final class SaintsDragonsConfig {
         NULLJAW_SPAWN_WEIGHT = builder.defineInt("nulljawSpawnWeight", 2, 0, 100);
         NULLJAW_MIN_GROUP_SIZE = builder.defineInt("nulljawMinGroupSize", 1, 1, 10);
         NULLJAW_MAX_GROUP_SIZE = builder.defineInt("nulljawMaxGroupSize", 2, 1, 10);
+
+        IGNIVORUS_SPAWN_WEIGHT = builder.defineInt("ignivorusSpawnWeight", 1, 0, 100);
+        IGNIVORUS_MIN_GROUP_SIZE = builder.defineInt("ignivorusMinGroupSize", 1, 1, 10);
+        IGNIVORUS_MAX_GROUP_SIZE = builder.defineInt("ignivorusMaxGroupSize", 2, 1, 10);
 
         builder.pop();
         builder.build();
