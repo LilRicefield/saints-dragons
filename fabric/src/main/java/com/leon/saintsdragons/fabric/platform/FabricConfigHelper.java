@@ -49,8 +49,18 @@ public final class FabricConfigHelper implements ConfigHelper {
             }
 
             @Override
+            public void comment(String comment) {
+                // No-op
+            }
+
+            @Override
             public IntValue defineInt(String key, int defaultValue, int min, int max) {
                 return () -> Math.max(min, Math.min(max, defaultValue));
+            }
+
+            @Override
+            public ListValue defineList(String key, java.util.List<String> defaultValue) {
+                return () -> new java.util.ArrayList<>(defaultValue);
             }
 
             @Override

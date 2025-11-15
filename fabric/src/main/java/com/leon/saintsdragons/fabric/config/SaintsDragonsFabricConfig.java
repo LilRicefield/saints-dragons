@@ -4,6 +4,9 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Config(name = "saintsdragonsspawning")
 public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
@@ -22,6 +25,10 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     public int raevyxMaxGroupSize = 2;
 
     @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> raevyxAdditionalBiomes = new ArrayList<>();
+
+    @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
     public int stegonautSpawnWeight = 5;
@@ -35,6 +42,10 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
     public int stegonautMaxGroupSize = 4;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> stegonautAdditionalBiomes = new ArrayList<>();
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -52,6 +63,10 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     public int cindervaneMaxGroupSize = 3;
 
     @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> cindervaneAdditionalBiomes = new ArrayList<>();
+
+    @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
     public int nulljawSpawnWeight = 2;
@@ -65,4 +80,27 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
     public int nulljawMaxGroupSize = 2;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> nulljawAdditionalBiomes = new ArrayList<>();
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+    public int ignivorusSpawnWeight = 1;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int ignivorusMinGroupSize = 1;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int ignivorusMaxGroupSize = 2;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> ignivorusAdditionalBiomes = new ArrayList<>();
 }

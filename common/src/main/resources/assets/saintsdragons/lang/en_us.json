@@ -239,6 +239,26 @@
   "text.autoconfig.saintsdragonsspawning.option.nulljawMinGroupSize": "Nulljaw Min Group Size",
   "text.autoconfig.saintsdragonsspawning.option.nulljawMinGroupSize.@Tooltip": "Minimum number of Nulljaw that spawn together",
   "text.autoconfig.saintsdragonsspawning.option.nulljawMaxGroupSize": "Nulljaw Max Group Size",
-  "text.autoconfig.saintsdragonsspawning.option.nulljawMaxGroupSize.@Tooltip": "Maximum number of Nulljaw that spawn together"
+  "text.autoconfig.saintsdragonsspawning.option.nulljawMaxGroupSize.@Tooltip": "Maximum number of Nulljaw that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawAdditionalBiomes": "Nulljaw Additional Biomes",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawAdditionalBiomes.@Tooltip": "Extra biomes where Nulljaw can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
+
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusSpawnWeight": "Ignivorus Spawn Weight",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusSpawnWeight.@Tooltip": "How often Ignivorus spawns (0 = disabled, higher = more common)",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusMinGroupSize": "Ignivorus Min Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusMinGroupSize.@Tooltip": "Minimum number of Ignivorus that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusMaxGroupSize": "Ignivorus Max Group Size",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusMaxGroupSize.@Tooltip": "Maximum number of Ignivorus that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusAdditionalBiomes": "Ignivorus Additional Biomes",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusAdditionalBiomes.@Tooltip": "Extra biomes where Ignivorus can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
+
+  "text.autoconfig.saintsdragonsspawning.option.raevyxAdditionalBiomes": "Raevyx Additional Biomes",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxAdditionalBiomes.@Tooltip": "Extra biomes where Raevyx can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
+
+  "text.autoconfig.saintsdragonsspawning.option.stegonautAdditionalBiomes": "Stegonaut Additional Biomes",
+  "text.autoconfig.saintsdragonsspawning.option.stegonautAdditionalBiomes.@Tooltip": "Extra biomes where Stegonaut can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
+
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneAdditionalBiomes": "Cindervane Additional Biomes",
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneAdditionalBiomes.@Tooltip": "Extra biomes where Cindervane can spawn (e.g., minecraft:desert, terralith:volcanic_crater)"
 }
 
