@@ -119,9 +119,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             }
         });
     }
-    
+
     // ===== ANIMATION PREDICATES =====
-    
+
     /**
      * Handles banking animation based on bank direction
      * Disabled when in water - swimming has its own movement animations
@@ -131,6 +131,11 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
             state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_off"));
             return PlayState.CONTINUE;
+        }
+
+        // Stop banking during sleep transitions or when controls are locked
+        if (wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting() || wyvern.areRiderControlsLocked()) {
+            return PlayState.STOP;
         }
 
         // Disable banking when in water
@@ -152,6 +157,11 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
             state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.pitching_off"));
             return PlayState.CONTINUE;
+        }
+
+        // Stop pitching during sleep transitions or when controls are locked
+        if (wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting() || wyvern.areRiderControlsLocked()) {
+            return PlayState.STOP;
         }
 
         // Disable pitching when in water

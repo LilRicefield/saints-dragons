@@ -22,7 +22,9 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -35,6 +37,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -100,6 +103,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
 
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
@@ -137,6 +142,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     public static final int RIDER_WATER_SCAN_RADIUS = 2;
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
+    private static final double WATER_EFFECT_MAX_HEIGHT = 8.0D;
+    private static final double WATER_EFFECT_INTENSITY = 1.15D;
 
     // Vocal entries (placeholder - sounds to be added later)
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
@@ -266,6 +273,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_FIRE_END_Z, 0F);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
+        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
 
     @Override
@@ -340,6 +348,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (!level().isClientSide) {
             tickTerrainClearing();
             handleAmbientSounds();
+            if (tickCount % 2 == 0) {
+                tickWaterDisturbance();
+            }
+
+            int cooldown = this.entityData.get(DATA_FEEDING_COOLDOWN);
+            if (cooldown > 0) {
+                this.entityData.set(DATA_FEEDING_COOLDOWN, cooldown - 1);
+            }
         }
 
         // Update sitting progress
@@ -402,6 +418,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public boolean areRiderControlsLocked() {
         return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
+    }
+
+    public boolean canFeed() {
+        return this.entityData.get(DATA_FEEDING_COOLDOWN) <= 0;
+    }
+
+    public void setFeedingCooldown(int ticks) {
+        this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, ticks));
     }
 
     public void lockRiderControls(int ticks) {
@@ -486,25 +510,77 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
 
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+
         if (this.isVehicle() && riderController.getRidingPlayer() != null) {
             Player rider = riderController.getRidingPlayer();
-            if (isFlying()) {
-                // Custom flight movement
+            if (inWater) {
+                handleWaterSwimming(travelVec);
+            } else if (isFlying()) {
                 riderController.handleRiderMovement(rider, travelVec);
             } else {
-                // Ground movement - use vanilla system
                 this.setSpeed(riderController.getRiddenSpeed(rider));
                 super.travel(travelVec);
             }
-        } else {
-            // AI movement
-            super.travel(travelVec);
+            return;
         }
+
+        if (inWater) {
+            handleWaterSwimming(travelVec);
+            return;
+        }
+
+        super.travel(travelVec);
     }
 
     @Override
     public float getRiddenSpeed(@NotNull Player rider) {
         return riderController.getRiddenSpeed(rider);
+    }
+
+    private void handleWaterSwimming(Vec3 input) {
+        Vec3 velocity = this.getDeltaMovement();
+
+        double swimSpeed = 0.4D;
+        if (isAccelerating()) {
+            swimSpeed *= 1.3D;
+        }
+
+        Vec3 desired = getSwimVec3(input, swimSpeed);
+        Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.15D));
+
+        double dragFactor = 0.88D;
+        blended = blended.multiply(dragFactor, 0.92D, dragFactor);
+
+        double dy = blended.y;
+        if (isGoingUp()) {
+            dy = Math.min(swimSpeed * 0.6D, dy + 0.08D);
+        } else if (isGoingDown()) {
+            dy = Math.max(-swimSpeed * 0.8D, dy - 0.12D);
+        } else {
+            dy -= 0.03D;
+        }
+
+        blended = new Vec3(blended.x, dy, blended.z);
+
+        this.setDeltaMovement(blended);
+        this.move(MoverType.SELF, this.getDeltaMovement());
+    }
+
+    private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed) {
+        double strafe = wishDir.x;
+        double forward = wishDir.z;
+        float yawRad = this.getYRot() * ((float) Math.PI / 180F);
+        double sin = Math.sin(yawRad);
+        double cos = Math.cos(yawRad);
+
+        double worldX = strafe * cos - forward * sin;
+        double worldZ = forward * cos + strafe * sin;
+
+        double dx = worldX * 0.6D * swimSpeed;
+        double dz = worldZ * 0.6D * swimSpeed;
+
+        return new Vec3(dx, 0.0D, dz);
     }
 
     @Override
@@ -1283,6 +1359,60 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
+    private void tickWaterDisturbance() {
+        if (level().isClientSide || !isFlying()) {
+            return;
+        }
+
+        Vec3 pos = position();
+        AABB box = getBoundingBox();
+        ServerLevel serverLevel = (ServerLevel) level();
+
+        for (int checkDown = 0; checkDown < WATER_EFFECT_MAX_HEIGHT; checkDown++) {
+            BlockPos checkPos = new BlockPos(
+                    Mth.floor(pos.x),
+                    Mth.floor(pos.y) - checkDown,
+                    Mth.floor(pos.z)
+            );
+
+            BlockState state = level().getBlockState(checkPos);
+            if (!state.getFluidState().isEmpty()) {
+                double waterY = checkPos.getY() + 1.0;
+                double boxWidth = box.getXsize();
+                double boxLength = box.getZsize();
+                int particleCount = (int) Math.ceil((boxWidth + boxLength) / 2.0 * WATER_EFFECT_INTENSITY * 8.0);
+                particleCount = Math.min(particleCount, 40);
+
+                for (int i = 0; i < particleCount; i++) {
+                    double offsetX = (random.nextDouble() - 0.5) * boxWidth;
+                    double offsetZ = (random.nextDouble() - 0.5) * boxLength;
+                    double particleX = pos.x + offsetX;
+                    double particleZ = pos.z + offsetZ;
+
+                    serverLevel.sendParticles(
+                            ParticleTypes.SPLASH,
+                            particleX, waterY, particleZ,
+                            1,
+                            offsetX * 0.2, 0.1, offsetZ * 0.2,
+                            0.1
+                    );
+
+                    if (random.nextFloat() < 0.25f) {
+                        serverLevel.sendParticles(
+                                ParticleTypes.BUBBLE_POP,
+                                particleX, waterY, particleZ,
+                                1,
+                                0.0, 0.0, 0.0,
+                                0.0
+                        );
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+
     private void tickTerrainClearing() {
         if (level().isClientSide || this.isBaby() || !this.isAlive()) {
             return;
@@ -1565,6 +1695,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         tag.putInt("TimeFlying", timeFlying);  // Save flying duration
         this.combatManager.saveToNBT(tag);
         this.physicsController.writeToNBT(tag);  // Save physics envelope state
+        tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
     }
 
     @Override
@@ -1574,6 +1705,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.timeFlying = tag.getInt("TimeFlying");  // Restore flying duration
         this.combatManager.loadFromNBT(tag);
         this.physicsController.readFromNBT(tag);  // Restore physics envelope state
+        if (tag.contains("FeedingCooldownTicks")) {
+            this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
+        }
     }
 
     @Override
