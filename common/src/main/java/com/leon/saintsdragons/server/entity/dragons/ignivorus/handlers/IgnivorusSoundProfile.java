@@ -64,6 +64,14 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         if ("ignivorus_roar".equals(key)) {
             return true; // Roar ability plays the synced audio
         }
+        if ("ignivorus_ultimate_start".equals(key)) {
+            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_ULTIMATE_START.get(), 2.0f, 1.0f, 0.0f);
+            return true;
+        }
+        if ("ignivorus_ultimate".equals(key)) {
+            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_ULTIMATE.get(), 2.5f, 1.0f, 0.0f);
+            return true;
+        }
         return false;
     }
 

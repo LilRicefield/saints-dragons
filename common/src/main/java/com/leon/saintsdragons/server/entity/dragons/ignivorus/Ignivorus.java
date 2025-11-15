@@ -412,6 +412,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
+    public void clearRiderControlLock() {
+        riderControlLockTicks = 0;
+        this.entityData.set(DATA_RIDER_LOCKED, false);
+    }
+
     @Override
     protected boolean isRiderInputLocked(Player player) {
         return areRiderControlsLocked();
@@ -449,6 +454,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public void travel(@NotNull Vec3 travelVec) {
+        // Block ALL movement when controls are locked (e.g., during ultimate ability)
+        if (areRiderControlsLocked()) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
         if (this.isVehicle() && riderController.getRidingPlayer() != null) {
             Player rider = riderController.getRidingPlayer();
             if (isFlying()) {
@@ -472,9 +483,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
-        // Apply deadzone and store input
-        float fwd = applyInputDeadzone(forward);
-        float str = applyInputDeadzone(strafe);
+        // Apply deadzone and store input (locked = 0)
+        float fwd = locked ? 0f : applyInputDeadzone(forward);
+        float str = locked ? 0f : applyInputDeadzone(strafe);
         setLastRiderForward(fwd);
         setLastRiderStrafe(str);
 
@@ -498,8 +509,16 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
         switch (action) {
-            case TAKEOFF_REQUEST -> requestRiderTakeoff();
-            case ACCELERATE -> setAccelerating(true);
+            case TAKEOFF_REQUEST -> {
+                if (!locked) {
+                    requestRiderTakeoff();
+                }
+            }
+            case ACCELERATE -> {
+                if (!locked) {
+                    setAccelerating(true);
+                }
+            }
             case STOP_ACCELERATE -> setAccelerating(false);
             case TOGGLE_MELEE -> {
                 if (!locked) {
@@ -571,6 +590,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
         return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
