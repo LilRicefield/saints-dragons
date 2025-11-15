@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
 
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 public final class FabricPlatformHelper implements PlatformHelper {
@@ -85,5 +86,10 @@ public final class FabricPlatformHelper implements PlatformHelper {
         private SimpleParticleTypeImpl(boolean overrideLimiter) {
             super(overrideLimiter);
         }
+    }
+
+    @Override
+    public Path getConfigDirectory() {
+        return FabricLoader.getInstance().getConfigDir();
     }
 }

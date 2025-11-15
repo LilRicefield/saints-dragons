@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -68,6 +70,7 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
@@ -239,6 +242,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         RandomSource rng = this.getRandom();
         this.ambientSoundTimer = rng.nextInt(80);
         this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1));
+
+        if (!level.isClientSide) {
+            applyConfiguredAttributes();
+        }
     }
 
     @Override
@@ -252,16 +259,36 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             this.setOrderedToSit(false);
         }
 
+        applyConfiguredAttributes();
         return data;
     }
 
+    private void applyConfiguredAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
+        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
+        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
+        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
+        setAttributeBase(Attributes.ARMOR, config.armor());
+        if (this.getHealth() > config.maxHealth()) {
+            this.setHealth((float) config.maxHealth());
+        }
+    }
+
+    private void setAttributeBase(net.minecraft.world.entity.ai.attributes.Attribute attribute, double value) {
+        AttributeInstance instance = this.getAttribute(attribute);
+        if (instance != null) {
+            instance.setBaseValue(value);
+        }
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         return TamableAnimal.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 80.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.45D)
+                .add(Attributes.MAX_HEALTH, config.maxHealth())
+                .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
-                .add(Attributes.FLYING_SPEED, 0.60D) // Slower for glider behavior
-                .add(Attributes.ARMOR, 4.0D);
+                .add(Attributes.FLYING_SPEED, config.flyingSpeed()) // Slower for glider behavior
+                .add(Attributes.ARMOR, config.armor());
     }
 
     public static boolean canSpawnHere(EntityType<? extends Cindervane> type,

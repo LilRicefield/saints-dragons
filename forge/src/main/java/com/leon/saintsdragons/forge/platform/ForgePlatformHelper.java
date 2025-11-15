@@ -11,8 +11,10 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLLoader;
+import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 public final class ForgePlatformHelper implements PlatformHelper {
@@ -76,5 +78,10 @@ public final class ForgePlatformHelper implements PlatformHelper {
     @Override
     public net.minecraft.core.particles.SimpleParticleType createSimpleParticle(boolean overrideLimiter) {
         return new net.minecraft.core.particles.SimpleParticleType(overrideLimiter);
+    }
+
+    @Override
+    public Path getConfigDirectory() {
+        return FMLPaths.CONFIGDIR.get();
     }
 }

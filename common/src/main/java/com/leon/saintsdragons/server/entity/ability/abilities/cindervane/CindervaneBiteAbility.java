@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -87,8 +88,9 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
     }
 
     private void applyHit(Cindervane dragon, LivingEntity target) {
-
-        float damage = BASE_DAMAGE;
+        float damage = (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID)
+                .abilityDamage("bite", BASE_DAMAGE);
         AttributeInstance attackAttr = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
         if (attackAttr != null) {
             double value = attackAttr.getValue();

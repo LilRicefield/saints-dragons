@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.forge.world.AddDragonsBiomeModifier;
 import com.mojang.serialization.Codec;
@@ -10,6 +11,7 @@ import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.world.BiomeModifier;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
@@ -42,6 +44,7 @@ public final class SaintsDragonsForge {
         modEventBus.addListener(this::onRegisterSpawnPlacements);
 
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
+        MinecraftForge.EVENT_BUS.addListener(this::onAddReloadListeners);
 
         SaintsDragonsCommon.init();
     }
@@ -74,5 +77,9 @@ public final class SaintsDragonsForge {
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
         CommonModEvents.registerCommands(event.getDispatcher());
+    }
+
+    private void onAddReloadListeners(AddReloadListenerEvent event) {
+        event.addListener(DragonAttributeConfigLoader.getInstance());
     }
 }
