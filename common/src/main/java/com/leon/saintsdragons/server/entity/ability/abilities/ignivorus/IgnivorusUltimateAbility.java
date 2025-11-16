@@ -41,10 +41,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     @SuppressWarnings("unused")
     private static final int LOOP_END_TICK = ULTIMATE_START_TICKS + ULTIMATE_LOOP_TICKS;
 
-    private static final double EXPLOSION_RADIUS = 64.0D;
+    private static final double EXPLOSION_RADIUS = 32.0D; // Reduced from 64 for better visibility
     private static final float EXPLOSION_DAMAGE = 200.0F;
     private static final int EXPLOSION_FIRE_SECONDS = 8;
-    private static final int EXPLOSION_PARTICLE_POINTS = 32;
+    private static final int EXPLOSION_PARTICLE_POINTS = 64; // Doubled for denser particle ring
     private static final int LOOP_DAMAGE_INTERVAL = 5; // ticks between pulses while ultimate animation plays
     private static final int LOOP_DAMAGE_WARMUP = 20;  // delay before first pulse (ticks inside loop)
     private static final float PENALTY_HEALTH = 50.0F;
@@ -228,6 +228,15 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         }
 
         ServerLevel server = (ServerLevel) dragon.level();
+
+        // Spawn central explosion particles for dramatic effect
+        if (openingPulse) {
+            // Big initial burst at dragon's position
+            server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.x, center.y + 1.0D, center.z, 3, 1.0D, 0.5D, 1.0D, 0.0D);
+            server.sendParticles(ParticleTypes.FLAME, center.x, center.y + 1.0D, center.z, 100, 2.0D, 1.0D, 2.0D, 0.2D);
+            server.sendParticles(ParticleTypes.LAVA, center.x, center.y + 0.5D, center.z, 50, 1.5D, 0.5D, 1.5D, 0.1D);
+        }
+
         spawnRingParticles(server, center);
         applyRingDamage(server, center);
     }
@@ -237,8 +246,19 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             double angle = (Math.PI * 2.0D * i) / EXPLOSION_PARTICLE_POINTS;
             double x = center.x + Math.cos(angle) * EXPLOSION_RADIUS;
             double z = center.z + Math.sin(angle) * EXPLOSION_RADIUS;
-            level.sendParticles(ParticleTypes.FLAME, x, center.y + 0.5D, z, 12, 0.6D, 0.4D, 0.6D, 0.02D);
-            level.sendParticles(ParticleTypes.LARGE_SMOKE, x, center.y + 0.5D, z, 4, 0.4D, 0.2D, 0.4D, 0.01D);
+
+            // Spawn particles at ground level and slightly above for better visibility
+            double y = center.y + 0.1D; // Just above ground
+
+            // Main flame particles - more count, more spread
+            level.sendParticles(ParticleTypes.FLAME, x, y, z, 20, 0.8D, 0.6D, 0.8D, 0.05D);
+            level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 0.5D, z, 8, 0.6D, 0.4D, 0.6D, 0.02D);
+
+            // Add extra fire particles shooting upward for dramatic effect
+            level.sendParticles(ParticleTypes.FLAME, x, y, z, 10, 0.3D, 1.0D, 0.3D, 0.1D);
+
+            // Add some lava particles for extra pizzazz
+            level.sendParticles(ParticleTypes.LAVA, x, y, z, 3, 0.5D, 0.2D, 0.5D, 0.0D);
         }
     }
 

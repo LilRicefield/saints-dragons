@@ -9,7 +9,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxDodgeGoal;
-import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
+import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxSmartFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
@@ -2818,7 +2818,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                                                                net.minecraft.world.item.Items.COD,
                                                                net.minecraft.world.item.Items.PUFFERFISH), false));
         
-        this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
+        this.goalSelector.addGoal(11, new RaevyxSmartFlightGoal(this));
         // Look goals that skip when being ridden (so rider has full control)
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
             @Override

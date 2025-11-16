@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.init;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.command.DragonAllyCommand;
+import com.leon.saintsdragons.server.command.DragonBenchmarkCommand;
 import com.leon.saintsdragons.server.command.DragonTameCommand;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -95,6 +96,7 @@ public final class CommonModEvents {
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         DragonAllyCommand.register(dispatcher);
         DragonTameCommand.register(dispatcher);
+        DragonBenchmarkCommand.register(dispatcher);
     }
 
     @FunctionalInterface
