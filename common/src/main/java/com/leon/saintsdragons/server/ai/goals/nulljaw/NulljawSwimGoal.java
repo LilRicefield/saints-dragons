@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class NulljawSwimGoal extends RandomStrollGoal {
 
     private final Nulljaw drake;
-    private static final double AI_SWIM_SPEED = 2.0D; // Fast AI patrol speed
+    private static final double AI_SWIM_SPEED = 5.0D; // Fast AI patrol speed
 
     public NulljawSwimGoal(Nulljaw drake, double v, int chance) {
         super(drake, AI_SWIM_SPEED, chance, false);
@@ -90,16 +90,16 @@ public class NulljawSwimGoal extends RandomStrollGoal {
             }
         }
 
-        // LONG RANGE SWIMMING - 128 blocks horizontal, 20 vertical
+        // LONG RANGE SWIMMING
         // This prevents circular swimming patterns!
-        Vec3 pos = DefaultRandomPos.getPos(drake, 128, 20);
+        Vec3 pos = DefaultRandomPos.getPos(drake, 256, 62);
         int attempts = 0;
 
         while (pos != null &&
                !drake.level().getBlockState(net.minecraft.core.BlockPos.containing(pos))
                    .isPathfindable(drake.level(), net.minecraft.core.BlockPos.containing(pos), PathComputationType.WATER)
                && attempts++ < 16) { // More attempts for longer range
-            pos = DefaultRandomPos.getPos(drake, 128, 20);
+            pos = DefaultRandomPos.getPos(drake, 256, 62);
         }
 
         return pos;
