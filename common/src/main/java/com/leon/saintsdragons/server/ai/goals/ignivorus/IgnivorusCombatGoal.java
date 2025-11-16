@@ -28,6 +28,10 @@ public class IgnivorusCombatGoal extends Goal {
     private double lastTargetY;
     private double lastTargetZ;
 
+    // Fire breath cooldown mechanic (AI only - 3 minute cooldown)
+    private int breathCooldown = 0;
+    private static final int BREATH_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
+
     public IgnivorusCombatGoal(Ignivorus dragon) {
         this.dragon = dragon;
         this.setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
@@ -39,6 +43,13 @@ public class IgnivorusCombatGoal extends Goal {
 
         if (target == null || !target.isAlive()) {
             return false;
+        }
+
+        // Don't attack creative/spectator players
+        if (target instanceof net.minecraft.world.entity.player.Player player) {
+            if (player.isCreative() || player.isSpectator()) {
+                return false;
+            }
         }
 
         if (dragon.isVehicle() || dragon.isOrderedToSit()) {
@@ -60,6 +71,13 @@ public class IgnivorusCombatGoal extends Goal {
             return false;
         }
 
+        // Stop attacking if player switches to creative/spectator
+        if (target instanceof net.minecraft.world.entity.player.Player player) {
+            if (player.isCreative() || player.isSpectator()) {
+                return false;
+            }
+        }
+
         if (dragon.isVehicle() || dragon.isOrderedToSit()) {
             return false;
         }
@@ -79,7 +97,7 @@ public class IgnivorusCombatGoal extends Goal {
     @Override
     public void stop() {
         dragon.getNavigation().stop();
-        dragon.setRunning(false);
+        // Don't modify running state - let other systems handle it
         dragon.setAggressive(false);
         dragon.setGroundMoveStateFromAI(0);
         cancelFireBreathIfActive();
@@ -88,7 +106,7 @@ public class IgnivorusCombatGoal extends Goal {
 
     @Override
     public void start() {
-        dragon.setRunning(true);
+        // Don't set running to avoid speed boost - just use chaseSpeed multiplier
         dragon.setAggressive(true);
         dragon.setGroundMoveStateFromAI(2);
 
@@ -107,6 +125,11 @@ public class IgnivorusCombatGoal extends Goal {
     public void tick() {
         if (attackCooldown > 0) {
             attackCooldown--;
+        }
+
+        // Tick down breath cooldown
+        if (breathCooldown > 0) {
+            breathCooldown--;
         }
 
         LivingEntity target = dragon.getTarget();
@@ -181,13 +204,14 @@ public class IgnivorusCombatGoal extends Goal {
 
         double gap = getGapToTarget(target);
 
-        // ONLY use fire breath at long range (>10 blocks) - AI can't aim well at close range
-        if (gap > fireBreathMinRange) {
+        // Fire breath at long range (>32 blocks) when available
+        if (gap > fireBreathMinRange && breathCooldown <= 0) {
             dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
-            attackCooldown = 60; // Long cooldown - fire breath is situational, not primary attack
-        } else {
-            // MELEE RANGE: Randomly choose between bite and body slam for unpredictability
-            // NO range differentiation - pure randomization makes combat unpredictable
+            attackCooldown = 60; // Long cooldown after breath
+            breathCooldown = BREATH_COOLDOWN_TICKS; // 3 minute cooldown for AI breath
+        } else if (gap <= meleeEngageRange) {
+            // Melee attacks ONLY in melee range (<6 blocks)
+            // Randomly choose between bite and body slam for unpredictability
             if (dragon.getRandom().nextBoolean()) {
                 dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BODY_SLAM);
                 attackCooldown = 25; // Moderate cooldown for body slam
@@ -196,6 +220,7 @@ public class IgnivorusCombatGoal extends Goal {
                 attackCooldown = 20; // Slightly faster cooldown for bite
             }
         }
+        // No attack in 6-32 block range (or when breath on cooldown at >32 blocks) - just chase
     }
 
     /**
