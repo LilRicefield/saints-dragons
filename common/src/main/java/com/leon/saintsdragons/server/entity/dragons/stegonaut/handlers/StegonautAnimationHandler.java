@@ -85,7 +85,9 @@ public class StegonautAnimationHandler {
         // PRIORITY: Handle dying, sleeping, and rest transitions FIRST
         // During these states, action controller handles the animations
         // CRITICAL: Stop movement controller during ALL sleep states to prevent flickering
-        if (drake.isDying() || drake.isSleeping() || drake.isSleepTransitioning() || drake.isInRestTransition()) {
+        // This includes entering (fall_asleep) and exiting (wake_up) transitions
+        if (drake.isDying() || drake.isSleeping() || drake.isSleepTransitioning() || 
+            drake.isSleepingEntering() || drake.isSleepingExiting() || drake.isInRestTransition()) {
             return PlayState.STOP;
         }
 
