@@ -85,19 +85,49 @@ public class StegonautSleepGoal extends Goal {
     public boolean canContinueToUse() {
         boolean safeToRest = drake.getTarget() == null && !drake.isAggressive();
 
-        // Wake up if it becomes day
+        var restManager = drake.getRestManager();
+        DragonRestState state = restManager.getCurrentState();
+
+        // CRITICAL: Allow wake-up sequence to complete even if it becomes day
+        // Otherwise the dragon will skip the wake_up → sit_after → stand_up animations
+        boolean isWakingUp = state == DragonRestState.WAKING_UP ||
+                             state == DragonRestState.SITTING_AFTER ||
+                             state == DragonRestState.STANDING_UP;
+
+        if (isWakingUp) {
+            // Continue through the wake-up sequence regardless of time or owner state
+            return restManager.isResting() && safeToRest;
+        }
+
+        // Check time of day
         long dayTime = drake.level().getDayTime() % 24000;
         boolean isNight = dayTime >= 13000 && dayTime < 23000;
+
+        // CRITICAL: If it's day and dragon is in sleep cycle, allow goal to continue
+        // so the state machine can transition through wake-up sequence properly
+        // This prevents the animation sequence from being interrupted mid-cycle
+        boolean isInSleepCycle = state == DragonRestState.SLEEPING ||
+                                 state == DragonRestState.FALLING_ASLEEP;
+
+        if (!isNight && isInSleepCycle) {
+            // Allow goal to continue so tick() can initiate/complete wake-up
+            return restManager.isResting() && safeToRest;
+        }
 
         // For tamed drakes, wake up if owner wakes up
         if (drake.isTame() && drake.getOwner() != null) {
             boolean ownerSleeping = drake.getOwner().isSleeping();
-            if (!ownerSleeping) {
+            if (!ownerSleeping && isInSleepCycle) {
+                // Allow state machine to transition to wake-up
+                return restManager.isResting() && safeToRest;
+            }
+            if (!ownerSleeping && !isWakingUp) {
                 return false;
             }
         }
 
-        boolean shouldContinue = drake.getRestManager().isResting() && safeToRest && isNight;{}
+        // Normal check: continue if resting, safe, and nighttime
+        boolean shouldContinue = restManager.isResting() && safeToRest && isNight;
         return shouldContinue;
     }
 
@@ -138,7 +168,8 @@ public class StegonautSleepGoal extends Goal {
         drake.getNavigation().stop();
         drake.setDeltaMovement(0, drake.getDeltaMovement().y, 0);
 
-        // Ensure drake stays sitting during relevant states
+        // Ensure dragon stays sitting ONLY during initial sit-down and sitting states
+        // (Matches Nulljaw's approach - no complex state syncing needed)
         if (state == DragonRestState.SITTING_DOWN || state == DragonRestState.SITTING) {
             if (!drake.isOrderedToSit()) {
                 drake.setOrderedToSit(true);
@@ -155,6 +186,10 @@ public class StegonautSleepGoal extends Goal {
             case SITTING_DOWN:
                 // Wait for down → sit animation (38 ticks + 2 tick buffer)
                 if (restManager.getStateTimer() > 40) {
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                        "[SleepGoal] SITTING_DOWN -> SITTING (timer={})",
+                        restManager.getStateTimer()
+                    );
                     restManager.advanceState();
                 }
                 break;
@@ -162,6 +197,10 @@ public class StegonautSleepGoal extends Goal {
             case SITTING:
                 // Brief pause before falling asleep (1 second)
                 if (restManager.getStateTimer() > 20) {
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                        "[SleepGoal] SITTING -> FALLING_ASLEEP (timer={})",
+                        restManager.getStateTimer()
+                    );
                     restManager.advanceState();
                     drake.startSleepEnter(); // Triggers fall_asleep animation
                 }
@@ -170,6 +209,10 @@ public class StegonautSleepGoal extends Goal {
             case FALLING_ASLEEP:
                 // Wait for fall_asleep animation (38 ticks + 2 tick buffer)
                 if ((drake.isSleeping() && !drake.isSleepTransitioning()) || restManager.getStateTimer() > 40) {
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                        "[SleepGoal] FALLING_ASLEEP -> SLEEPING (timer={}, isSleeping={}, sleepTrans={})",
+                        restManager.getStateTimer(), drake.isSleeping(), drake.isSleepTransitioning()
+                    );
                     restManager.advanceState();
                 }
                 break;
@@ -180,6 +223,10 @@ public class StegonautSleepGoal extends Goal {
                 boolean shouldWake = !isNight || (restManager.getRestingTicks() >= restManager.getRestDuration());
 
                 if (shouldWake) {
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                        "[SleepGoal] SLEEPING -> WAKING_UP (isNight={}, restingTicks={}/{})",
+                        isNight, restManager.getRestingTicks(), restManager.getRestDuration()
+                    );
                     restManager.advanceState();
                     drake.startSleepExit(); // Triggers wake_up animation
                     drake.setOrderedToSit(true);
@@ -189,6 +236,10 @@ public class StegonautSleepGoal extends Goal {
             case WAKING_UP:
                 // Wait for wake_up animation (38 ticks + 2 tick buffer)
                 if (restManager.getStateTimer() > 40) {
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                        "[SleepGoal] WAKING_UP -> SITTING_AFTER (timer={})",
+                        restManager.getStateTimer()
+                    );
                     restManager.advanceState();
                     drake.setOrderedToSit(true);
                 }
@@ -197,6 +248,10 @@ public class StegonautSleepGoal extends Goal {
             case SITTING_AFTER:
                 // Brief pause after waking (1 second)
                 if (restManager.getStateTimer() > 20) {
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                        "[SleepGoal] SITTING_AFTER -> STANDING_UP (timer={})",
+                        restManager.getStateTimer()
+                    );
                     restManager.advanceState();
                     drake.setOrderedToSit(false); // Trigger stand up animation
                 }
@@ -205,6 +260,10 @@ public class StegonautSleepGoal extends Goal {
             case STANDING_UP:
                 // Wait for up animation (38 ticks + 2 tick buffer)
                 if (restManager.getStateTimer() > 40) {
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                        "[SleepGoal] STANDING_UP -> IDLE (timer={})",
+                        restManager.getStateTimer()
+                    );
                     restManager.advanceState(); // Returns to IDLE
                 }
                 break;
@@ -220,9 +279,23 @@ public class StegonautSleepGoal extends Goal {
     @Override
     public void stop() {
         var restManager = drake.getRestManager();
+        DragonRestState state = restManager.getCurrentState();
 
-        // Emergency cleanup - force stand up if interrupted mid-cycle
-        if (restManager.isResting() && restManager.getCurrentState() != DragonRestState.STANDING_UP) {
+        // Check if we're already in the wake-up sequence
+        boolean isWakingUp = state == DragonRestState.WAKING_UP ||
+                             state == DragonRestState.SITTING_AFTER ||
+                             state == DragonRestState.STANDING_UP;
+
+        if (isWakingUp) {
+            // Already in wake-up sequence - let it complete naturally
+            // Don't call stopRest() or it will skip the remaining animations
+            // Set cooldown for next rest cycle
+            retryCooldown = 200 + drake.getRandom().nextInt(201);
+            return;
+        }
+
+        // Emergency cleanup - force stand up if interrupted mid-cycle (and NOT already waking up)
+        if (restManager.isResting()) {
             if (drake.isSleeping() || drake.isSleepTransitioning()) {
                 drake.startSleepExit();
             }

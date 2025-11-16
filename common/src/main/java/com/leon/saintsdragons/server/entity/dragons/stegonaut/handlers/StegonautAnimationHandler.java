@@ -82,34 +82,20 @@ public class StegonautAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        // PRIORITY: Handle dying, sleeping, and rest transitions FIRST
-        // During these states, action controller handles the animations
-        // CRITICAL: Stop movement controller during ALL sleep states to prevent flickering
-        // This includes entering (fall_asleep) and exiting (wake_up) transitions
-        if (drake.isDying() || drake.isSleeping() || drake.isSleepTransitioning() || 
-            drake.isSleepingEntering() || drake.isSleepingExiting() || drake.isInRestTransition()) {
-            return PlayState.STOP;
-        }
-
         // Swimming has higher priority than ground loops
         if (drake.isInWaterOrBubble()) {
             state.getController().transitionLength(6);
             state.setAndContinue(SWIM_ANIM);
             return PlayState.CONTINUE;
-        }
-
-        // Check for sitting - use sit progress system to avoid desync
-        // Only play SIT loop when FULLY sat down
-        float sitProgress = drake.getSitProgress();
-        float maxSit = drake.maxSitTicks();
-
-        if (sitProgress >= maxSit) {
-            // Fully sitting - play SIT loop
+        } else if (drake.isSleeping() || drake.isSleepingEntering() || drake.isSleepingExiting()) {
+            // CRITICAL: Stop movement controller during sleep transitions
+            // This prevents idle/walk animations from competing with sleep animations (flickering)
+            return PlayState.STOP;
+        } else if (drake.getSitProgress() > 0.5f) {
+            // Drive SIT from our custom progress system only to avoid de-sync
+            state.getController().transitionLength(4);
             state.setAndContinue(SIT_ANIM);
             return PlayState.CONTINUE;
-        } else if (sitProgress > 0f) {
-            // In transition (either sitting down or standing up) - let action controller handle it
-            return PlayState.STOP;
         }
 
         // Use the improved movement state detection
