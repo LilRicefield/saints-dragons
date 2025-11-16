@@ -854,9 +854,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         setBooleanData(DATA_BEAMING, beaming);
         if (!beaming) {
             clearBeamPath();
+            beamTime = 0;
+            beamServerTarget = null;
         }
         if (!beaming || !wasBeaming) {
             resetBeamAim();
+        }
+        if (beaming && !wasBeaming) {
+            // Just started beaming - initialize targeting
+            beamTime = 0;
+            beamServerTarget = createInitialBeamTarget();
         }
     }
 
@@ -877,6 +884,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private Vec3 beamAimDir = null;
     private float beamYawOffsetRad = 0.0f;
     private float beamPitchOffsetRad = 0.0f;
+
+    // ===== BEAM TARGETING (AI-driven aiming) =====
+    private int beamTime = 0; // Tracks how long beam has been active for accuracy ramping
+    private Vec3 beamServerTarget = null; // Server-side smooth target position with wobble
 
     public void setBeamEndPosition(@org.jetbrains.annotations.Nullable Vec3 pos) {
 
@@ -1658,6 +1669,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     private Vec3 computeRawBeamAimDirection(Vec3 start) {
+        // Rider always has perfect control
         Entity cp = getControllingPassenger();
         if (cp instanceof LivingEntity rider) {
             Vec3 riderLook = rider.getLookAngle();
@@ -1666,15 +1678,19 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
         }
 
-        LivingEntity target = getTarget();
-        if (target != null && target.isAlive()) {
-            Vec3 aimPoint = target.getEyePosition().add(0.0, -0.25, 0.0);
-            Vec3 towardTarget = aimPoint.subtract(start);
+        // AI targeting with smart tracking
+        if (!level().isClientSide) {
+            tickBeamTargeting(start);
+        }
+
+        if (beamServerTarget != null) {
+            Vec3 towardTarget = beamServerTarget.subtract(start);
             if (towardTarget.lengthSqr() > 1.0E-6) {
                 return towardTarget.normalize();
             }
         }
 
+        // Fallback to looking direction
         Vec3 fallbackDir = Vec3.directionFromRotation(this.getXRot(), this.yHeadRot);
         return fallbackDir.lengthSqr() > 1.0E-6 ? fallbackDir.normalize() : Vec3.ZERO;
     }
@@ -1707,6 +1723,75 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         Vec3 finalDir = Vec3.directionFromRotation(finalPitch, finalYaw);
         return finalDir.lengthSqr() > 1.0E-6 ? finalDir.normalize() : null;
+    }
+
+    /**
+     * Creates initial beam target position with wild random offset.
+     * Makes the beam start very inaccurate.
+     */
+    private Vec3 createInitialBeamTarget() {
+        LivingEntity target = getTarget();
+        Vec3 shootFrom = getBeamStartAnchor(1.0f);
+        if (shootFrom == null) {
+            shootFrom = position().add(0, getBbHeight() * 0.5, 0);
+        }
+
+        if (target != null && target.isAlive()) {
+            // Start with huge random offset around target
+            Vec3 randomOffset = new Vec3(
+                -50 + random.nextFloat() * 100F,  // ±50 blocks X
+                -20 + random.nextFloat() * 40F,    // ±20 blocks Y
+                -50 + random.nextFloat() * 100F    // ±50 blocks Z
+            );
+            return target.position().add(randomOffset);
+        } else {
+            // No target - aim forward with random spread
+            Vec3 forward = new Vec3(0, random.nextBoolean() ? 50 : 10, 30)
+                .yRot((float) Math.toRadians(-this.yBodyRot));
+            return shootFrom.add(forward);
+        }
+    }
+
+    /**
+     * Updates beam targeting with accuracy ramping and dynamic wobble.
+     * Called each tick while beaming to smoothly track targets.
+     */
+    private void tickBeamTargeting(Vec3 shootFrom) {
+        beamTime++;
+
+        LivingEntity target = getTarget();
+        Vec3 currentTarget = beamServerTarget != null ? beamServerTarget : shootFrom;
+
+        if (target != null && target.isAlive()) {
+            // Calculate accuracy: starts at 100% inaccurate, converges to 0% over 60 ticks
+            float maxBeamTime = 60.0F;
+            float time = (float) beamTime / maxBeamTime;
+            float accuracy = 1.0F - (Math.min(0.75F, time) / 0.75F);
+
+            // Create dynamic wobble pattern that scales with inaccuracy
+            Vec3 wobbleOffset = new Vec3(
+                Math.sin(tickCount * 0.2F) * 4.0,
+                Math.sin(tickCount * 0.15F) * 2.0,
+                Math.cos(tickCount * 0.2F) * -4.0
+            ).yRot((float) Math.toRadians(-this.yBodyRot)).scale(accuracy);
+
+            // Aim point with wobble
+            Vec3 targetPoint = target.getEyePosition().add(0, -0.25, 0).add(wobbleOffset);
+
+            // Smooth approach: only move 10% toward desired position each tick
+            Vec3 approach = targetPoint.subtract(currentTarget).scale(0.1F).add(currentTarget);
+            beamServerTarget = approach;
+        } else {
+            // No target - slowly sweep the beam forward
+            Vec3 sweepOffset = new Vec3(
+                Math.sin(tickCount * 0.1F) * 10,
+                0,
+                6
+            ).yRot((float) Math.toRadians(-this.yBodyRot));
+            Vec3 sweepTarget = shootFrom.add(sweepOffset);
+            Vec3 approach = sweepTarget.subtract(currentTarget).scale(0.1F).add(currentTarget);
+            beamServerTarget = approach;
+        }
     }
 
     private void applyBeamLook(@Nullable Vec3 aimDir) {

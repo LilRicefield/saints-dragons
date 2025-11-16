@@ -15,21 +15,27 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
-    // Beam timeline: 1s startup (20 ticks) then 400 ticks of active beaming.
-    // Separate start/loop/stop animations handle the visuals.
-    private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
+    // Beam timeline: 1s startup (20 ticks) then variable active duration.
+    // Rider-controlled: 400 ticks (~20 seconds)
+    // AI-controlled: 80 ticks (4 seconds)
+    private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 400)
     };
+    private static final DragonAbilitySection[] AI_TRACK = new DragonAbilitySection[] {
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
+            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 80) // 4 seconds for AI
+    };
     private static final double MAX_BEAM_RANGE = 128.0D;
     private static final float DEFAULT_BEAM_DAMAGE = 35.0f;
-    
+
     private boolean hasBeamFired = false; // Track if beam has been fired this activation
     private boolean beamStartPlayed = false;
     private boolean beamLoopActive = false;
 
     public RaevyxBeamAbility(DragonAbilityType<Raevyx, RaevyxBeamAbility> type, Raevyx user) {
-        super(type, user, TRACK, 0); // No cooldown; gated by input
+        // Choose track based on whether user has a controlling passenger
+        super(type, user, user.getControllingPassenger() != null ? RIDER_TRACK : AI_TRACK, 0);
     }
 
     @Override
@@ -99,13 +105,19 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         Raevyx wyvern = getUser();
         if (wyvern.level().isClientSide) return; // server-side authority only
 
+        // Check if target is still valid - interrupt beam if not
+        var tgt = wyvern.getTarget();
+        if (!isValidTarget(tgt)) {
+            interrupt();
+            return;
+        }
+
         BeamPath path = computeBeamPath(wyvern);
         if (path == null) {
             return;
         }
 
         // Actively align body toward target while beaming so the whole wyvern faces the enemy
-        var tgt = wyvern.getTarget();
         if (tgt != null && tgt.isAlive()) {
             double dx = tgt.getX() - wyvern.getX();
             double dz = tgt.getZ() - wyvern.getZ();
@@ -226,6 +238,25 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private boolean isAllied(Raevyx wyvern, net.minecraft.world.entity.Entity other) {
         // Use the comprehensive ally system from DragonEntity
         return wyvern.isAlly(other);
+    }
+
+    /**
+     * Checks if the target is valid for continued beaming.
+     * Beam stops if target is null, dead, removed, or in creative mode.
+     */
+    private boolean isValidTarget(net.minecraft.world.entity.LivingEntity target) {
+        if (target == null) return false;
+        if (!target.isAlive()) return false;
+        if (target.isRemoved()) return false;
+
+        // Stop beaming if target switches to creative mode
+        if (target instanceof net.minecraft.world.entity.player.Player player) {
+            if (player.isCreative() || player.isSpectator()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private record BeamPath(net.minecraft.world.phys.Vec3 origin, net.minecraft.world.phys.Vec3 impact) {}
