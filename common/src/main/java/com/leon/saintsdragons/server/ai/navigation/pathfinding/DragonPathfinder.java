@@ -20,8 +20,6 @@ import java.util.Map;
  * - Coarse grid (2-block spacing to reduce search space)
  * - Timeout-based to prevent lag
  * - Uses binary heap for efficiency
- *
- * NOT YET INTEGRATED - This is for testing and demonstration only!
  */
 public class DragonPathfinder {
 
