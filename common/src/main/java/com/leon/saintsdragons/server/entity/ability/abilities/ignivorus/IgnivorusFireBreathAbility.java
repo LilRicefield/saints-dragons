@@ -32,8 +32,8 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     // Animation timing: 75ms startup matches fire_breath_starts animation duration
     private static final int STARTUP_TICKS = 4;  // ~75ms (was 18, now synced to animation)
-    private static final int ACTIVE_TICKS = 400;
-    private static final int WILD_ACTIVE_LIMIT_TICKS = 80; // 4 seconds max for wild dragons
+    private static final int RIDER_ACTIVE_TICKS = 400;  // ~20 seconds for riders
+    private static final int AI_ACTIVE_TICKS = 80;      // 4 seconds for AI
     private static final int COOLDOWN_TICKS = 40;
 
     private static final double MAX_RANGE = 64.0D;  // Must match layer's MAX_VISUAL_DISTANCE!
@@ -41,9 +41,14 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private static final float BASE_DAMAGE = 4.0F;
     private static final int FIRE_DURATION_SECONDS = 3;
 
-    private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[]{
+    private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[]{
         new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
-        new AbilitySectionDuration(ACTIVE, ACTIVE_TICKS)
+        new AbilitySectionDuration(ACTIVE, RIDER_ACTIVE_TICKS)
+    };
+
+    private static final DragonAbilitySection[] AI_TRACK = new DragonAbilitySection[]{
+        new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
+        new AbilitySectionDuration(ACTIVE, AI_ACTIVE_TICKS)
     };
 
     // Animation state tracking (follows Raevyx pattern)
@@ -52,7 +57,8 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     public IgnivorusFireBreathAbility(DragonAbilityType<Ignivorus, IgnivorusFireBreathAbility> type,
                                       Ignivorus user) {
-        super(type, user, TRACK, COOLDOWN_TICKS);
+        // Choose track based on whether user has a controlling passenger
+        super(type, user, user.getControllingPassenger() != null ? RIDER_TRACK : AI_TRACK, COOLDOWN_TICKS);
     }
 
     @Override
@@ -63,10 +69,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
         Ignivorus dragon = getUser();
 
-        if (!dragon.isTame()) {
-            // Wild dragons shouldn't keep channeling without a living target
-            LivingEntity target = dragon.getTarget();
-            if (target == null || !target.isAlive() || getTicksInSection() >= WILD_ACTIVE_LIMIT_TICKS) {
+        // Check if target is still valid for AI
+        if (!dragon.isTame() && dragon.getControllingPassenger() == null) {
+            if (!isValidTarget(dragon.getTarget())) {
                 interrupt();
                 return;
             }
@@ -154,6 +159,14 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
         Ignivorus dragon = getUser();
 
+        // Check if target is still valid for AI - interrupt if not
+        if (!dragon.isTame() && dragon.getControllingPassenger() == null) {
+            if (!isValidTarget(dragon.getTarget())) {
+                interrupt();
+                return;
+            }
+        }
+
         // Increment stream progress for extending animation (0-40, like Ice & Fire)
         int currentProgress = dragon.getFireBreathProgress();
         if (currentProgress < 40) {
@@ -211,5 +224,24 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             return reach;
         }
         return hit.getLocation();
+    }
+
+    /**
+     * Checks if the target is valid for continued breathing.
+     * Breath stops if target is null, dead, removed, or in creative mode.
+     */
+    private boolean isValidTarget(LivingEntity target) {
+        if (target == null) return false;
+        if (!target.isAlive()) return false;
+        if (target.isRemoved()) return false;
+
+        // Stop breathing if target switches to creative mode
+        if (target instanceof net.minecraft.world.entity.player.Player player) {
+            if (player.isCreative() || player.isSpectator()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

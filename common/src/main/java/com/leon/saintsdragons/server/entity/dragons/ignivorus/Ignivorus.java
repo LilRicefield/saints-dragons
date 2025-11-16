@@ -204,6 +204,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final float MAX_FIRE_PITCH_DEG = 45.0F;
     private Vec3 fireAimDir;
 
+    // Fire breath targeting (AI-driven smart aiming)
+    private int fireTime = 0; // Tracks how long fire breath has been active for accuracy ramping
+    private Vec3 fireServerTarget = null; // Server-side smooth target position with wobble
+
     // Banking animation state
     private float bankSmoothedYaw = 0f;
     private int bankHoldTicks = 0;
@@ -997,10 +1001,18 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public void setBreathingFire(boolean breathing) {
+        boolean wasBreathing = this.entityData.get(DATA_FIRE_BREATHING);
         this.entityData.set(DATA_FIRE_BREATHING, breathing);
         if (!breathing) {
             resetFireAimDirection();
             setFireBreathProgress(0);
+            fireTime = 0;
+            fireServerTarget = null;
+        }
+        if (breathing && !wasBreathing) {
+            // Just started breathing - initialize targeting
+            fireTime = 0;
+            fireServerTarget = createInitialFireTarget();
         }
     }
 
@@ -1122,6 +1134,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     private Vec3 computeRawFireAimDirection(Vec3 start) {
+        // Rider always has perfect control
         Entity controller = this.getControllingPassenger();
         if (controller instanceof LivingEntity rider) {
             Vec3 look = rider.getLookAngle();
@@ -1130,15 +1143,19 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
         }
 
-        LivingEntity target = this.getTarget();
-        if (target != null && target.isAlive()) {
-            Vec3 aimPoint = target.getEyePosition().add(0.0D, -0.2D, 0.0D);
-            Vec3 toward = aimPoint.subtract(start);
-            if (toward.lengthSqr() > 1.0E-6) {
-                return toward.normalize();
+        // AI targeting with smart tracking
+        if (!level().isClientSide) {
+            tickFireTargeting(start);
+        }
+
+        if (fireServerTarget != null) {
+            Vec3 towardTarget = fireServerTarget.subtract(start);
+            if (towardTarget.lengthSqr() > 1.0E-6) {
+                return towardTarget.normalize();
             }
         }
 
+        // Fallback to looking direction
         Vec3 fallback = Vec3.directionFromRotation(this.getXRot(), this.yHeadRot);
         return fallback.lengthSqr() > 1.0E-6 ? fallback.normalize() : null;
     }
@@ -1191,6 +1208,75 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     private void resetFireAimDirection() {
         fireAimDir = null;
+    }
+
+    /**
+     * Creates initial fire breath target position with wild random offset.
+     * Makes the breath start very inaccurate.
+     */
+    private Vec3 createInitialFireTarget() {
+        LivingEntity target = getTarget();
+        Vec3 shootFrom = getFireBreathStartAnchor(1.0f);
+        if (shootFrom == null) {
+            shootFrom = position().add(0, getBbHeight() * 0.5, 0);
+        }
+
+        if (target != null && target.isAlive()) {
+            // Start with huge random offset around target
+            Vec3 randomOffset = new Vec3(
+                -50 + random.nextFloat() * 100F,  // ±50 blocks X
+                -20 + random.nextFloat() * 40F,    // ±20 blocks Y
+                -50 + random.nextFloat() * 100F    // ±50 blocks Z
+            );
+            return target.position().add(randomOffset);
+        } else {
+            // No target - aim forward with random spread
+            Vec3 forward = new Vec3(0, random.nextBoolean() ? 50 : 10, 30)
+                .yRot((float) Math.toRadians(-this.yBodyRot));
+            return shootFrom.add(forward);
+        }
+    }
+
+    /**
+     * Updates fire breath targeting with accuracy ramping and dynamic wobble.
+     * Called each tick while breathing to smoothly track targets.
+     */
+    private void tickFireTargeting(Vec3 shootFrom) {
+        fireTime++;
+
+        LivingEntity target = getTarget();
+        Vec3 currentTarget = fireServerTarget != null ? fireServerTarget : shootFrom;
+
+        if (target != null && target.isAlive()) {
+            // Calculate accuracy: starts at 100% inaccurate, converges to 0% over 60 ticks
+            float maxFireTime = 60.0F;
+            float time = (float) fireTime / maxFireTime;
+            float accuracy = 1.0F - (Math.min(0.75F, time) / 0.75F);
+
+            // Create dynamic wobble pattern that scales with inaccuracy
+            Vec3 wobbleOffset = new Vec3(
+                Math.sin(tickCount * 0.2F) * 4.0,
+                Math.sin(tickCount * 0.15F) * 2.0,
+                Math.cos(tickCount * 0.2F) * -4.0
+            ).yRot((float) Math.toRadians(-this.yBodyRot)).scale(accuracy);
+
+            // Aim point with wobble
+            Vec3 targetPoint = target.getEyePosition().add(0, -0.2, 0).add(wobbleOffset);
+
+            // Smooth approach: only move 10% toward desired position each tick
+            Vec3 approach = targetPoint.subtract(currentTarget).scale(0.1F).add(currentTarget);
+            fireServerTarget = approach;
+        } else {
+            // No target - slowly sweep the breath forward
+            Vec3 sweepOffset = new Vec3(
+                Math.sin(tickCount * 0.1F) * 10,
+                0,
+                6
+            ).yRot((float) Math.toRadians(-this.yBodyRot));
+            Vec3 sweepTarget = shootFrom.add(sweepOffset);
+            Vec3 approach = sweepTarget.subtract(currentTarget).scale(0.1F).add(currentTarget);
+            fireServerTarget = approach;
+        }
     }
 
 
