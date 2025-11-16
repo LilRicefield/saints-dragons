@@ -113,12 +113,11 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
 
     // Synced sleep state for client-side animation
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING = 
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-    
-    
+
     // Synced ground movement state for reliable animation
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = 
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     
     // Binding state for Drake Binder
@@ -615,18 +614,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         return sleepingExiting;
     }
 
-    /**
-     * Check if drake is in a rest transition state (sit ↔ idle, sit ↔ sleep)
-     * Used by animation controller to return STOP during transitions
-     */
-    public boolean isInRestTransition() {
-        var restState = restManager.getCurrentState();
-        return restState == com.leon.saintsdragons.server.entity.sleep.DragonRestState.SITTING_DOWN ||
-               restState == com.leon.saintsdragons.server.entity.sleep.DragonRestState.FALLING_ASLEEP ||
-               restState == com.leon.saintsdragons.server.entity.sleep.DragonRestState.WAKING_UP ||
-               restState == com.leon.saintsdragons.server.entity.sleep.DragonRestState.STANDING_UP ||
-               isSittingDown || isStandingUp || sleepingEntering || sleepingExiting;
-    }
     
     @Override
     public boolean isSleepSuppressed() {
@@ -774,58 +761,71 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
      */
     private void handleRestStateTransitions() {
         var restState = restManager.getCurrentState();
-        
+
         // Detect state changes and trigger animations on entry (not exit)
         if (restState != previousRestState) {
+            // DEBUG: Log state transitions
+            com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
+                "[Stegonaut] State transition: {} -> {} (sitProgress={}, isOrderedToSit={})",
+                previousRestState, restState, sitProgress, isOrderedToSit()
+            );
+
             switch (restState) {
                 case SITTING_DOWN:
                     // Entering sit-down transition (part of sleep cycle)
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info("[Stegonaut] Triggering sit_down animation");
                     animationController.triggerSitDownAnimation();
                     sleepTransitionTicks = 38; // 1.88 seconds
                     isSittingDown = true;
                     isStandingUp = false;
                     break;
-                    
+
                 case FALLING_ASLEEP:
                     // Transitioning from sit to sleep
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info("[Stegonaut] Triggering fall_asleep animation");
                     animationController.triggerFallAsleepAnimation();
                     sleepTransitionTicks = 38; // 1.88 seconds
                     sleepingEntering = true;
                     break;
-                    
+
                 case SLEEPING:
                     // Entering sleep loop
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info("[Stegonaut] Triggering sleep animation");
                     animationController.triggerSleepAnimation();
                     sleepTransitionTicks = -1; // Loop indefinitely
                     sleepingEntering = false; // Transition complete
                     sleeping = true; // Now fully asleep
                     this.entityData.set(DATA_SLEEPING, true); // Sync to client
                     break;
-                    
+
                 case WAKING_UP:
                     // Transitioning from sleep to sit
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info("[Stegonaut] Triggering wake_up animation");
                     animationController.triggerWakeUpAnimation();
                     sleepTransitionTicks = 38; // 1.88 seconds
                     sleepingExiting = true;
                     sleeping = false; // No longer sleeping
                     this.entityData.set(DATA_SLEEPING, false); // Sync to client
                     break;
-                    
+
                 case STANDING_UP:
                     // Entering stand-up transition (part of sleep cycle)
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info("[Stegonaut] Triggering sit_up animation");
                     animationController.triggerSitUpAnimation();
                     sleepTransitionTicks = 38; // 1.88 seconds
                     isStandingUp = true;
                     isSittingDown = false;
                     break;
-                    
+
                 case SITTING:
                 case SITTING_AFTER:
                     // No animation trigger needed for these states
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info("[Stegonaut] Entering {} state (no animation trigger)", restState);
                     break;
-                    
+
                 case IDLE:
                     // Exiting rest cycle - clear all transition flags
+                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info("[Stegonaut] Returning to IDLE, clearing flags");
                     sleepingEntering = false;
                     sleepingExiting = false;
                     sleepTransitioning = false;
