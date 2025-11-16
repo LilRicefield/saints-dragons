@@ -52,15 +52,9 @@ public class DragonBodyControl extends BodyRotationControl {
             // Calculate movement direction
             double moveAngle = Math.toDegrees(Mth.atan2(dz, dx)) - 90.0;
 
-            // Check if moving backward (movement direction is opposite to body facing)
-            float angleDiff = Math.abs(Mth.wrapDegrees((float)moveAngle - this.entity.yBodyRot));
-            boolean movingBackward = angleDiff > 135.0f; // ~135-180° = backing up
-
-            if (!movingBackward) {
-                // Normal movement: align body to movement direction
-                this.entity.yBodyRot = (float)(this.entity.yBodyRot + Mth.wrapDegrees(moveAngle - this.entity.yBodyRot) * this.turnSpeed);
-            }
-            // If moving backward, keep current body rotation (don't try to turn around)
+            // ALWAYS align body to movement direction to prevent backwards walking
+            // This forces the dragon to turn around instead of walking backwards with bent neck
+            this.entity.yBodyRot = (float)(this.entity.yBodyRot + Mth.wrapDegrees(moveAngle - this.entity.yBodyRot) * this.turnSpeed);
 
             this.targetYawHead = this.entity.yHeadRot;
         }
