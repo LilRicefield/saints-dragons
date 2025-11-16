@@ -106,10 +106,13 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (wyvern.level().isClientSide) return; // server-side authority only
 
         // Check if target is still valid - interrupt beam if not
+
         var tgt = wyvern.getTarget();
-        if (!isValidTarget(tgt)) {
-            interrupt();
-            return;
+        if (!wyvern.isTame() && wyvern.getControllingPassenger() == null) {
+            if (!isValidTarget(wyvern.getTarget())) {
+                interrupt();
+                return;
+            }
         }
 
         BeamPath path = computeBeamPath(wyvern);
