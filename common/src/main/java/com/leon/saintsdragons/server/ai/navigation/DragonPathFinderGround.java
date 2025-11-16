@@ -21,8 +21,8 @@ import java.util.Set;
 /**
  * Fixes vanilla Minecraft pathfinding issues and provides smoother movement.
  */
-public class DragonPathFinder extends PathFinder {
-    public DragonPathFinder(NodeEvaluator processor, int maxVisitedNodes) {
+public class DragonPathFinderGround extends PathFinder {
+    public DragonPathFinderGround(NodeEvaluator processor, int maxVisitedNodes) {
         super(processor, maxVisitedNodes);
     }
 

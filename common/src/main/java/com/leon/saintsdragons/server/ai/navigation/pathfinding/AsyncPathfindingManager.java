@@ -145,7 +145,7 @@ public class AsyncPathfindingManager {
         long startTime = System.currentTimeMillis();
 
         // Create pathfinder instance
-        SimpleDragonPathfinder pathfinder = new SimpleDragonPathfinder(
+        DragonPathfinder pathfinder = new DragonPathfinder(
             level,
             gridResolution,
             10000,      // Max nodes (configurable later)
