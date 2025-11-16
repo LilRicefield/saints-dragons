@@ -3,19 +3,12 @@ package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
+import com.leon.saintsdragons.server.ai.goals.nulljaw.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.DragonAmphibiousNavigation;
 import com.leon.saintsdragons.server.ai.navigation.DragonSwimMoveControl;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawCombatGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFindWaterGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFollowOwnerGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawLeaveWaterGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawGroundWanderGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawRandomSwimGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawRestGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawSleepGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.*;
@@ -38,7 +31,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -142,7 +134,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private final DragonSwimMoveControl swimMoveControl;
     private final RiftDrakeLookController landLookControl;
     private int riderControlLockTicks = 0;
-    private NulljawRandomSwimGoal waterSwimGoal;
+    private NulljawSwimGoal waterSwimGoal;
     private NulljawGroundWanderGoal groundWanderGoal;
     private boolean swimming;
     private int swimTicks;
@@ -435,7 +427,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         this.goalSelector.addGoal(8, new NulljawFollowOwnerGoal(this));
 
         // Priority 9: Idle swimming
-        this.waterSwimGoal = new NulljawRandomSwimGoal(this, 1.2D, 30);
+        this.waterSwimGoal = new NulljawSwimGoal(this, 1.2D, 30);
         this.goalSelector.addGoal(9, waterSwimGoal);
 
         // Priority 10: Idle roaming on land

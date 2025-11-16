@@ -23,7 +23,7 @@ import java.util.Map;
  *
  * NOT YET INTEGRATED - This is for testing and demonstration only!
  */
-public class SimpleDragonPathfinder {
+public class DragonPathfinder {
 
     private final Level level;
     private final int gridResolution; // How many blocks per pathfinding node
@@ -36,7 +36,7 @@ public class SimpleDragonPathfinder {
      */
     private static final int[][] MOVEMENT_OFFSETS_3D = generateMovementOffsets();
 
-    public SimpleDragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs) {
+    public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs) {
         this.level = level;
         this.gridResolution = gridResolution;
         this.maxSearchNodes = maxSearchNodes;

@@ -26,7 +26,7 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
     protected @NotNull PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new WalkNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
-        return new DragonPathFinder(this.nodeEvaluator, maxVisitedNodes);
+        return new DragonPathFinderGround(this.nodeEvaluator, maxVisitedNodes);
     }
 
     @Override
