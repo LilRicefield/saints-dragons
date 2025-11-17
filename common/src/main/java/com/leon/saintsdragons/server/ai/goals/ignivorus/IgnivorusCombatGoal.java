@@ -28,6 +28,10 @@ public class IgnivorusCombatGoal extends Goal {
     private double lastTargetY;
     private double lastTargetZ;
 
+    // Ultimate opener mechanic
+    private boolean hasUsedUltimateOpener = false;
+    private int ultimateOpenerDelay = 0;
+
     // Fire breath cooldown mechanic (AI only - 3 minute cooldown)
     private int breathCooldown = 0;
     private static final int BREATH_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
@@ -82,10 +86,11 @@ public class IgnivorusCombatGoal extends Goal {
             return false;
         }
 
-        // IMPORTANT: If currently breathing fire, don't stop the goal even if target goes out of range
-        // This prevents the breath from being cancelled mid-animation when the player runs away
-        if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)) {
-            return true; // Keep goal active to finish the breath
+        // IMPORTANT: If currently breathing fire or using ultimate, don't stop the goal even if target goes out of range
+        // This prevents abilities from being cancelled mid-animation when the player runs away
+        if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
+            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE)) {
+            return true; // Keep goal active to finish the ability
         }
 
         if (dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
@@ -108,6 +113,10 @@ public class IgnivorusCombatGoal extends Goal {
         dragon.setGroundMoveStateFromAI(0);
         cancelFireBreathIfActive();
         pathRecalcCooldown = 0;
+
+        // Reset ultimate opener for next combat encounter
+        hasUsedUltimateOpener = false;
+        ultimateOpenerDelay = 0;
     }
 
     @Override
@@ -116,14 +125,23 @@ public class IgnivorusCombatGoal extends Goal {
         dragon.setAggressive(true);
         dragon.setGroundMoveStateFromAI(2);
 
+        // Initialize ultimate opener - only for WILD dragons (no owner)
+        // Tamed dragons helping their owner skip the ultimate and go straight to normal combat
+        if (dragon.isTame() && dragon.getOwner() != null) {
+            // Tamed dragon - skip ultimate opener entirely
+            hasUsedUltimateOpener = true; // Mark as "used" so it never triggers
+            ultimateOpenerDelay = 0;
+        } else {
+            // Wild dragon - initialize ultimate opener (wait 5 ticks then use ultimate)
+            hasUsedUltimateOpener = false;
+            ultimateOpenerDelay = 5;
+        }
+
         LivingEntity target = dragon.getTarget();
         if (target != null) {
             dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
             dragon.getNavigation().moveTo(target, chaseSpeed);
             rememberTargetPosition(target);
-
-            // Try attacking immediately if in range
-            tryAttack(target);
         }
     }
 
@@ -147,6 +165,30 @@ public class IgnivorusCombatGoal extends Goal {
         }
 
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
+
+        // Handle ultimate opener - use ultimate once at the start of combat
+        if (!hasUsedUltimateOpener) {
+            if (ultimateOpenerDelay > 0) {
+                ultimateOpenerDelay--;
+                // Keep chasing during delay
+                updateChasePath(target);
+                updateGroundMoveState();
+                return; // Don't do normal attacks during opener delay
+            } else {
+                // Delay expired - try to use ultimate ability
+                dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
+                hasUsedUltimateOpener = true;
+
+                // Check if ultimate actually started (may fail due to requirements)
+                if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE)) {
+                    // Ultimate successfully started - set long cooldown
+                    attackCooldown = 180; // Cooldown after ultimate (9 seconds - longer than ultimate duration)
+                } else {
+                    // Ultimate failed (likely due to ground/flight state) - skip to normal combat immediately
+                    attackCooldown = 0; // No cooldown, proceed with normal attacks
+                }
+            }
+        }
 
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
@@ -180,7 +222,8 @@ public class IgnivorusCombatGoal extends Goal {
     private boolean isCurrentlyAttacking() {
         return dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BITE)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BODY_SLAM)
-            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
+            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
+            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
     }
 
     /**
