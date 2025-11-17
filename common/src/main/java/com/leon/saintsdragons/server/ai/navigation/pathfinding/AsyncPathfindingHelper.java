@@ -27,11 +27,12 @@ public class AsyncPathfindingHelper {
      *     dragon.position(),
      *     targetPos,
      *     2,  // Grid resolution
+     *     dragon.getBoundingBox(), // Entity bounding box
      *     result -> {
      *         if (result.isSuccess()) {
      *             // This runs on background thread!
      *             // Schedule any entity modification on main thread
-     *             scheduleOnMainThread(dragon, () -> {
+     *             scheduleOnMainThread(dragon.level(), () -> {
      *                 dragon.startFollowingPath(result.getPath());
      *             });
      *         }
@@ -44,11 +45,12 @@ public class AsyncPathfindingHelper {
         Vec3 start,
         Vec3 goal,
         int gridResolution,
+        net.minecraft.world.phys.AABB entityBounds,
         Consumer<PathfindingResult> callback
     ) {
         AsyncPathfindingManager manager = AsyncPathfindingManager.getInstance();
 
-        return manager.requestPath(level, start, goal, gridResolution)
+        return manager.requestPath(level, start, goal, gridResolution, entityBounds)
             .thenApply(result -> {
                 // Execute callback when done
                 if (callback != null) {
@@ -56,6 +58,19 @@ public class AsyncPathfindingHelper {
                 }
                 return result;
             });
+    }
+
+    /**
+     * Convenience method without entity bounds (uses default).
+     */
+    public static CompletableFuture<PathfindingResult> requestPath(
+        ServerLevel level,
+        Vec3 start,
+        Vec3 goal,
+        int gridResolution,
+        Consumer<PathfindingResult> callback
+    ) {
+        return requestPath(level, start, goal, gridResolution, null, callback);
     }
 
     /**

@@ -79,6 +79,7 @@ public class AsyncPathfindingManager {
      * @param gridResolution Grid resolution (1 = fine, 2-3 = coarse/faster)
      * @param timeoutMs      Maximum time to spend pathfinding (ms)
      * @param smoothPath     Whether to apply path smoothing
+     * @param entityBounds   Entity bounding box (optional, uses default if null)
      * @return CompletableFuture that will contain the result
      */
     public CompletableFuture<PathfindingResult> requestPath(
@@ -87,13 +88,14 @@ public class AsyncPathfindingManager {
         Vec3 goal,
         int gridResolution,
         long timeoutMs,
-        boolean smoothPath
+        boolean smoothPath,
+        net.minecraft.world.phys.AABB entityBounds
     ) {
         activeTasks.incrementAndGet();
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return computePath(level, start, goal, gridResolution, timeoutMs, smoothPath);
+                return computePath(level, start, goal, gridResolution, timeoutMs, smoothPath, entityBounds);
             } catch (Exception e) {
                 // Catch any unexpected errors
                 System.err.println("Pathfinding error: " + e.getMessage());
@@ -107,7 +109,7 @@ public class AsyncPathfindingManager {
     }
 
     /**
-     * Convenience method with default timeout and smoothing enabled.
+     * Convenience method with default timeout, smoothing, and entity bounds.
      */
     public CompletableFuture<PathfindingResult> requestPath(
         Level level,
@@ -115,11 +117,11 @@ public class AsyncPathfindingManager {
         Vec3 goal,
         int gridResolution
     ) {
-        return requestPath(level, start, goal, gridResolution, DEFAULT_TIMEOUT_MS, true);
+        return requestPath(level, start, goal, gridResolution, DEFAULT_TIMEOUT_MS, true, null);
     }
 
     /**
-     * Convenience method with default smoothing enabled.
+     * Convenience method with default smoothing and entity bounds.
      */
     public CompletableFuture<PathfindingResult> requestPath(
         Level level,
@@ -128,7 +130,20 @@ public class AsyncPathfindingManager {
         int gridResolution,
         long timeoutMs
     ) {
-        return requestPath(level, start, goal, gridResolution, timeoutMs, true);
+        return requestPath(level, start, goal, gridResolution, timeoutMs, true, null);
+    }
+
+    /**
+     * Convenience method with entity bounds but default timeout and smoothing.
+     */
+    public CompletableFuture<PathfindingResult> requestPath(
+        Level level,
+        Vec3 start,
+        Vec3 goal,
+        int gridResolution,
+        net.minecraft.world.phys.AABB entityBounds
+    ) {
+        return requestPath(level, start, goal, gridResolution, DEFAULT_TIMEOUT_MS, true, entityBounds);
     }
 
     /**
@@ -140,17 +155,15 @@ public class AsyncPathfindingManager {
         Vec3 goal,
         int gridResolution,
         long timeoutMs,
-        boolean smoothPath
+        boolean smoothPath,
+        net.minecraft.world.phys.AABB entityBounds
     ) {
         long startTime = System.currentTimeMillis();
 
-        // Create pathfinder instance
-        DragonPathfinder pathfinder = new DragonPathfinder(
-            level,
-            gridResolution,
-            10000,      // Max nodes (configurable later)
-            timeoutMs
-        );
+        // Create pathfinder instance with entity bounds
+        DragonPathfinder pathfinder = entityBounds != null
+            ? new DragonPathfinder(level, gridResolution, 10000, timeoutMs, entityBounds)
+            : new DragonPathfinder(level, gridResolution, 10000, timeoutMs);
 
         // Find path
         List<Vec3> path = pathfinder.findPath(start, goal);

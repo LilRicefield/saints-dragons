@@ -246,6 +246,7 @@ public class RaevyxSmartFlightGoal extends Goal {
                 raevyx.position(),
                 targetPos,
                 2, // Grid resolution (same as Cindervane)
+                raevyx.getBoundingBox(), // Use actual dragon size
                 result -> {
                     pathfindingInProgress = false;
 
