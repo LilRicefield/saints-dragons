@@ -208,6 +208,9 @@ public class CindervaneBinderItem extends Item {
             newAmphithere.readAdditionalSaveData(amphithereData);
         }
 
+        // IMPORTANT: Generate a new UUID to prevent collisions
+        newAmphithere.setUUID(java.util.UUID.randomUUID());
+
         newAmphithere.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
         if (ownerUUID != null) {

@@ -281,6 +281,7 @@ public class CindervaneSmartFlightGoal extends Goal {
                 cindervane.position(),
                 targetPos,
                 2, // Grid resolution (2 blocks - good for flight)
+                cindervane.getBoundingBox(), // Use actual dragon size
                 result -> {
                     // Callback runs on background thread!
                     pathfindingInProgress = false;

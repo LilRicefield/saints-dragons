@@ -208,6 +208,9 @@ public class IgnivorusBinderItem extends Item {
             newIgnivorus.readAdditionalSaveData(ignivorusData);
         }
 
+        // IMPORTANT: Generate a new UUID to prevent collisions
+        newIgnivorus.setUUID(java.util.UUID.randomUUID());
+
         newIgnivorus.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
         if (ownerUUID != null) {

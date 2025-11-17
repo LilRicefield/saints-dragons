@@ -206,6 +206,9 @@ public class RaevyxBinderItem extends Item {
             newDragon.readAdditionalSaveData(dragonData);
         }
 
+        // IMPORTANT: Generate a new UUID to prevent collisions
+        newDragon.setUUID(java.util.UUID.randomUUID());
+
         // Ensure newly released dragons default to follow command so they don't stay in previous wander state
         newDragon.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 

@@ -202,8 +202,12 @@ public class StegonautBinderItem extends Item {
         // Set position
         newDrake.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
-        // Restore drake data
+        // Restore drake data (this restores the old UUID, which we'll override)
         newDrake.readAdditionalSaveData(drakeData);
+
+        // IMPORTANT: Generate a new UUID to prevent collisions
+        // The old UUID might still exist in the world if the drake was duplicated
+        newDrake.setUUID(java.util.UUID.randomUUID());
 
         if (ownerUUID != null) {
             newDrake.setTame(true);

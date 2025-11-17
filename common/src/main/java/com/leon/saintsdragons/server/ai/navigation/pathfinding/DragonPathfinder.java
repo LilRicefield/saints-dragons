@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.navigation.pathfinding;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.Map;
  * - Coarse grid (2-block spacing to reduce search space)
  * - Timeout-based to prevent lag
  * - Uses binary heap for efficiency
+ * - Entity bounding box awareness for dragon size
  */
 public class DragonPathfinder {
 
@@ -27,6 +29,7 @@ public class DragonPathfinder {
     private final int gridResolution; // How many blocks per pathfinding node
     private final int maxSearchNodes; // Maximum nodes to explore before giving up
     private final long timeoutMs; // Maximum time to spend pathfinding
+    private final AABB entityBounds; // Bounding box of the entity (for collision checking)
 
     /**
      * Movement offsets for 3D pathfinding.
@@ -34,11 +37,16 @@ public class DragonPathfinder {
      */
     private static final int[][] MOVEMENT_OFFSETS_3D = generateMovementOffsets();
 
-    public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs) {
+    public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs, AABB entityBounds) {
         this.level = level;
         this.gridResolution = gridResolution;
         this.maxSearchNodes = maxSearchNodes;
         this.timeoutMs = timeoutMs;
+        this.entityBounds = entityBounds;
+    }
+
+    public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs) {
+        this(level, gridResolution, maxSearchNodes, timeoutMs, new AABB(-0.5, 0, -0.5, 0.5, 1, 0.5));
     }
 
     /**
@@ -171,14 +179,26 @@ public class DragonPathfinder {
 
     /**
      * Check if a position is passable for flight.
-     * Simplified version - just checks if blocks are solid.
+     * Uses entity bounding box to check if dragon fits.
      */
     private boolean isPassable(BlockPos pos) {
-        // Check a 3x3x3 box around the position for obstacles
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    BlockPos checkPos = pos.offset(dx, dy, dz);
+        // Calculate bounding box at this position based on entity size
+        double halfWidth = (entityBounds.maxX - entityBounds.minX) / 2.0;
+        double height = entityBounds.maxY - entityBounds.minY;
+
+        // Check blocks that the entity's bounding box would occupy
+        int minX = (int) Math.floor(pos.getX() - halfWidth);
+        int maxX = (int) Math.ceil(pos.getX() + halfWidth);
+        int minY = pos.getY();
+        int maxY = (int) Math.ceil(pos.getY() + height);
+        int minZ = (int) Math.floor(pos.getZ() - halfWidth);
+        int maxZ = (int) Math.ceil(pos.getZ() + halfWidth);
+
+        // Check all blocks in the bounding box
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    BlockPos checkPos = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(checkPos);
                     if (!state.isAir() && state.blocksMotion()) {
                         return false; // Obstacle detected

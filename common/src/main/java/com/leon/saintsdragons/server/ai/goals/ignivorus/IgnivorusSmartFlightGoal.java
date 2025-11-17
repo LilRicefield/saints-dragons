@@ -289,6 +289,7 @@ public class IgnivorusSmartFlightGoal extends Goal {
                 dragon.position(),
                 targetPos,
                 2, // Grid resolution
+                dragon.getBoundingBox(), // Use actual dragon size
                 result -> {
                     pathfindingInProgress = false;
 
