@@ -971,17 +971,20 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                 newEntity.setYRot(yaw);
                 newEntity.setXRot(pitch);
 
-                // Preserve UUID if tamed (important for ownership)
+                // Clear the respawning flag now that the process is complete
+                newEntity.isRespawning = false;
+
+                // CRITICAL: Remove old entity FIRST to free up the UUID
+                this.discard();
+
+                // THEN preserve UUID if tamed (important for ownership)
+                // This must happen AFTER discarding the old entity to avoid UUID collision
                 if (wasTamed) {
                     newEntity.setUUID(oldUUID);
                 }
 
-                // Clear the respawning flag now that the process is complete
-                newEntity.isRespawning = false;
-
-                // IMPORTANT: Add new entity BEFORE removing old one to prevent "already removed" errors
+                // Finally, add the new entity to the world
                 world.addFreshEntity(newEntity);
-                this.discard();
 
                 // Visual/sound feedback for the transformation
                 world.broadcastEntityEvent(newEntity, (byte) 7); // Hearts
