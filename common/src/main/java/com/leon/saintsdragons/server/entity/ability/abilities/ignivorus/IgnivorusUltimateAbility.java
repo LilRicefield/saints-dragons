@@ -84,10 +84,14 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             sendGroundMessage();
             return false;
         }
-        if (dragon.getHealth() < dragon.getMaxHealth()) {
+
+        // Only enforce full health requirement for ridden dragons (player-controlled)
+        // AI-controlled wild dragons can use it regardless of health
+        if (dragon.isVehicle() && dragon.getHealth() < dragon.getMaxHealth()) {
             sendRequirementMessage();
             return false;
         }
+
         return super.tryAbility();
     }
 
@@ -161,12 +165,19 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         if (penaltyApplied) {
             return;
         }
+
+        // Apply health penalty to ALL dragons (both AI and player-controlled)
+        // This is the cost for using the ultimate ability
         float current = dragon.getHealth();
         float penaltyHealth = resolvePenaltyHealth();
         if (current > penaltyHealth) {
             dragon.setHealth(penaltyHealth);
-            sendPenaltyMessage();
+            // Only send message to rider if there is one
+            if (dragon.isVehicle()) {
+                sendPenaltyMessage();
+            }
         }
+
         penaltyApplied = true;
     }
 
