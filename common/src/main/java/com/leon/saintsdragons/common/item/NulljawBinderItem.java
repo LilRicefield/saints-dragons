@@ -183,6 +183,9 @@ public class NulljawBinderItem extends Item {
             newDrake.readAdditionalSaveData(drakeData);
         }
 
+        // IMPORTANT: Generate a new UUID to prevent collisions
+        newDrake.setUUID(java.util.UUID.randomUUID());
+
         newDrake.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
         if (ownerUUID != null) {
