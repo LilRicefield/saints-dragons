@@ -67,6 +67,49 @@ public class DragonBodyControl extends BodyRotationControl {
     }
 
     /**
+     * Server-side body rotation update.
+     * Called from DragonEntity.tick() on server side to keep body aligned with head/movement.
+     * CRITICAL: This prevents neck "crunching" when dragon looks around while standing.
+     */
+    public void serverTick() {
+        // Skip if ridden (rider controls rotation)
+        if (this.entity.isVehicle()) {
+            return;
+        }
+
+        // Shift history
+        for (int i = this.histPosX.length - 1; i > 0; --i) {
+            this.histPosX[i] = this.histPosX[i - 1];
+            this.histPosZ[i] = this.histPosZ[i - 1];
+        }
+        this.histPosX[0] = this.entity.getX();
+        this.histPosZ[0] = this.entity.getZ();
+
+        // Calculate movement velocity by comparing position history
+        double dx = this.delta(this.histPosX);
+        double dz = this.delta(this.histPosZ);
+        double distSq = dx * dx + dz * dz;
+
+        // If moving (velocity detected)
+        if (distSq > 2.5E-7) {
+            // Calculate movement direction
+            double moveAngle = Math.toDegrees(Mth.atan2(dz, dx)) - 90.0;
+
+            // ALWAYS align body to movement direction to prevent backwards walking
+            // This forces the dragon to turn around instead of walking backwards with bent neck
+            this.entity.yBodyRot = (float)(this.entity.yBodyRot + Mth.wrapDegrees(moveAngle - this.entity.yBodyRot) * this.turnSpeed);
+
+            this.targetYawHead = this.entity.yHeadRot;
+        }
+        // If standing still
+        else {
+            // Body gradually follows head
+            this.targetYawHead = smooth(this.targetYawHead, this.entity.yHeadRot, 0.3f);
+            this.entity.yBodyRot = approach(this.targetYawHead, this.entity.yBodyRot, 75.0f);
+        }
+    }
+
+    /**
      * Calculate velocity delta by comparing recent vs older positions.
      */
     private double delta(double[] arr) {
