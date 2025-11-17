@@ -57,6 +57,11 @@ public class RaevyxGroundCombatGoal extends Goal {
             return false;
         }
 
+        // Don't use ground combat if target is airborne (let air combat goal handle it)
+        if (isTargetAirborne(target)) {
+            return false;
+        }
+
         if (wyvern.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
             return false;
         }
@@ -80,6 +85,11 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
 
         if (wyvern.isVehicle() || wyvern.isOrderedToSit()) {
+            return false;
+        }
+
+        // Stop ground combat if target becomes airborne (switch to air combat goal)
+        if (isTargetAirborne(target)) {
             return false;
         }
 
@@ -259,5 +269,29 @@ public class RaevyxGroundCombatGoal extends Goal {
         double dy = target.getY() - this.lastTargetY;
         double dz = target.getZ() - this.lastTargetZ;
         return dx * dx + dy * dy + dz * dz > 4.0D;
+    }
+
+    /**
+     * Check if target is airborne (flying, riding flying mount, or off ground)
+     */
+    private boolean isTargetAirborne(LivingEntity target) {
+        // Check if target is on ground
+        if (target.onGround()) {
+            return false;
+        }
+
+        // Check if riding something (might be a flying dragon)
+        if (target.isPassenger() && target.getVehicle() != null) {
+            return true; // Assume mounted targets are valid air targets
+        }
+
+        // Check if significantly off ground (more than 8 blocks up for elytra/flight stability)
+        // Increased from 3 to prevent low elytra gliding from triggering constant takeoff
+        double groundY = wyvern.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
+        if (target.getY() - groundY > 8.0) {
+            return true;
+        }
+
+        return false;
     }
 }
