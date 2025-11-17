@@ -2042,7 +2042,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         boolean moveGoalActive = this.goalSelector.getRunningGoals().anyMatch(wrapped -> {
             Goal goal = wrapped.getGoal();
-            return goal instanceof RaevyxFollowOwnerGoal || goal instanceof RaevyxCombatGoal;
+            return goal instanceof RaevyxFollowOwnerGoal || goal instanceof RaevyxGroundCombatGoal;
         });
         if (moveGoalActive) {
             return;
@@ -2806,7 +2806,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
 
         // Combat goal - all-in-one system (movement + attack selection)
-        this.goalSelector.addGoal(3, new RaevyxCombatGoal(this));
+        this.goalSelector.addGoal(3, new RaevyxGroundCombatGoal(this));
 
         // Movement/idle
         // Unified sleep goal: high priority to preempt follow/wander, but calm() prevents overriding combat/aggro

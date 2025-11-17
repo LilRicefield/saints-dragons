@@ -13,7 +13,7 @@ import java.util.EnumSet;
  * All-in-one combat goal for Raevyx - handles movement, attack selection, and execution.
  * No state machine, no windup phases - just instant attacks when in range.
  */
-public class RaevyxCombatGoal extends Goal {
+public class RaevyxGroundCombatGoal extends Goal {
     private final Raevyx wyvern;
     private final double biteRange = 3.0;
     private final double goreRange = 4.5;
@@ -33,7 +33,7 @@ public class RaevyxCombatGoal extends Goal {
     private int beamCooldown = 0;
     private static final int BEAM_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
 
-    public RaevyxCombatGoal(Raevyx wyvern) {
+    public RaevyxGroundCombatGoal(Raevyx wyvern) {
         this.wyvern = wyvern;
         this.setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
     }

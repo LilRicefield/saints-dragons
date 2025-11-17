@@ -14,7 +14,7 @@ import java.util.EnumSet;
  * Fire dragon combat: AGGRESSIVE melee-focused with randomized attacks.
  * Prioritizes unpredictable bite/body slam combos, only uses fire breath at long range.
  */
-public class IgnivorusCombatGoal extends Goal {
+public class IgnivorusGroundCombatGoal extends Goal {
     private final Ignivorus dragon;
 
     // Combat ranges
@@ -36,7 +36,7 @@ public class IgnivorusCombatGoal extends Goal {
     private int breathCooldown = 0;
     private static final int BREATH_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
 
-    public IgnivorusCombatGoal(Ignivorus dragon) {
+    public IgnivorusGroundCombatGoal(Ignivorus dragon) {
         this.dragon = dragon;
         this.setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
     }
@@ -125,6 +125,12 @@ public class IgnivorusCombatGoal extends Goal {
         dragon.setAggressive(true);
         dragon.setGroundMoveStateFromAI(2);
 
+        // Force dragon to land and stay grounded during combat
+        dragon.markLandedNow();
+        dragon.setHovering(false);
+        dragon.setLanding(false);
+        dragon.setTakeoff(false);
+
         // Initialize ultimate opener - only for WILD dragons (no owner)
         // Tamed dragons helping their owner skip the ultimate and go straight to normal combat
         if (dragon.isTame() && dragon.getOwner() != null) {
@@ -147,6 +153,14 @@ public class IgnivorusCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        // Keep dragon grounded during combat - prevent flight AI from interfering
+        if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff()) {
+            dragon.markLandedNow();
+            dragon.setHovering(false);
+            dragon.setLanding(false);
+            dragon.setTakeoff(false);
+        }
+
         if (attackCooldown > 0) {
             attackCooldown--;
         }
