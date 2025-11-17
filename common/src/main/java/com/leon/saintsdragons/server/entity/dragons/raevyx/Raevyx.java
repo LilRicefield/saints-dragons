@@ -2739,10 +2739,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         for (int i = 0; i < babiesToSpawn; i++) {
             Raevyx baby = ModEntities.RAEVYX.get().create(level());
             if (baby != null) {
-                // Set baby properties
+                // Set baby properties BEFORE adding to world to ensure they persist
+                baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+
+                // Set skip flag BEFORE setAge to prevent respawn logic
+                baby.skipRespawnTicks = 5;
                 baby.setBaby(true);
                 baby.setAge(-24000); // Standard baby age
-                baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
 
                 // Position baby VERY close to parent (parent is now positioned!)
                 double angle = (Math.PI * 2.0 * i) / babiesToSpawn;

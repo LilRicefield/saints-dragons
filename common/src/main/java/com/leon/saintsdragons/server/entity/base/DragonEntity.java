@@ -869,8 +869,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("Command", getCommand());
-        tag.putByte("Gender", getGender().getId());
-        tag.putBoolean("IsFemale", isFemale());
+
+        // Save gender - use direct entityData access to ensure we get the current value
+        byte genderId = this.entityData.get(DATA_GENDER);
+        tag.putByte("Gender", genderId);
+        tag.putBoolean("IsFemale", genderId == DragonGender.FEMALE.getId());
+        tag.putBoolean("GenderInitialized", this.genderInitialized);
+
         allyManager.saveToNBT(tag);
     }
 
@@ -889,9 +894,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             setCommand(tag.getInt("Command"));
         }
         if (tag.contains("Gender", Tag.TAG_BYTE)) {
-            setGender(DragonGender.fromId(tag.getByte("Gender")));
+            byte savedGenderId = tag.getByte("Gender");
+            boolean savedGenderInit = tag.contains("GenderInitialized") ? tag.getBoolean("GenderInitialized") : true;
+            setGender(DragonGender.fromId(savedGenderId));
+            this.genderInitialized = savedGenderInit;
         } else if (tag.contains("IsFemale")) {
             setFemale(tag.getBoolean("IsFemale"));
+            this.genderInitialized = tag.contains("GenderInitialized") ? tag.getBoolean("GenderInitialized") : true;
         } else {
             this.genderInitialized = false;
             ensureGenderInitialized();
@@ -929,7 +938,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // - Already in the middle of a respawn (prevents infinite recursion)
         // - Skip flag is set (newly spawned babies from spawn eggs/breeding)
         // - Entity has never been added to world (getId() returns -1 for entities not yet added)
-        if (wasBaby != isNowBaby && !level().isClientSide && !isRespawning && this.getId() != -1 && skipRespawnTicks == 0) {
+        // - Entity is being initially loaded (wasBaby is false and age is going negative - this is world load, not actual aging)
+        boolean isInitialLoad = !wasBaby && age < 0 && this.tickCount == 0;
+
+        if (wasBaby != isNowBaby && !level().isClientSide && !isRespawning && this.getId() != -1 && skipRespawnTicks == 0 && !isInitialLoad) {
 
             // Set flag to prevent re-entrancy when newEntity.load() calls setAge()
             isRespawning = true;
@@ -959,6 +971,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
             // Update age in the saved data
             nbt.putInt("Age", age);
+
+            // CRITICAL: Preserve gender initialization state across respawn
+            // Without this, the new entity will have genderInitialized=false and may randomize gender
+            nbt.putBoolean("GenderInitialized", this.genderInitialized);
 
             // Create fresh entity with updated data
             @SuppressWarnings("unchecked")
