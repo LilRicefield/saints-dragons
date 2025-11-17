@@ -312,7 +312,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
             .add(Attributes.FLYING_SPEED, config.flyingSpeed())
             .add(Attributes.ATTACK_DAMAGE, attackDamage)
-            .add(Attributes.FOLLOW_RANGE, 48.0D)
+            .add(Attributes.FOLLOW_RANGE, 128.0D) // Long range to support fire breath at distance
             .add(Attributes.ARMOR, config.armor())
             .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
     }

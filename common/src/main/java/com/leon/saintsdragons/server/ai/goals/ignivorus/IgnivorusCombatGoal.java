@@ -82,6 +82,12 @@ public class IgnivorusCombatGoal extends Goal {
             return false;
         }
 
+        // IMPORTANT: If currently breathing fire, don't stop the goal even if target goes out of range
+        // This prevents the breath from being cancelled mid-animation when the player runs away
+        if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)) {
+            return true; // Keep goal active to finish the breath
+        }
+
         if (dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
             return false;
         }
@@ -145,20 +151,23 @@ public class IgnivorusCombatGoal extends Goal {
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
 
-        // AGGRESSIVE CHASE: Keep chasing until in melee range
-        // This ensures dragon gets close for bite/body slam instead of staying at fire breath range
-        if (gap > meleeEngageRange || !hasLineOfSight) {
+        // Only use fire breath when target is far away (>32 blocks) AND breath is off cooldown
+        if (gap > fireBreathMinRange && hasLineOfSight && breathCooldown <= 0) {
+            // Long range and breath available - stop and use breath
+            if (!isCurrentlyAttacking()) {
+                dragon.getNavigation().stop();
+                pathRecalcCooldown = 0;
+            }
+            tryAttack(target);
+        } else if (gap > meleeEngageRange) {
+            // Medium-long range (6-32 blocks) OR breath on cooldown - chase to get closer
             if (!isCurrentlyAttacking()) {
                 updateChasePath(target);
             }
         } else {
-            // In melee range - stop moving and unleash melee attacks
+            // In melee range (0-6 blocks) - stop moving and attack
             dragon.getNavigation().stop();
             pathRecalcCooldown = 0;
-        }
-
-        // Always try to attack when target is visible (attack selection handles range logic)
-        if (hasLineOfSight) {
             tryAttack(target);
         }
 
