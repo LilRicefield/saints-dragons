@@ -60,6 +60,11 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return false;
         }
 
+        // Don't use ground combat if target is airborne (let air combat goal handle it)
+        if (isTargetAirborne(target)) {
+            return false;
+        }
+
         if (dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
             return false;
         }
@@ -91,6 +96,11 @@ public class IgnivorusGroundCombatGoal extends Goal {
         if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE)) {
             return true; // Keep goal active to finish the ability
+        }
+
+        // Stop ground combat if target becomes airborne (switch to air combat goal)
+        if (isTargetAirborne(target)) {
+            return false;
         }
 
         if (dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
@@ -334,5 +344,28 @@ public class IgnivorusGroundCombatGoal extends Goal {
         } else {
             dragon.setGroundMoveStateFromAI(0);
         }
+    }
+
+    /**
+     * Check if target is airborne (flying, riding flying mount, or off ground)
+     */
+    private boolean isTargetAirborne(LivingEntity target) {
+        // Check if target is on ground
+        if (target.onGround()) {
+            return false;
+        }
+
+        // Check if riding something (might be a flying dragon)
+        if (target.isPassenger() && target.getVehicle() != null) {
+            return true; // Assume mounted targets are valid air targets
+        }
+
+        // Check if significantly off ground (more than 3 blocks up)
+        double groundY = dragon.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
+        if (target.getY() - groundY > 3.0) {
+            return true;
+        }
+
+        return false;
     }
 }

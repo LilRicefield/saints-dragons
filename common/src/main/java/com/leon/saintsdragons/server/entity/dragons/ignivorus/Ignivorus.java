@@ -10,6 +10,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
@@ -321,6 +322,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     protected void registerGoals() {
         // Priority 1: Combat - highest priority when aggressive
+        // Air combat takes precedence when target is airborne and dragon is flying
+        this.goalSelector.addGoal(1, new IgnivorusAirCombatGoal(this));
         this.goalSelector.addGoal(1, new IgnivorusGroundCombatGoal(this));
 
         // Priority 3: Follow owner
