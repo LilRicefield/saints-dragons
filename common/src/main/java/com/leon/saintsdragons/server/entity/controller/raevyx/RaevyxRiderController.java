@@ -31,10 +31,10 @@ public record RaevyxRiderController(Raevyx wyvern) {
     private static final double STRAFE_POWER = 0.5;          // Strafe input strength (constant)
 
     // ===== VERTICAL PHYSICS (dive acceleration only) =====
-    private static final double ASCEND_THRUST = 0.08D;       // Upward thrust when climbing
+    private static final double ASCEND_THRUST = 1.2D;       // Upward thrust when climbing
     private static final double DESCEND_THRUST = 1.0D;       // Downward thrust when diving (accelerates)
     private static final double TERMINAL_VELOCITY = 1.5D;    // Max falling speed
-    private static final double VERTICAL_DRAG = 0.92D;       // Damping when no vertical input (air resistance)
+    private static final double VERTICAL_DRAG = 0.02D;       // Damping when no vertical input (air resistance)
 
     // ===== RIDING UTILITIES =====
 
@@ -345,7 +345,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
         // Gentle cooldown after landing to prevent spam takeoff/land jitter
         long now = wyvern.level().getGameTime();
         long lastLand = wyvern.getLastLandingGameTime();
-        if (lastLand != Long.MIN_VALUE && (now - lastLand) < 20L) { // ~1s cooldown
+        if (lastLand != Long.MIN_VALUE && (now - lastLand) < 5.0) { // ~1s cooldown
             return;
         }
         
@@ -361,13 +361,5 @@ public record RaevyxRiderController(Raevyx wyvern) {
         wyvern.setLanding(false);
         // Keep takeoff active for a brief window so server flight logic applies upward force
         wyvern.setRiderTakeoffTicks(30);
-
-        // Play takeoff sound (Ender Dragon flap)
-        if (wyvern.level().isClientSide) {
-            float urgency = wyvern.getTarget() != null ? 1.3f : 1.0f;
-            wyvern.level().playLocalSound(wyvern.getX(), wyvern.getY(), wyvern.getZ(),
-                    net.minecraft.sounds.SoundEvents.ENDER_DRAGON_FLAP,
-                    net.minecraft.sounds.SoundSource.NEUTRAL, urgency * 1.2f, 0.85f, false);
-        }
     }
 }

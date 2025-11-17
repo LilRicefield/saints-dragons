@@ -107,6 +107,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Client-only visual smoothing caches (avoid renderer singleton state bleed)
     private float clientTailDragVelocity = 0f;
 
+    // Store reference to our custom body control for server-side rotation updates
+    private com.leon.saintsdragons.server.entity.controller.DragonBodyControl dragonBodyControl;
+
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
@@ -117,7 +120,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     @Override
     protected net.minecraft.world.entity.ai.control.@NotNull BodyRotationControl createBodyControl() {
-        return new com.leon.saintsdragons.server.entity.controller.DragonBodyControl(this, getBodyTurnSpeed());
+        this.dragonBodyControl = new com.leon.saintsdragons.server.entity.controller.DragonBodyControl(this, getBodyTurnSpeed());
+        return this.dragonBodyControl;
     }
 
     /**
@@ -669,6 +673,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             skipRespawnTicks--;
         }
         tickAbilities();
+
+        // Update body rotation to follow head/movement (prevents neck crunching)
+        // CRITICAL: Must run on SERVER to keep yBodyRot synced properly
+        if (!level().isClientSide && this.dragonBodyControl != null) {
+            this.dragonBodyControl.serverTick();
+        }
 
         // Update rotation deviations (Hybrid approach for ridden dragons)
         // Client: Calculate from synced data OR locally if riding
