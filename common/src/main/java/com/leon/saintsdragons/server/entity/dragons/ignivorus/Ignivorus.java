@@ -1970,11 +1970,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public boolean causeFallDamage(float fallDistance, float fallMultiplier, @NotNull net.minecraft.world.damagesource.DamageSource source) {
-        // Immune to fall damage when flying, taking off, or landing
-        if (this.isFlying() || this.isTakeoff() || this.isLanding()) {
-            return false;
-        }
-        return super.causeFallDamage(fallDistance, fallMultiplier, source);
+        // Ignivorus is completely immune to fall damage
+        return false;
     }
 
     // ===== SPAWN PLACEMENT =====
