@@ -8,7 +8,6 @@ import com.leon.saintsdragons.common.particle.raevyx.*;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
-import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxDodgeGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxSmartFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxGroundWanderGoal;
@@ -21,7 +20,6 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.*;
-import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxFlightController;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
@@ -409,7 +407,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
 
+    @Override
     public void markLandedNow() {
+        // Clear landing/takeoff flags (like Cindervane)
+        setLanding(false);
+        setTakeoff(false);
+        this.riderTakeoffTicks = 0;
+
         if (!level().isClientSide) {
             this.lastLandingGameTime = level().getGameTime();
         }
@@ -422,7 +426,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public boolean usingAirNav = false;
 
     // ===== CONTROLLER INSTANCES =====
-    public final RaevyxFlightController flightController;
     private double configuredWalkSpeed = WALK_SPEED;
     private double configuredRunSpeed = RUN_SPEED;
 
@@ -488,8 +491,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.FENCE, -1.0F);
 
-        // Initialize controllers
-        this.flightController = new RaevyxFlightController(this);
+        // Initialize controllers (FlightController removed)
         this.lightningInteractionHandler = new RaevyxInteractionHandler(this);
         this.animationHandler = new RaevyxAnimationHandler(this);
 
@@ -1055,21 +1057,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             this.getNavigation().stop();
             this.setTakeoff(true);
             this.landingFlag = true;
-            if (!level().isClientSide) {
-                this.flightController.planSmartLanding();
-            }
         } else {
             this.landingFlag = false;
         }
     }
-
-    // DATA STUFF
-
-    // Old attack system methods removed - using new state system instead
-    
-    // ===== NEW ATTACK STATE SYSTEM METHODS =====
-    
-    // ===== Lightning Dragon Specific Methods =====
     
     // Flight mode accessor for controllers (avoids accessing protected entityData outside entity)
     public int getSyncedFlightMode() { return getIntegerData(DATA_FLIGHT_MODE); }
@@ -1305,10 +1296,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // === SERVER-SIDE: EVERY TICK (lightweight or critical) ===
         tickSittingState();
-        tickPostLoadStabilization();
+        // tickPostLoadStabilization(); // DISABLED - no longer needed with vanilla travel
         tickRiderTakeoff();
         tickHurtSoundCooldown();
         spawnBabiesIfNeeded(); // Has internal check, only spawns once
+
+        // Update timeFlying counter (like Cindervane)
+        if (isFlying()) {
+            timeFlying++;
+        } else {
+            timeFlying = 0;
+        }
 
         // When ridden and flying, never stay in 'hovering' unless explicitly landing/beaming/takeoff
         if (isFlying() && getControllingPassenger() != null) {
@@ -1335,6 +1333,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tickSleepTransition();
         tickSleepCooldowns();
         handleAmbientSounds();
+        tickFlightPhysics(); // Apply takeoff/landing forces
 
         // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
         if (tickCount % 5 == 0) {
@@ -1394,9 +1393,68 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tickClientSideUpdates();
     }
 
+    @Override
+    public void aiStep() {
+        super.aiStep();
+
+        if (!this.level().isClientSide) {
+            // Clear sit progress if not sitting
+            if (!this.isOrderedToSit() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
+                this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            }
+
+            // Only consider SOLID ground, not water (mirrors Cindervane)
+            boolean onGroundNow = this.onGround() && !this.isInWater();
+
+            if (isFlying()) {
+                this.fallDistance = 0.0F;
+
+                // Clear takeoff flag after being airborne for a few ticks
+                if (isTakeoff() && !onGroundNow && timeFlying > 5) {
+                    setTakeoff(false);
+                }
+
+                // Auto-land when touching ground (like Cindervane)
+                if (onGroundNow && !isTakeoff()) {
+                    if (!isLanding()) {
+                        setLanding(true);
+                    }
+                    setFlying(false);
+                } else if (isLanding() && !onGroundNow) {
+                    setLanding(false);
+                }
+            }
+
+            // Handle landing settle (like Cindervane - 20 ticks = 1 second)
+            if (isLanding()) {
+                if (onGroundNow) {
+                    landingTimer++;
+                    if (landingTimer >= 5) {
+                        markLandedNow();
+                    }
+                } else {
+                    landingTimer = 0;
+                }
+            } else {
+                landingTimer = 0;
+            }
+
+            // Update animation states
+            tickAnimationStates();
+        }
+
+        // CRITICAL: Update NoGravity every tick (like Cindervane)
+        // This allows proper landing - NoGravity is disabled when grounded
+        this.setNoGravity(isFlying() || isHovering());
+
+        // Switch to ground navigation when landed
+        if (!isFlying() && usingAirNav) {
+            switchToGroundNavigation();
+        }
+    }
 
     // ===== TICK SUBMETHODS =====
-    
+
     private void tickScreenShake() {
         // Client side: just read the synced value from entity data
         if (level().isClientSide) {
@@ -1412,6 +1470,27 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
         } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
             this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        }
+    }
+
+    /**
+     * Apply flight physics forces (takeoff lift, falling resistance, etc.)
+     * Mirrors Cindervane's minimal approach - just upward force during takeoff
+     */
+    private void tickFlightPhysics() {
+        if (level().isClientSide) return;
+
+        // Apply takeoff upward force during initial flight (first ~30 ticks)
+        // This gives the dragon height during takeoff animation
+        if (isTakeoff() && isFlying() && timeFlying < 30) {
+            Vec3 motion = getDeltaMovement();
+            double upwardForce = 0.11D;
+            setDeltaMovement(motion.add(0, upwardForce, 0));
+        }
+
+        // Reduce falling speed while flying
+        if (isFlying() && getDeltaMovement().y < 0 && isAlive()) {
+            setDeltaMovement(getDeltaMovement().multiply(1, 0.6, 1));
         }
     }
 
@@ -1903,12 +1982,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
         }
     }
-    
+
+    /**
+     * Clear the post-load air stabilization counter.
+     * Used by air combat goal to prevent interference with takeoff flag management.
+     */
+    public void clearPostLoadStabilization() {
+        this.postLoadAirStabilizeTicks = 0;
+    }
+
     private void tickControllers() {
-        // Delegate to controllers (disabled while dying)
-        if (!isDying()) {
-            flightController.handleFlightLogic();
-        }
+        // FlightController disabled - now using vanilla travel like Cindervane/Ignivorus
+        // This fixes the reload drift bug and eliminates postLoadAirStabilizeTicks workaround
         updateSittingProgress();
     }
 
@@ -2042,7 +2127,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         boolean moveGoalActive = this.goalSelector.getRunningGoals().anyMatch(wrapped -> {
             Goal goal = wrapped.getGoal();
-            return goal instanceof RaevyxFollowOwnerGoal || goal instanceof RaevyxGroundCombatGoal;
+            return goal instanceof RaevyxFollowOwnerGoal || goal instanceof RaevyxGroundCombatGoal || goal instanceof RaevyxAirCombatGoal;
         });
         if (moveGoalActive) {
             return;
@@ -2521,17 +2606,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 super.travel(motion);
             }
         } else {
-            // Normal AI movement
-            if (inWater) {
-                // AI in water - just use vanilla swimming for now
-                super.travel(motion);
-            } else if (isFlying()) {
-                // AI flight movement
-                flightController.handleFlightTravel(motion);
-            } else {
-                // AI ground movement
-                super.travel(motion);
-            }
+            // Normal AI movement - use vanilla travel for everything like Cindervane/Ignivorus
+            super.travel(motion);
         }
 
     }
@@ -2593,12 +2669,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 this.setHovering(false);
                 this.setLanding(false);
                 this.switchToAirNavigation();
-
                 // Give upward boost for breach
                 this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
-
-                // Trigger takeoff in flight controller
-                this.flightController.shouldTakeoff();
+                // Trigger takeoff (FlightController removed)
                 this.riderTakeoffTicks = 40;
             }
         }
@@ -2799,13 +2872,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // ===== AI GOALS =====
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(1, new RaevyxDodgeGoal(this));
+        // Dodge goal removed - interferes with air combat
+        // this.goalSelector.addGoal(1, new RaevyxDodgeGoal(this));
         this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(6, new FloatGoal(this));
         this.goalSelector.addGoal(7, new RaevyxFollowParentGoal(this, 1.15D));
         this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
 
-        // Combat goal - all-in-one system (movement + attack selection)
+        // Combat goals - air combat takes precedence when target is airborne and dragon is flying
+        this.goalSelector.addGoal(3, new RaevyxAirCombatGoal(this));
         this.goalSelector.addGoal(3, new RaevyxGroundCombatGoal(this));
 
         // Movement/idle
@@ -3434,25 +3509,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.sleepCommandSnapshot = -1;
         this.followFailsafeCooldown = 0;
 
-        // If we saved while flying, keep the wyvern in the air briefly after load
-        if (tag.getBoolean("Flying")) {
-            this.postLoadAirStabilizeTicks = 60; // ~3 seconds of grace to receive rider inputs
-            // Also treat as takeoff for a short while to apply upward force
-            this.riderTakeoffTicks = Math.max(this.riderTakeoffTicks, 40);
-
-            // Ensure flight controller is properly reactivated for ALL dragons
-            if (!level().isClientSide) {
-                // For all dragons, restart flight controller to prevent drifting
-                this.flightController.shouldTakeoff();
-
-                // Force proper flight state restoration
-                this.setFlying(true);
-                this.setTakeoff(true);
-                this.setHovering(true);
-                this.setLanding(false);
-                this.switchToAirNavigation();
-            }
-        }
+        // CRITICAL: Set NoGravity for flying dragons on reload (like Cindervane)
+        // This prevents dragons from falling when reloading mid-flight
+        this.setNoGravity(isFlying() || isHovering());
 
         // Clear navigation and target if wyvern is sitting to prevent AI goal issues on world reload
         if (this.isOrderedToSit()) {

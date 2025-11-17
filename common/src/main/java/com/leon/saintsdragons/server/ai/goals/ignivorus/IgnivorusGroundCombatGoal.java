@@ -360,9 +360,10 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return true; // Assume mounted targets are valid air targets
         }
 
-        // Check if significantly off ground (more than 3 blocks up)
+        // Check if significantly off ground (more than 8 blocks up for elytra/flight stability)
+        // Increased from 3 to prevent low elytra gliding from triggering constant takeoff
         double groundY = dragon.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
-        if (target.getY() - groundY > 3.0) {
+        if (target.getY() - groundY > 8.0) {
             return true;
         }
 

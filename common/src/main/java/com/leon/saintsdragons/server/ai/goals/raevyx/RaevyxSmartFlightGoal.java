@@ -154,7 +154,7 @@ public class RaevyxSmartFlightGoal extends Goal {
     @Override
     public void start() {
         raevyx.setFlying(true);
-        raevyx.setTakeoff(false);
+        raevyx.setTakeoff(true);  // Set to TRUE to trigger upward force during takeoff
         raevyx.setLanding(false);
         raevyx.setHovering(false);
 
@@ -185,7 +185,7 @@ public class RaevyxSmartFlightGoal extends Goal {
             }
 
             // Aggressive stuck detection for fast dragon
-            if (raevyx.horizontalCollision || raevyx.isFlightControllerStuck()) {
+            if (raevyx.horizontalCollision) {
                 stuckCounter++;
                 // Re-path faster than Cindervane (2 vs 3)
                 if (stuckCounter > 2) {
@@ -306,7 +306,7 @@ public class RaevyxSmartFlightGoal extends Goal {
     }
 
     private Vec3 generateFlightCandidate(Vec3 dragonPos, int attempt) {
-        boolean isStuck = raevyx.horizontalCollision || stuckCounter > 0 || raevyx.isFlightControllerStuck();
+        boolean isStuck = raevyx.horizontalCollision || stuckCounter > 0;
 
         float maxRot = isStuck ? 360 : 180;
         float range = isStuck ? 30.0f + raevyx.getRandom().nextFloat() * 40.0f :
