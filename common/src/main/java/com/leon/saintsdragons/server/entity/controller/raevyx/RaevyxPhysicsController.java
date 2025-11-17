@@ -13,9 +13,9 @@ import software.bernie.geckolib.core.object.PlayState;
  */
 public class RaevyxPhysicsController {
     private final Raevyx wyvern;
-    // Takeoff animation timing tuning
-    private static final int TAKEOFF_ANIM_MAX_TICKS = 24;   // previously 30
-    private static final int TAKEOFF_ANIM_EARLY_TICKS = 16; // start even sooner once airborne
+    // Takeoff animation timing tuning - 2 second animation (40 ticks at 20 TPS)
+    private static final int TAKEOFF_ANIM_MAX_TICKS = 40;   // Match full 2s animation length
+    private static final int TAKEOFF_ANIM_EARLY_TICKS = 38; // Start checking conditions slightly earlier
 
     // Physics envelopes for renderer effects
     private final Envelope01 glideEnv = new Envelope01(0.25f, 0.25f);

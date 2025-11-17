@@ -1409,8 +1409,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             if (isFlying()) {
                 this.fallDistance = 0.0F;
 
-                // Clear takeoff flag after being airborne for a few ticks
-                if (isTakeoff() && !onGroundNow && timeFlying > 5) {
+                // Clear takeoff flag after full animation completes (40 ticks = 2 seconds)
+                if (isTakeoff() && !onGroundNow && timeFlying > 40) {
                     setTakeoff(false);
                 }
 
@@ -1480,9 +1480,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private void tickFlightPhysics() {
         if (level().isClientSide) return;
 
-        // Apply takeoff upward force during initial flight (first ~30 ticks)
+        // Apply takeoff upward force during initial flight (first 40 ticks = 2s animation)
         // This gives the dragon height during takeoff animation
-        if (isTakeoff() && isFlying() && timeFlying < 30) {
+        if (isTakeoff() && isFlying() && timeFlying < 40) {
             Vec3 motion = getDeltaMovement();
             double upwardForce = 0.11D;
             setDeltaMovement(motion.add(0, upwardForce, 0));
