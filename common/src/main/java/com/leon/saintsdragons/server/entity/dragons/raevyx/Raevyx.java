@@ -265,6 +265,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private boolean manualSitCommand = false;
     private boolean commandChangeManual = false;
     private int riderLandingBlendTicks = 0;
+    private static final int DISMOUNT_RECALL_WINDOW = 60;
+    private int dismountRecallTicks = 0;
 
     @Override
     public void setCommand(int command) {
@@ -286,6 +288,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public void setCommandAuto(int command) {
         this.commandChangeManual = false;
         this.setCommand(command);
+    }
+    
+    public boolean shouldForceOwnerFollow() {
+        return dismountRecallTicks > 0;
+    }
+
+    public void clearForcedOwnerFollow() {
+        this.dismountRecallTicks = 0;
     }
 
     // ===== AMBIENT SOUND SYSTEM =====
@@ -1126,7 +1136,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (landing) {
             landingTimer = 0;
             this.getNavigation().stop();
-            this.setTakeoff(true);
+            this.setTakeoff(false);
             this.landingFlag = true;
         } else {
             this.landingFlag = false;
@@ -1370,6 +1380,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // tickPostLoadStabilization(); // DISABLED - no longer needed with vanilla travel
         tickRiderTakeoff();
         tickHurtSoundCooldown();
+        tickDismountRecall();
         spawnBabiesIfNeeded(); // Has internal check, only spawns once
 
         // Update timeFlying counter (like Cindervane)
@@ -1715,6 +1726,28 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
         wasVehicleLastTick = this.isVehicle();
     }
+
+    private void tickDismountRecall() {
+        if (this.isVehicle()) {
+            clearForcedOwnerFollow();
+            return;
+        }
+        if (dismountRecallTicks > 0) {
+            dismountRecallTicks--;
+        }
+    }
+
+    private void triggerForcedOwnerFollow() {
+        if (this.level().isClientSide) {
+            return;
+        }
+        this.setOrderedToSit(false);
+        this.setCommandAuto(0);
+        this.setHovering(false);
+        this.setLanding(false);
+        this.getNavigation().stop();
+        this.dismountRecallTicks = DISMOUNT_RECALL_WINDOW;
+    }
     
     /**
      * Clears all wyvern states (sleep, sit) when mounted to ensure full player control
@@ -1740,6 +1773,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             
             // Suppress sleep for a longer period to prevent immediate re-entry
             suppressSleep(300); // ~15 seconds
+            clearForcedOwnerFollow();
         }
     }
     
@@ -4018,8 +4052,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (areRiderControlsLocked() && passenger == getControllingPassenger()) {
             return;
         }
+        boolean shouldRecallOwner = !this.level().isClientSide
+                && passenger == getControllingPassenger()
+                && passenger == getOwner()
+                && !this.onGround();
         // Call parent implementation to handle standard rideable wyvern cleanup
         super.removePassenger(passenger);
+        if (shouldRecallOwner) {
+            triggerForcedOwnerFollow();
+        }
     }
     // Cooldown for aggro growl to prevent spam while ridden or under repeated retargeting
     private int aggroGrowlCooldown = 0;
