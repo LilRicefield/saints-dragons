@@ -87,8 +87,16 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
                 playSimpleMouthSound(handler, dragon, locator, ModSounds.RAEVYX_HORNGORE.get(), 1.3f, 0.9f, 0.2f);
                 yield true;
             }
+            case "raevyx_summon_storm_ground_start" -> {
+                playSummonStormStart(handler, dragon, locator);
+                yield true;
+            }
             case "raevyx_summon_storm" -> {
                 playSummonStorm(handler, dragon, locator);
+                yield true;
+            }
+            case "raevyx_summon_storm_ground_end" -> {
+                playSummonStormEnd(handler, dragon, locator);
                 yield true;
             }
             default -> false;
@@ -171,6 +179,16 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
 
         playClientSound(dragon, at, ModSounds.RAEVYX_SUMMON_STORM.get(), 1.6f, 1.0f);
+    }
+
+    private void playSummonStormStart(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        playClientSound(dragon, at, ModSounds.RAEVYX_SUMMON_STORM_START.get(), 1.2f, 1.0f);
+    }
+
+    private void playSummonStormEnd(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        playClientSound(dragon, at, ModSounds.RAEVYX_SUMMON_STORM_END.get(), 1.2f, 1.0f);
     }
 
     /**

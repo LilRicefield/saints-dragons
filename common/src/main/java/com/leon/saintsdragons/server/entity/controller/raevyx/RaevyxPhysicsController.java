@@ -4,18 +4,11 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.object.PlayState;
-
-/**
+/** 
  * Clean physics controller for Raevyx - simple and maintainable
  */
 public class RaevyxPhysicsController {
     private final Raevyx wyvern;
-    // Takeoff animation timing tuning - 2 second animation (40 ticks at 20 TPS)
-    private static final int TAKEOFF_ANIM_MAX_TICKS = 35;
-    private static final int TAKEOFF_ANIM_EARLY_TICKS = 30; // Start checking conditions slightly earlier
 
     // Physics envelopes for renderer effects
     private final Envelope01 glideEnv = new Envelope01(0.25f, 0.25f);
@@ -29,9 +22,6 @@ public class RaevyxPhysicsController {
     public float prevFlappingFraction = 0f;
     public float hoveringFraction = 0f;
     public float prevHoveringFraction = 0f;
-
-    // Flight animation state tracking
-    private RawAnimation currentFlightAnimation = FLY_GLIDE;
 
     // ===== Envelopes and lift model =====
     public static class Envelope01 {
@@ -70,245 +60,6 @@ public class RaevyxPhysicsController {
         prevHoveringFraction = hoveringFraction;
 
         updatePhysicsEnvelopes();
-    }
-
-    public PlayState handleMovementAnimation(AnimationState<Raevyx> state) {
-        // Default transition length (safe baseline); override per-branch below
-        state.getController().transitionLength(6);
-
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        // Wait for entity data to sync from server before processing animations
-        if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
-            state.setAndContinue(GROUND_IDLE);
-            return PlayState.CONTINUE;
-        }
-
-        // HIGHEST PRIORITY: Swimming overrides EVERYTHING (flying, walking, dying, etc.)
-        // When dragon touches water, immediately switch to swim animation
-        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
-        if (inWater) {
-            state.getController().transitionLength(4); // Quick transition into water
-            state.setAndContinue(SWIM);
-            return PlayState.CONTINUE;
-        }
-
-        // PRIORITY: Handle dying and sleeping FIRST (applies to both baby and adult)
-        if (wyvern.isDying() || wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()) {
-            return PlayState.STOP;
-        }
-
-        // PRIORITY: Handle sitting BEFORE baby check (applies to both baby and adult)
-        // Drive SIT from our custom progress system only to avoid desync
-        float maxSit = wyvern.maxSitTicks();
-        float sitProgress = wyvern.getSitProgress();
-
-        if (sitProgress >= maxSit) {
-            // Fully sitting - play SIT loop
-            state.setAndContinue(SIT);
-            return PlayState.CONTINUE;
-        } else if (sitProgress > 0f) {
-            // In transition (either sitting down or standing up) - let action controller handle it
-            return PlayState.STOP;
-        }
-
-        // TAMING STUN: treat as alternate idle loop so death/hurt animations can still pre-empt via action controller
-        if (wyvern.isTamingStunned()) {
-            state.getController().transitionLength(4);
-            state.setAndContinue(STUNNED);
-            return PlayState.CONTINUE;
-        }
-
-        // BABY dragons use simple idle/walk/run only (no flying, no complex behaviors)
-        // NOTE: Uses same animation names as adult - renderer switches JSON file based on isBaby()
-        if (wyvern.isBaby()) {
-            if (wyvern.isActuallyRunning()) {
-                state.getController().transitionLength(3);
-                state.setAndContinue(GROUND_RUN);
-            } else if (wyvern.isWalking()) {
-                state.getController().transitionLength(3);
-                state.setAndContinue(GROUND_WALK);
-            } else {
-                state.getController().transitionLength(4);
-                state.setAndContinue(GROUND_IDLE);
-            }
-            return PlayState.CONTINUE;
-        }
-
-        // ADULT-ONLY animations below (babies returned above)
-        if (wyvern.isDodging()) {
-            state.setAndContinue(DODGE);
-        } else if (wyvern.isLanding()) {
-            state.setAndContinue(LANDING);
-        } else if (wyvern.isFlying()) {
-            // Prefer server-synced flight mode when available for observer consistency
-            int syncedMode = wyvern.getSyncedFlightMode();
-            Vec3 vNow = wyvern.getDeltaMovement();
-            if (syncedMode == 3) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(TAKEOFF);
-                return PlayState.CONTINUE;
-            }
-            if (wyvern.isRiderLandingBlendActive()) {
-                state.getController().transitionLength(4);
-                currentFlightAnimation = LANDING;
-                state.setAndContinue(LANDING);
-                return PlayState.CONTINUE;
-            }
-
-            boolean manualRiderControl = wyvern.isTame() && wyvern.isVehicle();
-            if (manualRiderControl) {
-                // Check if actually moving to determine hover vs active flight
-                Vec3 vel = wyvern.getDeltaMovement();
-                boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
-                boolean isMovingVertically = Math.abs(vel.y) > 0.02;
-                boolean isStationary = !isMovingHorizontally && !isMovingVertically;
-
-                // GLIDE_DOWN - absolute priority, nothing overrides diving
-                if (wyvern.isGoingDown() && !wyvern.isRiderLandingBlendActive()) {
-                    RawAnimation descend = GLIDE_DOWN;
-                    if (currentFlightAnimation != descend) {
-                        state.getController().transitionLength(6);
-                        currentFlightAnimation = descend;
-                    }
-                    state.setAndContinue(descend);
-                    return PlayState.CONTINUE;
-                }
-
-                // HOVER - second priority: truly stationary in air (no input or holding position)
-                if (isStationary) {
-                    RawAnimation hover = FLAP;
-                    if (currentFlightAnimation != hover) {
-                        state.getController().transitionLength(6);
-                        currentFlightAnimation = hover;
-                    }
-                    state.setAndContinue(hover);
-                    return PlayState.CONTINUE;
-                }
-
-                // SPRINT FLYING - third priority (after dive and hover)
-                // Only play sprint animation if actually moving
-                if (wyvern.isAccelerating() && isMovingHorizontally) {
-                    RawAnimation sprint = SPRINT_FLAP;
-                    if (currentFlightAnimation != sprint) {
-                        state.getController().transitionLength(3);
-                        currentFlightAnimation = sprint;
-                    }
-                    state.setAndContinue(sprint);
-                    return PlayState.CONTINUE;
-                }
-
-                // ASCENDING - fourth priority
-                if (wyvern.isGoingUp()) {
-                    RawAnimation upward = FLAP;
-                    if (currentFlightAnimation != upward) {
-                        state.getController().transitionLength(4);
-                        currentFlightAnimation = upward;
-                    }
-                    state.setAndContinue(upward);
-                    return PlayState.CONTINUE;
-                }
-            }
-            if (syncedMode == 2) {
-                // Stationary/hover: play dedicated air hover clip
-                state.getController().transitionLength(6);
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-            if (syncedMode == 1) {
-                // Mode 1 = FLAP (low altitude or physics demands flapping)
-                state.getController().transitionLength(4);
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-            if (syncedMode == 0) {
-                // Server says GLIDE: evaluate descend heuristics for tamed dragons
-                // Longer transition for smoother high-altitude gliding feel
-                state.getController().transitionLength(12);
-                state.setAndContinue(resolveGlideAnimation(vNow));
-                return PlayState.CONTINUE;
-            }
-
-            if (shouldPlayTakeoff()) {
-                // Snappier blend into takeoff when leaving ground
-                state.getController().transitionLength(4);
-                state.setAndContinue(TAKEOFF);
-            } else {
-                // HYSTERESIS - prevent rapid switching between animations
-                float hoverWeight = hoveringFraction;
-                float flapWeight = flappingFraction;
-
-                boolean descendingNow = vNow.y < -0.03;
-                if (wyvern.isVehicle()) {
-                    descendingNow |= wyvern.isGoingDown();
-                } else {
-                    descendingNow |= wyvern.getPitchDirection() > 0;
-                }
-
-                // Base thresholds for entering/exiting flap (without locks)
-                boolean shouldFlapBase = (currentFlightAnimation == FLAP)
-                        ? (flapWeight > 0.55f || hoverWeight > 0.65f) // Higher threshold to stay flapping
-                        : (flapWeight > 0.22f || hoverWeight > 0.28f); // Lower threshold to enter flapping
-
-                // If we are clearly in hover without a synced mode (fallback), play air hover
-                if (hoverWeight > 0.45f) {
-                    state.getController().transitionLength(6);
-                    currentFlightAnimation = FLAP;
-                    state.setAndContinue(FLAP);
-                    return PlayState.CONTINUE;
-                }
-
-                // PHYSICS-BASED: Use flap/glide envelope weights
-                boolean ascendingNow = wyvern.isGoingUp() || vNow.y > 0.02;
-
-                // Always flap when ascending
-                if (ascendingNow) {
-                    if (currentFlightAnimation != FLAP) {
-                        state.getController().transitionLength(4);
-                        currentFlightAnimation = FLAP;
-                    }
-                    state.setAndContinue(FLAP);
-                }
-                // Use physics envelope to decide
-                else if (shouldFlapBase) {
-                    if (currentFlightAnimation != FLAP) {
-                        state.getController().transitionLength(4);
-                        currentFlightAnimation = FLAP;
-                    }
-                    state.setAndContinue(FLAP);
-                } else {
-                    // Default to gliding when not ascending and physics doesn't demand flapping
-                    RawAnimation glideAnimation = resolveGlideAnimation(vNow);
-                    if (currentFlightAnimation != glideAnimation) {
-                        state.getController().transitionLength(8);
-                        currentFlightAnimation = glideAnimation;
-                    }
-                    state.setAndContinue(glideAnimation);
-                }
-            }
-        } else {
-            // Ground movement transitions tuned to be snappier
-            if (wyvern.isActuallyRunning()) {
-                state.getController().transitionLength(3); // even faster into run
-                state.setAndContinue(GROUND_RUN);
-            } else if (wyvern.isWalking()) {
-                state.getController().transitionLength(3); // quicker walk engage/disengage
-                state.setAndContinue(GROUND_WALK);
-            } else {
-                state.getController().transitionLength(4); // slightly softer into idle
-                state.setAndContinue(GROUND_IDLE);
-            }
-        }
-        return PlayState.CONTINUE;
-    }
-
-    private boolean shouldPlayTakeoff() {
-        // Play takeoff at the very start of flight, and also as soon as we clear the ground or start ascending
-        if (wyvern.timeFlying < TAKEOFF_ANIM_EARLY_TICKS) return true;
-
-        boolean airborne = !wyvern.onGround();
-        boolean ascending = wyvern.getDeltaMovement().y > 0.08;
-
-        return (wyvern.timeFlying < TAKEOFF_ANIM_MAX_TICKS) && (airborne || ascending);
     }
 
     private void updatePhysicsEnvelopes() {
@@ -353,29 +104,6 @@ public class RaevyxPhysicsController {
         glidingFraction = glideEnv.raw();
         flappingFraction = flapEnv.raw();
         hoveringFraction = hoverEnv.raw();
-    }
-
-    private RawAnimation resolveGlideAnimation(Vec3 velocity) {
-        if (!wyvern.isTame()) {
-            return FLY_GLIDE;
-        }
-
-        Vec3 motion = velocity == null ? Vec3.ZERO : velocity;
-        double verticalSpeed = motion.y;
-        double horizontalSpeedSqr = motion.horizontalDistanceSqr();
-
-        boolean riderDescending = wyvern.isVehicle() && wyvern.isGoingDown();
-        boolean pitchingDown = !wyvern.isVehicle() && wyvern.getPitchDirection() > 0;
-        boolean fallingFast = verticalSpeed < -0.06;
-        boolean moderateDescent = verticalSpeed < -0.025;
-        boolean sustainedGlide = glidingFraction > 0.18f || flapEnv.raw() < 0.35f;
-        boolean hasForwardSpeed = horizontalSpeedSqr > 0.0009;
-
-        if ((pitchingDown || riderDescending || fallingFast || moderateDescent) && sustainedGlide && hasForwardSpeed) {
-            return GLIDE_DOWN;
-        }
-
-        return FLY_GLIDE;
     }
 
     // ===== SAVE/LOAD SUPPORT =====
