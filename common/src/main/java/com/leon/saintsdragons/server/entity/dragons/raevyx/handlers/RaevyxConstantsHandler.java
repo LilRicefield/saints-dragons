@@ -4,7 +4,7 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 
 /**
  * Constants for the Lightning Dragon entity.
- * Centralizes all static final values used throughout the LightningDragonEntity class.
+ * Centralizes all static final values used throughout the Raevyx class.
  */
 public class RaevyxConstantsHandler {
 
@@ -53,6 +53,9 @@ public class RaevyxConstantsHandler {
 
     /** Swim animation (overrides all others when in water) */
     public static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.raevyx.swim");
+    
+    /** Taming stun loop (treated like alternate idle) */
+    public static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.raevyx.stunned");
 
     // ===== MODEL CONSTANTS =====
     

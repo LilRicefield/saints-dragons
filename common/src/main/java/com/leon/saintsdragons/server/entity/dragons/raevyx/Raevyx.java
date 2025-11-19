@@ -24,6 +24,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxSoundProfile;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxTamingHandler;
 import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.*;
 import com.leon.saintsdragons.server.entity.interfaces.ElectricalConductivityCapable;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
@@ -95,6 +96,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
         DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, ElectricalConductivityCapable {
     private static final double RUN_SPEED_RATIO = WALK_SPEED <= 0.0D ? 1.0D : RUN_SPEED / WALK_SPEED;
+    private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -213,6 +215,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     /** Entity data accessor for feeding cooldown ticks */
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+    /** Tracks whether the wyvern is stunned during a taming attempt */
+    public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
     // ===== OTHER CONSTANTS =====
 
@@ -385,6 +390,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private int postStandUnlockTicks = 0;
 
     // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
+    private final RaevyxTamingHandler tamingController = new RaevyxTamingHandler(this);
+    private int tamingAbortCalmTicks = 0;
 
     public boolean canFeed() {
         int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
@@ -393,6 +400,69 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public void setFeedingCooldown(int ticks) {
         this.entityData.set(DATA_FEEDING_COOLDOWN, ticks);
+    }
+
+    public boolean isTamingStunned() {
+        return this.entityData.get(DATA_TAMING_STUNNED);
+    }
+
+    public void enterTamingStun() {
+        tamingController.enterStun();
+    }
+
+    public void enterTamingHoldState() {
+        tamingController.enterHoldState();
+    }
+
+    public void setTamingRecoveryTarget(float targetHealth) {
+        tamingController.setRecoveryTarget(targetHealth);
+    }
+
+    public void clearTamingRecovery() {
+        tamingController.clearRecovery();
+    }
+
+    public void incrementTamingFailures() {
+        tamingController.incrementFailures();
+    }
+
+    public void resetTamingFailures() {
+        tamingController.resetFailures();
+    }
+
+    public int getTamingFailureCounter() {
+        return tamingController.getFailureCounter();
+    }
+
+    public boolean isAwaitingTamingFeed() {
+        return tamingController.isAwaitingFeed();
+    }
+
+    public void abortTamingAttempt() {
+        abortTamingAttempt(true);
+    }
+
+    public void abortTamingAttempt(boolean restoreHealth) {
+        clearTamingRecovery();
+        resetTamingFailures();
+        setTarget(null);
+        setAggressive(false);
+        setLastHurtByMob(null);
+        this.setLastHurtByPlayer(null);
+        this.combatManager.clearAllStates();
+        this.hurtMarked = false;
+        if (restoreHealth && isAlive()) {
+            setHealth(getMaxHealth());
+        }
+        tamingAbortCalmTicks = Math.max(tamingAbortCalmTicks, 100);
+    }
+
+    public boolean isBelowTamingThreshold() {
+        return this.getHealth() <= getTamingThreshold();
+    }
+
+    public float getTamingThreshold() {
+        return this.getMaxHealth() * TAMING_HEALTH_RATIO;
     }
 
     // Rider takeoff request timer: while > 0, flight controller treats state as takeoff
@@ -579,6 +649,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.define(DATA_BEAM_START_Z, 0f);
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+        this.entityData.define(DATA_TAMING_STUNNED, false);
     }
 
     @Override
@@ -1330,6 +1401,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // === SERVER-SIDE: EVERY TICK (precise timing needed) ===
         tickFeedingCooldown();
+        if (tamingAbortCalmTicks > 0) {
+            tamingAbortCalmTicks--;
+        }
+        tamingController.tickServer();
         tickSleepTransition();
         tickSleepCooldowns();
         handleAmbientSounds();
@@ -2236,6 +2311,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     private void tickFeedingCooldown() {
+        if (level().isClientSide) {
+            return;
+        }
         int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
         if (cooldownTicks > 0) {
             cooldownTicks--;
@@ -2938,6 +3016,27 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             return false;
         }
 
+        // Handle damage during taming attempts - player attacking a stunned dragon cancels taming
+        if (isTamingStunned() && !isTame()) {
+            Entity attacker = damageSource.getEntity();
+            if (attacker instanceof Player player) {
+                // Player attacked during taming stun - abort current attempt but do not start escape logic
+                abortTamingAttempt(false);
+                if (!level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.displayClientMessage(
+                        net.minecraft.network.chat.Component.translatable(
+                            "entity.saintsdragons.raevyx.taming_attacked",
+                            this.getName()
+                        ),
+                        true
+                    );
+                }
+            }
+            // Allow damage to go through but taming attempt has been reset
+            boolean result = super.hurt(damageSource, amount);
+            return result;
+        }
+
         // Store previous flying state to restore if being ridden
         boolean wasFlying = isFlying();
         boolean wasRidden = isVehicle();
@@ -3398,6 +3497,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // Persist feeding cooldown (synced via entity data but saved for redundancy)
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
+        tamingController.save(tag);
 
         // Persist rest state manager
         restManager.save(tag);
@@ -3455,6 +3555,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
+        tamingController.load(tag);
 
         // Restore rest state manager and re-trigger animations based on loaded state
         restManager.load(tag);
@@ -3567,19 +3668,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.sleepReentryCooldownTicks = 0;
         this.sleepAmbientCooldownTicks = 0;
     }
-
-
-
-    // ===== ANIMATION TRIGGERS =====
-    /**
-     * Triggers the dodge animation - called when wyvern dodges projectiles
-     */
-    public void triggerDodgeAnimation() {
-        // Trigger native GeckoLib action key
-        animationHandler.triggerDodgeAnimation();
-    }
-
-    // Note: We rely on GeckoLib triggerAnim(...) to play action clips.
 
     // ===== GECKOLIB =====
     @Override
@@ -3938,6 +4026,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
+        if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
+            return;
+        }
         if (isBaby()) {
             super.setTarget(null);
             return;

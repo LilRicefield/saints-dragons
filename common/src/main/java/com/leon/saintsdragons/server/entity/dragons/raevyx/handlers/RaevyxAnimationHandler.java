@@ -14,13 +14,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     // ===== ANIMATION TRIGGERS =====
 
     /**
-     * Triggers the dodge animation
-     */
-    public void triggerDodgeAnimation() {
-        wyvern.triggerAnim("action", "dodge");
-    }
-
-    /**
      * Triggers the sit down transition animation
      */
     public void triggerSitDownAnimation() {
