@@ -186,10 +186,6 @@ public class StegonautSleepGoal extends Goal {
             case SITTING_DOWN:
                 // Wait for down → sit animation (38 ticks + 2 tick buffer)
                 if (restManager.getStateTimer() > 40) {
-                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
-                        "[SleepGoal] SITTING_DOWN -> SITTING (timer={})",
-                        restManager.getStateTimer()
-                    );
                     restManager.advanceState();
                 }
                 break;
@@ -197,10 +193,6 @@ public class StegonautSleepGoal extends Goal {
             case SITTING:
                 // Brief pause before falling asleep (1 second)
                 if (restManager.getStateTimer() > 20) {
-                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
-                        "[SleepGoal] SITTING -> FALLING_ASLEEP (timer={})",
-                        restManager.getStateTimer()
-                    );
                     restManager.advanceState();
                     drake.startSleepEnter(); // Triggers fall_asleep animation
                 }
@@ -209,10 +201,6 @@ public class StegonautSleepGoal extends Goal {
             case FALLING_ASLEEP:
                 // Wait for fall_asleep animation (38 ticks + 2 tick buffer)
                 if ((drake.isSleeping() && !drake.isSleepTransitioning()) || restManager.getStateTimer() > 40) {
-                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
-                        "[SleepGoal] FALLING_ASLEEP -> SLEEPING (timer={}, isSleeping={}, sleepTrans={})",
-                        restManager.getStateTimer(), drake.isSleeping(), drake.isSleepTransitioning()
-                    );
                     restManager.advanceState();
                 }
                 break;
@@ -223,10 +211,6 @@ public class StegonautSleepGoal extends Goal {
                 boolean shouldWake = !isNight || (restManager.getRestingTicks() >= restManager.getRestDuration());
 
                 if (shouldWake) {
-                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
-                        "[SleepGoal] SLEEPING -> WAKING_UP (isNight={}, restingTicks={}/{})",
-                        isNight, restManager.getRestingTicks(), restManager.getRestDuration()
-                    );
                     restManager.advanceState();
                     drake.startSleepExit(); // Triggers wake_up animation
                     drake.setOrderedToSit(true);
@@ -236,10 +220,6 @@ public class StegonautSleepGoal extends Goal {
             case WAKING_UP:
                 // Wait for wake_up animation (38 ticks + 2 tick buffer)
                 if (restManager.getStateTimer() > 40) {
-                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
-                        "[SleepGoal] WAKING_UP -> SITTING_AFTER (timer={})",
-                        restManager.getStateTimer()
-                    );
                     restManager.advanceState();
                     drake.setOrderedToSit(true);
                 }
@@ -248,10 +228,6 @@ public class StegonautSleepGoal extends Goal {
             case SITTING_AFTER:
                 // Brief pause after waking (1 second)
                 if (restManager.getStateTimer() > 20) {
-                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
-                        "[SleepGoal] SITTING_AFTER -> STANDING_UP (timer={})",
-                        restManager.getStateTimer()
-                    );
                     restManager.advanceState();
                     drake.setOrderedToSit(false); // Trigger stand up animation
                 }
@@ -260,10 +236,6 @@ public class StegonautSleepGoal extends Goal {
             case STANDING_UP:
                 // Wait for up animation (38 ticks + 2 tick buffer)
                 if (restManager.getStateTimer() > 40) {
-                    com.leon.saintsdragons.common.SaintsDragonsCommon.LOGGER.info(
-                        "[SleepGoal] STANDING_UP -> IDLE (timer={})",
-                        restManager.getStateTimer()
-                    );
                     restManager.advanceState(); // Returns to IDLE
                 }
                 break;

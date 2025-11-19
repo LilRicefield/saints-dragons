@@ -111,7 +111,6 @@ public class RaevyxDodgeGoal extends Goal {
     public void start() {
         wyvern.getNavigation().stop();
         // Trigger dodge animation every time
-        wyvern.triggerDodgeAnimation();
         // Play annoyed sound when dodging attacks
         wyvern.playAnnoyedSound();
     }

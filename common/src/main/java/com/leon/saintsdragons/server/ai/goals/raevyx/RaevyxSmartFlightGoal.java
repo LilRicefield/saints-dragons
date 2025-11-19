@@ -154,9 +154,9 @@ public class RaevyxSmartFlightGoal extends Goal {
     @Override
     public void start() {
         raevyx.setFlying(true);
-        raevyx.setTakeoff(true);  // Set to TRUE to trigger upward force during takeoff
         raevyx.setLanding(false);
         raevyx.setHovering(false);
+        raevyx.setTakeoff(true);
 
         if (hasWaypointsRemaining()) {
             moveToNextWaypoint();
@@ -198,7 +198,7 @@ public class RaevyxSmartFlightGoal extends Goal {
         } else if (finalTarget != null) {
             double distToTarget = raevyx.distanceToSqr(finalTarget);
 
-            // Raevyx reaches targets faster
+            // Raevyx reaches targets faster - re-path when close or after timeout
             if (distToTarget < 64.0 || timeSinceTargetChange > 300) {
                 requestNewFlightPath();
             }
@@ -294,6 +294,7 @@ public class RaevyxSmartFlightGoal extends Goal {
     private Vec3 findFlightTarget() {
         Vec3 dragonPos = raevyx.position();
 
+        // Normal flight target generation
         for (int attempts = 0; attempts < 16; attempts++) {
             Vec3 candidate = generateFlightCandidate(dragonPos, attempts);
 

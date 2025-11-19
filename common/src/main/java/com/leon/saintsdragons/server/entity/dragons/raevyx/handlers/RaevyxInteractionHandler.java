@@ -17,6 +17,9 @@ import net.minecraft.world.item.ItemStack;
  * Extracted from LightningDragonEntity to improve maintainability and reduce class size.
  */
 public record RaevyxInteractionHandler(Raevyx wyvern) {
+    // Raevyx fully recovers after every failed attempt to keep taming loops consistent
+    private static final int BASE_TAMING_ROLL = 15;
+    private static final int HEARTY_TAMING_ROLL = 8;
     
     /**
      * Main interaction entry point.
@@ -40,13 +43,31 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
      * Handle interactions with untamed dragons (taming attempts).
      */
     private InteractionResult handleUntamedInteraction(Player player, ItemStack itemstack) {
+        boolean client = wyvern.level().isClientSide;
+
+        // Allow players to abort a taming attempt by crouching with empty hands
+        if (wyvern.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
+            if (!client) {
+                wyvern.abortTamingAttempt();
+                sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_aborted");
+            }
+            return InteractionResult.sidedSuccess(client);
+        }
+
         if (!wyvern.isFood(itemstack)) {
             return InteractionResult.PASS;
         }
 
+        if (wyvern.isTamingStunned()) {
+            if (!wyvern.isAwaitingTamingFeed()) {
+                sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_dazed");
+                return InteractionResult.CONSUME;
+            }
+        }
+
         // Check feeding cooldown to prevent spam-feeding
         if (!wyvern.canFeed()) {
-            if (!wyvern.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
                     Component.translatable("entity.saintsdragons.raevyx.still_eating", wyvern.getName()),
                     true
@@ -55,8 +76,15 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             return InteractionResult.CONSUME;
         }
 
+        float minRequiredHealth = wyvern.getTamingThreshold();
+        // Add 1.0 HP buffer to prevent edge cases (e.g., small regeneration between ticks)
+        if (wyvern.getHealth() > minRequiredHealth + 1.0F) {
+            sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_need_weakened");
+            return InteractionResult.CONSUME;
+        }
+
         // Taming logic must be server-only to avoid client-only visual state changes
-        if (!wyvern.level().isClientSide) {
+        if (!client) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
@@ -71,24 +99,32 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (hearty) {
                 wyvern.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
-            int tameRoll = hearty ? 6 : 15; // hearty meal improves taming odds
 
-            if (wyvern.getRandom().nextInt(tameRoll) == 0) {
-                // Successful taming
+            wyvern.enterTamingStun();
+
+            int tameRoll = hearty ? HEARTY_TAMING_ROLL : BASE_TAMING_ROLL;
+            boolean success = wyvern.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
+
+            if (success) {
                 wyvern.tame(player);
                 wyvern.setOrderedToSit(true);
                 wyvern.setCommandManual(1); // Set command to Sit (1) to match the sitting state
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 7);
+                wyvern.resetTamingFailures();
+                wyvern.clearTamingRecovery();
 
                 // Trigger advancement for taming Lightning Dragon
                 triggerTamingAdvancement(player);
             } else {
-                // Failed taming attempt
+                Float healTarget = nextFailureHealTarget();
+                wyvern.setTamingRecoveryTarget(healTarget);
+                wyvern.incrementTamingFailures();
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 6);
+                sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_failed");
             }
         }
 
-        return InteractionResult.sidedSuccess(wyvern.level().isClientSide);
+        return InteractionResult.sidedSuccess(client);
     }
     
     /**
@@ -317,6 +353,11 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
         }
+    }
+
+    private Float nextFailureHealTarget() {
+        // Always heal all the way back to max health (180 HP) after each failed attempt
+        return wyvern.getMaxHealth();
     }
     
     private void sendStatusMessage(Player player, String key) {

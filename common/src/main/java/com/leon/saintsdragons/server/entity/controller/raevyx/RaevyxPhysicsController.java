@@ -111,6 +111,13 @@ public class RaevyxPhysicsController {
             return PlayState.STOP;
         }
 
+        // TAMING STUN: treat as alternate idle loop so death/hurt animations can still pre-empt via action controller
+        if (wyvern.isTamingStunned()) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(STUNNED);
+            return PlayState.CONTINUE;
+        }
+
         // BABY dragons use simple idle/walk/run only (no flying, no complex behaviors)
         // NOTE: Uses same animation names as adult - renderer switches JSON file based on isBaby()
         if (wyvern.isBaby()) {
