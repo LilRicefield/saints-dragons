@@ -3709,7 +3709,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Use entity-specific controller names to prevent animation bleeding between dragons
         // Update frequency: run every tick to maintain accurate keyframe timing
         AnimationController<Raevyx> movementController =
-                new AnimationController<>(this, "movement", 5, animationController::handleMovementAnimation);
+                new AnimationController<>(this, "movement", 5, animationHandler::handleMovementAnimation);
 
         // Action controller uses ONLY triggers (no predicate logic)
         // All animations (combat, abilities, sleep, death) are triggered via triggerAnim()

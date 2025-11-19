@@ -310,12 +310,32 @@
       }
     ]
   },
+  "raevyx_summon_storm_ground_start": {
+    "subtitle": "Storm ignition",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm_ground_start",
+        "volume": 1.6,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_summon_storm": {
     "subtitle": "Storm gathers",
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_summon_storm",
         "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_summon_storm_ground_end": {
+    "subtitle": "Storm discharge",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm_ground_end",
+        "volume": 1.6,
         "pitch": 1.0
       }
     ]
