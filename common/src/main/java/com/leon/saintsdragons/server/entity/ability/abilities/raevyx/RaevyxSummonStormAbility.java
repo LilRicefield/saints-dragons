@@ -36,6 +36,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private boolean startAnimPlayed;
     private boolean loopAnimPlayed;
     private boolean endAnimPlayed;
+    private boolean screenShakeActive;
     private int activeStartupDuration = GROUND_TOTAL_SEQUENCE_TICKS;
 
     public RaevyxSummonStormAbility(DragonAbilityType<Raevyx, RaevyxSummonStormAbility> type, Raevyx user) {
@@ -44,9 +45,9 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
 
     @Override
     public void tickUsing() {
-        // Continuously trigger screen shake from when the roar starts (tick 35) until the end
-        if (getTicksInUse() >= SCREEN_SHAKE_TRIGGER_TICK && !getUser().level().isClientSide) {
-            getUser().triggerScreenShake(1.5F); // Continuous intensity for dramatic effect
+        // Only shake while the ground loop animation is running
+        if (screenShakeActive && !getUser().level().isClientSide) {
+            getUser().triggerScreenShake(1.5F);
         }
 
         DragonAbilitySection section = getCurrentSection();
@@ -64,10 +65,12 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
             if (!loopAnimPlayed && ticks >= GROUND_START_TICKS) {
                 getUser().triggerAnim("action", "summon_storm_ground");
                 loopAnimPlayed = true;
+                screenShakeActive = true;
             }
             if (!endAnimPlayed && ticks >= GROUND_START_TICKS + GROUND_LOOP_TICKS) {
                 getUser().triggerAnim("action", "summon_storm_ground_end");
                 endAnimPlayed = true;
+                screenShakeActive = false;
             }
         }
 
@@ -99,11 +102,13 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
                 startAnimPlayed = true;
                 loopAnimPlayed = false;
                 endAnimPlayed = false;
+                screenShakeActive = false;
             } else {
                 getUser().triggerAnim("action", "summon_storm_air");
                 startAnimPlayed = false;
                 loopAnimPlayed = false;
                 endAnimPlayed = false;
+                screenShakeActive = false;
             }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (!getLevel().isClientSide) {
@@ -146,5 +151,6 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         if (isGroundCast) {
             getUser().clearRiderControlLock();
         }
+        screenShakeActive = false;
     }
 }
