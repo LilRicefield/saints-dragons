@@ -1,9 +1,12 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
@@ -59,6 +62,10 @@ public class RaevyxFollowOwnerGoal extends Goal {
             return false;
         }
 
+        if (wyvern.shouldForceOwnerFollow()) {
+            return true;
+        }
+
         // Only follow if owner is far enough away
         double ownerDist = wyvern.getCachedDistanceToOwner();
         return ownerDist > START_FOLLOW_DIST * START_FOLLOW_DIST;
@@ -69,6 +76,10 @@ public class RaevyxFollowOwnerGoal extends Goal {
         LivingEntity owner = wyvern.getOwner();
         if (owner == null || !owner.isAlive() || wyvern.isOrderedToSit() || wyvern.isSleepLocked()) {
             return false;
+        }
+
+        if (wyvern.shouldForceOwnerFollow()) {
+            return true;
         }
 
         // Suspend following while fighting
@@ -102,6 +113,7 @@ public class RaevyxFollowOwnerGoal extends Goal {
         if (owner == null) return;
 
         double distance = wyvern.distanceTo(owner);
+        boolean ownerAirborne = isOwnerAirborne(owner);
 
         // Emergency teleport if owner gets stupidly far away
         if (distance > TELEPORT_DIST) {
@@ -121,7 +133,7 @@ public class RaevyxFollowOwnerGoal extends Goal {
         wyvern.getLookControl().setLookAt(owner, 10.0f, 10.0f);
 
         // Smart flight decision making
-        boolean shouldFly = shouldTriggerFlight(owner, distance);
+        boolean shouldFly = shouldTriggerFlight(owner, distance, ownerAirborne);
 
         // Handle flight state changes
         if (shouldFly && !wyvern.isFlying()) {
@@ -132,13 +144,18 @@ public class RaevyxFollowOwnerGoal extends Goal {
             wyvern.setHovering(false);
             resetPathTracking();
             
-        } else if (wyvern.isFlying() && distance < STOP_FOLLOW_DIST * 1.5) {
-            // Start landing sequence when close enough to owner
-            wyvern.setLanding(true);
-            wyvern.setFlying(false);
-            wyvern.setHovering(true);
-            pathRecalcCooldown = 0;
-            
+        } else if (wyvern.isFlying()) {
+            if (wyvern.shouldForceOwnerFollow() || ownerAirborne) {
+                wyvern.setLanding(false);
+                wyvern.setHovering(false);
+            } else if (!wyvern.isLanding()) {
+                // Owner has touched down; drop out of flight like the flight goal does
+                wyvern.setLanding(true);
+                wyvern.setHovering(false);
+                wyvern.setTakeoff(false);
+                wyvern.setFlying(false);
+                pathRecalcCooldown = 0;
+            }
         }
 
         // Movement logic
@@ -227,15 +244,26 @@ public class RaevyxFollowOwnerGoal extends Goal {
      * Determine if wyvern should take flight to follow owner
      * Uses Ice and Fire's logic for smarter flight decisions
      */
-    private boolean shouldTriggerFlight(LivingEntity owner, double distance) {
+    private boolean shouldTriggerFlight(LivingEntity owner, double distance, boolean ownerAirborne) {
         // If already flying, continue flying until we're close to landing
         if (wyvern.isFlying()) {
             // Only stop flying if we're close to the owner and not too high up
+            if (wyvern.shouldForceOwnerFollow() || ownerAirborne) {
+                return true;
+            }
             return !(distance < LANDING_DISTANCE && (owner.getY() - wyvern.getY()) < FLIGHT_HEIGHT_DIFF);
         }
 
-        // Don't take off if we can't fly or are already hovering
-        if (wyvern.isHovering() || !canTriggerFlight()) {
+        // Don't take off if we can't fly or are already hovering, unless forced by airborne owner
+        if (!canTriggerFlight()) {
+            return false;
+        }
+
+        if (wyvern.shouldForceOwnerFollow() || ownerAirborne) {
+            return true;
+        }
+
+        if (wyvern.isHovering()) {
             return false;
         }
 
@@ -271,6 +299,7 @@ public class RaevyxFollowOwnerGoal extends Goal {
         wyvern.setRunning(false);
         wyvern.getNavigation().stop();
         wyvern.setGroundMoveStateFromAI(0);
+        wyvern.clearForcedOwnerFollow();
         resetPathTracking();
     }
 
@@ -317,5 +346,23 @@ public class RaevyxFollowOwnerGoal extends Goal {
         this.lastOwnerX = Double.NaN;
         this.lastOwnerY = Double.NaN;
         this.lastOwnerZ = Double.NaN;
+    }
+
+    private boolean isOwnerAirborne(LivingEntity owner) {
+        if (owner == null || owner.level() != wyvern.level()) {
+            return false;
+        }
+        if (owner.isPassenger()) {
+            Entity vehicle = owner.getVehicle();
+            if (vehicle != null && !vehicle.onGround()) {
+                return true;
+            }
+        }
+        if (owner.onGround()) {
+            return false;
+        }
+        BlockPos pos = owner.blockPosition();
+        int groundY = owner.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos).getY();
+        return owner.getY() - groundY > 4.0;
     }
 }
