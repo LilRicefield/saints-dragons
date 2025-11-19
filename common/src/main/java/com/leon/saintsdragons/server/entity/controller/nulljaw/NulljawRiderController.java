@@ -264,6 +264,16 @@ public record NulljawRiderController(Nulljaw drake) {
      */
     @Nullable
     public Player getControllingPassenger() {
-        return getRidingPlayer();
+        Player rider = getRidingPlayer();
+        if (rider == null) {
+            return null;
+        }
+        if (!drake.isTame()) {
+            return null;
+        }
+        if (!drake.isOwnedBy(rider)) {
+            return null;
+        }
+        return rider;
     }
 }

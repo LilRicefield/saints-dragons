@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
@@ -50,6 +51,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,6 +165,16 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private int sleepCommandSnapshot = -1;
     private boolean wasVehicleLastTick = false;
 
+    // ===== UNTAMED RIDE / TAMING STATE =====
+    private static final int MIN_WILD_TAME_TICKS = 60;
+    private static final int MAX_TAMING_PROGRESS = 400;
+    private static final int BUCK_INTERVAL_MIN = 60;
+    private static final int BUCK_INTERVAL_MAX = 110;
+    private boolean wildRideActive = false;
+    private int wildRideTicks = 0;
+    private int nextBuckAttemptTick = 0;
+    private int cumulativeWildRideProgress = 0;
+
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
     private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
@@ -229,7 +241,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     public boolean areRiderControlsLocked() {
-        return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
+        boolean locked = level().isClientSide
+                ? this.entityData.get(DATA_RIDER_LOCKED)
+                : riderControlLockTicks > 0;
+        return locked || isWildRideActive();
     }
 
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
@@ -624,6 +639,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
             this.tickAnimationStates();
             this.updateSwimOrientationState();
+            this.tickWildRideState();
         }
 
         tickClientSideUpdates();
@@ -631,7 +647,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public void travel(@NotNull Vec3 motion) {
-        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player && !isWildRideActive()) {
             if (areRiderControlsLocked()) {
                 this.setDeltaMovement(Vec3.ZERO);
                 return;
@@ -703,6 +719,28 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
      */
     public InteractionResult superMobInteract(Player player, InteractionHand hand) {
         return super.mobInteract(player, hand);
+    }
+
+    public boolean beginUntamedRide(Player player) {
+        if (this.isTame() || this.isBaby() || this.isVehicle() || player.isSecondaryUseActive()) {
+            return false;
+        }
+        if (this.level().isClientSide) {
+            return true;
+        }
+        player.startRiding(this);
+        startWildRideSequence();
+        return true;
+    }
+
+    public void awardTamingAdvancement(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            var advancement = serverPlayer.server.getAdvancements()
+                    .getAdvancement(SaintsDragonsCommon.rl("tame_nulljaw"));
+            if (advancement != null) {
+                serverPlayer.getAdvancements().award(advancement, "tame_nulljaw");
+            }
+        }
     }
 
     private void applyConfiguredAttributes() {
@@ -877,6 +915,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
+        if (isWildRideActive()) {
+            handleUntamedRideWhileMounted(player);
+            return;
+        }
         super.tickRidden(player, travelVector);
         if (areRiderControlsLocked()) {
             player.fallDistance = 0.0F;
@@ -895,6 +937,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     @Override
     public void removePassenger(@NotNull Entity passenger) {
         super.removePassenger(passenger);
+        if (!this.level().isClientSide && !this.isTame() && wildRideActive) {
+            endWildRide(false);
+        }
         if (!this.level().isClientSide) {
             this.setAccelerating(false);
             this.setLastRiderForward(0.0F);
@@ -904,6 +949,14 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     // Let RideableDragonBase handle tickAnimationStates() for proper networking
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource source) {
+        if (fallDistance <= 16.0F) {
+            return false;
+        }
+        return super.causeFallDamage(fallDistance - 16.0F, damageMultiplier, source);
+    }
 
     @Override
     public void jumpFromGround() {
@@ -1489,6 +1542,127 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         }
 
         wasVehicleLastTick = mounted;
+    }
+
+    private void startWildRideSequence() {
+        wildRideActive = true;
+        wildRideTicks = 0;
+        nextBuckAttemptTick = nextBuckDelay();
+        this.getNavigation().stop();
+        this.setTarget(null);
+    }
+
+    private void tickWildRideState() {
+        if (!wildRideActive || this.isTame()) {
+            wildRideActive = false;
+            return;
+        }
+
+        Player rider = getWildRideRider();
+        if (rider == null) {
+            endWildRide(false);
+            return;
+        }
+
+        wildRideTicks++;
+        cumulativeWildRideProgress = Math.min(cumulativeWildRideProgress + 1, MAX_TAMING_PROGRESS);
+        applyWildRideMotion();
+
+        if (wildRideTicks >= nextBuckAttemptTick) {
+            buckWildRider(rider);
+            endWildRide(true);
+            return;
+        }
+
+        if (wildRideTicks >= MIN_WILD_TAME_TICKS) {
+            float progressFactor = (float) cumulativeWildRideProgress / (float) MAX_TAMING_PROGRESS;
+            float successChance = 0.01F + progressFactor * 0.03F; // 1% base up to ~4%
+            if (this.getRandom().nextFloat() < successChance) {
+                this.tame(rider);
+                this.setOrderedToSit(false);
+                this.setCommand(0);
+                this.level().broadcastEntityEvent(this, (byte) 7);
+                awardTamingAdvancement(rider);
+                endWildRide(false);
+            }
+        }
+    }
+
+    private void handleUntamedRideWhileMounted(Player rider) {
+        rider.fallDistance = 0.0F;
+        this.fallDistance = 0.0F;
+    }
+
+    private void applyWildRideMotion() {
+        if (this.getNavigation().isDone() || this.getRandom().nextInt(40) == 0) {
+            double targetX = this.getX() + (this.getRandom().nextDouble() - 0.5D) * 18.0D;
+            double targetZ = this.getZ() + (this.getRandom().nextDouble() - 0.5D) * 18.0D;
+            double targetY = this.getY();
+            this.getNavigation().moveTo(targetX, targetY, targetZ, 1.45D);
+        }
+
+        if (this.onGround()) {
+            if (this.tickCount % 7 == 0) {
+                this.jumpFromGround();
+                Vec3 impulse = new Vec3(
+                        (this.getRandom().nextDouble() - 0.5D) * 1.0D,
+                        0.5D + this.getRandom().nextDouble() * 0.4D,
+                        (this.getRandom().nextDouble() - 0.5D) * 1.0D
+                );
+                this.setDeltaMovement(this.getDeltaMovement().add(impulse));
+                this.hasImpulse = true;
+            } else if (this.tickCount % 4 == 0) {
+                Vec3 lateral = new Vec3(
+                        (this.getRandom().nextDouble() - 0.5D) * 0.5D,
+                        0.0D,
+                        (this.getRandom().nextDouble() - 0.5D) * 0.5D
+                );
+                this.setDeltaMovement(this.getDeltaMovement().add(lateral));
+                this.hasImpulse = true;
+            }
+        }
+    }
+
+    private Player getWildRideRider() {
+        if (!this.isVehicle()) {
+            return null;
+        }
+        Entity passenger = this.getFirstPassenger();
+        if (passenger instanceof Player player && !this.isTame()) {
+            return player;
+        }
+        return null;
+    }
+
+    private void buckWildRider(Player rider) {
+        rider.stopRiding();
+        Vec3 launch = new Vec3(
+                (this.getRandom().nextDouble() - 0.5D) * 0.9D,
+                0.8D + this.getRandom().nextDouble() * 0.4D,
+                (this.getRandom().nextDouble() - 0.5D) * 0.9D
+        );
+        rider.push(launch.x, launch.y, launch.z);
+        rider.hurtMarked = true;
+        this.level().broadcastEntityEvent(this, (byte) 6);
+    }
+
+    private void endWildRide(boolean bucked) {
+        if (bucked) {
+            cumulativeWildRideProgress = Math.max(0, cumulativeWildRideProgress - 40);
+        } else {
+            cumulativeWildRideProgress = Math.max(0, cumulativeWildRideProgress - 10);
+        }
+        wildRideActive = false;
+        wildRideTicks = 0;
+        nextBuckAttemptTick = 0;
+    }
+
+    private int nextBuckDelay() {
+        return Mth.nextInt(this.getRandom(), BUCK_INTERVAL_MIN, BUCK_INTERVAL_MAX);
+    }
+
+    private boolean isWildRideActive() {
+        return wildRideActive && !this.isTame();
     }
 
     private void updateSittingProgress() {
