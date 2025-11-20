@@ -3827,11 +3827,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "ignivorus_step",
-					"locator": "body_locator"
-				},
-				"0.8333": {
-					"effect": "ignivorus_step",
+					"effect": "ignivorus_walk",
 					"locator": "body_locator"
 				}
 			}
@@ -5403,11 +5399,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "ignivorus_step",
-					"locator": "body_locator"
-				},
-				"0.5": {
-					"effect": "ignivorus_step",
+					"effect": "ignivorus_run",
 					"locator": "body_locator"
 				}
 			}

@@ -27,7 +27,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
      */
     public PlayState handleMovementAnimation(AnimationState<Ignivorus> state) {
         // Reduced transition to prevent overlapping step sounds during animation changes
-        state.getController().transitionLength(3);
+        state.getController().transitionLength(6);
 
         // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
         // Wait for entity data to sync from server before processing animations
