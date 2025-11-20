@@ -23,8 +23,10 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private static final int GROUND_LOOP_TICKS = 114; // 5.71s animation.raevyx.summon_storm_ground
     private static final int GROUND_END_TICKS = 38; // 1.88s animation.raevyx.summon_storm_ground_end
     private static final int GROUND_TOTAL_SEQUENCE_TICKS = GROUND_START_TICKS + GROUND_LOOP_TICKS + GROUND_END_TICKS;
-    private static final int AIR_ANIMATION_TICKS = 145; // 7.25 seconds animation.raevyx.summon_storm_air
-    private static final int SCREEN_SHAKE_TRIGGER_TICK = 35; // 1.76 seconds (35.2 ticks)
+    private static final int AIR_START_TICKS = 38; // 1.88s animation.raevyx.summon_storm_air_start
+    private static final int AIR_LOOP_TICKS = 114; // 5.71s animation.raevyx.summon_storm_air
+    private static final int AIR_END_TICKS = 38; // 1.88s animation.raevyx.summon_storm_air_end
+    private static final int AIR_TOTAL_SEQUENCE_TICKS = AIR_START_TICKS + AIR_LOOP_TICKS + AIR_END_TICKS;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, GROUND_TOTAL_SEQUENCE_TICKS), // covers full ground sequence
@@ -33,7 +35,6 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     };
 
     private boolean isGroundCast;
-    private boolean startAnimPlayed;
     private boolean loopAnimPlayed;
     private boolean endAnimPlayed;
     private boolean screenShakeActive;
@@ -45,7 +46,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
 
     @Override
     public void tickUsing() {
-        // Only shake while the ground loop animation is running
+        // Only shake while the loop animation is running
         if (screenShakeActive && !getUser().level().isClientSide) {
             getUser().triggerScreenShake(1.5F);
         }
@@ -56,22 +57,20 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         }
 
         int ticks = getTicksInSection();
-        if (isGroundCast) {
-            // Trigger loop/end animations when each phase completes
-            if (!startAnimPlayed) {
-                getUser().triggerAnim("action", "summon_storm_ground_start");
-                startAnimPlayed = true;
-            }
-            if (!loopAnimPlayed && ticks >= GROUND_START_TICKS) {
-                getUser().triggerAnim("action", "summon_storm_ground");
-                loopAnimPlayed = true;
-                screenShakeActive = true;
-            }
-            if (!endAnimPlayed && ticks >= GROUND_START_TICKS + GROUND_LOOP_TICKS) {
-                getUser().triggerAnim("action", "summon_storm_ground_end");
-                endAnimPlayed = true;
-                screenShakeActive = false;
-            }
+        int startTicks = getCurrentStartTicks();
+        int loopEndTicks = startTicks + getCurrentLoopTicks();
+
+        if (!loopAnimPlayed && ticks >= startTicks) {
+            String loopTrigger = isGroundCast ? "summon_storm_ground" : "summon_storm_air";
+            getUser().triggerAnim("action", loopTrigger);
+            loopAnimPlayed = true;
+            screenShakeActive = true;
+        }
+        if (!endAnimPlayed && ticks >= loopEndTicks) {
+            String endTrigger = isGroundCast ? "summon_storm_ground_end" : "summon_storm_air_end";
+            getUser().triggerAnim("action", endTrigger);
+            endAnimPlayed = true;
+            screenShakeActive = false;
         }
 
         if (ticks >= activeStartupDuration) {
@@ -85,31 +84,21 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         if (section.sectionType == AbilitySectionType.STARTUP) {
             // Determine if this is a ground or air cast
             isGroundCast = !getUser().isFlying();
-            activeStartupDuration = isGroundCast ? GROUND_TOTAL_SEQUENCE_TICKS : AIR_ANIMATION_TICKS;
+            activeStartupDuration = getCurrentTotalTicks();
 
             // Grant invulnerability for the full animation duration
             getUser().startTemporaryInvuln(activeStartupDuration);
 
-            // Lock controls ONLY for ground cast - air cast allows free movement
-            if (isGroundCast) {
-                getUser().lockRiderControls(activeStartupDuration);
-            }
+            // Lock controls to mirror cinematic handling regardless of flight state
+            getUser().lockRiderControls(activeStartupDuration);
             getUser().lockTakeoff(activeStartupDuration);
 
             // Play appropriate animation variant (sound is handled by keyframe at 1.76s)
-            if (isGroundCast) {
-                getUser().triggerAnim("action", "summon_storm_ground_start");
-                startAnimPlayed = true;
-                loopAnimPlayed = false;
-                endAnimPlayed = false;
-                screenShakeActive = false;
-            } else {
-                getUser().triggerAnim("action", "summon_storm_air");
-                startAnimPlayed = false;
-                loopAnimPlayed = false;
-                endAnimPlayed = false;
-                screenShakeActive = false;
-            }
+            String startTrigger = isGroundCast ? "summon_storm_ground_start" : "summon_storm_air_start";
+            getUser().triggerAnim("action", startTrigger);
+            loopAnimPlayed = false;
+            endAnimPlayed = false;
+            screenShakeActive = false;
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (!getLevel().isClientSide) {
                 // Apply supercharge
@@ -148,9 +137,23 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
 
     private void releaseLocks() {
         getUser().clearTakeoffLock();
-        if (isGroundCast) {
-            getUser().clearRiderControlLock();
-        }
+        getUser().clearRiderControlLock();
         screenShakeActive = false;
+    }
+
+    private int getCurrentStartTicks() {
+        return isGroundCast ? GROUND_START_TICKS : AIR_START_TICKS;
+    }
+
+    private int getCurrentLoopTicks() {
+        return isGroundCast ? GROUND_LOOP_TICKS : AIR_LOOP_TICKS;
+    }
+
+    private int getCurrentEndTicks() {
+        return isGroundCast ? GROUND_END_TICKS : AIR_END_TICKS;
+    }
+
+    private int getCurrentTotalTicks() {
+        return getCurrentStartTicks() + getCurrentLoopTicks() + getCurrentEndTicks();
     }
 }

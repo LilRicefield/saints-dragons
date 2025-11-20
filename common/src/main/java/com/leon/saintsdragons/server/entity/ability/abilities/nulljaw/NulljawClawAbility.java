@@ -160,12 +160,35 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
 
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
 
+        // Pre-calc thresholds for the ray-like swipe
+        double maxForward = BLOCK_BREAK_RANGE + 0.5;
+        double maxLateral = BLOCK_BREAK_WIDTH + 0.5;
+        double maxVertical = BLOCK_BREAK_HEIGHT * 0.5 + 0.5;
+
         for (int x = minPos.getX(); x <= maxPos.getX(); x++) {
             for (int y = minPos.getY(); y <= maxPos.getY(); y++) {
                 for (int z = minPos.getZ(); z <= maxPos.getZ(); z++) {
                     cursor.set(x, y, z);
 
                     if (!server.isLoaded(cursor)) {
+                        continue;
+                    }
+
+                    Vec3 blockCenter = new Vec3(x + 0.5, y + 0.5, z + 0.5);
+                    Vec3 offset = blockCenter.subtract(mouth);
+
+                    double forward = offset.dot(look);
+                    if (forward < 0.0 || forward > maxForward) {
+                        continue;
+                    }
+
+                    Vec3 along = look.scale(forward);
+                    double lateralDistance = offset.subtract(along).length();
+                    if (lateralDistance > maxLateral) {
+                        continue;
+                    }
+
+                    if (Math.abs(offset.y) > maxVertical) {
                         continue;
                     }
 
