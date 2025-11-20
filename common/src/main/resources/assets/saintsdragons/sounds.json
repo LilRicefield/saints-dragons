@@ -291,12 +291,12 @@
       }
     ]
   },
-  "raevyx_step": {
-    "subtitle": "Reavyx steps",
+  "raevyx_walk": {
+    "subtitle": "Raevyx pads forward",
     "sounds": [
       {
-        "name": "saintsdragons:entity/raevyx/raevyx_step",
-        "volume": 0.8,
+        "name": "saintsdragons:entity/raevyx/raevyx_walk",
+        "volume": 1.0,
         "pitch": 1.0
       }
     ]
@@ -723,6 +723,16 @@
         "volume": 2.0,
         "pitch": 0.95,
         "attenuation_distance": 64
+      }
+    ]
+  },
+  "raevyx_run": {
+    "subtitle": "Raevyx sprints",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_run",
+        "volume": 1.2,
+        "pitch": 1.0
       }
     ]
   }

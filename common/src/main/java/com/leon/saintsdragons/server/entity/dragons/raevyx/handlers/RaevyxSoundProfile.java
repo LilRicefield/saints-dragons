@@ -8,7 +8,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Raevyx-specific vocal timing metadata and animation sound routing.
@@ -49,11 +48,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             Map.entry("baby_raevyx_die", "baby_raevyx_die")
     );
 
-    private static final Set<String> STEP_KEYS = Set.of(
-            "raevyx_step1", "raevyx_step2",
-            "raevyx_run_step1", "raevyx_run_step2"
-    );
-
     private RaevyxSoundProfile() {}
 
     @Override
@@ -63,9 +57,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         if (key.startsWith("raevyx_flap")) {
             playWingFlap(handler, dragon, locator);
             return true;
-        }
-        if (STEP_KEYS.contains(key)) {
-            return false; // let shared handler normalise & process footsteps
         }
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
@@ -85,6 +76,14 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             }
             case "raevyx_horngore" -> {
                 playSimpleMouthSound(handler, dragon, locator, ModSounds.RAEVYX_HORNGORE.get(), 1.3f, 0.9f, 0.2f);
+                yield true;
+            }
+            case "raevyx_walk" -> {
+                playWalkSound(handler, dragon, locator);
+                yield true;
+            }
+            case "raevyx_run" -> {
+                playRunSound(handler, dragon, locator);
                 yield true;
             }
             case "raevyx_summon_storm_ground_start" -> {
@@ -132,15 +131,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         return true;
     }
 
-    @Override
-    public boolean handleStepSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator,
-                                   double x, double y, double z, float volume, float pitch) {
-        // Play the Raevyx step sound
-        dragon.level().playLocalSound(x, y, z, ModSounds.RAEVYX_STEP.get(),
-                SoundSource.NEUTRAL, volume, pitch, false);
-        return true;
-    }
-
     private void playWingFlap(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 bodyPos = handler.resolveLocatorWorldPos(
                 locator != null && !locator.isEmpty() ? locator : "bodyLocator"
@@ -150,6 +140,20 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         float volume = Math.max(0.6f, 0.9f + (float) (flightSpeed * 0.2f));
 
         playClientSound(dragon, bodyPos, ModSounds.RAEVYX_FLAP.get(), volume, pitch);
+    }
+
+    private void playWalkSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "bodyLocator"
+        );
+        playClientSound(dragon, at, ModSounds.RAEVYX_WALK.get(), 1.0f, 1.0f);
+    }
+
+    private void playRunSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "bodyLocator"
+        );
+        playClientSound(dragon, at, ModSounds.RAEVYX_RUN.get(), 1.0f, 1.0f);
     }
 
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
