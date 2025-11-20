@@ -294,7 +294,8 @@
   "raevyx_step": {
     "subtitle": "Reavyx steps",
     "sounds": [
-      { "name": "saintsdragons:entity/raevyx/raevyx_step",
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_step",
         "volume": 0.8,
         "pitch": 1.0
       }
@@ -320,11 +321,11 @@
       }
     ]
   },
-  "raevyx_summon_storm": {
+  "raevyx_summon_storm_ground": {
     "subtitle": "Storm gathers",
     "sounds": [
       {
-        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm",
+        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm_ground",
         "volume": 2.0,
         "pitch": 1.0
       }
@@ -677,6 +678,26 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_ultimate_start",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_summon_storm_air_start": {
+    "subtitle": "Storm gathers aloft",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm_air_start",
+        "volume": 1.3,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_summon_storm_air": {
+    "subtitle": "Storm roars aloft",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm_air",
         "volume": 2.0,
         "pitch": 1.0
       }
