@@ -561,12 +561,22 @@
       }
     ]
   },
-  "ignivorus_step": {
+  "ignivorus_walk": {
     "subtitle": "Ignivorus steps",
     "sounds": [
       {
-        "name": "saintsdragons:entity/ignivorus/ignivorus_step",
-        "volume": 0.25,
+        "name": "saintsdragons:entity/ignivorus/ignivorus_walk",
+        "volume": 0.6,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_run": {
+    "subtitle": "Ignivorus charges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_run",
+        "volume": 0.9,
         "pitch": 1.0
       }
     ]

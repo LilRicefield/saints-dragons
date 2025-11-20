@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.Vec3;
 
@@ -45,8 +46,12 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
             dragon.level().playLocalSound(x, y, z, ModSounds.IGNIVORUS_BODY_SLAM.get(), SoundSource.NEUTRAL, 2.0f, pitch, false);
             return true;
         }
-        if (key.contains("ignivorus_step") || key.startsWith("step") || key.startsWith("run_step")) {
-            playStep(handler, dragon, locator, 1.0f, 0.85f);
+        if ("ignivorus_walk".equals(key)) {
+            playMovementSound(handler, dragon, locator, ModSounds.IGNIVORUS_WALK.get(), 1.0f, 0.85f);
+            return true;
+        }
+        if ("ignivorus_run".equals(key)) {
+            playMovementSound(handler, dragon, locator, ModSounds.IGNIVORUS_RUN.get(), 1.1f, 0.9f);
             return true;
         }
         if ("ignivorus_grumble1".equals(key)) {
@@ -124,8 +129,8 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
     }
 
-    private void playStep(DragonSoundHandler handler, DragonEntity dragon, String locator,
-                          float volume, float pitch) {
+    private void playMovementSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                   SoundEvent sound, float volume, float pitch) {
         // Add cooldown to prevent rapid-fire step sounds during animation transitions
         if (dragon instanceof Ignivorus) {
             long currentTick = dragon.tickCount;
@@ -143,6 +148,6 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         double z = body != null ? body.z : dragon.getZ();
         float vol = volume * 1.2f;
         float pit = pitch + (dragon.getRandom().nextFloat() - 0.5f) * 0.05f;
-        dragon.level().playLocalSound(x, y, z, ModSounds.IGNIVORUS_STEP.get(), SoundSource.NEUTRAL, vol, pit, false);
+        dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, vol, pit, false);
     }
 }

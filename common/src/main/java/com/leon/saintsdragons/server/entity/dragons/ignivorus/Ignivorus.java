@@ -1861,7 +1861,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         String controllerName = event.getController() != null ? event.getController().getName() : "unknown";
 
         // Ignore step sounds from non-movement controllers to prevent duplicates
-        if (key != null && key.contains("ignivorus_step") && !"movement".equals(controllerName)) {
+        if (key != null && (key.contains("ignivorus_walk") || key.contains("ignivorus_run")) && !"movement".equals(controllerName)) {
             return;
         }
 
@@ -1912,6 +1912,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
+    }
+
+    @Override
+    protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
+        // GeckoLib handles walking/running audio via keyframes.
     }
 
     // ===== CLIENT LOCATOR CACHE =====
