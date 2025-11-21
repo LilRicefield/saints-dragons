@@ -51,6 +51,18 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
         // Handler already blocks server-side, we're only called on client
 
+        if ("cindervane_walk".equals(key)) {
+            dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                    ModSounds.CINDERVANE_WALK.get(), SoundSource.NEUTRAL, 1.0f, 1.0f, false);
+            return true;
+        }
+
+        if ("cindervane_run".equals(key)) {
+            dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                    ModSounds.CINDERVANE_RUN.get(), SoundSource.NEUTRAL, 1.0f, 1.0f, false);
+            return true;
+        }
+
         if ("cindervane_bite".equals(key)) {
             Vec3 mouthPos = handler.resolveLocatorWorldPos("mouth_origin");
             float pitch = 0.95f + dragon.getRandom().nextFloat() * 0.1f;
@@ -86,15 +98,6 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
     @Override
     public int getVocalAnimationWindowTicks(String key) {
         return VOCAL_WINDOWS.getOrDefault(key, -1);
-    }
-
-    @Override
-    public boolean handleStepSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator,
-                                   double x, double y, double z, float volume, float pitch) {
-        // Play the Cindervane step sound
-        dragon.level().playLocalSound(x, y, z, ModSounds.CINDERVANE_STEP.get(),
-                SoundSource.NEUTRAL, volume, pitch, false);
-        return true;
     }
 
     @Override
