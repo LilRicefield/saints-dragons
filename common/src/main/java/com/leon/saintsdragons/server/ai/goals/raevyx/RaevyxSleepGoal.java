@@ -90,6 +90,15 @@ public class RaevyxSleepGoal extends Goal {
         boolean ownerOk = !wyvern.isTame() || ownerAsleepNearby();
         boolean sleepWindow = canSleepNow();
 
+        // Any threat/aggro forces immediate wake sequencing
+        if (!calm && phase != SleepPhase.IDLE && phase != SleepPhase.EXITING) {
+            wyvern.startSleepExit();
+            phase = SleepPhase.EXITING;
+            boolean ownerWantsSit = wyvern.isTame() && wyvern.getCommand() == 1;
+            phaseTimer = wyvern.getSleepWakeUpDuration()
+                    + (ownerWantsSit ? 0 : wyvern.getSleepSitUpDuration()) + 8;
+        }
+
         if (phase == SleepPhase.ENTERING) {
             // Promote to sleeping once the entity reports it (after fall_asleep finishes)
             if (wyvern.isSleeping()) {
@@ -139,7 +148,9 @@ public class RaevyxSleepGoal extends Goal {
 
     @Override
     public boolean isInterruptable() {
-        return false; // keep the full transition chain intact
+        // Allow interruption when dragon has a target (attacked) or is aggressive
+        // This ensures combat goals can activate immediately without waiting for sleep goal to clean up
+        return wyvern.getTarget() != null || wyvern.isAggressive();
     }
 
     private boolean canSleepNow() {

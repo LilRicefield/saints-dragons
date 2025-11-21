@@ -17,6 +17,9 @@ public class RaevyxTamingHandler {
     private int stunGraceTicks = 0;
     private boolean aiLocked = false;
     private boolean awaitingFeed = false;
+    private int stunTimeoutTicks = 0;
+
+    private static final int STUN_TIMEOUT = 20 * 30; // 30 seconds
 
     public RaevyxTamingHandler(Raevyx wyvern) {
         this.wyvern = wyvern;
@@ -34,6 +37,7 @@ public class RaevyxTamingHandler {
         awaitingFeed = false;
         stunGraceTicks = Math.max(stunGraceTicks, 20);
         recoveryTargetHealth = -1.0F;
+        stunTimeoutTicks = 0; // Reset timeout when entering stun (player fed it)
         ensureStunState();
     }
 
@@ -41,6 +45,7 @@ public class RaevyxTamingHandler {
         awaitingFeed = true;
         stunGraceTicks = 0;
         recoveryTargetHealth = -1.0F;
+        stunTimeoutTicks = STUN_TIMEOUT; // Start 30 second timeout
         ensureStunState();
     }
 
@@ -48,6 +53,7 @@ public class RaevyxTamingHandler {
         awaitingFeed = false;
         recoveryTargetHealth = Math.max(0.0F, Math.min(targetHealth, wyvern.getMaxHealth()));
         stunGraceTicks = Math.max(stunGraceTicks, 40);
+        stunTimeoutTicks = 0; // Reset timeout when healing starts
         ensureStunState();
     }
 
@@ -55,6 +61,7 @@ public class RaevyxTamingHandler {
         recoveryTargetHealth = -1.0F;
         stunGraceTicks = 0;
         awaitingFeed = false;
+        stunTimeoutTicks = 0; // Reset timeout
         boolean wasStunned = wyvern.isTamingStunned();
         if (wyvern.isTamingStunned()) {
             wyvern.getEntityData().set(Raevyx.DATA_TAMING_STUNNED, false);
@@ -85,6 +92,7 @@ public class RaevyxTamingHandler {
         tag.putBoolean("TamingAiLocked", aiLocked);
         tag.putBoolean("TamingAwaitingFeed", awaitingFeed);
         tag.putBoolean("TamingStunned", wyvern.isTamingStunned());
+        tag.putInt("TamingStunTimeout", Math.max(0, stunTimeoutTicks));
     }
 
     public void load(CompoundTag tag) {
@@ -93,6 +101,7 @@ public class RaevyxTamingHandler {
         stunGraceTicks = Math.max(0, tag.getInt("TamingStunGraceTicks"));
         aiLocked = tag.getBoolean("TamingAiLocked");
         awaitingFeed = tag.getBoolean("TamingAwaitingFeed");
+        stunTimeoutTicks = Math.max(0, tag.getInt("TamingStunTimeout"));
         if (tag.getBoolean("TamingStunned")) {
             wyvern.getEntityData().set(Raevyx.DATA_TAMING_STUNNED, true);
             if (aiLocked && !wyvern.level().isClientSide) {
@@ -119,7 +128,38 @@ public class RaevyxTamingHandler {
 
         ensureStunState();
 
+        // Tick down stun timeout if waiting for feed
         if (awaitingFeed) {
+            if (stunTimeoutTicks > 0) {
+                stunTimeoutTicks--;
+                if (stunTimeoutTicks <= 0) {
+                    // Timeout reached - player took too long to decide
+                    // Heal dragon to full and release from stun
+                    wyvern.setHealth(wyvern.getMaxHealth());
+
+                    // Notify nearby players about the timeout
+                    if (!level.isClientSide) {
+                        var nearbyPlayers = level.getEntitiesOfClass(
+                            net.minecraft.world.entity.player.Player.class,
+                            wyvern.getBoundingBox().inflate(32.0),
+                            p -> p instanceof net.minecraft.server.level.ServerPlayer
+                        );
+                        for (var player : nearbyPlayers) {
+                            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                                serverPlayer.displayClientMessage(
+                                    net.minecraft.network.chat.Component.translatable(
+                                        "entity.saintsdragons.raevyx.taming_timeout",
+                                        wyvern.getName()
+                                    ),
+                                    true
+                                );
+                            }
+                        }
+                    }
+
+                    clearRecovery();
+                }
+            }
             return;
         }
 
