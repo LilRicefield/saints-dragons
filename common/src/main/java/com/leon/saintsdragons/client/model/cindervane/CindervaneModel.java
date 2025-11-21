@@ -31,7 +31,7 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);  // Smooth body rotation like Nulljaw/Raevyx
             applyBankingRoll(entity, animationState);
-            applyNeckFollow(animationState);  // Base head tracking first (uses EntityModelData)
+            applyNeckFollow(entity, animationState);  // Base head tracking first (uses EntityModelData)
             applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden (flying)
             applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
             applyTailDrag(entity, partialTick);
@@ -168,22 +168,37 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     }
 
     /**
-     * Distributes head rotation across neck segments using EntityModelData.
-     * Mirrors Raevyx's approach exactly - preserves animation keyframes.
+     * Distributes head rotation across neck segments.
+     * Combines look direction with structural rotation from turning, then clamps to prevent crunching.
      */
-    private void applyNeckFollow(AnimationState<Cindervane> state) {
+    private void applyNeckFollow(Cindervane entity, AnimationState<Cindervane> state) {
         EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) {
             return;
         }
 
-        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
-        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        float partialTick = state.getPartialTick();
 
-        applyNeckBoneFollow("neck1", lookPitchRad, lookYawRad, 0.35f);
-        applyNeckBoneFollow("neck2", lookPitchRad, lookYawRad, 0.55f);
-        applyNeckBoneFollow("neck3", lookPitchRad, lookYawRad, 0.70f);
-        applyNeckBoneFollow("skullController", lookPitchRad, lookYawRad, 0.80f);
+        // Get body deviation (how much head leads body)
+        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+
+        // Combine structural rotation + look direction, then clamp
+        // bodyDeviation * 2.0 = structural neck bend from turning
+        // netHeadYaw = where the head wants to look
+        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
+        float totalYawRad = lookYawRad + structuralYawRad;
+
+        // Clamp total rotation to prevent structural crunching during 360° turns
+        totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
+
+        // Clamp pitch as well
+        float lookPitchRad = Mth.clamp(modelData.headPitch(), -20.0f, 20.0f) * Mth.DEG_TO_RAD;
+
+        applyNeckBoneFollow("neck1", lookPitchRad, totalYawRad, 0.35f);
+        applyNeckBoneFollow("neck2", lookPitchRad, totalYawRad, 0.55f);
+        applyNeckBoneFollow("neck3", lookPitchRad, totalYawRad, 0.70f);
+        applyNeckBoneFollow("skullController", lookPitchRad, totalYawRad, 0.80f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
