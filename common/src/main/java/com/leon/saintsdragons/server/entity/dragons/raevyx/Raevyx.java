@@ -3577,15 +3577,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tag.putInt("TempInvulnTicks", Math.max(0, this.tempInvulnTicks));
         tag.putBoolean("AllowGroundBeamStorm", this.allowGroundBeamDuringStorm);
 
-        // Persist sleep state and transition timers
-        tag.putBoolean("Sleeping", this.isSleeping());
-        // Sleep transition states now synced via entity data, no need to save separately
-        tag.putInt("SleepTransitionTicks", Math.max(0, this.sleepTransitionTicks));
-        tag.putInt("SleepAmbientCooldownTicks", Math.max(0, this.sleepAmbientCooldownTicks));
-        tag.putInt("SleepReentryCooldownTicks", Math.max(0, this.sleepReentryCooldownTicks));
-        tag.putInt("SleepCancelTicks", Math.max(0, this.sleepCancelTicks));
-        tag.putBoolean("SleepLock", this.sleepLocked);
-        tag.putInt("SleepCommandSnapshot", this.sleepCommandSnapshot);
+        // Sleep state is ephemeral - not persisted (sleep goal re-evaluates on load)
         tag.putBoolean("ManualSitCommand", this.manualSitCommand);
 
         // Persist feeding cooldown (synced via entity data but saved for redundancy)
@@ -3634,15 +3626,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             this.allowGroundBeamDuringStorm = tag.getBoolean("AllowGroundBeamStorm");
         }
 
-        // Restore sleep state and transition timers
-        if (tag.contains("Sleeping")) this.setSleeping(tag.getBoolean("Sleeping"));
-        // Sleep transition states now synced via entity data, loaded automatically
-        this.sleepTransitionTicks = Math.max(0, tag.getInt("SleepTransitionTicks"));
-        this.sleepAmbientCooldownTicks = Math.max(0, tag.getInt("SleepAmbientCooldownTicks"));
-        this.sleepReentryCooldownTicks = Math.max(0, tag.getInt("SleepReentryCooldownTicks"));
-        this.sleepCancelTicks = Math.max(0, tag.getInt("SleepCancelTicks"));
-        this.sleepLocked = tag.getBoolean("SleepLock");
-        this.sleepCommandSnapshot = tag.getInt("SleepCommandSnapshot");
+        // Sleep state is ephemeral - not loaded (cleaned up below, sleep goal re-evaluates)
 
         // Restore feeding cooldown (synced via entity data but loaded for redundancy)
         if (tag.contains("FeedingCooldownTicks")) {
@@ -3690,7 +3674,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             this.setOrderedToSit(false);
         }
 
-        // If we reload while sleep-locked (or mid-transition), immediately wake and clear the lock so AI goals resume.
+        // Clear all sleep state on world load (sleep is ephemeral, not persisted)
+        // Sleep goal will re-evaluate conditions and put dragon back to sleep if appropriate
         if (this.sleepLocked || this.isSleepingEntering() || this.isSleepingExiting() || this.entityData.get(DATA_SLEEPING)) {
             this.releaseSleepLock();
             this.wakeUpImmediately();
