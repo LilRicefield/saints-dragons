@@ -74,7 +74,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
     }
 
     /**
-     * Applies smooth body rotation using TDE's deviation approach.
+     * Applies smooth body rotation using deviation approach.
      * bodyRotDeviation tracks the difference between head and body rotation.
      * This creates the natural "head leads, body follows" behavior.
      */
@@ -192,9 +192,8 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
     /**
      * Distributes the parent "head" bone's rotation across neck segments like a giraffe.
-     * GeckoLib rotates the main "head" bone, and we distribute that rotation so each
-     * neck segment contributes a portion, creating smooth natural movement.
-     * Simple version like Nulljaw - no special beaming logic.
+     * Calculate neck rotation relative to BODY yaw (structural), not head look target.
+     * This prevents "funny bending" when tracking targets while turning.
      */
     private void applyNeckFollow(Raevyx entity, AnimationState<Raevyx> state) {
         var headOpt = getBone("head1Controller");
@@ -206,19 +205,33 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         }
 
         GeoBone head = headOpt.get();
+        float partialTick = state.getPartialTick();
 
-        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        // Get body deviation (how much head leads body)
+        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+
+        // bodyDeviation * 2.0 = structural neck bend from turning
+        // netHeadYaw = where the head wants to look
+        // ADD them together, then clamp the total to prevent crunching
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
+        float totalYawRad = lookYawRad + structuralYawRad;
+
+        // Clamp the TOTAL rotation to prevent structural crunching
+        totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
+
+        // For pitch, use head look pitch but clamp it
+        float lookPitchRad = Mth.clamp(modelData.headPitch(), -20.0f, 20.0f) * Mth.DEG_TO_RAD;
 
         // Remove the procedural look rotation from the head itself so the animation pose stays intact.
         head.setRotX(head.getRotX() - lookPitchRad);
-        head.setRotY(head.getRotY() - lookYawRad);
+        head.setRotY(head.getRotY() - totalYawRad);
 
-        // Now distribute the rotation across neck segments (4 segments for Raevyx)
-        applyNeckBoneFollow("neck1Controller", lookPitchRad, lookYawRad, 0.20f);  // Base
-        applyNeckBoneFollow("neck2Controller", lookPitchRad, lookYawRad, 0.25f);  // Lower-mid
-        applyNeckBoneFollow("neck3Controller", lookPitchRad, lookYawRad, 0.30f);  // Upper-mid
-        applyNeckBoneFollow("neck4Controller", lookPitchRad, lookYawRad, 0.35f);  // Tip
+        // Now distribute the CLAMPED rotation across neck segments (4 segments for Raevyx)
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.20f);  // Base
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.25f);  // Lower-mid
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.30f);  // Upper-mid
+        applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.35f);  // Tip
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {

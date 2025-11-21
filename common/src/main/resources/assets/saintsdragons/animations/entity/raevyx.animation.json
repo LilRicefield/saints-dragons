@@ -3536,6 +3536,11 @@
 						"vector": [0, 0, 0]
 					}
 				},
+				"lowerjawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftshoulderController": {
 					"rotation": {
 						"0.0": {
@@ -3934,6 +3939,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"neckstartController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"neck1Controller": {
@@ -4402,6 +4412,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"lowerjawController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"leftfeet": {
@@ -6364,6 +6379,11 @@
 						}
 					}
 				},
+				"neckstartController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"neck1Controller": {
 					"rotation": {
 						"0.0": {
@@ -7413,6 +7433,11 @@
 						}
 					}
 				},
+				"neckstartController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"neck2Controller": {
 					"rotation": {
 						"vector": [0, 0, 0]
@@ -7424,6 +7449,11 @@
 					}
 				},
 				"head1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"lowerjawController": {
 					"rotation": {
 						"vector": [0, 0, 0]
 					}

@@ -149,7 +149,6 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
 
     /**
      * Distributes head rotation across neck segments using EntityModelData.
-     * Mirrors Raevyx's approach exactly - preserves animation keyframes.
      */
     private void applyNeckFollow(Ignivorus entity, AnimationState<Ignivorus> state) {
         var headOpt = getBone("headController");
@@ -161,13 +160,27 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         }
 
         GeoBone head = headOpt.get();
+        float partialTick = state.getPartialTick();
 
-        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        // Get body deviation (how much head leads body)
+        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+
+        // bodyDeviation * 2.0 = structural neck bend from turning
+        // netHeadYaw = where the head wants to look
+        // ADD them together, then clamp the total to prevent crunching
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
+        float totalYawRad = lookYawRad + structuralYawRad;
+
+        // Clamp the TOTAL rotation to prevent structural crunching during 360° turns
+        totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
+
+        // For pitch, use head look pitch but clamp it
+        float lookPitchRad = Mth.clamp(modelData.headPitch(), -20.0f, 20.0f) * Mth.DEG_TO_RAD;
 
         // Remove the procedural look rotation from the head itself so the animation pose stays intact
         head.setRotX(head.getRotX() - lookPitchRad);
-        head.setRotY(head.getRotY() - lookYawRad);
+        head.setRotY(head.getRotY() - totalYawRad);
 
         // When being ridden, skip pitch distribution to prevent neck snapping during ascent/descent
         // Only apply yaw for horizontal head looking
@@ -176,10 +189,10 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         }
 
         // Distribute rotation across neck segments (4 segments for Ignivorus)
-        applyNeckBoneFollow("neck1", lookPitchRad, lookYawRad, 0.20f);
-        applyNeckBoneFollow("neck2", lookPitchRad, lookYawRad, 0.25f);
-        applyNeckBoneFollow("neck3", lookPitchRad, lookYawRad, 0.30f);
-        applyNeckBoneFollow("neck4", lookPitchRad, lookYawRad, 0.35f);
+        applyNeckBoneFollow("neck1", lookPitchRad, totalYawRad, 0.20f);
+        applyNeckBoneFollow("neck2", lookPitchRad, totalYawRad, 0.25f);
+        applyNeckBoneFollow("neck3", lookPitchRad, totalYawRad, 0.30f);
+        applyNeckBoneFollow("neck4", lookPitchRad, totalYawRad, 0.35f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -196,6 +209,8 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     }
 
     private void applyTailDrag(Ignivorus entity, float partialTick) {
+
+
         double velocity = entity.yawVelocity.get(partialTick);
         velocity = Mth.clamp(velocity, -30.0, 30.0);
         float targetVelocity = (float) velocity;
