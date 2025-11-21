@@ -3084,25 +3084,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             return false;
         }
 
-        // Handle damage during taming attempts - player attacking a stunned dragon cancels taming
+        // Handle damage during taming stun - dragon is completely vulnerable
+        // Player can choose to kill it or leave it to recover after timeout
         if (isTamingStunned() && !isTame()) {
-            Entity attacker = damageSource.getEntity();
-            if (attacker instanceof Player player) {
-                // Player attacked during taming stun - abort current attempt but do not start escape logic
-                abortTamingAttempt(false);
-                if (!level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                    serverPlayer.displayClientMessage(
-                        net.minecraft.network.chat.Component.translatable(
-                            "entity.saintsdragons.raevyx.taming_attacked",
-                            this.getName()
-                        ),
-                        true
-                    );
-                }
-            }
-            // Allow damage to go through but taming attempt has been reset
-            boolean result = super.hurt(damageSource, amount);
-            return result;
+            // Allow damage normally - stunned dragon can be killed
+            return super.hurt(damageSource, amount);
         }
 
         // Store previous flying state to restore if being ridden
@@ -3457,6 +3443,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         sleepFallAsleepTriggered = false;
         sleepSitUpTriggered = false;
         sleepCancelTicks = 2;
+        // Clear sitting state so dragon can move/fight immediately
+        setOrderedToSit(false);
         if (!level().isClientSide) {
             suppressSleep(20);
             releaseSleepLock();
