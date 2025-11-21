@@ -33,10 +33,10 @@ public class RaevyxSleepGoal extends Goal {
 
         // Already sleeping or mid transition? allow the goal to continue if daytime
         if (wyvern.isSleepLocked() || wyvern.isSleeping() || wyvern.isSleepTransitioning()) {
-            return canSleepToday();
+            return canSleepNow();
         }
 
-        if (!canSleepToday()) return false;
+        if (!canSleepNow()) return false;
         if (!wyvern.canSleepNow() || wyvern.isSleepSuppressed()) return false;
         if (wyvern.isInWaterOrBubble() || wyvern.isInLava()) return false;
         if (wyvern.isDying() || wyvern.isVehicle() || wyvern.isFlying()) return false;
@@ -57,7 +57,7 @@ public class RaevyxSleepGoal extends Goal {
             return wyvern.isSleepLocked() || wyvern.isSleepTransitioning() || phaseTimer > 0;
         }
 
-        boolean shouldStayAsleep = canSleepToday() && isEnvironmentCalm();
+        boolean shouldStayAsleep = canSleepNow() && isEnvironmentCalm();
         if (wyvern.isTame()) {
             shouldStayAsleep = shouldStayAsleep && ownerAsleepNearby();
         }
@@ -69,7 +69,10 @@ public class RaevyxSleepGoal extends Goal {
     @Override
     public void start() {
         phase = SleepPhase.ENTERING;
-        phaseTimer = wyvern.getSleepSitDownDuration() + wyvern.getSleepFallAsleepDuration() + 4; // small buffer
+        boolean alreadySitting = wyvern.isOrderedToSit() || wyvern.getSitProgress() >= wyvern.maxSitTicks();
+        // If already seated (owner command), skip sit_down buffer
+        phaseTimer = (alreadySitting ? 0 : wyvern.getSleepSitDownDuration())
+                + wyvern.getSleepFallAsleepDuration() + 4; // small buffer
         wyvern.startSleepEnter();
     }
 
@@ -85,7 +88,7 @@ public class RaevyxSleepGoal extends Goal {
 
         boolean calm = isEnvironmentCalm();
         boolean ownerOk = !wyvern.isTame() || ownerAsleepNearby();
-        boolean daytimeSleeper = canSleepToday();
+        boolean sleepWindow = canSleepNow();
 
         if (phase == SleepPhase.ENTERING) {
             // Promote to sleeping once the entity reports it (after fall_asleep finishes)
@@ -97,11 +100,14 @@ public class RaevyxSleepGoal extends Goal {
         }
 
         if (phase == SleepPhase.SLEEPING) {
-            boolean shouldWake = !(calm && ownerOk && daytimeSleeper);
+            boolean shouldWake = !(calm && ownerOk && sleepWindow);
             if (shouldWake && !wyvern.isSleepTransitioning()) {
                 wyvern.startSleepExit();
                 phase = SleepPhase.EXITING;
-                phaseTimer = wyvern.getSleepWakeUpDuration() + wyvern.getSleepSitUpDuration() + 8;
+                // If owner commanded sit, we stop at sit after wake_up (no stand)
+                boolean ownerWantsSit = wyvern.isTame() && wyvern.getCommand() == 1;
+                phaseTimer = wyvern.getSleepWakeUpDuration()
+                        + (ownerWantsSit ? 0 : wyvern.getSleepSitUpDuration()) + 8;
             }
             return;
         }
@@ -109,7 +115,13 @@ public class RaevyxSleepGoal extends Goal {
         if (phase == SleepPhase.EXITING) {
             // Keep seated until stand-up begins; allow sit_up via orderedToSit(false) when timer elapses
             if (phaseTimer <= 0 && !wyvern.isSleepTransitioning()) {
-                wyvern.setOrderedToSit(false);
+                boolean ownerWantsSit = wyvern.isTame() && wyvern.getCommand() == 1;
+                if (!ownerWantsSit) {
+                    wyvern.setOrderedToSit(false);
+                } else {
+                    wyvern.setOrderedToSit(true);
+                    wyvern.setGroundMoveStateFromAI(0);
+                }
                 phase = SleepPhase.IDLE;
             }
         }
@@ -130,9 +142,14 @@ public class RaevyxSleepGoal extends Goal {
         return false; // keep the full transition chain intact
     }
 
-    private boolean canSleepToday() {
-        // Raevyx are daylight sleepers; thunder keeps them alert
-        return wyvern.level().isDay() && !wyvern.level().isThundering();
+    private boolean canSleepNow() {
+        // Raevyx are daylight sleepers; tamed wyverns also sleep when owner is asleep (night)
+        boolean isDay = wyvern.level().isDay();
+        boolean ownerSleeping = wyvern.isTame() && ownerAsleepNearby();
+        if (wyvern.level().isThundering()) {
+            return false;
+        }
+        return isDay || ownerSleeping;
     }
 
     private boolean ownerAsleepNearby() {
