@@ -49,7 +49,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * Primitive Drake - A simple ground drake that wanders around and flees from threats.
  * No complex abilities, just basic AI and cute behavior.
  * Features:
- * - Sleep behavior: Sleeps at night, awake during day. Simple nap system for short rests.
+ * - Sleep behavior: Sleeps at night, awake during day.
  * - Flee behavior: Runs away from Raevyx and other Stegonauts when threatened
  * - Protective aura: Grants resistance and absorption to nearby players and allies
  * - NOT rideable: Too small and simple to be a mount
@@ -59,7 +59,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
-    private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
     // Passive aura that applies resistance and absorption to allies
     private final StegonautPassiveBuffAbility passiveBuffAbility =
             new StegonautPassiveBuffAbility(this);
@@ -98,15 +97,9 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     private boolean sleepTransitioning = false;
     private boolean sleepingEntering = false; // True during fall_asleep transition
     private boolean sleepingExiting = false; // True during wake_up transition
-    private int napTicks = 0; // For short naps
-    private int napCooldown = 0; // Cooldown between naps
-    private boolean dayNapQueued = false;
-
-    // Rest transition tracking (for animation state machine)
     private int sleepTransitionTicks = 0; // Countdown timer for transition animations
-    private boolean isSittingDown = false; // Currently playing sit_down animation
-    private boolean isStandingUp = false; // Currently playing sit_up animation
-    private com.leon.saintsdragons.server.entity.sleep.DragonRestState previousRestState = com.leon.saintsdragons.server.entity.sleep.DragonRestState.IDLE; // Track state changes
+    private boolean sleepFallAsleepTriggered = false;
+    private boolean sleepSitUpTriggered = false;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -114,6 +107,10 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
 
     // Synced sleep state for client-side animation
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
     // Synced ground movement state for reliable animation
@@ -147,20 +144,20 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_SLEEPING, false);
+        this.entityData.define(DATA_SLEEPING_ENTERING, false);
+        this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_GROUND_MOVE_STATE, 0); // 0=idle, 1=walking, 2=running
     }
     
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(0, new StegonautSleepGoal(this)); // Highest priority - nighttime sleep only
         this.goalSelector.addGoal(1, new StegonautLeaveWaterGoal(this, 1.15D)); // Emergency priority - get out of water fast
         this.goalSelector.addGoal(2, new StegonautFleeFromPredatorsGoal(this, 0.6D, 12.0D)); // Flee from Raevyx and other Stegonauts
         this.goalSelector.addGoal(3, new StegonautFollowOwnerGoal(this));
-        this.goalSelector.addGoal(4, new StegonautRestGoal(this)); // Casual rest goal - sits down to rest occasionally
-        this.goalSelector.addGoal(5, new StegonautGroundWanderGoal(this, 0.35D, 120));
-        this.goalSelector.addGoal(6, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(7, new StegonautRandomLookAroundGoal(this));
+        this.goalSelector.addGoal(4, new StegonautGroundWanderGoal(this, 0.35D, 120));
+        this.goalSelector.addGoal(5, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(6, new StegonautRandomLookAroundGoal(this));
     }
 
     @Override
@@ -498,10 +495,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         return soundHandler;
     }
 
-    public com.leon.saintsdragons.server.entity.sleep.DragonRestManager getRestManager() {
-        return restManager;
-    }
-
 
     /**
      * Play random grumble sounds for personality
@@ -597,21 +590,28 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     
     @Override
     public boolean isSleepTransitioning() {
-        return sleepTransitioning;
+        if (level().isClientSide) {
+            return this.entityData.get(DATA_SLEEPING_ENTERING) || this.entityData.get(DATA_SLEEPING_EXITING);
+        }
+        return sleepTransitioning || sleepingEntering || sleepingExiting;
     }
-    
+
+    public boolean isSleepLocked() {
+        return isSleeping() || isSleepTransitioning() || isSleepingEntering() || isSleepingExiting();
+    }
+
     /**
      * Check if drake is entering sleep (fall_asleep transition)
      */
     public boolean isSleepingEntering() {
-        return sleepingEntering;
+        return level().isClientSide ? this.entityData.get(DATA_SLEEPING_ENTERING) : sleepingEntering;
     }
     
     /**
      * Check if drake is exiting sleep (wake_up transition)
      */
     public boolean isSleepingExiting() {
-        return sleepingExiting;
+        return level().isClientSide ? this.entityData.get(DATA_SLEEPING_EXITING) : sleepingExiting;
     }
 
     
@@ -623,27 +623,40 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     
     @Override
     public void startSleepEnter() {
-        if (!sleeping && !sleepTransitioning) {
-            sleepTransitioning = true;
-            sleepingEntering = true;
-            sleeping = false; // Not fully asleep yet, still transitioning
-            // Don't sync sleep state yet - wait for SLEEPING state
-            // Simple sleep - just lie down, no complex transitions
+        if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) return;
+        sleepTransitioning = true;
+        sleepingEntering = true;
+        sleepingExiting = false;
+        sleeping = false; // Not fully asleep yet, still transitioning
+        this.entityData.set(DATA_SLEEPING_ENTERING, true);
+        this.entityData.set(DATA_SLEEPING_EXITING, false);
+        sleepFallAsleepTriggered = false;
+        sleepSitUpTriggered = false;
+        // If already sitting (e.g., owner commanded sit), skip the sit_down clip
+        if (isOrderedToSit() || shouldStaySeatedCommand()) {
+            sleepTransitionTicks = 1;
+        } else {
+            sleepTransitionTicks = getSleepSitDownDuration();
+            animationController.triggerSitDownAnimation();
             setOrderedToSit(true);
         }
     }
-    
+
     @Override
     public void startSleepExit() {
-        if (sleeping && !sleepTransitioning) {
-            sleepTransitioning = true;
-            sleepingExiting = true;
-            sleeping = false; // No longer sleeping, but still in wake_up transition
-            // Sync sleep state to client
-            this.entityData.set(DATA_SLEEPING, false);
-            // Keep sitting during wake_up transition
-            setOrderedToSit(true);
-        }
+        if ((!sleeping && !sleepingEntering) || sleepingExiting || sleepTransitioning) return;
+        sleepTransitioning = true;
+        sleepingExiting = true;
+        sleepingEntering = false;
+        sleeping = true; // keep flagged sleeping until wake_up finishes
+        this.entityData.set(DATA_SLEEPING, true);
+        this.entityData.set(DATA_SLEEPING_ENTERING, false);
+        this.entityData.set(DATA_SLEEPING_EXITING, true);
+        setOrderedToSit(true);
+        sleepFallAsleepTriggered = false;
+        sleepSitUpTriggered = false;
+        sleepTransitionTicks = getSleepWakeUpDuration();
+        animationController.triggerWakeUpAnimation();
     }
     
     @Override
@@ -651,7 +664,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Simple sleep preferences: sleep at night, awake during day
         return new SleepPreferences(
             true,  // canSleepAtNight
-            true,  // canSleepDuringDay (for occasional naps)
+            false, // canSleepDuringDay
             false, // requiresShelter (simple drake doesn't need shelter)
             false, // avoidsThunderstorms (not afraid of storms)
             false  // sleepsNearOwner (independent)
@@ -660,19 +673,56 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     
     @Override
     public boolean canSleepNow() {
-        // Can sleep at night or take a nap during day
-        if (level().isDay()) {
-            // During day, only allow short naps if not on cooldown
-            if (napCooldown <= 0 && getRandom().nextFloat() < 0.01f) {
-                dayNapQueued = true;
-                return true;
-            }
-            dayNapQueued = false;
-            return false;
+        return !level().isDay();
+    }
+
+    // Sleep animation durations (ticks)
+    public int getSleepSitDownDuration() {
+        return 38;
+    }
+
+    public int getSleepSitUpDuration() {
+        return 38;
+    }
+
+    public int getSleepFallAsleepDuration() {
+        return 38;
+    }
+
+    public int getSleepWakeUpDuration() {
+        return 38;
+    }
+
+    @Override
+    public void setOrderedToSit(boolean sitting) {
+        boolean wasSitting = this.isOrderedToSit();
+        super.setOrderedToSit(sitting);
+        if (level().isClientSide) {
+            return;
+        }
+        if (wasSitting == sitting) {
+            return;
+        }
+        // During sleep transitions, dedicated logic drives the sit clips
+        if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) {
+            return;
+        }
+        if (sitting) {
+            animationController.triggerSitDownAnimation();
+            setGroundMoveStateFromAI(0);
         } else {
-            dayNapQueued = false;
-            // At night, always allow sleep
-            return true;
+            animationController.triggerSitUpAnimation();
+            setGroundMoveStateFromAI(0);
+        }
+    }
+
+    // Allow AI to forcibly clamp ground animation state to idle during sleep transitions
+    private void setGroundMoveStateFromAI(int state) {
+        if (!this.level().isClientSide) {
+            int s = Math.max(0, Math.min(2, state));
+            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
+                this.entityData.set(DATA_GROUND_MOVE_STATE, s);
+            }
         }
     }
     
@@ -698,29 +748,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             passiveBuffAbility.tick();
         } else {
             // Clean up resistance buffs when dead
-            passiveBuffAbility.cleanup();
-        }
-
-        // Handle sleep transition completion
-        if (sleepTransitioning) {
-            sleepTransitioning = false;
-        }
-
-        // Handle nap system
-        if (napTicks > 0) {
-            napTicks--;
-            if (napTicks <= 0) {
-                // Nap finished, wake up
-                if (sleeping) {
-                    startSleepExit();
-                }
-                napCooldown = 1200 + getRandom().nextInt(1800); // 1-2.5 minute cooldown
-            }
-        }
-
-        // Handle nap cooldown
-        if (napCooldown > 0) {
-            napCooldown--;
+        passiveBuffAbility.cleanup();
         }
 
         // Handle grumble cooldown (now deprecated - replaced by handleAmbientSounds)
@@ -728,9 +756,9 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             grumbleCooldown--;
         }
 
-        // Handle rest state transitions and trigger animations (server-side only)
+        // Handle sleep transitions and trigger animations (server-side only)
         if (!level().isClientSide) {
-            handleRestStateTransitions();
+            tickSleepTransitions();
         }
 
         // Handle sit progress animation
@@ -753,96 +781,125 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
         }
     }
-    
-    /**
-     * Handles rest state transitions and triggers appropriate animations
-     * Based on DragonRestState from DragonRestManager
-     * All transition animations are 1.88 seconds (38 ticks)
-     */
-    private void handleRestStateTransitions() {
-        var restState = restManager.getCurrentState();
 
-        // Detect state changes and trigger animations on entry (not exit)
-        if (restState != previousRestState) {
-            switch (restState) {
-                case SITTING_DOWN:
-                    // Entering sit-down transition (part of sleep cycle)
-                    animationController.triggerSitDownAnimation();
-                    sleepTransitionTicks = 38; // 1.88 seconds
-                    isSittingDown = true;
-                    isStandingUp = false;
-                    break;
+    private void freezeDuringSleepChain() {
+        this.getNavigation().stop();
+        this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
+        this.setOrderedToSit(true);
+        setGroundMoveStateFromAI(0);
+        this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), sitProgress));
+    }
 
-                case FALLING_ASLEEP:
-                    // Transitioning from sit to sleep
-                    animationController.triggerFallAsleepAnimation();
-                    sleepTransitionTicks = 38; // 1.88 seconds
-                    sleepingEntering = true;
-                    break;
-
-                case SLEEPING:
-                    // Entering sleep loop
-                    animationController.triggerSleepAnimation();
-                    sleepTransitionTicks = -1; // Loop indefinitely
-                    sleepingEntering = false; // Transition complete
-                    sleeping = true; // Now fully asleep
-                    this.entityData.set(DATA_SLEEPING, true); // Sync to client
-                    break;
-
-                case WAKING_UP:
-                    // Transitioning from sleep to sit
-                    animationController.triggerWakeUpAnimation();
-                    sleepTransitionTicks = 38; // 1.88 seconds
-                    sleepingExiting = true;
-                    sleeping = false; // No longer sleeping
-                    this.entityData.set(DATA_SLEEPING, false); // Sync to client
-                    break;
-
-                case STANDING_UP:
-                    // Entering stand-up transition (part of sleep cycle)
-                    animationController.triggerSitUpAnimation();
-                    sleepTransitionTicks = 38; // 1.88 seconds
-                    isStandingUp = true;
-                    isSittingDown = false;
-                    break;
-
-                case SITTING:
-                case SITTING_AFTER:
-                    // No animation trigger needed for these states
-                    break;
-
-                case IDLE:
-                    // Exiting rest cycle - clear all transition flags
-                    sleepingEntering = false;
-                    sleepingExiting = false;
-                    sleepTransitioning = false;
-                    break;
-            }
-            previousRestState = restState;
-        }
-        
-        // Tick down transition timer
-        if (sleepTransitionTicks > 0) {
-            sleepTransitionTicks--;
-        }
-        
-        // Clear sitting/standing flags when transition completes
-        if (sleepTransitionTicks == 0) {
-            if (isSittingDown && sitProgress >= maxSitTicks()) {
-                isSittingDown = false;
-            }
-            if (isStandingUp && sitProgress == 0f) {
-                isStandingUp = false;
-            }
-        }
+    private boolean shouldStaySeatedCommand() {
+        return this.isTame() && this.getCommand() == 1;
     }
 
     /**
-     * Start a short nap (1-2 minutes)
+     * Handles the sleep animation chain (sit_down -> fall_asleep -> sleep -> wake_up -> sit_up).
+     * Mirrors the Raevyx ticking flow to keep transitions deterministic across reloads.
      */
-    public void startNap() {
-        if (!sleeping && napCooldown <= 0) {
-            napTicks = 1200 + getRandom().nextInt(1200); // 1-2 minutes
+    private void tickSleepTransitions() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        // Hard-freeze movement so no other controller competes with sleep clips
+        if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) {
+            freezeDuringSleepChain();
+        }
+
+        // Entering sleep: wait for sit_down to finish, then play fall_asleep and lock into sleep loop
+        if (sleepingEntering) {
+            if (!sleepFallAsleepTriggered) {
+                if (sleepTransitionTicks > 0) {
+                    sleepTransitionTicks--;
+                    if (sleepTransitionTicks > 0) {
+                        return;
+                    }
+                }
+
+                // If commanded to sit (or already seated), skip sit_down dependency
+                boolean seatedEnough = isOrderedToSit() || shouldStaySeatedCommand() || getSitProgress() >= maxSitTicks();
+                if (seatedEnough) {
+                    sleepFallAsleepTriggered = true;
+                    sleepTransitionTicks = getSleepFallAsleepDuration();
+                    animationController.triggerFallAsleepAnimation();
+                    return;
+                }
+
+                // Clamp to recheck next tick
+                sleepTransitionTicks = 1;
+                return;
+            }
+
+            if (sleepTransitionTicks > 0) {
+                sleepTransitionTicks--;
+                if (sleepTransitionTicks > 0) {
+                    return;
+                }
+            }
+
+            // fall_asleep finished
+            sleeping = true;
+            sleepingEntering = false;
+            sleepTransitioning = false;
+            sleepFallAsleepTriggered = false;
+            this.entityData.set(DATA_SLEEPING_ENTERING, false);
+            this.entityData.set(DATA_SLEEPING, true);
+            animationController.triggerSleepAnimation();
+            return;
+        }
+
+        // Exiting sleep: finish wake_up timer, then sit_up before clearing flags
+        if (sleepingExiting) {
+            if (!sleepSitUpTriggered) {
+                if (sleepTransitionTicks > 0) {
+                    sleepTransitionTicks--;
+                    if (sleepTransitionTicks > 0) {
+                        return;
+                    }
+                }
+
+                // If owner commanded sit, stop at sit pose after wake_up (no stand-up)
+                if (shouldStaySeatedCommand()) {
+                    sleeping = false;
+                    sleepingExiting = false;
+                    sleepTransitioning = false;
+                    sleepSitUpTriggered = false;
+                    this.entityData.set(DATA_SLEEPING_EXITING, false);
+                    this.entityData.set(DATA_SLEEPING, false);
+                    setOrderedToSit(true);
+                    this.sitProgress = Math.max(this.sitProgress, maxSitTicks());
+                    this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
+                    setGroundMoveStateFromAI(0);
+                    return;
+                }
+
+                sleepSitUpTriggered = true;
+                sleepTransitionTicks = getSleepSitUpDuration();
+                animationController.triggerSitUpAnimation();
+                setOrderedToSit(false);
+                return;
+            }
+
+            if (sleepTransitionTicks > 0) {
+                sleepTransitionTicks--;
+                if (sleepTransitionTicks > 0) {
+                    return;
+                }
+            }
+
+            sleeping = false;
+            sleepingExiting = false;
+            sleepTransitioning = false;
+            sleepSitUpTriggered = false;
+            this.entityData.set(DATA_SLEEPING_EXITING, false);
+            this.entityData.set(DATA_SLEEPING, false);
+            // Hard reset sit state so we don't snap back to sit after standing
+            this.sitProgress = 0f;
+            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            this.setOrderedToSit(false);
+            setGroundMoveStateFromAI(0);
         }
     }
 
@@ -851,17 +908,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
     }
 
-    public boolean isDayNapQueued() {
-        return dayNapQueued;
-    }
-
-    public boolean consumeDayNapQueued() {
-        boolean queued = dayNapQueued;
-        dayNapQueued = false;
-        return queued;
-    }
-
-    
     // ===== SOUND KEYFRAME HANDLING =====
     
     /**
@@ -992,8 +1038,10 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         tag.putBoolean("SleepTransitioning", sleepTransitioning);
         tag.putBoolean("SleepingEntering", sleepingEntering);
         tag.putBoolean("SleepingExiting", sleepingExiting);
-        tag.putInt("NapTicks", napTicks);
-        tag.putInt("NapCooldown", napCooldown);
+        tag.putBoolean("SleepFallAsleepTriggered", sleepFallAsleepTriggered);
+        tag.putBoolean("SleepSitUpTriggered", sleepSitUpTriggered);
+        tag.putBoolean("SleepEnteringSynced", this.entityData.get(DATA_SLEEPING_ENTERING));
+        tag.putBoolean("SleepExitingSynced", this.entityData.get(DATA_SLEEPING_EXITING));
 
         // Save grumble cooldown
         tag.putInt("GrumbleCooldown", grumbleCooldown);
@@ -1004,14 +1052,8 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Save sit progress for animation state
         tag.putFloat("SitProgress", sitProgress);
 
-        // Save rest transition tracking
-        tag.putInt("SleepTransitionTicks", sleepTransitionTicks);
-        tag.putBoolean("IsSittingDown", isSittingDown);
-        tag.putBoolean("IsStandingUp", isStandingUp);
-        tag.putString("PreviousRestState", previousRestState.name());
-
-        // Save rest state manager
-        restManager.save(tag);
+        // Save transition timer for ongoing animations
+        tag.putInt("SleepTransitionTicks", Math.max(0, sleepTransitionTicks));
     }
     
     @Override
@@ -1032,8 +1074,18 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         sleepTransitioning = tag.getBoolean("SleepTransitioning");
         sleepingEntering = tag.getBoolean("SleepingEntering");
         sleepingExiting = tag.getBoolean("SleepingExiting");
-        napTicks = tag.getInt("NapTicks");
-        napCooldown = tag.getInt("NapCooldown");
+        sleepFallAsleepTriggered = tag.getBoolean("SleepFallAsleepTriggered");
+        sleepSitUpTriggered = tag.getBoolean("SleepSitUpTriggered");
+        if (tag.contains("SleepEnteringSynced")) {
+            this.entityData.set(DATA_SLEEPING_ENTERING, tag.getBoolean("SleepEnteringSynced"));
+        } else {
+            this.entityData.set(DATA_SLEEPING_ENTERING, sleepingEntering);
+        }
+        if (tag.contains("SleepExitingSynced")) {
+            this.entityData.set(DATA_SLEEPING_EXITING, tag.getBoolean("SleepExitingSynced"));
+        } else {
+            this.entityData.set(DATA_SLEEPING_EXITING, sleepingExiting);
+        }
 
         // Load grumble cooldown
         grumbleCooldown = tag.getInt("GrumbleCooldown");
@@ -1050,74 +1102,36 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             this.entityData.set(DragonEntity.DATA_SIT_PROGRESS, sitProgress);
         }
 
-        // Load rest transition tracking
-        sleepTransitionTicks = tag.getInt("SleepTransitionTicks");
-        isSittingDown = tag.getBoolean("IsSittingDown");
-        isStandingUp = tag.getBoolean("IsStandingUp");
-        if (tag.contains("PreviousRestState")) {
-            try {
-                previousRestState = com.leon.saintsdragons.server.entity.sleep.DragonRestState.valueOf(tag.getString("PreviousRestState"));
-            } catch (IllegalArgumentException e) {
-                previousRestState = com.leon.saintsdragons.server.entity.sleep.DragonRestState.IDLE;
-            }
-        }
+        // Load transition tracking (reset helper flags on reload)
+        sleepTransitionTicks = Math.max(0, tag.getInt("SleepTransitionTicks"));
 
         // Align baseline command state before restoring extra behaviors
         refreshCommandState();
         this.setOrderedToSit(restoredOrderedSit);
 
-        // Restore rest state manager and trigger appropriate animation
-        restManager.load(tag);
-        com.leon.saintsdragons.server.entity.sleep.DragonRestState restState = restManager.getCurrentState();
-
-        // Sync previousRestState to current state to prevent re-triggering on next tick
-        // But if we're in a transition state, we need to re-trigger the animation
-        switch (restState) {
-            case SLEEPING:
-                // If loaded while sleeping, trigger sleep loop
-                setOrderedToSit(true);
-                animationController.triggerSleepAnimation();
-                previousRestState = restState; // Prevent re-trigger
-                break;
-            case SITTING_DOWN:
-                // If loaded during sit_down transition, re-trigger it
-                setOrderedToSit(true);
-                animationController.triggerSitDownAnimation();
-                sleepTransitionTicks = 38; // Reset transition timer
-                isSittingDown = true;
-                previousRestState = com.leon.saintsdragons.server.entity.sleep.DragonRestState.IDLE; // Allow re-trigger on next state change
-                break;
-            case SITTING:
-            case SITTING_AFTER:
-                // If loaded while sitting, make sure sit state is set
-                setOrderedToSit(true);
-                previousRestState = restState; // Prevent re-trigger
-                break;
-            case FALLING_ASLEEP:
-                // If loaded during fall_asleep transition, re-trigger it
-                setOrderedToSit(true);
-                animationController.triggerFallAsleepAnimation();
-                sleepTransitionTicks = 38; // Reset transition timer
-                previousRestState = com.leon.saintsdragons.server.entity.sleep.DragonRestState.SITTING; // Allow re-trigger on next state change
-                break;
-            case WAKING_UP:
-                // If loaded during wake_up transition, re-trigger it
-                setOrderedToSit(true);
-                animationController.triggerWakeUpAnimation();
-                sleepTransitionTicks = 38; // Reset transition timer
-                previousRestState = com.leon.saintsdragons.server.entity.sleep.DragonRestState.SLEEPING; // Allow re-trigger on next state change
-                break;
-            case STANDING_UP:
-                // If loaded during stand_up transition, re-trigger it
-                animationController.triggerSitUpAnimation();
-                isStandingUp = true;
-                sleepTransitionTicks = 38; // Reset transition timer
-                previousRestState = com.leon.saintsdragons.server.entity.sleep.DragonRestState.SITTING_AFTER; // Allow re-trigger on next state change
-                break;
-            case IDLE:
-                // Not in rest cycle
-                previousRestState = restState; // Prevent re-trigger
-                break;
+        // Normalize sleep state on reload to avoid broken transitions
+        if (sleeping) {
+            setOrderedToSit(true);
+            animationController.triggerSleepAnimation();
+            sleepTransitioning = false;
+            sleepingEntering = false;
+            sleepingExiting = false;
+            sleepFallAsleepTriggered = false;
+            sleepSitUpTriggered = false;
+            this.entityData.set(DATA_SLEEPING_ENTERING, false);
+            this.entityData.set(DATA_SLEEPING_EXITING, false);
+        } else if (sleepingEntering || sleepingExiting || sleepTransitioning) {
+            sleeping = false;
+            sleepingEntering = false;
+            sleepingExiting = false;
+            sleepTransitioning = false;
+            sleepFallAsleepTriggered = false;
+            sleepSitUpTriggered = false;
+            sleepTransitionTicks = 0;
+            this.entityData.set(DATA_SLEEPING, false);
+            this.entityData.set(DATA_SLEEPING_ENTERING, false);
+            this.entityData.set(DATA_SLEEPING_EXITING, false);
+            setOrderedToSit(restoredOrderedSit);
         }
     }
     
