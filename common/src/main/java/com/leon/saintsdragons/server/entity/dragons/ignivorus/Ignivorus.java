@@ -42,12 +42,15 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
+import javax.annotation.Nonnull;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -448,6 +451,24 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
             tickSleepTransitions();
         }
+    }
+
+    @Override
+    public boolean hurt(@Nonnull DamageSource damageSource, float amount) {
+        // During dying sequence, ignore all damage (entity is already dead, playing death animation)
+        if (isDying()) {
+            return false;
+        }
+        // Immune to fire damage
+        if (damageSource.is(DamageTypes.IN_FIRE) || damageSource.is(DamageTypes.ON_FIRE) || damageSource.is(DamageTypes.LAVA)) {
+            return false;
+        }
+        // Wake if sleeping and suppress re-entry on damage
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
+            wakeUpImmediately();
+            suppressSleep(200);
+        }
+        return super.hurt(damageSource, amount);
     }
 
     @Override
