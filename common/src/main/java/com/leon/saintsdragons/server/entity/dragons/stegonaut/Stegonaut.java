@@ -1033,15 +1033,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         tag.putInt("StegonautCommand", this.getCommand());
         tag.putBoolean("StegonautOrderedSit", this.isOrderedToSit());
 
-        // Save sleep state
-        tag.putBoolean("Sleeping", sleeping);
-        tag.putBoolean("SleepTransitioning", sleepTransitioning);
-        tag.putBoolean("SleepingEntering", sleepingEntering);
-        tag.putBoolean("SleepingExiting", sleepingExiting);
-        tag.putBoolean("SleepFallAsleepTriggered", sleepFallAsleepTriggered);
-        tag.putBoolean("SleepSitUpTriggered", sleepSitUpTriggered);
-        tag.putBoolean("SleepEnteringSynced", this.entityData.get(DATA_SLEEPING_ENTERING));
-        tag.putBoolean("SleepExitingSynced", this.entityData.get(DATA_SLEEPING_EXITING));
+        // Sleep state is ephemeral - not persisted (sleep goal re-evaluates on load)
 
         // Save grumble cooldown
         tag.putInt("GrumbleCooldown", grumbleCooldown);
@@ -1051,9 +1043,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
 
         // Save sit progress for animation state
         tag.putFloat("SitProgress", sitProgress);
-
-        // Save transition timer for ongoing animations
-        tag.putInt("SleepTransitionTicks", Math.max(0, sleepTransitionTicks));
     }
     
     @Override
@@ -1069,23 +1058,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
                 ? tag.getBoolean("StegonautOrderedSit")
                 : restoredCommand == 1;
 
-        // Load sleep state
-        sleeping = tag.getBoolean("Sleeping");
-        sleepTransitioning = tag.getBoolean("SleepTransitioning");
-        sleepingEntering = tag.getBoolean("SleepingEntering");
-        sleepingExiting = tag.getBoolean("SleepingExiting");
-        sleepFallAsleepTriggered = tag.getBoolean("SleepFallAsleepTriggered");
-        sleepSitUpTriggered = tag.getBoolean("SleepSitUpTriggered");
-        if (tag.contains("SleepEnteringSynced")) {
-            this.entityData.set(DATA_SLEEPING_ENTERING, tag.getBoolean("SleepEnteringSynced"));
-        } else {
-            this.entityData.set(DATA_SLEEPING_ENTERING, sleepingEntering);
-        }
-        if (tag.contains("SleepExitingSynced")) {
-            this.entityData.set(DATA_SLEEPING_EXITING, tag.getBoolean("SleepExitingSynced"));
-        } else {
-            this.entityData.set(DATA_SLEEPING_EXITING, sleepingExiting);
-        }
+        // Sleep state is ephemeral - not loaded (cleaned up below, sleep goal re-evaluates)
 
         // Load grumble cooldown
         grumbleCooldown = tag.getInt("GrumbleCooldown");
@@ -1093,46 +1066,28 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
         // Load binding state
         boundToBinder = tag.getBoolean("BoundToBinder");
 
-        // Sync sleep state to client
-        this.entityData.set(DATA_SLEEPING, sleeping);
-
         // Load sit progress for animation state prior to command refresh so poses align immediately
         if (tag.contains("SitProgress")) {
             sitProgress = tag.getFloat("SitProgress");
             this.entityData.set(DragonEntity.DATA_SIT_PROGRESS, sitProgress);
         }
 
-        // Load transition tracking (reset helper flags on reload)
-        sleepTransitionTicks = Math.max(0, tag.getInt("SleepTransitionTicks"));
-
         // Align baseline command state before restoring extra behaviors
         refreshCommandState();
         this.setOrderedToSit(restoredOrderedSit);
 
-        // Normalize sleep state on reload to avoid broken transitions
-        if (sleeping) {
-            setOrderedToSit(true);
-            animationController.triggerSleepAnimation();
-            sleepTransitioning = false;
-            sleepingEntering = false;
-            sleepingExiting = false;
-            sleepFallAsleepTriggered = false;
-            sleepSitUpTriggered = false;
-            this.entityData.set(DATA_SLEEPING_ENTERING, false);
-            this.entityData.set(DATA_SLEEPING_EXITING, false);
-        } else if (sleepingEntering || sleepingExiting || sleepTransitioning) {
-            sleeping = false;
-            sleepingEntering = false;
-            sleepingExiting = false;
-            sleepTransitioning = false;
-            sleepFallAsleepTriggered = false;
-            sleepSitUpTriggered = false;
-            sleepTransitionTicks = 0;
-            this.entityData.set(DATA_SLEEPING, false);
-            this.entityData.set(DATA_SLEEPING_ENTERING, false);
-            this.entityData.set(DATA_SLEEPING_EXITING, false);
-            setOrderedToSit(restoredOrderedSit);
-        }
+        // Clear all sleep state on world load (sleep is ephemeral, not persisted)
+        // Sleep goal will re-evaluate conditions and put dragon back to sleep if appropriate
+        sleeping = false;
+        sleepTransitioning = false;
+        sleepingEntering = false;
+        sleepingExiting = false;
+        sleepFallAsleepTriggered = false;
+        sleepSitUpTriggered = false;
+        sleepTransitionTicks = 0;
+        this.entityData.set(DATA_SLEEPING, false);
+        this.entityData.set(DATA_SLEEPING_ENTERING, false);
+        this.entityData.set(DATA_SLEEPING_EXITING, false);
     }
     
     // ===== DRAKE BINDER FUNCTIONALITY =====

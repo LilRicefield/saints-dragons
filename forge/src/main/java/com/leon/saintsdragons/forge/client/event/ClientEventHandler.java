@@ -264,18 +264,4 @@ public class ClientEventHandler {
         RaevyxLightningBeamSoundController.tick(minecraft);
         IgnivorusFireBreathSoundController.tick(minecraft);
     }
-
-    // DISABLED: Let vanilla render the passenger normally for now
-    // We'll handle bone-based positioning purely through the render layer
-    public static boolean allowRaevyxPassengerRender = false;
-
-    // @SubscribeEvent
-    // public static void suppressVanillaPassengerRendering(RenderLivingEvent.Pre<?, ?> event) {
-    //     Entity entity = event.getEntity();
-    //     if (entity == null) return;
-    //     Entity vehicle = entity.getVehicle();
-    //     if (vehicle instanceof Raevyx && !allowRaevyxPassengerRender) {
-    //         event.setCanceled(true);
-    //     }
-    // }
 }
