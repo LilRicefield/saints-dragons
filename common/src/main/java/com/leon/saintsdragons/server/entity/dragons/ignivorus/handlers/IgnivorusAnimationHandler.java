@@ -42,6 +42,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
+        // Stop movement controller during ALL sleep states to prevent flickering
+        // Must be checked BEFORE ground movement logic to avoid 1-frame idle flicker
+        if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
+            return PlayState.STOP;
+        }
+
         // Check for sitting - highest priority after flying
         if (!dragon.isFlying() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
             state.setAndContinue(SIT);
@@ -128,9 +134,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 case 2 -> state.setAndContinue(RUN);   // Running/sprinting
                 case 1 -> state.setAndContinue(WALK);  // Walking
                 default -> state.setAndContinue(IDLE); // Idle/stopped
-            }
-            if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
-                return PlayState.STOP;
             }
         }
         return PlayState.CONTINUE;
