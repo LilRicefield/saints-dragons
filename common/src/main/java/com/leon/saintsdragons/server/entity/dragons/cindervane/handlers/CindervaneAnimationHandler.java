@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 
+import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -74,7 +75,9 @@ public class CindervaneAnimationHandler {
             if (dragon.isFlying()) {
                 // Check if actually moving to determine hover vs active flight
                 var vel = dragon.getDeltaMovement();
-                boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
+                boolean sprintingSynced = Boolean.TRUE.equals(dragon.getAnimData(DragonAnimTickets.FLIGHT_SPRINTING));
+                boolean sprinting = dragon.isAccelerating() || sprintingSynced;
+                boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01 || sprinting;
                 boolean isMovingVertically = Math.abs(vel.y) > 0.02;
                 boolean isStationary = !isMovingHorizontally && !isMovingVertically;
 
@@ -95,17 +98,16 @@ public class CindervaneAnimationHandler {
                     state.setAndContinue(GLIDE_DOWN);
                     return PlayState.CONTINUE;
                 }
-                // HOVER - fourth priority: truly stationary in air
-                else if (isStationary) {
-                    state.getController().transitionLength(6);
-                    state.setAndContinue(FLAP);
-                    return PlayState.CONTINUE;
-                }
-                // SPRINT FLYING - fifth priority (after dive and hover)
-                // Only play sprint animation if actually moving
-                else if (dragon.isAccelerating() && isMovingHorizontally) {
+                // SPRINT FLYING - third priority after dive/landing/takeoff
+                if (sprinting && (isMovingHorizontally || sprintingSynced)) {
                     state.getController().transitionLength(3);
                     state.setAndContinue(SPRINT_FLAP);
+                    return PlayState.CONTINUE;
+                }
+                // HOVER - next priority: truly stationary in air
+                if (isStationary) {
+                    state.getController().transitionLength(6);
+                    state.setAndContinue(FLAP);
                     return PlayState.CONTINUE;
                 }
                 // Altitude-based animations (lowest priority)
@@ -167,20 +169,27 @@ public class CindervaneAnimationHandler {
             }
 
             // Check if descending when being ridden (for GLIDE_DOWN animation)
-            boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && dragon.isGoingDown();
-            if (riderDescending) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(GLIDE_DOWN);
-            } else {
-                // Wild dragons alternate between FLAP and GLIDE for natural flight
-                // Use vertical velocity to determine which animation to play
-                double verticalVelocity = dragon.getDeltaMovement().y;
-
-                // Ascending or low-speed flight: flap wings
-                // Gliding: high-speed level flight or descending slowly
-                if (verticalVelocity > 0.02 || dragon.getDeltaMovement().horizontalDistanceSqr() < 0.1) {
+                boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && dragon.isGoingDown();
+                if (riderDescending) {
                     state.getController().transitionLength(6);
-                    state.setAndContinue(FLAP);
+                    state.setAndContinue(GLIDE_DOWN);
+                } else {
+                    boolean sprintingSynced = Boolean.TRUE.equals(dragon.getAnimData(DragonAnimTickets.FLIGHT_SPRINTING));
+                    boolean sprinting = dragon.isAccelerating() || sprintingSynced;
+                    boolean isMovingHorizontally = dragon.getDeltaMovement().horizontalDistanceSqr() > 0.01 || sprinting;
+
+                    // Wild dragons alternate between FLAP and GLIDE for natural flight
+                    // Use vertical velocity to determine which animation to play
+                    double verticalVelocity = dragon.getDeltaMovement().y;
+
+                    // Ascending or low-speed flight: flap wings
+                    // Gliding: high-speed level flight or descending slowly
+                    if (sprinting && isMovingHorizontally) {
+                        state.getController().transitionLength(3);
+                        state.setAndContinue(SPRINT_FLAP);
+                    } else if (verticalVelocity > 0.02 || dragon.getDeltaMovement().horizontalDistanceSqr() < 0.1) {
+                        state.getController().transitionLength(6);
+                        state.setAndContinue(FLAP);
                 } else {
                     state.getController().transitionLength(8);
                     state.setAndContinue(GLIDE);
