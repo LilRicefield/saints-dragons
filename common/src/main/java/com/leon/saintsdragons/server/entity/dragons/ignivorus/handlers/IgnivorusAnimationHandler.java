@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 
+import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.object.PlayState;
@@ -62,7 +63,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         if (dragon.isFlying()) {
             // Get synced flight mode from physics controller
             // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, -1 = ground
-            int syncedMode = dragon.getFlightMode();
+            int syncedMode = dragon.getSyncedFlightMode();
+            boolean sprinting = dragon.isAccelerating() || Boolean.TRUE.equals(dragon.getAnimData(DragonAnimTickets.FLIGHT_SPRINTING));
 
             // Check for takeoff animation (highest priority)
             if (syncedMode == 3 || dragon.isTakeoff() || dragon.timeFlying < 30) {
@@ -80,7 +82,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
             // Check velocity for movement detection
             var vel = dragon.getDeltaMovement();
-            boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
+            boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.0005 || sprinting;
 
             // GLIDE_DOWN - only for RIDER diving (not AI flight)
             // This prevents AI dragons from always playing glide_down
@@ -91,7 +93,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             }
 
             // SPRINT_FLAP - accelerating flight
-            if (dragon.isAccelerating() && isMovingHorizontally) {
+            if (sprinting && (isMovingHorizontally || sprinting)) {
                 state.getController().transitionLength(3);
                 state.setAndContinue(SPRINT_FLAP);
                 return PlayState.CONTINUE;
@@ -107,7 +109,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             // HOVER - stationary in air
             if (syncedMode == 2 || dragon.isHovering()) {
                 state.getController().transitionLength(6);
-                state.setAndContinue(FLAP);
+                state.setAndContinue(sprinting ? SPRINT_FLAP : FLAP);
                 return PlayState.CONTINUE;
             }
 
@@ -115,11 +117,9 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             // Mode 1 = FLAP (low altitude or needs lift)
             // Mode 0 = GLIDE (high altitude, can glide)
             if (syncedMode == 1) {
-                // Flapping for lift (low altitude)
                 state.getController().transitionLength(4);
-                state.setAndContinue(FLAP);
+                state.setAndContinue(sprinting ? SPRINT_FLAP : FLAP);
             } else {
-                // Gliding at high altitude (GLIDE_DOWN is only for riders)
                 state.getController().transitionLength(12);
                 state.setAndContinue(GLIDE);
             }
