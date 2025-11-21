@@ -2337,6 +2337,21 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 } else if (isSleepingExiting()) {
                     // wake_up finished: now play sit_up, then release
                     if (!sleepSitUpTriggered) {
+                        // If owner commanded sit, stop at sit after wake_up (no stand-up)
+                        if (shouldStaySeatedCommand()) {
+                            setSleeping(false);
+                            sleepSitUpTriggered = false;
+                            setSleepingExiting(false);
+                            sleepTransitionTicks = 0;
+                            sleepAmbientCooldownTicks = 10;
+                            setOrderedToSit(true);
+                            this.entityData.set(DATA_SIT_PROGRESS, maxSitTicks());
+                            if (!level().isClientSide) {
+                                releaseSleepLock();
+                            }
+                            return;
+                        }
+
                         sleepSitUpTriggered = true;
                         sleepTransitionTicks = getSleepSitUpDuration();
                         animationHandler.triggerSitUpAnimation();
@@ -3397,11 +3412,22 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         sleepFallAsleepTriggered = false;
         sleepSitUpTriggered = false;
         // New system: sit_down (uses sitProgress) → fall_asleep → sleep loop
-        sleepTransitionTicks = getFallAsleepAnimationTicks();
-        // Trigger sit_down animation first (handled by sit progress system)
-        animationHandler.triggerSitDownAnimation();
-        if (!level().isClientSide) {
-            enterSleepLock();
+        boolean alreadySitting = isOrderedToSit() || getSitProgress() >= maxSitTicks() || shouldStaySeatedCommand();
+        if (alreadySitting) {
+            sleepTransitionTicks = getFallAsleepAnimationTicks();
+            sleepFallAsleepTriggered = true;
+            animationHandler.triggerFallAsleepAnimation();
+            this.setOrderedToSit(true);
+            if (!level().isClientSide) {
+                enterSleepLock();
+            }
+        } else {
+            sleepTransitionTicks = getFallAsleepAnimationTicks();
+            // Trigger sit_down animation first (handled by sit progress system)
+            animationHandler.triggerSitDownAnimation();
+            if (!level().isClientSide) {
+                enterSleepLock();
+            }
         }
     }
 
@@ -4191,6 +4217,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     public boolean canSleepNow() {
         return !isCharging() && !isBeaming() && !isVehicle();
+    }
+
+    private boolean shouldStaySeatedCommand() {
+        return this.isTame() && this.getCommand() == 1;
     }
     
     // ===== LIGHTNING DRAGON SPECIFIC METHODS =====
