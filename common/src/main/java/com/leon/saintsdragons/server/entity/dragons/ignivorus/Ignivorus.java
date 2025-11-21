@@ -24,6 +24,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
@@ -75,7 +76,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
-public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
+public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, DragonSleepCapable {
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -145,6 +146,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     private static final EntityDataAccessor<Boolean> DATA_CINEMATIC_ZOOM_ACTIVE =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
     private static final double MODEL_SCALE = 1.0D;
 
@@ -205,6 +212,18 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 45.0F;
     private Vec3 fireAimDir;
+
+    // Sleep system state (one-shot transitions: down -> fall_asleep -> wake_up -> up)
+    private boolean sleeping = false;
+    private boolean sleepingEntering = false;
+    private boolean sleepingExiting = false;
+    private boolean sleepTransitioning = false;
+    private int sleepTransitionTicks = 0;
+    private boolean sleepFallAsleepTriggered = false;
+    private boolean sleepSitUpTriggered = false;
+    private boolean sleepLocked = false;
+    private int sleepCommandSnapshot = -1;
+    private int sleepSuppressionTicks = 0;
 
     // Fire breath targeting (AI-driven smart aiming)
     private int fireTime = 0; // Tracks how long fire breath has been active for accuracy ramping
@@ -299,6 +318,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+        this.entityData.define(DATA_SLEEPING, false);
+        this.entityData.define(DATA_SLEEPING_ENTERING, false);
+        this.entityData.define(DATA_SLEEPING_EXITING, false);
     }
 
     @Override
@@ -321,6 +343,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void registerGoals() {
+        // Priority 0: Sleep (night/owner sleep) - matches Stegonaut state machine with Ignivorus timings
+        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusSleepGoal(this));
+
         // Priority 1: Combat - highest priority when aggressive
         // Air combat takes precedence when target is airborne and dragon is flying
         this.goalSelector.addGoal(1, new IgnivorusAirCombatGoal(this));
@@ -416,6 +441,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Update sitting progress
         updateSittingProgress();
+        // Server-side sleep transition driver
+        if (!level().isClientSide) {
+            if (sleepSuppressionTicks > 0) {
+                sleepSuppressionTicks--;
+            }
+            tickSleepTransitions();
+        }
     }
 
     @Override
@@ -719,6 +751,252 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         int s = Mth.clamp(state, 0, 2);
         if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
             this.entityData.set(DATA_GROUND_MOVE_STATE, s);
+        }
+    }
+
+    // ===== SLEEP SYSTEM =====
+    @Override
+    public boolean isSleeping() {
+        return level().isClientSide ? this.entityData.get(DATA_SLEEPING) : sleeping;
+    }
+
+    @Override
+    public boolean isSleepTransitioning() {
+        if (level().isClientSide) {
+            return this.entityData.get(DATA_SLEEPING_ENTERING) || this.entityData.get(DATA_SLEEPING_EXITING);
+        }
+        return sleepTransitioning || sleepingEntering || sleepingExiting;
+    }
+
+    public boolean isSleepingEntering() {
+        return level().isClientSide ? this.entityData.get(DATA_SLEEPING_ENTERING) : sleepingEntering;
+    }
+
+    public boolean isSleepingExiting() {
+        return level().isClientSide ? this.entityData.get(DATA_SLEEPING_EXITING) : sleepingExiting;
+    }
+
+    public boolean isSleepLocked() {
+        return sleeping || sleepingEntering || sleepingExiting || sleepTransitioning || sleepLocked;
+    }
+
+    @Override
+    public void startSleepEnter() {
+        if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) {
+            return;
+        }
+        sleepTransitioning = true;
+        sleepingEntering = true;
+        sleepingExiting = false;
+        sleeping = false;
+        sleepFallAsleepTriggered = false;
+        sleepSitUpTriggered = false;
+        sleepLocked = true;
+        sleepCommandSnapshot = this.getCommand();
+
+        this.entityData.set(DATA_SLEEPING_ENTERING, true);
+        this.entityData.set(DATA_SLEEPING_EXITING, false);
+        this.entityData.set(DATA_SLEEPING, false);
+
+        setGroundMoveStateFromAI(0);
+        setFlying(false);
+        setHovering(false);
+        setTakeoff(false);
+        setLanding(false);
+        // Only issue sit_down if not already fully seated before the chain begins
+        boolean alreadySeated = this.getSitProgress() >= this.maxSitTicks();
+        if (!alreadySeated) {
+            this.setOrderedToSit(false);
+        }
+        debugSleep("startSleepEnter; sitProgress=" + getSitProgress() + "/" + maxSitTicks());
+
+        if (isOrderedToSit() || this.getSitProgress() >= this.maxSitTicks()) {
+            sleepTransitionTicks = 1;
+        } else {
+            sleepTransitionTicks = getSleepSitDownDuration();
+            animationHandler.triggerSitDownAnimation();
+            debugSleep("sit_down triggered; ticks=" + sleepTransitionTicks);
+        }
+    }
+
+    @Override
+    public void startSleepExit() {
+        if ((!sleeping && !sleepingEntering) || sleepingExiting) {
+            return;
+        }
+        sleeping = false;
+        sleepingEntering = false;
+        sleepingExiting = true;
+        sleepTransitioning = true;
+        sleepSitUpTriggered = false;
+        sleepTransitionTicks = getSleepWakeUpDuration();
+
+        this.entityData.set(DATA_SLEEPING, false);
+        this.entityData.set(DATA_SLEEPING_ENTERING, false);
+        this.entityData.set(DATA_SLEEPING_EXITING, true);
+
+        setGroundMoveStateFromAI(0);
+        setOrderedToSit(true);
+        animationHandler.triggerWakeUpAnimation();
+        debugSleep("startSleepExit; wake_up ticks=" + sleepTransitionTicks);
+        suppressSleep(40);
+    }
+
+    public void wakeUpImmediately() {
+        suppressSleep(40);
+        sleepTransitionTicks = 0;
+        sleepTransitioning = false;
+        sleepFallAsleepTriggered = false;
+        sleepSitUpTriggered = false;
+        sleeping = false;
+        sleepingEntering = false;
+        sleepingExiting = false;
+        sleepLocked = false;
+        sleepCommandSnapshot = -1;
+        this.entityData.set(DATA_SLEEPING, false);
+        this.entityData.set(DATA_SLEEPING_ENTERING, false);
+        this.entityData.set(DATA_SLEEPING_EXITING, false);
+        setOrderedToSit(false);
+        setGroundMoveStateFromAI(0);
+        debugSleep("wakeUpImmediately");
+    }
+
+    public void suppressSleep(int ticks) {
+        sleepSuppressionTicks = Math.max(sleepSuppressionTicks, ticks);
+    }
+
+    @Override
+    public boolean isSleepSuppressed() {
+        return sleepSuppressionTicks > 0 || getTarget() != null || isFlying() || isInWaterOrBubble() || isVehicle();
+    }
+
+    @Override
+    public SleepPreferences getSleepPreferences() {
+        return new SleepPreferences(
+                true,   // canSleepAtNight
+                false,  // canSleepDuringDay
+                false,  // requiresShelter
+                false,  // avoidsThunderstorms
+                true    // sleepsNearOwner
+        );
+    }
+
+    @Override
+    public boolean canSleepNow() {
+        boolean ownerSleeping = false;
+        if (isTame()) {
+            var owner = getOwner();
+            ownerSleeping = owner instanceof Player player && player.isSleeping();
+        }
+        return !level().isDay() || ownerSleeping;
+    }
+
+    public int getSleepSitDownDuration() {
+        return 38; // animation "down" length
+    }
+
+    public int getSleepSitUpDuration() {
+        return 38; // animation "up" length
+    }
+
+    public int getSleepFallAsleepDuration() {
+        return 38; // animation "fall_asleep" length
+    }
+
+    public int getSleepWakeUpDuration() {
+        return 38; // animation "wake_up" length
+    }
+
+    private void tickSleepTransitions() {
+        if (!(sleeping || sleepingEntering || sleepingExiting || sleepTransitioning)) {
+            return;
+        }
+
+        freezeDuringSleepChain();
+
+        if (sleepingEntering) {
+            if (!sleepFallAsleepTriggered) {
+                if (sleepTransitionTicks > 0) {
+                    sleepTransitionTicks--;
+                    if (sleepTransitionTicks > 0) {
+                        return;
+                    }
+                }
+                boolean seatedEnough = isOrderedToSit() || getSitProgress() >= maxSitTicks();
+                if (seatedEnough) {
+                    sleepFallAsleepTriggered = true;
+                    sleepTransitionTicks = getSleepFallAsleepDuration();
+                    animationHandler.triggerFallAsleepAnimation();
+                    debugSleep("fall_asleep triggered; ticks=" + sleepTransitionTicks);
+                    return;
+                }
+                // Trigger sit_down and wait for it to complete
+                sleepTransitionTicks = getSleepSitDownDuration();
+                animationHandler.triggerSitDownAnimation();
+                setOrderedToSit(true);
+                debugSleep("sit_down triggered; ticks=" + sleepTransitionTicks);
+                return;
+            }
+
+            if (sleepTransitionTicks > 0) {
+                sleepTransitionTicks--;
+                if (sleepTransitionTicks > 0) {
+                    return;
+                }
+            }
+
+            sleeping = true;
+            sleepingEntering = false;
+            sleepTransitioning = false;
+            sleepFallAsleepTriggered = false;
+            this.entityData.set(DATA_SLEEPING_ENTERING, false);
+            this.entityData.set(DATA_SLEEPING, true);
+            animationHandler.triggerSleepAnimation();
+            debugSleep("sleep loop entered");
+            setOrderedToSit(true);
+            setGroundMoveStateFromAI(0);
+            return;
+        }
+
+        if (sleepingExiting) {
+            if (sleepTransitionTicks > 0) {
+                sleepTransitionTicks--;
+                if (sleepTransitionTicks > 0) {
+                    return;
+                }
+            }
+
+            sleepingExiting = false;
+            sleepTransitioning = false;
+            sleepSitUpTriggered = false;
+            this.entityData.set(DATA_SLEEPING_EXITING, false);
+            this.entityData.set(DATA_SLEEPING, false);
+
+            sleepLocked = false;
+            int desired = sleepCommandSnapshot;
+            sleepCommandSnapshot = -1;
+            boolean ownerWantsSit = desired == 1;
+            setOrderedToSit(ownerWantsSit);
+            setGroundMoveStateFromAI(0);
+            debugSleep("sleep exit finished; ownerSit=" + ownerWantsSit);
+        }
+    }
+
+    private void freezeDuringSleepChain() {
+        this.getNavigation().stop();
+        this.setDeltaMovement(0, 0, 0);
+        this.setRunning(false);
+        this.setGroundMoveStateFromAI(0);
+        this.setFlying(false);
+        this.setHovering(false);
+        this.setTakeoff(false);
+        this.setLanding(false);
+        this.setOrderedToSit(true);
+    }
+
+    private void debugSleep(String msg) {
+        if (!level().isClientSide) {
+            System.out.println("[IgnivorusSleep] " + this.getId() + " " + msg);
         }
     }
 

@@ -129,6 +129,9 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 case 1 -> state.setAndContinue(WALK);  // Walking
                 default -> state.setAndContinue(IDLE); // Idle/stopped
             }
+            if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
+                return PlayState.STOP;
+            }
         }
         return PlayState.CONTINUE;
     }
@@ -141,6 +144,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
             state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.banking_off"));
             return PlayState.CONTINUE;
+        }
+
+        if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
+            return PlayState.STOP;
         }
 
         // Stop banking when controls are locked
@@ -161,6 +168,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
             state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.pitching_off"));
             return PlayState.CONTINUE;
+        }
+
+        if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
+            return PlayState.STOP;
         }
 
         // Stop pitching when controls are locked
@@ -196,6 +207,18 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         dragon.triggerAnim("action", "sit_up");
     }
 
+    public void triggerFallAsleepAnimation() {
+        dragon.triggerAnim("action", "fall_asleep");
+    }
+
+    public void triggerSleepAnimation() {
+        dragon.triggerAnim("action", "sleep");
+    }
+
+    public void triggerWakeUpAnimation() {
+        dragon.triggerAnim("action", "wake_up");
+    }
+
     /**
      * Sets up all GeckoLib animation triggers for the action controller.
      * Follows the same pattern as Raevyx for consistent ability animation handling.
@@ -206,6 +229,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             RawAnimation.begin().thenPlay("animation.ignivorus.down"));
         actionController.triggerableAnim("sit_up",
             RawAnimation.begin().thenPlay("animation.ignivorus.up"));
+        actionController.triggerableAnim("fall_asleep",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fall_asleep"));
+        actionController.triggerableAnim("wake_up",
+            RawAnimation.begin().thenPlay("animation.ignivorus.wake_up"));
+        actionController.triggerableAnim("sleep",
+            RawAnimation.begin().thenLoop("animation.ignivorus.sleep"));
 
         // Bite ability animation
         actionController.triggerableAnim("bite",
