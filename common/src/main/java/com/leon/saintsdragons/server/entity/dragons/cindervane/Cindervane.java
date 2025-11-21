@@ -129,7 +129,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
-    private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
 
     private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
@@ -193,6 +192,22 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private int sleepCancelTicks = 0;
     private boolean sleepLocked = false;
     private int sleepCommandSnapshot = -1;
+
+    public int getSleepSitDownDuration() {
+        return Math.round(maxSitTicks()); // matches sit_down length (45 ticks)
+    }
+
+    public int getSleepFallAsleepDuration() {
+        return 60; // fall_asleep animation duration
+    }
+
+    public int getSleepWakeUpDuration() {
+        return 42; // wake_up animation duration
+    }
+
+    public int getSleepSitUpDuration() {
+        return Math.round(maxSitTicks()); // re-use sit_up length (~46 ticks)
+    }
 
     // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
 
@@ -431,8 +446,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new CindervaneSleepGoal(this)); // Sleep goal - high priority (tamed dragons sleep with owner)
-        this.goalSelector.addGoal(2, new CindervaneRestGoal(this)); // Wild rest/sleep goal - night-time only (MUST be before FlightGoal!)
+        this.goalSelector.addGoal(1, new CindervaneSleepGoal(this)); // Night sleep goal for tame + wild
         this.goalSelector.addGoal(3, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(4, new CindervaneSmartFlightGoal(this));
         this.goalSelector.addGoal(5, new CindervaneCombatGoal(this));
@@ -1718,10 +1732,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         return soundHandler;
     }
 
-    public com.leon.saintsdragons.server.entity.sleep.DragonRestManager getRestManager() {
-        return restManager;
-    }
-
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
@@ -1911,7 +1921,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         super.addAdditionalSaveData(tag);
         tag.putInt("TimeFlying", timeFlying);
         saveRideableData(tag);
-        restManager.save(tag);
 
         // Persist feeding cooldown (synced via entity data but saved for redundancy)
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
@@ -1940,30 +1949,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // Restore feeding cooldown (synced via entity data but loaded for redundancy)
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
-        }
-
-        // Restore rest state manager and re-trigger animations based on loaded state
-        restManager.load(tag);
-        com.leon.saintsdragons.server.entity.sleep.DragonRestState restState = restManager.getCurrentState();
-        switch (restState) {
-            case SLEEPING -> {
-                setOrderedToSit(true);
-                animationHandler.triggerSleepAnimation();
-            }
-            case SITTING_DOWN, SITTING, SITTING_AFTER -> {
-                setOrderedToSit(true);
-            }
-            case FALLING_ASLEEP -> {
-                setOrderedToSit(true);
-                startSleepEnter();
-            }
-            case WAKING_UP -> {
-                setOrderedToSit(true);
-                startSleepExit();
-            }
-            case STANDING_UP -> {
-                setOrderedToSit(false);
-            }
         }
 
         // Force animation state sync after loading to prevent thrashing
