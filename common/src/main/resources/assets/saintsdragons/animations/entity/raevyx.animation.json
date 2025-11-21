@@ -31240,10 +31240,6 @@
 				"0.0": {
 					"effect": "raevyx_summon_storm_air",
 					"locator": "mouth_origin"
-				},
-				"0.5": {
-					"effect": "raevyx_summon_storm_air",
-					"locator": "mouth_origin"
 				}
 			}
 		},
