@@ -140,29 +140,44 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     }
 
     /**
-     * Distributes the parent "head" bone's rotation across neck segments like a giraffe.
-     * GeckoLib rotates the main "head" bone, and we distribute that rotation so each
-     * neck segment contributes a portion, creating smooth natural movement.
+     * Distributes head rotation across neck segments.
+     * Combines look direction with structural rotation from turning, then clamps to prevent crunching.
      */
     private void applyNeckFollow(Nulljaw entity, AnimationState<Nulljaw> state) {
         var headOpt = getBone("head");
         if (headOpt.isEmpty()) return;
 
         GeoBone head = headOpt.get();
+        float partialTick = state.getPartialTick();
 
         // Get how much GeckoLib rotated the parent "head" bone
         float headDeltaX = head.getRotX() - head.getInitialSnapshot().getRotX();
         float headDeltaY = head.getRotY() - head.getInitialSnapshot().getRotY();
+
+        // Get body deviation (how much head leads body)
+        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+
+        // Combine structural rotation + look direction, then clamp
+        // bodyDeviation * 2.0 = structural neck bend from turning
+        // headDeltaY = where the head wants to look (from GeckoLib)
+        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
+        float totalYawRad = headDeltaY + structuralYawRad;
+
+        // Clamp total rotation to prevent structural crunching during 360° turns
+        totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
+
+        // Clamp pitch as well
+        float clampedPitchRad = Mth.clamp(headDeltaX, -20.0f * Mth.DEG_TO_RAD, 20.0f * Mth.DEG_TO_RAD);
 
         // COUNTER-ROTATE the parent "head" bone so it doesn't rotate rigidly
         // We'll redistribute this rotation across the neck segments instead
         head.setRotX(head.getInitialSnapshot().getRotX());
         head.setRotY(head.getInitialSnapshot().getRotY());
 
-        // Now distribute the rotation across neck segments (adjust bone names and weights as needed)
-        applyNeckBoneFollow("neck1LookControl", headDeltaX, headDeltaY, 0.35f);  // Base
-        applyNeckBoneFollow("neck2LookControl", headDeltaX, headDeltaY, 0.40f);    // Middle
-        applyNeckBoneFollow("neck3LookControl", headDeltaX, headDeltaY, 0.45f);    // Tip - most rotation
+        // Now distribute the CLAMPED rotation across neck segments
+        applyNeckBoneFollow("neck1LookControl", clampedPitchRad, totalYawRad, 0.35f);  // Base
+        applyNeckBoneFollow("neck2LookControl", clampedPitchRad, totalYawRad, 0.40f);    // Middle
+        applyNeckBoneFollow("neck3LookControl", clampedPitchRad, totalYawRad, 0.45f);    // Tip - most rotation
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
