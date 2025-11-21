@@ -125,7 +125,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
     private final NulljawInteractionHandler interactionHandler = new NulljawInteractionHandler(this);
-    private final com.leon.saintsdragons.server.entity.sleep.DragonRestManager restManager = new com.leon.saintsdragons.server.entity.sleep.DragonRestManager(this);
     private final NulljawRiderController riderController;
     private double configuredWalkSpeed = 0.14D;
     private double configuredRunSpeed = 0.28D;
@@ -426,10 +425,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         super.registerGoals();
         // Priority 0: Critical survival - air management
         this.goalSelector.addGoal(0, new BreathAirGoal(this));
-        // Priority 1: Sleep system (tamed dragons following owners)
+        // Priority 1: Sleep system (sleeps at night, or when owner is asleep)
         this.goalSelector.addGoal(1, new NulljawSleepGoal(this));
-        // Priority 2: Casual resting for wild dragons
-        this.goalSelector.addGoal(2, new NulljawRestGoal(this));
 
         // Priority 3: Combat abilities (CombatGoal handles both movement and attacks)
         this.goalSelector.addGoal(3, new NulljawCombatGoal(this));
@@ -1809,12 +1806,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         return 38; // up animation is 1.88s = 38 ticks
     }
 
-    /**
-     * Get the persistent rest manager for save/load of rest state
-     */
-    public com.leon.saintsdragons.server.entity.sleep.DragonRestManager getRestManager() {
-        return restManager;
-    }
 
     // ===== SLEEP SYSTEM =====
 
@@ -1888,9 +1879,23 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     public void startSleepEnter() {
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
         setSleepingEntering(true);
-        sleepTransitionTicks = getFallAsleepAnimationTicks(); // Set to exact animation length
-        if (!level().isClientSide) {
-            enterSleepLock();
+        // Sleep enter: sit_down (uses sitProgress) → fall_asleep → sleep loop
+        boolean alreadySitting = isOrderedToSit() || getSitProgress() >= maxSitTicks();
+        if (alreadySitting) {
+            // Already sitting - trigger fall_asleep immediately
+            sleepTransitionTicks = getFallAsleepAnimationTicks();
+            animationHandler.triggerFallAsleepAnimation();
+            this.setOrderedToSit(true);
+            if (!level().isClientSide) {
+                enterSleepLock();
+            }
+        } else {
+            // Not sitting - trigger sit_down first
+            sleepTransitionTicks = getFallAsleepAnimationTicks();
+            animationHandler.triggerSitDownAnimation();
+            if (!level().isClientSide) {
+                enterSleepLock();
+            }
         }
     }
 
@@ -1963,6 +1968,20 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     @Override
+    public boolean hurt(@javax.annotation.Nonnull net.minecraft.world.damagesource.DamageSource damageSource, float amount) {
+        // During dying sequence, ignore all damage (entity is already dead, playing death animation)
+        if (isDying()) {
+            return false;
+        }
+        // Wake if sleeping and suppress re-entry on damage
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
+            wakeUpImmediately();
+            suppressSleep(200);
+        }
+        return super.hurt(damageSource, amount);
+    }
+
+    @Override
     public void addAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
@@ -1975,8 +1994,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         tag.putInt("SleepAmbientCooldown", sleepAmbientCooldownTicks);
         tag.putInt("SleepReentryCooldown", sleepReentryCooldownTicks);
 
-        // Save persistent rest state
-        restManager.save(tag);
+        // Sleep state is ephemeral - not persisted (sleep goal re-evaluates on load)
         tag.putInt("SleepCancelTicks", sleepCancelTicks);
         tag.putInt("SleepCommandSnapshot", sleepCommandSnapshot);
 
@@ -1996,39 +2014,28 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         sleepAmbientCooldownTicks = tag.getInt("SleepAmbientCooldown");
         sleepReentryCooldownTicks = tag.getInt("SleepReentryCooldown");
 
-        // Load persistent rest state
-        restManager.load(tag);
+        // Sleep state is ephemeral - not loaded (cleaned up below, sleep goal re-evaluates)
 
         // Restore feeding cooldown (synced via entity data but loaded for redundancy)
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
 
-        // Re-trigger animations based on loaded rest state
-        if (!level().isClientSide) {
-            var restState = restManager.getCurrentState();
-            switch (restState) {
-                case SITTING_DOWN, SITTING, SITTING_AFTER -> setOrderedToSit(true);
-                case FALLING_ASLEEP -> {
-                    setOrderedToSit(true);
-                    // Don't re-trigger fall_asleep here, let the state machine handle it
-                }
-                case SLEEPING -> {
-                    setOrderedToSit(true);
-                    // Re-trigger sleep loop animation
-                    animationHandler.triggerSleepAnimation();
-                }
-                case WAKING_UP -> {
-                    setOrderedToSit(true);
-                    // Don't re-trigger wake_up, let state machine handle it
-                }
-            }
-        }
-
         sleepCancelTicks = tag.getInt("SleepCancelTicks");
         sleepCommandSnapshot = tag.contains("SleepCommandSnapshot") ? tag.getInt("SleepCommandSnapshot") : -1;
-        if (sleepLocked) {
-            setOrderedToSit(true);
+
+        // Clear all sleep state on world load (sleep is ephemeral, not persisted)
+        // Sleep goal will re-evaluate conditions and put dragon back to sleep if appropriate
+        if (!level().isClientSide) {
+            if (sleepLocked || isSleepingEntering() || isSleepingExiting() || isSleeping()) {
+                releaseSleepLock();
+                wakeUpImmediately();
+                suppressSleep(200);
+            }
+            setSleepingEntering(false);
+            setSleepingExiting(false);
+            sleepTransitionTicks = 0;
+            setSleeping(false);
         }
         if (tag.contains("PhaseTwo")) {
             setPhaseTwoActive(tag.getBoolean("PhaseTwo"), false);
