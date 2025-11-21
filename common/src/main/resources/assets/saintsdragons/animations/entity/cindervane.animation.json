@@ -1629,12 +1629,8 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "cindervane_step",
-					"locator": "leftLocator"
-				},
-				"1.25": {
-					"effect": "cindervane_step",
-					"locator": "rightLocator"
+					"effect": "cindervane_walk",
+					"locator": "body_locator"
 				}
 			}
 		},
@@ -2227,12 +2223,8 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "cindervane_step",
-					"locator": "leftLocator"
-				},
-				"0.8286": {
-					"effect": "cindervane_step",
-					"locator": "rightLocator"
+					"effect": "cindervane_run",
+					"locator": "body_locator"
 				}
 			}
 		},

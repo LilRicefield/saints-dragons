@@ -141,11 +141,21 @@
       }
     ]
   },
-  "cindervane_step": {
+  "cindervane_walk": {
     "subtitle": "Cindervane steps",
     "sounds": [
       {
-        "name": "saintsdragons:entity/cindervane/cindervane_step",
+        "name": "saintsdragons:entity/cindervane/cindervane_walk",
+        "volume": 1.1,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_run": {
+    "subtitle": "Cindervane runs",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_run",
         "volume": 1.2,
         "pitch": 1.0
       }

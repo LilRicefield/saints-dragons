@@ -46,8 +46,8 @@ public class CindervaneSleepGoal extends Goal {
             return ownerAsleepNearby();
         }
 
-        // Wild dragons: low chance each tick when calm at night
-        return amphithere.getRandom().nextFloat() < 0.0005f;
+        // Wild dragons: sleep whenever it's calm during the night
+        return isEnvironmentCalm();
     }
 
     @Override
@@ -77,6 +77,7 @@ public class CindervaneSleepGoal extends Goal {
         // If already seated (owner command), skip sit_down buffer
         phaseTimer = (alreadySitting ? 0 : amphithere.getSleepSitDownDuration())
                 + amphithere.getSleepFallAsleepDuration() + 4; // small buffer
+        amphithere.setOrderedToSit(true); // kick off sit_down immediately
         amphithere.startSleepEnter();
     }
 

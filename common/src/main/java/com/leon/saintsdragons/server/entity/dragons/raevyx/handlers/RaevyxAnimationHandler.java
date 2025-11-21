@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
+import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.core.animation.*;
@@ -122,6 +123,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         if (wyvern.isFlying()) {
             int syncedMode = wyvern.getSyncedFlightMode();
             Vec3 vNow = wyvern.getDeltaMovement();
+            boolean sprintingSynced = Boolean.TRUE.equals(wyvern.getAnimData(DragonAnimTickets.FLIGHT_SPRINTING));
 
             if (syncedMode == 3) {
                 state.getController().transitionLength(4);
@@ -136,7 +138,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            boolean manualRiderControl = wyvern.isTame() && wyvern.isVehicle();
+            boolean manualRiderControl = wyvern.isTame() && wyvern.isVehicle() && wyvern.isControlledByLocalInstance();
             if (manualRiderControl) {
                 Vec3 vel = wyvern.getDeltaMovement();
                 boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
@@ -163,7 +165,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                     return PlayState.CONTINUE;
                 }
 
-                if (wyvern.isAccelerating() && isMovingHorizontally) {
+                boolean sprinting = wyvern.isAccelerating() || sprintingSynced;
+
+                if (sprinting && isMovingHorizontally) {
                     RawAnimation sprint = SPRINT_FLAP;
                     if (currentFlightAnimation != sprint) {
                         state.getController().transitionLength(3);
@@ -186,12 +190,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
 
             if (syncedMode == 2) {
                 state.getController().transitionLength(6);
-                state.setAndContinue(FLAP);
+                state.setAndContinue(sprintingSynced ? SPRINT_FLAP : FLAP);
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 1) {
                 state.getController().transitionLength(4);
-                state.setAndContinue(FLAP);
+                state.setAndContinue(sprintingSynced ? SPRINT_FLAP : FLAP);
                 return PlayState.CONTINUE;
             }
             if (syncedMode == 0) {

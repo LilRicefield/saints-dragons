@@ -61,7 +61,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> CINDERVANE_HURT = registerSound("cindervane_hurt");
     public static final Supplier<SoundEvent> CINDERVANE_BITE = registerSound("cindervane_bite");
     public static final Supplier<SoundEvent> CINDERVANE_DIE = registerSound("cindervane_die");
-    public static final Supplier<SoundEvent> CINDERVANE_STEP = registerSound("cindervane_step");
+    public static final Supplier<SoundEvent> CINDERVANE_WALK = registerSound("cindervane_walk");
+    public static final Supplier<SoundEvent> CINDERVANE_RUN = registerSound("cindervane_run");
     public static final Supplier<SoundEvent> CINDERVANE_FLAP = registerSound("cindervane_flap");
     public static final Supplier<SoundEvent> CINDERVANE_TAKEOFF = registerSound("cindervane_takeoff");
 

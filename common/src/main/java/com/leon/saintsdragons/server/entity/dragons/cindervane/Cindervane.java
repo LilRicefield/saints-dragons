@@ -2234,7 +2234,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                     setSleepingEntering(false);
                     animationHandler.triggerSleepAnimation();
                 } else if (isSleepingExiting()) {
-                    // wake_up finished: clear exiting state
+                    // wake_up finished: play sit_up if we're supposed to stand, then clear exiting state
+                    if (getCommand() != 1) {
+                        setOrderedToSit(false);
+                        animationHandler.triggerSitUpAnimation();
+                    }
                     setSleepingExiting(false);
                     // Brief cooldown before ambient sounds resume
                     sleepAmbientCooldownTicks = 10;
@@ -2330,6 +2334,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // enterSleepLock forces sit command, which triggers sit_down via updateSittingProgress
         if (!level().isClientSide) {
             enterSleepLock();
+            if (getSitProgress() < maxSitTicks()) {
+                animationHandler.triggerSitDownAnimation(); // ensure down clip starts immediately
+            } else {
+                // Already seated: jump straight into the fall_asleep clip/countdown
+                animationHandler.triggerFallAsleepAnimation();
+                sleepTransitionTicks = 60;
+            }
         }
     }
 
