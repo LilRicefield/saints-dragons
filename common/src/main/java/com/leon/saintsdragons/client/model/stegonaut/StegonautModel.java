@@ -36,20 +36,12 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     @Override
     public void setCustomAnimations(Stegonaut entity, long instanceId, AnimationState<Stegonaut> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
-
         float partialTick = animationState.getPartialTick();
-
-        // Apply AstemirLib-style body rotation for smooth "body follows head" behavior
         applyBodyRotationDeviation(entity, partialTick);
         applyTailDrag(entity, partialTick);
         // Note: Head rotation is handled by GeckoLib's built-in head tracking
     }
 
-    /**
-     * Applies smooth body rotation using AstemirLib's deviation approach.
-     * bodyRotDeviation tracks the difference between head and body rotation.
-     * This creates the natural "head leads, body follows" behavior.
-     */
     private void applyBodyRotationDeviation(Stegonaut entity, float partialTick) {
         var rootOpt = getBone("root");
         if (rootOpt.isEmpty()) {
