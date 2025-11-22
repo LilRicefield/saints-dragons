@@ -441,12 +441,32 @@
       }
     ]
   },
+  "nulljaw_phase2_start": {
+    "subtitle": "Nulljaw prepares to switch phase",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2_start",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "nulljaw_phase2": {
     "subtitle": "Nulljaw switches phase",
     "sounds": [
       {
         "name": "saintsdragons:entity/nulljaw/nulljaw_phase2",
         "volume": 3.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_phase2_end": {
+    "subtitle": "Nulljaw finishes phase switch",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2_end",
+        "volume": 1.8,
         "pitch": 1.0
       }
     ]
@@ -471,11 +491,41 @@
       }
     ]
   },
-  "nulljaw_step": {
-    "subtitle": "Nulljaw steps",
+  "nulljaw_walk": {
+    "subtitle": "Nulljaw walks",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_step",
+        "name": "saintsdragons:entity/nulljaw/nulljaw_walk",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_run": {
+    "subtitle": "Nulljaw runs",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_run",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_walk2": {
+    "subtitle": "Nulljaw walks (Phase 2)",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_walk2",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_run2": {
+    "subtitle": "Nulljaw runs (Phase 2)",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_run2",
         "volume": 1.0,
         "pitch": 1.0
       }

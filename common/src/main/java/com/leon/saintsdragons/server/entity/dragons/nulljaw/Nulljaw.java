@@ -521,11 +521,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         return VOCAL_ENTRIES;
     }
 
-    @Override
-    protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
-        // Mute vanilla footsteps; custom sounds handled via GeckoLib keyframes
-    }
-
     // ===== AMBIENT SOUND METHODS =====
 
     /**
@@ -534,8 +529,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private void playCustomAmbientSound() {
         RandomSource random = getRandom();
 
-        // Don't make ambient sounds if dying, in combat, or using abilities
-        if (isDying() || getTarget() != null || getActiveAbility() != null) {
+        // Don't make ambient sounds if dying, in combat, using abilities, or during phase transitions
+        if (isDying() || getTarget() != null || getActiveAbility() != null || areRiderControlsLocked()) {
             return;
         }
 

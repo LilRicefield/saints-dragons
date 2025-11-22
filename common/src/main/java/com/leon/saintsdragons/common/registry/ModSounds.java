@@ -71,10 +71,15 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_2 = registerSound("nulljaw_grumble2");
     public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_3 = registerSound("nulljaw_grumble3");
     public static final Supplier<SoundEvent> NULLJAW_PHASE1 = registerSound("nulljaw_phase1");
+    public static final Supplier<SoundEvent> NULLJAW_PHASE2_START = registerSound("nulljaw_phase2_start");
     public static final Supplier<SoundEvent> NULLJAW_PHASE2 = registerSound("nulljaw_phase2");
+    public static final Supplier<SoundEvent> NULLJAW_PHASE2_END = registerSound("nulljaw_phase2_end");
     public static final Supplier<SoundEvent> NULLJAW_ROAR = registerSound("nulljaw_roar");
     public static final Supplier<SoundEvent> NULLJAW_ROARCLAW = registerSound("nulljaw_roarclaw");
-    public static final Supplier<SoundEvent> NULLJAW_STEP = registerSound("nulljaw_step");
+    public static final Supplier<SoundEvent> NULLJAW_WALK = registerSound("nulljaw_walk");
+    public static final Supplier<SoundEvent> NULLJAW_RUN = registerSound("nulljaw_run");
+    public static final Supplier<SoundEvent> NULLJAW_WALK2 = registerSound("nulljaw_walk2");
+    public static final Supplier<SoundEvent> NULLJAW_RUN2 = registerSound("nulljaw_run2");
     public static final Supplier<SoundEvent> NULLJAW_CLAW = registerSound("nulljaw_claw");
     public static final Supplier<SoundEvent> NULLJAW_BITE = registerSound("nulljaw_bite");
     public static final Supplier<SoundEvent> NULLJAW_HORNGORE = registerSound("nulljaw_horngore");

@@ -117,11 +117,11 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         // So we NEGATE the velocity
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
 
-        // Apply with increasing intensity toward the head (3 neck segments + skull)
+        // Apply with increasing intensity toward the head (3 neck segments + head)
         applyNeckBoneRotation("neck1", turnRad * 0.4f);
         applyNeckBoneRotation("neck2", turnRad * 0.42f);
         applyNeckBoneRotation("neck3", turnRad * 0.44f);
-        applyNeckBoneRotation("skull", turnRad * 0.46f);
+        applyNeckBoneRotation("head", turnRad * 0.46f);
     }
 
     /**
@@ -175,9 +175,9 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         head.setRotY(head.getInitialSnapshot().getRotY());
 
         // Now distribute the CLAMPED rotation across neck segments
-        applyNeckBoneFollow("neck1LookControl", clampedPitchRad, totalYawRad, 0.35f);  // Base
-        applyNeckBoneFollow("neck2LookControl", clampedPitchRad, totalYawRad, 0.40f);    // Middle
-        applyNeckBoneFollow("neck3LookControl", clampedPitchRad, totalYawRad, 0.45f);    // Tip - most rotation
+        applyNeckBoneFollow("neck1", clampedPitchRad, totalYawRad, 0.35f);  // Base
+        applyNeckBoneFollow("neck2", clampedPitchRad, totalYawRad, 0.40f);    // Middle
+        applyNeckBoneFollow("neck3", clampedPitchRad, totalYawRad, 0.45f);    // Tip - most rotation
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -185,15 +185,14 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         if (boneOpt.isEmpty()) return;
 
         GeoBone bone = boneOpt.get();
-        var snap = bone.getInitialSnapshot();
 
         // Apply weighted portion of the head's rotation
         float addX = headDeltaX * weight;
         float addY = headDeltaY * weight;
 
-        // Set directly from snapshot (no lerp to avoid cross-entity sync)
-        bone.setRotX(snap.getRotX() + addX);
-        bone.setRotY(snap.getRotY() + addY);
+        // Add to current rotation (preserves animation keyframes)
+        bone.setRotX(bone.getRotX() + addX);
+        bone.setRotY(bone.getRotY() + addY);
     }
 
     /**
