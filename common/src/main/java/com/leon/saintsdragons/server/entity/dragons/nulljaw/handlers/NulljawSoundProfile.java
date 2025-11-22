@@ -34,7 +34,22 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
                 playClientSound(dragon, ModSounds.NULLJAW_GRUMBLE_3.get(), 1.5f, 0.95f, 0.1f);
                 yield true;
             }
-            case "nulljaw_phase2", "nulljaw_phase2_underwater" -> {
+            case "nulljaw_phase2_start" -> {
+                // Start buildup sound for phase2 transition
+                playClientSound(dragon, ModSounds.NULLJAW_PHASE2_START.get(), 2.0f, 0.9f, 0.1f);
+                yield true;
+            }
+            case "nulljaw_phase2" -> {
+                // Main phase 2 roar (plays during middle animation)
+                playClientSound(dragon, ModSounds.NULLJAW_PHASE2.get(), 2.5f, 0.9f, 0.2f);
+                yield true;
+            }
+            case "nulljaw_phase2_end" -> {
+                // Ending sound for phase2 transition (settling down)
+                playClientSound(dragon, ModSounds.NULLJAW_PHASE2_END.get(), 1.8f, 0.95f, 0.15f);
+                yield true;
+            }
+            case "nulljaw_phase2_underwater" -> {
                 playClientSound(dragon, ModSounds.NULLJAW_PHASE2.get(), 2.5f, 0.9f, 0.2f);
                 yield true;
             }
@@ -42,8 +57,20 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
                 playClientSound(dragon, ModSounds.NULLJAW_PHASE1.get(), 1.4f, 0.9f, 0.2f);
                 yield true;
             }
-            case "nulljaw_step" -> {
-                playClientSound(dragon, ModSounds.NULLJAW_STEP.get(), 0.8f, 0.9f, 0.2f);
+            case "nulljaw_walk" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_WALK.get(), 0.8f, 0.9f, 0.2f);
+                yield true;
+            }
+            case "nulljaw_run" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_RUN.get(), 0.8f, 0.9f, 0.2f);
+                yield true;
+            }
+            case "nulljaw_walk2" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_WALK2.get(), 0.8f, 0.9f, 0.2f);
+                yield true;
+            }
+            case "nulljaw_run2" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_RUN2.get(), 0.8f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_claw" -> {

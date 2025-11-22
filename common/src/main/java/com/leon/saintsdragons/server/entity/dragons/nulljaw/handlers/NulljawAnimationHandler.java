@@ -65,8 +65,16 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         // Register phase transitions
         actionController.triggerableAnim("phase1",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase1"));
+
+        // Phase 2 ground transition - chaining animations
+        actionController.triggerableAnim("phase2_start",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_start"));
         actionController.triggerableAnim("phase2",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase2"));
+        actionController.triggerableAnim("phase2_end",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_end"));
+
+        // Phase 2 underwater (single animation, no chain)
         actionController.triggerableAnim("phase1_underwater",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase1_underwater"));
         actionController.triggerableAnim("phase2_underwater",
@@ -117,6 +125,18 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     }
 
     public PlayState movementPredicate(AnimationState<Nulljaw> state) {
+
+        if (drake.isDying() || drake.isSleeping() || drake.isSleepingEntering() || drake.isSleepingExiting()) {
+            return PlayState.STOP;
+        }
+
+        // CRITICAL: Stop movement controller when controls are locked (e.g., phase shift transition)
+        // This prevents movement animations from competing with action controller animations
+        // Phase shift locks controls for 150 ticks during the full transition sequence
+        if (drake.areRiderControlsLocked()) {
+            return PlayState.STOP;
+        }
+
         var controller = state.getController();
         controller.setAnimationSpeed(1.0F);
 
@@ -202,6 +222,7 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     }
 
     public PlayState swimDirectionPredicate(AnimationState<Nulljaw> state) {
+
         var controller = state.getController();
         controller.transitionLength(SWIM_TRANSITION_TICKS);
 
