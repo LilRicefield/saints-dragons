@@ -892,14 +892,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (!alreadySeated) {
             this.setOrderedToSit(false);
         }
-        debugSleep("startSleepEnter; sitProgress=" + getSitProgress() + "/" + maxSitTicks());
 
         if (isOrderedToSit() || this.getSitProgress() >= this.maxSitTicks()) {
             sleepTransitionTicks = 1;
         } else {
             sleepTransitionTicks = getSleepSitDownDuration();
             animationHandler.triggerSitDownAnimation();
-            debugSleep("sit_down triggered; ticks=" + sleepTransitionTicks);
         }
     }
 
@@ -922,7 +920,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         setGroundMoveStateFromAI(0);
         setOrderedToSit(true);
         animationHandler.triggerWakeUpAnimation();
-        debugSleep("startSleepExit; wake_up ticks=" + sleepTransitionTicks);
         suppressSleep(40);
     }
 
@@ -942,7 +939,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.set(DATA_SLEEPING_EXITING, false);
         setOrderedToSit(false);
         setGroundMoveStateFromAI(0);
-        debugSleep("wakeUpImmediately");
     }
 
     public void suppressSleep(int ticks) {
@@ -1011,14 +1007,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     sleepFallAsleepTriggered = true;
                     sleepTransitionTicks = getSleepFallAsleepDuration();
                     animationHandler.triggerFallAsleepAnimation();
-                    debugSleep("fall_asleep triggered; ticks=" + sleepTransitionTicks);
                     return;
                 }
                 // Trigger sit_down and wait for it to complete
                 sleepTransitionTicks = getSleepSitDownDuration();
                 animationHandler.triggerSitDownAnimation();
                 setOrderedToSit(true);
-                debugSleep("sit_down triggered; ticks=" + sleepTransitionTicks);
                 return;
             }
 
@@ -1036,7 +1030,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             this.entityData.set(DATA_SLEEPING_ENTERING, false);
             this.entityData.set(DATA_SLEEPING, true);
             animationHandler.triggerSleepAnimation();
-            debugSleep("sleep loop entered");
             setOrderedToSit(true);
             setGroundMoveStateFromAI(0);
             return;
@@ -1062,7 +1055,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             boolean ownerWantsSit = desired == 1;
             setOrderedToSit(ownerWantsSit);
             setGroundMoveStateFromAI(0);
-            debugSleep("sleep exit finished; ownerSit=" + ownerWantsSit);
         }
     }
 
@@ -1076,12 +1068,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.setTakeoff(false);
         this.setLanding(false);
         this.setOrderedToSit(true);
-    }
-
-    private void debugSleep(String msg) {
-        if (!level().isClientSide) {
-            System.out.println("[IgnivorusSleep] " + this.getId() + " " + msg);
-        }
     }
 
     public void useRidingAbility(String abilityName) {

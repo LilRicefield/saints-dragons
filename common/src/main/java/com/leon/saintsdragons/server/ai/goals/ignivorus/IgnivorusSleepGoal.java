@@ -71,7 +71,6 @@ public class IgnivorusSleepGoal extends Goal {
         phaseTimer = (alreadySitting ? 0 : dragon.getSleepSitDownDuration())
                 + dragon.getSleepFallAsleepDuration() + 4; // small buffer
         dragon.startSleepEnter();
-        System.out.println("[IgnivorusSleepGoal] start ENTERING; alreadySit=" + alreadySitting + " timer=" + phaseTimer + " entity=" + dragon.getId());
     }
 
     @Override
@@ -90,17 +89,6 @@ public class IgnivorusSleepGoal extends Goal {
 
         // Abort sleep if airborne; wake immediately and wait to retry after landing
         if (!isEffectivelyGrounded() && phase != SleepPhase.IDLE) {
-            var pos = dragon.blockPosition();
-            boolean onGround = dragon.onGround();
-            boolean flying = dragon.isFlying();
-            boolean hovering = dragon.isHovering();
-            boolean landing = dragon.isLanding();
-            double motionY = dragon.getDeltaMovement().y;
-            boolean blockBelowAir = dragon.level().getBlockState(pos.below()).isAir();
-            System.out.println("[IgnivorusSleepGoal] not grounded; cancel attempt. phase=" + phase
-                    + " onGround=" + onGround + " flying=" + flying + " hovering=" + hovering
-                    + " landing=" + landing + " dy=" + motionY + " belowAir=" + blockBelowAir
-                    + " pos=" + pos + " entity=" + dragon.getId());
             phase = SleepPhase.IDLE;
             phaseTimer = 0;
             retryCooldownTicks = 40;
@@ -115,7 +103,6 @@ public class IgnivorusSleepGoal extends Goal {
             boolean ownerWantsSit = dragon.isTame() && dragon.getCommand() == 1;
             phaseTimer = dragon.getSleepWakeUpDuration()
                     + (ownerWantsSit ? 0 : dragon.getSleepSitUpDuration()) + 8;
-            System.out.println("[IgnivorusSleepGoal] threat detected -> EXITING; timer=" + phaseTimer + " entity=" + dragon.getId());
         }
 
         if (phase == SleepPhase.ENTERING) {
@@ -123,7 +110,6 @@ public class IgnivorusSleepGoal extends Goal {
             if (dragon.isSleeping()) {
                 phase = SleepPhase.SLEEPING;
                 phaseTimer = 0; // unmanaged until wake condition
-                System.out.println("[IgnivorusSleepGoal] ENTERING -> SLEEPING; entity=" + dragon.getId());
             }
             return;
         }
@@ -137,7 +123,6 @@ public class IgnivorusSleepGoal extends Goal {
                 boolean ownerWantsSit = dragon.isTame() && dragon.getCommand() == 1;
                 phaseTimer = dragon.getSleepWakeUpDuration()
                         + (ownerWantsSit ? 0 : dragon.getSleepSitUpDuration()) + 8;
-                System.out.println("[IgnivorusSleepGoal] wake condition -> EXITING; timer=" + phaseTimer + " entity=" + dragon.getId());
             }
             return;
         }
@@ -166,7 +151,6 @@ public class IgnivorusSleepGoal extends Goal {
         phase = SleepPhase.IDLE;
         phaseTimer = 0;
         retryCooldownTicks = 60; // short buffer before re-evaluating
-        System.out.println("[IgnivorusSleepGoal] stop -> EXITING trigger (if locked); entity=" + dragon.getId());
     }
 
     @Override

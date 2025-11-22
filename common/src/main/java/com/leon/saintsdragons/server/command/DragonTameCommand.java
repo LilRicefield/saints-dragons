@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.command;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -17,6 +18,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -37,19 +39,14 @@ public final class DragonTameCommand {
         CommandSourceStack source = context.getSource();
         Set<DragonEntity> ordered = new LinkedHashSet<>();
 
+        // Prioritize the dragon being looked at
         DragonEntity lookedAt = findLookedAtDragon(source);
         if (lookedAt != null) {
             ordered.add(lookedAt);
         }
 
-        ServerLevel level = source.getLevel();
-        Vec3 origin = source.getPosition();
-        AABB scanBox = new AABB(origin, origin).inflate(SUGGESTION_RADIUS);
-        level.getEntitiesOfClass(DragonEntity.class, scanBox)
-            .stream()
-            .sorted(Comparator.comparingDouble(dragon -> dragon.distanceToSqr(origin.x, origin.y, origin.z)))
-            .forEach(ordered::add);
-
+        // Don't show nearby dragons if not looking at them - reduces clutter
+        // Only show the looked-at dragon for better UX
         for (DragonEntity dragon : ordered) {
             builder.suggest(dragon.getUUID().toString(), dragon.getDisplayName());
         }
@@ -62,6 +59,10 @@ public final class DragonTameCommand {
 
     private static final DynamicCommandExceptionType ERROR_ALREADY_TAMED =
         new DynamicCommandExceptionType(name -> Component.translatable("saintsdragons.command.tame.already", name));
+
+    private static final DynamicCommandExceptionType ERROR_OWNERSHIP_CONFLICT =
+        new DynamicCommandExceptionType(args -> Component.translatable("saintsdragons.command.tame.ownership_conflict",
+            ((Object[])args)[0], ((Object[])args)[1]));
 
     private DragonTameCommand() {
     }
@@ -89,13 +90,30 @@ public final class DragonTameCommand {
             throw ERROR_UNKNOWN_DRAGON.create(dragonId.toString());
         }
 
-        if (dragon.isTame() && dragon.getOwner() != null && dragon.isOwnedBy(owner)) {
-            throw ERROR_ALREADY_TAMED.create(dragon.getDisplayName().getString());
+        // SECURITY: Prevent ownership theft - check if dragon is already tamed by someone else
+        if (dragon.isTame() && dragon.getOwner() != null) {
+            if (dragon.isOwnedBy(owner)) {
+                // Already owned by target player
+                throw ERROR_ALREADY_TAMED.create(dragon.getDisplayName().getString());
+            } else {
+                // Owned by someone else - require explicit permission override
+                Player currentOwner = (Player) dragon.getOwner();
+                throw ERROR_OWNERSHIP_CONFLICT.create(new Object[]{
+                    dragon.getDisplayName().getString(),
+                    currentOwner.getDisplayName().getString()
+                });
+            }
         }
 
+        // Tame the dragon
         dragon.tame(owner);
         dragon.setOrderedToSit(false);
         dragon.setTarget(null);
+
+        // Trigger taming advancement (same as natural taming)
+        if (owner instanceof ServerPlayer serverPlayer) {
+            triggerTamingAdvancement(serverPlayer, dragon);
+        }
 
         Component successMessage = Component.translatable(
             "saintsdragons.command.tame.success",
@@ -104,6 +122,46 @@ public final class DragonTameCommand {
         );
         source.sendSuccess(() -> successMessage, false);
         return 1;
+    }
+
+    /**
+     * Trigger appropriate taming advancement based on dragon type and gender.
+     * Mirrors the advancement logic from interaction handlers.
+     */
+    private static void triggerTamingAdvancement(ServerPlayer player, DragonEntity dragon) {
+        String dragonType = getDragonTypeName(dragon);
+        if (dragonType == null) {
+            return; // Unknown dragon type, skip advancement
+        }
+
+        // Try gender-specific advancement first (currently only Raevyx has this)
+        if (dragon.isFemale()) {
+            var femaleAdvancement = player.server.getAdvancements()
+                .getAdvancement(SaintsDragonsCommon.rl("tame_" + dragonType + "_female"));
+            if (femaleAdvancement != null) {
+                player.getAdvancements().award(femaleAdvancement, "tame_" + dragonType + "_female");
+                return;
+            }
+        }
+
+        // Fall back to standard advancement
+        var advancement = player.server.getAdvancements()
+            .getAdvancement(SaintsDragonsCommon.rl("tame_" + dragonType));
+        if (advancement != null) {
+            player.getAdvancements().award(advancement, "tame_" + dragonType);
+        }
+    }
+
+    /**
+     * Get the dragon type name for advancement lookup.
+     * Returns lowercase name matching advancement file names.
+     */
+    private static String getDragonTypeName(DragonEntity dragon) {
+        String className = dragon.getClass().getSimpleName().toLowerCase();
+        // Map class names to advancement names
+        // e.g., "Raevyx" -> "raevyx", "Cindervane" -> "cindervane"
+        // This works for current dragons: Raevyx, Cindervane, Nulljaw, Stegonaut, Ignivorus
+        return className;
     }
 
     private static DragonEntity findDragon(CommandSourceStack source, UUID id) {
