@@ -20,7 +20,7 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
 
     public NulljawModel() {
         // Defaulted paths under entity/ and built-in head rotation for "head" bone
-        super(SaintsDragonsCommon.rl("nulljaw"), "head");
+        super(SaintsDragonsCommon.rl("nulljaw"), "headController");
     }
 
     @Override
@@ -118,10 +118,10 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
 
         // Apply with increasing intensity toward the head (3 neck segments + head)
-        applyNeckBoneRotation("neck1", turnRad * 0.4f);
-        applyNeckBoneRotation("neck2", turnRad * 0.42f);
-        applyNeckBoneRotation("neck3", turnRad * 0.44f);
-        applyNeckBoneRotation("head", turnRad * 0.46f);
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.4f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 0.42f);
+        applyNeckBoneRotation("neck3Controller", turnRad * 0.44f);
+        applyNeckBoneRotation("headController", turnRad * 0.46f);
     }
 
     /**
@@ -144,7 +144,7 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
      * Combines look direction with structural rotation from turning, then clamps to prevent crunching.
      */
     private void applyNeckFollow(Nulljaw entity, AnimationState<Nulljaw> state) {
-        var headOpt = getBone("head");
+        var headOpt = getBone("headController");
         if (headOpt.isEmpty()) return;
 
         GeoBone head = headOpt.get();
@@ -175,9 +175,9 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         head.setRotY(head.getInitialSnapshot().getRotY());
 
         // Now distribute the CLAMPED rotation across neck segments
-        applyNeckBoneFollow("neck1", clampedPitchRad, totalYawRad, 0.35f);  // Base
-        applyNeckBoneFollow("neck2", clampedPitchRad, totalYawRad, 0.40f);    // Middle
-        applyNeckBoneFollow("neck3", clampedPitchRad, totalYawRad, 0.45f);    // Tip - most rotation
+        applyNeckBoneFollow("neck1Controller", clampedPitchRad, totalYawRad, 0.35f);  // Base
+        applyNeckBoneFollow("neck2Controller", clampedPitchRad, totalYawRad, 0.40f);    // Middle
+        applyNeckBoneFollow("neck3Controller", clampedPitchRad, totalYawRad, 0.45f);    // Tip - most rotation
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {

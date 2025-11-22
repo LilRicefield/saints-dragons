@@ -15443,12 +15443,9 @@
 						}
 					}
 				},
-				"head": {
+				"head1Controller": {
 					"rotation": {
-						"1.4583": {
-							"pre": {
-								"vector": [-10, 0, 0]
-							},
+						"0.0": {
 							"post": {
 								"vector": [-10, 0, 0]
 							},
@@ -16131,16 +16128,6 @@
 						"0.0": {
 							"post": {
 								"vector": [0, -15, 0]
-							},
-							"lerp_mode": "catmullrom"
-						}
-					}
-				},
-				"head": {
-					"rotation": {
-						"0.0": {
-							"post": {
-								"vector": [7.5, 0, 0]
 							},
 							"lerp_mode": "catmullrom"
 						}
