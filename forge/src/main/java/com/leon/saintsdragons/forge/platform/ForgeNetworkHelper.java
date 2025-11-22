@@ -25,7 +25,7 @@ public final class ForgeNetworkHelper implements NetworkHelper {
     private SimpleChannel getChannel() {
         if (channel == null) {
             channel = NetworkRegistry.newSimpleChannel(
-                    ResourceLocation.fromNamespaceAndPath(SaintsDragonsCommon.MOD_ID, "main"),
+                    new ResourceLocation(SaintsDragonsCommon.MOD_ID, "main"),
                     () -> PROTOCOL_VERSION,
                     PROTOCOL_VERSION::equals,
                     PROTOCOL_VERSION::equals
