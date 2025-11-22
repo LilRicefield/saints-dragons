@@ -169,6 +169,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private static final int MAX_TAMING_PROGRESS = 400;
     private static final int BUCK_INTERVAL_MIN = 60;
     private static final int BUCK_INTERVAL_MAX = 110;
+    private static final int BUCK_WARNING_WINDOW = 15; // Ticks before buck where Nulljaw "winds up"
     private boolean wildRideActive = false;
     private int wildRideTicks = 0;
     private int nextBuckAttemptTick = 0;
@@ -1563,17 +1564,29 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
         wildRideTicks++;
         cumulativeWildRideProgress = Math.min(cumulativeWildRideProgress + 1, MAX_TAMING_PROGRESS);
-        applyWildRideMotion();
 
+        // Calculate how close we are to the buck
+        int ticksUntilBuck = nextBuckAttemptTick - wildRideTicks;
+        boolean inWarningWindow = ticksUntilBuck > 0 && ticksUntilBuck <= BUCK_WARNING_WINDOW;
+
+        // In the warning window, Nulljaw gets more aggressive
+        if (inWarningWindow) {
+            applyWarningBehavior(ticksUntilBuck);
+        } else {
+            applyWildRideMotion();
+        }
+
+        // Time to buck!
         if (wildRideTicks >= nextBuckAttemptTick) {
             buckWildRider(rider);
             endWildRide(true);
             return;
         }
 
+        // Check for taming success - VERY slim chance!
         if (wildRideTicks >= MIN_WILD_TAME_TICKS) {
             float progressFactor = (float) cumulativeWildRideProgress / (float) MAX_TAMING_PROGRESS;
-            float successChance = 0.01F + progressFactor * 0.03F; // 1% base up to ~4%
+            float successChance = 0.003F + progressFactor * 0.012F; // 0.3% base up to ~1.5% - brutal!
             if (this.getRandom().nextFloat() < successChance) {
                 this.tame(rider);
                 this.setOrderedToSit(false);
@@ -1585,34 +1598,68 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         }
     }
 
+    /**
+     * Warning behavior before buck - Nulljaw becomes more erratic and aggressive.
+     * Like a real bronco "loading up" before the big buck.
+     */
+    private void applyWarningBehavior(int ticksUntilBuck) {
+        // Stop navigation during wind-up
+        this.getNavigation().stop();
+
+        if (this.onGround()) {
+            // Rapid small hops and spins - building tension
+            if (this.tickCount % 2 == 0) {
+                // Quick spin
+                float spinAmount = (this.getRandom().nextFloat() - 0.5F) * 25.0F;
+                this.setYRot(this.getYRot() + spinAmount);
+                this.yBodyRot = this.getYRot();
+
+                // Small agitated hop
+                Vec3 hop = new Vec3(
+                        (this.getRandom().nextDouble() - 0.5D) * 0.4D,
+                        0.15D + this.getRandom().nextDouble() * 0.1D,
+                        (this.getRandom().nextDouble() - 0.5D) * 0.4D
+                );
+                this.setDeltaMovement(this.getDeltaMovement().add(hop));
+                this.hasImpulse = true;
+            }
+        }
+    }
+
     private void handleUntamedRideWhileMounted(Player rider) {
         rider.fallDistance = 0.0F;
         this.fallDistance = 0.0F;
     }
 
     private void applyWildRideMotion() {
-        if (this.getNavigation().isDone() || this.getRandom().nextInt(40) == 0) {
-            double targetX = this.getX() + (this.getRandom().nextDouble() - 0.5D) * 18.0D;
-            double targetZ = this.getZ() + (this.getRandom().nextDouble() - 0.5D) * 18.0D;
+        // Frantic running - pick random sprint targets
+        if (this.getNavigation().isDone() || this.getRandom().nextInt(35) == 0) {
+            double targetX = this.getX() + (this.getRandom().nextDouble() - 0.5D) * 22.0D;
+            double targetZ = this.getZ() + (this.getRandom().nextDouble() - 0.5D) * 22.0D;
             double targetY = this.getY();
-            this.getNavigation().moveTo(targetX, targetY, targetZ, 1.45D);
+            this.getNavigation().moveTo(targetX, targetY, targetZ, 1.65D); // Faster sprint
         }
 
         if (this.onGround()) {
-            if (this.tickCount % 7 == 0) {
+            // Big bucking jumps - like a rodeo bronco
+            if (this.tickCount % 6 == 0) {
                 this.jumpFromGround();
+
+                // Strong upward kick with random lateral twist
                 Vec3 impulse = new Vec3(
-                        (this.getRandom().nextDouble() - 0.5D) * 1.0D,
-                        0.5D + this.getRandom().nextDouble() * 0.4D,
-                        (this.getRandom().nextDouble() - 0.5D) * 1.0D
+                        (this.getRandom().nextDouble() - 0.5D) * 1.4D, // More lateral chaos
+                        0.65D + this.getRandom().nextDouble() * 0.5D,  // Higher jumps
+                        (this.getRandom().nextDouble() - 0.5D) * 1.4D
                 );
                 this.setDeltaMovement(this.getDeltaMovement().add(impulse));
                 this.hasImpulse = true;
-            } else if (this.tickCount % 4 == 0) {
+            }
+            // Smaller "crow hops" between big bucks
+            else if (this.tickCount % 3 == 0) {
                 Vec3 lateral = new Vec3(
-                        (this.getRandom().nextDouble() - 0.5D) * 0.5D,
-                        0.0D,
-                        (this.getRandom().nextDouble() - 0.5D) * 0.5D
+                        (this.getRandom().nextDouble() - 0.5D) * 0.8D,
+                        0.2D + this.getRandom().nextDouble() * 0.2D, // Small hop
+                        (this.getRandom().nextDouble() - 0.5D) * 0.8D
                 );
                 this.setDeltaMovement(this.getDeltaMovement().add(lateral));
                 this.hasImpulse = true;
@@ -1632,15 +1679,42 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     private void buckWildRider(Player rider) {
-        rider.stopRiding();
+        // Calculate launch direction - mostly upward with some randomness
+        // Like a real bronco kicking its hind legs up
         Vec3 launch = new Vec3(
-                (this.getRandom().nextDouble() - 0.5D) * 0.9D,
-                0.8D + this.getRandom().nextDouble() * 0.4D,
-                (this.getRandom().nextDouble() - 0.5D) * 0.9D
+                (this.getRandom().nextDouble() - 0.5D) * 1.2D,  // Random X direction
+                1.2D + this.getRandom().nextDouble() * 0.6D,    // Strong upward launch (1.2-1.8)
+                (this.getRandom().nextDouble() - 0.5D) * 1.2D   // Random Z direction
         );
-        rider.push(launch.x, launch.y, launch.z);
+
+        // Dismount first, THEN apply velocity
+        rider.stopRiding();
+
+        // Set velocity directly instead of push() for reliable launch
+        Vec3 currentVel = rider.getDeltaMovement();
+        rider.setDeltaMovement(
+                currentVel.x + launch.x,
+                launch.y,  // Override Y completely for consistent height
+                currentVel.z + launch.z
+        );
         rider.hurtMarked = true;
+
+        // Make Nulljaw also jump up during the buck for realism
+        if (this.onGround()) {
+            Vec3 drakeKick = new Vec3(0.0D, 0.7D, 0.0D);
+            this.setDeltaMovement(this.getDeltaMovement().add(drakeKick));
+            this.hasImpulse = true;
+        }
+
+        // Broadcast event for particles/sounds
         this.level().broadcastEntityEvent(this, (byte) 6);
+
+        // Play aggressive roar sound and animation (phase 1 during taming)
+        this.playSound(ModSounds.NULLJAW_ROAR.get(), 1.5F, 0.8F + this.getRandom().nextFloat() * 0.3F);
+        this.triggerAnim("action", "roar");
+
+        // Triumphant screen shake when successfully bucking player off
+        this.triggerScreenShake(1.2F);
     }
 
     private void endWildRide(boolean bucked) {
