@@ -47,6 +47,11 @@ public class RaevyxTamingHandler {
         recoveryTargetHealth = -1.0F;
         stunTimeoutTicks = STUN_TIMEOUT; // Start 30 second timeout
         ensureStunState();
+
+        // Play stun sound effect to indicate dragon is now vulnerable
+        if (!wyvern.level().isClientSide) {
+            wyvern.playSound(net.minecraft.sounds.SoundEvents.ARROW_HIT_PLAYER, 1.5F, 0.8F);
+        }
     }
 
     public void setRecoveryTarget(float targetHealth) {

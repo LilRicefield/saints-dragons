@@ -97,10 +97,10 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 32.0f * Mth.DEG_TO_RAD;
 
         // Apply with increasing intensity toward the head (4 neck segments + head)
-        applyNeckBoneRotation("neck1", neckLeanRad * 0.4f);  // Base - subtle
-        applyNeckBoneRotation("neck2", neckLeanRad * 0.41f);  // Lower-mid
-        applyNeckBoneRotation("neck3", neckLeanRad * 0.42f);  // Upper-mid
-        applyNeckBoneRotation("neck4", neckLeanRad * 0.43f);  // Near head
+        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.4f);  // Base - subtle
+        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.41f);  // Lower-mid
+        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.42f);  // Upper-mid
+        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.43f);  // Near head
         applyNeckBoneRotation("headController", neckLeanRad * 0.44f);   // Head - most pronounced
     }
 
@@ -125,10 +125,10 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
 
         // Apply with same values as banking lean (4 neck segments + head)
-        applyNeckBoneRotation("neck1", turnRad * 0.4f);
-        applyNeckBoneRotation("neck2", turnRad * 0.41f);
-        applyNeckBoneRotation("neck3", turnRad * 0.42f);
-        applyNeckBoneRotation("neck4", turnRad * 0.43f);
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.4f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 0.41f);
+        applyNeckBoneRotation("neck3Controller", turnRad * 0.42f);
+        applyNeckBoneRotation("neck4Controller", turnRad * 0.43f);
         applyNeckBoneRotation("headController", turnRad * 0.44f);
     }
 
@@ -189,10 +189,10 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         }
 
         // Distribute rotation across neck segments (4 segments for Ignivorus)
-        applyNeckBoneFollow("neck1", lookPitchRad, totalYawRad, 0.20f);
-        applyNeckBoneFollow("neck2", lookPitchRad, totalYawRad, 0.25f);
-        applyNeckBoneFollow("neck3", lookPitchRad, totalYawRad, 0.30f);
-        applyNeckBoneFollow("neck4", lookPitchRad, totalYawRad, 0.35f);
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.20f);
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.25f);
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.30f);
+        applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.35f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
