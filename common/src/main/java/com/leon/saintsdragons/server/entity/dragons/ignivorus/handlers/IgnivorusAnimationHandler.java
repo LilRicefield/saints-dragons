@@ -22,6 +22,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.sprint_flap");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.ignivorus.sit");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.ignivorus.swim");
+    private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.ignivorus.stunned");
 
     /**
      * Main animation predicate - handles idle, walk, run, fly, and sit animations
@@ -47,6 +48,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Must be checked BEFORE ground movement logic to avoid 1-frame idle flicker
         if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
             return PlayState.STOP;
+        }
+
+        // Taming stunned - highest priority on ground (plays exhausted/downed animation)
+        if (dragon.isTamingStunned()) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(STUNNED);
+            return PlayState.CONTINUE;
         }
 
         // Check for sitting - highest priority after flying

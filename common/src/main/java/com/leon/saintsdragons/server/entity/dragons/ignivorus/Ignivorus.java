@@ -22,6 +22,7 @@ import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderC
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
@@ -122,6 +123,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
+    /** Tracks whether the dragon is stunned during a taming attempt */
+    public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
@@ -201,6 +205,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final IgnivorusRiderController riderController;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
+    private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
 
     private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
@@ -321,6 +326,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+        this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
@@ -430,6 +436,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         tickLandingLogic();
 
         if (!level().isClientSide) {
+            if (tamingAbortCalmTicks > 0) {
+                tamingAbortCalmTicks--;
+            }
+            tamingController.tickServer();
             tickTerrainClearing();
             handleAmbientSounds();
             if (tickCount % 2 == 0) {
@@ -535,6 +545,59 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public void setFeedingCooldown(int ticks) {
         this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, ticks));
+    }
+
+    // ===== TAMING SYSTEM =====
+    private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
+    private int tamingAbortCalmTicks = 0;
+
+    public boolean isTamingStunned() {
+        return this.entityData.get(DATA_TAMING_STUNNED);
+    }
+
+    public void enterTamingStun() {
+        tamingController.enterStun();
+    }
+
+    public void enterTamingHoldState() {
+        tamingController.enterHoldState();
+    }
+
+    public void setTamingRecoveryTarget(float targetHealth) {
+        tamingController.setRecoveryTarget(targetHealth);
+    }
+
+    public void clearTamingRecovery() {
+        tamingController.clearRecovery();
+    }
+
+    public void incrementTamingFailures() {
+        tamingController.incrementFailures();
+    }
+
+    public void resetTamingFailures() {
+        tamingController.resetFailures();
+    }
+
+    public int getTamingFailureCounter() {
+        return tamingController.getFailureCounter();
+    }
+
+    public boolean isAwaitingTamingFeed() {
+        return tamingController.isAwaitingFeed();
+    }
+
+    public void abortTamingAttempt() {
+        clearTamingRecovery();
+        tamingAbortCalmTicks = Math.max(tamingAbortCalmTicks, 100);
+    }
+
+    public boolean isBelowTamingThreshold() {
+        return this.getHealth() <= getTamingThreshold();
+    }
+
+    public float getTamingThreshold() {
+        return this.getMaxHealth() * TAMING_HEALTH_RATIO;
     }
 
     public void lockRiderControls(int ticks) {
@@ -2246,6 +2309,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.combatManager.saveToNBT(tag);
         this.physicsController.writeToNBT(tag);  // Save physics envelope state
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
+        tamingController.save(tag);
     }
 
     @Override
@@ -2258,6 +2322,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
+        tamingController.load(tag);
         applyConfiguredAttributes();
     }
 
@@ -2268,6 +2333,16 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         setTakeoff(takeoff);
         setHovering(hovering);
         setLanding(landing);
+    }
+
+    // ===== TAMING DAMAGE HANDLING =====
+
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
+            return;
+        }
+        super.setTarget(target);
     }
 
     // ===== FALL DAMAGE IMMUNITY =====

@@ -6,14 +6,18 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 /**
  * Handles all player interactions with Ignivorus dragons.
- * Simplified version for testing - no breeding or advanced features yet.
  */
 public record IgnivorusInteractionHandler(Ignivorus dragon) {
+    // Ignivorus fully recovers after every failed attempt to keep taming loops consistent
+    private static final int BASE_TAMING_ROLL = 15;
+    private static final int HEARTY_TAMING_ROLL = 8;
 
     /**
      * Main interaction entry point.
@@ -36,12 +40,31 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
      * Handle interactions with untamed dragons (taming attempts).
      */
     private InteractionResult handleUntamedInteraction(Player player, ItemStack itemstack) {
+        boolean client = dragon.level().isClientSide;
+
+        // Allow players to abort a taming attempt by crouching with empty hands
+        if (dragon.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
+            if (!client) {
+                dragon.abortTamingAttempt();
+                sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_aborted");
+            }
+            return InteractionResult.sidedSuccess(client);
+        }
+
         if (!dragon.isFood(itemstack)) {
             return InteractionResult.PASS;
         }
 
+        if (dragon.isTamingStunned()) {
+            if (!dragon.isAwaitingTamingFeed()) {
+                sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_dazed");
+                return InteractionResult.CONSUME;
+            }
+        }
+
+        // Check feeding cooldown to prevent spam-feeding
         if (!dragon.canFeed()) {
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
                     Component.translatable("entity.saintsdragons.ignivorus.still_eating", dragon.getName()),
                     true
@@ -50,39 +73,59 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             return InteractionResult.CONSUME;
         }
 
-        if (!dragon.level().isClientSide) {
+        float minRequiredHealth = dragon.getTamingThreshold();
+        // Add 1.0 HP buffer to prevent edge cases (e.g., small regeneration between ticks)
+        if (dragon.getHealth() > minRequiredHealth + 1.0F) {
+            sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_need_weakened");
+            return InteractionResult.CONSUME;
+        }
+
+        // Taming logic must be server-only to avoid client-only visual state changes
+        if (!client) {
             if (!player.getAbilities().instabuild) {
                 itemstack.shrink(1);
             }
 
+            // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+
+            // Set feeding cooldown
             dragon.setFeedingCooldown(20);
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            int tameRoll = hearty ? 6 : 15; // hearty meal improves taming odds
             if (hearty) {
-                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+                dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
 
-            // 1 in tameRoll chance to tame per feeding
-            if (dragon.getRandom().nextInt(tameRoll) == 0) {
-                // Successful taming
+            dragon.enterTamingStun();
+
+            int tameRoll = hearty ? HEARTY_TAMING_ROLL : BASE_TAMING_ROLL;
+            boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
+
+            if (success) {
                 dragon.tame(player);
                 dragon.setOrderedToSit(true);
-                dragon.setCommandManual(1); // Sit command
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7); // Hearts
+                dragon.setCommandManual(1); // Set command to Sit (1) to match the sitting state
+                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+                dragon.resetTamingFailures();
+                dragon.clearTamingRecovery();
+
+                // Trigger advancement for taming Ignivorus
                 triggerTamingAdvancement(player);
             } else {
-                // Failed taming attempt
-                dragon.level().broadcastEntityEvent(dragon, (byte) 6); // Smoke
+                Float healTarget = nextFailureHealTarget();
+                dragon.setTamingRecoveryTarget(healTarget);
+                dragon.incrementTamingFailures();
+                dragon.level().broadcastEntityEvent(dragon, (byte) 6);
+                sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_failed");
             }
         }
 
-        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        return InteractionResult.sidedSuccess(client);
     }
 
     /**
-     * Handle interactions with tamed dragons.
+     * Handle interactions with tamed dragons (feeding, commands, mounting).
      */
     private InteractionResult handleTamedInteraction(Player player, ItemStack itemstack, InteractionHand hand) {
         boolean isOwner = player.equals(dragon.getOwner());
@@ -111,6 +154,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
      * Handle feeding tamed dragons for healing.
      */
     private InteractionResult handleFeeding(Player player, ItemStack itemstack) {
+        // Check feeding cooldown to prevent spam-feeding
         if (!dragon.canFeed()) {
             if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
@@ -126,7 +170,10 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 itemstack.shrink(1);
             }
 
+            // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+
+            // Set feeding cooldown
             dragon.setFeedingCooldown(20);
 
             // Heal the dragon
@@ -136,7 +183,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             float newHealth = Math.min(currentHealth + healAmount, dragon.getMaxHealth());
             dragon.setHealth(newHealth);
             if (hearty) {
-                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+                dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
 
             // Play effects
@@ -220,6 +267,17 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
         }
 
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+    }
+
+    private Float nextFailureHealTarget() {
+        // Always heal all the way back to max health after each failed attempt
+        return dragon.getMaxHealth();
+    }
+
+    private void sendStatusMessage(Player player, String key) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.displayClientMessage(Component.translatable(key, dragon.getName()), true);
+        }
     }
 
     private void triggerTamingAdvancement(Player player) {
