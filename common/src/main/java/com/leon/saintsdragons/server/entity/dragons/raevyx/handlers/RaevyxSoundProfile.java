@@ -86,6 +86,22 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
                 playRunSound(handler, dragon, locator);
                 yield true;
             }
+            case "raevyx_takeoff" -> {
+                // Block keyframe sound - takeoff sound is handled by Raevyx.setTakeoff()
+                yield true;
+            }
+            case "raevyx_lightning_beam_start" -> {
+                // Block keyframe sound - beam start is handled by RaevyxBeamAbility
+                yield true;
+            }
+            case "raevyx_lightning_beaming" -> {
+                // Block keyframe sound - beam loop is handled by RaevyxLightningBeamSoundController
+                yield true;
+            }
+            case "raevyx_lightning_beam_stop" -> {
+                // Block keyframe sound - beam stop is handled by RaevyxBeamAbility
+                yield true;
+            }
             case "raevyx_summon_storm_ground_start" -> {
                 playSummonStormStart(handler, dragon, locator);
                 yield true;
