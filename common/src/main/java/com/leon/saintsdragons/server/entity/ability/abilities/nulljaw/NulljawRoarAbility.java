@@ -115,11 +115,12 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
             soundQueued = false;
         }
 
-        // Continuous screen shake for Phase 1 roar (from sound trigger until end)
-        if (!dragon.isPhaseTwoActive() && getTicksInUse() >= SOUND_DELAY_TICKS) {
-            if (!dragon.level().isClientSide) {
-                dragon.triggerScreenShake(0.8F);
-            }
+        // Continuous screen shake during the entire ability (like Raevyx's implementation)
+        // This automatically stops when the ability ends, preventing the dragging issue
+        if (!dragon.level().isClientSide) {
+            // Phase 2 has stronger shake due to the aggressive swipes
+            float intensity = dragon.isPhaseTwoActive() ? 1.0F : 0.8F;
+            dragon.triggerScreenShake(intensity);
         }
 
         if (section.sectionType == ACTIVE) {
@@ -153,9 +154,6 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
                 }
                 if (!swipesApplied[6] && ticks >= SEVENTH_SWIPE_TICK) {
                     applyRoarSwipe(dragon, 7);
-                    if (!dragon.level().isClientSide) {
-                        dragon.triggerScreenShake(1.0F);
-                    }
                     swipesApplied[6] = true;
                 }
             }
@@ -163,10 +161,7 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
     }
 
     private void applyRoarSwipe(Nulljaw dragon, int swipeNumber) {
-        float swipeIntensity = 0.8F;
-        if (!dragon.level().isClientSide) {
-            dragon.triggerScreenShake(swipeIntensity);
-        }
+        // Screen shake is now handled continuously in tickUsing(), no need for per-swipe triggers
 
         List<LivingEntity> targets = findClawTargets(dragon);
         if (targets.isEmpty()) {

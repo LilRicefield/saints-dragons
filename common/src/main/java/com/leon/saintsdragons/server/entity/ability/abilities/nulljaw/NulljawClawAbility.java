@@ -37,7 +37,7 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
     // Block breaking configuration
     private static final double BLOCK_BREAK_RANGE = 6.0;     // How far forward to break blocks
     private static final double BLOCK_BREAK_WIDTH = 3.0;     // Width of the breaking area
-    private static final double BLOCK_BREAK_HEIGHT = 4.0;    // Height of the breaking area
+    private static final double BLOCK_BREAK_HEIGHT = 6.0;    // Height of the breaking area
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 1),
@@ -128,7 +128,8 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
 
     /**
      * Breaks blocks in the path of the claw swipe to allow the large dragon to clear obstacles
-     * like trees, foliage, and other natural terrain.
+     * like trees, foliage, and other natural terrain. Only breaks blocks in front and above,
+     * never breaks the ground below.
      */
     private void breakBlocksInPath(Nulljaw dragon) {
         if (!(dragon.level() instanceof ServerLevel server)) {
@@ -143,8 +144,10 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
         Vec3 end = mouth.add(look.scale(BLOCK_BREAK_RANGE));
 
         // Create a bounding box for the swipe area
+        // Inflate horizontally and forward, but DON'T inflate downward (only upward)
         AABB breakArea = new AABB(start, end)
-                .inflate(BLOCK_BREAK_WIDTH, BLOCK_BREAK_HEIGHT, BLOCK_BREAK_WIDTH);
+                .inflate(BLOCK_BREAK_WIDTH, 0, BLOCK_BREAK_WIDTH)  // Horizontal inflate only
+                .expandTowards(0, BLOCK_BREAK_HEIGHT, 0);           // Extend upward only
 
         // Iterate through all blocks in the area
         BlockPos minPos = new BlockPos(
@@ -163,7 +166,8 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
         // Pre-calc thresholds for the ray-like swipe
         double maxForward = BLOCK_BREAK_RANGE + 0.5;
         double maxLateral = BLOCK_BREAK_WIDTH + 0.5;
-        double maxVertical = BLOCK_BREAK_HEIGHT * 0.5 + 0.5;
+        double minVertical = -1.0;  // Allow slightly below mouth (for blocks at mouth level)
+        double maxVertical = BLOCK_BREAK_HEIGHT + 0.5;  // Only extend upward
 
         for (int x = minPos.getX(); x <= maxPos.getX(); x++) {
             for (int y = minPos.getY(); y <= maxPos.getY(); y++) {
@@ -177,18 +181,22 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
                     Vec3 blockCenter = new Vec3(x + 0.5, y + 0.5, z + 0.5);
                     Vec3 offset = blockCenter.subtract(mouth);
 
+                    // Must be in front of the dragon
                     double forward = offset.dot(look);
                     if (forward < 0.0 || forward > maxForward) {
                         continue;
                     }
 
+                    // Check lateral (side-to-side) distance from the forward ray
                     Vec3 along = look.scale(forward);
                     double lateralDistance = offset.subtract(along).length();
                     if (lateralDistance > maxLateral) {
                         continue;
                     }
 
-                    if (Math.abs(offset.y) > maxVertical) {
+                    // ONLY break blocks at mouth level or above (never below)
+                    // This prevents smashing the ground
+                    if (offset.y < minVertical || offset.y > maxVertical) {
                         continue;
                     }
 
