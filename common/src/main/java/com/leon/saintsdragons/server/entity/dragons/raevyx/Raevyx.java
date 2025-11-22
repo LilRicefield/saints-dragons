@@ -38,6 +38,7 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
+
 import java.util.Map;
 
 //Minecraft
@@ -396,8 +397,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private boolean sleepLocked = false;
     private int sleepCommandSnapshot = -1;
 
-    // Post-load stabilization to preserve midair riding state across save/load
-    private int postLoadAirStabilizeTicks = 0; // counts down after world load if we saved while flying
     private int followFailsafeCooldown = 0;
     private int postStandUnlockTicks = 0;
 
@@ -2050,55 +2049,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
     }
     
-    private void tickPostLoadStabilization() {
-        // If we loaded while flying (e.g., player saved while riding in air), hold flight for a short grace period
-        if (!level().isClientSide && postLoadAirStabilizeTicks > 0) {
-            // Ensure air nav + flight flags are consistent
-            if (!isFlying()) setFlying(true);
-            if (!isTakeoff()) setTakeoff(true);
-            setLanding(false);
-            setHovering(true);
-            switchToAirNavigation();
-
-            // Reset flight timer so auto-landing logic doesn't immediately cancel flight
-            timeFlying = Math.min(timeFlying, 5);
-            landingFlag = false;
-            landingTimer = 0;
-
-            // Give stronger buoyancy to counter immediate drop before rider inputs arrive
-            var v = getDeltaMovement();
-            if (v.y < 0.05) {
-                // Apply upward force to prevent drifting down
-                setDeltaMovement(v.x * 0.95, Math.max(0.05, v.y + 0.02), v.z * 0.95);
-            }
-
-            postLoadAirStabilizeTicks--;
-            
-            // When stabilization expires, force wild/untamed dragons to land
-            if (postLoadAirStabilizeTicks == 0 && !isTame() && !isVehicle()) {
-                // Wild dragon reloaded mid-flight - force landing to prevent floating
-                setFlying(false);
-                setTakeoff(false);
-                setHovering(false);
-                setLanding(true);
-                switchToGroundNavigation();
-                // Apply downward force to start descent
-                setDeltaMovement(getDeltaMovement().multiply(0.5, -0.3, 0.5));
-            }
-        }
-    }
-
-    /**
-     * Clear the post-load air stabilization counter.
-     * Used by air combat goal to prevent interference with takeoff flag management.
-     */
-    public void clearPostLoadStabilization() {
-        this.postLoadAirStabilizeTicks = 0;
-    }
-
     private void tickControllers() {
         // FlightController disabled - now using vanilla travel like Cindervane/Ignivorus
-        // This fixes the reload drift bug and eliminates postLoadAirStabilizeTicks workaround
+        // This fixes the reload drift bug (no longer need postLoadAirStabilizeTicks workaround)
         updateSittingProgress();
     }
 
@@ -3476,6 +3429,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public void setOrderedToSit(boolean sitting) {
+        boolean wasSitting = isOrderedToSit();
         super.setOrderedToSit(sitting);
 
         if (sitting) {
@@ -3485,7 +3439,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
             this.setRunning(false);
             this.getNavigation().stop();
-        } else {
+        } else if (wasSitting) {
+            // ONLY clear flight states if we were ACTUALLY sitting and are now standing up
+            // Don't clear during reload (wasSitting == false) - flight state is restored separately
             // Don't clear sitProgress here; let updateSittingProgress() play the stand-up animation first.
             if (!level().isClientSide) {
                 // Ensure we are in ground navigation mode and not stuck in legacy flight flags
@@ -3592,6 +3548,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         loadRideableData(tag);
+        boolean savedFlying = tag.getBoolean("Flying");
         this.timeFlying = tag.getInt("TimeFlying");
         this.usingAirNav = tag.getBoolean("UsingAirNav");
         this.riderTakeoffTicks = tag.contains("RiderTakeoffTicks") ? tag.getInt("RiderTakeoffTicks") : 0;
@@ -3600,6 +3557,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.lastLandingGameTime = tag.contains("LastLandingGameTime") ? tag.getLong("LastLandingGameTime") : Long.MIN_VALUE;
         this.landingFlag = tag.contains("LandingFlag") && tag.getBoolean("LandingFlag");
         this.landingTimer = tag.contains("LandingTimer") ? tag.getInt("LandingTimer") : 0;
+
+        // Reset tick counters to prevent state inconsistencies (like Cindervane)
+        // This prevents the dragon from thinking it just started flying when reloading mid-flight
+        if (!savedFlying) {
+            landingTimer = 0;
+        }
 
         // Restore lock states (transient rider/takeoff locks reset on load)
         this.riderControlLockTicks = 0;
@@ -3664,7 +3627,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         // CRITICAL: Set NoGravity for flying dragons on reload (like Cindervane)
         // This prevents dragons from falling when reloading mid-flight
-        this.setNoGravity(isFlying() || isHovering());
+        boolean shouldHaveNoGravity = isFlying() || isHovering();
+        this.setNoGravity(shouldHaveNoGravity);
 
         // Clear navigation and target if wyvern is sitting to prevent AI goal issues on world reload
         if (this.isOrderedToSit()) {
@@ -3677,6 +3641,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             this.setCommandAuto(0);
             this.setOrderedToSit(false);
         }
+    }
+
+    /**
+     * Override to prevent Minecraft from repositioning flying dragons after world reload.
+     * When this returns false, the entity keeps its loaded position, which is critical for
+     * flying dragons with passengers - otherwise passengers get ejected during the repositioning.
+     */
+    @Override
+    protected boolean repositionEntityAfterLoad() {
+        // Flying dragons should NOT be repositioned - keep exact loaded position
+        // This prevents passenger ejection when reloading while flying
+        return !isFlying() && !isHovering();
     }
 
     // Rider takeoff window accessors for controllers
@@ -3711,8 +3687,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         
         // Clear any pending timers
         this.riderTakeoffTicks = 0;
-        this.postLoadAirStabilizeTicks = 0;
-        
+
         // Reset combat manager
         this.combatManager.clearAllStates();
         

@@ -155,9 +155,6 @@ public class RaevyxAirCombatGoal extends Goal {
     public void start() {
         dragon.setAggressive(true);
 
-        // CRITICAL: Clear post-load stabilization to prevent it from constantly re-setting takeoff flag
-        dragon.clearPostLoadStabilization();
-
         // If grounded, trigger takeoff sequence
         // Only set takeoff if truly grounded (not already flying/hovering)
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isHovering() && !dragon.isTakeoff() && !dragon.isLanding()) {

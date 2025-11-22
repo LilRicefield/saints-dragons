@@ -1958,6 +1958,18 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
+    /**
+     * Override to prevent Minecraft from repositioning flying dragons after world reload.
+     * When this returns false, the entity keeps its loaded position, which is critical for
+     * flying dragons with passengers - otherwise passengers get ejected during the repositioning.
+     */
+    @Override
+    protected boolean repositionEntityAfterLoad() {
+        // Flying dragons should NOT be repositioned - keep exact loaded position
+        // This prevents passenger ejection when reloading while flying
+        return !isFlying() && !isHovering();
+    }
+
     public void prepareForMounting() {
         if (level().isClientSide) {
             return;
