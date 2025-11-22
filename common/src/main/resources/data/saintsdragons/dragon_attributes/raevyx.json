@@ -12,6 +12,9 @@
     },
     "horn_gore": {
       "damage": 15.0
+    },
+    "summon_storm": {
+      "comment": "Duration is hardcoded to 60 seconds (1 minute) in RaevyxSummonStormAbility.java"
     }
   }
 }

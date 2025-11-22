@@ -13,11 +13,11 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 /**
  * Ultimate: Summon Storm
  * - Roars into the sky, triggers a thunderstorm in the current dimension
- * - Supercharges the wyvern for 2 minutes: x2 damage on abilities
+ * - Supercharges the wyvern for 1 minute: x2 damage on abilities
  * - Cooldown: 4 minutes
  */
 public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
-    private static final int SUPERCHARGE_TICKS = 20 * 120; // 120s
+    private static final int SUPERCHARGE_TICKS = 20 * 60; // 60s (1 minute)
     private static final int COOLDOWN_TICKS = 20 * 240; // 240s
     private static final int GROUND_START_TICKS = 38; // 1.88s animation.raevyx.summon_storm_ground_start
     private static final int GROUND_LOOP_TICKS = 114; // 5.71s animation.raevyx.summon_storm_ground
@@ -104,14 +104,24 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
                 // Apply supercharge
                 getUser().startSupercharge(SUPERCHARGE_TICKS);
 
-                // Force thunderstorm in this dimension for ~2 minutes
+                // Force thunderstorm in this dimension for at least 1 minute
                 if (getLevel() instanceof ServerLevel server) {
                     var ld = server.getLevelData();
                     if (ld instanceof ServerLevelData data) {
-                        data.setRaining(true);
-                        data.setRainTime(SUPERCHARGE_TICKS);
-                        data.setThundering(true);
-                        data.setThunderTime(SUPERCHARGE_TICKS);
+                        // Always ensure rain and thunder are active, extending duration if needed
+                        if (!data.isRaining()) {
+                            data.setRaining(true);
+                        }
+                        data.setRainTime(Math.max(data.getRainTime(), SUPERCHARGE_TICKS));
+
+                        // Force thundering state - always set to true to ensure it triggers
+                        if (!data.isThundering()) {
+                            data.setThundering(true);
+                        }
+                        data.setThunderTime(Math.max(data.getThunderTime(), SUPERCHARGE_TICKS));
+
+                        // Sync weather to all clients
+                        server.setWeatherParameters(0, SUPERCHARGE_TICKS, true, true);
                     }
 
                     // Dramatic thunder sound cue
@@ -132,6 +142,8 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     @Override
     public void end() {
         releaseLocks();
+        // Clear temporary invulnerability to prevent it from persisting if ability is interrupted
+        getUser().clearTemporaryInvuln();
         super.end();
     }
 
