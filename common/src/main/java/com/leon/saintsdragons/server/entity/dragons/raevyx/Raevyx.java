@@ -2188,11 +2188,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
     
     private void tickFollowFailsafe() {
+        // This is called every 5 ticks, so decrement by 5
         if (followFailsafeCooldown > 0) {
-            followFailsafeCooldown--;
+            followFailsafeCooldown -= 5;
             return;
         }
-        followFailsafeCooldown = 20; // roughly once per second
+        followFailsafeCooldown = 20; // roughly once per second (20 ticks)
 
         if (isSleepLocked() || isOrderedToSit() || isPassenger() || isVehicle() || isDying()) {
             return;
@@ -2273,10 +2274,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     
     private void tickSuperchargeTimer() {
         // Supercharge timer (summon storm)
+        // This is called every 5 ticks, so decrement by 5 to match real-time duration
         if (superchargeTicks > 0) {
-            superchargeTicks--;
-            // When supercharge ends, restore normal max health
-            if (superchargeTicks == 0) {
+            superchargeTicks -= 5;
+            if (superchargeTicks <= 0) {
+                superchargeTicks = 0;
+                // When supercharge ends, restore normal max health
                 Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(180.0D);
                 // Don't let health go above the new max
                 if (this.getHealth() > this.getMaxHealth()) {
@@ -2289,9 +2292,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     private void tickTempInvulnTimer() {
         // Temporary invulnerability timer
+        // This is called every 5 ticks, so decrement by 5 to match real-time duration
         if (tempInvulnTicks > 0) {
-            tempInvulnTicks--;
-            if (tempInvulnTicks == 0 && !isDying()) this.setInvulnerable(false);
+            tempInvulnTicks -= 5;
+            if (tempInvulnTicks <= 0) {
+                tempInvulnTicks = 0;
+                if (!isDying()) this.setInvulnerable(false);
+            }
         }
     }
     
@@ -3877,6 +3884,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public void lockTakeoff(int ticks) { this.takeoffLockTicks = Math.max(this.takeoffLockTicks, Math.max(0, ticks)); }
     public void clearTakeoffLock() { this.takeoffLockTicks = 0; }
     private void tickTakeoffLock() { if (takeoffLockTicks > 0) takeoffLockTicks--; }
+
+    public void clearTemporaryInvuln() {
+        this.tempInvulnTicks = 0;
+        if (!isDying()) this.setInvulnerable(false);
+    }
 
     // ===== RECENT AGGRO TRACKING (for roar lightning targeting) =====
     private final java.util.Map<Integer, Long> recentAggroIds = new java.util.concurrent.ConcurrentHashMap<>();
