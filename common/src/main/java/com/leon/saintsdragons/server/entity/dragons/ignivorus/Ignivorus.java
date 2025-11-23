@@ -343,7 +343,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        double attackDamage = config.extraDouble("attack_damage", 15.0D);
+        double attackDamage = config.abilityDamage("bite", 15.0D);
         return createMobAttributes()
             .add(Attributes.MAX_HEALTH, config.maxHealth())
             .add(Attributes.MOVEMENT_SPEED, 0.3D) // Hardcoded AI pathfinding speed
@@ -1248,7 +1248,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        double attackDamage = config.extraDouble("attack_damage", 15.0D);
+        double attackDamage = config.abilityDamage("bite", 15.0D);
 
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());

@@ -17,7 +17,6 @@
     }
   },
   "extra": {
-    "attack_damage": 15.0,
     "ultimate_penalty_health": 50.0,
     "taming_chance_base": 7.0,
     "taming_chance_hearty": 4.0
