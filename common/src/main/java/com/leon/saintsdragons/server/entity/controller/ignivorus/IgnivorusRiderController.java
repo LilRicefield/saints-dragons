@@ -155,13 +155,13 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         boolean isMoving = dragon.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
 
         if (dragon.isAccelerating() && isMoving) {
-            // L-Ctrl pressed AND moving - trigger run animation and boost speed
+            // L-Ctrl pressed AND moving - trigger run animation and use hardcoded run speed
             dragon.setRunning(true);
-            return (float) dragon.getGroundRunSpeed();
+            return (float) Ignivorus.RIDER_RUN_SPEED;
         } else {
-            // Normal ground speed - use walk animation, stop running
+            // Normal ground speed - use walk animation and hardcoded walk speed
             dragon.setRunning(false);
-            return (float) dragon.getGroundWalkSpeed();
+            return (float) Ignivorus.RIDER_WALK_SPEED;
         }
     }
 

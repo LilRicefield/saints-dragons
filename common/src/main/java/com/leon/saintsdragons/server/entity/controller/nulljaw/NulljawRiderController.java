@@ -106,10 +106,8 @@ public record NulljawRiderController(Nulljaw drake) {
             double speed = drake.isAccelerating() ? swimSpeed * WATER_SPEED_MULT : swimSpeed;
             return (float) speed;
         } else {
-            // Ground movement with sprint capability
-            double run = drake.getConfiguredRunSpeed();
-            double walk = drake.getConfiguredWalkSpeed();
-            double speed = drake.isAccelerating() ? run : walk;
+            // Ground movement - HARDCODED (not configurable)
+            double speed = drake.isAccelerating() ? Nulljaw.RIDER_RUN_SPEED : Nulljaw.RIDER_WALK_SPEED;
             return (float) speed;
         }
     }
