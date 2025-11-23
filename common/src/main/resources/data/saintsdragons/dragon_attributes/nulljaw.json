@@ -19,6 +19,7 @@
   },
   "extra": {
     "walk_speed": 0.14,
-    "swim_speed": 1.45
+    "swim_speed": 1.45,
+    "taming_chance": 6.0
   }
 }
