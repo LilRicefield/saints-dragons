@@ -740,12 +740,12 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private void applyConfiguredAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
         double runSpeed = config.groundRunSpeed(config.movementSpeed());
         configuredRunSpeed = Math.max(0.01D, runSpeed);
         double walkSpeed = config.groundWalkSpeed(configuredRunSpeed * 0.5D);
         configuredWalkSpeed = Math.max(0.01D, walkSpeed);
+        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredWalkSpeed);
         configuredSwimSpeed = config.extraDouble("swim_speed", 1.45D);
         if (this.getHealth() > config.maxHealth()) {
             this.setHealth((float) config.maxHealth());

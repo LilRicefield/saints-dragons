@@ -1249,7 +1249,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         double attackDamage = config.extraDouble("attack_damage", 15.0D);
 
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
         setAttributeBase(Attributes.ATTACK_DAMAGE, attackDamage);
@@ -1257,6 +1256,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         configuredRunSpeed = Math.max(0.01D, runSpeed);
         double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.75D);
         configuredWalkSpeed = Math.max(0.01D, walkSpeed);
+        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredWalkSpeed);
 
         double maxHealth = config.maxHealth();
         if (this.getHealth() > maxHealth) {
@@ -1326,6 +1326,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public void setRunning(boolean running) {
         this.entityData.set(DATA_RUNNING, running);
+        double target = running ? configuredRunSpeed : configuredWalkSpeed;
+        setAttributeBase(Attributes.MOVEMENT_SPEED, target);
     }
 
     @Override

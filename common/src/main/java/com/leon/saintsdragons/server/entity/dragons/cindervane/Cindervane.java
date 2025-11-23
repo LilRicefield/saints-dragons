@@ -278,13 +278,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private void applyConfiguredAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
         double runSpeed = config.groundRunSpeed(config.movementSpeed() * 0.60D);
         double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.50D);
         configuredGroundRunSpeed = Math.max(0.01D, runSpeed);
         configuredGroundWalkSpeed = Math.max(0.01D, walkSpeed);
+        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredGroundWalkSpeed);
         if (this.getHealth() > config.maxHealth()) {
             this.setHealth((float) config.maxHealth());
         }
@@ -1161,6 +1161,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void setRunning(boolean running) {
         this.entityData.set(DATA_RUNNING, running);
+        double target = running ? configuredGroundRunSpeed : configuredGroundWalkSpeed;
+        setAttributeBase(Attributes.MOVEMENT_SPEED, target);
     }
     
     public boolean isWalking() {
