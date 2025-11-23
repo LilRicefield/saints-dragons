@@ -2,8 +2,6 @@ package com.leon.saintsdragons.client.renderer.nulljaw;
 
 import com.leon.saintsdragons.client.model.nulljaw.NulljawModel;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
-
-import net.minecraft.resources.ResourceLocation;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -18,6 +16,11 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
     private BakedGeoModel lastBakedModel;
     public NulljawRenderer(EntityRendererProvider.Context context) {
         super(context, new NulljawModel());
+    }
+
+    @Override
+    public float getMotionAnimThreshold(Nulljaw animatable) {
+        return 0.000001f;
     }
 
     @Override

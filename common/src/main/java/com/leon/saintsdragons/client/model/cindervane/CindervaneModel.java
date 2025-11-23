@@ -11,8 +11,6 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
 public class CindervaneModel extends GeoModel<Cindervane> {
-    public CindervaneModel() {
-    }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/cindervane.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/cindervane.animation.json");
