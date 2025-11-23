@@ -25,7 +25,6 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxIntera
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxTamingHandler;
-import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.*;
 import com.leon.saintsdragons.server.entity.interfaces.ElectricalConductivityCapable;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
@@ -96,8 +95,27 @@ import java.util.concurrent.ConcurrentHashMap;
 //Just everything
 public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
         DragonFlightCapable, DragonSleepCapable, ShakesScreen, SoundHandledDragon, ElectricalConductivityCapable {
-    private static final double RUN_SPEED_RATIO = WALK_SPEED <= 0.0D ? 1.0D : RUN_SPEED / WALK_SPEED;
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
+
+    // ===== CONSTANTS =====
+
+    /** Walking speed */
+    public static final double WALK_SPEED = 0.25D;
+
+    /** Running speed */
+    public static final double RUN_SPEED = 0.45D;
+
+    /** Minimum delay between ambient sounds (in ticks) */
+    public static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
+
+    /** Maximum delay between ambient sounds (in ticks) */
+    public static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
+
+    /** Scale factor for the wyvern model */
+    public static final float MODEL_SCALE = 1.0f;
+
+    /** Time to live for aggression tracking (in ticks) */
+    public static final int AGGRO_TTL_TICKS = 200; // ~10s
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -1653,10 +1671,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
         // Quick altitude gate so we only scan when close to ocean level
         if (this.getY() > RIDER_WATER_SURFACE_LEVEL + RIDER_WATER_SURFACE_TOLERANCE) {
-            return false;
-        }
-
-        if (level() == null) {
             return false;
         }
 

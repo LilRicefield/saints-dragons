@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.entity.controller.raevyx;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.*;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 /** 

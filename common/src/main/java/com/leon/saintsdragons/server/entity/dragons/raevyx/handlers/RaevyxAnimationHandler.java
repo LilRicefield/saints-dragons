@@ -7,8 +7,6 @@ import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.object.PlayState;
 
-import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.*;
-
 /**
  * Handles all animation logic for Raevyx
  * Extracted from Raevyx to improve organization and maintainability
@@ -16,6 +14,50 @@ import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.Raevy
 public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final int TAKEOFF_ANIM_MAX_TICKS = 35;
     private static final int TAKEOFF_ANIM_EARLY_TICKS = 30;
+
+    // ===== ANIMATION CONSTANTS =====
+
+    /** Ground idle animation */
+    private static final RawAnimation GROUND_IDLE = RawAnimation.begin().thenLoop("animation.raevyx.idle");
+
+    /** Ground walk animation */
+    private static final RawAnimation GROUND_WALK = RawAnimation.begin().thenLoop("animation.raevyx.walk");
+
+    /** Ground run animation */
+    private static final RawAnimation GROUND_RUN = RawAnimation.begin().thenLoop("animation.raevyx.run");
+
+    /** Sitting animation (looping) */
+    private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.raevyx.sit");
+
+    /** Takeoff animation */
+    private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.raevyx.takeoff");
+
+    /** Flying glide animation */
+    private static final RawAnimation FLY_GLIDE = RawAnimation.begin().thenLoop("animation.raevyx.fly_glide");
+
+    /** Flying glide down animation (for tamed dragons pitching down) */
+    private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.raevyx.glide_down");
+
+    /** Wing flapping animation */
+    private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.raevyx.flap");
+
+    /** Rider hover/idle animation */
+    private static final RawAnimation FLY_IDLE = RawAnimation.begin().thenLoop("animation.raevyx.fly_idle");
+
+    /** Sprint flapping animation (rider only) */
+    private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.raevyx.sprint_flap");
+
+    /** Landing animation */
+    private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.raevyx.landing");
+
+    /** Dodge animation */
+    private static final RawAnimation DODGE = RawAnimation.begin().thenPlay("animation.raevyx.dodge");
+
+    /** Swim animation (overrides all others when in water) */
+    private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.raevyx.swim");
+
+    /** Taming stun loop (treated like alternate idle) */
+    private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.raevyx.stunned");
 
     private static RawAnimation currentFlightAnimation = FLY_GLIDE;
 
