@@ -18,6 +18,8 @@
     }
   },
   "extra": {
+    "run_speed": 0.6,
+    "walk_speed": 0.225,
     "attack_damage": 15.0,
     "ultimate_penalty_health": 50.0,
     "taming_chance_base": 7.0,

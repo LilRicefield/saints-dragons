@@ -133,6 +133,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
     private boolean usingAirNav;
+    private double configuredGroundRunSpeed = 0.27D;
+    private double configuredGroundWalkSpeed = 0.225D;
 
     private int targetCooldown;
     private int airTicks;
@@ -279,6 +281,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
+        double runSpeed = config.groundRunSpeed(config.movementSpeed() * 0.60D);
+        double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.50D);
+        configuredGroundRunSpeed = Math.max(0.01D, runSpeed);
+        configuredGroundWalkSpeed = Math.max(0.01D, walkSpeed);
         if (this.getHealth() > config.maxHealth()) {
             this.setHealth((float) config.maxHealth());
         }
@@ -289,6 +295,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (instance != null) {
             instance.setBaseValue(value);
         }
+    }
+
+    public double getGroundRunSpeed() {
+        return configuredGroundRunSpeed;
+    }
+
+    public double getGroundWalkSpeed() {
+        return configuredGroundWalkSpeed;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -1408,6 +1422,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 this.riderController.handleRiderMovement(player, motion);
             } else {
                 // Ground movement - use vanilla system which calls getRiddenInput()
+                this.setSpeed(riderController.getRiddenSpeed(player));
                 super.travel(motion);
             }
             return;

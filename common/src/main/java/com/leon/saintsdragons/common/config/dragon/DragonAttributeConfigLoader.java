@@ -63,6 +63,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "magma_volley", DragonAbilityOverride.ofDamage(20.0D)
                 ),
                 Map.of(
+                        "run_speed", 0.27D,
+                        "walk_speed", 0.225D,
                         "taming_chance_base", 4.0D,
                         "taming_chance_hearty", 2.0D
                 )
@@ -81,6 +83,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "horn_gore", DragonAbilityOverride.ofDamage(15.0D)
                 ),
                 Map.of(
+                        "run_speed", 0.315D,
+                        "walk_speed", 0.125D,
                         "taming_chance_base", 5.0D,
                         "taming_chance_hearty", 3.0D
                 )
@@ -100,6 +104,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "horn_gore_phase2", DragonAbilityOverride.ofDamage(20.8D)
                 ),
                 Map.of(
+                        "run_speed", 0.28D,
                         "walk_speed", 0.14D,
                         "swim_speed", 1.45D,
                         "taming_chance", 6.0D
@@ -120,6 +125,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "ultimate", DragonAbilityOverride.ofDamage(200.0D)
                 ),
                 Map.of(
+                        "run_speed", 0.60D,
+                        "walk_speed", 0.225D,
                         "attack_damage", 15.0D,
                         "ultimate_penalty_health", 50.0D,
                         "taming_chance_base", 7.0D,

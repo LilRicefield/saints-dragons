@@ -510,6 +510,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private double configuredWalkSpeed = WALK_SPEED;
     private double configuredRunSpeed = RUN_SPEED;
 
+    public double getConfiguredWalkSpeed() {
+        return configuredWalkSpeed;
+    }
+
+    public double getConfiguredRunSpeed() {
+        return configuredRunSpeed;
+    }
+
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
 
@@ -2704,6 +2712,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 this.riderController.handleRiderMovement(player, motion);
             } else {
                 // Ground movement - use vanilla system which calls getRiddenInput()
+                this.setSpeed(this.riderController.getRiddenSpeed(player));
                 super.travel(motion);
             }
         } else {
@@ -2882,8 +2891,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
 
-        configuredWalkSpeed = config.movementSpeed();
-        configuredRunSpeed = configuredWalkSpeed * RUN_SPEED_RATIO;
+        double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.50D);
+        configuredWalkSpeed = Math.max(0.01D, walkSpeed);
+        double runSpeed = config.groundRunSpeed(config.movementSpeed() * 1.26D);
+        configuredRunSpeed = Math.max(0.01D, runSpeed);
 
         AttributeInstance moveAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
         if (moveAttr != null) {

@@ -51,6 +51,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         cindervaneBuffer.maxHealth = cindervaneCurrent.maxHealth();
         cindervaneBuffer.armor = cindervaneCurrent.armor();
         cindervaneBuffer.movementSpeed = cindervaneCurrent.movementSpeed();
+        double cindervaneDefaultRun = cindervaneDefaults.groundRunSpeed(cindervaneDefaults.movementSpeed() * 0.60D);
+        cindervaneBuffer.runSpeed = cindervaneCurrent.groundRunSpeed(cindervaneDefaultRun);
+        double cindervaneDefaultWalk = cindervaneDefaults.groundWalkSpeed(cindervaneDefaults.movementSpeed() * 0.50D);
+        cindervaneBuffer.walkSpeed = cindervaneCurrent.groundWalkSpeed(cindervaneDefaultWalk);
         cindervaneBuffer.flyingSpeed = cindervaneCurrent.flyingSpeed();
         cindervaneBuffer.biteDamage = cindervaneCurrent.abilityDamage("bite",
                 cindervaneDefaults.abilityDamage("bite", 12.0D));
@@ -65,6 +69,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxBuffer.maxHealth = raevyxCurrent.maxHealth();
         raevyxBuffer.armor = raevyxCurrent.armor();
         raevyxBuffer.movementSpeed = raevyxCurrent.movementSpeed();
+        double raevyxDefaultRun = raevyxDefaults.groundRunSpeed(raevyxDefaults.movementSpeed() * 1.26D);
+        raevyxBuffer.runSpeed = raevyxCurrent.groundRunSpeed(raevyxDefaultRun);
+        double raevyxDefaultWalk = raevyxDefaults.groundWalkSpeed(raevyxDefaults.movementSpeed() * 0.50D);
+        raevyxBuffer.walkSpeed = raevyxCurrent.groundWalkSpeed(raevyxDefaultWalk);
         raevyxBuffer.flyingSpeed = raevyxCurrent.flyingSpeed();
         raevyxBuffer.biteDamage = raevyxCurrent.abilityDamage("bite",
                 raevyxDefaults.abilityDamage("bite", 15.0D));
@@ -80,8 +88,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         NulljawAttributeBuffer nulljawBuffer = new NulljawAttributeBuffer();
         nulljawBuffer.maxHealth = nulljawCurrent.maxHealth();
         nulljawBuffer.armor = nulljawCurrent.armor();
-        nulljawBuffer.runSpeed = nulljawCurrent.movementSpeed();
-        nulljawBuffer.walkSpeed = nulljawCurrent.extraDouble("walk_speed", nulljawBuffer.runSpeed * 0.5D);
+        double nulljawDefaultRun = nulljawDefaults.groundRunSpeed(nulljawDefaults.movementSpeed());
+        nulljawBuffer.runSpeed = nulljawCurrent.groundRunSpeed(nulljawDefaultRun);
+        double nulljawDefaultWalk = nulljawDefaults.groundWalkSpeed(nulljawDefaultRun * 0.5D);
+        nulljawBuffer.walkSpeed = nulljawCurrent.groundWalkSpeed(nulljawDefaultWalk);
         nulljawBuffer.swimSpeed = nulljawCurrent.extraDouble("swim_speed", 1.45D);
         nulljawBuffer.bitePhase1 = nulljawCurrent.abilityDamage("bite_phase1", 40.0D);
         nulljawBuffer.bitePhase2 = nulljawCurrent.abilityDamage("bite_phase2", 50.0D);
@@ -95,9 +105,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ignivorusBuffer.maxHealth = ignivorusCurrent.maxHealth();
         ignivorusBuffer.armor = ignivorusCurrent.armor();
         ignivorusBuffer.movementSpeed = ignivorusCurrent.movementSpeed();
-        double ignivorusDefaultWalk = ignivorusDefaults.extraDouble("walk_speed",
-                ignivorusDefaults.movementSpeed() * 0.8D);
-        ignivorusBuffer.walkSpeed = ignivorusCurrent.extraDouble("walk_speed", ignivorusDefaultWalk);
+        double ignivorusDefaultRun = ignivorusDefaults.groundRunSpeed(ignivorusDefaults.movementSpeed() * 2.0D);
+        ignivorusBuffer.runSpeed = ignivorusCurrent.groundRunSpeed(ignivorusDefaultRun);
+        double ignivorusDefaultWalk = ignivorusDefaults.groundWalkSpeed(ignivorusDefaults.movementSpeed() * 0.75D);
+        ignivorusBuffer.walkSpeed = ignivorusCurrent.groundWalkSpeed(ignivorusDefaultWalk);
         ignivorusBuffer.flyingSpeed = ignivorusCurrent.flyingSpeed();
         ignivorusBuffer.baseDamage = ignivorusCurrent.extraDouble("attack_damage",
                 ignivorusDefaults.extraDouble("attack_damage", 15.0D));
@@ -247,11 +258,17 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(30.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.movement_speed"), buffer.movementSpeed)
-                .setDefaultValue(defaults.movementSpeed())
-                .setMin(0.05D)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.run_speed"), buffer.runSpeed)
+                .setDefaultValue(defaults.groundRunSpeed(defaults.movementSpeed() * 0.60D))
+                .setMin(0.01D)
                 .setMax(1.5D)
-                .setSaveConsumer(value -> buffer.movementSpeed = value)
+                .setSaveConsumer(value -> buffer.runSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.walk_speed"), buffer.walkSpeed)
+                .setDefaultValue(defaults.groundWalkSpeed(defaults.movementSpeed() * 0.50D))
+                .setMin(0.01D)
+                .setMax(1.5D)
+                .setSaveConsumer(value -> buffer.walkSpeed = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.flying_speed"), buffer.flyingSpeed)
                 .setDefaultValue(defaults.flyingSpeed())
@@ -308,11 +325,17 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(40.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.movement_speed"), buffer.movementSpeed)
-                .setDefaultValue(defaults.movementSpeed())
-                .setMin(0.05D)
-                .setMax(1.5D)
-                .setSaveConsumer(value -> buffer.movementSpeed = value)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.run_speed"), buffer.runSpeed)
+                .setDefaultValue(defaults.groundRunSpeed(defaults.movementSpeed() * 1.26D))
+                .setMin(0.01D)
+                .setMax(2.0D)
+                .setSaveConsumer(value -> buffer.runSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.walk_speed"), buffer.walkSpeed)
+                .setDefaultValue(defaults.groundWalkSpeed(defaults.movementSpeed() * 0.50D))
+                .setMin(0.01D)
+                .setMax(2.0D)
+                .setSaveConsumer(value -> buffer.walkSpeed = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.flying_speed"), buffer.flyingSpeed)
                 .setDefaultValue(defaults.flyingSpeed())
@@ -375,13 +398,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.run_speed"), buffer.runSpeed)
-                .setDefaultValue(defaults.movementSpeed())
+                .setDefaultValue(defaults.groundRunSpeed(defaults.movementSpeed()))
                 .setMin(0.05D)
                 .setMax(1.5D)
                 .setSaveConsumer(value -> buffer.runSpeed = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.walk_speed"), buffer.walkSpeed)
-                .setDefaultValue(defaults.extraDouble("walk_speed", defaults.movementSpeed() * 0.5D))
+                .setDefaultValue(defaults.groundWalkSpeed(defaults.groundRunSpeed(defaults.movementSpeed()) * 0.5D))
                 .setMin(0.01D)
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.walkSpeed = value)
@@ -447,17 +470,17 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(40.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.run_speed"), buffer.runSpeed)
+                .setDefaultValue(defaults.groundRunSpeed(defaults.movementSpeed() * 2.0D))
+                .setMin(0.05D)
+                .setMax(2.5D)
+                .setSaveConsumer(value -> buffer.runSpeed = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.walk_speed"), buffer.walkSpeed)
-                .setDefaultValue(defaults.extraDouble("walk_speed", defaults.movementSpeed() * 0.8D))
+                .setDefaultValue(defaults.groundWalkSpeed(defaults.movementSpeed() * 0.75D))
                 .setMin(0.01D)
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.walkSpeed = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.movement_speed"), buffer.movementSpeed)
-                .setDefaultValue(defaults.movementSpeed())
-                .setMin(0.05D)
-                .setMax(1.5D)
-                .setSaveConsumer(value -> buffer.movementSpeed = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.flying_speed"), buffer.flyingSpeed)
                 .setDefaultValue(defaults.flyingSpeed())
@@ -536,6 +559,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 cindervaneBuffer.flyingSpeed,
                 abilities,
                 Map.of(
+                        "run_speed", cindervaneBuffer.runSpeed,
+                        "walk_speed", cindervaneBuffer.walkSpeed,
                         "taming_chance_base", cindervaneBuffer.tamingChanceBase,
                         "taming_chance_hearty", cindervaneBuffer.tamingChanceHearty
                 )
@@ -554,6 +579,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxBuffer.flyingSpeed,
                 raevyxAbilities,
                 Map.of(
+                        "run_speed", raevyxBuffer.runSpeed,
+                        "walk_speed", raevyxBuffer.walkSpeed,
                         "taming_chance_base", raevyxBuffer.tamingChanceBase,
                         "taming_chance_hearty", raevyxBuffer.tamingChanceHearty
                 )
@@ -572,6 +599,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 0.0D,
                 nulljawAbilities,
                 Map.of(
+                        "run_speed", nulljawBuffer.runSpeed,
                         "walk_speed", nulljawBuffer.walkSpeed,
                         "swim_speed", nulljawBuffer.swimSpeed,
                         "taming_chance", nulljawBuffer.tamingChance
@@ -592,6 +620,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusBuffer.flyingSpeed,
                 ignivorusAbilities,
                 Map.of(
+                        "run_speed", ignivorusBuffer.runSpeed,
                         "walk_speed", ignivorusBuffer.walkSpeed,
                         "attack_damage", ignivorusBuffer.baseDamage,
                         "ultimate_penalty_health", ignivorusBuffer.ultimatePenalty,
@@ -606,6 +635,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double maxHealth;
         double armor;
         double movementSpeed;
+        double runSpeed;
+        double walkSpeed;
         double flyingSpeed;
         double biteDamage;
         double volleyDamage;
@@ -617,6 +648,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double maxHealth;
         double armor;
         double movementSpeed;
+        double runSpeed;
+        double walkSpeed;
         double flyingSpeed;
         double biteDamage;
         double beamDamage;
@@ -641,6 +674,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static final class IgnivorusAttributeBuffer {
         double maxHealth;
         double armor;
+        double runSpeed;
         double walkSpeed;
         double movementSpeed;
         double flyingSpeed;

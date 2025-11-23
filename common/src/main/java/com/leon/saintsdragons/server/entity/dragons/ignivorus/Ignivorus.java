@@ -216,6 +216,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public int groundTicks;
     private int riderControlLockTicks;
     private int landingApproachTicks;
+    private double configuredRunSpeed = 0.60D;
+    private double configuredWalkSpeed = 0.225D;
 
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 45.0F;
@@ -1251,6 +1253,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
         setAttributeBase(Attributes.ATTACK_DAMAGE, attackDamage);
+        double runSpeed = config.groundRunSpeed(config.movementSpeed() * 2.0D);
+        configuredRunSpeed = Math.max(0.01D, runSpeed);
+        double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.75D);
+        configuredWalkSpeed = Math.max(0.01D, walkSpeed);
 
         double maxHealth = config.maxHealth();
         if (this.getHealth() > maxHealth) {
@@ -1263,6 +1269,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (instance != null) {
             instance.setBaseValue(value);
         }
+    }
+
+    public double getGroundRunSpeed() {
+        return configuredRunSpeed;
+    }
+
+    public double getGroundWalkSpeed() {
+        return configuredWalkSpeed;
     }
 
 
