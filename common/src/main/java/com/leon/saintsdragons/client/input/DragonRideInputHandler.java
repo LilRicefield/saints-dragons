@@ -138,8 +138,6 @@ public final class DragonRideInputHandler {
             return;
         }
 
-        // Check both dragon keybinds AND vanilla keybinds that might overlap
-        // This ensures compatibility on Fabric where keybind conflicts don't auto-trigger both
         boolean ascendDown = DRAGON_ASCEND.isDown() || mc.options.keyJump.isDown();
         boolean descendDown = DRAGON_DESCEND.isDown() || mc.options.keyShift.isDown();
         boolean accelerateDown = DRAGON_ACCELERATE.isDown() || mc.options.keySprint.isDown();

@@ -20,7 +20,6 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_female.png");
 
     public IgnivorusModel() {
-        // Use non-existent bone so GeckoLib doesn't override animation keyframes
         super(SaintsDragonsCommon.rl("ignivorus"), "headController");
     }
 
@@ -48,9 +47,9 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
-            applyNeckFollow(entity, animationState);  // Base head tracking first (uses EntityModelData)
-            applyNeckBankingLean(entity, partialTick);  // Lean neck into banking direction when ridden (flying)
-            applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
+            applyNeckFollow(entity, animationState);
+            applyNeckBankingLean(entity, partialTick);
+            applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
         }
     }
@@ -78,54 +77,26 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         body.setRotZ(snap.getRotZ() + bankAngleRad);
     }
 
-    /**
-     * Lean neck into the banking direction when being ridden.
-     * Bank right → head turns left (opposite direction).
-     * Uses the structural neck bones (neck1-4, head) with keyframes to prevent crazy spinning.
-     */
     private void applyNeckBankingLean(Ignivorus entity, float partialTick) {
-        // Only apply when being ridden and banking
         if (!entity.isVehicle() || !entity.isFlying()) {
             return;
         }
-
-        // Get the banking angle (-90 to +90 degrees)
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
-
-        // Convert to radians and scale
-        // Bank right → head turns left (opposite direction)
-        // Scale: 45° bank = ~32° neck lean total (between Cindervane and Raevyx)
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 32.0f * Mth.DEG_TO_RAD;
-
-        // Apply with increasing intensity toward the head (4 neck segments + head)
-        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.4f);  // Base - subtle
-        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.41f);  // Lower-mid
-        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.42f);  // Upper-mid
-        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.43f);  // Near head
-        applyNeckBoneRotation("headController", neckLeanRad * 0.44f);   // Head - most pronounced
+        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.4f);
+        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.41f);
+        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.42f);
+        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.43f);
+        applyNeckBoneRotation("headController", neckLeanRad * 0.44f);
     }
 
-    /**
-     * Turn neck in the direction of ground turning based on yaw velocity.
-     * Head leans INTO the turn direction when walking/running on ground.
-     */
     private void applyGroundNeckTurn(Ignivorus entity, float partialTick) {
-        // Only apply when on ground (not flying)
         if (entity.isFlying()) {
             return;
         }
-
-        // Use yaw velocity to determine turn direction and magnitude
         double velocity = entity.yawVelocity.get(partialTick);
-
-        // Clamp to prevent excessive rotation
         velocity = Mth.clamp(velocity, -25.0, 25.0);
-
-        // Convert to radians - head turns IN the direction of the turn (opposite of tail drag)
-        // So we NEGATE the velocity
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
-
-        // Apply with same values as banking lean (4 neck segments + head)
         applyNeckBoneRotation("neck1Controller", turnRad * 0.4f);
         applyNeckBoneRotation("neck2Controller", turnRad * 0.41f);
         applyNeckBoneRotation("neck3Controller", turnRad * 0.42f);
@@ -133,24 +104,15 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         applyNeckBoneRotation("headController", turnRad * 0.44f);
     }
 
-    /**
-     * Helper to apply Y-rotation to a neck bone for banking lean.
-     * ADDS to current rotation (preserves animation keyframes) instead of replacing it.
-     */
     private void applyNeckBoneRotation(String boneName, float rotationY) {
         var boneOpt = getBone(boneName);
         if (boneOpt.isEmpty()) {
             return;
         }
-
         GeoBone bone = boneOpt.get();
-        // Add to current rotation (which includes animation keyframes) instead of setting from snapshot
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    /**
-     * Distributes head rotation across neck segments using EntityModelData.
-     */
     private void applyNeckFollow(Ignivorus entity, AnimationState<Ignivorus> state) {
         var headOpt = getBone("headController");
         if (headOpt.isEmpty()) return;
@@ -162,34 +124,18 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
 
         GeoBone head = headOpt.get();
         float partialTick = state.getPartialTick();
-
-        // Get body deviation (how much head leads body)
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
-
-        // bodyDeviation * 2.0 = structural neck bend from turning
-        // netHeadYaw = where the head wants to look
-        // ADD them together, then clamp the total to prevent crunching
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
-
-        // Clamp the TOTAL rotation to prevent structural crunching during 360° turns
         totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
-
-        // For pitch, use head look pitch but clamp it
         float lookPitchRad = Mth.clamp(modelData.headPitch(), -20.0f, 20.0f) * Mth.DEG_TO_RAD;
-
-        // Remove the procedural look rotation from the head itself so the animation pose stays intact
         head.setRotX(head.getRotX() - lookPitchRad);
         head.setRotY(head.getRotY() - totalYawRad);
-
-        // When being ridden, skip pitch distribution to prevent neck snapping during ascent/descent
-        // Only apply yaw for horizontal head looking
         if (entity.isVehicle()) {
             lookPitchRad = 0.0f;
         }
 
-        // Distribute rotation across neck segments (4 segments for Ignivorus)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.20f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.25f);
         applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.30f);
@@ -201,7 +147,6 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         if (boneOpt.isEmpty()) return;
 
         GeoBone bone = boneOpt.get();
-        // Apply weighted portion of the head's rotation on top of the animated pose
         float addX = headDeltaX * weight;
         float addY = headDeltaY * weight;
 
