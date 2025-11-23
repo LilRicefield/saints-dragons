@@ -134,7 +134,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "run_speed", 0.60D,
                         "walk_speed", 0.225D,
-                        "attack_damage", 15.0D,
                         "ultimate_penalty_health", 50.0D,
                         "taming_chance_base", 7.0D,
                         "taming_chance_hearty", 4.0D
@@ -377,7 +376,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         } else if (id.equals(IGNIVORUS_ID)) {
             hints.addProperty("run_speed", "Min 0.05, Max 2.5");
             hints.addProperty("walk_speed", "Min 0.01, Max 1.0");
-            hints.addProperty("attack_damage", "Typical 1-300");
             hints.addProperty("ultimate_penalty_health", "Typical 1-500");
         }
         return hints;
