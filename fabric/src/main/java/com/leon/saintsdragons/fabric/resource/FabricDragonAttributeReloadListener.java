@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -24,12 +25,12 @@ public final class FabricDragonAttributeReloadListener implements IdentifiableRe
     }
 
     @Override
-    public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier barrier,
-                                          ResourceManager manager,
-                                          ProfilerFiller prepareProfiler,
-                                          ProfilerFiller applyProfiler,
-                                          Executor prepareExecutor,
-                                          Executor applyExecutor) {
+    public @NotNull CompletableFuture<Void> reload(PreparableReloadListener.@NotNull PreparationBarrier barrier,
+                                                   @NotNull ResourceManager manager,
+                                                   @NotNull ProfilerFiller prepareProfiler,
+                                                   @NotNull ProfilerFiller applyProfiler,
+                                                   @NotNull Executor prepareExecutor,
+                                                   @NotNull Executor applyExecutor) {
         return delegate.reload(barrier, manager, prepareProfiler, applyProfiler, prepareExecutor, applyExecutor);
     }
 }

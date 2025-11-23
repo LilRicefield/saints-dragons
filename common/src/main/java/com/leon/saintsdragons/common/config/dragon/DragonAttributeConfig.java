@@ -11,7 +11,9 @@ import java.util.Map;
 /**
  * Data-driven attribute bundle for a dragon species.
  */
-public final class DragonAttributeConfig {
+public record DragonAttributeConfig(double maxHealth, double armor, double movementSpeed, double flyingSpeed,
+                                    Map<String, DragonAbilityOverride> abilities, Map<String, Double> extraDoubles,
+                                    Map<String, Boolean> extraBooleans) {
     public static final DragonAttributeConfig EMPTY = new DragonAttributeConfig(
             40.0D,
             0.0D,
@@ -21,14 +23,6 @@ public final class DragonAttributeConfig {
             Map.of(),
             Map.of()
     );
-
-    private final double maxHealth;
-    private final double armor;
-    private final double movementSpeed;
-    private final double flyingSpeed;
-    private final Map<String, DragonAbilityOverride> abilities;
-    private final Map<String, Double> extraDoubles;
-    private final Map<String, Boolean> extraBooleans;
 
     public DragonAttributeConfig(double maxHealth,
                                  double armor,
@@ -46,41 +40,13 @@ public final class DragonAttributeConfig {
         this.extraBooleans = Map.copyOf(extraBooleans);
     }
 
-    public double maxHealth() {
-        return maxHealth;
-    }
-
-    public double armor() {
-        return armor;
-    }
-
-    public double movementSpeed() {
-        return movementSpeed;
-    }
-
-    public double flyingSpeed() {
-        return flyingSpeed;
-    }
-
-    public Map<String, DragonAbilityOverride> abilities() {
-        return abilities;
-    }
-
     public double abilityDamage(String key, double fallback) {
         DragonAbilityOverride override = abilities.get(key);
         return override != null ? override.damageOr(fallback) : fallback;
     }
 
-    public Map<String, Double> extraDoubles() {
-        return extraDoubles;
-    }
-
     public double extraDouble(String key, double fallback) {
         return extraDoubles.getOrDefault(key, fallback);
-    }
-
-    public Map<String, Boolean> extraBooleans() {
-        return extraBooleans;
     }
 
     public boolean extraBoolean(String key, boolean fallback) {

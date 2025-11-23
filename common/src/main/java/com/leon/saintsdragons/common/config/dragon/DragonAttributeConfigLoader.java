@@ -13,6 +13,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -168,8 +169,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> jsonMap,
-                         ResourceManager resourceManager,
-                         ProfilerFiller profiler) {
+                         @NotNull ResourceManager resourceManager,
+                         @NotNull ProfilerFiller profiler) {
         Map<ResourceLocation, DragonAttributeConfig> merged = new HashMap<>(defaults);
         Map<ResourceLocation, JsonObject> rawJson = new HashMap<>();
         for (Map.Entry<ResourceLocation, JsonElement> entry : jsonMap.entrySet()) {
