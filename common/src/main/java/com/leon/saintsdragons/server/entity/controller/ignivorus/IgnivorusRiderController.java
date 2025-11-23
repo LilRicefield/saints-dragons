@@ -20,8 +20,6 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     private static final double SEAT_BASE_FACTOR = 0.50D;
 
     // ===== GROUND MOVEMENT SPEED MULTIPLIERS =====
-    private static final float WALK_SPEED_MULT = 0.75F;
-    private static final float RUN_SPEED_MULT = 2.0F;
 
     // ===== LANDING LOGIC =====
     private static final double LANDING_HEIGHT_TRIGGER = 4.0D; // Blocks above ground to start landing animation
@@ -153,20 +151,17 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             return (float) dragon.getAttributeValue(Attributes.FLYING_SPEED);
         }
 
-        // Ground speed - use movement speed attribute with acceleration multipliers
-        float baseSpeed = (float) dragon.getAttributeValue(Attributes.MOVEMENT_SPEED);
-
         // Check if actually moving to prevent sprint animation when standing still
         boolean isMoving = dragon.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
 
         if (dragon.isAccelerating() && isMoving) {
             // L-Ctrl pressed AND moving - trigger run animation and boost speed
             dragon.setRunning(true);
-            return baseSpeed * RUN_SPEED_MULT;
+            return (float) dragon.getGroundRunSpeed();
         } else {
             // Normal ground speed - use walk animation, stop running
             dragon.setRunning(false);
-            return baseSpeed * WALK_SPEED_MULT;
+            return (float) dragon.getGroundWalkSpeed();
         }
     }
 

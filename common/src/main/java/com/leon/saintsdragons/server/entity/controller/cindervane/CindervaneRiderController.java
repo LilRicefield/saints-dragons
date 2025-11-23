@@ -126,14 +126,11 @@ public record CindervaneRiderController(Cindervane dragon) {
             // Flying speed - use ONLY the attributed flying speed, no modifiers
             return (float) dragon.getAttributeValue(Attributes.FLYING_SPEED);
         } else {
-            // Ground speed - use movement speed attribute with acceleration multipliers
-            float baseSpeed = (float) dragon.getAttributeValue(Attributes.MOVEMENT_SPEED);
-
-            if (dragon.isAccelerating()) {
-                return baseSpeed * 0.60F; // Just a tad slower than Lightning Dragon (0.7F)
-            } else {
-                return baseSpeed * 0.5F; // Normal speed (same as Lightning Dragon)
-            }
+            double run = dragon.getGroundRunSpeed();
+            double walk = dragon.getGroundWalkSpeed();
+            boolean running = dragon.isAccelerating();
+            dragon.setRunning(running);
+            return (float) (running ? run : walk);
         }
     }
 

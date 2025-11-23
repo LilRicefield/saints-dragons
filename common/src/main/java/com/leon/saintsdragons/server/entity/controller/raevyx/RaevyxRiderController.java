@@ -112,21 +112,14 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // Flying speed - use ONLY the attributed flying speed, no modifiers
             return (float) wyvern.getAttributeValue(Attributes.FLYING_SPEED);
         } else {
-            // Ground speed - use movement speed attribute with acceleration multipliers
-            float baseSpeed = (float) wyvern.getAttributeValue(Attributes.MOVEMENT_SPEED);
+            double run = wyvern.getConfiguredRunSpeed();
+            double walk = wyvern.getConfiguredWalkSpeed();
 
             // Check if actually moving to prevent sprint animation when standing still
             boolean isMoving = wyvern.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
-
-            if (wyvern.isAccelerating() && isMoving) {
-                // L-Ctrl pressed AND moving - trigger run animation and boost speed
-                wyvern.setRunning(true);
-                return baseSpeed * 0.7F;
-            } else {
-                // Normal ground speed - use walk animation, stop running
-                wyvern.setRunning(false);
-                return baseSpeed * 0.5F;
-            }
+            boolean running = wyvern.isAccelerating() && isMoving;
+            wyvern.setRunning(running);
+            return (float) (running ? run : walk);
         }
     }
 

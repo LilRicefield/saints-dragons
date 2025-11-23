@@ -75,6 +75,14 @@ public final class DragonAttributeConfig {
         return extraDoubles.getOrDefault(key, fallback);
     }
 
+    public double groundRunSpeed(double fallback) {
+        return extraDoubles.getOrDefault("run_speed", fallback);
+    }
+
+    public double groundWalkSpeed(double fallback) {
+        return extraDoubles.getOrDefault("walk_speed", fallback);
+    }
+
     public static DragonAttributeConfig merge(JsonObject json, @Nullable DragonAttributeConfig fallback) {
         DragonAttributeConfig base = fallback != null ? fallback : EMPTY;
 

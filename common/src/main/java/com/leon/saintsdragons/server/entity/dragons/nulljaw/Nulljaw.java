@@ -655,6 +655,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             } else {
                 setGoingUp(false);
                 setGoingDown(false);
+                this.setSpeed(riderController.getRiddenSpeed(player));
                 // Use vanilla movement system for proper camera-relative movement
                 // This will call getRiddenInput() and getRiddenSpeed() properly
                 super.travel(motion);
@@ -741,8 +742,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
         setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
-        configuredRunSpeed = Math.max(0.01D, config.movementSpeed());
-        configuredWalkSpeed = config.extraDouble("walk_speed", configuredRunSpeed * 0.5D);
+        double runSpeed = config.groundRunSpeed(config.movementSpeed());
+        configuredRunSpeed = Math.max(0.01D, runSpeed);
+        double walkSpeed = config.groundWalkSpeed(configuredRunSpeed * 0.5D);
+        configuredWalkSpeed = Math.max(0.01D, walkSpeed);
         configuredSwimSpeed = config.extraDouble("swim_speed", 1.45D);
         if (this.getHealth() > config.maxHealth()) {
             this.setHealth((float) config.maxHealth());
