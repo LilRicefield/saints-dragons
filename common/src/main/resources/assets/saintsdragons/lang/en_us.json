@@ -309,6 +309,11 @@
   "text.autoconfig.saintsdragonsspawning.option.ignivorusHeartyTamingChance.@Tooltip[0]": "Taming chance with Hearty Dragon Meal (1 in N chance)",
   "text.autoconfig.saintsdragonsspawning.option.ignivorusHeartyTamingChance.@Tooltip[1]": "Lower = easier taming. Example: 4 = 25% chance per feed",
 
+
+  "config.saintsdragons.attributes.ignivorus.legacy_taming": "Legacy Taming",
+  "config.saintsdragons.attributes.nulljaw.legacy_taming" : "Legacy Taming",
+  "config.saintsdragons.attributes.raevyx.legacy_taming": "Legacy Taming",
+  "config.saintsdragons.attributes.legacy_taming.tooltip" : "Toggle vanilla taming method",
   "config.saintsdragons.title": "Saints & Dragons Settings",
   "config.saintsdragons.category.spawning": "Spawning",
   "config.saintsdragons.category.attributes": "Dragon Attributes",

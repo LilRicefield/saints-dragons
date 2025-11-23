@@ -8,13 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents optional overrides for a single dragon ability.
  * Currently only exposes damage but can be extended with more fields later.
  */
-public final class DragonAbilityOverride {
-    @Nullable
-    private final Double damage;
-
-    public DragonAbilityOverride(@Nullable Double damage) {
-        this.damage = damage;
-    }
+public record DragonAbilityOverride(@Nullable Double damage) {
 
     public static DragonAbilityOverride ofDamage(double damage) {
         return new DragonAbilityOverride(damage);
@@ -30,10 +24,5 @@ public final class DragonAbilityOverride {
 
     public double damageOr(double fallback) {
         return damage != null ? damage : fallback;
-    }
-
-    @Nullable
-    public Double damage() {
-        return damage;
     }
 }
