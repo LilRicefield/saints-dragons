@@ -135,8 +135,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private boolean usingAirNav;
 
     // ===== HARDCODED GROUND SPEEDS =====
-    public static final double RIDER_WALK_SPEED = 0.225D;
-    public static final double RIDER_RUN_SPEED = 0.27D;
+    public static final double RIDER_WALK_SPEED = 0.18D;
+    public static final double RIDER_RUN_SPEED = 0.26D;
 
     private int targetCooldown;
     private int airTicks;

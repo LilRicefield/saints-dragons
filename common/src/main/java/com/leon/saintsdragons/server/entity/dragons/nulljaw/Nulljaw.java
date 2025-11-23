@@ -128,8 +128,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private final NulljawRiderController riderController;
 
     // ===== HARDCODED GROUND SPEEDS =====
-    public static final double RIDER_WALK_SPEED = 0.14D;
-    public static final double RIDER_RUN_SPEED = 0.28D;
+    public static final double RIDER_WALK_SPEED = 0.22D;
+    public static final double RIDER_RUN_SPEED = 0.42D;
     private double configuredSwimSpeed = 1.45D; // Still configurable
     private final PathNavigation groundNavigation;
     private final DragonAmphibiousNavigation waterNavigation;
