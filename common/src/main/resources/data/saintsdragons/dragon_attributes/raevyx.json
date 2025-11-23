@@ -16,5 +16,9 @@
     "summon_storm": {
       "comment": "Duration is hardcoded to 60 seconds (1 minute) in RaevyxSummonStormAbility.java"
     }
+  },
+  "extra": {
+    "taming_chance_base": 5.0,
+    "taming_chance_hearty": 3.0
   }
 }

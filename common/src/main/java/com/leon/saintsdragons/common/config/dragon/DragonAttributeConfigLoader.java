@@ -77,7 +77,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "lightning_beam", DragonAbilityOverride.ofDamage(35.0D),
                         "horn_gore", DragonAbilityOverride.ofDamage(15.0D)
                 ),
-                Map.of()
+                Map.of(
+                        "taming_chance_base", 5.0D,
+                        "taming_chance_hearty", 3.0D
+                )
         );
     }
 
@@ -114,7 +117,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ),
                 Map.of(
                         "attack_damage", 15.0D,
-                        "ultimate_penalty_health", 50.0D
+                        "ultimate_penalty_health", 50.0D,
+                        "taming_chance_base", 7.0D,
+                        "taming_chance_hearty", 4.0D
                 )
         );
     }
