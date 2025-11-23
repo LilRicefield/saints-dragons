@@ -1578,10 +1578,23 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             return;
         }
 
-        // Check for taming success - VERY slim chance!
+        // Check for taming success
         if (wildRideTicks >= MIN_WILD_TAME_TICKS) {
             float progressFactor = (float) cumulativeWildRideProgress / (float) MAX_TAMING_PROGRESS;
-            float successChance = 0.003F + progressFactor * 0.012F; // 0.3% base up to ~1.5% - brutal!
+
+            // Load taming chance from config
+            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+            double tamingChanceConfig = config.extraDoubles().getOrDefault("taming_chance", 6.0);
+
+            // Convert config value to per-tick success chance
+            // taming_chance of 1.0 = guaranteed tame after MIN_WILD_TAME_TICKS
+            // Higher values = lower per-tick chance (e.g., 6.0 = ~1/6 chance per eligible tick)
+            float baseChance = 1.0F / (float) tamingChanceConfig;
+
+            // Scale with progress: starts at baseChance, increases up to 2x with full progress
+            float successChance = baseChance * (1.0F + progressFactor);
+
             if (this.getRandom().nextFloat() < successChance) {
                 this.tame(rider);
                 this.setOrderedToSit(false);
