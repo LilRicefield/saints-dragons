@@ -21,6 +21,8 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
     private static final ResourceLocation GLOW_TEXTURE =
             SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_glow.png");
+    private static final ResourceLocation FEMALE_GLOW_TEXTURE =
+            SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_glow_female.png");
 
     public IgnivorusGlowLayer(GeoRenderer<Ignivorus> renderer) {
         super(renderer);
@@ -50,7 +52,8 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
             return;
         }
 
-        RenderType glowType = RenderType.entityTranslucent(GLOW_TEXTURE);
+        ResourceLocation glowTexture = animatable.isFemale() ? FEMALE_GLOW_TEXTURE : GLOW_TEXTURE;
+        RenderType glowType = RenderType.entityTranslucent(glowTexture);
         VertexConsumer glowBuffer = bufferSource.getBuffer(glowType);
 
         getRenderer().reRender(
