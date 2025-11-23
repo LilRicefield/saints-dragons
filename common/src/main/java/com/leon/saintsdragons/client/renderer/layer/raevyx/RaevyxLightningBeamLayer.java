@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.client.renderer.layer.raevyx;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import static com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxConstantsHandler.*;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -121,11 +120,11 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         double ox = net.minecraft.util.Mth.lerp(partialTick, animatable.xo, animatable.getX());
         double oy = net.minecraft.util.Mth.lerp(partialTick, animatable.yo, animatable.getY());
         double oz = net.minecraft.util.Mth.lerp(partialTick, animatable.zo, animatable.getZ());
-        float scale = MODEL_SCALE;
-        
+        float scale = Raevyx.MODEL_SCALE;
+
         // Calculate beam direction and prepare transformation
         net.minecraft.world.phys.Vec3 rawBeamPosition = end.subtract(mouthWorld);
-        // PoseStack here operates in model space; translation below divides by MODEL_SCALE.
+        // PoseStack here operates in model space; translation below divides by Raevyx.MODEL_SCALE.
         // Do the same for beam length so visuals match server/world distance.
         float length = (float) (rawBeamPosition.length() / scale);
         if (length <= 0.001f) return;
