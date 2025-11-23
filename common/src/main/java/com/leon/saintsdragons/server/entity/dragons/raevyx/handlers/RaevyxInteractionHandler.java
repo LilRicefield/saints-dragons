@@ -44,8 +44,13 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
     private InteractionResult handleUntamedInteraction(Player player, ItemStack itemstack) {
         boolean client = wyvern.level().isClientSide;
 
-        // Allow players to abort a taming attempt by crouching with empty hands
-        if (wyvern.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
+        // Check if legacy taming is enabled
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        boolean legacyTaming = config.extraBoolean("legacy_taming", false);
+
+        // Allow players to abort a taming attempt by crouching with empty hands (only in normal mode)
+        if (!legacyTaming && wyvern.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
             if (!client) {
                 wyvern.abortTamingAttempt();
                 sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_aborted");
@@ -57,10 +62,13 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             return InteractionResult.PASS;
         }
 
-        if (wyvern.isTamingStunned()) {
-            if (!wyvern.isAwaitingTamingFeed()) {
-                sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_dazed");
-                return InteractionResult.CONSUME;
+        if (!legacyTaming) {
+            // Normal mode: check taming stun state
+            if (wyvern.isTamingStunned()) {
+                if (!wyvern.isAwaitingTamingFeed()) {
+                    sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_dazed");
+                    return InteractionResult.CONSUME;
+                }
             }
         }
 
@@ -75,11 +83,14 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             return InteractionResult.CONSUME;
         }
 
-        float minRequiredHealth = wyvern.getTamingThreshold();
-        // Add 1.0 HP buffer to prevent edge cases (e.g., small regeneration between ticks)
-        if (wyvern.getHealth() > minRequiredHealth + 1.0F) {
-            sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_need_weakened");
-            return InteractionResult.CONSUME;
+        if (!legacyTaming) {
+            // Normal mode: require low health
+            float minRequiredHealth = wyvern.getTamingThreshold();
+            // Add 1.0 HP buffer to prevent edge cases (e.g., small regeneration between ticks)
+            if (wyvern.getHealth() > minRequiredHealth + 1.0F) {
+                sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_need_weakened");
+                return InteractionResult.CONSUME;
+            }
         }
 
         // Taming logic must be server-only to avoid client-only visual state changes
@@ -99,10 +110,16 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 wyvern.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
 
-            wyvern.enterTamingStun();
+            // Legacy taming: heal the dragon instead of entering stun
+            if (legacyTaming) {
+                float healAmount = hearty ? 28.0f : 10.0f;
+                float newHealth = Math.min(wyvern.getHealth() + healAmount, wyvern.getMaxHealth());
+                wyvern.setHealth(newHealth);
+            } else {
+                // Normal mode: enter taming stun
+                wyvern.enterTamingStun();
+            }
 
-            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                    .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
                 : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
@@ -114,15 +131,19 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 wyvern.setOrderedToSit(true);
                 wyvern.setCommandManual(1); // Set command to Sit (1) to match the sitting state
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 7);
-                wyvern.resetTamingFailures();
-                wyvern.clearTamingRecovery();
+                if (!legacyTaming) {
+                    wyvern.resetTamingFailures();
+                    wyvern.clearTamingRecovery();
+                }
 
                 // Trigger advancement for taming Lightning Dragon
                 triggerTamingAdvancement(player);
             } else {
-                Float healTarget = nextFailureHealTarget();
-                wyvern.setTamingRecoveryTarget(healTarget);
-                wyvern.incrementTamingFailures();
+                if (!legacyTaming) {
+                    Float healTarget = nextFailureHealTarget();
+                    wyvern.setTamingRecoveryTarget(healTarget);
+                    wyvern.incrementTamingFailures();
+                }
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 6);
                 sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_failed");
             }

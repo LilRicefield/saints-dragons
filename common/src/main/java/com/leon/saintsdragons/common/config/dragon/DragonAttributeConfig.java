@@ -18,6 +18,7 @@ public final class DragonAttributeConfig {
             0.3D,
             0.3D,
             Map.of(),
+            Map.of(),
             Map.of()
     );
 
@@ -27,19 +28,22 @@ public final class DragonAttributeConfig {
     private final double flyingSpeed;
     private final Map<String, DragonAbilityOverride> abilities;
     private final Map<String, Double> extraDoubles;
+    private final Map<String, Boolean> extraBooleans;
 
     public DragonAttributeConfig(double maxHealth,
                                  double armor,
                                  double movementSpeed,
                                  double flyingSpeed,
                                  Map<String, DragonAbilityOverride> abilities,
-                                 Map<String, Double> extraDoubles) {
+                                 Map<String, Double> extraDoubles,
+                                 Map<String, Boolean> extraBooleans) {
         this.maxHealth = maxHealth;
         this.armor = armor;
         this.movementSpeed = movementSpeed;
         this.flyingSpeed = flyingSpeed;
         this.abilities = Map.copyOf(abilities);
         this.extraDoubles = Map.copyOf(extraDoubles);
+        this.extraBooleans = Map.copyOf(extraBooleans);
     }
 
     public double maxHealth() {
@@ -73,6 +77,14 @@ public final class DragonAttributeConfig {
 
     public double extraDouble(String key, double fallback) {
         return extraDoubles.getOrDefault(key, fallback);
+    }
+
+    public Map<String, Boolean> extraBooleans() {
+        return extraBooleans;
+    }
+
+    public boolean extraBoolean(String key, boolean fallback) {
+        return extraBooleans.getOrDefault(key, fallback);
     }
 
     public double groundRunSpeed(double fallback) {
@@ -111,6 +123,14 @@ public final class DragonAttributeConfig {
             }
         }
 
-        return new DragonAttributeConfig(maxHealth, armor, movementSpeed, flyingSpeed, abilityMap, extra);
+        Map<String, Boolean> booleans = new HashMap<>(base.extraBooleans);
+        if (json.has("extra_booleans")) {
+            JsonObject booleansJson = GsonHelper.getAsJsonObject(json, "extra_booleans");
+            for (Map.Entry<String, JsonElement> entry : booleansJson.entrySet()) {
+                booleans.put(entry.getKey(), GsonHelper.convertToBoolean(entry.getValue(), entry.getKey()));
+            }
+        }
+
+        return new DragonAttributeConfig(maxHealth, armor, movementSpeed, flyingSpeed, abilityMap, extra, booleans);
     }
 }

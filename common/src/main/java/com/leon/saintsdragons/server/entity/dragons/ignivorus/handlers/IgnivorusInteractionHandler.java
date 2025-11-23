@@ -41,8 +41,13 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
     private InteractionResult handleUntamedInteraction(Player player, ItemStack itemstack) {
         boolean client = dragon.level().isClientSide;
 
-        // Allow players to abort a taming attempt by crouching with empty hands
-        if (dragon.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
+        // Check if legacy taming is enabled
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        boolean legacyTaming = config.extraBoolean("legacy_taming", false);
+
+        // Allow players to abort a taming attempt by crouching with empty hands (only in normal mode)
+        if (!legacyTaming && dragon.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
             if (!client) {
                 dragon.abortTamingAttempt();
                 sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_aborted");
@@ -54,10 +59,13 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             return InteractionResult.PASS;
         }
 
-        if (dragon.isTamingStunned()) {
-            if (!dragon.isAwaitingTamingFeed()) {
-                sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_dazed");
-                return InteractionResult.CONSUME;
+        if (!legacyTaming) {
+            // Normal mode: check taming stun state
+            if (dragon.isTamingStunned()) {
+                if (!dragon.isAwaitingTamingFeed()) {
+                    sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_dazed");
+                    return InteractionResult.CONSUME;
+                }
             }
         }
 
@@ -72,11 +80,14 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             return InteractionResult.CONSUME;
         }
 
-        float minRequiredHealth = dragon.getTamingThreshold();
-        // Add 1.0 HP buffer to prevent edge cases (e.g., small regeneration between ticks)
-        if (dragon.getHealth() > minRequiredHealth + 1.0F) {
-            sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_need_weakened");
-            return InteractionResult.CONSUME;
+        if (!legacyTaming) {
+            // Normal mode: require low health
+            float minRequiredHealth = dragon.getTamingThreshold();
+            // Add 1.0 HP buffer to prevent edge cases (e.g., small regeneration between ticks)
+            if (dragon.getHealth() > minRequiredHealth + 1.0F) {
+                sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_need_weakened");
+                return InteractionResult.CONSUME;
+            }
         }
 
         // Taming logic must be server-only to avoid client-only visual state changes
@@ -96,10 +107,16 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
 
-            dragon.enterTamingStun();
+            // Legacy taming: heal the dragon instead of entering stun
+            if (legacyTaming) {
+                float healAmount = hearty ? 30.0f : 10.0f;
+                float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
+                dragon.setHealth(newHealth);
+            } else {
+                // Normal mode: enter taming stun
+                dragon.enterTamingStun();
+            }
 
-            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                    .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 4.0)
                 : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
@@ -111,15 +128,19 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 dragon.setOrderedToSit(true);
                 dragon.setCommandManual(1); // Set command to Sit (1) to match the sitting state
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
-                dragon.resetTamingFailures();
-                dragon.clearTamingRecovery();
+                if (!legacyTaming) {
+                    dragon.resetTamingFailures();
+                    dragon.clearTamingRecovery();
+                }
 
                 // Trigger advancement for taming Ignivorus
                 triggerTamingAdvancement(player);
             } else {
-                Float healTarget = nextFailureHealTarget();
-                dragon.setTamingRecoveryTarget(healTarget);
-                dragon.incrementTamingFailures();
+                if (!legacyTaming) {
+                    Float healTarget = nextFailureHealTarget();
+                    dragon.setTamingRecoveryTarget(healTarget);
+                    dragon.incrementTamingFailures();
+                }
                 dragon.level().broadcastEntityEvent(dragon, (byte) 6);
                 sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_failed");
             }

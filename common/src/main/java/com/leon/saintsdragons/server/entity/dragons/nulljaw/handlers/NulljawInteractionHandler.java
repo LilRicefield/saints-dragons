@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,16 +26,92 @@ public record NulljawInteractionHandler(Nulljaw drake) {
     }
 
     private InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
-        if (drake.isFood(heldItem) && drake.getHealth() < drake.getMaxHealth()) {
-            return handleFeeding(player, heldItem, true);
+        // Check if legacy taming is enabled
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        boolean legacyTaming = config.extraBoolean("legacy_taming", false);
+
+        if (drake.isFood(heldItem)) {
+            if (legacyTaming) {
+                // Legacy taming: simple food-based taming with RNG
+                return handleLegacyTaming(player, heldItem);
+            } else if (drake.getHealth() < drake.getMaxHealth()) {
+                // Normal mode: only allow feeding for healing, not taming
+                return handleFeeding(player, heldItem, true);
+            }
         }
 
-        if (hand == InteractionHand.MAIN_HAND && heldItem.isEmpty() && !player.isCrouching()) {
+        // Rodeo taming (only in non-legacy mode)
+        if (!legacyTaming && hand == InteractionHand.MAIN_HAND && heldItem.isEmpty() && !player.isCrouching()) {
             boolean started = drake.beginUntamedRide(player);
             return started ? InteractionResult.sidedSuccess(drake.level().isClientSide) : InteractionResult.PASS;
         }
 
         return InteractionResult.PASS;
+    }
+
+    private InteractionResult handleLegacyTaming(Player player, ItemStack food) {
+        if (!drake.canFeed()) {
+            if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.nulljaw.still_eating", drake.getName()),
+                        true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        if (!drake.level().isClientSide) {
+            if (!player.getAbilities().instabuild) {
+                food.shrink(1);
+            }
+
+            drake.triggerAnim("action", "eat");
+            drake.setFeedingCooldown(50);
+
+            boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            float healAmount = heartyMeal ? 35.0F : 5.0F;
+            float newHealth = Math.min(drake.getHealth() + healAmount, drake.getMaxHealth());
+            drake.setHealth(newHealth);
+
+            if (heartyMeal) {
+                drake.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+            }
+
+            // Taming chance logic
+            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+            double tameChance = heartyMeal
+                    ? config.extraDoubles().getOrDefault("taming_chance", 6.0) / 2.0  // Hearty meal doubles chance
+                    : config.extraDoubles().getOrDefault("taming_chance", 6.0);
+            int tameRoll = (int) Math.round(tameChance);
+            boolean success = drake.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
+
+            if (success) {
+                drake.tame(player);
+                drake.setOrderedToSit(true);
+                drake.level().broadcastEntityEvent(drake, (byte) 7);  // Hearts
+                drake.awardTamingAdvancement(player);
+            } else {
+                drake.level().broadcastEntityEvent(drake, (byte) 6);  // Smoke
+            }
+
+            if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                if (success) {
+                    serverPlayer.displayClientMessage(
+                            Component.translatable("entity.saintsdragons.nulljaw.tamed", drake.getName()),
+                            true
+                    );
+                } else {
+                    serverPlayer.displayClientMessage(
+                            Component.translatable("entity.saintsdragons.nulljaw.taming_failed", drake.getName()),
+                            true
+                    );
+                }
+            }
+        }
+
+        return InteractionResult.sidedSuccess(drake.level().isClientSide);
     }
 
     private InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {

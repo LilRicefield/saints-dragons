@@ -507,10 +507,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public boolean usingAirNav = false;
 
     // ===== HARDCODED GROUND SPEEDS =====
-    // AI uses MOVEMENT_SPEED attribute (hardcoded in createAttributes)
-    // Rider uses these constants (hardcoded in RiderController)
-    public static final double RIDER_WALK_SPEED = 0.15D;
-    public static final double RIDER_RUN_SPEED = 0.22D;
+    public static final double RIDER_WALK_SPEED = 0.18D;
+    public static final double RIDER_RUN_SPEED = 0.25D;
 
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
@@ -521,10 +519,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
-
-    // ===== CUSTOM SITTING SYSTEM =====
-    // Completely replace TamableAnimal's broken sitting behavior
-
 
     @Override
     public boolean isInSittingPose() {
@@ -1237,7 +1231,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (running) {
             runningTicks = 0;
         }
-        // MOVEMENT_SPEED is fixed for AI - rider speed is handled by RiderController
     }
     
     // ===== RideableDragonBase Override for Custom Logic =====

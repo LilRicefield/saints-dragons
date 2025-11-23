@@ -67,7 +67,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "walk_speed", 0.225D,
                         "taming_chance_base", 4.0D,
                         "taming_chance_hearty", 2.0D
-                )
+                ),
+                Map.of()
         );
     }
 
@@ -87,6 +88,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "walk_speed", 0.25D,
                         "taming_chance_base", 5.0D,
                         "taming_chance_hearty", 3.0D
+                ),
+                Map.of(
+                        "legacy_taming", false
                 )
         );
     }
@@ -108,6 +112,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "walk_speed", 0.14D,
                         "swim_speed", 1.45D,
                         "taming_chance", 6.0D
+                ),
+                Map.of(
+                        "legacy_taming", false
                 )
         );
     }
@@ -131,6 +138,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "ultimate_penalty_health", 50.0D,
                         "taming_chance_base", 7.0D,
                         "taming_chance_hearty", 4.0D
+                ),
+                Map.of(
+                        "legacy_taming", false
                 )
         );
     }
@@ -192,10 +202,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
         for (Map.Entry<ResourceLocation, DragonAttributeConfig> entry : merged.entrySet()) {
             Path path = configPath(entry.getKey());
+            JsonObject source = rawJson.getOrDefault(entry.getKey(), serializeConfig(entry.getKey(), entry.getValue()));
+            ensureLegacyTamingFlag(entry.getKey(), source);
+
             if (Files.exists(path)) {
+                backfillLegacyTaming(path, entry.getKey());
                 continue;
             }
-            JsonObject source = rawJson.getOrDefault(entry.getKey(), serializeConfig(entry.getKey(), entry.getValue()));
             if (!source.has("hints")) {
                 JsonObject hints = defaultHints(entry.getKey());
                 if (hints != null && !hints.entrySet().isEmpty()) {
@@ -266,6 +279,18 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             json.add("extra", extraJson);
         }
 
+        // Always write extra_booleans section for dragons that have legacy_taming
+        if (!config.extraBooleans().isEmpty() ||
+            requiresLegacyTamingFlag(id)) {
+            JsonObject booleansJson = new JsonObject();
+            config.extraBooleans().forEach(booleansJson::addProperty);
+            // Ensure legacy_taming is present for the three special dragons
+            if (requiresLegacyTamingFlag(id) && !booleansJson.has("legacy_taming")) {
+                booleansJson.addProperty("legacy_taming", false);
+            }
+            json.add("extra_booleans", booleansJson);
+        }
+
         // Friendly hints for players editing the Forge JSON files
         if (!json.has("hints")) {
             JsonObject hints = defaultHints(id);
@@ -284,12 +309,60 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         this.configs = ImmutableMap.copyOf(updated);
     }
 
+    private static void ensureLegacyTamingFlag(ResourceLocation id, JsonObject json) {
+        if (!requiresLegacyTamingFlag(id)) {
+            return;
+        }
+        boolean changed = false;
+        JsonObject booleansJson;
+        if (json.has("extra_booleans")) {
+            booleansJson = GsonHelper.getAsJsonObject(json, "extra_booleans");
+        } else {
+            booleansJson = new JsonObject();
+            json.add("extra_booleans", booleansJson);
+            changed = true;
+        }
+        if (!booleansJson.has("legacy_taming")) {
+            booleansJson.addProperty("legacy_taming", false);
+            changed = true;
+        }
+        if (changed && !json.has("hints")) {
+            JsonObject hints = defaultHints(id);
+            if (hints != null && !hints.entrySet().isEmpty()) {
+                json.add("hints", hints);
+            }
+        }
+    }
+
+    private void backfillLegacyTaming(Path path, ResourceLocation id) {
+        if (!requiresLegacyTamingFlag(id)) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            boolean needsUpdate = !json.has("extra_booleans")
+                    || !GsonHelper.getAsJsonObject(json, "extra_booleans").has("legacy_taming");
+            if (needsUpdate) {
+                ensureLegacyTamingFlag(id, json);
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill legacy_taming flag for {} at {}", id, path, e);
+        }
+    }
+
+    private static boolean requiresLegacyTamingFlag(ResourceLocation id) {
+        return id.equals(NULLJAW_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID);
+    }
+
     private static JsonObject defaultHints(ResourceLocation id) {
         JsonObject hints = new JsonObject();
         // Shared taming guidance
         hints.addProperty("taming_chance_base", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
         hints.addProperty("taming_chance_hearty", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
         hints.addProperty("taming_chance", "Lower is easier: 1 = 100% per attempt, 100 = 1% per attempt");
+        hints.addProperty("legacy_taming", "true = simple food taming, false = special mechanics (rodeo/low-health)");
 
         if (id.equals(CINDERVANE_ID)) {
             hints.addProperty("run_speed", "Min 0.01, Max 1.5");
