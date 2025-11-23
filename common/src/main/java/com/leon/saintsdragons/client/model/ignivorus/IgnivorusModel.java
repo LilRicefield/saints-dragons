@@ -17,6 +17,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/ignivorus.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/ignivorus.animation.json");
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
+    private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_female.png");
 
     public IgnivorusModel() {
         // Use non-existent bone so GeckoLib doesn't override animation keyframes
@@ -30,7 +31,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
 
     @Override
     public ResourceLocation getTextureResource(Ignivorus entity) {
-        return TEXTURE;
+        return entity != null && entity.isFemale() ? FEMALE_TEXTURE : TEXTURE;
     }
 
     @Override

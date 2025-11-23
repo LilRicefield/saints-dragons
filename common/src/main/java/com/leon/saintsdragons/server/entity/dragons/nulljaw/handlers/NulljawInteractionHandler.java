@@ -95,20 +95,6 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             } else {
                 drake.level().broadcastEntityEvent(drake, (byte) 6);  // Smoke
             }
-
-            if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                if (success) {
-                    serverPlayer.displayClientMessage(
-                            Component.translatable("entity.saintsdragons.nulljaw.tamed", drake.getName()),
-                            true
-                    );
-                } else {
-                    serverPlayer.displayClientMessage(
-                            Component.translatable("entity.saintsdragons.nulljaw.taming_failed", drake.getName()),
-                            true
-                    );
-                }
-            }
         }
 
         return InteractionResult.sidedSuccess(drake.level().isClientSide);
