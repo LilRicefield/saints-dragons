@@ -284,7 +284,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.50D);
         configuredGroundRunSpeed = Math.max(0.01D, runSpeed);
         configuredGroundWalkSpeed = Math.max(0.01D, walkSpeed);
-        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredGroundWalkSpeed);
+        // Keep AI baseline at the general movement speed so it can follow properly; rider sets speed dynamically
+        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
         if (this.getHealth() > config.maxHealth()) {
             this.setHealth((float) config.maxHealth());
         }

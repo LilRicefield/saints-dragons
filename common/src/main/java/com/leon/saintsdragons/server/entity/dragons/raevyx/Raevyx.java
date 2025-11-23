@@ -2887,8 +2887,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private void applyConfiguredAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        // Ground movement uses configurable walk/run speeds; set base to walk
-        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredWalkSpeed);
+        // Ground movement uses configurable walk/run speeds; set base to run for AI follow responsiveness
+        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredRunSpeed);
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
 
@@ -2899,7 +2899,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
         AttributeInstance moveAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
         if (moveAttr != null) {
-            moveAttr.setBaseValue(this.isRunning() ? configuredRunSpeed : configuredWalkSpeed);
+            moveAttr.setBaseValue(this.isRunning() ? configuredRunSpeed : configuredRunSpeed);
         }
 
         double maxHealth = config.maxHealth();

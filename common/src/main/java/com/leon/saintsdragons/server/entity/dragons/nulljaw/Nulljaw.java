@@ -745,7 +745,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         configuredRunSpeed = Math.max(0.01D, runSpeed);
         double walkSpeed = config.groundWalkSpeed(configuredRunSpeed * 0.5D);
         configuredWalkSpeed = Math.max(0.01D, walkSpeed);
-        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredWalkSpeed);
+        // Use run speed as the base AI speed so following doesn't crawl
+        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredRunSpeed);
         configuredSwimSpeed = config.extraDouble("swim_speed", 1.45D);
         if (this.getHealth() > config.maxHealth()) {
             this.setHealth((float) config.maxHealth());

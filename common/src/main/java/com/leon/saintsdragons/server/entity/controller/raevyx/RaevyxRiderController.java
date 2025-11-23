@@ -112,8 +112,11 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // Flying speed - use ONLY the attributed flying speed, no modifiers
             return (float) wyvern.getAttributeValue(Attributes.FLYING_SPEED);
         } else {
-            double run = wyvern.getConfiguredRunSpeed();
-            double walk = wyvern.getConfiguredWalkSpeed();
+            // Rider speeds are intentionally toned down relative to AI/base speeds
+            final double WALK_SCALE = 8.0D / 12.0D;   // reduce walk to ~66%
+            final double RUN_SCALE = 18.0D / 21.0D;   // reduce run to ~86%
+            double run = wyvern.getConfiguredRunSpeed() * RUN_SCALE;
+            double walk = wyvern.getConfiguredWalkSpeed() * WALK_SCALE;
 
             // Check if actually moving to prevent sprint animation when standing still
             boolean isMoving = wyvern.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
