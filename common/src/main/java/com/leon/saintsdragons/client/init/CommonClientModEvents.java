@@ -13,9 +13,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
-/**
- * Client-only renderer wiring shared across loaders.
- */
 public final class CommonClientModEvents {
     private CommonClientModEvents() {
     }

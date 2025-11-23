@@ -38,14 +38,15 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
     private static final int SOUND_DELAY_TICKS = 3;
     private static final int ROAR_TOTAL_TICKS = 100; // 5 seconds @ 20 TPS
 
-    // Swipe timing in ticks (based on animation keyframes)
-    private static final int FIRST_SWIPE_TICK = 16;   // 0.80s
-    private static final int SECOND_SWIPE_TICK = 26;  // 1.32s
-    private static final int THIRD_SWIPE_TICK = 33;   // 1.67s
-    private static final int FOURTH_SWIPE_TICK = 43;  // 2.13s
-    private static final int FIFTH_SWIPE_TICK = 49;   // 2.45s
-    private static final int SIXTH_SWIPE_TICK = 60;   // 3.00s
-    private static final int SEVENTH_SWIPE_TICK = 89; // 4.47s
+    // Swipe timing in ticks (relative to ACTIVE section start, animation starts at STARTUP tick 0)
+    // Animation total: 95 ticks (4.75s), STARTUP is 6 ticks, so subtract 6 from animation timings
+    private static final int FIRST_SWIPE_TICK = 7;    // 0.67s from animation start (13 ticks - 6)
+    private static final int SECOND_SWIPE_TICK = 21;  // 1.33s from animation start (27 ticks - 6)
+    private static final int THIRD_SWIPE_TICK = 29;   // 1.75s from animation start (35 ticks - 6)
+    private static final int FOURTH_SWIPE_TICK = 36;  // 2.11s from animation start (42 ticks - 6)
+    private static final int FIFTH_SWIPE_TICK = 43;   // 2.44s from animation start (49 ticks - 6)
+    private static final int SIXTH_SWIPE_TICK = 53;   // 2.96s from animation start (59 ticks - 6)
+    private static final int SEVENTH_SWIPE_TICK = 84; // 4.50s from animation start (90 ticks - 6)
 
     private static final float BASE_CLAW_DAMAGE = 12.0f;
     private static final double CLAW_RANGE = 5.0;

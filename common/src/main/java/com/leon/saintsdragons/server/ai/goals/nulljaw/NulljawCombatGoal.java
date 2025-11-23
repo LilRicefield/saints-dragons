@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.goals.nulljaw;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -10,17 +11,25 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.EnumSet;
 
 /**
- * Ground combat coordinator for the Rift Drake.
- * Keeps the drake neutral until provoked, then selects the appropriate melee ability.
+ * Ground combat coordinator for Nulljaw.
+ * Features phase-based combat with roar opener and optimized pathfinding.
  */
 public class NulljawCombatGoal extends Goal {
     private static final double CHASE_SPEED = 1.5D;
-    private static final double BITE_RANGE = 3.5D;
-    private static final double HORN_RANGE = 4.5D;
-    private static final int MIN_ATTACK_COOLDOWN_TICKS = 10;
+    private static final double BITE_RANGE = 5.0D;   // Matched to bite ability (5.5) - slightly conservative for AI
+    private static final double HORN_RANGE = 5.0D;   // Matched to horn gore ability (7.0) - slightly conservative for AI
+    private static final int MIN_ATTACK_COOLDOWN_TICKS = 20;
 
     private final Nulljaw drake;
     private int attackCooldown;
+    private int pathRecalcCooldown = 0;
+    private double lastTargetX;
+    private double lastTargetY;
+    private double lastTargetZ;
+
+    // Roar opener mechanic
+    private boolean hasUsedRoarOpener = false;
+    private int roarOpenerDelay = 0;
 
     public NulljawCombatGoal(Nulljaw drake) {
         this.drake = drake;
@@ -56,9 +65,21 @@ public class NulljawCombatGoal extends Goal {
         this.attackCooldown = 0;
         drake.setAggressive(true);
 
+        // Initialize roar opener - only in phase 2 (roar2 has damaging claw swipes)
+        if (drake.isPhaseTwoActive()) {
+            hasUsedRoarOpener = false;
+            roarOpenerDelay = 5;
+        } else {
+            // Skip roar opener in phase 1
+            hasUsedRoarOpener = true;
+            roarOpenerDelay = 0;
+        }
+
         LivingEntity target = drake.getTarget();
         if (target != null) {
+            drake.getLookControl().setLookAt(target, 30.0F, 30.0F);
             drake.getNavigation().moveTo(target, CHASE_SPEED);
+            rememberTargetPosition(target);
         }
     }
 
@@ -66,6 +87,11 @@ public class NulljawCombatGoal extends Goal {
     public void stop() {
         drake.getNavigation().stop();
         drake.setAggressive(false);
+        pathRecalcCooldown = 0;
+
+        // Reset roar opener for next combat encounter
+        hasUsedRoarOpener = false;
+        roarOpenerDelay = 0;
     }
 
     @Override
@@ -84,26 +110,49 @@ public class NulljawCombatGoal extends Goal {
             return;
         }
 
-        drake.getLookControl().setLookAt(target, 35.0F, 35.0F);
+        drake.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-        double distanceSq = drake.distanceToSqr(target);
-        double attackReachSq = getAttackReachSqr(target);
-        boolean inRange = distanceSq <= attackReachSq;
-        boolean hasLineOfSight = drake.getSensing().hasLineOfSight(target);
-
-        if (!inRange || !hasLineOfSight) {
-            if (!isPerformingAttack()) {
-                drake.getNavigation().moveTo(target, CHASE_SPEED);
+        // Handle roar opener - use roar once at the start of combat (phase 2 only)
+        if (!hasUsedRoarOpener) {
+            if (roarOpenerDelay > 0) {
+                roarOpenerDelay--;
+                // Keep chasing during delay
+                updateChasePath(target);
+            } else {
+                // Delay expired - use roar ability and KEEP WALKING toward target
+                // Roar2 has 7 claw swipes that need to land, so maintain chase
+                drake.combatManager.tryUseAbility(NulljawAbilities.NULLJAW_ROAR);
+                hasUsedRoarOpener = true;
+                attackCooldown = 100; // Roar lasts 100 ticks, wait for it to finish
             }
-            return;
+            // KEEP CHASING even after roar starts (roar2 needs close range for swipes)
+            updateChasePath(target);
+            return; // Don't do normal attacks during roar
         }
 
-        drake.getNavigation().stop();
-        tryPerformAttacks(target);
+        // Normal combat after roar opener
+        double gap = getGapToTarget(target);
+        boolean hasLineOfSight = drake.getSensing().hasLineOfSight(target);
+
+        if (gap > HORN_RANGE) {
+            // Out of range - chase to get closer
+            if (!isPerformingAttack()) {
+                updateChasePath(target);
+            }
+        } else {
+            // In melee range - stop moving and attack
+            drake.getNavigation().stop();
+            pathRecalcCooldown = 0;
+            tryPerformAttacks(target);
+        }
     }
 
     private void tryPerformAttacks(LivingEntity target) {
-        if (attackCooldown > 0) {
+        if (attackCooldown > 0 || isPerformingAttack()) {
+            return;
+        }
+
+        if (!drake.getSensing().hasLineOfSight(target)) {
             return;
         }
 
@@ -135,9 +184,15 @@ public class NulljawCombatGoal extends Goal {
         return null;
     }
 
+    /**
+     * Check if drake is currently executing an attack ability
+     */
     private boolean isPerformingAttack() {
-        return drake.getActiveAbility() != null
-                || drake.combatManager.isAbilityActive(NulljawAbilities.NULLJAW_CLAW);
+        return drake.isAbilityActive(NulljawAbilities.NULLJAW_BITE)
+            || drake.isAbilityActive(NulljawAbilities.NULLJAW_BITE2)
+            || drake.isAbilityActive(NulljawAbilities.NULLJAW_CLAW)
+            || drake.isAbilityActive(NulljawAbilities.NULLJAW_HORN_GORE)
+            || drake.isAbilityActive(NulljawAbilities.NULLJAW_ROAR);
     }
 
     private boolean isWithinAggroRange(LivingEntity target) {
@@ -155,9 +210,37 @@ public class NulljawCombatGoal extends Goal {
         return reach * reach;
     }
 
+    /**
+     * Get the gap between entity edges (not centers)
+     */
     private double getGapToTarget(LivingEntity target) {
         double distance = drake.distanceTo(target);
         double combinedRadii = (drake.getBbWidth() + target.getBbWidth()) * 0.5;
         return Math.max(0.0D, distance - combinedRadii);
+    }
+
+    /**
+     * Update chase path with optimized recalculation
+     */
+    private void updateChasePath(LivingEntity target) {
+        if (--pathRecalcCooldown <= 0 || targetMovedSignificantly(target)) {
+            rememberTargetPosition(target);
+            double distance = drake.distanceTo(target);
+            pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
+            drake.getNavigation().moveTo(target, CHASE_SPEED);
+        }
+    }
+
+    private void rememberTargetPosition(LivingEntity target) {
+        this.lastTargetX = target.getX();
+        this.lastTargetY = target.getY();
+        this.lastTargetZ = target.getZ();
+    }
+
+    private boolean targetMovedSignificantly(LivingEntity target) {
+        double dx = target.getX() - this.lastTargetX;
+        double dy = target.getY() - this.lastTargetY;
+        double dz = target.getZ() - this.lastTargetZ;
+        return dx * dx + dy * dy + dz * dz > 4.0D;
     }
 }

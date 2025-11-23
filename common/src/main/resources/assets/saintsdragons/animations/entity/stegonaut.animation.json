@@ -4650,7 +4650,7 @@
 		"animation.stegonaut.die": {
 			"animation_length": 3.3333,
 			"bones": {
-				"body": {
+				"root": {
 					"rotation": {
 						"0.0": {
 							"post": {

@@ -5,8 +5,10 @@ import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
+import software.bernie.geckolib.model.data.EntityModelData;
 
 public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     public StegonautModel() {
@@ -39,54 +41,36 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         float partialTick = animationState.getPartialTick();
         applyBodyRotationDeviation(entity, partialTick);
         applyTailDrag(entity, partialTick);
-        // Note: Head rotation is handled by GeckoLib's built-in head tracking
+        applyNeckFollow(entity, animationState);
     }
 
     private void applyBodyRotationDeviation(Stegonaut entity, float partialTick) {
-        var rootOpt = getBone("root");
+        var rootOpt = getBone("body");
         if (rootOpt.isEmpty()) {
             return;
         }
-
         GeoBone root = rootOpt.get();
         var snap = root.getInitialSnapshot();
-
-        // Get the smoothed head-body difference
         double deviation = entity.bodyRotDeviation.get(partialTick);
-
-        // Convert to radians
-        // GeckoLib bones rotate left when positive, Minecraft rotates right when positive
-        // Subtract to flip the coordinate system
         float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
 
         root.setRotY(snap.getRotY() - deviationRad);
     }
 
-    /**
-     * Applies tail drag effect when turning (The Dawn Era approach).
-     * Uses yawVelocity (body turning speed) NOT bodyRotDeviation (head-body difference).
-     * This way tail only swings when BODY turns, not when head looks around.
-     */
+
     private void applyTailDrag(Stegonaut entity, float partialTick) {
-        // Use yawVelocity (body turn rate) instead of bodyRotDeviation (head-body difference)
-        // This prevents tail from acting like a second neck when dragon looks around while walking
         double velocity = entity.yawVelocity.get(partialTick);
+        velocity = Mth.clamp(velocity, -30.0, 30.0);
 
-        // Clamp velocity to prevent tail from going crazy during rapid movements
-        velocity = Mth.clamp(velocity, -30.0, 30.0); // Max ~30 degrees of tail swing
+        float targetVelocity = (float) velocity;
+        float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity);
+        float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
 
-        float velocityRad = (float)(velocity * Mth.DEG_TO_RAD);
-
-        // Apply rotation with increasing intensity toward tip
-        applyTailBoneRotation("tail1", velocityRad * 1.0f);
-        applyTailBoneRotation("tail2", velocityRad * 2.5f);
-        applyTailBoneRotation("tail3", velocityRad * 3.0f);
+        applyTailBoneRotation("tail1", velocityRad * 0.5f);
+        applyTailBoneRotation("tail2", velocityRad * 1.0f);
+        applyTailBoneRotation("tail3", velocityRad * 1.5f);
     }
 
-    /**
-     * Helper to apply Y-rotation to a tail bone.
-     * ADDS to current rotation (preserves animation) instead of replacing it.
-     */
     private void applyTailBoneRotation(String boneName, float rotationY) {
         var boneOpt = getBone(boneName);
         if (boneOpt.isEmpty()) {
@@ -94,7 +78,40 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         }
 
         GeoBone bone = boneOpt.get();
-        // Add to current rotation (which includes animation) instead of setting from snapshot
         bone.setRotY(bone.getRotY() + rotationY);
+    }
+
+    private void applyNeckFollow(Stegonaut entity, AnimationState<Stegonaut> state) {
+        EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) {
+            return;
+        }
+
+        float partialTick = state.getPartialTick();
+
+        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+
+        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
+        float totalYawRad = lookYawRad + structuralYawRad;
+
+        totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
+
+        float lookPitchRad = Mth.clamp(modelData.headPitch(), -20.0f, 20.0f) * Mth.DEG_TO_RAD;
+
+        applyNeckBoneFollow("neck1", lookPitchRad, totalYawRad, 0.15f);
+        applyNeckBoneFollow("neck2", lookPitchRad, totalYawRad, 0.20f);
+        applyNeckBoneFollow("head", lookPitchRad, totalYawRad, 0.25f);
+    }
+    private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) return;
+
+        GeoBone bone = boneOpt.get();
+        float addX = headDeltaX * weight;
+        float addY = headDeltaY * weight;
+
+        bone.setRotX(bone.getRotX() + addX);
+        bone.setRotY(bone.getRotY() + addY);
     }
 }

@@ -8,10 +8,6 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
-/**
- * Nulljaw model using GeckoLib's built-in head tracking system.
- * The "head" bone parents all neck bones, so we distribute rotation across the neck chain.
- */
 public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/nulljaw.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/nulljaw.animation.json");
@@ -19,7 +15,6 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/nulljaw/nulljaw_female.png");
 
     public NulljawModel() {
-        // Defaulted paths under entity/ and built-in head rotation for "head" bone
         super(SaintsDragonsCommon.rl("nulljaw"), "headController");
     }
 
@@ -42,27 +37,16 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     @Override
     public void setCustomAnimations(Nulljaw entity, long instanceId, AnimationState<Nulljaw> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
-
         float partialTick = animationState.getPartialTick();
-
-        // Apply body rotation deviation for smooth "body follows head" behavior
         applyBodyRotationDeviation(entity, partialTick);
-
-        // Apply swim roll for dynamic underwater banking (like Raevyx's flight banking)
         if (entity.isAlive() && entity.isSwimming()) {
             applySwimRoll(entity, animationState);
         }
-        applyGroundNeckTurn(entity, partialTick);  // Turn neck based on ground turning
+        applyGroundNeckTurn(entity, partialTick);
         applyTailDrag(entity, partialTick);
-        // Distribute head rotation across neck segments
         applyNeckFollow(entity, animationState);
     }
 
-    /**
-     * Applies smooth body rotation using AstemirLib's deviation approach.
-     * bodyRotDeviation tracks the difference between head and body rotation.
-     * This creates the natural "head leads, body follows" behavior.
-     */
     private void applyBodyRotationDeviation(Nulljaw entity, float partialTick) {
         var rootOpt = getBone("root");
         if (rootOpt.isEmpty()) {
@@ -71,23 +55,12 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
 
         GeoBone root = rootOpt.get();
         var snap = root.getInitialSnapshot();
-
-        // Get the smoothed head-body difference
         double deviation = entity.bodyRotDeviation.get(partialTick);
-
-        // Convert to radians and apply
-        // GeckoLib bones rotate left when positive, Minecraft rotates right when positive
         float deviationRad = (float)(deviation * net.minecraft.util.Mth.DEG_TO_RAD);
 
         root.setRotY(snap.getRotY() - deviationRad);
     }
 
-
-    /**
-     * Applies dynamic swim roll to the body bone for smooth underwater banking.
-     * Similar to Raevyx's flight banking but adapted for swimming mechanics.
-     * Adds to whatever the animation (swimming_left/swimming_right) already set.
-     */
     private void applySwimRoll(Nulljaw entity, AnimationState<Nulljaw> state) {
         var bodyOpt = getBone("body");
         if (bodyOpt.isEmpty()) return;
@@ -102,136 +75,72 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         body.setRotZ(body.getRotZ() + swimRollRad);
     }
 
-    /**
-     * Turn neck in the direction of ground turning based on yaw velocity.
-     * Head leans INTO the turn direction when walking/running on ground.
-     */
     private void applyGroundNeckTurn(Nulljaw entity, float partialTick) {
-        // Use yaw velocity to determine turn direction and magnitude
         double velocity = entity.yawVelocity.get(partialTick);
-
-        // Clamp to prevent excessive rotation
         velocity = Mth.clamp(velocity, -25.0, 25.0);
-
-        // Convert to radians - head turns IN the direction of the turn (opposite of tail drag)
-        // So we NEGATE the velocity
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
-
-        // Apply with increasing intensity toward the head (3 neck segments + head)
         applyNeckBoneRotation("neck1Controller", turnRad * 0.4f);
         applyNeckBoneRotation("neck2Controller", turnRad * 0.42f);
         applyNeckBoneRotation("neck3Controller", turnRad * 0.44f);
         applyNeckBoneRotation("headController", turnRad * 0.46f);
     }
 
-    /**
-     * Helper to apply Y-rotation to a neck bone for ground turning.
-     * ADDS to current rotation (preserves animation) instead of replacing it.
-     */
     private void applyNeckBoneRotation(String boneName, float rotationY) {
         var boneOpt = getBone(boneName);
         if (boneOpt.isEmpty()) {
             return;
         }
-
         GeoBone bone = boneOpt.get();
-        // Add to current rotation (which includes animation) instead of setting from snapshot
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    /**
-     * Distributes head rotation across neck segments.
-     * Combines look direction with structural rotation from turning, then clamps to prevent crunching.
-     */
     private void applyNeckFollow(Nulljaw entity, AnimationState<Nulljaw> state) {
         var headOpt = getBone("headController");
         if (headOpt.isEmpty()) return;
-
         GeoBone head = headOpt.get();
         float partialTick = state.getPartialTick();
-
-        // Get how much GeckoLib rotated the parent "head" bone
         float headDeltaX = head.getRotX() - head.getInitialSnapshot().getRotX();
         float headDeltaY = head.getRotY() - head.getInitialSnapshot().getRotY();
-
-        // Get body deviation (how much head leads body)
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
-
-        // Combine structural rotation + look direction, then clamp
-        // bodyDeviation * 2.0 = structural neck bend from turning
-        // headDeltaY = where the head wants to look (from GeckoLib)
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = headDeltaY + structuralYawRad;
-
-        // Clamp total rotation to prevent structural crunching during 360° turns
         totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
-
-        // Clamp pitch as well
         float clampedPitchRad = Mth.clamp(headDeltaX, -20.0f * Mth.DEG_TO_RAD, 20.0f * Mth.DEG_TO_RAD);
-
-        // COUNTER-ROTATE the parent "head" bone so it doesn't rotate rigidly
-        // We'll redistribute this rotation across the neck segments instead
         head.setRotX(head.getInitialSnapshot().getRotX());
         head.setRotY(head.getInitialSnapshot().getRotY());
-
-        // Now distribute the CLAMPED rotation across neck segments
-        applyNeckBoneFollow("neck1Controller", clampedPitchRad, totalYawRad, 0.35f);  // Base
-        applyNeckBoneFollow("neck2Controller", clampedPitchRad, totalYawRad, 0.40f);    // Middle
-        applyNeckBoneFollow("neck3Controller", clampedPitchRad, totalYawRad, 0.45f);    // Tip - most rotation
+        applyNeckBoneFollow("neck1Controller", clampedPitchRad, totalYawRad, 0.35f);
+        applyNeckBoneFollow("neck2Controller", clampedPitchRad, totalYawRad, 0.40f);
+        applyNeckBoneFollow("neck3Controller", clampedPitchRad, totalYawRad, 0.45f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
         var boneOpt = getBone(boneName);
         if (boneOpt.isEmpty()) return;
-
         GeoBone bone = boneOpt.get();
-
-        // Apply weighted portion of the head's rotation
         float addX = headDeltaX * weight;
         float addY = headDeltaY * weight;
-
-        // Add to current rotation (preserves animation keyframes)
         bone.setRotX(bone.getRotX() + addX);
         bone.setRotY(bone.getRotY() + addY);
     }
 
-    /**
-     * Applies tail drag effect based on turning speed (yaw velocity).
-     * Works for both wild and ridden dragons - tail swings with turn direction.
-     */
     private void applyTailDrag(Nulljaw entity, float partialTick) {
-        // Use yawVelocity instead of bodyRotDeviation so it works when riding
         double velocity = entity.yawVelocity.get(partialTick);
-
-        // Clamp velocity to prevent tail from going crazy during rapid movements
-        velocity = Mth.clamp(velocity, -30.0, 30.0); // Max ~30 degrees of tail swing
-
-        // Apply additional client-side smoothing to prevent snapping during sprint transitions
-        // Server-side yawVelocity smoothing (0.25f) isn't enough for visual smoothness
+        velocity = Mth.clamp(velocity, -30.0, 30.0);
         float targetVelocity = (float) velocity;
-        float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity); // Per-entity smoothing
-
+        float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity);
         float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
-
-        // Tail swings with increasing intensity toward tip
         applyTailBoneRotation("tail1", velocityRad * 1.0f);
         applyTailBoneRotation("tail2", velocityRad * 1.5f);
         applyTailBoneRotation("tail3", velocityRad * 2.0f);
         applyTailBoneRotation("tail4", velocityRad * 2.5f);
     }
 
-    /**
-     * Helper to apply Y-rotation to a tail bone.
-     * ADDS to current rotation (preserves animation) instead of replacing it.
-     */
     private void applyTailBoneRotation(String boneName, float rotationY) {
         var boneOpt = getBone(boneName);
         if (boneOpt.isEmpty()) {
             return;
         }
-
         GeoBone bone = boneOpt.get();
-        // Add to current rotation (which includes animation) instead of setting from snapshot
         bone.setRotY(bone.getRotY() + rotationY);
     }
 }
