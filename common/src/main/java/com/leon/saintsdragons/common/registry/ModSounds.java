@@ -75,7 +75,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> NULLJAW_PHASE2 = registerSound("nulljaw_phase2");
     public static final Supplier<SoundEvent> NULLJAW_PHASE2_END = registerSound("nulljaw_phase2_end");
     public static final Supplier<SoundEvent> NULLJAW_ROAR = registerSound("nulljaw_roar");
-    public static final Supplier<SoundEvent> NULLJAW_ROARCLAW = registerSound("nulljaw_roarclaw");
+    public static final Supplier<SoundEvent> NULLJAW_ROAR2 = registerSound("nulljaw_roar2");
     public static final Supplier<SoundEvent> NULLJAW_WALK = registerSound("nulljaw_walk");
     public static final Supplier<SoundEvent> NULLJAW_RUN = registerSound("nulljaw_run");
     public static final Supplier<SoundEvent> NULLJAW_WALK2 = registerSound("nulljaw_walk2");

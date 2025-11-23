@@ -481,12 +481,12 @@
       }
     ]
   },
-  "nulljaw_roarclaw": {
-    "subtitle": "Nulljaw slashes while roaring",
+  "nulljaw_roar2": {
+    "subtitle": "Nulljaw roars aggressively",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_roarclaw",
-        "volume": 1.4,
+        "name": "saintsdragons:entity/nulljaw/nulljaw_roar2",
+        "volume": 2.5,
         "pitch": 1.0
       }
     ]

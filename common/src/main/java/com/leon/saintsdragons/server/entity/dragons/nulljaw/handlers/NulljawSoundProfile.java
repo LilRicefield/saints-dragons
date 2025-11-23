@@ -93,13 +93,13 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
                 playClientSound(dragon, ModSounds.NULLJAW_HORNGORE.get(), 1.2f, 0.9f, 0.2f);
                 yield true;
             }
-            case "nulljaw_roarclaw" -> {
-                playClientSound(dragon, ModSounds.NULLJAW_ROARCLAW.get(), 1.3f, 0.9f, 0.2f);
+            case "nulljaw_roar" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_ROAR.get(), 2.5f, 0.9f, 0.1f);
                 yield true;
             }
-            case "nulljaw_roar" -> {
-                // Roar is handled by ability, return false to skip
-                yield false;
+            case "nulljaw_roar2" -> {
+                playClientSound(dragon, ModSounds.NULLJAW_ROAR2.get(), 2.5f, 0.8f, 0.1f);
+                yield true;
             }
             default -> false;
         };
