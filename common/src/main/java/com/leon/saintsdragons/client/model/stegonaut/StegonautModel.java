@@ -38,10 +38,15 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     @Override
     public void setCustomAnimations(Stegonaut entity, long instanceId, AnimationState<Stegonaut> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
+
+        // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
+        EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) return;
+
         float partialTick = animationState.getPartialTick();
         applyBodyRotationDeviation(entity, partialTick);
         applyTailDrag(entity, partialTick);
-        applyNeckFollow(entity, animationState);
+        applyNeckFollow(entity, modelData, partialTick);
     }
 
     private void applyBodyRotationDeviation(Stegonaut entity, float partialTick) {
@@ -81,14 +86,7 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    private void applyNeckFollow(Stegonaut entity, AnimationState<Stegonaut> state) {
-        EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
-        if (modelData == null) {
-            return;
-        }
-
-        float partialTick = state.getPartialTick();
-
+    private void applyNeckFollow(Stegonaut entity, EntityModelData modelData, float partialTick) {
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
 
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;

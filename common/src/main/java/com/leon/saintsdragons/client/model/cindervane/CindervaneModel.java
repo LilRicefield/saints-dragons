@@ -25,12 +25,16 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
     public void setCustomAnimations(Cindervane entity, long instanceId, AnimationState<Cindervane> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
+        // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
+        EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) return;
+
         float partialTick = animationState.getPartialTick();
 
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
-            applyNeckFollow(entity, animationState);
+            applyNeckFollow(entity, modelData, partialTick);
             applyNeckBankingLean(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
@@ -118,12 +122,7 @@ public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    private void applyNeckFollow(Cindervane entity, AnimationState<Cindervane> state) {
-        EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
-        if (modelData == null) {
-            return;
-        }
-        float partialTick = state.getPartialTick();
+    private void applyNeckFollow(Cindervane entity, EntityModelData modelData, float partialTick) {
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);

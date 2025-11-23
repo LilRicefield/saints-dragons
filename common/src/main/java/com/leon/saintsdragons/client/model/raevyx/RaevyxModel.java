@@ -61,12 +61,16 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         // Let GeckoLib handle head tracking automatically
         super.setCustomAnimations(entity, instanceId, animationState);
 
+        // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
+        EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) return;
+
         float partialTick = animationState.getPartialTick();
 
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);  // Same as Nulljaw/Stegonaut
             applyBankingRoll(entity, animationState);
-            applyNeckFollow(entity, animationState);   // Base head tracking first (uses animation snapshot)
+            applyNeckFollow(entity, modelData, partialTick);   // Base head tracking first (uses animation snapshot)
             applyNeckBankingLean(entity, partialTick); // Then layer procedural leans so they add on top
             applyGroundNeckTurn(entity, partialTick);  // Same for ground turning
             applyTailDrag(entity, partialTick);
@@ -195,17 +199,11 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
      * Calculate neck rotation relative to BODY yaw (structural), not head look target.
      * This prevents "funny bending" when tracking targets while turning.
      */
-    private void applyNeckFollow(Raevyx entity, AnimationState<Raevyx> state) {
+    private void applyNeckFollow(Raevyx entity, EntityModelData modelData, float partialTick) {
         var headOpt = getBone("head1Controller");
         if (headOpt.isEmpty()) return;
 
-        EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
-        if (modelData == null) {
-            return;
-        }
-
         GeoBone head = headOpt.get();
-        float partialTick = state.getPartialTick();
 
         // Get body deviation (how much head leads body)
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);

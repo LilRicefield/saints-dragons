@@ -5,8 +5,10 @@ import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
+import software.bernie.geckolib.model.data.EntityModelData;
 
 public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/nulljaw.geo.json");
@@ -37,6 +39,11 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     @Override
     public void setCustomAnimations(Nulljaw entity, long instanceId, AnimationState<Nulljaw> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
+
+        // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
+        EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) return;
+
         float partialTick = animationState.getPartialTick();
         applyBodyRotationDeviation(entity, partialTick);
         if (entity.isAlive() && entity.isSwimming()) {
@@ -44,7 +51,7 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         }
         applyGroundNeckTurn(entity, partialTick);
         applyTailDrag(entity, partialTick);
-        applyNeckFollow(entity, animationState);
+        applyNeckFollow(entity, modelData, partialTick);
     }
 
     private void applyBodyRotationDeviation(Nulljaw entity, float partialTick) {
@@ -94,20 +101,26 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    private void applyNeckFollow(Nulljaw entity, AnimationState<Nulljaw> state) {
+    private void applyNeckFollow(Nulljaw entity, EntityModelData modelData, float partialTick) {
         var headOpt = getBone("headController");
         if (headOpt.isEmpty()) return;
+
         GeoBone head = headOpt.get();
-        float partialTick = state.getPartialTick();
-        float headDeltaX = head.getRotX() - head.getInitialSnapshot().getRotX();
-        float headDeltaY = head.getRotY() - head.getInitialSnapshot().getRotY();
+
+        // Use EntityModelData directly instead of reading bone deltas (consistent with other dragons)
+        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
-        float totalYawRad = headDeltaY + structuralYawRad;
+        float totalYawRad = lookYawRad + structuralYawRad;
         totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
-        float clampedPitchRad = Mth.clamp(headDeltaX, -20.0f * Mth.DEG_TO_RAD, 20.0f * Mth.DEG_TO_RAD);
+        float clampedPitchRad = Mth.clamp(lookPitchRad, -20.0f * Mth.DEG_TO_RAD, 20.0f * Mth.DEG_TO_RAD);
+
+        // Reset head controller to snapshot (let neck bones handle the tracking)
         head.setRotX(head.getInitialSnapshot().getRotX());
         head.setRotY(head.getInitialSnapshot().getRotY());
+
         applyNeckBoneFollow("neck1Controller", clampedPitchRad, totalYawRad, 0.35f);
         applyNeckBoneFollow("neck2Controller", clampedPitchRad, totalYawRad, 0.40f);
         applyNeckBoneFollow("neck3Controller", clampedPitchRad, totalYawRad, 0.45f);

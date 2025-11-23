@@ -42,12 +42,16 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     public void setCustomAnimations(Ignivorus entity, long instanceId, AnimationState<Ignivorus> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
+        // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
+        EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) return;
+
         float partialTick = animationState.getPartialTick();
 
         if (entity.isAlive()) {
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
-            applyNeckFollow(entity, animationState);
+            applyNeckFollow(entity, modelData, partialTick);
             applyNeckBankingLean(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
@@ -113,17 +117,11 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    private void applyNeckFollow(Ignivorus entity, AnimationState<Ignivorus> state) {
+    private void applyNeckFollow(Ignivorus entity, EntityModelData modelData, float partialTick) {
         var headOpt = getBone("headController");
         if (headOpt.isEmpty()) return;
 
-        EntityModelData modelData = state.getData(DataTickets.ENTITY_MODEL_DATA);
-        if (modelData == null) {
-            return;
-        }
-
         GeoBone head = headOpt.get();
-        float partialTick = state.getPartialTick();
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);

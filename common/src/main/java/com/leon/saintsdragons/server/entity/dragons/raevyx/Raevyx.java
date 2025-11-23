@@ -99,12 +99,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     // ===== CONSTANTS =====
 
-    /** Walking speed */
-    public static final double WALK_SPEED = 0.25D;
-
-    /** Running speed */
-    public static final double RUN_SPEED = 0.45D;
-
     /** Minimum delay between ambient sounds (in ticks) */
     public static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
 
