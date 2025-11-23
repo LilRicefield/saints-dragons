@@ -10,5 +10,9 @@
     "magma_volley": {
       "damage": 20.0
     }
+  },
+  "extra": {
+    "taming_chance_base": 4.0,
+    "taming_chance_hearty": 2.0
   }
 }

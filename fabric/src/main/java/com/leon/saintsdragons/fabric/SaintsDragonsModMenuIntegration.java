@@ -56,6 +56,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 cindervaneDefaults.abilityDamage("bite", 12.0D));
         cindervaneBuffer.volleyDamage = cindervaneCurrent.abilityDamage("magma_volley",
                 cindervaneDefaults.abilityDamage("magma_volley", 20.0D));
+        cindervaneBuffer.tamingChanceBase = cindervaneCurrent.extraDouble("taming_chance_base", 4.0);
+        cindervaneBuffer.tamingChanceHearty = cindervaneCurrent.extraDouble("taming_chance_hearty", 2.0);
 
         DragonAttributeConfig raevyxCurrent = loader.getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         DragonAttributeConfig raevyxDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.RAEVYX_ID);
@@ -85,6 +87,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         nulljawBuffer.bitePhase2 = nulljawCurrent.abilityDamage("bite_phase2", 50.0D);
         nulljawBuffer.hornPhase1 = nulljawCurrent.abilityDamage("horn_gore_phase1", 16.0D);
         nulljawBuffer.hornPhase2 = nulljawCurrent.abilityDamage("horn_gore_phase2", 20.8D);
+        nulljawBuffer.tamingChance = nulljawCurrent.extraDouble("taming_chance", 6.0);
 
         DragonAttributeConfig ignivorusCurrent = loader.getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         DragonAttributeConfig ignivorusDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
@@ -268,6 +271,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.volleyDamage = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.taming_base"), buffer.tamingChanceBase)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 4.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceBase = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.taming_hearty"), buffer.tamingChanceHearty)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 2.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
+                .build());
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
@@ -401,6 +416,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(400.0D)
                 .setSaveConsumer(value -> buffer.hornPhase2 = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.taming_chance"), buffer.tamingChance)
+                .setDefaultValue(defaults.extraDouble("taming_chance", 6.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChance = value)
+                .build());
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
@@ -514,7 +535,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 cindervaneBuffer.movementSpeed,
                 cindervaneBuffer.flyingSpeed,
                 abilities,
-                Map.of()
+                Map.of(
+                        "taming_chance_base", cindervaneBuffer.tamingChanceBase,
+                        "taming_chance_hearty", cindervaneBuffer.tamingChanceHearty
+                )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.CINDERVANE_ID, updated);
 
@@ -549,7 +573,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 nulljawAbilities,
                 Map.of(
                         "walk_speed", nulljawBuffer.walkSpeed,
-                        "swim_speed", nulljawBuffer.swimSpeed
+                        "swim_speed", nulljawBuffer.swimSpeed,
+                        "taming_chance", nulljawBuffer.tamingChance
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.NULLJAW_ID, updatedNulljaw);
@@ -584,6 +609,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double flyingSpeed;
         double biteDamage;
         double volleyDamage;
+        double tamingChanceBase;
+        double tamingChanceHearty;
     }
 
     private static final class RaevyxAttributeBuffer {
@@ -608,6 +635,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double bitePhase2;
         double hornPhase1;
         double hornPhase2;
+        double tamingChance;
     }
 
     private static final class IgnivorusAttributeBuffer {

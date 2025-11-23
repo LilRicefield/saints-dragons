@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -66,12 +68,19 @@ public class CindervaneInteractionHandler {
             dragon.setFeedingCooldown(44);
 
             boolean hearty = heldItem.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            int tameRoll = hearty ? 10 : 20;
+
+            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
+            double tameChance = hearty
+                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0)
+                : config.extraDoubles().getOrDefault("taming_chance_base", 4.0);
+            int tameRoll = (int) Math.round(tameChance);
+
             if (hearty) {
                 dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
             }
 
-            if (dragon.getRandom().nextInt(tameRoll) == 0) {
+            if (dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0) {
                 dragon.tame(player);
                 dragon.getNavigation().stop();
                 dragon.setOrderedToSit(true);

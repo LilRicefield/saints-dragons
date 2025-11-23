@@ -62,7 +62,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "bite", DragonAbilityOverride.ofDamage(12.0D),
                         "magma_volley", DragonAbilityOverride.ofDamage(20.0D)
                 ),
-                Map.of()
+                Map.of(
+                        "taming_chance_base", 4.0D,
+                        "taming_chance_hearty", 2.0D
+                )
         );
     }
 
@@ -98,7 +101,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ),
                 Map.of(
                         "walk_speed", 0.14D,
-                        "swim_speed", 1.45D
+                        "swim_speed", 1.45D,
+                        "taming_chance", 6.0D
                 )
         );
     }
