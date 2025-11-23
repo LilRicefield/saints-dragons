@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.network.chat.Component;
@@ -17,9 +19,6 @@ import net.minecraft.world.item.ItemStack;
  * Extracted from LightningDragonEntity to improve maintainability and reduce class size.
  */
 public record RaevyxInteractionHandler(Raevyx wyvern) {
-    // Raevyx fully recovers after every failed attempt to keep taming loops consistent
-    private static final int BASE_TAMING_ROLL = 15;
-    private static final int HEARTY_TAMING_ROLL = 8;
     
     /**
      * Main interaction entry point.
@@ -102,7 +101,12 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
 
             wyvern.enterTamingStun();
 
-            int tameRoll = hearty ? HEARTY_TAMING_ROLL : BASE_TAMING_ROLL;
+            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+            double tameChance = hearty
+                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
+                : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
+            int tameRoll = (int) Math.round(tameChance);
             boolean success = wyvern.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
 
             if (success) {

@@ -291,6 +291,24 @@
   "text.autoconfig.saintsdragonsspawning.option.cindervaneAdditionalBiomes": "Cindervane Additional Biomes",
   "text.autoconfig.saintsdragonsspawning.option.cindervaneAdditionalBiomes.@Tooltip": "Extra biomes where Cindervane can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
 
+  "text.autoconfig.saintsdragonsspawning.category.taming": "Dragon Taming",
+
+  "text.autoconfig.saintsdragonsspawning.option.raevyxBaseTamingChance": "Raevyx Base Taming Chance",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxBaseTamingChance.@Tooltip[0]": "Taming chance with regular food (1 in N chance)",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxBaseTamingChance.@Tooltip[1]": "Lower = easier taming. Example: 5 = 20% chance per feed",
+
+  "text.autoconfig.saintsdragonsspawning.option.raevyxHeartyTamingChance": "Raevyx Hearty Taming Chance",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxHeartyTamingChance.@Tooltip[0]": "Taming chance with Hearty Dragon Meal (1 in N chance)",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxHeartyTamingChance.@Tooltip[1]": "Lower = easier taming. Example: 3 = 33% chance per feed",
+
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusBaseTamingChance": "Ignivorus Base Taming Chance",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusBaseTamingChance.@Tooltip[0]": "Taming chance with regular food (1 in N chance)",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusBaseTamingChance.@Tooltip[1]": "Lower = easier taming. Example: 7 = 14% chance per feed",
+
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusHeartyTamingChance": "Ignivorus Hearty Taming Chance",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusHeartyTamingChance.@Tooltip[0]": "Taming chance with Hearty Dragon Meal (1 in N chance)",
+  "text.autoconfig.saintsdragonsspawning.option.ignivorusHeartyTamingChance.@Tooltip[1]": "Lower = easier taming. Example: 4 = 25% chance per feed",
+
   "config.saintsdragons.title": "Saints & Dragons Settings",
   "config.saintsdragons.category.spawning": "Spawning",
   "config.saintsdragons.category.attributes": "Dragon Attributes",
@@ -318,6 +336,8 @@
   "config.saintsdragons.attributes.raevyx.bite_damage": "Bite Damage",
   "config.saintsdragons.attributes.raevyx.beam_damage": "Lightning Beam Damage",
   "config.saintsdragons.attributes.raevyx.horn_damage": "Horn Gore Damage",
+  "config.saintsdragons.attributes.raevyx.taming_base": "Taming Chance (Base Food)",
+  "config.saintsdragons.attributes.raevyx.taming_hearty": "Taming Chance (Hearty Meal)",
   "config.saintsdragons.attributes.nulljaw": "Nulljaw Attributes",
   "config.saintsdragons.attributes.nulljaw.max_health": "Max Health",
   "config.saintsdragons.attributes.nulljaw.armor": "Armor",
@@ -339,6 +359,8 @@
   "config.saintsdragons.attributes.ignivorus.body_slam_damage": "Body Slam Damage",
   "config.saintsdragons.attributes.ignivorus.fire_breath_damage": "Fire Breath Damage",
   "config.saintsdragons.attributes.ignivorus.ultimate_damage": "Ultimate Damage",
-  "config.saintsdragons.attributes.ignivorus.ultimate_penalty": "Ultimate Health Penalty"
+  "config.saintsdragons.attributes.ignivorus.ultimate_penalty": "Ultimate Health Penalty",
+  "config.saintsdragons.attributes.ignivorus.taming_base": "Taming Chance (Base Food)",
+  "config.saintsdragons.attributes.ignivorus.taming_hearty": "Taming Chance (Hearty Meal)"
 }
 

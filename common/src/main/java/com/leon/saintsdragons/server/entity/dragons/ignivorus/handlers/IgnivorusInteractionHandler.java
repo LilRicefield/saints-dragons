@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,9 +17,6 @@ import net.minecraft.world.item.ItemStack;
  * Handles all player interactions with Ignivorus dragons.
  */
 public record IgnivorusInteractionHandler(Ignivorus dragon) {
-    // Ignivorus fully recovers after every failed attempt to keep taming loops consistent
-    private static final int BASE_TAMING_ROLL = 15;
-    private static final int HEARTY_TAMING_ROLL = 8;
 
     /**
      * Main interaction entry point.
@@ -99,7 +98,12 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
 
             dragon.enterTamingStun();
 
-            int tameRoll = hearty ? HEARTY_TAMING_ROLL : BASE_TAMING_ROLL;
+            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+            double tameChance = hearty
+                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 4.0)
+                : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
+            int tameRoll = (int) Math.round(tameChance);
             boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
 
             if (success) {

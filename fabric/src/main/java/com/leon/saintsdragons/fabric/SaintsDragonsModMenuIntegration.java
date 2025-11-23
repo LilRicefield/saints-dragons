@@ -70,6 +70,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxDefaults.abilityDamage("lightning_beam", 35.0D));
         raevyxBuffer.hornDamage = raevyxCurrent.abilityDamage("horn_gore",
                 raevyxDefaults.abilityDamage("horn_gore", 15.0D));
+        raevyxBuffer.tamingChanceBase = raevyxCurrent.extraDouble("taming_chance_base", 5.0);
+        raevyxBuffer.tamingChanceHearty = raevyxCurrent.extraDouble("taming_chance_hearty", 3.0);
 
         DragonAttributeConfig nulljawCurrent = loader.getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         DragonAttributeConfig nulljawDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.NULLJAW_ID);
@@ -106,6 +108,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.abilityDamage("ultimate", 200.0D));
         ignivorusBuffer.ultimatePenalty = ignivorusCurrent.extraDouble("ultimate_penalty_health",
                 ignivorusDefaults.extraDouble("ultimate_penalty_health", 50.0D));
+        ignivorusBuffer.tamingChanceBase = ignivorusCurrent.extraDouble("taming_chance_base", 7.0);
+        ignivorusBuffer.tamingChanceHearty = ignivorusCurrent.extraDouble("taming_chance_hearty", 4.0);
         raevyxBuffer.hornDamage = raevyxCurrent.abilityDamage("horn_gore",
                 raevyxDefaults.abilityDamage("horn_gore", 15.0D));
 
@@ -319,6 +323,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.hornDamage = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_base"), buffer.tamingChanceBase)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 5.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceBase = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_hearty"), buffer.tamingChanceHearty)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 3.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
+                .build());
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.raevyx"), rawEntries)
@@ -464,6 +480,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(500.0D)
                 .setSaveConsumer(value -> buffer.ultimatePenalty = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_base"), buffer.tamingChanceBase)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 7.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceBase = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_hearty"), buffer.tamingChanceHearty)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 4.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
+                .build());
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.ignivorus"), rawEntries)
@@ -501,7 +529,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxBuffer.movementSpeed,
                 raevyxBuffer.flyingSpeed,
                 raevyxAbilities,
-                Map.of()
+                Map.of(
+                        "taming_chance_base", raevyxBuffer.tamingChanceBase,
+                        "taming_chance_hearty", raevyxBuffer.tamingChanceHearty
+                )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.RAEVYX_ID, updatedRaevyx);
 
@@ -538,7 +569,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 Map.of(
                         "walk_speed", ignivorusBuffer.walkSpeed,
                         "attack_damage", ignivorusBuffer.baseDamage,
-                        "ultimate_penalty_health", ignivorusBuffer.ultimatePenalty
+                        "ultimate_penalty_health", ignivorusBuffer.ultimatePenalty,
+                        "taming_chance_base", ignivorusBuffer.tamingChanceBase,
+                        "taming_chance_hearty", ignivorusBuffer.tamingChanceHearty
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.IGNIVORUS_ID, updatedIgnivorus);
@@ -561,6 +594,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double biteDamage;
         double beamDamage;
         double hornDamage;
+        double tamingChanceBase;
+        double tamingChanceHearty;
     }
 
     private static final class NulljawAttributeBuffer {
@@ -587,5 +622,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double fireBreathDamage;
         double ultimateDamage;
         double ultimatePenalty;
+        double tamingChanceBase;
+        double tamingChanceHearty;
     }
 }
