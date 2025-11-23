@@ -7,13 +7,10 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.model.DefaultedEntityGeoModel;
+import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
-public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
-    public StegonautModel() {
-        super(SaintsDragonsCommon.rl("stegonaut"), "head");
-    }
+public class StegonautModel extends GeoModel<Stegonaut> {
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/stegonaut.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/stegonaut.animation.json");
     private static final ResourceLocation MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/stegonaut/stegonaut.png");

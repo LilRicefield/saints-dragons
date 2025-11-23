@@ -7,14 +7,13 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.constant.DataTickets;
+import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
-import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 /**
  * Raevyx (Lightning Dragon) model using GeckoLib's built-in head tracking system.
- * The "head" bone parents all neck bones, so GeckoLib automatically rotates the entire chain.
  * Only procedural animation: banking roll for flight physics.
  */
-public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
+public class RaevyxModel extends GeoModel<Raevyx> {
     private static final ResourceLocation ADULT_MODEL = SaintsDragonsCommon.rl("geo/entity/raevyx.geo.json");
     private static final ResourceLocation FEMALE_MODEL = SaintsDragonsCommon.rl("geo/entity/raevyx.geo.json");
     private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_raevyx.geo.json");
@@ -27,8 +26,6 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
     private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/raevyx/baby_raevyx.png");
 
     public RaevyxModel() {
-        // Defaulted paths under entity/ and built-in head rotation for "head" bone
-        super(SaintsDragonsCommon.rl("raevyx"),"head1Controller");
     }
 
     @Override

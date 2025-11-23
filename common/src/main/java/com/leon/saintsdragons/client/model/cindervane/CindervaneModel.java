@@ -7,12 +7,11 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.model.DefaultedEntityGeoModel;
+import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
-public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
+public class CindervaneModel extends GeoModel<Cindervane> {
     public CindervaneModel() {
-        super(SaintsDragonsCommon.rl("cindervane"), "skullController");
     }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/cindervane.geo.json");

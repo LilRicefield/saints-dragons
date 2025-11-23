@@ -7,20 +7,17 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.model.DefaultedEntityGeoModel;
+import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
-/**
- * Ignivorus model using GeckoLib's built-in head tracking system
- */
-public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
+
+public class IgnivorusModel extends GeoModel<Ignivorus> {
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/ignivorus.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/ignivorus.animation.json");
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_female.png");
 
     public IgnivorusModel() {
-        super(SaintsDragonsCommon.rl("ignivorus"), "headController");
     }
 
     @Override
