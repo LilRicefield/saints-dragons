@@ -35,8 +35,8 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
             new AbilitySectionDuration(RECOVERY, 9)
     };
 
-    private static final int SOUND_DELAY_TICKS = 3;
     private static final int ROAR_TOTAL_TICKS = 100; // 5 seconds @ 20 TPS
+    private static final int SOUND_ADVANCE_TICKS = 3; // Play sound 3 ticks early to compensate for network delay
 
     // Swipe timing in ticks (relative to ACTIVE section start, animation starts at STARTUP tick 0)
     // Animation total: 95 ticks (4.75s), STARTUP is 6 ticks, so subtract 6 from animation timings
@@ -56,7 +56,6 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
     private static final double CLAW_VERTICAL = 4.0;
     private static final double CLAW_ANGLE_DEG = 100.0;
 
-    private boolean soundQueued = false;
     private boolean[] swipesApplied = new boolean[7];
 
     public NulljawRoarAbility(DragonAbilityType<Nulljaw, NulljawRoarAbility> type,
@@ -71,20 +70,15 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
         }
         if (section.sectionType == STARTUP) {
             Nulljaw dragon = getUser();
+            boolean phaseTwo = dragon.isPhaseTwoActive();
+
             // Use different roar animation based on phase
-            String trigger = dragon.isPhaseTwoActive() ? "roar2" : "roar";
+            // Sound is handled via animation keyframe (client-side, no delay)
+            String trigger = phaseTwo ? "roar2" : "roar";
             dragon.triggerAnim("action", trigger);
-            soundQueued = true;
 
             // Lock abilities for full animation duration but allow walking/running
             dragon.lockAbilities(ROAR_TOTAL_TICKS);
-        }
-    }
-
-    @Override
-    protected void endSection(DragonAbilitySection section) {
-        if (section != null && section.sectionType == STARTUP) {
-            soundQueued = false;
         }
     }
 
@@ -97,27 +91,7 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
 
         Nulljaw dragon = getUser();
 
-        if (soundQueued && section.sectionType == STARTUP && getTicksInSection() >= SOUND_DELAY_TICKS) {
-            if (!dragon.level().isClientSide) {
-                Vec3 mouth = dragon.getMouthPosition();
-                boolean phaseTwo = dragon.isPhaseTwoActive();
-                // Phase 2 roar is deeper and louder
-                float basePitch = phaseTwo ? 0.8f : 1.0f;
-                float volume = phaseTwo ? 1.8f : 1.4f;
-                float pitch = basePitch + dragon.getRandom().nextFloat() * 0.1f;
-
-                dragon.level().playSound(null,
-                        mouth.x, mouth.y, mouth.z,
-                        ModSounds.NULLJAW_ROAR.get(),
-                        SoundSource.NEUTRAL,
-                        volume,
-                        pitch);
-            }
-            soundQueued = false;
-        }
-
-        // Continuous screen shake during the entire ability (like Raevyx's implementation)
-        // This automatically stops when the ability ends, preventing the dragging issue
+        // Continuous screen shake during the entire ability
         if (!dragon.level().isClientSide) {
             // Phase 2 has stronger shake due to the aggressive swipes
             float intensity = dragon.isPhaseTwoActive() ? 1.0F : 0.8F;
