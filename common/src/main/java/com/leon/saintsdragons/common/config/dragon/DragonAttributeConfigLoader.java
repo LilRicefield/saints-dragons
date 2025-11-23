@@ -83,8 +83,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "horn_gore", DragonAbilityOverride.ofDamage(15.0D)
                 ),
                 Map.of(
-                        "run_speed", 0.315D,
-                        "walk_speed", 0.125D,
+                        "run_speed", 0.45D,
+                        "walk_speed", 0.25D,
                         "taming_chance_base", 5.0D,
                         "taming_chance_hearty", 3.0D
                 )
@@ -195,7 +195,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             if (Files.exists(path)) {
                 continue;
             }
-            JsonObject source = rawJson.getOrDefault(entry.getKey(), serializeConfig(entry.getValue()));
+            JsonObject source = rawJson.getOrDefault(entry.getKey(), serializeConfig(entry.getKey(), entry.getValue()));
+            if (!source.has("hints")) {
+                JsonObject hints = defaultHints(entry.getKey());
+                if (hints != null && !hints.entrySet().isEmpty()) {
+                    source.add("hints", hints);
+                }
+            }
             writeConfigFile(path, source);
         }
 
@@ -235,7 +241,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         return configDirectory.resolve(id.getPath() + ".json");
     }
 
-    private static JsonObject serializeConfig(DragonAttributeConfig config) {
+    private static JsonObject serializeConfig(ResourceLocation id, DragonAttributeConfig config) {
         JsonObject json = new JsonObject();
         json.addProperty("max_health", config.maxHealth());
         json.addProperty("armor", config.armor());
@@ -260,13 +266,47 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             json.add("extra", extraJson);
         }
 
+        // Friendly hints for players editing the Forge JSON files
+        if (!json.has("hints")) {
+            JsonObject hints = defaultHints(id);
+            if (hints != null && !hints.entrySet().isEmpty()) {
+                json.add("hints", hints);
+            }
+        }
+
         return json;
     }
 
     public void overwriteConfig(ResourceLocation id, DragonAttributeConfig config) {
-        writeConfigFile(configPath(id), serializeConfig(config));
+        writeConfigFile(configPath(id), serializeConfig(id, config));
         Map<ResourceLocation, DragonAttributeConfig> updated = new HashMap<>(this.configs);
         updated.put(id, config);
         this.configs = ImmutableMap.copyOf(updated);
+    }
+
+    private static JsonObject defaultHints(ResourceLocation id) {
+        JsonObject hints = new JsonObject();
+        // Shared taming guidance
+        hints.addProperty("taming_chance_base", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
+        hints.addProperty("taming_chance_hearty", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
+        hints.addProperty("taming_chance", "Lower is easier: 1 = 100% per attempt, 100 = 1% per attempt");
+
+        if (id.equals(CINDERVANE_ID)) {
+            hints.addProperty("run_speed", "Min 0.01, Max 1.5");
+            hints.addProperty("walk_speed", "Min 0.01, Max 1.5");
+        } else if (id.equals(RAEVYX_ID)) {
+            hints.addProperty("run_speed", "Min 0.01, Max 2.0");
+            hints.addProperty("walk_speed", "Min 0.01, Max 2.0");
+        } else if (id.equals(NULLJAW_ID)) {
+            hints.addProperty("run_speed", "Min 0.05, Max 1.5");
+            hints.addProperty("walk_speed", "Min 0.01, Max 1.0");
+            hints.addProperty("swim_speed", "Min 0.1, Max 5.0");
+        } else if (id.equals(IGNIVORUS_ID)) {
+            hints.addProperty("run_speed", "Min 0.05, Max 2.5");
+            hints.addProperty("walk_speed", "Min 0.01, Max 1.0");
+            hints.addProperty("attack_damage", "Typical 1-300");
+            hints.addProperty("ultimate_penalty_health", "Typical 1-500");
+        }
+        return hints;
     }
 }

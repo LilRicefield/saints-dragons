@@ -18,8 +18,8 @@
     }
   },
   "extra": {
-    "run_speed": 0.315,
-    "walk_speed": 0.125,
+    "run_speed": 0.45,
+    "walk_speed": 0.25,
     "taming_chance_base": 5.0,
     "taming_chance_hearty": 3.0
   }
