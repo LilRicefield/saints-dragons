@@ -1,7 +1,6 @@
 {
   "max_health": 80.0,
   "armor": 4.0,
-  "movement_speed": 0.45,
   "flying_speed": 0.6,
   "abilities": {
     "bite": {
@@ -12,8 +11,6 @@
     }
   },
   "extra": {
-    "run_speed": 0.27,
-    "walk_speed": 0.225,
     "taming_chance_base": 4.0,
     "taming_chance_hearty": 2.0
   }

@@ -506,17 +506,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public final FlyingPathNavigation airNav;
     public boolean usingAirNav = false;
 
-    // ===== CONTROLLER INSTANCES =====
-    private double configuredWalkSpeed = WALK_SPEED;
-    private double configuredRunSpeed = RUN_SPEED;
-
-    public double getConfiguredWalkSpeed() {
-        return configuredWalkSpeed;
-    }
-
-    public double getConfiguredRunSpeed() {
-        return configuredRunSpeed;
-    }
+    // ===== HARDCODED GROUND SPEEDS =====
+    // AI uses MOVEMENT_SPEED attribute (hardcoded in createAttributes)
+    // Rider uses these constants (hardcoded in RiderController)
+    public static final double RIDER_WALK_SPEED = 0.15D;
+    public static final double RIDER_RUN_SPEED = 0.22D;
 
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
@@ -632,7 +626,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
+                .add(Attributes.MOVEMENT_SPEED, 0.25D) // Hardcoded AI pathfinding speed
                 .add(Attributes.FOLLOW_RANGE, 80.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
@@ -1243,11 +1237,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (running) {
             runningTicks = 0;
         }
-        double targetSpeed = running ? configuredRunSpeed : configuredWalkSpeed;
-        AttributeInstance attr = this.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (attr != null) {
-            attr.setBaseValue(targetSpeed);
-        }
+        // MOVEMENT_SPEED is fixed for AI - rider speed is handled by RiderController
     }
     
     // ===== RideableDragonBase Override for Custom Logic =====
@@ -2887,20 +2877,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private void applyConfiguredAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        // Ground movement uses configurable walk/run speeds; set base to run for AI follow responsiveness
-        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredRunSpeed);
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
-
-        double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.50D);
-        configuredWalkSpeed = Math.max(0.01D, walkSpeed);
-        double runSpeed = config.groundRunSpeed(config.movementSpeed() * 1.26D);
-        configuredRunSpeed = Math.max(0.01D, runSpeed);
-
-        AttributeInstance moveAttr = this.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (moveAttr != null) {
-            moveAttr.setBaseValue(this.isRunning() ? configuredRunSpeed : configuredRunSpeed);
-        }
+        // MOVEMENT_SPEED is hardcoded in createAttributes() - no config needed
 
         double maxHealth = config.maxHealth();
         if (this.getHealth() > maxHealth) {

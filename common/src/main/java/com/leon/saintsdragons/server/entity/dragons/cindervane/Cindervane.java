@@ -133,8 +133,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
     private boolean usingAirNav;
-    private double configuredGroundRunSpeed = 0.27D;
-    private double configuredGroundWalkSpeed = 0.225D;
+
+    // ===== HARDCODED GROUND SPEEDS =====
+    public static final double RIDER_WALK_SPEED = 0.225D;
+    public static final double RIDER_RUN_SPEED = 0.27D;
 
     private int targetCooldown;
     private int airTicks;
@@ -280,12 +282,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
-        double runSpeed = config.groundRunSpeed(config.movementSpeed() * 0.60D);
-        double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.50D);
-        configuredGroundRunSpeed = Math.max(0.01D, runSpeed);
-        configuredGroundWalkSpeed = Math.max(0.01D, walkSpeed);
-        // Keep AI baseline at the general movement speed so it can follow properly; rider sets speed dynamically
-        setAttributeBase(Attributes.MOVEMENT_SPEED, config.movementSpeed());
+        // MOVEMENT_SPEED is hardcoded in createAttributes() - no config needed
+
         if (this.getHealth() > config.maxHealth()) {
             this.setHealth((float) config.maxHealth());
         }
@@ -298,19 +296,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
-    public double getGroundRunSpeed() {
-        return configuredGroundRunSpeed;
-    }
-
-    public double getGroundWalkSpeed() {
-        return configuredGroundWalkSpeed;
-    }
+    // Ground speeds are now hardcoded constants (RIDER_WALK_SPEED, RIDER_RUN_SPEED)
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
+                .add(Attributes.MOVEMENT_SPEED, 0.45D) // Hardcoded AI pathfinding speed
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed()) // Slower for glider behavior
                 .add(Attributes.ARMOR, config.armor());
@@ -1162,8 +1154,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void setRunning(boolean running) {
         this.entityData.set(DATA_RUNNING, running);
-        double target = running ? configuredGroundRunSpeed : configuredGroundWalkSpeed;
-        setAttributeBase(Attributes.MOVEMENT_SPEED, target);
+        // MOVEMENT_SPEED is fixed for AI - rider speed is handled by RiderController
     }
     
     public boolean isWalking() {

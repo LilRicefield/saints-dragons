@@ -126,9 +126,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
     private final NulljawInteractionHandler interactionHandler = new NulljawInteractionHandler(this);
     private final NulljawRiderController riderController;
-    private double configuredWalkSpeed = 0.14D;
-    private double configuredRunSpeed = 0.28D;
-    private double configuredSwimSpeed = 1.45D;
+
+    // ===== HARDCODED GROUND SPEEDS =====
+    public static final double RIDER_WALK_SPEED = 0.14D;
+    public static final double RIDER_RUN_SPEED = 0.28D;
+    private double configuredSwimSpeed = 1.45D; // Still configurable
     private final PathNavigation groundNavigation;
     private final DragonAmphibiousNavigation waterNavigation;
     private final MoveControl landMoveControl;
@@ -351,7 +353,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
+                .add(Attributes.MOVEMENT_SPEED, 0.28D) // Hardcoded AI pathfinding speed
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.5D)
                 .add(Attributes.ARMOR, 8.0D)
@@ -741,13 +743,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
         setAttributeBase(Attributes.ARMOR, config.armor());
-        double runSpeed = config.groundRunSpeed(config.movementSpeed());
-        configuredRunSpeed = Math.max(0.01D, runSpeed);
-        double walkSpeed = config.groundWalkSpeed(configuredRunSpeed * 0.5D);
-        configuredWalkSpeed = Math.max(0.01D, walkSpeed);
-        // Use run speed as the base AI speed so following doesn't crawl
-        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredRunSpeed);
+        // MOVEMENT_SPEED is hardcoded in createAttributes() - no config needed
+
+        // Only swim speed is configurable
         configuredSwimSpeed = config.extraDouble("swim_speed", 1.45D);
+
         if (this.getHealth() > config.maxHealth()) {
             this.setHealth((float) config.maxHealth());
         }
@@ -760,13 +760,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         }
     }
 
-    public double getConfiguredWalkSpeed() {
-        return configuredWalkSpeed;
-    }
-
-    public double getConfiguredRunSpeed() {
-        return configuredRunSpeed;
-    }
+    // Ground speeds are now hardcoded constants (RIDER_WALK_SPEED, RIDER_RUN_SPEED)
 
     public double getConfiguredSwimSpeed() {
         return configuredSwimSpeed;

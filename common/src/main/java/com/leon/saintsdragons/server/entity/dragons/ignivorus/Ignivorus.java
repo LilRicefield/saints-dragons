@@ -216,8 +216,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public int groundTicks;
     private int riderControlLockTicks;
     private int landingApproachTicks;
-    private double configuredRunSpeed = 0.60D;
-    private double configuredWalkSpeed = 0.225D;
+
+    // ===== HARDCODED GROUND SPEEDS =====
+    public static final double RIDER_WALK_SPEED = 0.225D;
+    public static final double RIDER_RUN_SPEED = 0.6D;
 
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 45.0F;
@@ -344,7 +346,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         double attackDamage = config.extraDouble("attack_damage", 15.0D);
         return createMobAttributes()
             .add(Attributes.MAX_HEALTH, config.maxHealth())
-            .add(Attributes.MOVEMENT_SPEED, config.movementSpeed())
+            .add(Attributes.MOVEMENT_SPEED, 0.3D) // Hardcoded AI pathfinding speed
             .add(Attributes.FLYING_SPEED, config.flyingSpeed())
             .add(Attributes.ATTACK_DAMAGE, attackDamage)
             .add(Attributes.FOLLOW_RANGE, 128.0D) // Long range to support fire breath at distance
@@ -1252,11 +1254,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
         setAttributeBase(Attributes.ATTACK_DAMAGE, attackDamage);
-        double runSpeed = config.groundRunSpeed(config.movementSpeed() * 2.0D);
-        configuredRunSpeed = Math.max(0.01D, runSpeed);
-        double walkSpeed = config.groundWalkSpeed(config.movementSpeed() * 0.75D);
-        configuredWalkSpeed = Math.max(0.01D, walkSpeed);
-        setAttributeBase(Attributes.MOVEMENT_SPEED, configuredWalkSpeed);
+        // MOVEMENT_SPEED is hardcoded in createAttributes() - no config needed
 
         double maxHealth = config.maxHealth();
         if (this.getHealth() > maxHealth) {
@@ -1271,13 +1269,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
-    public double getGroundRunSpeed() {
-        return configuredRunSpeed;
-    }
-
-    public double getGroundWalkSpeed() {
-        return configuredWalkSpeed;
-    }
+    // Ground speeds are now hardcoded constants (RIDER_WALK_SPEED, RIDER_RUN_SPEED)
 
 
     @Override
@@ -1326,8 +1318,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public void setRunning(boolean running) {
         this.entityData.set(DATA_RUNNING, running);
-        double target = running ? configuredRunSpeed : configuredWalkSpeed;
-        setAttributeBase(Attributes.MOVEMENT_SPEED, target);
+        // MOVEMENT_SPEED is fixed for AI - rider speed is handled by RiderController
     }
 
     @Override

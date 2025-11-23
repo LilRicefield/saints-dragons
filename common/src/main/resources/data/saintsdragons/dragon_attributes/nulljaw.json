@@ -1,7 +1,6 @@
 {
   "max_health": 250.0,
   "armor": 8.0,
-  "movement_speed": 0.28,
   "flying_speed": 0.0,
   "abilities": {
     "bite_phase1": {
@@ -18,8 +17,6 @@
     }
   },
   "extra": {
-    "run_speed": 0.28,
-    "walk_speed": 0.14,
     "swim_speed": 1.45,
     "taming_chance": 6.0
   }
