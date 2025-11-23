@@ -75,8 +75,7 @@ public class NulljawModel extends GeoModel<Nulljaw> {
         float swimRollDeg = entity.getSwimRollAngleDegrees(partialTick);
         float swimRollRad = Mth.clamp(-swimRollDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
 
-        // Add to whatever the animation already set (don't use snapshot - we want to layer on top)
-        body.setRotZ(body.getRotZ() + swimRollRad);
+        applyAdditiveRotation(body, 0.0f, 0.0f, swimRollRad);
     }
 
     private void applyGroundNeckTurn(Nulljaw entity, float partialTick) {
@@ -95,7 +94,7 @@ public class NulljawModel extends GeoModel<Nulljaw> {
             return;
         }
         GeoBone bone = boneOpt.get();
-        bone.setRotY(bone.getRotY() + rotationY);
+        applyAdditiveRotation(bone, 0.0f, rotationY, 0.0f);
     }
 
     private void applyNeckFollow(Nulljaw entity, EntityModelData modelData, float partialTick) {
@@ -129,8 +128,7 @@ public class NulljawModel extends GeoModel<Nulljaw> {
         GeoBone bone = boneOpt.get();
         float addX = headDeltaX * weight;
         float addY = headDeltaY * weight;
-        bone.setRotX(bone.getRotX() + addX);
-        bone.setRotY(bone.getRotY() + addY);
+        applyAdditiveRotation(bone, addX, addY, 0.0f);
     }
 
     private void applyTailDrag(Nulljaw entity, float partialTick) {
@@ -151,6 +149,17 @@ public class NulljawModel extends GeoModel<Nulljaw> {
             return;
         }
         GeoBone bone = boneOpt.get();
-        bone.setRotY(bone.getRotY() + rotationY);
+        applyAdditiveRotation(bone, 0.0f, rotationY, 0.0f);
+    }
+
+    private void applyAdditiveRotation(GeoBone bone, float addX, float addY, float addZ) {
+        var snap = bone.getInitialSnapshot();
+        // Preserve animated pose (current - snapshot) and layer procedural rotation on top
+        float animX = bone.getRotX() - snap.getRotX();
+        float animY = bone.getRotY() - snap.getRotY();
+        float animZ = bone.getRotZ() - snap.getRotZ();
+        bone.setRotX(snap.getRotX() + animX + addX);
+        bone.setRotY(snap.getRotY() + animY + addY);
+        bone.setRotZ(snap.getRotZ() + animZ + addZ);
     }
 }

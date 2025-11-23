@@ -17,8 +17,6 @@ public class IgnivorusModel extends GeoModel<Ignivorus> {
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_female.png");
 
-    public IgnivorusModel() {
-    }
 
     @Override
     public ResourceLocation getModelResource(Ignivorus entity) {

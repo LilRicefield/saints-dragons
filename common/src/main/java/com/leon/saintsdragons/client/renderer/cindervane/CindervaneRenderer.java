@@ -28,6 +28,11 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     }
 
     @Override
+    public float getMotionAnimThreshold(Cindervane animatable) {
+        return 0.000001f;
+    }
+
+    @Override
     protected float getDeathMaxRotation(Cindervane entity) {
         // Keep Amphithere upright so custom death animation plays without vanilla flop
         return 0.0F;

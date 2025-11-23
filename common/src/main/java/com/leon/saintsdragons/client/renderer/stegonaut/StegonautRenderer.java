@@ -26,6 +26,11 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
     }
 
     @Override
+    public float getMotionAnimThreshold(Stegonaut animatable) {
+        return 0.000001f;
+    }
+
+    @Override
     protected float getDeathMaxRotation(Stegonaut entity) {
         // Prevent vanilla renderer from rotating the body sideways during the death sequence
         return 0.0F;

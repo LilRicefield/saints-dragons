@@ -35,6 +35,11 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     }
 
     @Override
+    public float getMotionAnimThreshold(Raevyx animatable) {
+        return 0.000001f;
+    }
+
+    @Override
     public @NotNull ResourceLocation getTextureLocation(@NotNull Raevyx entity) {
         if (entity.isBaby()) {
             return entity.isFemale() ? TEXTURE_BABY_FEMALE : TEXTURE_BABY_MALE;

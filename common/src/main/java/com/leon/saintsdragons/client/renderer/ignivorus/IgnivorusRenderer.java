@@ -31,6 +31,11 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     }
 
     @Override
+    public float getMotionAnimThreshold(Ignivorus animatable) {
+        return 0.000001f;
+    }
+
+    @Override
     protected float getDeathMaxRotation(Ignivorus entity) {
         return 0.0F;
     }

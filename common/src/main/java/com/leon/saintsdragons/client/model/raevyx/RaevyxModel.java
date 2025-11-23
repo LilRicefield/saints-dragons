@@ -25,8 +25,6 @@ public class RaevyxModel extends GeoModel<Raevyx> {
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_female.png");
     private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/raevyx/baby_raevyx.png");
 
-    public RaevyxModel() {
-    }
 
     @Override
     public ResourceLocation getModelResource(Raevyx entity) {
