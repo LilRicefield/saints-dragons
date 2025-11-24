@@ -2,11 +2,11 @@ package com.leon.saintsdragons.server.ai.navigation.pathfinding;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.pathfinder.Node;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Enhanced path node for dragon pathfinding with binary heap support.
  * Based on Baritone's PathNode implementation.
- *
  * This extends vanilla Node but adds heap position tracking for efficient
  * decrease-key operations in the binary heap priority queue.
  */
@@ -61,7 +61,7 @@ public class DragonPathNode extends Node {
     /**
      * Convert this node to a BlockPos for convenience.
      */
-    public BlockPos asBlockPos() {
+    public @NotNull BlockPos asBlockPos() {
         return new BlockPos(this.x, this.y, this.z);
     }
 

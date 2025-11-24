@@ -426,34 +426,18 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        // Priority 0: Critical survival - air management
-        this.goalSelector.addGoal(0, new BreathAirGoal(this));
-        // Priority 1: Sleep system (sleeps at night, or when owner is asleep)
-        this.goalSelector.addGoal(1, new NulljawSleepGoal(this));
-
-        // Priority 3: Combat abilities (CombatGoal handles both movement and attacks)
+        this.goalSelector.addGoal(1, new BreathAirGoal(this));
         this.goalSelector.addGoal(3, new NulljawCombatGoal(this));
-
-        // Priority 6-7: Amphibious behavior (semi-aquatic patrol pattern)
+        this.goalSelector.addGoal(4, new NulljawSleepGoal(this));
         this.goalSelector.addGoal(6, new NulljawLeaveWaterGoal(this));
         this.goalSelector.addGoal(7, new NulljawFindWaterGoal(this));
-
-        // Priority 8: Social behavior (follow owner)
         this.goalSelector.addGoal(8, new NulljawFollowOwnerGoal(this));
-
-        // Priority 9: Idle swimming
         this.waterSwimGoal = new NulljawSwimGoal(this, 1.2D, 30);
         this.goalSelector.addGoal(9, waterSwimGoal);
-
-        // Priority 10: Idle roaming on land
         this.groundWanderGoal = new NulljawGroundWanderGoal(this, 1.0D, 100);
         this.goalSelector.addGoal(10, groundWanderGoal);
-
-        // Priority 11: Ambient behaviors
         this.goalSelector.addGoal(11, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
-
-        // Target selectors (threat detection)
         this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
