@@ -35,6 +35,7 @@ public class DragonPathNode extends Node {
         super(x, y, z);
         this.heapPosition = -1;
         this.combinedCost = Float.MAX_VALUE;
+        this.g = Float.MAX_VALUE; // CRITICAL: Initialize g to infinity so A* can update it
         this.parent = null;
     }
 

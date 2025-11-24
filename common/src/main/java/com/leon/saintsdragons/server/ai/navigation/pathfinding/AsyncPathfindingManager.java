@@ -80,6 +80,7 @@ public class AsyncPathfindingManager {
      * @param timeoutMs      Maximum time to spend pathfinding (ms)
      * @param smoothPath     Whether to apply path smoothing
      * @param entityBounds   Entity bounding box (optional, uses default if null)
+     * @param mode           Pathfinding mode (FLIGHT, WATER_ESCAPE, AMPHIBIOUS)
      * @return CompletableFuture that will contain the result
      */
     public CompletableFuture<PathfindingResult> requestPath(
@@ -89,13 +90,14 @@ public class AsyncPathfindingManager {
         int gridResolution,
         long timeoutMs,
         boolean smoothPath,
-        net.minecraft.world.phys.AABB entityBounds
+        net.minecraft.world.phys.AABB entityBounds,
+        DragonPathfinder.PathMode mode
     ) {
         activeTasks.incrementAndGet();
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return computePath(level, start, goal, gridResolution, timeoutMs, smoothPath, entityBounds);
+                return computePath(level, start, goal, gridResolution, timeoutMs, smoothPath, entityBounds, mode);
             } catch (Exception e) {
                 // Catch any unexpected errors
                 System.err.println("Pathfinding error: " + e.getMessage());
@@ -109,7 +111,7 @@ public class AsyncPathfindingManager {
     }
 
     /**
-     * Convenience method with default timeout, smoothing, and entity bounds.
+     * Convenience method with default timeout, smoothing, entity bounds, and FLIGHT mode.
      */
     public CompletableFuture<PathfindingResult> requestPath(
         Level level,
@@ -117,11 +119,11 @@ public class AsyncPathfindingManager {
         Vec3 goal,
         int gridResolution
     ) {
-        return requestPath(level, start, goal, gridResolution, DEFAULT_TIMEOUT_MS, true, null);
+        return requestPath(level, start, goal, gridResolution, DEFAULT_TIMEOUT_MS, true, null, DragonPathfinder.PathMode.FLIGHT);
     }
 
     /**
-     * Convenience method with default smoothing and entity bounds.
+     * Convenience method with default smoothing, entity bounds, and FLIGHT mode.
      */
     public CompletableFuture<PathfindingResult> requestPath(
         Level level,
@@ -130,11 +132,11 @@ public class AsyncPathfindingManager {
         int gridResolution,
         long timeoutMs
     ) {
-        return requestPath(level, start, goal, gridResolution, timeoutMs, true, null);
+        return requestPath(level, start, goal, gridResolution, timeoutMs, true, null, DragonPathfinder.PathMode.FLIGHT);
     }
 
     /**
-     * Convenience method with entity bounds but default timeout and smoothing.
+     * Convenience method with entity bounds but default timeout, smoothing, and FLIGHT mode.
      */
     public CompletableFuture<PathfindingResult> requestPath(
         Level level,
@@ -143,7 +145,20 @@ public class AsyncPathfindingManager {
         int gridResolution,
         net.minecraft.world.phys.AABB entityBounds
     ) {
-        return requestPath(level, start, goal, gridResolution, DEFAULT_TIMEOUT_MS, true, entityBounds);
+        return requestPath(level, start, goal, gridResolution, DEFAULT_TIMEOUT_MS, true, entityBounds, DragonPathfinder.PathMode.FLIGHT);
+    }
+
+    /**
+     * Convenience method with pathfinding mode but default timeout, smoothing, and entity bounds.
+     */
+    public CompletableFuture<PathfindingResult> requestPath(
+        Level level,
+        Vec3 start,
+        Vec3 goal,
+        int gridResolution,
+        DragonPathfinder.PathMode mode
+    ) {
+        return requestPath(level, start, goal, gridResolution, DEFAULT_TIMEOUT_MS, true, null, mode);
     }
 
     /**
@@ -156,14 +171,15 @@ public class AsyncPathfindingManager {
         int gridResolution,
         long timeoutMs,
         boolean smoothPath,
-        net.minecraft.world.phys.AABB entityBounds
+        net.minecraft.world.phys.AABB entityBounds,
+        DragonPathfinder.PathMode mode
     ) {
         long startTime = System.currentTimeMillis();
 
-        // Create pathfinder instance with entity bounds
+        // Create pathfinder instance with entity bounds and mode
         DragonPathfinder pathfinder = entityBounds != null
-            ? new DragonPathfinder(level, gridResolution, 10000, timeoutMs, entityBounds)
-            : new DragonPathfinder(level, gridResolution, 10000, timeoutMs);
+            ? new DragonPathfinder(level, gridResolution, 10000, timeoutMs, entityBounds, mode)
+            : new DragonPathfinder(level, gridResolution, 10000, timeoutMs, mode);
 
         // Find path
         List<Vec3> path = pathfinder.findPath(start, goal);

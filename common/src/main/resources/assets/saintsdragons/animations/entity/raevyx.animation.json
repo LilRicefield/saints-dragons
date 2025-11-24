@@ -621,6 +621,31 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftshoulderController": {
 					"rotation": {
 						"0.0": {
@@ -1620,6 +1645,31 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"neck2Controller": {
@@ -2646,6 +2696,31 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail5Controller": {
 					"rotation": {
 						"0.0": {
@@ -3457,12 +3532,7 @@
 				},
 				"tail1": {
 					"rotation": {
-						"0.0": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
-						}
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail1Controller": {
@@ -3475,6 +3545,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -3483,6 +3558,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -3495,6 +3575,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -3503,6 +3588,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -3930,6 +4020,16 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4": {
 					"rotation": {
 						"0.0": {
@@ -4275,6 +4375,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -4329,6 +4434,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -4866,6 +4976,16 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail4": {
@@ -5410,6 +5530,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -5518,6 +5643,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -6280,6 +6410,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -6314,6 +6449,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -6334,6 +6474,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -6370,6 +6515,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -6402,6 +6552,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -7210,6 +7365,26 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftleg": {
 					"rotation": {
 						"0.0": {
@@ -7474,6 +7649,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -14068,6 +14248,31 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"head1Controller": {
 					"rotation": {
 						"0.0": {
@@ -15091,6 +15296,31 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"head1Controller": {
 					"rotation": {
 						"vector": [0, 0, 0]
@@ -15254,6 +15484,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -15274,6 +15509,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail2Controller": {
@@ -15298,6 +15538,11 @@
 						}
 					}
 				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail3Controller": {
 					"rotation": {
 						"0.0": {
@@ -15320,6 +15565,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -15334,6 +15584,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -16222,6 +16477,31 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"head1Controller": {
 					"rotation": {
 						"0.0": {
@@ -16929,6 +17209,31 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"head1Controller": {
 					"rotation": {
 						"0.0": {
@@ -17314,6 +17619,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -17328,6 +17638,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail2Controller": {
@@ -17346,6 +17661,11 @@
 						}
 					}
 				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail3Controller": {
 					"rotation": {
 						"0.0": {
@@ -17362,6 +17682,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -17376,6 +17701,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -18099,6 +18429,11 @@
 						"vector": [-20, 5, -45]
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -18107,6 +18442,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail2Controller": {
@@ -18119,6 +18459,11 @@
 						}
 					}
 				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail3Controller": {
 					"rotation": {
 						"0.0": {
@@ -18129,6 +18474,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -18137,6 +18487,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -18921,12 +19276,12 @@
 				"tail3": {
 					"rotation": {
 						"0.0": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [0, 0, 0]
 						},
 						"3.0": {
+							"pre": {
+								"vector": [0, 17.5, 0]
+							},
 							"post": {
 								"vector": [0, 17.5, 0]
 							},
@@ -19058,6 +19413,26 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"head1Controller": {
@@ -20101,6 +20476,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -20141,6 +20521,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -20175,6 +20560,11 @@
 						}
 					}
 				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail3Controller": {
 					"rotation": {
 						"0.0": {
@@ -20207,6 +20597,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail4Controller": {
@@ -20247,6 +20642,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -21922,6 +22322,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -21986,6 +22391,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -22048,6 +22458,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -22162,6 +22577,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -22272,6 +22692,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -24751,6 +25176,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -24785,6 +25215,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -24811,6 +25246,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -24841,6 +25281,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -24867,6 +25312,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -25929,6 +26379,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -25951,6 +26406,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -25971,6 +26431,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -26007,6 +26472,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -26039,6 +26509,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -26211,6 +26686,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"head1Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"lowerjawController": {
@@ -26693,96 +27173,6 @@
 				}
 			}
 		},
-		"animation.raevyx.pose": {
-			"loop": true,
-			"bones": {
-				"neck1Controller": {
-					"rotation": {
-						"vector": [20, 0, 0]
-					}
-				},
-				"neck2Controller": {
-					"rotation": {
-						"vector": [-7.5, 0, 0]
-					}
-				},
-				"neck3Controller": {
-					"rotation": {
-						"vector": [-10, 0, 0]
-					}
-				},
-				"neck4Controller": {
-					"rotation": {
-						"vector": [-9.05675, -10.56487, 12.62125]
-					}
-				},
-				"lowerjawController": {
-					"rotation": {
-						"vector": [5, 0, 0]
-					}
-				},
-				"leftshoulderController": {
-					"rotation": {
-						"vector": [19.74502, 0.8794, 23.3735]
-					}
-				},
-				"leftarmController": {
-					"rotation": {
-						"vector": [55.84746, 44.11415, 45.53992]
-					}
-				},
-				"phalanges4": {
-					"rotation": {
-						"vector": [0, -15, 0]
-					}
-				},
-				"phalangles3": {
-					"rotation": {
-						"vector": [0, -22.5, 0]
-					}
-				},
-				"phalanges1": {
-					"rotation": {
-						"vector": [0, -65, 0]
-					}
-				},
-				"phalanges2": {
-					"rotation": {
-						"vector": [0, -7.5, 0]
-					}
-				},
-				"rightshoulderController": {
-					"rotation": {
-						"vector": [47.5, 0, -10]
-					}
-				},
-				"rightarmController": {
-					"rotation": {
-						"vector": [0, -40, 0]
-					}
-				},
-				"phalanges3": {
-					"rotation": {
-						"vector": [0, 62.5, 0]
-					}
-				},
-				"phalanges5": {
-					"rotation": {
-						"vector": [0, 10, 0]
-					}
-				},
-				"phalangles2": {
-					"rotation": {
-						"vector": [0, 12.5, 0]
-					}
-				},
-				"phalanges6": {
-					"rotation": {
-						"vector": [0, 7.5, 0]
-					}
-				}
-			}
-		},
 		"animation.raevyx.stunned": {
 			"loop": true,
 			"animation_length": 1.6667,
@@ -26809,6 +27199,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -26831,6 +27226,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -26851,6 +27251,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -26887,6 +27292,11 @@
 						}
 					}
 				},
+				"tail4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail4Controller": {
 					"rotation": {
 						"0.0": {
@@ -26913,6 +27323,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -27694,6 +28109,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -27740,6 +28160,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -27784,6 +28209,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -27835,12 +28265,12 @@
 				"tail4": {
 					"rotation": {
 						"0.0": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [0, 0, 0]
 						},
 						"1.875": {
+							"pre": {
+								"vector": [0, 0, 0]
+							},
 							"post": {
 								"vector": [0, 0, 0]
 							},
@@ -27886,6 +28316,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -28935,6 +29370,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -28975,6 +29415,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -29007,6 +29452,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -29058,12 +29508,12 @@
 				"tail4": {
 					"rotation": {
 						"0.0": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [0, 0, 0]
 						},
 						"5.7083": {
+							"pre": {
+								"vector": [0, 0, 0]
+							},
 							"post": {
 								"vector": [0, 0, 0]
 							},
@@ -29109,6 +29559,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
@@ -31364,6 +31819,11 @@
 						}
 					}
 				},
+				"tail1": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail1Controller": {
 					"rotation": {
 						"0.0": {
@@ -31380,6 +31840,11 @@
 						}
 					}
 				},
+				"tail2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"tail2Controller": {
 					"rotation": {
 						"0.0": {
@@ -31394,6 +31859,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail3Controller": {
@@ -31415,12 +31885,12 @@
 				"tail4": {
 					"rotation": {
 						"0.0": {
-							"post": {
-								"vector": [0, 0, 0]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [0, 0, 0]
 						},
 						"1.875": {
+							"pre": {
+								"vector": [0, 0, 0]
+							},
 							"post": {
 								"vector": [0, 0, 0]
 							},
@@ -31442,6 +31912,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"tail5": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"tail5Controller": {
