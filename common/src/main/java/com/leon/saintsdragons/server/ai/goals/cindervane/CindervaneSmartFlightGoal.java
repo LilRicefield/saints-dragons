@@ -276,11 +276,22 @@ public class CindervaneSmartFlightGoal extends Goal {
         if (cindervane.level() instanceof ServerLevel serverLevel) {
             pathfindingInProgress = true;
 
+            // Adaptive grid resolution based on distance to prevent timeout on long paths
+            double distance = cindervane.position().distanceTo(targetPos);
+            int gridResolution;
+            if (distance < 30) {
+                gridResolution = 2; // Fine-grained for short distances
+            } else if (distance < 80) {
+                gridResolution = 4; // Medium for medium distances
+            } else {
+                gridResolution = 8; // Coarse for long distances
+            }
+
             AsyncPathfindingHelper.requestPath(
                 serverLevel,
                 cindervane.position(),
                 targetPos,
-                2, // Grid resolution (2 blocks - good for flight)
+                gridResolution,
                 cindervane.getBoundingBox(), // Use actual dragon size
                 result -> {
                     // Callback runs on background thread!
@@ -434,6 +445,23 @@ public class CindervaneSmartFlightGoal extends Goal {
     private boolean isValidFlightTarget(Vec3 target) {
         if (target == null) return false;
 
+        // Reject targets over water - check ground below target
+        BlockPos targetPos = BlockPos.containing(target);
+        int groundY = cindervane.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, targetPos.getX(), targetPos.getZ());
+
+        // If ground is at or below water level (Y=62) and target is low, reject it
+        // This prevents landing in water or on small islands at water level
+        if (groundY <= 63 && target.y < 75) {
+            BlockPos groundPos = new BlockPos(targetPos.getX(), groundY, targetPos.getZ());
+            net.minecraft.world.level.block.state.BlockState groundState = cindervane.level().getBlockState(groundPos);
+
+            // Reject if ground is water or the target is too close to sea level
+            if (groundState.getFluidState().is(net.minecraft.tags.FluidTags.WATER) || groundY < 63) {
+                return false;
+            }
+        }
+
+        // Line-of-sight check
         BlockHitResult result = cindervane.level().clip(new ClipContext(
                 cindervane.getEyePosition(),
                 target,

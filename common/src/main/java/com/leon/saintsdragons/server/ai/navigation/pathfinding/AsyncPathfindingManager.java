@@ -32,7 +32,7 @@ public class AsyncPathfindingManager {
 
     // Configuration
     private static final int MAX_THREADS = 4; // Limit concurrent pathfinding operations
-    private static final long DEFAULT_TIMEOUT_MS = 100; // Default timeout per pathfinding request
+    private static final long DEFAULT_TIMEOUT_MS = 150; // Default timeout per pathfinding request (keep short to avoid freezing)
 
     private AsyncPathfindingManager() {
         // Create thread pool with daemon threads (won't prevent JVM shutdown)

@@ -356,25 +356,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void registerGoals() {
-        // Priority 0: Sleep (night/owner sleep) - matches Stegonaut state machine with Ignivorus timings
-        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusSleepGoal(this));
-
-        // Priority 1: Combat - highest priority when aggressive
-        // Air combat takes precedence when target is airborne and dragon is flying
-        this.goalSelector.addGoal(1, new IgnivorusAirCombatGoal(this));
-        this.goalSelector.addGoal(1, new IgnivorusGroundCombatGoal(this));
-
-        // Priority 3: Follow owner
-        this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFollowOwnerGoal(this));
-
-        // Priority 4: Flight patrol
-        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusSmartFlightGoal(this));
-
-        // Priority 5: Ground wandering
+        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
+        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusSmartFlightGoal(this));
+        this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this));
+        this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
+        this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
+        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusSleepGoal(this));
+        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFollowOwnerGoal(this));
         this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundWanderGoal(this, 1.0, 120));
-
-        // Priority 12: Look around when idle
-        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));

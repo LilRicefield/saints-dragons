@@ -110,6 +110,11 @@
 						}
 					}
 				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"headController": {
 					"rotation": {
 						"0.0": {
@@ -876,6 +881,16 @@
 						}
 					}
 				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"eyes": {
 					"scale": {
 						"0.0": {
@@ -1072,6 +1087,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"jaw": {
@@ -1688,6 +1708,16 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			},
 			"sound_effects": {
@@ -1804,6 +1834,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				}
 			},
@@ -1923,6 +1958,16 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				}
 			},
@@ -2082,6 +2127,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"headController": {
@@ -2878,6 +2928,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}
@@ -3777,6 +3832,11 @@
 						}
 					}
 				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"eyes": {
 					"scale": {
 						"vector": [0.925, 0, 1]
@@ -4497,6 +4557,11 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			},
 			"sound_effects": {
@@ -4575,6 +4640,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"headController": {
@@ -4764,6 +4834,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"head": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"headController": {
@@ -5322,6 +5397,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"leftfrontleg": {

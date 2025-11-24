@@ -2965,24 +2965,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // ===== AI GOALS =====
     @Override
     protected void registerGoals() {
-        // Dodge goal removed - interferes with air combat
-        // this.goalSelector.addGoal(1, new RaevyxDodgeGoal(this));
-        this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(6, new FloatGoal(this));
-        this.goalSelector.addGoal(7, new RaevyxFollowParentGoal(this, 1.15D));
-        this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
-
-        // Combat goals - air combat takes precedence when target is airborne and dragon is flying
+        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
+        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this));
+        this.goalSelector.addGoal(2, new RaevyxSleepGoal(this));
         this.goalSelector.addGoal(3, new RaevyxAirCombatGoal(this));
         this.goalSelector.addGoal(3, new RaevyxGroundCombatGoal(this));
-
-        // Movement/idle
-        // Unified sleep goal: high priority to preempt follow/wander, but calm() prevents overriding combat/aggro
-        this.goalSelector.addGoal(0, new RaevyxSleepGoal(this));         // Higher priority than follow
+        this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(7, new RaevyxFollowParentGoal(this, 1.15D));
+        this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
         this.goalSelector.addGoal(8, new RaevyxFollowOwnerGoal(this));   // Lower priority than combat
         this.goalSelector.addGoal(9, new RaevyxGroundWanderGoal(this, 1.0, 60)); // Lower priority than combat
-        
-        // Item pickup behavior (like foxes eating berries) + ground fish taming
         this.goalSelector.addGoal(10, new RaevyxTemptGoal(this, 1.2,
                 net.minecraft.world.item.crafting.Ingredient.of(net.minecraft.world.item.Items.SALMON, 
                                                                net.minecraft.world.item.Items.COD,

@@ -86,18 +86,12 @@ public class DragonPathfinder {
     public List<Vec3> findPath(Vec3 start, Vec3 goal) {
         long startTime = System.currentTimeMillis();
 
-        System.out.println("[DragonPathfinder] Starting pathfinding in mode: " + mode);
-        System.out.println("[DragonPathfinder] From: " + start + " To: " + goal);
-
         // Snap to grid
         BlockPos startGrid = snapToGrid(start);
         BlockPos goalGrid = snapToGrid(goal);
 
-        System.out.println("[DragonPathfinder] Grid: From " + startGrid + " To " + goalGrid);
-
         if (startGrid.equals(goalGrid)) {
             // Already at goal
-            System.out.println("[DragonPathfinder] Start == Goal, returning direct path");
             List<Vec3> path = new ArrayList<>();
             path.add(goal);
             return path;
@@ -105,7 +99,6 @@ public class DragonPathfinder {
 
         // Check if start is passable
         if (!isPassable(startGrid)) {
-            System.out.println("[DragonPathfinder] ERROR: Start position is not passable!");
             return null;
         }
 
@@ -120,22 +113,13 @@ public class DragonPathfinder {
                 // If goal is solid ground with air above (and not water), it's a shore - accept it!
                 if (!goalState.isAir() && goalState.blocksMotion() &&
                     aboveState.isAir() && level.getFluidState(aboveGoal).isEmpty()) {
-                    System.out.println("[DragonPathfinder] Goal is solid ground with air above (shore) - accepting!");
                     // Adjust goal to be the AIR position above the ground (where dragon will stand)
                     // CRITICAL: Must snap adjusted goal back to grid!
-                    BlockPos oldGoalGrid = goalGrid;
                     goalGrid = snapToGrid(Vec3.atCenterOf(aboveGoal));
-                    System.out.println("[DragonPathfinder] Adjusted goal: " + oldGoalGrid + " → " + aboveGoal + " → " + goalGrid + " (grid-snapped)");
                 } else {
-                    System.out.println("[DragonPathfinder] ERROR: Goal position is not passable!");
-                    // Debug: What's actually at the goal?
-                    FluidState goalFluid = level.getFluidState(goalGrid);
-                    System.out.println("[DragonPathfinder] Goal block at " + goalGrid + ": " + goalState.getBlock().getName().getString() +
-                        (goalFluid.isEmpty() ? "" : " + FLUID"));
                     return null;
                 }
             } else {
-                System.out.println("[DragonPathfinder] ERROR: Goal position is not passable!");
                 return null;
             }
         }
@@ -155,7 +139,6 @@ public class DragonPathfinder {
         while (!openSet.isEmpty() && nodesExplored < maxSearchNodes) {
             // Check timeout
             if (System.currentTimeMillis() - startTime > timeoutMs) {
-                System.out.println("[DragonPathfinder] TIMEOUT after exploring " + nodesExplored + " nodes");
                 return null; // Timeout
             }
 
@@ -165,13 +148,10 @@ public class DragonPathfinder {
             // Check if we reached the goal
             if (current.asBlockPos().equals(goalGrid)) {
                 // Reconstruct path
-                System.out.println("[DragonPathfinder] SUCCESS - Path found! Explored " + nodesExplored + " nodes");
                 return reconstructPath(current, goal);
             }
 
             // Explore neighbors
-            int passableNeighbors = 0;
-            int addedToOpenSet = 0;
             for (int[] offset : MOVEMENT_OFFSETS_3D) {
                 int newX = current.x + offset[0] * gridResolution;
                 int newY = current.y + offset[1] * gridResolution;
@@ -188,7 +168,6 @@ public class DragonPathfinder {
                 if (!isPassable(neighborPos)) {
                     continue;
                 }
-                passableNeighbors++;
 
                 DragonPathNode neighbor = getOrCreateNode(nodeMap, neighborPos);
 
@@ -207,18 +186,11 @@ public class DragonPathfinder {
                         openSet.update(neighbor);
                     } else {
                         openSet.insert(neighbor);
-                        addedToOpenSet++;
                     }
                 }
             }
-
-            if (nodesExplored <= 5) {
-                System.out.println("[DragonPathfinder] Node " + nodesExplored + " at " + current.asBlockPos() +
-                    " has " + passableNeighbors + " passable neighbors, added " + addedToOpenSet + " to open set. Open set size: " + openSet.size());
-            }
         }
 
-        System.out.println("[DragonPathfinder] FAILED - No path found after exploring " + nodesExplored + " nodes (max: " + maxSearchNodes + ")");
         return null; // No path found
     }
 
@@ -375,8 +347,16 @@ public class DragonPathfinder {
 
                     switch (mode) {
                         case FLIGHT:
-                            // Only air is passable for flying dragons
-                            if (!isAir) {
+                            // Only air is passable for flying dragons (but allow standing on ground at start)
+                            if (isSolid) {
+                                // Allow solid ground at the bottom (dragon can take off from ground)
+                                if (y != minY) {
+                                    return false; // Solid blocks above ground level block movement
+                                }
+                                // Ground level solid is OK (standing/taking off from ground)
+                            }
+                            // Water blocks movement in flight mode
+                            if (isWater) {
                                 return false;
                             }
                             break;
