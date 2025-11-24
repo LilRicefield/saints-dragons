@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.navigation.pathfinding;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +23,30 @@ import java.util.Map;
  * - Timeout-based to prevent lag
  * - Uses binary heap for efficiency
  * - Entity bounding box awareness for dragon size
+ * - Multi-mode support: FLIGHT, WATER_ESCAPE, AMPHIBIOUS
  */
 public class DragonPathfinder {
+
+    /**
+     * Pathfinding mode determines how the pathfinder treats different block types.
+     */
+    public enum PathMode {
+        /** Air-only pathfinding for flying dragons. Water and solid blocks are impassable. */
+        FLIGHT,
+
+        /** Water escape mode for flying dragons stuck in water. Strongly prefers land over water. */
+        WATER_ESCAPE,
+
+        /** Amphibious mode for aquatic dragons. Can path through water, air, and along ground. */
+        AMPHIBIOUS
+    }
 
     private final Level level;
     private final int gridResolution; // How many blocks per pathfinding node
     private final int maxSearchNodes; // Maximum nodes to explore before giving up
     private final long timeoutMs; // Maximum time to spend pathfinding
     private final AABB entityBounds; // Bounding box of the entity (for collision checking)
+    private final PathMode mode; // Pathfinding mode
 
     /**
      * Movement offsets for 3D pathfinding.
@@ -37,16 +54,25 @@ public class DragonPathfinder {
      */
     private static final int[][] MOVEMENT_OFFSETS_3D = generateMovementOffsets();
 
-    public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs, AABB entityBounds) {
+    public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs, AABB entityBounds, PathMode mode) {
         this.level = level;
         this.gridResolution = gridResolution;
         this.maxSearchNodes = maxSearchNodes;
         this.timeoutMs = timeoutMs;
         this.entityBounds = entityBounds;
+        this.mode = mode;
+    }
+
+    public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs, AABB entityBounds) {
+        this(level, gridResolution, maxSearchNodes, timeoutMs, entityBounds, PathMode.FLIGHT);
     }
 
     public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs) {
-        this(level, gridResolution, maxSearchNodes, timeoutMs, new AABB(-0.5, 0, -0.5, 0.5, 1, 0.5));
+        this(level, gridResolution, maxSearchNodes, timeoutMs, new AABB(-0.5, 0, -0.5, 0.5, 1, 0.5), PathMode.FLIGHT);
+    }
+
+    public DragonPathfinder(Level level, int gridResolution, int maxSearchNodes, long timeoutMs, PathMode mode) {
+        this(level, gridResolution, maxSearchNodes, timeoutMs, new AABB(-0.5, 0, -0.5, 0.5, 1, 0.5), mode);
     }
 
     /**
@@ -60,15 +86,58 @@ public class DragonPathfinder {
     public List<Vec3> findPath(Vec3 start, Vec3 goal) {
         long startTime = System.currentTimeMillis();
 
+        System.out.println("[DragonPathfinder] Starting pathfinding in mode: " + mode);
+        System.out.println("[DragonPathfinder] From: " + start + " To: " + goal);
+
         // Snap to grid
         BlockPos startGrid = snapToGrid(start);
         BlockPos goalGrid = snapToGrid(goal);
 
+        System.out.println("[DragonPathfinder] Grid: From " + startGrid + " To " + goalGrid);
+
         if (startGrid.equals(goalGrid)) {
             // Already at goal
+            System.out.println("[DragonPathfinder] Start == Goal, returning direct path");
             List<Vec3> path = new ArrayList<>();
             path.add(goal);
             return path;
+        }
+
+        // Check if start is passable
+        if (!isPassable(startGrid)) {
+            System.out.println("[DragonPathfinder] ERROR: Start position is not passable!");
+            return null;
+        }
+
+        // Check if goal is passable
+        // Special case for WATER_ESCAPE: If goal is solid ground with air above, it's a valid shore
+        if (!isPassable(goalGrid)) {
+            if (mode == PathMode.WATER_ESCAPE) {
+                BlockState goalState = level.getBlockState(goalGrid);
+                BlockPos aboveGoal = goalGrid.above();
+                BlockState aboveState = level.getBlockState(aboveGoal);
+
+                // If goal is solid ground with air above (and not water), it's a shore - accept it!
+                if (!goalState.isAir() && goalState.blocksMotion() &&
+                    aboveState.isAir() && level.getFluidState(aboveGoal).isEmpty()) {
+                    System.out.println("[DragonPathfinder] Goal is solid ground with air above (shore) - accepting!");
+                    // Adjust goal to be the AIR position above the ground (where dragon will stand)
+                    // CRITICAL: Must snap adjusted goal back to grid!
+                    BlockPos oldGoalGrid = goalGrid;
+                    goalGrid = snapToGrid(Vec3.atCenterOf(aboveGoal));
+                    System.out.println("[DragonPathfinder] Adjusted goal: " + oldGoalGrid + " → " + aboveGoal + " → " + goalGrid + " (grid-snapped)");
+                } else {
+                    System.out.println("[DragonPathfinder] ERROR: Goal position is not passable!");
+                    // Debug: What's actually at the goal?
+                    FluidState goalFluid = level.getFluidState(goalGrid);
+                    System.out.println("[DragonPathfinder] Goal block at " + goalGrid + ": " + goalState.getBlock().getName().getString() +
+                        (goalFluid.isEmpty() ? "" : " + FLUID"));
+                    return null;
+                }
+            } else {
+                System.out.println("[DragonPathfinder] ERROR: Goal position is not passable!");
+                return null;
+            }
         }
 
         // Initialize data structures
@@ -86,7 +155,7 @@ public class DragonPathfinder {
         while (!openSet.isEmpty() && nodesExplored < maxSearchNodes) {
             // Check timeout
             if (System.currentTimeMillis() - startTime > timeoutMs) {
-                // System.out.println("Pathfinding timeout after exploring " + nodesExplored + " nodes");
+                System.out.println("[DragonPathfinder] TIMEOUT after exploring " + nodesExplored + " nodes");
                 return null; // Timeout
             }
 
@@ -96,10 +165,13 @@ public class DragonPathfinder {
             // Check if we reached the goal
             if (current.asBlockPos().equals(goalGrid)) {
                 // Reconstruct path
+                System.out.println("[DragonPathfinder] SUCCESS - Path found! Explored " + nodesExplored + " nodes");
                 return reconstructPath(current, goal);
             }
 
             // Explore neighbors
+            int passableNeighbors = 0;
+            int addedToOpenSet = 0;
             for (int[] offset : MOVEMENT_OFFSETS_3D) {
                 int newX = current.x + offset[0] * gridResolution;
                 int newY = current.y + offset[1] * gridResolution;
@@ -116,6 +188,7 @@ public class DragonPathfinder {
                 if (!isPassable(neighborPos)) {
                     continue;
                 }
+                passableNeighbors++;
 
                 DragonPathNode neighbor = getOrCreateNode(nodeMap, neighborPos);
 
@@ -134,12 +207,18 @@ public class DragonPathfinder {
                         openSet.update(neighbor);
                     } else {
                         openSet.insert(neighbor);
+                        addedToOpenSet++;
                     }
                 }
             }
+
+            if (nodesExplored <= 5) {
+                System.out.println("[DragonPathfinder] Node " + nodesExplored + " at " + current.asBlockPos() +
+                    " has " + passableNeighbors + " passable neighbors, added " + addedToOpenSet + " to open set. Open set size: " + openSet.size());
+            }
         }
 
-        // System.out.println("No path found after exploring " + nodesExplored + " nodes");
+        System.out.println("[DragonPathfinder] FAILED - No path found after exploring " + nodesExplored + " nodes (max: " + maxSearchNodes + ")");
         return null; // No path found
     }
 
@@ -156,29 +235,117 @@ public class DragonPathfinder {
     /**
      * Get movement cost between two positions.
      * Higher cost = less desirable path.
+     * Cost adjustments based on PathMode and terrain.
      */
     private float getMovementCost(BlockPos from, BlockPos to) {
         // Base cost is Euclidean distance
         float baseCost = heuristic(from, to);
 
-        // Add penalties for undesirable movements
+        // Add penalties/bonuses based on mode and terrain
         int dy = to.getY() - from.getY();
 
-        // Slight penalty for vertical movement (encourage horizontal flight)
-        if (dy != 0) {
-            baseCost *= 1.1f;
-        }
+        switch (mode) {
+            case FLIGHT:
+                // Flying dragons prefer horizontal movement and avoid ground
+                if (dy != 0) {
+                    baseCost *= 1.1f; // Slight penalty for vertical movement
+                }
+                // Check if near ground and penalize
+                if (to.getY() < level.getSeaLevel() + 5) {
+                    baseCost *= 1.2f; // Penalty for flying low
+                }
+                break;
 
-        // TODO: Add more sophisticated costs:
-        // - Penalty for flying near ground
-        // - Penalty for tight spaces
-        // - Bonus for open air
+            case WATER_ESCAPE:
+                // Heavily prefer land over water (based on TDE's SemiWaterNodeEvaluator)
+                boolean toIsWater = isPositionInWater(to);
+                boolean toIsLand = !toIsWater && isPositionOnLand(to);
+
+                if (toIsLand) {
+                    // Strongly prefer land - subtract significant cost
+                    baseCost = Math.max(0.1f, baseCost - 6.0f);
+                } else if (toIsWater) {
+                    boolean isWaterBorder = isWaterBorder(to);
+                    if (isWaterBorder) {
+                        // Water edges are less desirable than open water
+                        baseCost += 4.0f;
+                    }
+                    // Water is passable but not preferred (cost remains base)
+                }
+                break;
+
+            case AMPHIBIOUS:
+                // Neutral costs for all terrain types
+                boolean inWater = isPositionInWater(to);
+                if (inWater) {
+                    // Check if on underwater ground (more stable)
+                    BlockPos below = to.below();
+                    BlockState belowState = level.getBlockState(below);
+                    if (!belowState.isAir() && belowState.blocksMotion()) {
+                        // Slight preference for swimming along bottom
+                        baseCost *= 0.8f;
+                    }
+                }
+                break;
+        }
 
         return baseCost;
     }
 
     /**
-     * Check if a position is passable for flight.
+     * Check if a position is in water.
+     */
+    private boolean isPositionInWater(BlockPos pos) {
+        FluidState fluidState = level.getFluidState(pos);
+        return !fluidState.isEmpty();
+    }
+
+    /**
+     * Check if a position is on land (air above solid ground).
+     */
+    private boolean isPositionOnLand(BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (!state.isAir()) {
+            return false;
+        }
+        // Check if there's solid ground below within reasonable distance
+        for (int i = 1; i <= 3; i++) {
+            BlockPos below = pos.below(i);
+            BlockState belowState = level.getBlockState(below);
+            if (!belowState.isAir() && belowState.blocksMotion()) {
+                return true;
+            }
+            // Stop if we hit water
+            if (!level.getFluidState(below).isEmpty()) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if a water position is at the border (has non-water neighbors).
+     */
+    private boolean isWaterBorder(BlockPos pos) {
+        if (!isPositionInWater(pos)) {
+            return false;
+        }
+        // Check horizontal neighbors
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dz == 0) continue;
+                BlockPos neighbor = pos.offset(dx, 0, dz);
+                BlockState neighborState = level.getBlockState(neighbor);
+                if (neighborState.blocksMotion()) {
+                    return true; // Adjacent to solid block
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if a position is passable based on the pathfinding mode.
      * Uses entity bounding box to check if dragon fits.
      */
     private boolean isPassable(BlockPos pos) {
@@ -200,8 +367,41 @@ public class DragonPathfinder {
                 for (int z = minZ; z <= maxZ; z++) {
                     BlockPos checkPos = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(checkPos);
-                    if (!state.isAir() && state.blocksMotion()) {
-                        return false; // Obstacle detected
+                    FluidState fluidState = level.getFluidState(checkPos);
+
+                    boolean isAir = state.isAir();
+                    boolean isWater = !fluidState.isEmpty();
+                    boolean isSolid = !isAir && state.blocksMotion();
+
+                    switch (mode) {
+                        case FLIGHT:
+                            // Only air is passable for flying dragons
+                            if (!isAir) {
+                                return false;
+                            }
+                            break;
+
+                        case WATER_ESCAPE:
+                            // Air and water are passable, solid blocks allowed ONLY at bottom (standing on shore)
+                            if (isSolid) {
+                                // Allow solid ground at the bottom (dragon will stand on shore)
+                                if (y != minY) {
+                                    return false; // Solid blocks above ground level block movement
+                                }
+                                // Ground level solid is OK (standing on shore)
+                            }
+                            break;
+
+                        case AMPHIBIOUS:
+                            // Air, water, and some ground positions are passable
+                            if (isSolid) {
+                                // Allow movement along solid ground if it's the bottom of the bounding box
+                                if (y != minY) {
+                                    return false; // Solid blocks above ground level block movement
+                                }
+                                // Ground level solid is OK (walking/swimming along bottom)
+                            }
+                            break;
                     }
                 }
             }
@@ -262,6 +462,102 @@ public class DragonPathfinder {
             }
         }
         return offsets.toArray(new int[0][]);
+    }
+
+    /**
+     * Find the nearest shore position from a water position.
+     * Uses breadth-first search to find the closest air block above solid ground.
+     *
+     * @param level      The world level
+     * @param startPos   Starting position (usually the dragon's current position in water)
+     * @param maxRadius  Maximum search radius in blocks
+     * @return The nearest shore position, or null if none found within radius
+     */
+    @Nullable
+    public static Vec3 findNearestShore(Level level, Vec3 startPos, int maxRadius) {
+        BlockPos start = BlockPos.containing(startPos);
+
+        // Quick check: if already on land, return current position
+        if (!level.getFluidState(start).isEmpty() == false) {
+            BlockPos landPos = findLandPositionBelow(level, start);
+            if (landPos != null) {
+                return Vec3.atBottomCenterOf(landPos);
+            }
+        }
+
+        // BFS to find nearest shore
+        List<BlockPos> queue = new ArrayList<>();
+        Map<BlockPos, Boolean> visited = new HashMap<>();
+
+        queue.add(start);
+        visited.put(start, true);
+
+        int[] dx = {-1, 1, 0, 0, 0, 0};
+        int[] dy = {0, 0, -1, 1, 0, 0};
+        int[] dz = {0, 0, 0, 0, -1, 1};
+
+        int queueIndex = 0;
+        while (queueIndex < queue.size()) {
+            BlockPos current = queue.get(queueIndex++);
+
+            // Check distance from start
+            if (current.distManhattan(start) > maxRadius) {
+                continue;
+            }
+
+            // Check if this position is land (air above solid ground)
+            BlockState state = level.getBlockState(current);
+            if (state.isAir()) {
+                BlockPos landPos = findLandPositionBelow(level, current);
+                if (landPos != null) {
+                    // Found land! Return this position
+                    return Vec3.atBottomCenterOf(landPos);
+                }
+            }
+
+            // Add neighbors to queue
+            for (int i = 0; i < 6; i++) {
+                BlockPos neighbor = current.offset(dx[i], dy[i], dz[i]);
+
+                // Bounds check
+                if (neighbor.getY() < level.getMinBuildHeight() || neighbor.getY() > level.getMaxBuildHeight()) {
+                    continue;
+                }
+
+                if (visited.containsKey(neighbor)) {
+                    continue;
+                }
+
+                visited.put(neighbor, true);
+                queue.add(neighbor);
+            }
+        }
+
+        return null; // No shore found within radius
+    }
+
+    /**
+     * Check if a position is above solid ground (land).
+     * Returns the ground position if found, null otherwise.
+     */
+    @Nullable
+    private static BlockPos findLandPositionBelow(Level level, BlockPos pos) {
+        // Check up to 5 blocks below for solid ground
+        for (int i = 0; i <= 5; i++) {
+            BlockPos below = pos.below(i);
+            BlockState belowState = level.getBlockState(below);
+
+            // If we hit water, this isn't land
+            if (!level.getFluidState(below).isEmpty()) {
+                return null;
+            }
+
+            // If we hit solid ground, this is land!
+            if (!belowState.isAir() && belowState.blocksMotion()) {
+                return pos; // Return the air position above the ground
+            }
+        }
+        return null; // No ground found within range
     }
 
     /**
