@@ -7,11 +7,16 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
 
-public class IgnivorusModel extends GeoModel<Ignivorus> {
+public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
+
+    public IgnivorusModel() {
+        super(SaintsDragonsCommon.rl("cindervane"));
+    }
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/ignivorus.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/ignivorus.animation.json");
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
