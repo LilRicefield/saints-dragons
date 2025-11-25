@@ -97,10 +97,10 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
         float v1 = this.getV1();
         int light = this.getLightColor(partialTicks);
 
-        buffer.vertex(CORNER_CACHE[0].x(), CORNER_CACHE[0].y(), CORNER_CACHE[0].z()).uv(u1, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        buffer.vertex(CORNER_CACHE[1].x(), CORNER_CACHE[1].y(), CORNER_CACHE[1].z()).uv(u1, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        buffer.vertex(CORNER_CACHE[2].x(), CORNER_CACHE[2].y(), CORNER_CACHE[2].z()).uv(u0, v0).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
-        buffer.vertex(CORNER_CACHE[3].x(), CORNER_CACHE[3].y(), CORNER_CACHE[3].z()).uv(u0, v1).color(this.rCol, this.gCol, this.bCol, this.alpha).uv2(light).endVertex();
+        buffer.addVertex(CORNER_CACHE[0].x(), CORNER_CACHE[0].y(), CORNER_CACHE[0].z()).setUv(u1, v1).setColor(this.rCol, this.gCol, this.bCol, this.alpha).setLight(light);
+        buffer.addVertex(CORNER_CACHE[1].x(), CORNER_CACHE[1].y(), CORNER_CACHE[1].z()).setUv(u1, v0).setColor(this.rCol, this.gCol, this.bCol, this.alpha).setLight(light);
+        buffer.addVertex(CORNER_CACHE[2].x(), CORNER_CACHE[2].y(), CORNER_CACHE[2].z()).setUv(u0, v0).setColor(this.rCol, this.gCol, this.bCol, this.alpha).setLight(light);
+        buffer.addVertex(CORNER_CACHE[3].x(), CORNER_CACHE[3].y(), CORNER_CACHE[3].z()).setUv(u0, v1).setColor(this.rCol, this.gCol, this.bCol, this.alpha).setLight(light);
     }
 
     @Override

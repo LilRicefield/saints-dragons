@@ -45,8 +45,10 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -74,16 +76,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.particles.ParticleTypes;
 
 
 //GeckoLib
-import software.bernie.geckolib.core.animation.*;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
+import software.bernie.geckolib.animation.*;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.keyframe.event.SoundKeyframeEvent;
 
 //WHO ARE THESE SUCKAS
 import org.jetbrains.annotations.Nullable;
@@ -555,7 +557,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public Raevyx(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
-        this.setMaxUpStep(1.25F);
+        // Prefer slightly higher step to handle rough terrain while ridden
 
         // Initialize both navigators with custom pathfinding
         this.groundNav = new com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround(this, level);
@@ -574,10 +576,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.moveControl = new MoveControl(this);
 
         // Pathfinding setup
-        this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
-        this.setPathfindingMalus(BlockPathTypes.WATER, -1.0F);
-        this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, -1.0F);
-        this.setPathfindingMalus(BlockPathTypes.FENCE, -1.0F);
+        this.setPathfindingMalus(PathType.DANGER_FIRE, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, -1.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, -1.0F);
+        this.setPathfindingMalus(PathType.FENCE, -1.0F);
 
         // Initialize controllers (FlightController removed)
         this.lightningInteractionHandler = new RaevyxInteractionHandler(this);
@@ -639,47 +641,50 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 .add(Attributes.ARMOR, config.armor());
     }
 
+    @Override
+    public float maxUpStep() {
+        return 1.25F;
+    }
+
     // Cooldown to prevent hurt sound spam when ridden or under rapid hits
     private int hurtSoundCooldown = 0;
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        // Define Lightning Dragon specific data
-        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        this.entityData.define(DATA_BEAMING, false);
-        this.entityData.define(DATA_BEAM_GLOW, false);
-        this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
-        this.entityData.define(DATA_RIDER_LOCKED, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
-        this.entityData.define(DATA_BEAM_END_SET, false);
-        this.entityData.define(DATA_BEAM_END_X, 0f);
-        this.entityData.define(DATA_BEAM_END_Y, 0f);
-        this.entityData.define(DATA_BEAM_END_Z, 0f);
-        this.entityData.define(DATA_BEAM_START_SET, false);
-        this.entityData.define(DATA_BEAM_START_X, 0f);
-        this.entityData.define(DATA_BEAM_START_Y, 0f);
-        this.entityData.define(DATA_BEAM_START_Z, 0f);
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
-        this.entityData.define(DATA_TAMING_STUNNED, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        builder.define(DATA_BEAMING, false);
+        builder.define(DATA_BEAM_GLOW, false);
+        builder.define(DATA_RIDER_LANDING_BLEND, false);
+        builder.define(DATA_RIDER_LOCKED, false);
+        builder.define(DATA_SLEEPING_ENTERING, false);
+        builder.define(DATA_SLEEPING_EXITING, false);
+        builder.define(DATA_BEAM_END_SET, false);
+        builder.define(DATA_BEAM_END_X, 0f);
+        builder.define(DATA_BEAM_END_Y, 0f);
+        builder.define(DATA_BEAM_END_Z, 0f);
+        builder.define(DATA_BEAM_START_SET, false);
+        builder.define(DATA_BEAM_START_X, 0f);
+        builder.define(DATA_BEAM_START_Y, 0f);
+        builder.define(DATA_BEAM_START_Z, 0f);
+        builder.define(DATA_SLEEPING, false);
+        builder.define(DATA_FEEDING_COOLDOWN, 0);
+        builder.define(DATA_TAMING_STUNNED, false);
     }
 
     @Override
-    protected void defineRideableDragonData() {
-        // Define all rideable wyvern data keys for LightningDragonEntity
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_RIDER_FORWARD, 0f);
-        this.entityData.define(DATA_RIDER_STRAFE, 0f);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_ACCELERATING, false);
+    protected void defineRideableDragonData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_FLYING, false);
+        builder.define(DATA_TAKEOFF, false);
+        builder.define(DATA_HOVERING, false);
+        builder.define(DATA_LANDING, false);
+        builder.define(DATA_RUNNING, false);
+        builder.define(DATA_GROUND_MOVE_STATE, 0);
+        builder.define(DATA_FLIGHT_MODE, -1);
+        builder.define(DATA_RIDER_FORWARD, 0f);
+        builder.define(DATA_RIDER_STRAFE, 0f);
+        builder.define(DATA_GOING_UP, false);
+        builder.define(DATA_GOING_DOWN, false);
+        builder.define(DATA_ACCELERATING, false);
     }
 
     // Implementation of abstract accessor methods
@@ -1319,13 +1324,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     // ===== RIDING SUPPORT =====
     @Override
-    public double getPassengersRidingOffset() {
-        return riderController.getPassengersRidingOffset();
+    protected void positionRider(@Nonnull Entity passenger, Entity.MoveFunction moveFunction) {
+        riderController.positionRider(passenger, moveFunction);
     }
 
     @Override
-    protected void positionRider(@Nonnull Entity passenger, @Nonnull Entity.MoveFunction moveFunction) {
-        riderController.positionRider(passenger, moveFunction);
+    public Vec3 getPassengerRidingPosition(@Nonnull Entity passenger) {
+        return riderController.getPassengerPosition(passenger);
     }
 
     @Override
@@ -2183,7 +2188,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             return;
         }
 
-        boolean moveGoalActive = this.goalSelector.getRunningGoals().anyMatch(wrapped -> {
+        boolean moveGoalActive = this.goalSelector.getAvailableGoals().stream().anyMatch(wrapped -> {
+            if (!wrapped.isRunning()) {
+                return false;
+            }
             Goal goal = wrapped.getGoal();
             return goal instanceof RaevyxFollowOwnerGoal || goal instanceof RaevyxGroundCombatGoal || goal instanceof RaevyxAirCombatGoal;
         });
@@ -2849,10 +2857,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             @Nonnull net.minecraft.world.level.ServerLevelAccessor level,
             @Nonnull net.minecraft.world.DifficultyInstance difficulty,
             @Nonnull MobSpawnType spawnReason,
-            @Nullable SpawnGroupData spawnData,
-            @Nullable CompoundTag dataTag
+            @Nullable SpawnGroupData spawnData
     ) {
-        spawnData = super.finalizeSpawn(level, difficulty, spawnReason, spawnData, dataTag);
+        spawnData = super.finalizeSpawn(level, difficulty, spawnReason, spawnData);
 
         // Only spawn families during chunk generation
         // Use a custom SpawnGroupData to track if we've already spawned babies
@@ -2888,7 +2895,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
     }
 
-    private void setAttributeBase(Attribute attribute, double value) {
+    private void setAttributeBase(Holder<Attribute> attribute, double value) {
         AttributeInstance instance = this.getAttribute(attribute);
         if (instance != null) {
             instance.setBaseValue(value);
@@ -3876,31 +3883,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     @Override
-    public float getEyeHeight(@Nonnull Pose pose) {
-        // Always use dynamically calculated eye height when available
-        EntityDimensions dimensions = getDimensions(pose);
-        return dimensions.height * 0.6f;
-    }
-
-    @Override
-    protected float getStandingEyeHeight(@Nonnull Pose pose, @Nonnull EntityDimensions dimensions) {
-        // Always use cached value when available (both client and server need this)
-        return dimensions.height * 0.6f;
-    }
-
-    @Override
-    public EntityDimensions getDimensions(@Nonnull Pose pose) {
-        // Scale down hitbox for babies to prevent pushing parent dragon
-        EntityDimensions baseDimensions = super.getDimensions(pose);
-        if (this.isBaby()) {
-            // Scale babies to 40% of adult size (0.4x)
-            // Adult: 3.5F x 3.0F -> Baby: 1.4F x 1.2F
-            return baseDimensions.scale(0.4F);
-        }
-        return baseDimensions;
-    }
-
-    @Override
     public void ageBoundaryReached() {
         super.ageBoundaryReached();
         // Refresh hitbox dimensions when baby grows into adult
@@ -3953,7 +3935,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             java.util.UUID ownerId = this.getOwnerUUID();
             if (ownerId != null) {
                 baby.setOwnerUUID(ownerId);
-                baby.setTame(true);
+                baby.setTame(true, true);
             }
 
             // IMPORTANT: Set skip flag BEFORE calling setAge to prevent respawn logic

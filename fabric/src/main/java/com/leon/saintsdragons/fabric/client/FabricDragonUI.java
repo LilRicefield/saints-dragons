@@ -56,7 +56,8 @@ public final class FabricDragonUI {
             DragonStatusUI ui = manager.getDragonStatusUI();
 
             if (ui.isVisible()) {
-                ui.render(graphics, -1, -1, tickDelta);
+                float partialTick = tickDelta.getGameTimeDeltaPartialTick(client.isPaused());
+                ui.render(graphics, -1, -1, partialTick);
             }
 
             int width = client.getWindow().getGuiScaledWidth();

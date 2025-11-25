@@ -20,37 +20,57 @@ public final class ModParticles {
 
     public static final Supplier<ParticleType<RaevyxLightningStormData>> LIGHTNING_STORM =
             REGISTER.register("lightning_storm",
-                    () -> new ParticleType<>(false, RaevyxLightningStormData.DESERIALIZER) {
+                    () -> new ParticleType<>(false) {
                         @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningStormData> codec() {
-                            return RaevyxLightningStormData.CODEC(this);
+                        public com.mojang.serialization.MapCodec<RaevyxLightningStormData> codec() {
+                            return RaevyxLightningStormData.MAP_CODEC;
+                        }
+
+                        @Override
+                        public net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, RaevyxLightningStormData> streamCodec() {
+                            return RaevyxLightningStormData.STREAM_CODEC;
                         }
                     });
 
     public static final Supplier<ParticleType<RaevyxLightningStormData>> LIGHTNING_STORM_FEMALE =
             REGISTER.register("lightning_storm_female",
-                    () -> new ParticleType<>(false, RaevyxLightningStormData.DESERIALIZER) {
+                    () -> new ParticleType<>(false) {
                         @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningStormData> codec() {
-                            return RaevyxLightningStormData.CODEC(this);
+                        public com.mojang.serialization.MapCodec<RaevyxLightningStormData> codec() {
+                            return RaevyxLightningStormData.MAP_CODEC;
+                        }
+
+                        @Override
+                        public net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, RaevyxLightningStormData> streamCodec() {
+                            return RaevyxLightningStormData.STREAM_CODEC;
                         }
                     });
 
     public static final Supplier<ParticleType<RaevyxLightningArcData>> LIGHTNING_ARC =
             REGISTER.register("lightning_arc",
-                    () -> new ParticleType<>(false, RaevyxLightningArcData.DESERIALIZER) {
+                    () -> new ParticleType<>(false) {
                         @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningArcData> codec() {
-                            return RaevyxLightningArcData.CODEC(this);
+                        public com.mojang.serialization.MapCodec<RaevyxLightningArcData> codec() {
+                            return RaevyxLightningArcData.MAP_CODEC;
+                        }
+
+                        @Override
+                        public net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, RaevyxLightningArcData> streamCodec() {
+                            return RaevyxLightningArcData.STREAM_CODEC;
                         }
                     });
 
     public static final Supplier<ParticleType<RaevyxLightningChainData>> LIGHTNING_CHAIN =
             REGISTER.register("lightning_chain",
-                    () -> new ParticleType<>(false, RaevyxLightningChainData.DESERIALIZER) {
+                    () -> new ParticleType<>(false) {
                         @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningChainData> codec() {
-                            return RaevyxLightningChainData.CODEC(this);
+                        public com.mojang.serialization.MapCodec<RaevyxLightningChainData> codec() {
+                            return RaevyxLightningChainData.MAP_CODEC;
+                        }
+
+                        @Override
+                        public net.minecraft.network.codec.StreamCodec<net.minecraft.network.RegistryFriendlyByteBuf, RaevyxLightningChainData> streamCodec() {
+                            return RaevyxLightningChainData.STREAM_CODEC;
                         }
                     });
 

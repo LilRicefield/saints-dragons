@@ -15,6 +15,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.SpawnPlacementType;
+import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.CreativeModeTab;
@@ -63,31 +65,31 @@ public final class CommonModEvents {
     public static void registerSpawnPlacements(SpawnPlacementRegistrar registrar) {
         registrar.register(
                 ModEntities.RAEVYX.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Raevyx::canSpawnHere
         );
         registrar.register(
                 ModEntities.STEGONAUT.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Stegonaut::canSpawnHere
         );
         registrar.register(
                 ModEntities.CINDERVANE.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Cindervane::canSpawnHere
         );
         registrar.register(
                 ModEntities.NULLJAW.get(),
-                SpawnPlacements.Type.NO_RESTRICTIONS,
+                SpawnPlacementTypes.NO_RESTRICTIONS,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Nulljaw::canSpawnHere
         );
         registrar.register(
                 ModEntities.IGNIVORUS.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Ignivorus::canSpawnHere
         );
@@ -107,7 +109,7 @@ public final class CommonModEvents {
     @FunctionalInterface
     public interface SpawnPlacementRegistrar {
         <T extends Mob> void register(EntityType<T> type,
-                                      SpawnPlacements.Type placementType,
+                                      SpawnPlacementType placementType,
                                       Heightmap.Types heightmap,
                                       SpawnPlacements.SpawnPredicate<T> predicate);
     }

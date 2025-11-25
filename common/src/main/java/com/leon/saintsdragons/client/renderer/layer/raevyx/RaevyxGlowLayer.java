@@ -58,10 +58,7 @@ public class RaevyxGlowLayer extends GeoRenderLayer<Raevyx> {
                 partialTick,
                 0xF000F0,  // Max light = fullbright emissive
                 OverlayTexture.NO_OVERLAY,
-                1.0f,
-                1.0f,
-                1.0f,
-                pulse  // Alpha for pulsation
+                (int)(pulse * 255) << 24 | 0xFFFFFF
         );
     }
 }

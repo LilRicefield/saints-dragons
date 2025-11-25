@@ -28,33 +28,15 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
         return 0.0F;
     }
 
-    @Override
-    public void preRender(@NotNull PoseStack poseStack,
-                          Nulljaw entity,
-                          BakedGeoModel model,
-                          MultiBufferSource bufferSource,
-                          com.mojang.blaze3d.vertex.VertexConsumer buffer,
-                          boolean isReRender,
-                          float partialTick,
-                          int packedLight,
-                          int packedOverlay,
-                          float red, float green, float blue, float alpha) {
-
-        // Store model and enable matrix tracking for bones with locators
-        this.lastBakedModel = model;
-        enableTrackingForBones(model);
-
-        // Scale the drake - females are slightly smaller (85% scale)
-        float scale = 1.0f;
-        poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 2.5f * scale;
-
-        super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
-    }
+    // preRender signature changed; rely on base renderer and handle tracking in render
 
     @Override
     public void render(@NotNull Nulljaw entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        this.lastBakedModel = this.getGeoModel().getBakedModel(this.getGeoModel().getModelResource(entity));
+        if (this.lastBakedModel != null) {
+            enableTrackingForBones(this.lastBakedModel);
+        }
         // Call normal rendering first
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 

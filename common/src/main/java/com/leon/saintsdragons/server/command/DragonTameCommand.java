@@ -136,8 +136,8 @@ public final class DragonTameCommand {
 
         // Try gender-specific advancement first (currently only Raevyx has this)
         if (dragon.isFemale()) {
-            var femaleAdvancement = player.server.getAdvancements()
-                .getAdvancement(SaintsDragonsCommon.rl("tame_" + dragonType + "_female"));
+        var femaleAdvancement = player.server.getAdvancements()
+                .get(SaintsDragonsCommon.rl("tame_" + dragonType + "_female"));
             if (femaleAdvancement != null) {
                 player.getAdvancements().award(femaleAdvancement, "tame_" + dragonType + "_female");
                 return;
@@ -146,7 +146,7 @@ public final class DragonTameCommand {
 
         // Fall back to standard advancement
         var advancement = player.server.getAdvancements()
-            .getAdvancement(SaintsDragonsCommon.rl("tame_" + dragonType));
+            .get(SaintsDragonsCommon.rl("tame_" + dragonType));
         if (advancement != null) {
             player.getAdvancements().award(advancement, "tame_" + dragonType);
         }

@@ -33,14 +33,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_MELEE_MODE, 0); // Default to primary melee (mode 0)
-        defineRideableDragonData();
+    protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_MELEE_MODE, 0); // Default to primary melee (mode 0)
+        defineRideableDragonData(builder);
     }
 
     // This method should be overridden by subclasses to define their own entity data keys
-    protected abstract void defineRideableDragonData();
+    protected abstract void defineRideableDragonData(net.minecraft.network.syncher.SynchedEntityData.Builder builder);
 
 
     public boolean canBeControlledBy(Player player) {

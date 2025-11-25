@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.common.network;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import software.bernie.geckolib.network.SerializableDataTicket;
+import software.bernie.geckolib.constant.dataticket.SerializableDataTicket;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**

@@ -56,6 +56,7 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
         RenderType glowType = RenderType.entityTranslucent(glowTexture);
         VertexConsumer glowBuffer = bufferSource.getBuffer(glowType);
 
+        int packedColor = (int)(alpha * 255) << 24 | 0xFFFFFF;
         getRenderer().reRender(
                 bakedModel,
                 poseStack,
@@ -66,10 +67,7 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
                 partialTick,
                 0xF000F0,
                 OverlayTexture.NO_OVERLAY,
-                1.0f,
-                1.0f,
-                1.0f,
-                alpha
+                packedColor
         );
     }
 }

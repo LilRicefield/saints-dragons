@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.platform;
 
 import com.leon.saintsdragons.platform.ConfigHelper;
+import com.leon.saintsdragons.platform.DataComponentHelper;
 import com.leon.saintsdragons.platform.NetworkHelper;
 import com.leon.saintsdragons.platform.PlatformHelper;
 import com.leon.saintsdragons.platform.RegistryHelper;
@@ -19,6 +20,7 @@ public final class FabricPlatformHelper implements PlatformHelper {
     private FabricRegistryHelper registryHelper;
     private FabricNetworkHelper networkHelper;
     private FabricConfigHelper configHelper;
+    private FabricDataComponentHelper dataComponentHelper;
 
     @Override
     public RegistryHelper getRegistryHelper() {
@@ -42,6 +44,14 @@ public final class FabricPlatformHelper implements PlatformHelper {
             configHelper = new FabricConfigHelper();
         }
         return configHelper;
+    }
+
+    @Override
+    public DataComponentHelper getDataComponentHelper() {
+        if (dataComponentHelper == null) {
+            dataComponentHelper = new FabricDataComponentHelper();
+        }
+        return dataComponentHelper;
     }
 
     @Override

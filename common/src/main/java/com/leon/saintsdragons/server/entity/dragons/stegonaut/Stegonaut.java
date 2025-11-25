@@ -26,6 +26,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.network.syncher.SynchedEntityData;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -39,10 +40,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
@@ -141,12 +142,12 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     }
     
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0); // 0=idle, 1=walking, 2=running
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_SLEEPING, false);
+        builder.define(DATA_SLEEPING_ENTERING, false);
+        builder.define(DATA_SLEEPING_EXITING, false);
+        builder.define(DATA_GROUND_MOVE_STATE, 0); // 0=idle, 1=walking, 2=running
     }
     
     @Override
@@ -367,7 +368,7 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
             // Trigger advancement for taming Primitive Drake
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                 var advancement = serverPlayer.server.getAdvancements()
-                    .getAdvancement(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_stegonaut"));
+                    .get(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_stegonaut"));
                 if (advancement != null) {
                     serverPlayer.getAdvancements().award(advancement, "tame_stegonaut");
                 }

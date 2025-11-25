@@ -48,7 +48,7 @@ public class DragonSoundHandler {
      * Handle keyframe-based sound effects during animations
      * Call this from animation controller sound handlers (legacy support)
      */
-    public void handleAnimationSound(DragonEntity entity, Object keyframeData, software.bernie.geckolib.core.animation.AnimationController<?> controller) {
+    public void handleAnimationSound(DragonEntity entity, Object keyframeData, software.bernie.geckolib.animation.AnimationController<?> controller) {
         if (dragon.isDying()) return;
         // IMPORTANT: GeckoLib fires animation sound events on BOTH client and server!
         // We ONLY want to handle on client side for local playback

@@ -1,18 +1,18 @@
 package com.leon.saintsdragons.common.particle.raevyx;
 
 import com.leon.saintsdragons.common.registry.ModParticles;
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.Locale;
 
 /**
@@ -20,69 +20,37 @@ import java.util.Locale;
  * Carries start and end positions for the lightning arc.
  */
 public record RaevyxLightningChainData(float size, Vec3 startPos, Vec3 endPos, boolean female) implements ParticleOptions {
-    public static final ParticleOptions.Deserializer<RaevyxLightningChainData> DESERIALIZER = new ParticleOptions.Deserializer<>() {
-        @Override
-        public @NotNull RaevyxLightningChainData fromCommand(@Nonnull ParticleType<RaevyxLightningChainData> type, @Nonnull StringReader reader) throws CommandSyntaxException {
-            reader.expect(' ');
-            float size = reader.readFloat();
-            reader.expect(' ');
-            double startX = reader.readDouble();
-            reader.expect(' ');
-            double startY = reader.readDouble();
-            reader.expect(' ');
-            double startZ = reader.readDouble();
-            reader.expect(' ');
-            double endX = reader.readDouble();
-            reader.expect(' ');
-            double endY = reader.readDouble();
-            reader.expect(' ');
-            double endZ = reader.readDouble();
-            boolean female = false;
-            if (reader.canRead() && reader.peek() == ' ') {
-                reader.expect(' ');
-                female = reader.readBoolean();
-            }
-            
-            return new RaevyxLightningChainData(size, new Vec3(startX, startY, startZ), new Vec3(endX, endY, endZ), female);
-        }
+    public static final MapCodec<RaevyxLightningChainData> MAP_CODEC = RecordCodecBuilder.mapCodec(b -> b.group(
+            Codec.FLOAT.fieldOf("size").forGetter(RaevyxLightningChainData::size),
+            Vec3.CODEC.fieldOf("startPos").forGetter(RaevyxLightningChainData::startPos),
+            Vec3.CODEC.fieldOf("endPos").forGetter(RaevyxLightningChainData::endPos),
+            Codec.BOOL.optionalFieldOf("female", false).forGetter(RaevyxLightningChainData::female)
+    ).apply(b, RaevyxLightningChainData::new));
 
-        @Override
-        public @NotNull RaevyxLightningChainData fromNetwork(@Nonnull ParticleType<RaevyxLightningChainData> type, @Nonnull FriendlyByteBuf buf) {
-            float size = buf.readFloat();
-            double startX = buf.readDouble();
-            double startY = buf.readDouble();
-            double startZ = buf.readDouble();
-            double endX = buf.readDouble();
-            double endY = buf.readDouble();
-            double endZ = buf.readDouble();
-            boolean female = buf.readBoolean();
-            
-            return new RaevyxLightningChainData(size, new Vec3(startX, startY, startZ), new Vec3(endX, endY, endZ), female);
-        }
-    };
+    public static final StreamCodec<RegistryFriendlyByteBuf, RaevyxLightningChainData> STREAM_CODEC = StreamCodec.of(
+            (buf, data) -> {
+                buf.writeFloat(data.size());
+                buf.writeDouble(data.startPos().x);
+                buf.writeDouble(data.startPos().y);
+                buf.writeDouble(data.startPos().z);
+                buf.writeDouble(data.endPos().x);
+                buf.writeDouble(data.endPos().y);
+                buf.writeDouble(data.endPos().z);
+                buf.writeBoolean(data.female());
+            },
+            buf -> {
+                float size = buf.readFloat();
+                Vec3 start = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+                Vec3 end = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+                boolean female = buf.readBoolean();
+                return new RaevyxLightningChainData(size, start, end, female);
+            }
+    );
 
     public static Codec<RaevyxLightningChainData> CODEC(@SuppressWarnings("unused") ParticleType<RaevyxLightningChainData> type) {
-        return RecordCodecBuilder.create(b -> b.group(
-                Codec.FLOAT.fieldOf("size").forGetter(RaevyxLightningChainData::size),
-                Vec3.CODEC.fieldOf("startPos").forGetter(RaevyxLightningChainData::startPos),
-                Vec3.CODEC.fieldOf("endPos").forGetter(RaevyxLightningChainData::endPos),
-                Codec.BOOL.optionalFieldOf("female", false).forGetter(RaevyxLightningChainData::female)
-        ).apply(b, RaevyxLightningChainData::new));
+        return MAP_CODEC.codec();
     }
 
-    @Override
-    public void writeToNetwork(@Nonnull FriendlyByteBuf buf) {
-        buf.writeFloat(this.size);
-        buf.writeDouble(this.startPos.x);
-        buf.writeDouble(this.startPos.y);
-        buf.writeDouble(this.startPos.z);
-        buf.writeDouble(this.endPos.x);
-        buf.writeDouble(this.endPos.y);
-        buf.writeDouble(this.endPos.z);
-        buf.writeBoolean(this.female);
-    }
-
-    @Override
     public @NotNull String writeToString() {
         return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %.2f %.2f %.2f %.2f %s", 
                 BuiltInRegistries.PARTICLE_TYPE.getKey(ModParticles.LIGHTNING_CHAIN.get()), this.size,

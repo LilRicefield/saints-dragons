@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModDataComponents;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -26,17 +27,18 @@ public final class SaintsDragonsCommon {
     }
 
     public static ResourceLocation rl(String path) {
-        return new ResourceLocation(MOD_ID, path);
+        return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
     public static void init() {
         // Initialize GeckoLib runtime (required for animations)
-        GeckoLib.initialize();
+        // GeckoLib bootstrap not required on 1.21.1; remove explicit initialize
         SaintsDragonsConfig.bootstrap();
         DragonAttributeConfigLoader.bootstrap();
         // GeckoLib data tickets MUST be registered first (before entities use them)
         DragonAnimTickets.bootstrap();
 
+        ModDataComponents.register();
         ModEntities.register();
         ModItems.register();
         ModSounds.register();

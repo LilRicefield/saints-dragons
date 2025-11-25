@@ -38,32 +38,6 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         return 0.0F;
     }
 
-    @Override
-    public void preRender(PoseStack poseStack,
-                          Cindervane entity,
-                          BakedGeoModel model,
-                          MultiBufferSource bufferSource,
-                          VertexConsumer buffer,
-                          boolean isReRender,
-                          float partialTick,
-                          int packedLight,
-                          int packedOverlay,
-                          float red, float green, float blue, float alpha) {
-
-        float scale = 1.0f;
-        poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 2.0f * scale;
-
-        // Store the model for later use in render()
-        this.lastBakedModel = model;
-
-        // Enable matrix tracking for passenger bones
-        enableTrackingForBones(model);
-
-        super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
-                partialTick, packedLight, packedOverlay, red, green, blue, alpha);
-    }
-
     private void enableTrackingForBones(BakedGeoModel model) {
         // Enable tracking for both passenger seat bones
         model.getBone("passengerBone1").ifPresent(b -> b.setTrackingMatrices(true));
@@ -73,6 +47,7 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     @Override
     public void render(@NotNull Cindervane entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        this.lastBakedModel = this.getGeoModel().getBakedModel(this.getGeoModel().getModelResource(entity));
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
         // Sample passenger bone positions and store in entity's locator cache for RiderController to use

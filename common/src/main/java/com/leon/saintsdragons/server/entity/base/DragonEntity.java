@@ -28,6 +28,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
@@ -37,8 +38,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
@@ -143,14 +144,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private boolean isRideable = false;
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_COMMAND, 0); // 0=Follow, 1=Sit, 2=Wander (default Follow)
-        this.entityData.define(DATA_SIT_PROGRESS, 0.0f); // Sit progress for smooth animations
-        this.entityData.define(DATA_GENDER, DragonGender.MALE.getId());
-        this.entityData.define(DATA_BODY_DEVIATION, 0.0f);
-        this.entityData.define(DATA_PITCH_DEVIATION, 0.0f);
-        this.entityData.define(DATA_YAW_VELOCITY, 0.0f);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_COMMAND, 0); // 0=Follow, 1=Sit, 2=Wander (default Follow)
+        builder.define(DATA_SIT_PROGRESS, 0.0f); // Sit progress for smooth animations
+        builder.define(DATA_GENDER, DragonGender.MALE.getId());
+        builder.define(DATA_BODY_DEVIATION, 0.0f);
+        builder.define(DATA_PITCH_DEVIATION, 0.0f);
+        builder.define(DATA_YAW_VELOCITY, 0.0f);
     }
 
     /**
@@ -219,8 +220,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     @Override
     public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor levelAccessor, @NotNull DifficultyInstance difficulty, MobSpawnType reason,
-                                                 @Nullable SpawnGroupData spawnData, @Nullable CompoundTag spawnTag) {
-        SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
+                                                 @Nullable SpawnGroupData spawnData) {
+        SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData);
         ensureGenderInitialized();
 
         // If baby spawned from spawn egg, reposition on ground to prevent falling from sky
@@ -450,8 +451,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             this.lastHurtByPlayerTime = killDataRecentlyHit;
 
             // Drop loot with proper kill credit
-            if (killDataCause != null) {
-                this.dropAllDeathLoot(killDataCause);
+            if (killDataCause != null && this.level() instanceof ServerLevel serverLevel) {
+                this.dropAllDeathLoot(serverLevel, killDataCause);
             }
 
             // Broadcast death event and remove entity
@@ -465,12 +466,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * This ensures loot drops only after the death animation completes.
      */
     @Override
-    protected void dropAllDeathLoot(@NotNull DamageSource source) {
+    protected void dropAllDeathLoot(@NotNull ServerLevel level, @NotNull DamageSource source) {
         if (deathTime > 0 && deathTime < getDeathAnimationDurationTicks()) {
             // Still playing death animation - don't drop yet
             return;
         }
-        super.dropAllDeathLoot(source);
+        super.dropAllDeathLoot(level, source);
     }
 
     /**
@@ -536,8 +537,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      *
      * @param controller The animation controller to register the sound key with
      */
-    protected final void registerBiteSoundKey(software.bernie.geckolib.core.animation.AnimationController<?> controller, String speciesId) {
-        controller.triggerableAnim("bite", software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation." + speciesId + ".bite"));
+    protected final void registerBiteSoundKey(software.bernie.geckolib.animation.AnimationController<?> controller, String speciesId) {
+        controller.triggerableAnim("bite", software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation." + speciesId + ".bite"));
     }
 
 

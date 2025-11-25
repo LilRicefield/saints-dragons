@@ -25,12 +25,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
@@ -98,10 +98,10 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     }
 
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(DATA_STAGE, 0);
-        this.entityData.define(DATA_SCALE, 1.0f);
-        this.entityData.define(DATA_SUBSIDING, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_STAGE, 0);
+        builder.define(DATA_SCALE, 1.0f);
+        builder.define(DATA_SUBSIDING, false);
     }
 
     public void setStage(int stage) {
@@ -219,12 +219,12 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     }
 
     @Override
-    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, boolean teleport) {
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
         // Prevent client interpolation from overriding rotation
         if (rotationLocked) {
-            super.lerpTo(x, y, z, lockedHeadYaw, 0.0f, steps, teleport);
+            super.lerpTo(x, y, z, lockedHeadYaw, 0.0f, steps);
         } else {
-            super.lerpTo(x, y, z, yRot, xRot, steps, teleport);
+            super.lerpTo(x, y, z, yRot, xRot, steps);
         }
     }
 
@@ -272,7 +272,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             hitEntities.add(target.getUUID());
 
             target.hurt(source, impactDamage);
-            target.setSecondsOnFire(4);
+            target.igniteForSeconds(4);
 
             Vec3 knockDir = target.position().subtract(position());
             knockDir = new Vec3(knockDir.x, 0.0D, knockDir.z);
@@ -386,19 +386,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             uuidArray[i++] = uuid.getLeastSignificantBits();
         }
         tag.putLongArray("HitEntities", uuidArray);
-    }
-
-    @Override
-    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return new ClientboundAddEntityPacket(this);
-    }
-
-    @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
-        super.recreateFromPacket(packet);
-        float yaw = packet.getYRot();
-        initializeRotation(yaw);
-        this.rotationLocked = true;
     }
 
     @Override

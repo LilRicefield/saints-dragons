@@ -6,7 +6,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.phys.Vec3;
@@ -191,9 +191,9 @@ public class DragonAmphibiousNavigation extends AmphibiousPathNavigation {
 
         double t = 0.0D;
         while (t <= maxT) {
-            BlockPathTypes type = this.nodeEvaluator.getBlockPathType(this.level, currentX, currentY, currentZ, this.mob);
+            PathType type = this.nodeEvaluator.getPathType(this.mob, net.minecraft.core.BlockPos.containing(currentX, currentY, currentZ));
             float malus = this.mob.getPathfindingMalus(type);
-            if (malus < 0.0F || malus >= 8.0F || type == BlockPathTypes.DAMAGE_FIRE || type == BlockPathTypes.DAMAGE_OTHER) {
+            if (malus < 0.0F || malus >= 8.0F || type == PathType.DAMAGE_FIRE || type == PathType.DAMAGE_OTHER) {
                 return false;
             }
 

@@ -239,8 +239,10 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         return (double) dragon.getBbHeight() * SEAT_BASE_FACTOR;
     }
 
-    public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
-        if (!dragon.hasPassenger(passenger)) return;
+    public Vec3 getPassengerPosition(@NotNull Entity passenger) {
+        if (!dragon.hasPassenger(passenger)) {
+            return passenger.position();
+        }
 
         Vec3 passengerLoc = dragon.getClientLocatorPosition("passengerLocator");
 
@@ -264,15 +266,18 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
 
             Vec3 dragonCurrentPos = dragon.position();
-            Vec3 passengerCurrentPos = dragonCurrentPos.add(currentWorldX, localY, currentWorldZ);
-
-            moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
-        } else {
-            double x = dragon.getX();
-            double y = dragon.getY() + getPassengersRidingOffset() + passenger.getMyRidingOffset();
-            double z = dragon.getZ();
-            moveFunction.accept(passenger, x, y, z);
+            return dragonCurrentPos.add(currentWorldX, localY, currentWorldZ);
         }
+
+        double x = dragon.getX();
+        double y = dragon.getY() + getPassengersRidingOffset() + passenger.getBbHeight() * 0.5D;
+        double z = dragon.getZ();
+        return new Vec3(x, y, z);
+    }
+
+    public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
+        Vec3 passengerCurrentPos = getPassengerPosition(passenger);
+        moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
     }
 
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {

@@ -119,37 +119,26 @@ public record NulljawRiderController(Nulljaw drake) {
         return (drake.getBbHeight() * SEAT_BASE_FACTOR) + SEAT_LIFT;
     }
 
-    /**
-     * Position a rider on the drake using bone-based positioning
-     */
-    public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
-        if (passenger == null) return;
+    public Vec3 getPassengerPosition(Entity passenger) {
+        if (passenger == null) {
+            return Vec3.ZERO;
+        }
 
-        // Get the bone position from the renderer's cache (updated each render frame)
         Vec3 passengerLoc = drake.getClientLocatorPosition("passengerLocator");
 
         if (passengerLoc != null) {
-            // The cached position is in world-space but may be from the previous frame
-            // We need to convert to drake-local space to handle both movement AND rotation
-
-            // Get drake's old position and rotation (from when bone was sampled)
             Vec3 drakeOldPos = new Vec3(drake.xo, drake.yo, drake.zo);
             float oldYaw = drake.yRotO;
 
-            // Calculate offset in world space
             Vec3 worldOffset = passengerLoc.subtract(drakeOldPos);
-
-            // Convert world offset to drake-local space (relative to old rotation)
-            double oldYawRad = Math.toRadians(-oldYaw); // Negative because Minecraft yaw is inverted
+            double oldYawRad = Math.toRadians(-oldYaw);
             double cosOld = Math.cos(oldYawRad);
             double sinOld = Math.sin(oldYawRad);
 
-            // Rotate world offset back to local space
             double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
             double localY = worldOffset.y;
             double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
 
-            // Now rotate local offset to current rotation
             float currentYaw = drake.getYRot();
             double currentYawRad = Math.toRadians(-currentYaw);
             double cosCurrent = Math.cos(currentYawRad);
@@ -158,23 +147,25 @@ public record NulljawRiderController(Nulljaw drake) {
             double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
             double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
 
-            // Apply to current drake position
             Vec3 drakeCurrentPos = drake.position();
-            Vec3 passengerCurrentPos = drakeCurrentPos.add(currentWorldX, localY, currentWorldZ);
-
-            moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
-        } else {
-            // Fallback to vanilla positioning if bone position not available yet
-            // This handles server-side and initial frames before renderer updates the cache
-            double seatY = getPassengersRidingOffset();
-            Vec3 forward = Vec3.directionFromRotation(0.0F, drake.getYRot());
-            Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
-            Vec3 offset = forward.scale(SEAT_FORWARD)
-                    .add(right.scale(SEAT_SIDE))
-                    .add(0.0D, seatY, 0.0D);
-
-            moveFunction.accept(passenger, drake.getX() + offset.x, drake.getY() + offset.y, drake.getZ() + offset.z);
+            return drakeCurrentPos.add(currentWorldX, localY, currentWorldZ);
         }
+
+        double seatY = getPassengersRidingOffset() + passenger.getBbHeight() * 0.5D;
+        Vec3 forward = Vec3.directionFromRotation(0.0F, drake.getYRot());
+        Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
+        Vec3 offset = forward.scale(SEAT_FORWARD)
+                .add(right.scale(SEAT_SIDE))
+                .add(0.0D, seatY, 0.0D);
+        return new Vec3(drake.getX() + offset.x, drake.getY() + offset.y, drake.getZ() + offset.z);
+    }
+
+    /**
+     * Position a rider on the drake using bone-based positioning
+     */
+    public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+        Vec3 pos = getPassengerPosition(passenger);
+        moveFunction.accept(passenger, pos.x, pos.y, pos.z);
     }
 
     /**

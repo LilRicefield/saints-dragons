@@ -23,6 +23,6 @@ public class RaevyxLightningChainRenderer extends EntityRenderer<RaevyxLightning
     @Override
     public @NotNull ResourceLocation getTextureLocation(@NotNull RaevyxLightningChainEntity entity) {
         // Return a dummy texture since we don't actually render the entity
-        return new ResourceLocation("minecraft", "textures/entity/lightning_bolt.png");
+        return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/lightning_bolt.png");
     }
 }

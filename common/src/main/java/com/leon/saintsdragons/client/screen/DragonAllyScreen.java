@@ -106,7 +106,7 @@ public class DragonAllyScreen extends Screen {
     
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         
         // Use the reliable programmatic drawing system - it works perfectly!
         int actualWidth = getActualGuiWidth();
@@ -170,11 +170,11 @@ public class DragonAllyScreen extends Screen {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
         if (allyList.size() > MAX_VISIBLE_ALLIES) {
-            if (delta < 0 && scrollOffset < allyList.size() - MAX_VISIBLE_ALLIES) {
+            if (deltaY < 0 && scrollOffset < allyList.size() - MAX_VISIBLE_ALLIES) {
                 scrollOffset++;
-            } else if (delta > 0 && scrollOffset > 0) {
+            } else if (deltaY > 0 && scrollOffset > 0) {
                 scrollOffset--;
             }
             return true;

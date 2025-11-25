@@ -13,6 +13,8 @@ public interface PlatformHelper {
 
     ConfigHelper getConfigHelper();
 
+    DataComponentHelper getDataComponentHelper();
+
     /**
      * Execute the supplied runnable if the environment is a physical client.
      */

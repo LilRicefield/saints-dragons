@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -83,16 +84,16 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
@@ -231,7 +232,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public Cindervane(EntityType<? extends Cindervane> type, Level level) {
         super(type, level);
-        this.setMaxUpStep(1.1F);
 
         this.groundNav = new DragonPathNavigateGround(this, level);
         this.airNav = new FlyingPathNavigation(this, level) {
@@ -250,8 +250,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.usingAirNav = false;
         this.riderController = new CindervaneRiderController(this);
 
-        this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
-        this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
+        this.setPathfindingMalus(PathType.LEAVES, -1.0F);
+        this.setPathfindingMalus(PathType.DANGER_FIRE, -1.0F);
 
         RandomSource rng = this.getRandom();
         this.ambientSoundTimer = rng.nextInt(80);
@@ -264,8 +264,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level, @NotNull DifficultyInstance difficulty, @NotNull MobSpawnType spawnType,
-                                                 @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
-        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
+                                                 @Nullable SpawnGroupData spawnData) {
+        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData);
 
         if (!this.isTame()) {
             this.setOwnerUUID(null);
@@ -289,7 +289,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
-    private void setAttributeBase(net.minecraft.world.entity.ai.attributes.Attribute attribute, double value) {
+    private void setAttributeBase(Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute, double value) {
         AttributeInstance instance = this.getAttribute(attribute);
         if (instance != null) {
             instance.setBaseValue(value);
@@ -327,6 +327,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         // Optional: enforce a sturdy block underneath
         return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
+    }
+
+    @Override
+    public float maxUpStep() {
+        return 1.1F;
     }
 
     // Amphithere-specific entity data accessors
@@ -376,34 +381,31 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        // Define Amphithere-specific data
-        this.entityData.define(DATA_FIRE_BREATHING, false);
-        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0f);
-        this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
-        // Define sleep system data
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
-        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_FIRE_BREATHING, false);
+        builder.define(DATA_SCREEN_SHAKE_AMOUNT, 0f);
+        builder.define(DATA_RIDER_LANDING_BLEND, false);
+        builder.define(DATA_SLEEPING, false);
+        builder.define(DATA_SLEEPING_ENTERING, false);
+        builder.define(DATA_SLEEPING_EXITING, false);
+        builder.define(DATA_FEEDING_COOLDOWN, 0);
     }
 
     @Override
-    protected void defineRideableDragonData() {
-        // Define all rideable dragon data keys for AmphithereEntity
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_RIDER_FORWARD, 0f);
-        this.entityData.define(DATA_RIDER_STRAFE, 0f);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_ACCELERATING, false);
+    protected void defineRideableDragonData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_FLYING, false);
+        builder.define(DATA_TAKEOFF, false);
+        builder.define(DATA_HOVERING, false);
+        builder.define(DATA_LANDING, false);
+        builder.define(DATA_RUNNING, false);
+        builder.define(DATA_GROUND_MOVE_STATE, 0);
+        builder.define(DATA_FLIGHT_MODE, -1);
+        builder.define(DATA_RIDER_FORWARD, 0f);
+        builder.define(DATA_RIDER_STRAFE, 0f);
+        builder.define(DATA_GOING_UP, false);
+        builder.define(DATA_GOING_DOWN, false);
+        builder.define(DATA_ACCELERATING, false);
     }
 
     // Implementation of abstract accessor methods
@@ -1557,9 +1559,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             }
         };
 
-        Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), calculator,
-                x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, true, Explosion.BlockInteraction.DESTROY);
-
         List<LivingEntity> allies = grantAlliesExplosionImmunity(server, x, y, z);
 
         // Make allies temporarily invulnerable to prevent armor damage
@@ -1567,8 +1566,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             ally.setInvulnerable(true);
         }
 
-        explosion.explode();
-        explosion.finalizeExplosion(true);
+        Explosion explosion = server.explode(this, server.damageSources().explosion(this, this), calculator,
+                x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, true, net.minecraft.world.level.Level.ExplosionInteraction.MOB);
 
         // Restore vulnerability
         for (LivingEntity ally : allies) {
@@ -1649,7 +1648,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         for (LivingEntity target : targets) {
             if (target.hurt(server.damageSources().explosion(this, this), FIRE_BODY_EXPLOSION_DAMAGE)) {
-                target.setSecondsOnFire(8);
+                target.igniteForSeconds(8);
             }
         }
     }
@@ -1727,7 +1726,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         controllers.add(actions);
 
         AnimationController<Cindervane> HurtController = new AnimationController<>(this, "hurt", 3,
-                state -> software.bernie.geckolib.core.object.PlayState.STOP);
+                state -> software.bernie.geckolib.animation.PlayState.STOP);
         HurtController.triggerableAnim("cindervane_hurt",
                 RawAnimation.begin().thenPlay("animation.cindervane.hurt"));
         HurtController.setSoundKeyframeHandler(this::onAnimationSound);

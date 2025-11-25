@@ -59,8 +59,8 @@ public class CindervaneMagmaBlockEntity extends Entity {
     }
 
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(DATA_BLOCK_STATE, Blocks.MAGMA_BLOCK.defaultBlockState());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_BLOCK_STATE, Blocks.MAGMA_BLOCK.defaultBlockState());
     }
 
     public void setFiringProperties(Cindervane owner, double impactRadius, float impactDamage, int lifetimeTicks) {
@@ -141,7 +141,7 @@ public class CindervaneMagmaBlockEntity extends Entity {
                 0.5D, 0.3D, 0.5D, 0.04D);
         server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D, impact.z, 30,
                 0.6D, 0.4D, 0.6D, 0.08D);
-        server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, getSoundSource(), 0.7F, 1.1F);
+        server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), getSoundSource(), 0.7F, 1.1F);
 
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius);
@@ -150,7 +150,7 @@ public class CindervaneMagmaBlockEntity extends Entity {
 
         for (net.minecraft.world.entity.LivingEntity target : hits) {
             target.hurt(server.damageSources().explosion(this, owner != null ? owner : this), impactDamage);
-            target.setSecondsOnFire(4);
+            target.igniteForSeconds(4);
         }
 
         igniteArea(server, BlockPos.containing(impact));
@@ -195,11 +195,6 @@ public class CindervaneMagmaBlockEntity extends Entity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return new ClientboundAddEntityPacket(this);
-    }
-
-    @Override
     public void recreateFromPacket(ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
         // Restore velocity from packet
@@ -236,18 +231,8 @@ public class CindervaneMagmaBlockEntity extends Entity {
     }
 
     @Override
-    public double getPassengersRidingOffset() {
-        return -0.2D;
-    }
-
-    @Override
     public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
         return !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY);
-    }
-
-    @Override
-    public float getEyeHeight(@NotNull Pose pose) {
-        return 0.5F;
     }
 
     @Override

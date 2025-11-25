@@ -432,14 +432,14 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (wyvern.isFemale()) {
                 // Female-specific advancement
                 var femaleAdvancement = serverPlayer.server.getAdvancements()
-                    .getAdvancement(SaintsDragonsCommon.rl("tame_raevyx_female"));
+                    .get(SaintsDragonsCommon.rl("tame_raevyx_female"));
                 if (femaleAdvancement != null) {
                     serverPlayer.getAdvancements().award(femaleAdvancement, "tame_raevyx_female");
                 }
             } else {
                 // Male-specific advancement
                 var advancement = serverPlayer.server.getAdvancements()
-                    .getAdvancement(SaintsDragonsCommon.rl("tame_raevyx"));
+                    .get(SaintsDragonsCommon.rl("tame_raevyx"));
                 if (advancement != null) {
                     serverPlayer.getAdvancements().award(advancement, "tame_raevyx");
                 }

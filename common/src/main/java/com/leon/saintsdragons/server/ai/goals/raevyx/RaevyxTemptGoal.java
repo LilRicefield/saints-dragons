@@ -159,7 +159,7 @@ public class RaevyxTemptGoal extends Goal {
                     // Trigger taming advancement
                     if (feedingPlayer instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                         var advancement = serverPlayer.server.getAdvancements()
-                            .getAdvancement(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_lightning_dragon"));
+                            .get(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_lightning_dragon"));
                         if (advancement != null) {
                             serverPlayer.getAdvancements().award(advancement, "tame_lightning_dragon");
                         }

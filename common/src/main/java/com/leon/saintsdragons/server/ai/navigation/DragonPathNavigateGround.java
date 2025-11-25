@@ -4,7 +4,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
@@ -116,16 +116,16 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
     }
 
     @Override
-    protected boolean hasValidPathType(@Nonnull BlockPathTypes pathType) {
-        if (pathType == BlockPathTypes.LAVA) {
+    protected boolean hasValidPathType(@Nonnull PathType pathType) {
+        if (pathType == PathType.LAVA) {
             return false; // Dragons avoid lava paths entirely
         }
 
-        if (pathType == BlockPathTypes.WATER) {
+        if (pathType == PathType.WATER) {
             // Permit water nodes only when the mob is already submerged so it can path out.
             return this.mob.isInWaterOrBubble();
         }
 
-        return pathType != BlockPathTypes.OPEN;
+        return pathType != PathType.OPEN;
     }
 }

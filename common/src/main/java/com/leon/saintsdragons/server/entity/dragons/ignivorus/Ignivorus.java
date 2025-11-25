@@ -30,6 +30,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -71,10 +72,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,7 +282,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public Ignivorus(EntityType<? extends Ignivorus> type, Level level) {
         super(type, level);
-        this.setMaxUpStep(1.1F);
 
         this.groundNav = new DragonPathNavigateGround(this, level);
         this.airNav = new FlyingPathNavigation(this, level) {
@@ -302,43 +302,42 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_RIDER_FORWARD, 0F);
-        this.entityData.define(DATA_RIDER_STRAFE, 0F);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_ACCELERATING, false);
-        this.entityData.define(DATA_RIDER_LOCKED, false);
-        this.entityData.define(DATA_FIRE_BREATHING, false);
-        this.entityData.define(DATA_FIRE_BREATH_PROGRESS, 0);
-        this.entityData.define(DATA_FIRE_START_SET, false);
-        this.entityData.define(DATA_FIRE_START_X, 0F);
-        this.entityData.define(DATA_FIRE_START_Y, 0F);
-        this.entityData.define(DATA_FIRE_START_Z, 0F);
-        this.entityData.define(DATA_FIRE_END_SET, false);
-        this.entityData.define(DATA_FIRE_END_X, 0F);
-        this.entityData.define(DATA_FIRE_END_Y, 0F);
-        this.entityData.define(DATA_FIRE_END_Z, 0F);
-        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
-        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
-        this.entityData.define(DATA_TAMING_STUNNED, false);
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_RIDER_LOCKED, false);
+        builder.define(DATA_FIRE_BREATHING, false);
+        builder.define(DATA_FIRE_BREATH_PROGRESS, 0);
+        builder.define(DATA_FIRE_START_SET, false);
+        builder.define(DATA_FIRE_START_X, 0F);
+        builder.define(DATA_FIRE_START_Y, 0F);
+        builder.define(DATA_FIRE_START_Z, 0F);
+        builder.define(DATA_FIRE_END_SET, false);
+        builder.define(DATA_FIRE_END_X, 0F);
+        builder.define(DATA_FIRE_END_Y, 0F);
+        builder.define(DATA_FIRE_END_Z, 0F);
+        builder.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        builder.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
+        builder.define(DATA_FEEDING_COOLDOWN, 0);
+        builder.define(DATA_TAMING_STUNNED, false);
+        builder.define(DATA_SLEEPING, false);
+        builder.define(DATA_SLEEPING_ENTERING, false);
+        builder.define(DATA_SLEEPING_EXITING, false);
     }
 
     @Override
-    protected void defineRideableDragonData() {
-        // Additional rideable dragon data if needed
+    protected void defineRideableDragonData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_FLYING, false);
+        builder.define(DATA_TAKEOFF, false);
+        builder.define(DATA_HOVERING, false);
+        builder.define(DATA_LANDING, false);
+        builder.define(DATA_RUNNING, false);
+        builder.define(DATA_FLIGHT_MODE, -1);
+        builder.define(DATA_RIDER_FORWARD, 0F);
+        builder.define(DATA_RIDER_STRAFE, 0F);
+        builder.define(DATA_GROUND_MOVE_STATE, 0);
+        builder.define(DATA_GOING_UP, false);
+        builder.define(DATA_GOING_DOWN, false);
+        builder.define(DATA_ACCELERATING, false);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -352,6 +351,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             .add(Attributes.FOLLOW_RANGE, 128.0D) // Long range to support fire breath at distance
             .add(Attributes.ARMOR, config.armor())
             .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
+    }
+
+    @Override
+    public float maxUpStep() {
+        return 1.1F;
     }
 
     @Override
@@ -374,11 +378,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public @Nullable SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level,
-                                                  @NotNull DifficultyInstance difficulty,
-                                                  @NotNull MobSpawnType spawnType,
-                                                  @Nullable SpawnGroupData spawnData,
-                                                  @Nullable CompoundTag dataTag) {
-        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
+                                                 @NotNull DifficultyInstance difficulty,
+                                                 @NotNull MobSpawnType spawnType,
+                                                 @Nullable SpawnGroupData spawnData) {
+        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData);
         applyConfiguredAttributes();
         return data;
     }
@@ -1176,13 +1179,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    public void positionRider(@NotNull Entity passenger, @NotNull Entity.MoveFunction moveFunction) {
+    protected void positionRider(@NotNull Entity passenger, Entity.MoveFunction moveFunction) {
         riderController.positionRider(passenger, moveFunction);
     }
 
     @Override
-    public double getPassengersRidingOffset() {
-        return riderController.getPassengersRidingOffset();
+    public Vec3 getPassengerRidingPosition(@NotNull Entity passenger) {
+        return riderController.getPassengerPosition(passenger);
     }
 
     @Override
@@ -1252,7 +1255,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
-    private void setAttributeBase(Attribute attribute, double value) {
+    private void setAttributeBase(Holder<Attribute> attribute, double value) {
         AttributeInstance instance = this.getAttribute(attribute);
         if (instance != null) {
             instance.setBaseValue(value);
@@ -2181,12 +2184,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Action controller for triggerable animations (sit transitions, fire breath, etc.)
         AnimationController<Ignivorus> actionController =
-            new AnimationController<>(this, "action", 5, state -> software.bernie.geckolib.core.object.PlayState.STOP);
+            new AnimationController<>(this, "action", 5, state -> software.bernie.geckolib.animation.PlayState.STOP);
 
         AnimationController<Ignivorus> hurtController =
-            new AnimationController<>(this, "hurt", 3, state -> software.bernie.geckolib.core.object.PlayState.STOP);
+            new AnimationController<>(this, "hurt", 3, state -> software.bernie.geckolib.animation.PlayState.STOP);
         hurtController.triggerableAnim("ignivorus_hurt",
-            software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
+            software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
         hurtController.setSoundKeyframeHandler(this::onAnimationSound);
 
         // Register all action animations via handler

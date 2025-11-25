@@ -308,7 +308,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
     private void triggerTamingAdvancement(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
             var advancement = serverPlayer.server.getAdvancements()
-                    .getAdvancement(SaintsDragonsCommon.rl("tame_ignivorus"));
+                    .get(SaintsDragonsCommon.rl("tame_ignivorus"));
             if (advancement != null) {
                 serverPlayer.getAdvancements().award(advancement, "tame_ignivorus");
             }

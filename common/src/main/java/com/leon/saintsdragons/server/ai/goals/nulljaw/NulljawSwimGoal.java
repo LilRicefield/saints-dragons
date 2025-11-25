@@ -97,7 +97,7 @@ public class NulljawSwimGoal extends RandomStrollGoal {
 
         while (pos != null &&
                !drake.level().getBlockState(net.minecraft.core.BlockPos.containing(pos))
-                   .isPathfindable(drake.level(), net.minecraft.core.BlockPos.containing(pos), PathComputationType.WATER)
+                   .isPathfindable(PathComputationType.WATER)
                && attempts++ < 16) { // More attempts for longer range
             pos = DefaultRandomPos.getPos(drake, 256, 62);
         }

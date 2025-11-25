@@ -21,6 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import com.leon.saintsdragons.server.entity.controller.nulljaw.NulljawRiderController;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Direction;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -50,16 +51,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import net.minecraft.world.entity.LivingEntity;
@@ -194,15 +195,19 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         return cooldownTicks <= 0;
     }
 
+    @Override
+    public float maxUpStep() {
+        return 1.4F;
+    }
+
     public void setFeedingCooldown(int ticks) {
         this.entityData.set(DATA_FEEDING_COOLDOWN, ticks);
     }
 
     public Nulljaw(EntityType<? extends Nulljaw> type, Level level) {
         super(type, level);
-        this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
-        this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
-        this.setMaxUpStep(1.4F);
+        this.setPathfindingMalus(PathType.WATER, 0.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, 0.0F);
         this.groundNavigation = new DragonPathNavigateGround(this, level);
         this.waterNavigation = new DragonAmphibiousNavigation(this, level);
         this.landMoveControl = new RiftDrakeMoveControl(this);
@@ -361,29 +366,29 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_SWIMMING, false);
-        this.entityData.define(DATA_SWIM_TURN, 0);
-        this.entityData.define(DATA_SWIM_PITCH, 0);
-        this.entityData.define(DATA_PHASE_TWO, false);
-        this.entityData.define(DATA_RIDER_LOCKED, false);
-        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
-        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_SWIMMING, false);
+        builder.define(DATA_SWIM_TURN, 0);
+        builder.define(DATA_SWIM_PITCH, 0);
+        builder.define(DATA_PHASE_TWO, false);
+        builder.define(DATA_RIDER_LOCKED, false);
+        builder.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        builder.define(DATA_SLEEPING, false);
+        builder.define(DATA_SLEEPING_ENTERING, false);
+        builder.define(DATA_SLEEPING_EXITING, false);
+        builder.define(DATA_FEEDING_COOLDOWN, 0);
     }
     
     @Override
-    protected void defineRideableDragonData() {
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
-        this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
-        this.entityData.define(DATA_ACCELERATING, false);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
+    protected void defineRideableDragonData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_GROUND_MOVE_STATE, 0);
+        builder.define(DATA_RIDER_FORWARD, 0.0F);
+        builder.define(DATA_RIDER_STRAFE, 0.0F);
+        builder.define(DATA_ACCELERATING, false);
+        builder.define(DATA_FLIGHT_MODE, -1);
+        builder.define(DATA_GOING_UP, false);
+        builder.define(DATA_GOING_DOWN, false);
     }
     
     // ===== REQUIRED ABSTRACT METHODS FROM RIDEABLEDRAGONBASE =====
@@ -716,7 +721,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     public void awardTamingAdvancement(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
             var advancement = serverPlayer.server.getAdvancements()
-                    .getAdvancement(SaintsDragonsCommon.rl("tame_nulljaw"));
+                    .get(SaintsDragonsCommon.rl("tame_nulljaw"));
             if (advancement != null) {
                 serverPlayer.getAdvancements().award(advancement, "tame_nulljaw");
             }
@@ -737,7 +742,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         }
     }
 
-    private void setAttributeBase(Attribute attribute, double value) {
+    private void setAttributeBase(Holder<Attribute> attribute, double value) {
         AttributeInstance instance = this.getAttribute(attribute);
         if (instance != null) {
             instance.setBaseValue(value);
@@ -1017,13 +1022,13 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     // ===== RIDING METHODS =====
     
     @Override
-    public double getPassengersRidingOffset() {
-        return riderController.getPassengersRidingOffset();
+    protected void positionRider(@Nonnull @NotNull Entity passenger, Entity.MoveFunction moveFunction) {
+        riderController.positionRider(passenger, moveFunction);
     }
 
     @Override
-    protected void positionRider(@Nonnull @NotNull Entity passenger, @Nonnull @NotNull Entity.MoveFunction moveFunction) {
-        riderController.positionRider(passenger, moveFunction);
+    public Vec3 getPassengerRidingPosition(@NotNull Entity passenger) {
+        return riderController.getPassengerPosition(passenger);
     }
 
     @Override

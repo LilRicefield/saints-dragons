@@ -288,7 +288,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             }
 
             entity.hurt(source, explosionDamage);
-            entity.setSecondsOnFire(EXPLOSION_FIRE_SECONDS);
+                entity.igniteForSeconds(EXPLOSION_FIRE_SECONDS);
 
             Vec3 knock = entity.position().subtract(center).normalize().scale(1.4D);
             entity.push(knock.x, 0.6D, knock.z);

@@ -1,10 +1,10 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.PlayState;
 
 /**
  * Handles smooth animation transitions for the Primitive Drake

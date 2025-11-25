@@ -202,10 +202,10 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             float f7 = Mth.cos((float) Math.PI + (float) j * ((float) Math.PI * 2F) / (float) vertices) * width;
             float f8 = Mth.sin((float) Math.PI + (float) j * ((float) Math.PI * 2F) / (float) vertices) * width;
             float f9 = (float) j + 1;
-            vertexconsumer.vertex(matrix4f, f4 * 0.55F, f5 * 0.55F, 0.0F).color(1.0F, 1.0F, 1.0F, startAlpha).uv(f6, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(matrix3f, 0.0F, -1.0F, 0.0F).endVertex();
-            vertexconsumer.vertex(matrix4f, f4, f5, length).color(1.0F, 1.0F, 1.0F, endAlpha).uv(f6, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(matrix3f, 0.0F, -1F, 0.0F).endVertex();
-            vertexconsumer.vertex(matrix4f, f7, f8, length).color(1.0F, 1.0F, 1.0F, endAlpha).uv(f9, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(matrix3f, 0.0F, -1F, 0.0F).endVertex();
-            vertexconsumer.vertex(matrix4f, f7 * 0.55F, f8 * 0.55F, 0.0F).color(1.0F, 1.0F, 1.0F, startAlpha).uv(f9, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(matrix3f, 0.0F, -1.0F, 0.0F).endVertex();
+            vertexconsumer.addVertex(matrix4f, f4 * 0.55F, f5 * 0.55F, 0.0F).setColor(1.0F, 1.0F, 1.0F, startAlpha).setUv(f6, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(posestack$pose, 0.0F, -1.0F, 0.0F);
+            vertexconsumer.addVertex(matrix4f, f4, f5, length).setColor(1.0F, 1.0F, 1.0F, endAlpha).setUv(f6, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(posestack$pose, 0.0F, -1F, 0.0F);
+            vertexconsumer.addVertex(matrix4f, f7, f8, length).setColor(1.0F, 1.0F, 1.0F, endAlpha).setUv(f9, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(posestack$pose, 0.0F, -1F, 0.0F);
+            vertexconsumer.addVertex(matrix4f, f7 * 0.55F, f8 * 0.55F, 0.0F).setColor(1.0F, 1.0F, 1.0F, startAlpha).setUv(f9, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(posestack$pose, 0.0F, -1.0F, 0.0F);
             f4 = f7;
             f5 = f8;
             f6 = f9;
@@ -328,28 +328,28 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             float x = fixedCoord;
             float yMin = -half;
             float yMax = half;
-            consumer.vertex(poseMatrix, x, yMin, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v0)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, x, yMin, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v1)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, x, yMax, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v1)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, x, yMax, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v0)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+            consumer.addVertex(poseMatrix, x, yMin, zStart).setColor(1.0F, 1.0F, 1.0F, alpha).setUv(u0, v0)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(normalVec.x(), normalVec.y(), normalVec.z());
+            consumer.addVertex(poseMatrix, x, yMin, zEnd).setColor(1.0F, 1.0F, 1.0F, alpha).setUv(u0, v1)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(normalVec.x(), normalVec.y(), normalVec.z());
+            consumer.addVertex(poseMatrix, x, yMax, zEnd).setColor(1.0F, 1.0F, 1.0F, alpha).setUv(u1, v1)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(normalVec.x(), normalVec.y(), normalVec.z());
+            consumer.addVertex(poseMatrix, x, yMax, zStart).setColor(1.0F, 1.0F, 1.0F, alpha).setUv(u1, v0)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(normalVec.x(), normalVec.y(), normalVec.z());
         } else {
             normalVec = new Vector3f(0.0F, positive ? 1.0F : -1.0F, 0.0F);
             normalMatrix.transform(normalVec);
             float y = fixedCoord;
             float xMin = -half;
             float xMax = half;
-            consumer.vertex(poseMatrix, xMin, y, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v0)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, xMin, y, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v1)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, xMax, y, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v1)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, xMax, y, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v0)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
+            consumer.addVertex(poseMatrix, xMin, y, zStart).setColor(1.0F, 1.0F, 1.0F, alpha).setUv(u0, v0)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(normalVec.x(), normalVec.y(), normalVec.z());
+            consumer.addVertex(poseMatrix, xMin, y, zEnd).setColor(1.0F, 1.0F, 1.0F, alpha).setUv(u0, v1)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(normalVec.x(), normalVec.y(), normalVec.z());
+            consumer.addVertex(poseMatrix, xMax, y, zEnd).setColor(1.0F, 1.0F, 1.0F, alpha).setUv(u1, v1)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(normalVec.x(), normalVec.y(), normalVec.z());
+            consumer.addVertex(poseMatrix, xMax, y, zStart).setColor(1.0F, 1.0F, 1.0F, alpha).setUv(u1, v0)
+                    .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(normalVec.x(), normalVec.y(), normalVec.z());
         }
     }
 

@@ -227,7 +227,42 @@ public record RaevyxRiderController(Raevyx wyvern) {
     public double getPassengersRidingOffset() {
         return (double) wyvern.getBbHeight() * SEAT_BASE_FACTOR;
     }
-    
+
+    public Vec3 getPassengerPosition(@NotNull Entity passenger) {
+        if (!wyvern.hasPassenger(passenger)) {
+            return passenger.position();
+        }
+
+        Vec3 passengerLoc = wyvern.getClientLocatorPosition("passengerLocator");
+        if (passengerLoc != null) {
+            Vec3 wyvernOldPos = new Vec3(wyvern.xo, wyvern.yo, wyvern.zo);
+            float oldYaw = wyvern.yRotO;
+            Vec3 worldOffset = passengerLoc.subtract(wyvernOldPos);
+
+            double oldYawRad = Math.toRadians(-oldYaw);
+            double cosOld = Math.cos(oldYawRad);
+            double sinOld = Math.sin(oldYawRad);
+            double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
+            double localY = worldOffset.y;
+            double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
+
+            float currentYaw = wyvern.getYRot();
+            double currentYawRad = Math.toRadians(-currentYaw);
+            double cosCurrent = Math.cos(currentYawRad);
+            double sinCurrent = Math.sin(currentYawRad);
+            double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
+            double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
+
+            Vec3 wyvernCurrentPos = wyvern.position();
+            return wyvernCurrentPos.add(currentWorldX, localY, currentWorldZ);
+        }
+
+        double x = wyvern.getX();
+        double y = wyvern.getY() + getPassengersRidingOffset() + passenger.getBbHeight() * 0.5D;
+        double z = wyvern.getZ();
+        return new Vec3(x, y, z);
+    }
+
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
         if (!wyvern.hasPassenger(passenger)) return;
 
@@ -271,10 +306,8 @@ public record RaevyxRiderController(Raevyx wyvern) {
             moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
         } else {
             // Fallback to vanilla positioning if bone position not available yet
-            double x = wyvern.getX();
-            double y = wyvern.getY() + getPassengersRidingOffset() + passenger.getMyRidingOffset();
-            double z = wyvern.getZ();
-            moveFunction.accept(passenger, x, y, z);
+            Vec3 pos = getPassengerPosition(passenger);
+            moveFunction.accept(passenger, pos.x, pos.y, pos.z);
         }
     }
     

@@ -72,18 +72,13 @@ public class RaevyxLightningChainEntity extends Entity {
     }
 
     @Override
-    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return new ClientboundAddEntityPacket(this);
-    }
-
-    @Override
-    protected void defineSynchedData() {
-        this.entityData.define(DAMAGE, 0F);
-        this.entityData.define(SIZE, 1.0F);
-        this.entityData.define(LIFESPAN, 0);
-        this.entityData.define(DELAY, 0);
-        this.entityData.define(IS_CHAIN, false);
-        this.entityData.define(CASTER_FEMALE, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DAMAGE, 0F);
+        builder.define(SIZE, 1.0F);
+        builder.define(LIFESPAN, 0);
+        builder.define(DELAY, 0);
+        builder.define(IS_CHAIN, false);
+        builder.define(CASTER_FEMALE, false);
     }
 
     public int getLifespan() {

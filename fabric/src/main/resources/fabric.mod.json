@@ -26,7 +26,7 @@
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": ">=${fabric_api_version}",
     "minecraft": "~${minecraft_version}",
-    "geckolib": ">=4.8.1"
+    "geckolib": ">=4.8.2"
   },
   "suggests": {
     "cloth-config": ">=${cloth_config_version}"

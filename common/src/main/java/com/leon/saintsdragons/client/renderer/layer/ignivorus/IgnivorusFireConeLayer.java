@@ -227,44 +227,40 @@ public class IgnivorusFireConeLayer extends GeoRenderLayer<Ignivorus> {
 
             // Quad: start vertex -> end vertex -> next end vertex -> next start vertex
             // Bottom (start of cone)
-            vertexConsumer.vertex(matrix4f, x1, y1, 0.0F)
-                .color(colorR, colorG, colorB, startAlpha)
-                .uv(u, uvOffset)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(240) // Full brightness
-                .normal(matrix3f, 0.0F, -1.0F, 0.0F)
-                .endVertex();
+            vertexConsumer.addVertex(matrix4f, x1, y1, 0.0F)
+                .setColor(colorR, colorG, colorB, startAlpha)
+                .setUv(u, uvOffset)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(240)
+                .setNormal(pose, 0.0F, -1.0F, 0.0F);
 
             // Top (end of cone)
-            vertexConsumer.vertex(matrix4f, x2, y2, length)
-                .color(colorR, colorG, colorB, endAlpha)
-                .uv(u, uvOffset + length * 0.2F)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(240)
-                .normal(matrix3f, 0.0F, -1.0F, 0.0F)
-                .endVertex();
+            vertexConsumer.addVertex(matrix4f, x2, y2, length)
+                .setColor(colorR, colorG, colorB, endAlpha)
+                .setUv(u, uvOffset + length * 0.2F)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(240)
+                .setNormal(pose, 0.0F, -1.0F, 0.0F);
 
             // Next segment's top
             float x3 = Mth.cos(nextAngle) * endWidth;
             float y3 = Mth.sin(nextAngle) * endWidth;
-            vertexConsumer.vertex(matrix4f, x3, y3, length)
-                .color(colorR, colorG, colorB, endAlpha)
-                .uv(uNext, uvOffset + length * 0.2F)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(240)
-                .normal(matrix3f, 0.0F, -1.0F, 0.0F)
-                .endVertex();
+            vertexConsumer.addVertex(matrix4f, x3, y3, length)
+                .setColor(colorR, colorG, colorB, endAlpha)
+                .setUv(uNext, uvOffset + length * 0.2F)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(240)
+                .setNormal(pose, 0.0F, -1.0F, 0.0F);
 
             // Next segment's bottom
             float x4 = Mth.cos(nextAngle) * startWidth;
             float y4 = Mth.sin(nextAngle) * startWidth;
-            vertexConsumer.vertex(matrix4f, x4, y4, 0.0F)
-                .color(colorR, colorG, colorB, startAlpha)
-                .uv(uNext, uvOffset)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(240)
-                .normal(matrix3f, 0.0F, -1.0F, 0.0F)
-                .endVertex();
+            vertexConsumer.addVertex(matrix4f, x4, y4, 0.0F)
+                .setColor(colorR, colorG, colorB, startAlpha)
+                .setUv(uNext, uvOffset)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(240)
+                .setNormal(pose, 0.0F, -1.0F, 0.0F);
         }
 
         poseStack.popPose();

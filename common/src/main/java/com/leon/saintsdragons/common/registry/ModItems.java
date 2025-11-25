@@ -116,8 +116,8 @@ public final class ModItems {
                                     .stacksTo(16)
                                     .food(new FoodProperties.Builder()
                                             .nutrition(10)       // heals dragons for a lot
-                                            .saturationMod(1.2f) // hearty saturation feel
-                                            .alwaysEat()         // dragons can eat even when "full"
+                                            .saturationModifier(1.2f) // hearty saturation feel
+                                            .alwaysEdible()       // dragons can eat even when "full"
                                             .build())
                     ));
 

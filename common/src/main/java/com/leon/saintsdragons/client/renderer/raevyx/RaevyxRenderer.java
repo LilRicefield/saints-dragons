@@ -52,33 +52,14 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         return 0.0F;
     }
 
-    @Override
-    public void preRender(PoseStack poseStack,
-                          Raevyx entity,
-                          BakedGeoModel model,
-                          MultiBufferSource bufferSource,
-                          VertexConsumer buffer,
-                          boolean isReRender,
-                          float partialTick,
-                          int packedLight,
-                          int packedOverlay,
-                          float red, float green, float blue, float alpha) {
-
-        float scale = 1.0f;
-        poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 2.0f * scale;
-
-        // Enable matrix tracking for the feet bones we care about
-        this.lastBakedModel = model;
-        enableTrackingForBones(model);
-
-        // Call super.preRender
-        super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
-                partialTick, packedLight, packedOverlay, red, green, blue, alpha);
-    }
+    // preRender signature changed in newer GeckoLib; rely on base behavior and track bones during render.
     @Override
     public void render(@NotNull Raevyx entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        this.lastBakedModel = this.getGeoModel().getBakedModel(this.getGeoModel().getModelResource(entity));
+        if (this.lastBakedModel != null) {
+            enableTrackingForBones(this.lastBakedModel);
+        }
 
         // Call normal rendering first
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);

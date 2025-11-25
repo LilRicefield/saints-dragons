@@ -120,7 +120,7 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
         target.hurt(physicalSource, armorPenDamage);
 
         // Set target on fire for extra burn damage (3 seconds)
-        target.setSecondsOnFire(3);
+        target.igniteForSeconds(3);
 
         // Apply knockback based on look direction
         Vec3 push = dragon.getLookAngle().scale(dragon.isFlying() ? 0.4 : 0.25);

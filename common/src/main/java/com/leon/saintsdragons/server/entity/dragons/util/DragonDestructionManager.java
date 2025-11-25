@@ -47,7 +47,7 @@ public final class DragonDestructionManager {
 
             if (hit.add(entity)) {
                 entity.hurt(level.damageSources().dragonBreath(), damage);
-                entity.setSecondsOnFire(fireSeconds);
+                entity.igniteForSeconds(fireSeconds);
             }
         }
     }
