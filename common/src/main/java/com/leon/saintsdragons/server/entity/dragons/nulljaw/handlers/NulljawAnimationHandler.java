@@ -126,6 +126,7 @@ public record NulljawAnimationHandler(Nulljaw drake) {
 
     public PlayState movementPredicate(AnimationState<Nulljaw> state) {
 
+        // Stop movement animations during actual death sequence, not just at low health
         if (drake.isDying() || drake.isSleeping() || drake.isSleepingEntering() || drake.isSleepingExiting()) {
             return PlayState.STOP;
         }

@@ -7,13 +7,19 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.constant.DataTickets;
+import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 /**
  * Raevyx (Lightning Dragon) model using GeckoLib's built-in head tracking system.
  * Only procedural animation: banking roll for flight physics.
  */
-public class RaevyxModel extends GeoModel<Raevyx> {
+public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
+
+    public  RaevyxModel() {
+        super(SaintsDragonsCommon.rl("raevyx"));
+    }
+
     private static final ResourceLocation ADULT_MODEL = SaintsDragonsCommon.rl("geo/entity/raevyx.geo.json");
     private static final ResourceLocation FEMALE_MODEL = SaintsDragonsCommon.rl("geo/entity/raevyx.geo.json");
     private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_raevyx.geo.json");
