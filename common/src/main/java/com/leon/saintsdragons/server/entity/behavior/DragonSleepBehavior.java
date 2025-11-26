@@ -49,11 +49,6 @@ public class DragonSleepBehavior {
         SleepPhase oldPhase = currentPhase;
         updatePhase();
 
-        // DEBUG: Log phase changes
-        if (oldPhase != currentPhase && dragon.tickCount % 10 == 0) {
-            System.out.println("[SLEEP] " + dragon.getClass().getSimpleName() + " phase: " + oldPhase + " -> " + currentPhase);
-        }
-
         // Handle tamed dragon sleep based on owner commands
         if (dragon.isTame()) {
             handleTamedDragonSleep();
@@ -61,20 +56,14 @@ public class DragonSleepBehavior {
 
         // Only attempt state changes when in stable phases
         if (currentPhase == SleepPhase.IDLE && shouldAttemptSleep()) {
-            System.out.println("[SLEEP] " + dragon.getClass().getSimpleName() + " attempting sleep (cooldown=" + sleepActionCooldown + ")");
             if (tryStartSleeping()) {
                 currentPhase = SleepPhase.ENTERING;
-                System.out.println("[SLEEP] Sleep command sent");
             }
         } else if (currentPhase == SleepPhase.SLEEPING) {
             boolean shouldWake = shouldWakeUp();
-            if (shouldWake && dragon.tickCount % 20 == 0) {
-                System.out.println("[SLEEP] " + dragon.getClass().getSimpleName() + " should wake: " + getWakeReason());
-            }
             if (shouldWake) {
                 if (tryWakeUp()) {
                     currentPhase = SleepPhase.EXITING;
-                    System.out.println("[SLEEP] Wake command sent");
                 }
             }
         }
