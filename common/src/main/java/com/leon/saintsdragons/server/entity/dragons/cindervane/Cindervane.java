@@ -194,7 +194,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private int sleepReentryCooldownTicks = 0;
     private int sleepCancelTicks = 0;
     private boolean sleepLocked = false;
+    private boolean sleepFallAsleepTriggered = false;
+    private boolean sleepSitUpTriggered = false;
     private int sleepCommandSnapshot = -1;
+
+    @Override
+    public float maxSitTicks() {
+        return 45.0F; // down animation is ~45 ticks
+    }
 
     public int getSleepSitDownDuration() {
         return Math.round(maxSitTicks()); // matches sit_down length (45 ticks)
@@ -1964,6 +1971,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             // Delay the sync slightly to ensure all systems are initialized
             this.tickCount = 0; // Reset tick counter to ensure proper initialization
         }
+
+        // Clear transient sleep transition flags on load
+        sleepFallAsleepTriggered = false;
+        sleepSitUpTriggered = false;
     }
 
     /**
@@ -2230,18 +2241,18 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private void tickSleepTransition() {
         // Handle sleep enter transition: sit_down → fall_asleep → sleep loop
         if (isSleepingEntering() && !level().isClientSide) {
-            // Check if sit_down is complete (using sit progress)
-            if (getSitProgress() >= maxSitTicks()) {
-                // Sit down complete, now trigger fall_asleep and start countdown
-                if (sleepTransitionTicks > 60) {
-                    // Just reached sitting position, trigger fall_asleep
-                    animationHandler.triggerFallAsleepAnimation();
-                    sleepTransitionTicks = 60; // Start countdown for fall_asleep duration
+            // Wait until sit_down completes, then trigger fall_asleep once
+            if (!sleepFallAsleepTriggered) {
+                if (getSitProgress() < maxSitTicks()) {
+                    sleepTransitionTicks = getSleepFallAsleepDuration();
+                    return; // hold until seated
                 }
-            } else {
-                // While sitting down, keep transition ticks above the threshold
-                sleepTransitionTicks = 61;
-                return; // Don't count down yet
+
+                // Sit down complete: trigger fall_asleep and start countdown next tick
+                sleepFallAsleepTriggered = true;
+                sleepTransitionTicks = getSleepFallAsleepDuration();
+                animationHandler.triggerFallAsleepAnimation();
+                return;
             }
         }
 
@@ -2252,16 +2263,42 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                     // fall_asleep finished: mark sleeping and trigger loop animation
                     setSleeping(true);
                     setSleepingEntering(false);
+                    sleepFallAsleepTriggered = false;
                     animationHandler.triggerSleepAnimation();
                 } else if (isSleepingExiting()) {
-                    // wake_up finished: play sit_up if we're supposed to stand, then clear exiting state
-                    if (getCommand() != 1) {
-                        setOrderedToSit(false);
+                    // wake_up finished: now play sit_up, then release
+                    if (!sleepSitUpTriggered) {
+                        // If commanded to sit, stop at sit after wake_up (no stand-up)
+                        if (getCommand() == 1 || isOrderedToSit()) {
+                            setSleeping(false);
+                            sleepSitUpTriggered = false;
+                            setSleepingExiting(false);
+                            sleepTransitionTicks = 0;
+                            sleepAmbientCooldownTicks = 10;
+                            setOrderedToSit(true);
+                            this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), maxSitTicks()));
+                            if (!level().isClientSide) {
+                                releaseSleepLock();
+                            }
+                            return;
+                        }
+
+                        sleepSitUpTriggered = true;
+                        sleepTransitionTicks = getSleepSitUpDuration();
                         animationHandler.triggerSitUpAnimation();
+                        // Allow stand-up by clearing sit lock
+                        setOrderedToSit(false);
+                        return;
+                    } else {
+                        // sit_up finished
+                        setSleeping(false);
+                        sleepSitUpTriggered = false;
+                        setSleepingExiting(false);
+                        sleepAmbientCooldownTicks = 10;
+                        if (!level().isClientSide) {
+                            releaseSleepLock();
+                        }
                     }
-                    setSleepingExiting(false);
-                    // Brief cooldown before ambient sounds resume
-                    sleepAmbientCooldownTicks = 10;
                 }
             }
         }
@@ -2348,8 +2385,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public void startSleepEnter() {
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
         setSleepingEntering(true);
+        sleepFallAsleepTriggered = false;
         // New system: sit_down (uses sitProgress) → fall_asleep (3s = 60 ticks) → sleep loop
-        sleepTransitionTicks = 61; // Use 61 as sentinel value - will be set to 60 when sit_down completes
+        // Seed with sentinel > fall_asleep duration so tickSleepTransition knows we're not seated yet
+        sleepTransitionTicks = getSleepFallAsleepDuration() + 1;
 
         // enterSleepLock forces sit command, which triggers sit_down via updateSittingProgress
         if (!level().isClientSide) {
@@ -2367,16 +2406,16 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void startSleepExit() {
         if ((!isSleeping() && !isSleepingEntering()) || isSleepingExiting()) return;
-        this.entityData.set(DATA_SLEEPING, false);
         setSleepingEntering(false);
         setSleepingExiting(true);
+        sleepFallAsleepTriggered = false;
+        sleepSitUpTriggered = false;
         // New system: wake_up (2.0833s = ~42 ticks) → sit (brief) → sit_up
         sleepTransitionTicks = 42; // Duration of wake_up animation (2.0833 seconds)
         // Trigger wake_up animation
         animationHandler.triggerWakeUpAnimation();
         if (!level().isClientSide) {
             suppressSleep(20);
-            releaseSleepLock();
         }
     }
 
@@ -2384,6 +2423,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.entityData.set(DATA_SLEEPING, false);
         setSleepingEntering(false);
         setSleepingExiting(false);
+        sleepFallAsleepTriggered = false;
+        sleepSitUpTriggered = false;
         sleepTransitionTicks = 0;
         sleepCancelTicks = 2;
         if (!level().isClientSide) {
