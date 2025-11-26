@@ -28,6 +28,11 @@ public class DragonLookControl<T extends DragonEntity> extends LookControl {
 
     @Override
     public void tick() {
+        // Don't look around while sleeping - dragons should be still
+        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
+            return;
+        }
+
         // When being ridden, skip custom clamping but still call vanilla logic
         // (vanilla tick() might update internal state needed for camera smoothness)
         if (dragon.isVehicle()) {

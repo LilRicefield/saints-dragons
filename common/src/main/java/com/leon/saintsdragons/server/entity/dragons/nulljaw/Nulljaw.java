@@ -67,7 +67,7 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Nulljaw extends RideableDragonBase implements AquaticDragon, ShakesScreen, SoundHandledDragon, DragonSleepCapable {
+public class Nulljaw extends RideableDragonBase implements AquaticDragon, ShakesScreen, SoundHandledDragon {
 
     // Force-load abilities registry when this class is loaded
     static {
@@ -428,7 +428,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         super.registerGoals();
         this.goalSelector.addGoal(1, new BreathAirGoal(this));
         this.goalSelector.addGoal(3, new NulljawCombatGoal(this));
-        this.goalSelector.addGoal(4, new NulljawSleepGoal(this));
         this.goalSelector.addGoal(6, new NulljawLeaveWaterGoal(this));
         this.goalSelector.addGoal(7, new NulljawFindWaterGoal(this));
         this.goalSelector.addGoal(8, new NulljawFollowOwnerGoal(this));
@@ -1390,13 +1389,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         return desired;
     }
 
-    /**
-     * Check if the drake is at low health (below 10%)
-     */
-    public boolean isLowHealth() {
-        return this.getHealth() < this.getMaxHealth() * 0.1f;
-    }
-    
     // Required methods for RideableDragon interface
     @Override
     public boolean isGoingUp() {
@@ -1999,14 +1991,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     @Override
-    public SleepPreferences getSleepPreferences() {
-        return new SleepPreferences(
-                true,   // canSleepAtNight
-                false,  // canSleepDuringDay
-                false,  // requiresShelter
-                true,   // avoidsThunderstorms
-                true    // sleepsNearOwner
-        );
+    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+        // Nulljaw are nocturnal sleepers (sleep at night, active during day)
+        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override
