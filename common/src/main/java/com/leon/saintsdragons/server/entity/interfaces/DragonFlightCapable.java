@@ -9,7 +9,19 @@ public interface DragonFlightCapable {
     /**
      * Check if the wyvern is currently flying
      */
-    boolean isFlying();
+    /**
+     * Check if the wyvern is currently flying.
+     * Defaulted to guard against old binaries that may not have compiled against this method.
+     */
+    default boolean isFlying() {
+        if (this instanceof com.leon.saintsdragons.server.entity.base.RideableDragonBase rideable) {
+            return rideable.isFlying();
+        }
+        if (this instanceof net.minecraft.world.entity.animal.FlyingAnimal flyingAnimal) {
+            return flyingAnimal.isFlying();
+        }
+        return false;
+    }
     
     /**
      * Set the wyvern's flying state
