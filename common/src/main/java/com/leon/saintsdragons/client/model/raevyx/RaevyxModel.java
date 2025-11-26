@@ -17,7 +17,7 @@ import software.bernie.geckolib.model.data.EntityModelData;
 public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
     public  RaevyxModel() {
-        super(SaintsDragonsCommon.rl("raevyx"));
+        super(SaintsDragonsCommon.rl("raevyx"), "head1Controller");
     }
 
     private static final ResourceLocation ADULT_MODEL = SaintsDragonsCommon.rl("geo/entity/raevyx.geo.json");
@@ -265,11 +265,11 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
 
         // Tail swings with increasing intensity toward tip
-        applyTailBoneRotation("tail1Controller", velocityRad * 0.5f);
-        applyTailBoneRotation("tail2Controller", velocityRad * 0.75f);
-        applyTailBoneRotation("tail3Controller", velocityRad * 1.0f);
-        applyTailBoneRotation("tail4Controller", velocityRad * 1.25f);
-        applyTailBoneRotation("tail5Controller", velocityRad * 1.75f);
+        applyTailBoneRotation("tail1", velocityRad * 0.5f);
+        applyTailBoneRotation("tail2", velocityRad * 0.75f);
+        applyTailBoneRotation("tail3", velocityRad * 1.0f);
+        applyTailBoneRotation("tail4", velocityRad * 1.25f);
+        applyTailBoneRotation("tail5", velocityRad * 1.75f);
     }
 
     /**

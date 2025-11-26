@@ -14,7 +14,7 @@ import software.bernie.geckolib.model.data.EntityModelData;
 public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
 
     public StegonautModel() {
-        super(SaintsDragonsCommon.rl("stegonaut"));
+        super(SaintsDragonsCommon.rl("stegonaut"), "headController");
     }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/stegonaut.geo.json");
@@ -100,9 +100,9 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
 
         float lookPitchRad = Mth.clamp(modelData.headPitch(), -20.0f, 20.0f) * Mth.DEG_TO_RAD;
 
-        applyNeckBoneFollow("neck1", lookPitchRad, totalYawRad, 0.15f);
-        applyNeckBoneFollow("neck2", lookPitchRad, totalYawRad, 0.20f);
-        applyNeckBoneFollow("head", lookPitchRad, totalYawRad, 0.25f);
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.15f);
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.20f);
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.25f);
     }
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
         var boneOpt = getBone(boneName);
