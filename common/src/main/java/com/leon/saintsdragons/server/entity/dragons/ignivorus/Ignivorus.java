@@ -25,7 +25,6 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
-import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
@@ -80,7 +79,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
-public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, DragonSleepCapable {
+public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -361,7 +360,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this));
         this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
         this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
-        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusSleepGoal(this));
         this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFollowOwnerGoal(this));
         this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundWanderGoal(this, 1.0, 120));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
@@ -945,14 +943,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    public SleepPreferences getSleepPreferences() {
-        return new SleepPreferences(
-                true,   // canSleepAtNight
-                false,  // canSleepDuringDay
-                false,  // requiresShelter
-                false,  // avoidsThunderstorms
-                true    // sleepsNearOwner
-        );
+    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+        // Ignivorus are nocturnal sleepers (sleep at night)
+        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override

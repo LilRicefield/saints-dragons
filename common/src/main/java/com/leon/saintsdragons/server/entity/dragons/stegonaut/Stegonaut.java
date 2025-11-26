@@ -8,7 +8,6 @@ import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.Stegonaut
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
-import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
@@ -54,7 +53,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * - Protective aura: Grants resistance and absorption to nearby players and allies
  * - NOT rideable: Too small and simple to be a mount
  */
-public class Stegonaut extends DragonEntity implements DragonSleepCapable, SoundHandledDragon {
+public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
@@ -152,7 +151,6 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this)); // CRITICAL: Must float in water to not drown!
-        this.goalSelector.addGoal(1, new StegonautSleepGoal(this)); // Highest priority - nighttime sleep only
         // NEW: Async water escape using smart pathfinding (replaces old StegonautLeaveWaterGoal)
         this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this, 48, 5000)); // 5 second timeout for testing
         this.goalSelector.addGoal(3, new StegonautFleeFromPredatorsGoal(this, 0.6D, 12.0D)); // Flee from Raevyx and other Stegonauts
@@ -662,17 +660,11 @@ public class Stegonaut extends DragonEntity implements DragonSleepCapable, Sound
     }
     
     @Override
-    public SleepPreferences getSleepPreferences() {
-        // Simple sleep preferences: sleep at night, awake during day
-        return new SleepPreferences(
-            true,  // canSleepAtNight
-            false, // canSleepDuringDay
-            false, // requiresShelter (simple drake doesn't need shelter)
-            false, // avoidsThunderstorms (not afraid of storms)
-            false  // sleepsNearOwner (independent)
-        );
+    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+        // Stegonaut are nocturnal sleepers (sleep at night, active during day)
+        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
     }
-    
+
     @Override
     public boolean canSleepNow() {
         return !level().isDay();

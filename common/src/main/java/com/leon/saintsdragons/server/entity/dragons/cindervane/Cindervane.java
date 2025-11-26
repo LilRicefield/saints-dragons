@@ -25,7 +25,6 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
-import com.leon.saintsdragons.server.entity.interfaces.DragonSleepCapable;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.Direction;
@@ -96,7 +95,7 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
-public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, DragonSleepCapable {
+public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
     // Note: DATA_FIRE_BREATHING will be defined in defineSynchedData() using a unique ID
     private static final int LANDING_SETTLE_TICKS = 4;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
@@ -456,7 +455,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this));
         this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(3, new CindervaneSmartFlightGoal(this));
-        this.goalSelector.addGoal(4, new CindervaneSleepGoal(this));
         this.goalSelector.addGoal(5, new CindervaneCombatGoal(this));
         this.goalSelector.addGoal(6, new CindervaneFollowOwnerGoal(this));
         this.goalSelector.addGoal(7, new CindervaneGroundWanderGoal(this, 0.6D, 160));
@@ -2404,14 +2402,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
-    public DragonSleepCapable.SleepPreferences getSleepPreferences() {
-        return new DragonSleepCapable.SleepPreferences(
-            true,  // canSleepAtNight - Cindervanes sleep at night
-            false, // canSleepDuringDay - Cindervanes are diurnal
-            true,  // requiresShelter
-            true,  // avoidsThunderstorms
-            true   // sleepsNearOwner
-        );
+    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+        // Cindervane are nocturnal sleepers (sleep at night, active during day)
+        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override

@@ -12,6 +12,7 @@ public class DragonSleepBehavior {
 
     private final DragonEntity dragon;
     private int sleepActionCooldown = 0;
+    private SleepPhase currentPhase = SleepPhase.IDLE;
 
     public DragonSleepBehavior(DragonEntity dragon) {
         this.dragon = dragon;
@@ -30,33 +31,101 @@ public class DragonSleepBehavior {
             sleepActionCooldown--;
         }
 
+        // Wild dragons should never persist a sit order after reloads; clear it so sleep logic can re-evaluate
+        if (!dragon.isTame() && dragon.isOrderedToSit() && !dragon.isSleeping() && !dragon.isSleepTransitioning()) {
+            dragon.setOrderedToSit(false);
+            if (dragon.getCommand() == 1) {
+                dragon.setCommand(0);
+            }
+            // Hard reset sit pose to avoid lingering T-poses on reload
+            if (dragon.sitProgress > 0f) {
+                dragon.sitProgress = 0f;
+                dragon.prevSitProgress = 0f;
+                dragon.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+            }
+        }
+
+        // Update phase based on actual dragon state
+        SleepPhase oldPhase = currentPhase;
+        updatePhase();
+
+        // DEBUG: Log phase changes
+        if (oldPhase != currentPhase && dragon.tickCount % 10 == 0) {
+            System.out.println("[SLEEP] " + dragon.getClass().getSimpleName() + " phase: " + oldPhase + " -> " + currentPhase);
+        }
+
         // Handle tamed dragon sleep based on owner commands
         if (dragon.isTame()) {
             handleTamedDragonSleep();
         }
 
-        // Check environment and attempt sleep if conditions are right
-        if (shouldAttemptSleep()) {
-            tryStartSleeping();
-        }
-
-        // Check if we should wake up
-        if (shouldWakeUp()) {
-            tryWakeUp();
+        // Only attempt state changes when in stable phases
+        if (currentPhase == SleepPhase.IDLE && shouldAttemptSleep()) {
+            System.out.println("[SLEEP] " + dragon.getClass().getSimpleName() + " attempting sleep (cooldown=" + sleepActionCooldown + ")");
+            if (tryStartSleeping()) {
+                currentPhase = SleepPhase.ENTERING;
+                System.out.println("[SLEEP] Sleep command sent");
+            }
+        } else if (currentPhase == SleepPhase.SLEEPING) {
+            boolean shouldWake = shouldWakeUp();
+            if (shouldWake && dragon.tickCount % 20 == 0) {
+                System.out.println("[SLEEP] " + dragon.getClass().getSimpleName() + " should wake: " + getWakeReason());
+            }
+            if (shouldWake) {
+                if (tryWakeUp()) {
+                    currentPhase = SleepPhase.EXITING;
+                    System.out.println("[SLEEP] Wake command sent");
+                }
+            }
         }
     }
 
     /**
-     * Handle tamed dragon sleep logic based on owner commands
+     * Update internal phase based on dragon's actual sleep state
+     */
+    private void updatePhase() {
+        if (dragon.isSleepTransitioning()) {
+            // Dragon is transitioning - determine which direction
+            if (dragon.isSleeping()) {
+                // Still marked as sleeping but transitioning = waking up
+                if (currentPhase != SleepPhase.EXITING) {
+                    currentPhase = SleepPhase.EXITING;
+                }
+            } else {
+                // Not sleeping yet but transitioning = entering sleep
+                if (currentPhase != SleepPhase.ENTERING) {
+                    currentPhase = SleepPhase.ENTERING;
+                }
+            }
+        } else if (dragon.isSleeping()) {
+            // Fully asleep
+            currentPhase = SleepPhase.SLEEPING;
+        } else {
+            // Awake and not transitioning
+            if (currentPhase != SleepPhase.IDLE) {
+                currentPhase = SleepPhase.IDLE;
+                // Add cooldown after waking to prevent immediate re-sleep
+                delaySleep(40, 60);
+            }
+        }
+    }
+
+    /**
+     * Handle tamed dragon sleep logic based on owner proximity
+     * Tamed dragons sleep when owner is sleeping nearby (like wolves/cats in vanilla)
      */
     private void handleTamedDragonSleep() {
-        // If owner commanded to sit/stay, allow sleeping
+        // If dragon is sitting, prevent auto-sleep (sit is a separate command, not sleep)
         if (dragon.isOrderedToSit()) {
-            sleepActionCooldown = 0;
-            // Dragon can sleep while sitting
+            // Wake up if currently sleeping while sitting (shouldn't happen, but safety check)
+            if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
+                tryWakeUp();
+            }
+            return;
         }
-        // If owner commanded to follow and dragon is sleeping, wake up
-        else if ((dragon.isSleeping() || dragon.isSleepTransitioning()) && !dragon.isOrderedToSit()) {
+
+        // If owner is not sleeping and dragon is sleeping, wake up
+        if ((dragon.isSleeping() || dragon.isSleepTransitioning()) && !isOwnerSleepingNearby()) {
             sleepActionCooldown = 0;
             tryWakeUp();
         }
@@ -76,6 +145,11 @@ public class DragonSleepBehavior {
             return false;
         }
 
+        // NEVER sleep while sitting (sit is a separate command, not sleep)
+        if (dragon.isOrderedToSit()) {
+            return false;
+        }
+
         // Basic environmental checks
         if (!canSleepInCurrentEnvironment()) {
             return false;
@@ -87,15 +161,12 @@ public class DragonSleepBehavior {
             return false;
         }
 
-        // Tamed dragons: only auto-sleep if owner is sleeping nearby OR if ordered to sit
+        // Tamed dragons: only auto-sleep if owner is sleeping nearby
         if (dragon.isTame()) {
-            if (dragon.isOrderedToSit()) {
-                return true; // Can sleep while sitting
-            }
             return isOwnerSleepingNearby();
         }
 
-        // Wild dragons: sleep according to their preferences
+        // Wild dragons: sleep according to their preferences (time of day, etc.)
         return true;
     }
 
@@ -130,6 +201,47 @@ public class DragonSleepBehavior {
     }
 
     /**
+     * Debug method to explain why dragon should wake
+     */
+    private String getWakeReason() {
+        if (!dragon.isSleeping()) return "not sleeping";
+        if (!canSleepInCurrentEnvironment()) return "environment unsafe: " + getEnvironmentFailure();
+
+        DragonSleepPreferences prefs = dragon.getSleepPreferences();
+        if (!prefs.canSleepDuringConditions(dragon.level())) {
+            boolean isDay = dragon.level().isDay();
+            if (dragon.level().isThundering()) return "thunderstorm";
+            if (isDay && !prefs.canSleepDuringDay()) return "daytime (nocturnal)";
+            if (!isDay && !prefs.canSleepAtNight()) return "nighttime (diurnal)";
+            return "time/weather conditions";
+        }
+
+        if (dragon.isTame() && !dragon.isOrderedToSit() && !isOwnerSleepingNearby()) {
+            return "owner not sleeping";
+        }
+
+        return "unknown";
+    }
+
+    private String getEnvironmentFailure() {
+        if (dragon.isDying() || !dragon.isAlive() || dragon.isDeadOrDying()) return "dying/dead";
+        if (dragon.isVehicle()) return "being ridden";
+        if (dragon.getTarget() != null) return "has target";
+        if (dragon.isInWaterOrBubble() || dragon.isInLava()) return "in water/lava";
+        if (!dragon.onGround()) return "not on ground";
+
+        if (dragon instanceof com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable flyer) {
+            if (flyer.isFlying()) return "flying";
+            if (flyer.isHovering()) return "hovering";
+            if (flyer.isTakeoff()) return "taking off";
+            if (flyer.isLanding()) return "landing";
+        }
+
+        if (dragon.isSleepSuppressed()) return "sleep suppressed";
+        return "unknown";
+    }
+
+    /**
      * Check if the current environment is safe for sleeping
      * This includes ground checks, water checks, flight checks, etc.
      */
@@ -154,15 +266,21 @@ public class DragonSleepBehavior {
             return false;
         }
 
-        // CRITICAL: Can't sleep while flying/airborne - must be on ground!
-        if (!dragon.onGround()) {
-            return false;
-        }
+        // CRITICAL: Only check ground/flight BEFORE entering sleep!
+        // Once sleeping/transitioning, don't check (animations might lift dragon slightly)
+        boolean alreadySleepingOrTransitioning = dragon.isSleeping() || dragon.isSleepTransitioning();
 
-        // Can't sleep if actively flying (even if briefly on ground)
-        if (dragon instanceof com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable flyer) {
-            if (flyer.isFlying() || flyer.isHovering() || flyer.isTakeoff() || flyer.isLanding()) {
+        if (!alreadySleepingOrTransitioning) {
+            // Must be on ground to START sleeping
+            if (!dragon.onGround()) {
                 return false;
+            }
+
+            // Can't start sleep if actively flying
+            if (dragon instanceof com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable flyer) {
+                if (flyer.isFlying() || flyer.isHovering() || flyer.isTakeoff() || flyer.isLanding()) {
+                    return false;
+                }
             }
         }
 
@@ -290,5 +408,15 @@ public class DragonSleepBehavior {
         public static DragonSleepPreferences FLEXIBLE() {
             return new DragonSleepPreferences(true, true, true); // Sleeps anytime
         }
+    }
+
+    /**
+     * Sleep phase tracking to prevent looping behavior
+     */
+    private enum SleepPhase {
+        IDLE,      // Not sleeping, can attempt sleep
+        ENTERING,  // Commanded sleep, waiting for transition
+        SLEEPING,  // Fully asleep
+        EXITING    // Commanded wake, waiting for transition
     }
 }
