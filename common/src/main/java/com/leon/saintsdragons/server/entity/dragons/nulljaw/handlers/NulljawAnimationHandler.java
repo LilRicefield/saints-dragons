@@ -80,7 +80,7 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         actionController.triggerableAnim("phase2_underwater",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase2_underwater"));
         actionController.triggerableAnim("phase2_underwater_stop",
-                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_underwater_stop"));
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_underwater_end"));
 
         // Phase 1 revert animations (ground and underwater)
         actionController.triggerableAnim("phase1_underwater",
