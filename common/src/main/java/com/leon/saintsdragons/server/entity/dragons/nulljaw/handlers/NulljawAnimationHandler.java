@@ -74,11 +74,17 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         actionController.triggerableAnim("phase2_end",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase2_end"));
 
-        // Phase 2 underwater (single animation, no chain)
-        actionController.triggerableAnim("phase1_underwater",
-                RawAnimation.begin().thenPlay("animation.nulljaw.phase1_underwater"));
+        // Phase 2 underwater transition - chaining animations
+        actionController.triggerableAnim("phase2_underwater_start",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_underwater_start"));
         actionController.triggerableAnim("phase2_underwater",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase2_underwater"));
+        actionController.triggerableAnim("phase2_underwater_stop",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_underwater_stop"));
+
+        // Phase 1 revert animations (ground and underwater)
+        actionController.triggerableAnim("phase1_underwater",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase1_underwater"));
 
         // Phase 1 melee attack (works both on ground and underwater)
         actionController.triggerableAnim("bite",

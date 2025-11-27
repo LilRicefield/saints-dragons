@@ -28038,7 +28038,7 @@
 		"animation.ignivorus.eat": {
 			"animation_length": 0.8333,
 			"bones": {
-				"neck1Controller": {
+				"neck1": {
 					"rotation": {
 						"0.0": {
 							"post": {
@@ -28060,7 +28060,7 @@
 						}
 					}
 				},
-				"neck2Controller": {
+				"neck2": {
 					"rotation": {
 						"0.0": {
 							"post": {
@@ -28082,7 +28082,7 @@
 						}
 					}
 				},
-				"neck3Controller": {
+				"neck3": {
 					"rotation": {
 						"0.0": {
 							"post": {
@@ -28110,7 +28110,7 @@
 						}
 					}
 				},
-				"neck4Controller": {
+				"neck4": {
 					"rotation": {
 						"0.0": {
 							"post": {
@@ -28144,7 +28144,7 @@
 						}
 					}
 				},
-				"headController": {
+				"head": {
 					"rotation": {
 						"0.0": {
 							"post": {
@@ -28952,6 +28952,11 @@
 							},
 							"lerp_mode": "catmullrom"
 						}
+					}
+				},
+				"neck3Controller": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"neck4Controller": {

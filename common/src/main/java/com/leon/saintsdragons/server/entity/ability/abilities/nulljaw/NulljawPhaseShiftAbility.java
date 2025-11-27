@@ -11,7 +11,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Phase Shift - Ultimate toggle ability
  * - Toggles between Phase 1 (quadruped, bite only) and Phase 2 (can use claws + bite)
  * - Can only be activated on ground initially
- * - No cooldown, plays chained transition animations when entering phase 2 on ground
+ * - No cooldown, plays chained transition animations when entering phase 2
+ * - Uses different animation chains for ground vs underwater
  */
 public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
     // Ground phase 2 transition - chaining animations (start + main + end)
@@ -19,6 +20,13 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
     private static final int GROUND_MAIN_TICKS = 67;   // 3.3333s animation.nulljaw.phase2
     private static final int GROUND_END_TICKS = 17;    // 0.8333s animation.nulljaw.phase2_end
     private static final int GROUND_TOTAL_SEQUENCE_TICKS = GROUND_START_TICKS + GROUND_MAIN_TICKS + GROUND_END_TICKS; // 122 ticks
+
+    // Underwater phase 2 transition - chaining animations (start + main + stop)
+    private static final int UNDERWATER_START_TICKS = 38;  // animation.nulljaw.phase2_underwater_start
+    private static final int UNDERWATER_MAIN_TICKS = 67;   // animation.nulljaw.phase2_underwater
+    private static final int UNDERWATER_STOP_TICKS = 17;   // animation.nulljaw.phase2_underwater_stop
+    private static final int UNDERWATER_TOTAL_SEQUENCE_TICKS = UNDERWATER_START_TICKS + UNDERWATER_MAIN_TICKS + UNDERWATER_STOP_TICKS;
+
     // Lock slightly longer than animations to ensure client EntityData sync completes before movement controller resumes
     // Network delay can cause client to see old phase value for ~5-10 ticks after server toggles it
     private static final int LOCK_DURATION = 120;
@@ -36,18 +44,34 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
             new AbilitySectionDuration(AbilitySectionType.RECOVERY, 10) // Small tail
     };
 
+    private static final DragonAbilitySection[] TRACK_ENTER_PHASE2_UNDERWATER = new DragonAbilitySection[] {
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, UNDERWATER_TOTAL_SEQUENCE_TICKS), // Full underwater sequence
+            new AbilitySectionInstant(AbilitySectionType.ACTIVE), // Apply phase change
+            new AbilitySectionDuration(AbilitySectionType.RECOVERY, 10) // Small tail
+    };
+
     private static final DragonAbilitySection[] TRACK_EXIT_PHASE2 = new DragonAbilitySection[] {
             new AbilitySectionInstant(AbilitySectionType.ACTIVE) // Instant revert
     };
 
     public NulljawPhaseShiftAbility(DragonAbilityType<Nulljaw, NulljawPhaseShiftAbility> type, Nulljaw user) {
-        super(type, user, user.isPhaseTwoActive() ? TRACK_EXIT_PHASE2 : TRACK_ENTER_PHASE2_GROUND, 0); // No cooldown
+        super(type, user, determineTrack(user), 0); // No cooldown
         this.enteringPhaseTwo = !user.isPhaseTwoActive();
-        this.isGroundTransition = !user.isInWaterOrBubble(); // Ground uses chaining anims, underwater uses single anim
+        this.isGroundTransition = !user.isInWaterOrBubble(); // Ground vs underwater transition
         this.phaseToggleApplied = false;
         this.mainAnimPlayed = false;
         this.endAnimPlayed = false;
         this.screenShakeActive = false;
+    }
+
+    private static DragonAbilitySection[] determineTrack(Nulljaw user) {
+        if (user.isPhaseTwoActive()) {
+            return TRACK_EXIT_PHASE2; // Exiting phase 2
+        } else if (user.isInWaterOrBubble()) {
+            return TRACK_ENTER_PHASE2_UNDERWATER; // Entering phase 2 underwater
+        } else {
+            return TRACK_ENTER_PHASE2_GROUND; // Entering phase 2 on ground
+        }
     }
 
 
@@ -105,8 +129,10 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
                     getUser().lockRiderControls(45);
                     getUser().lockAbilities(45);
 
-                    // Trigger phase1 animation (sound is handled by animation keyframe, don't play manually)
-                    getUser().triggerAnim("action", "phase1");
+                    // Trigger appropriate phase 1 revert animation (sound is handled by animation keyframe)
+                    boolean underwater = getUser().isInWaterOrBubble();
+                    String revertAnim = underwater ? "phase1_underwater" : "phase1";
+                    getUser().triggerAnim("action", revertAnim);
                 }
             }
         }
@@ -124,26 +150,45 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
             return;
         }
 
-        // Only chain animations for ground transitions entering phase 2
-        if (!enteringPhaseTwo || !isGroundTransition) {
+        // Only chain animations when entering phase 2
+        if (!enteringPhaseTwo) {
             return;
         }
 
         int ticks = getTicksInSection();
 
-        // Chain main animation (phase2) after start animation
-        if (!mainAnimPlayed && ticks >= GROUND_START_TICKS) {
-            getUser().triggerAnim("action", "phase2");
-            mainAnimPlayed = true;
-            screenShakeActive = true; // Start screen shake during main animation
-            // Phase already toggled in beginSection(STARTUP)
-        }
+        if (isGroundTransition) {
+            // Ground animation chain: phase2_start -> phase2 -> phase2_end
+            // Chain main animation (phase2) after start animation
+            if (!mainAnimPlayed && ticks >= GROUND_START_TICKS) {
+                getUser().triggerAnim("action", "phase2");
+                mainAnimPlayed = true;
+                screenShakeActive = true; // Start screen shake during main animation
+                // Phase already toggled in beginSection(STARTUP)
+            }
 
-        // Chain end animation (phase2_end) after main animation
-        if (!endAnimPlayed && ticks >= (GROUND_START_TICKS + GROUND_MAIN_TICKS)) {
-            getUser().triggerAnim("action", "phase2_end");
-            endAnimPlayed = true;
-            screenShakeActive = false; // Stop screen shake when entering end animation
+            // Chain end animation (phase2_end) after main animation
+            if (!endAnimPlayed && ticks >= (GROUND_START_TICKS + GROUND_MAIN_TICKS)) {
+                getUser().triggerAnim("action", "phase2_end");
+                endAnimPlayed = true;
+                screenShakeActive = false; // Stop screen shake when entering end animation
+            }
+        } else {
+            // Underwater animation chain: phase2_underwater_start -> phase2_underwater -> phase2_underwater_stop
+            // Chain main animation (phase2_underwater) after start animation
+            if (!mainAnimPlayed && ticks >= UNDERWATER_START_TICKS) {
+                getUser().triggerAnim("action", "phase2_underwater");
+                mainAnimPlayed = true;
+                screenShakeActive = true; // Start screen shake during main animation
+                // Phase already toggled in beginSection(STARTUP)
+            }
+
+            // Chain stop animation (phase2_underwater_stop) after main animation
+            if (!endAnimPlayed && ticks >= (UNDERWATER_START_TICKS + UNDERWATER_MAIN_TICKS)) {
+                getUser().triggerAnim("action", "phase2_underwater_stop");
+                endAnimPlayed = true;
+                screenShakeActive = false; // Stop screen shake when entering stop animation
+            }
         }
     }
 
@@ -163,10 +208,11 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
     private String resolvePhaseAnimation() {
         boolean underwater = getUser().isInWaterOrBubble();
         if (underwater) {
-            // Underwater uses single animation (no chaining)
-            return "phase2_underwater";
+            // Underwater uses chaining: phase2_underwater_start -> phase2_underwater -> phase2_underwater_stop
+            // This method returns the FIRST animation in the chain
+            return "phase2_underwater_start";
         }
-        // Ground uses chaining: start -> main -> end
+        // Ground uses chaining: phase2_start -> phase2 -> phase2_end
         // This method returns the FIRST animation in the chain
         return "phase2_start";
     }
