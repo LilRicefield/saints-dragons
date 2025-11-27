@@ -185,7 +185,7 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
 
             // Chain stop animation (phase2_underwater_stop) after main animation
             if (!endAnimPlayed && ticks >= (UNDERWATER_START_TICKS + UNDERWATER_MAIN_TICKS)) {
-                getUser().triggerAnim("action", "phase2_underwater_stop");
+                getUser().triggerAnim("action", "phase2_underwater_end");
                 endAnimPlayed = true;
                 screenShakeActive = false; // Stop screen shake when entering stop animation
             }
