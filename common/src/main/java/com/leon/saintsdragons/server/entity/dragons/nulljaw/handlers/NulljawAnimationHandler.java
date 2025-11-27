@@ -43,11 +43,6 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     // Swim animations (shared between phases)
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.nulljaw.swim_idle");
     private static final RawAnimation SWIM_CRUISE = RawAnimation.begin().thenLoop("animation.nulljaw.swim_move");
-    private static final RawAnimation SWIM_UP = RawAnimation.begin().thenLoop("animation.nulljaw.swimming_up");
-    private static final RawAnimation SWIM_DOWN = RawAnimation.begin().thenLoop("animation.nulljaw.swimming_down");
-    private static final RawAnimation SWIM_LEFT = RawAnimation.begin().thenLoop("animation.nulljaw.swimming_left");
-    private static final RawAnimation SWIM_RIGHT = RawAnimation.begin().thenLoop("animation.nulljaw.swimming_right");
-    private static final RawAnimation SWIM_NEUTRAL = RawAnimation.begin().thenLoop("animation.nulljaw.swimming_off");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.nulljaw.sit");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.nulljaw.down");
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.nulljaw.up");
@@ -229,38 +224,10 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     }
 
     public PlayState swimDirectionPredicate(AnimationState<Nulljaw> state) {
-
-        var controller = state.getController();
-        controller.transitionLength(SWIM_TRANSITION_TICKS);
-
-        // Stop swim direction controller during sleep transitions
-        if (drake.isSleeping() || drake.isSleepingEntering() || drake.isSleepingExiting()) {
-            return PlayState.STOP;
-        }
-
-        if (!drake.isSwimming()) {
-            state.setAndContinue(SWIM_NEUTRAL);
-            return PlayState.CONTINUE;
-        }
-
-        if (drake.isSwimmingUp()) {
-            state.setAndContinue(SWIM_UP);
-            return PlayState.CONTINUE;
-        }
-        if (drake.isSwimmingDown()) {
-            state.setAndContinue(SWIM_DOWN);
-            return PlayState.CONTINUE;
-        }
-
-        int yawDir = drake.getSwimTurnDirection();
-        if (yawDir < 0) {
-            state.setAndContinue(SWIM_LEFT);
-        } else if (yawDir > 0) {
-            state.setAndContinue(SWIM_RIGHT);
-        } else {
-            state.setAndContinue(SWIM_NEUTRAL);
-        }
-        return PlayState.CONTINUE;
+        // Swim direction controller disabled - directional swim animations removed
+        // This prevents bone rotation issues when transitioning between swimming and ground movement
+        // Main swim animations (swim_idle, swim_cruise) are handled by the movement controller
+        return PlayState.STOP;
     }
 
     public PlayState actionPredicate(AnimationState<Nulljaw> state) {
