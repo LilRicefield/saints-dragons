@@ -14,7 +14,7 @@ import software.bernie.geckolib.model.data.EntityModelData;
 public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
 
     public StegonautModel() {
-        super(SaintsDragonsCommon.rl("stegonaut"), "headController");
+        super(SaintsDragonsCommon.rl("stegonaut"));
     }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/stegonaut.geo.json");

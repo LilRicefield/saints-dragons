@@ -17,7 +17,7 @@ import software.bernie.geckolib.model.data.EntityModelData;
 public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
     public  RaevyxModel() {
-        super(SaintsDragonsCommon.rl("raevyx"), "head1Controller");
+        super(SaintsDragonsCommon.rl("raevyx"));
     }
 
     private static final ResourceLocation ADULT_MODEL = SaintsDragonsCommon.rl("geo/entity/raevyx.geo.json");
