@@ -26,8 +26,13 @@
 					"pivot": [0, 40, -4]
 				},
 				{
-					"name": "bodypart",
+					"name": "heightController",
 					"parent": "body",
+					"pivot": [0, 34, -4]
+				},
+				{
+					"name": "bodypart",
+					"parent": "heightController",
 					"pivot": [0, 34, -4],
 					"cubes": [
 						{"origin": [-14, 22.4, -28], "size": [28, 33.6, 40], "uv": [0, 137]},
@@ -460,7 +465,7 @@
 				},
 				{
 					"name": "body1",
-					"parent": "body",
+					"parent": "heightController",
 					"pivot": [0, 41.76668, 12.33332],
 					"cubes": [
 						{"origin": [-16, 29, 8], "size": [32, 27.6, 40], "uv": [0, 70]},
