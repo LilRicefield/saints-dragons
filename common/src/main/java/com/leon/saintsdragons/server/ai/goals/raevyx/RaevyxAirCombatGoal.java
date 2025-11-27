@@ -136,7 +136,6 @@ public class RaevyxAirCombatGoal extends Goal {
 
     @Override
     public void stop() {
-        System.out.println("[RaevyxAirCombat] STOP - Goal ending (flying=" + dragon.isFlying() + ", hovering=" + dragon.isHovering() + ")");
         dragon.setAggressive(false);
         attackCooldown = 0;
         repositionCooldown = 0;
@@ -144,7 +143,6 @@ public class RaevyxAirCombatGoal extends Goal {
         // Don't call setLanding() - it triggers setTakeoff(true) which causes animation issues
         // Just clear flying/takeoff and let natural landing occur
         if (dragon.isFlying() || dragon.isHovering()) {
-            System.out.println("[RaevyxAirCombat] STOP - Clearing flight flags");
             dragon.setFlying(false);
             dragon.setTakeoff(false);
             dragon.setHovering(false);
@@ -160,14 +158,12 @@ public class RaevyxAirCombatGoal extends Goal {
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isHovering() && !dragon.isTakeoff() && !dragon.isLanding()) {
             // Set both flying and takeoff - physics needs flying=true to actually fly
             // tick() will clear takeoff flag once airborne
-            System.out.println("[RaevyxAirCombat] START - Grounded, triggering takeoff");
             dragon.setFlying(true);
             dragon.setTakeoff(true);
             dragon.setLanding(false);
             dragon.setHovering(false);
         } else if (dragon.isFlying() || dragon.isHovering()) {
             // Already airborne - just ensure takeoff flag is cleared and set flying
-            System.out.println("[RaevyxAirCombat] START - Already airborne");
             dragon.setTakeoff(false);
             dragon.setFlying(true);
             dragon.setLanding(false);
@@ -178,7 +174,6 @@ public class RaevyxAirCombatGoal extends Goal {
     public void tick() {
         // Force clear takeoff flag if airborne and flying - don't let it stick
         if (dragon.isTakeoff() && dragon.isFlying() && !dragon.onGround()) {
-            System.out.println("[RaevyxAirCombat] TICK - Force clearing takeoff flag");
             dragon.setTakeoff(false);
         }
 

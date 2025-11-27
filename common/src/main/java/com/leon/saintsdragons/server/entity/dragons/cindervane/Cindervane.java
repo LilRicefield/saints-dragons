@@ -1975,6 +1975,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // Clear transient sleep transition flags on load
         sleepFallAsleepTriggered = false;
         sleepSitUpTriggered = false;
+
+        // Apply config attributes when loading from NBT (Forge fix)
+        applyConfiguredAttributes();
     }
 
     /**

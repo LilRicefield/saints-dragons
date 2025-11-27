@@ -133,16 +133,12 @@ public class AsyncPathfindingHelper {
                     // Schedule entity modification on main thread
                     scheduleOnMainThread(serverLevel, () -> {
                         // Now it's safe to modify the mob
-                        System.out.println("Path found with " + path.size() + " waypoints in " +
-                            result.getComputeTimeMs() + "ms");
-
                         // TODO: Make mob follow the path
                         // mob.getNavigation().moveTo(path.get(0).x, path.get(0).y, path.get(0).z, 1.0);
                     });
 
                 } else {
                     // Path failed
-                    System.out.println("Pathfinding failed: " + result.getFailureReason());
                 }
             }
         );
