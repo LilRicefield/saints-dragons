@@ -100,8 +100,6 @@ public class AsyncPathfindingManager {
                 return computePath(level, start, goal, gridResolution, timeoutMs, smoothPath, entityBounds, mode);
             } catch (Exception e) {
                 // Catch any unexpected errors
-                System.err.println("Pathfinding error: " + e.getMessage());
-                e.printStackTrace();
                 return PathfindingResult.failure("Exception: " + e.getMessage(), 0);
             } finally {
                 activeTasks.decrementAndGet();

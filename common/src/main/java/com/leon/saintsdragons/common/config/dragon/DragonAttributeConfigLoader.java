@@ -64,8 +64,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "magma_volley", DragonAbilityOverride.ofDamage(20.0D)
                 ),
                 Map.of(
-                        "run_speed", 0.27D,
-                        "walk_speed", 0.225D,
                         "taming_chance_base", 4.0D,
                         "taming_chance_hearty", 2.0D
                 ),
@@ -85,8 +83,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "horn_gore", DragonAbilityOverride.ofDamage(15.0D)
                 ),
                 Map.of(
-                        "run_speed", 0.45D,
-                        "walk_speed", 0.25D,
                         "taming_chance_base", 5.0D,
                         "taming_chance_hearty", 3.0D
                 ),
@@ -109,8 +105,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "horn_gore_phase2", DragonAbilityOverride.ofDamage(20.8D)
                 ),
                 Map.of(
-                        "run_speed", 0.28D,
-                        "walk_speed", 0.14D,
                         "swim_speed", 1.45D,
                         "taming_chance", 6.0D
                 ),
@@ -133,8 +127,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "ultimate", DragonAbilityOverride.ofDamage(200.0D)
                 ),
                 Map.of(
-                        "run_speed", 0.60D,
-                        "walk_speed", 0.225D,
                         "ultimate_penalty_health", 50.0D,
                         "taming_chance_base", 7.0D,
                         "taming_chance_hearty", 4.0D
@@ -364,19 +356,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         hints.addProperty("taming_chance", "Lower is easier: 1 = 100% per attempt, 100 = 1% per attempt");
         hints.addProperty("legacy_taming", "true = simple food taming, false = special mechanics (rodeo/low-health)");
 
-        if (id.equals(CINDERVANE_ID)) {
-            hints.addProperty("run_speed", "Min 0.01, Max 1.5");
-            hints.addProperty("walk_speed", "Min 0.01, Max 1.5");
-        } else if (id.equals(RAEVYX_ID)) {
-            hints.addProperty("run_speed", "Min 0.01, Max 2.0");
-            hints.addProperty("walk_speed", "Min 0.01, Max 2.0");
-        } else if (id.equals(NULLJAW_ID)) {
-            hints.addProperty("run_speed", "Min 0.05, Max 1.5");
-            hints.addProperty("walk_speed", "Min 0.01, Max 1.0");
+        if (id.equals(NULLJAW_ID)) {
             hints.addProperty("swim_speed", "Min 0.1, Max 5.0");
         } else if (id.equals(IGNIVORUS_ID)) {
-            hints.addProperty("run_speed", "Min 0.05, Max 2.5");
-            hints.addProperty("walk_speed", "Min 0.01, Max 1.0");
             hints.addProperty("ultimate_penalty_health", "Typical 1-500");
         }
         return hints;
