@@ -14,7 +14,7 @@ import software.bernie.geckolib.model.data.EntityModelData;
 
 public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     public NulljawModel() {
-        super(SaintsDragonsCommon.rl ("nulljaw"), "headController");
+        super(SaintsDragonsCommon.rl ("nulljaw"));
     }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/nulljaw.geo.json");

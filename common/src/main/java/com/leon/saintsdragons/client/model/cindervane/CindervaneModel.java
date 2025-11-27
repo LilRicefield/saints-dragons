@@ -97,7 +97,7 @@ public CindervaneModel() {
 
         applyNeckBoneRotation("neck1", neckLeanRad * 0.5f);
         applyNeckBoneRotation("neck2", neckLeanRad * 1.0f);
-        applyNeckBoneRotation("skullController", neckLeanRad * 1.25f);
+        applyNeckBoneRotation("skull", neckLeanRad * 1.25f);
     }
 
     private void applyGroundNeckTurn(Cindervane entity, float partialTick) {
@@ -135,7 +135,7 @@ public CindervaneModel() {
         applyNeckBoneFollow("neck1", lookPitchRad, totalYawRad, 0.35f);
         applyNeckBoneFollow("neck2", lookPitchRad, totalYawRad, 0.55f);
         applyNeckBoneFollow("neck3", lookPitchRad, totalYawRad, 0.70f);
-        applyNeckBoneFollow("skullController", lookPitchRad, totalYawRad, 0.80f);
+        applyNeckBoneFollow("skull", lookPitchRad, totalYawRad, 0.80f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
