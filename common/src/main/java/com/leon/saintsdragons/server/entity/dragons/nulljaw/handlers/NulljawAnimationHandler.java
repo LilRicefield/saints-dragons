@@ -11,11 +11,13 @@ public record NulljawAnimationHandler(Nulljaw drake) {
 
     // ===== ANIMATION TRIGGER HELPERS =====
     public void triggerSitDownAnimation() {
-        drake.triggerAnim("action", "sit_down");
+        boolean isPhaseTwo = drake.isPhaseTwoActive();
+        drake.triggerAnim("action", isPhaseTwo ? "sit_down2" : "sit_down");
     }
 
     public void triggerSitUpAnimation() {
-        drake.triggerAnim("action", "sit_up");
+        boolean isPhaseTwo = drake.isPhaseTwoActive();
+        drake.triggerAnim("action", isPhaseTwo ? "sit_up2" : "sit_up");
     }
 
     public void triggerFallAsleepAnimation() {
@@ -43,12 +45,19 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     // Swim animations (shared between phases)
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.nulljaw.swim_idle");
     private static final RawAnimation SWIM_CRUISE = RawAnimation.begin().thenLoop("animation.nulljaw.swim_move");
+
+    // Phase 1 sitting/sleeping animations
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.nulljaw.sit");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.nulljaw.down");
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.nulljaw.up");
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.nulljaw.fall_asleep");
     private static final RawAnimation SLEEP_LOOP = RawAnimation.begin().thenLoop("animation.nulljaw.sleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.nulljaw.wake_up");
+
+    // Phase 2 sitting/sleeping animations
+    private static final RawAnimation SIT2 = RawAnimation.begin().thenLoop("animation.nulljaw.sit2");
+    private static final RawAnimation SIT_DOWN2 = RawAnimation.begin().thenPlay("animation.nulljaw.down2");
+    private static final RawAnimation SIT_UP2 = RawAnimation.begin().thenPlay("animation.nulljaw.up2");
 
     private static final int MOVEMENT_TRANSITION_TICKS = 6;
     private static final int SWIM_TRANSITION_TICKS = 7;
@@ -109,12 +118,16 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         actionController.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.nulljaw.eat"));
 
-        // Sit & sleep transitions
+        // Sit & sleep transitions (Phase 1)
         actionController.triggerableAnim("sit_down", SIT_DOWN);
         actionController.triggerableAnim("sit_up", SIT_UP);
         actionController.triggerableAnim("fall_asleep", FALL_ASLEEP);
         actionController.triggerableAnim("sleep", SLEEP_LOOP);
         actionController.triggerableAnim("wake_up", WAKE_UP);
+
+        // Sit & sleep transitions (Phase 2)
+        actionController.triggerableAnim("sit_down2", SIT_DOWN2);
+        actionController.triggerableAnim("sit_up2", SIT_UP2);
 
         // Ambient vocal grumbles now run through the action controller so they can blend with look control
         actionController.triggerableAnim("grumble1",
@@ -187,8 +200,10 @@ public record NulljawAnimationHandler(Nulljaw drake) {
             return PlayState.STOP;
         } else if (drake.getSitProgress() > 0.5f) {
             // Drive SIT from our custom progress system only to avoid de-sync
+            // Use phase 2 sitting animation when phase 2 is active
+            boolean phaseTwo = drake.isPhaseTwoActive();
             controller.transitionLength(4);
-            state.setAnimation(SIT);
+            state.setAnimation(phaseTwo ? SIT2 : SIT);
         } else {
             int groundState = drake.getEffectiveGroundState();
             boolean phaseTwo = drake.isPhaseTwoActive();
