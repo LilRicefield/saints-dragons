@@ -84,7 +84,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
      * This creates the natural "head leads, body follows" behavior.
      */
     private void applyBodyRotationDeviation(Raevyx entity, float partialTick) {
-        var rootOpt = getBone("body");
+        var rootOpt = getBone("root");
         if (rootOpt.isEmpty()) {
             return;
         }

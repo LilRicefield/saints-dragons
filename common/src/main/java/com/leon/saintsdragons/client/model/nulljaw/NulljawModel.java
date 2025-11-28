@@ -49,9 +49,6 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
 
         float partialTick = animationState.getPartialTick();
         applyBodyRotationDeviation(entity, partialTick);
-        if (entity.isAlive() && entity.isSwimming()) {
-            applySwimRoll(entity, animationState);
-        }
         applyGroundNeckTurn(entity, partialTick);
         applyTailDrag(entity, partialTick);
         applyNeckFollow(entity, modelData, partialTick);
@@ -69,19 +66,6 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         float deviationRad = (float)(deviation * net.minecraft.util.Mth.DEG_TO_RAD);
 
         root.setRotY(snap.getRotY() - deviationRad);
-    }
-
-    private void applySwimRoll(Nulljaw entity, AnimationState<Nulljaw> state) {
-        var bodyOpt = getBone("body");
-        if (bodyOpt.isEmpty()) return;
-
-        GeoBone body = bodyOpt.get();
-
-        float partialTick = state.getPartialTick();
-        float swimRollDeg = entity.getSwimRollAngleDegrees(partialTick);
-        float swimRollRad = Mth.clamp(-swimRollDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
-
-        applyAdditiveRotation(body, 0.0f, 0.0f, swimRollRad);
     }
 
     private void applyGroundNeckTurn(Nulljaw entity, float partialTick) {

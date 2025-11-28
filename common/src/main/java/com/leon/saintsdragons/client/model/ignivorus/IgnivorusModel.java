@@ -59,7 +59,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     }
 
     private void applyBodyRotationDeviation(Ignivorus entity, float partialTick) {
-        var rootOpt = getBone("heightController");
+        var rootOpt = getBone("root");
         if (rootOpt.isEmpty()) return;
 
         GeoBone root = rootOpt.get();
