@@ -520,7 +520,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     // ===== HARDCODED GROUND SPEEDS =====
     public static final double RIDER_WALK_SPEED = 0.18D;
-    public static final double RIDER_RUN_SPEED = 0.25D;
+    public static final double RIDER_RUN_SPEED = 0.30D;
 
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
