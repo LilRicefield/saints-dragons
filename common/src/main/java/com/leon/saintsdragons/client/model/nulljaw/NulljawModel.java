@@ -93,23 +93,22 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
 
         GeoBone head = headOpt.get();
 
-        // Use EntityModelData directly instead of reading bone deltas (consistent with other dragons)
+        // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
 
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
-        totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
-        float clampedPitchRad = Mth.clamp(lookPitchRad, -20.0f * Mth.DEG_TO_RAD, 20.0f * Mth.DEG_TO_RAD);
 
         // Reset head controller to snapshot (let neck bones handle the tracking)
         head.setRotX(head.getInitialSnapshot().getRotX());
         head.setRotY(head.getInitialSnapshot().getRotY());
 
-        applyNeckBoneFollow("neck1Controller", clampedPitchRad, totalYawRad, 0.35f);
-        applyNeckBoneFollow("neck2Controller", clampedPitchRad, totalYawRad, 0.40f);
-        applyNeckBoneFollow("neck3Controller", clampedPitchRad, totalYawRad, 0.45f);
+        // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.35f);
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.40f);
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.45f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {

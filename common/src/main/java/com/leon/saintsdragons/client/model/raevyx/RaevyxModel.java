@@ -198,7 +198,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
     /**
      * Distributes the parent "head" bone's rotation across neck segments like a giraffe.
      * Calculate neck rotation relative to BODY yaw (structural), not head look target.
-     * This prevents "funny bending" when tracking targets while turning.
+     * NO clamping here - DragonBodyControl handles all rotation limiting (like Naturalist's approach).
      */
     private void applyNeckFollow(Raevyx entity, EntityModelData modelData, float partialTick) {
         var headOpt = getBone("head1Controller");
@@ -209,24 +209,19 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         // Get body deviation (how much head leads body)
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
 
-        // bodyDeviation * 2.0 = structural neck bend from turning
-        // netHeadYaw = where the head wants to look
-        // ADD them together, then clamp the total to prevent crunching
+        // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
 
-        // Clamp the TOTAL rotation to prevent structural crunching
-        totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
-
-        // For pitch, use head look pitch but clamp it
-        float lookPitchRad = Mth.clamp(modelData.headPitch(), -20.0f, 20.0f) * Mth.DEG_TO_RAD;
+        // Simple pitch conversion (NO CLAMPING - let body control handle it)
+        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
 
         // Remove the procedural look rotation from the head itself so the animation pose stays intact.
         head.setRotX(head.getRotX() - lookPitchRad);
         head.setRotY(head.getRotY() - totalYawRad);
 
-        // Now distribute the CLAMPED rotation across neck segments (4 segments for Raevyx)
+        // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.20f);  // Base
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.25f);  // Lower-mid
         applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.30f);  // Upper-mid
