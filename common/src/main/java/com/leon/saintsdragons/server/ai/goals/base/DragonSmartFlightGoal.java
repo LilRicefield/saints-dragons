@@ -467,17 +467,15 @@ public abstract class DragonSmartFlightGoal<T extends DragonEntity & DragonFligh
     protected boolean isValidFlightTarget(Vec3 target) {
         if (target == null) return false;
 
-        // Reject targets over water
+        // Reject targets sitting directly in fluids (works at any world height)
         BlockPos targetPos = BlockPos.containing(target);
-        int groundY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, targetPos.getX(), targetPos.getZ());
-
-        if (groundY <= 63 && target.y < 75) {
-            BlockPos groundPos = new BlockPos(targetPos.getX(), groundY, targetPos.getZ());
-            net.minecraft.world.level.block.state.BlockState groundState = dragon.level().getBlockState(groundPos);
-
-            if (groundState.getFluidState().is(net.minecraft.tags.FluidTags.WATER) || groundY < 63) {
-                return false;
-            }
+        if (!dragon.level().getFluidState(targetPos).isEmpty()) {
+            return false;
+        }
+        // Also check the column directly beneath the target to avoid hovering just above fluids
+        BlockPos below = targetPos.below();
+        if (!dragon.level().getFluidState(below).isEmpty()) {
+            return false;
         }
 
         // Line-of-sight check

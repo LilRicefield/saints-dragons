@@ -2,7 +2,12 @@ package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.server.ai.goals.base.DragonSmartFlightGoal;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Raevyx flight behavior - FAST, aggressive, storm-loving lightning dragon.
@@ -79,7 +84,27 @@ public class RaevyxSmartFlightGoal extends DragonSmartFlightGoal<Raevyx> {
         double cap = groundY + capAboveGround;
         double worldCap = dragon.level().getMaxBuildHeight() - 10.0;
 
-        return Math.min(Math.min(target, cap), worldCap);
+        double chosen = Math.min(Math.min(target, cap), worldCap);
+
+        // When underground (caves), clamp to space below the ceiling so we don't pick roof height
+        if (dragon.getY() + 1.0 < groundY) {
+            Vec3 eye = dragon.getEyePosition();
+            BlockHitResult hit = dragon.level().clip(new ClipContext(
+                    eye,
+                    eye.add(0, 64, 0),
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    dragon
+            ));
+            if (hit.getType() != HitResult.Type.MISS) {
+                double ceiling = hit.getLocation().y() - 1.0;
+                double minY = dragon.getY() + 2.0;
+                double maxY = Math.max(minY, ceiling - 2.0);
+                chosen = Mth.clamp(chosen, minY, maxY);
+            }
+        }
+
+        return chosen;
     }
 
     @Override
