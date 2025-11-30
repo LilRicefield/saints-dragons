@@ -90,20 +90,22 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     }
 
     private void applyNeckFollow(Stegonaut entity, EntityModelData modelData, float partialTick) {
-        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+        var headOpt = getBone("headController");
+        if (headOpt.isEmpty()) return;
 
-        // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
+        GeoBone head = headOpt.get();
+
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
 
-        // Simple pitch conversion (NO CLAMPING - let body control handle it)
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
-
+        head.setRotX(head.getInitialSnapshot().getRotX());
+        head.setRotY(head.getInitialSnapshot().getRotY());
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.15f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.20f);
-        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.25f);
     }
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
         var boneOpt = getBone(boneName);

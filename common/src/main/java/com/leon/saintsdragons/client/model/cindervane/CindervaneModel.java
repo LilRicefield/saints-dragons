@@ -126,21 +126,27 @@ public CindervaneModel() {
     }
 
     private void applyNeckFollow(Cindervane entity, EntityModelData modelData, float partialTick) {
-        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+        var headOpt = getBone("skullController");
+        if (headOpt.isEmpty()) return;
 
-        // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
+        GeoBone head = headOpt.get();
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+
+        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
 
-        // Simple pitch conversion (NO CLAMPING - let body control handle it)
-        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        // Preserve animated pose while removing procedural look from the head itself
+        var snap = head.getInitialSnapshot();
+        float animX = head.getRotX() - snap.getRotX();
+        float animY = head.getRotY() - snap.getRotY();
+        head.setRotX(snap.getRotX() + animX - lookPitchRad);
+        head.setRotY(snap.getRotY() + animY - totalYawRad);
 
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.35f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.55f);
-        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.70f);
-        applyNeckBoneFollow("skullController", lookPitchRad, totalYawRad, 0.80f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
