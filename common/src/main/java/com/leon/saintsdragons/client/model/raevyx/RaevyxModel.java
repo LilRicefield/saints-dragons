@@ -221,6 +221,9 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         head.setRotX(head.getRotX() - lookPitchRad);
         head.setRotY(head.getRotY() - totalYawRad);
 
+        head.setRotX(head.getInitialSnapshot().getRotX());
+        head.setRotY(head.getInitialSnapshot().getRotY());
+
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.20f);  // Base
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.25f);  // Lower-mid
