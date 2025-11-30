@@ -59,6 +59,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     /** Taming stun loop (treated like alternate idle) */
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.raevyx.stunned");
 
+    /** Sleep loop animation (applied continuously when sleeping) */
+    private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.raevyx.sleep");
+
     private static RawAnimation currentFlightAnimation = FLY_GLIDE;
 
     // ===== ANIMATION TRIGGERS =====
@@ -119,7 +122,17 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
-        if (wyvern.isDying() || wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()) {
+        if (wyvern.isDying()) {
+            return PlayState.STOP;
+        }
+
+        // Handle sleep: continuous animation for sleep loop, stop for transitions
+        if (wyvern.isSleeping() && !wyvern.isSleepingEntering() && !wyvern.isSleepingExiting()) {
+            state.getController().transitionLength(6);
+            state.setAndContinue(SLEEP);
+            return PlayState.CONTINUE;
+        } else if (wyvern.isSleepingEntering() || wyvern.isSleepingExiting()) {
+            // Transition animations are triggered, don't interfere
             return PlayState.STOP;
         }
 
