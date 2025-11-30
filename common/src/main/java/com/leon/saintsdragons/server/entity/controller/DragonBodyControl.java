@@ -20,10 +20,28 @@ public class DragonBodyControl extends BodyRotationControl {
     private final double[] histPosZ = new double[HISTORY_SIZE];
     private final float turnSpeed;
 
+    // CRITICAL: Max head rotation relative to body (prevents neck-crunching and 360 spins)
+    // When head tries to rotate beyond this, body MUST turn instead
+    private final float maxHeadBodyDiff;
+
+    // Rotation speed parameters
+    private final float headLagSpeed;        // How fast head follows target while standing
+    private final float bodyLagStillSpeed;   // How fast body follows head while standing
+    private final float bodyMaxDelta;        // Max degrees body can rotate per tick
+
     public DragonBodyControl(Mob entity, float turnSpeed) {
+        this(entity, turnSpeed, 50.0f, 0.3f, 0.05f, 45.0f);
+    }
+
+    public DragonBodyControl(Mob entity, float turnSpeed, float maxHeadBodyDiff,
+                           float headLagSpeed, float bodyLagStillSpeed, float bodyMaxDelta) {
         super(entity);
         this.entity = entity;
         this.turnSpeed = turnSpeed;
+        this.maxHeadBodyDiff = maxHeadBodyDiff;
+        this.headLagSpeed = headLagSpeed;
+        this.bodyLagStillSpeed = bodyLagStillSpeed;
+        this.bodyMaxDelta = bodyMaxDelta;
     }
 
     @Override
@@ -60,10 +78,14 @@ public class DragonBodyControl extends BodyRotationControl {
         }
         // If standing still
         else {
-            // Body gradually follows head
-            this.targetYawHead = smooth(this.targetYawHead, this.entity.yHeadRot, 0.3f);
-            this.entity.yBodyRot = approach(this.targetYawHead, this.entity.yBodyRot, 75.0f);
+            // Body gradually follows head (SLOW for natural behavior)
+            this.targetYawHead = smooth(this.targetYawHead, this.entity.yHeadRot, this.headLagSpeed);
+            this.entity.yBodyRot = approach(this.targetYawHead, this.entity.yBodyRot, this.bodyMaxDelta, this.bodyLagStillSpeed);
         }
+
+        // CRITICAL: Clamp head rotation relative to body to prevent neck-crunching
+        // This forces the body to turn when the head looks too far back
+        clampHeadBodyDifference();
     }
 
     /**
@@ -103,10 +125,28 @@ public class DragonBodyControl extends BodyRotationControl {
         }
         // If standing still
         else {
-            // Body gradually follows head
-            this.targetYawHead = smooth(this.targetYawHead, this.entity.yHeadRot, 0.3f);
-            this.entity.yBodyRot = approach(this.targetYawHead, this.entity.yBodyRot, 75.0f);
+            // Body gradually follows head (SLOW for natural behavior)
+            this.targetYawHead = smooth(this.targetYawHead, this.entity.yHeadRot, this.headLagSpeed);
+            this.entity.yBodyRot = approach(this.targetYawHead, this.entity.yBodyRot, this.bodyMaxDelta, this.bodyLagStillSpeed);
         }
+
+        // CRITICAL: Clamp head rotation relative to body to prevent neck-crunching
+        // This forces the body to turn when the head looks too far back
+        clampHeadBodyDifference();
+    }
+
+    /**
+     * CRITICAL FIX: Clamps head rotation relative to body.
+     * Without this, the head can rotate 180° from the body, causing:
+     * 1. Neck bones to "crunch" visually
+     * 2. Body to do a full 360° spin to catch up
+     * With this, when the head reaches maxHeadBodyDiff, the body is FORCED to turn,
+     * preventing the 360 spin and keeping the neck bones natural.
+     */
+    private void clampHeadBodyDifference() {
+        float diff = Mth.wrapDegrees(this.entity.yHeadRot - this.entity.yBodyRot);
+        float clamped = Mth.clamp(diff, -this.maxHeadBodyDiff, this.maxHeadBodyDiff);
+        this.entity.yHeadRot = this.entity.yBodyRot + clamped;
     }
 
     /**
@@ -135,15 +175,11 @@ public class DragonBodyControl extends BodyRotationControl {
     }
 
     /**
-     * Approach target rotation with a maximum delta limit.
+     * Approach target rotation with a maximum delta limit and speed factor.
      */
-    private static float approach(float target, float current, float limit) {
+    private static float approach(float target, float current, float maxDelta, float speed) {
         float delta = Mth.wrapDegrees(current - target);
-        if (delta < -limit) {
-            delta = -limit;
-        } else if (delta >= limit) {
-            delta = limit;
-        }
-        return target + delta * 0.55f;
+        delta = Mth.clamp(delta, -maxDelta, maxDelta);
+        return target + delta * speed;
     }
 }
