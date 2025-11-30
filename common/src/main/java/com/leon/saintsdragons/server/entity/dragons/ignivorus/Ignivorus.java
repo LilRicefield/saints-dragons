@@ -1188,12 +1188,16 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     // ===== FLIGHT SYSTEM =====
 
-    public void switchNavigation(boolean flying) {
-        if (flying && !usingAirNav) {
+    public void switchToAirNavigation() {
+        if (!this.usingAirNav) {
             this.navigation = this.airNav;
             this.moveControl = new DragonFlightMoveHelper(this);
             this.usingAirNav = true;
-        } else if (!flying && usingAirNav) {
+        }
+    }
+
+    public void switchToGroundNavigation() {
+        if (this.usingAirNav) {
             this.navigation = this.groundNav;
             this.moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
             this.usingAirNav = false;
@@ -1273,10 +1277,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             this.setAccelerating(false);
             if (flying) {
                 enforcePrimaryMeleeForFlight(getControllingPassenger() instanceof Player p ? p : null);
-                switchNavigation(true);
+                switchToAirNavigation();
                 setRunning(false);
             } else {
-                switchNavigation(false);
+                switchToGroundNavigation();
             }
         }
     }
