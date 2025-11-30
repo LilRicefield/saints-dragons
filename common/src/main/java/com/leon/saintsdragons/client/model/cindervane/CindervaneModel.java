@@ -95,9 +95,9 @@ public CindervaneModel() {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 30.0f * Mth.DEG_TO_RAD;
 
-        applyNeckBoneRotation("neck1", neckLeanRad * 0.5f);
-        applyNeckBoneRotation("neck2", neckLeanRad * 1.0f);
-        applyNeckBoneRotation("skull", neckLeanRad * 1.25f);
+        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.5f);
+        applyNeckBoneRotation("neck2Controller", neckLeanRad * 1.0f);
+        applyNeckBoneRotation("skullController", neckLeanRad * 1.25f);
     }
 
     private void applyGroundNeckTurn(Cindervane entity, float partialTick) {
@@ -111,8 +111,8 @@ public CindervaneModel() {
 
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
 
-        applyNeckBoneRotation("neck1", turnRad * 0.5f);
-        applyNeckBoneRotation("neck2", turnRad * 1.0f);
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.5f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 1.0f);
     }
 
     private void applyNeckBoneRotation(String boneName, float rotationY) {
@@ -137,10 +137,10 @@ public CindervaneModel() {
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
 
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
-        applyNeckBoneFollow("neck1", lookPitchRad, totalYawRad, 0.35f);
-        applyNeckBoneFollow("neck2", lookPitchRad, totalYawRad, 0.55f);
-        applyNeckBoneFollow("neck3", lookPitchRad, totalYawRad, 0.70f);
-        applyNeckBoneFollow("skull", lookPitchRad, totalYawRad, 0.80f);
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.35f);
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.55f);
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.70f);
+        applyNeckBoneFollow("skullController", lookPitchRad, totalYawRad, 0.80f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
