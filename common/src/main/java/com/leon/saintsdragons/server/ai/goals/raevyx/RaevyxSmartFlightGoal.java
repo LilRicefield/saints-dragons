@@ -1,474 +1,98 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
-import com.leon.saintsdragons.server.ai.navigation.pathfinding.AsyncPathfindingHelper;
-import com.leon.saintsdragons.server.ai.navigation.pathfinding.PathfindingResult;
+import com.leon.saintsdragons.server.ai.goals.base.DragonSmartFlightGoal;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
-
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
 
 /**
- * Enhanced Raevyx flight goal using async A* pathfinding.
+ * Raevyx flight behavior - FAST, aggressive, storm-loving lightning dragon.
  *
- * Raevyx is a FAST, aggressive storm-lover - this pathfinder is tuned for speed:
- * - Slightly coarser grid (2 blocks) for faster computation
- * - Aggressive re-pathing when stuck
- * - Handles high-speed flight smoothly
- *
- * Based on RaevyxFlightGoal but with pathfinding integration.
+ * Flight characteristics:
+ * - Large waypoint acceptance (5 blocks) for high-speed turns
+ * - Aggressive stuck recovery (re-paths after 2 ticks)
+ * - LOVES storms - flies higher and longer in bad weather
+ * - Long flight range (50-130 blocks)
+ * - Protects babies - won't abandon them
  */
-public class RaevyxSmartFlightGoal extends Goal {
-    private final Raevyx raevyx;
-    private Vec3 finalTarget;
-    private List<Vec3> currentPath;
-    private int currentWaypointIndex;
-
-    private int stuckCounter = 0;
-    private int timeSinceTargetChange = 0;
-    private boolean pathfindingInProgress = false;
-
-    private static final int LANDING_COOLDOWN_TICKS = 100;
-    private long lastLandingTime = 0;
-
-    private int flightDecisionCooldown = 0;
-    private boolean wasThundering = false;
-    private boolean wasRaining = false;
+public class RaevyxSmartFlightGoal extends DragonSmartFlightGoal<Raevyx> {
 
     public RaevyxSmartFlightGoal(Raevyx raevyx) {
-        this.raevyx = raevyx;
-        this.setFlags(EnumSet.of(Flag.MOVE));
-        this.flightDecisionCooldown = 0;
+        super(raevyx);
     }
 
     @Override
-    public boolean canUse() {
-        if (raevyx.isLanding() || raevyx.isVehicle() ||
-            raevyx.isPassenger() || raevyx.isOrderedToSit()) {
-            return false;
-        }
+    protected double getWaypointAcceptanceRadiusSqr() {
+        return 25.0; // 5 blocks - fast dragon needs larger acceptance
+    }
 
-        // Parents shouldn't fly away and abandon babies
-        if (!raevyx.isBaby() && hasNearbyBabies() && !isOverDanger()) {
-            return false;
-        }
+    @Override
+    protected int getStuckThreshold() {
+        return 2; // Aggressive re-pathing
+    }
 
-        boolean thundering = raevyx.level().isThundering();
-        boolean raining = !thundering && raevyx.level().isRaining();
+    @Override
+    protected int getLandingCooldownTicks() {
+        return 100; // Longer cooldown - Raevyx stays airborne
+    }
 
-        boolean weatherChangedToStorm = (thundering && !wasThundering) || (raining && !wasRaining);
-        boolean weatherChangedToThunder = thundering && !wasThundering;
-
-        wasThundering = thundering;
-        wasRaining = raining;
-
-        // Tamed Raevyx stay near owner
-        if (raevyx.isTame()) {
-            var owner = raevyx.getOwner();
-            if (owner != null && raevyx.distanceToSqr(owner) < 15.0 * 15.0) {
-                if (!isOverDanger()) {
-                    return false;
-                }
-            }
-        }
-
-        long currentTime = raevyx.level().getGameTime();
-        int cooldown = LANDING_COOLDOWN_TICKS;
-        if (thundering) cooldown = 0;
-        else if (raining) cooldown = cooldown / 4;
-
-        if (weatherChangedToStorm) cooldown = 0;
-
-        if (!raevyx.isFlying() && (currentTime - lastLandingTime) < cooldown) {
-            return false;
-        }
-
-        int decisionInterval = flightDecisionInterval(thundering, raining);
-        if (flightDecisionCooldown > 0) {
-            flightDecisionCooldown--;
-            if (flightDecisionCooldown > 0) {
-                if (weatherChangedToThunder) {
-                    flightDecisionCooldown = 0;
-                } else if ((thundering || raining) && flightDecisionCooldown > decisionInterval) {
-                    flightDecisionCooldown = decisionInterval;
-                }
-                if (flightDecisionCooldown > 0) {
-                    return false;
-                }
-            }
-        }
-
-        boolean isFlying;
-        if (isOverDanger()) {
-            isFlying = true;
+    @Override
+    protected int getTakeoffChance(boolean thundering, boolean raining) {
+        if (thundering) {
+            return 4; // 25% - LOVES thunder
+        } else if (raining) {
+            return 8; // 12.5% - likes rain
         } else {
-            if (raevyx.isFlying()) {
-                isFlying = shouldKeepFlying(thundering, raining);
-            } else {
-                isFlying = shouldTakeOff(thundering, raining);
-            }
-        }
-
-        if (isFlying) {
-            requestNewFlightPath();
-            this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
-            return true;
-        }
-
-        this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
-        return false;
-    }
-
-    @Override
-    public boolean canContinueToUse() {
-        if (raevyx.isLanding() || raevyx.isOrderedToSit() || raevyx.isVehicle()) {
-            return false;
-        }
-
-        if (raevyx.getTarget() != null && raevyx.getTarget().isAlive()) {
-            return false;
-        }
-
-        boolean thundering = raevyx.level().isThundering();
-        boolean raining = !thundering && raevyx.level().isRaining();
-        if (raevyx.isFlying() && !shouldKeepFlying(thundering, raining)) {
-            raevyx.setLanding(true);
-            raevyx.setFlying(false);
-            raevyx.setTakeoff(false);
-            raevyx.setHovering(false);
-            return false;
-        }
-
-        return raevyx.isFlying() &&
-               (hasWaypointsRemaining() || (finalTarget != null && raevyx.distanceToSqr(finalTarget) > 9.0));
-    }
-
-    @Override
-    public void start() {
-        raevyx.setFlying(true);
-        raevyx.setLanding(false);
-        raevyx.setHovering(false);
-        raevyx.setTakeoff(true);
-
-        if (hasWaypointsRemaining()) {
-            moveToNextWaypoint();
+            return 80; // 1.25% - rare in clear weather
         }
     }
 
     @Override
-    public void tick() {
-        timeSinceTargetChange++;
-
-        if (raevyx.isLanding()) {
-            return;
-        }
-
-        // Follow path waypoints
-        if (hasWaypointsRemaining()) {
-            Vec3 currentWaypoint = currentPath.get(currentWaypointIndex);
-            double distToWaypoint = raevyx.distanceToSqr(currentWaypoint);
-
-            // Raevyx is FAST - larger waypoint acceptance radius
-            if (distToWaypoint < 25.0) { // 5 blocks (vs Cindervane's 4)
-                currentWaypointIndex++;
-                if (hasWaypointsRemaining()) {
-                    moveToNextWaypoint();
-                }
-            }
-
-            // Aggressive stuck detection for fast dragon
-            if (raevyx.horizontalCollision) {
-                stuckCounter++;
-                // Re-path faster than Cindervane (2 vs 3)
-                if (stuckCounter > 2) {
-                    requestNewFlightPath();
-                    stuckCounter = 0;
-                }
-            } else {
-                stuckCounter = Math.max(0, stuckCounter - 1);
-            }
-        } else if (finalTarget != null) {
-            double distToTarget = raevyx.distanceToSqr(finalTarget);
-
-            // Raevyx reaches targets faster - re-path when close or after timeout
-            if (distToTarget < 64.0 || timeSinceTargetChange > 300) {
-                requestNewFlightPath();
-            }
+    protected int getKeepFlyingChance(boolean thundering, boolean raining) {
+        if (thundering) {
+            return 3000; // ~2.5 minutes - flies LONG in storms
+        } else if (raining) {
+            return 1800; // ~90 seconds
         } else {
-            requestNewFlightPath();
+            return 200; // ~10 seconds - lands quickly in clear weather
         }
     }
 
     @Override
-    public void stop() {
-        finalTarget = null;
-        currentPath = null;
-        currentWaypointIndex = 0;
-        pathfindingInProgress = false;
-        stuckCounter = 0;
-        timeSinceTargetChange = 0;
-        raevyx.getNavigation().stop();
-
-        if (!raevyx.isFlying()) {
-            lastLandingTime = raevyx.level().getGameTime();
-        }
+    protected int getFlightDecisionInterval(boolean thundering, boolean raining) {
+        if (thundering) return 2; // Very frequent decisions in storms
+        if (raining) return 8;
+        return 25; // Normal interval
     }
 
-    // ===== PATHFINDING INTEGRATION =====
-
-    private void requestNewFlightPath() {
-        if (pathfindingInProgress) {
-            return;
-        }
-
-        Vec3 targetPos = findFlightTarget();
-        if (targetPos == null) {
-            return;
-        }
-
-        this.finalTarget = targetPos;
-        timeSinceTargetChange = 0;
-
-        if (raevyx.level() instanceof ServerLevel serverLevel) {
-            pathfindingInProgress = true;
-
-            // Adaptive grid resolution based on distance to prevent timeout on long paths
-            double distance = raevyx.position().distanceTo(targetPos);
-            int gridResolution;
-            if (distance < 30) {
-                gridResolution = 2; // Fine-grained for short distances
-            } else if (distance < 80) {
-                gridResolution = 4; // Medium for medium distances
-            } else {
-                gridResolution = 8; // Coarse for long distances
-            }
-
-            AsyncPathfindingHelper.requestPath(
-                serverLevel,
-                raevyx.position(),
-                targetPos,
-                gridResolution,
-                raevyx.getBoundingBox(), // Use actual dragon size
-                result -> {
-                    pathfindingInProgress = false;
-
-                    if (result.isSuccess()) {
-                        List<Vec3> path = result.getPath();
-
-                        AsyncPathfindingHelper.scheduleOnMainThread(serverLevel, () -> {
-                            currentPath = new ArrayList<>(path);
-                            currentWaypointIndex = 0;
-                            moveToNextWaypoint();
-                        });
-                    } else {
-                        // Fallback: fly direct
-                        AsyncPathfindingHelper.scheduleOnMainThread(serverLevel, () -> {
-                            currentPath = null;
-                            raevyx.getMoveControl().setWantedPosition(
-                                targetPos.x, targetPos.y, targetPos.z, 1.0
-                            );
-                        });
-                    }
-                }
-            );
-        } else {
-            raevyx.getMoveControl().setWantedPosition(
-                targetPos.x, targetPos.y, targetPos.z, 1.0
-            );
-        }
-    }
-
-    private void moveToNextWaypoint() {
-        if (!hasWaypointsRemaining()) {
-            return;
-        }
-
-        Vec3 waypoint = currentPath.get(currentWaypointIndex);
-        raevyx.getMoveControl().setWantedPosition(waypoint.x, waypoint.y, waypoint.z, 1.0);
-    }
-
-    private boolean hasWaypointsRemaining() {
-        return currentPath != null && currentWaypointIndex < currentPath.size();
-    }
-
-    // ===== RAEVYX FLIGHT LOGIC =====
-
-    private Vec3 findFlightTarget() {
-        Vec3 dragonPos = raevyx.position();
-
-        // Normal flight target generation
-        for (int attempts = 0; attempts < 16; attempts++) {
-            Vec3 candidate = generateFlightCandidate(dragonPos, attempts);
-
-            if (isValidFlightTarget(candidate)) {
-                return candidate;
-            }
-        }
-
-        return new Vec3(dragonPos.x, findSafeFlightHeight(dragonPos.x, dragonPos.z), dragonPos.z);
-    }
-
-    private Vec3 generateFlightCandidate(Vec3 dragonPos, int attempt) {
-        boolean isStuck = raevyx.horizontalCollision || stuckCounter > 0;
-
-        float maxRot = isStuck ? 360 : 180;
-        float range = isStuck ? 30.0f + raevyx.getRandom().nextFloat() * 40.0f :
-                50.0f + raevyx.getRandom().nextFloat() * 80.0f; // Raevyx's ranges
-
-        float yRotOffset;
-        if (isStuck && attempt < 8) {
-            yRotOffset = (float) Math.toRadians(180 + raevyx.getRandom().nextFloat() * 120 - 60);
-        } else {
-            yRotOffset = (float) Math.toRadians(raevyx.getRandom().nextFloat() * maxRot - (maxRot / 2));
-        }
-
-        float xRotOffset = (float) Math.toRadians((raevyx.getRandom().nextFloat() - 0.5f) * 20);
-
-        Vec3 lookVec = raevyx.getLookAngle();
-        Vec3 targetVec = lookVec.scale(range).yRot(yRotOffset).xRot(xRotOffset);
-        Vec3 candidate = dragonPos.add(targetVec);
-
-        double targetY = findSafeFlightHeight(candidate.x, candidate.z);
-        candidate = new Vec3(candidate.x, targetY, candidate.z);
-
-        if (!raevyx.level().isLoaded(BlockPos.containing(candidate))) {
-            return null;
-        }
-
-        return candidate;
-    }
-
-    private double findSafeFlightHeight(double x, double z) {
+    @Override
+    protected double findSafeFlightHeight(double x, double z, boolean thundering, boolean raining) {
         int ix = (int) x;
         int iz = (int) z;
-        int groundY = raevyx.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+        int groundY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
 
-        double base = 15.0 + raevyx.getRandom().nextDouble() * 20.0; // 15..35 above surface
+        double base = 15.0 + dragon.getRandom().nextDouble() * 20.0; // 15-35 above surface
 
-        // Raevyx LOVES storms - flies HIGHER in bad weather (opposite of Cindervane!)
-        boolean thundering = raevyx.level().isThundering();
-        boolean raining = !thundering && raevyx.level().isRaining();
+        // Raevyx LOVES storms - flies HIGHER in bad weather
         double capAboveGround = thundering ? 90.0 : (raining ? 70.0 : 50.0);
 
         double target = groundY + base;
         double cap = groundY + capAboveGround;
-        double worldCap = raevyx.level().getMaxBuildHeight() - 10.0;
+        double worldCap = dragon.level().getMaxBuildHeight() - 10.0;
 
         return Math.min(Math.min(target, cap), worldCap);
     }
 
-    private boolean isValidFlightTarget(Vec3 target) {
-        if (target == null) return false;
-
-        // Reject targets over water - check ground below target
-        BlockPos targetPos = BlockPos.containing(target);
-        int groundY = raevyx.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, targetPos.getX(), targetPos.getZ());
-
-        // If ground is at or below water level (Y=62) and target is low, reject it
-        // This prevents landing in water or on small islands at water level
-        if (groundY <= 63 && target.y < 75) {
-            BlockPos groundPos = new BlockPos(targetPos.getX(), groundY, targetPos.getZ());
-            net.minecraft.world.level.block.state.BlockState groundState = raevyx.level().getBlockState(groundPos);
-
-            // Reject if ground is water or the target is too close to sea level
-            if (groundState.getFluidState().is(net.minecraft.tags.FluidTags.WATER) || groundY < 63) {
-                return false;
-            }
-        }
-
-        // Line-of-sight check
-        BlockHitResult result = raevyx.level().clip(new ClipContext(
-                raevyx.getEyePosition(),
-                target,
-                ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE,
-                raevyx
-        ));
-
-        if (result.getType() == HitResult.Type.MISS) {
-            return true;
-        }
-
-        double distanceToHit = result.getLocation().distanceTo(raevyx.position());
-        double distanceToTarget = target.distanceTo(raevyx.position());
-
-        return distanceToHit > distanceToTarget * 0.95;
-    }
-
-    private int flightDecisionInterval(boolean thundering, boolean raining) {
-        if (thundering) return 2;
-        if (raining) return 8;
-        return 25;
-    }
-
-    private int nextDecisionCooldown(int baseInterval) {
-        int jitter = Math.max(1, baseInterval / 2);
-        return baseInterval + raevyx.getRandom().nextInt(jitter);
-    }
-
-    private boolean shouldTakeOff(boolean thundering, boolean raining) {
-        if (isOverDanger()) return true;
-
-        if (thundering) {
-            // Raevyx LOVES thunder - very aggressive takeoff
-            return raevyx.getRandom().nextInt(4) == 0; // 25%
-        } else if (raining) {
-            return raevyx.getRandom().nextInt(8) == 0; // 12.5%
+    @Override
+    protected float[] getFlightRange(boolean isStuck) {
+        if (isStuck) {
+            return new float[]{30.0f, 70.0f}; // 30-70 blocks when stuck
         } else {
-            return raevyx.getRandom().nextInt(80) == 0; // 1.25%
+            return new float[]{50.0f, 130.0f}; // 50-130 blocks - LONG range
         }
     }
 
-    private boolean shouldKeepFlying(boolean thundering, boolean raining) {
-        if (isOverDanger()) return true;
-
-        // Raevyx LOVES storms - flies LONGER in bad weather
-        if (thundering) {
-            return raevyx.getRandom().nextInt(3000) != 0; // ~2.5 min
-        } else if (raining) {
-            return raevyx.getRandom().nextInt(1800) != 0; // ~90 sec
-        } else {
-            return raevyx.getRandom().nextInt(200) != 0; // ~10 sec
-        }
-    }
-
-    private boolean hasNearbyBabies() {
-        return !raevyx.level().getEntitiesOfClass(
-                Raevyx.class,
-                raevyx.getBoundingBox().inflate(16.0D),
-                baby -> baby != null && baby.isBaby() && baby.isAlive()
-        ).isEmpty();
-    }
-
-    private boolean isOverDanger() {
-        BlockPos dragonPos = raevyx.blockPosition();
-        boolean foundSolid = false;
-        boolean nearFluid = false;
-
-        for (int i = 1; i <= 25; i++) {
-            BlockPos checkPos = dragonPos.below(i);
-
-            var state = raevyx.level().getBlockState(checkPos);
-            if (!state.getCollisionShape(raevyx.level(), checkPos).isEmpty() ||
-                    state.isFaceSturdy(raevyx.level(), checkPos, net.minecraft.core.Direction.UP)) {
-                foundSolid = true;
-                break;
-            }
-
-            if (i <= 10 && !raevyx.level().getFluidState(checkPos).isEmpty()) {
-                nearFluid = true;
-            }
-        }
-
-        if (nearFluid) return true;
-        return !foundSolid && dragonPos.getY() < raevyx.level().getMinBuildHeight() + 20;
+    @Override
+    protected boolean shouldProtectBabies() {
+        return true; // Raevyx protects babies
     }
 }
