@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -426,7 +427,8 @@ public abstract class DragonSmartFlightGoal<T extends DragonEntity & DragonFligh
 
         boolean thundering = dragon.level().isThundering();
         boolean raining = !thundering && dragon.level().isRaining();
-        return new Vec3(dragonPos.x, findSafeFlightHeight(dragonPos.x, dragonPos.z, thundering, raining), dragonPos.z);
+        Vec3 fallback = new Vec3(dragonPos.x, findSafeFlightHeight(dragonPos.x, dragonPos.z, thundering, raining), dragonPos.z);
+        return clampToLocalCaveSpace(fallback);
     }
 
     protected Vec3 generateFlightCandidate(Vec3 dragonPos, int attempt) {
@@ -456,12 +458,68 @@ public abstract class DragonSmartFlightGoal<T extends DragonEntity & DragonFligh
         boolean raining = !thundering && dragon.level().isRaining();
         double targetY = findSafeFlightHeight(candidate.x, candidate.z, thundering, raining);
         candidate = new Vec3(candidate.x, targetY, candidate.z);
+        candidate = clampToLocalCaveSpace(candidate);
 
         if (!dragon.level().isLoaded(BlockPos.containing(candidate))) {
             return null;
         }
 
         return candidate;
+    }
+
+    /**
+     * Clamp a target position to available vertical space when underground (large caves, modded worlds).
+     * Finds the nearest ceiling above and floor below and keeps the target between them.
+     */
+    protected Vec3 clampToLocalCaveSpace(Vec3 pos) {
+        double startY = pos.y;
+        Vec3 start = new Vec3(pos.x, startY, pos.z);
+
+        // Probe upward far enough to catch tall modded ceilings
+        double maxUp = Math.min(256.0, dragon.level().getMaxBuildHeight() - startY - 1.0);
+        BlockHitResult upHit = dragon.level().clip(new ClipContext(
+                start,
+                start.add(0, maxUp, 0),
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                dragon
+        ));
+
+        // Probe downward to find local floor
+        BlockHitResult downHit = dragon.level().clip(new ClipContext(
+                start,
+                start.add(0, -128.0, 0),
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                dragon
+        ));
+
+        double ceilingY = upHit.getType() == HitResult.Type.MISS ? Double.POSITIVE_INFINITY : upHit.getLocation().y();
+        double floorY = downHit.getType() == HitResult.Type.MISS ? Double.NEGATIVE_INFINITY : downHit.getLocation().y();
+
+        // If both bounds exist, pick a fraction of the cavity height (like Subterranodon does)
+        double margin = Math.max(1.5, dragon.getBbHeight() * 0.5); // clearance from floor/ceiling
+        if (ceilingY != Double.POSITIVE_INFINITY && floorY != Double.NEGATIVE_INFINITY) {
+            double span = ceilingY - floorY;
+            if (span <= margin * 2 + 1.0) {
+                // Too tight, keep original
+                return pos;
+            }
+            double frac = 0.45 + dragon.getRandom().nextDouble() * 0.25; // 45-70% up the cavity
+            double desiredY = floorY + span * frac;
+            desiredY = Mth.clamp(desiredY, floorY + margin, ceilingY - margin);
+            desiredY = Mth.clamp(desiredY, dragon.level().getMinBuildHeight() + 1.0, dragon.level().getMaxBuildHeight() - 1.0);
+            return new Vec3(pos.x, desiredY, pos.z);
+        }
+
+        // Fallback to clamping against whichever bound we found
+        double lower = floorY == Double.NEGATIVE_INFINITY ? pos.y : floorY + margin;
+        double upper = ceilingY == Double.POSITIVE_INFINITY ? pos.y : ceilingY - margin;
+        if (upper < lower) {
+            return pos;
+        }
+        double clampedY = Mth.clamp(pos.y, lower, upper);
+        return new Vec3(pos.x, clampedY, pos.z);
     }
 
     protected boolean isValidFlightTarget(Vec3 target) {

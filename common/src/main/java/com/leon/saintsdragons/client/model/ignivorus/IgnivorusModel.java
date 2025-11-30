@@ -118,10 +118,6 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     }
 
     private void applyNeckFollow(Ignivorus entity, EntityModelData modelData, float partialTick) {
-        var headOpt = getBone("headController");
-        if (headOpt.isEmpty()) return;
-
-        GeoBone head = headOpt.get();
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
         // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
@@ -136,18 +132,12 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
             lookPitchRad = 0.0f;
         }
 
-        // Preserve animated pose while removing procedural look from the head itself
-        var snap = head.getInitialSnapshot();
-        float animX = head.getRotX() - snap.getRotX();
-        float animY = head.getRotY() - snap.getRotY();
-        head.setRotX(snap.getRotX() + animX - lookPitchRad);
-        head.setRotY(snap.getRotY() + animY - totalYawRad);
-
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.20f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.25f);
         applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.30f);
         applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.35f);
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.40f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
