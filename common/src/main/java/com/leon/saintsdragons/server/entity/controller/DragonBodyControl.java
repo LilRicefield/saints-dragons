@@ -160,11 +160,12 @@ public class DragonBodyControl extends BodyRotationControl {
      * Calculate mean of 5 consecutive values starting at index.
      */
     private double mean(double[] arr, int start) {
-        double mean = 0.0;
-        for (int i = 0; i < 5; ++i) {
-            mean += arr[i + start];
+        double sum = 0.0;
+        int count = arr.length / 2; // always average 5 entries (half of HISTORY_SIZE)
+        for (int i = 0; i < count; ++i) {
+            sum += arr[i + start];
         }
-        return mean / (double)arr.length;
+        return sum / (double) count;
     }
 
     /**
@@ -178,8 +179,8 @@ public class DragonBodyControl extends BodyRotationControl {
      * Approach target rotation with a maximum delta limit and speed factor.
      */
     private static float approach(float target, float current, float maxDelta, float speed) {
-        float delta = Mth.wrapDegrees(current - target);
+        float delta = Mth.wrapDegrees(target - current);
         delta = Mth.clamp(delta, -maxDelta, maxDelta);
-        return target + delta * speed;
+        return current + delta * speed;
     }
 }
