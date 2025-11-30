@@ -422,6 +422,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             setFlightMode(newFlightMode);
         }
 
+        // CRITICAL: Disable gravity when flying/hovering (fixes grounding issue)
+        this.setNoGravity(isFlying() || isHovering());
+
         // Update banking and pitching for animations
         tickBankingLogic();
         tickPitchingLogic();
