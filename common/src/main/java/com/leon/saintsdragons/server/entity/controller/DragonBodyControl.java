@@ -30,7 +30,8 @@ public class DragonBodyControl extends BodyRotationControl {
     private final float bodyMaxDelta;        // Max degrees body can rotate per tick
 
     public DragonBodyControl(Mob entity, float turnSpeed) {
-        this(entity, turnSpeed, 50.0f, 0.3f, 0.05f, 45.0f);
+        // Slightly faster standing spin (bodyLagStillSpeed 0.1 -> body catches up quicker when idle)
+        this(entity, turnSpeed, 50.0f, 0.3f, 0.10f, 45.0f);
     }
 
     public DragonBodyControl(Mob entity, float turnSpeed, float maxHeadBodyDiff,
