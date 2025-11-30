@@ -23,6 +23,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.ignivorus.sit");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.ignivorus.swim");
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.ignivorus.stunned");
+    private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.ignivorus.sleep");
 
     /**
      * Main animation predicate - handles idle, walk, run, fly, and sit animations
@@ -44,9 +45,17 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
-        // Stop movement controller during ALL sleep states to prevent flickering
-        // Must be checked BEFORE ground movement logic to avoid 1-frame idle flicker
-        if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
+        if (dragon.isDying()) {
+            return PlayState.STOP;
+        }
+
+        // Handle sleep: continuous animation for sleep loop, stop for transitions
+        if (dragon.isSleeping() && !dragon.isSleepingEntering() && !dragon.isSleepingExiting()) {
+            state.getController().transitionLength(6);
+            state.setAndContinue(SLEEP);
+            return PlayState.CONTINUE;
+        } else if (dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
+            // Transition animations are triggered, don't interfere
             return PlayState.STOP;
         }
 

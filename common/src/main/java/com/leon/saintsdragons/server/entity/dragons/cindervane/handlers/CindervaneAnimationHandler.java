@@ -56,8 +56,17 @@ public class CindervaneAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        // While dying or sleeping (including transitions), suppress movement animations entirely; action controller plays die/sleep clips
-        if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepTransitioning()) {
+        if (dragon.isDying()) {
+            return PlayState.STOP;
+        }
+
+        // Handle sleep: continuous animation for sleep loop, stop for transitions
+        if (dragon.isSleeping() && !dragon.isSleepTransitioning()) {
+            state.getController().transitionLength(6);
+            state.setAndContinue(SLEEP);
+            return PlayState.CONTINUE;
+        } else if (dragon.isSleepTransitioning()) {
+            // Transition animations are triggered, don't interfere
             return PlayState.STOP;
         }
 
