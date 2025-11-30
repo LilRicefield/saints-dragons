@@ -127,11 +127,16 @@ public CindervaneModel() {
 
     private void applyNeckFollow(Cindervane entity, EntityModelData modelData, float partialTick) {
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+
+        // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
-        totalYawRad = Mth.clamp(totalYawRad, -60.0f * Mth.DEG_TO_RAD, 60.0f * Mth.DEG_TO_RAD);
-        float lookPitchRad = Mth.clamp(modelData.headPitch(), -20.0f, 20.0f) * Mth.DEG_TO_RAD;
+
+        // Simple pitch conversion (NO CLAMPING - let body control handle it)
+        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+
+        // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1", lookPitchRad, totalYawRad, 0.35f);
         applyNeckBoneFollow("neck2", lookPitchRad, totalYawRad, 0.55f);
         applyNeckBoneFollow("neck3", lookPitchRad, totalYawRad, 0.70f);

@@ -70,9 +70,9 @@ public class DragonBodyControl extends BodyRotationControl {
             // Calculate movement direction
             double moveAngle = Math.toDegrees(Mth.atan2(dz, dx)) - 90.0;
 
-            // ALWAYS align body to movement direction to prevent backwards walking
-            // This forces the dragon to turn around instead of walking backwards with bent neck
-            this.entity.yBodyRot = (float)(this.entity.yBodyRot + Mth.wrapDegrees(moveAngle - this.entity.yBodyRot) * this.turnSpeed);
+            // Gradually turn body toward movement direction (like Naturalist)
+            // This prevents instant snapping while still preventing backwards walking
+            this.entity.yBodyRot = approach((float)moveAngle, this.entity.yBodyRot, this.bodyMaxDelta, this.turnSpeed);
 
             this.targetYawHead = this.entity.yHeadRot;
         }
@@ -117,9 +117,9 @@ public class DragonBodyControl extends BodyRotationControl {
             // Calculate movement direction
             double moveAngle = Math.toDegrees(Mth.atan2(dz, dx)) - 90.0;
 
-            // ALWAYS align body to movement direction to prevent backwards walking
-            // This forces the dragon to turn around instead of walking backwards with bent neck
-            this.entity.yBodyRot = (float)(this.entity.yBodyRot + Mth.wrapDegrees(moveAngle - this.entity.yBodyRot) * this.turnSpeed);
+            // Gradually turn body toward movement direction (like Naturalist)
+            // This prevents instant snapping while still preventing backwards walking
+            this.entity.yBodyRot = approach((float)moveAngle, this.entity.yBodyRot, this.bodyMaxDelta, this.turnSpeed);
 
             this.targetYawHead = this.entity.yHeadRot;
         }
