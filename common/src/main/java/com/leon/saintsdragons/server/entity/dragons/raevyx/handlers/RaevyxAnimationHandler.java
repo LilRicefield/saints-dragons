@@ -50,6 +50,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     /** Landing animation */
     private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.raevyx.landing");
 
+    /** Landed animation (plays after landing completes) */
+    private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.raevyx.landed");
+
     /** Dodge animation */
     private static final RawAnimation DODGE = RawAnimation.begin().thenPlay("animation.raevyx.dodge");
 
@@ -378,6 +381,10 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenLoop("animation.raevyx.sleep"));
         actionController.triggerableAnim("wake_up",
                 RawAnimation.begin().thenPlay("animation.raevyx.wake_up"));
+
+        // Landed animation (plays after landing with rider)
+        actionController.triggerableAnim("landed",
+                RawAnimation.begin().thenPlay("animation.raevyx.landed"));
 
         // Death animation
         actionController.triggerableAnim("die",

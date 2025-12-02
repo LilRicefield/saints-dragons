@@ -129,6 +129,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public static final EntityDataAccessor<Boolean> DATA_LANDING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
+    /** Entity data accessor for landed state (post-landing settle animation) */
+    public static final EntityDataAccessor<Boolean> DATA_LANDED =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
     /** Entity data accessor for running state */
     public static final EntityDataAccessor<Boolean> DATA_RUNNING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
@@ -363,8 +367,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // ===== STATE VARIABLES (Package-private for controller access) =====
     public int timeFlying = 0;
     public boolean landingFlag = false;
+    public boolean landedFlag = false;
 
     public int landingTimer = 0;
+    public int landedTimer = 0;
     int runningTicks = 0;
     // Banking smoothing state
     private float bankSmoothedYaw = 0f;
@@ -510,6 +516,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (!level().isClientSide) {
             this.lastLandingGameTime = level().getGameTime();
         }
+
+        // Note: Rider landing is handled separately in tickRiderLandingBlendTimer()
+        // This path only handles AI/non-rider landings
     }
 
 
@@ -672,6 +681,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.define(DATA_TAKEOFF, false);
         this.entityData.define(DATA_HOVERING, false);
         this.entityData.define(DATA_LANDING, false);
+        this.entityData.define(DATA_LANDED, false);
         this.entityData.define(DATA_RUNNING, false);
         this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
         this.entityData.define(DATA_FLIGHT_MODE, -1);
@@ -1145,7 +1155,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             this.landingFlag = false;
         }
     }
-    
+
+    public void setLanded(boolean landed) {
+        this.entityData.set(DATA_LANDED, landed);
+        if (landed) {
+            landedTimer = 0;
+            landedFlag = true;
+        } else {
+            landedFlag = false;
+        }
+    }
+
     // Flight mode accessor for controllers (avoids accessing protected entityData outside entity)
     public int getSyncedFlightMode() { return getIntegerData(DATA_FLIGHT_MODE); }
 
@@ -1226,7 +1246,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public boolean isLanding() {
         return getBooleanData(DATA_LANDING);
     }
-    
+
+    public boolean isLanded() {
+        return getBooleanData(DATA_LANDED);
+    }
+
     @Override
     public boolean isHovering() {
         return getBooleanData(DATA_HOVERING);
@@ -2396,9 +2420,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     
     private void tickRiderLandingBlendTimer() {
         if (!isVehicle() || !isFlying() || onGround()) {
+            // If we were actively landing and now touched ground, trigger landed animation
+            boolean wasLanding = riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
             riderLandingBlendTicks = 0;
             if (!level().isClientSide) {
                 this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+
+                // Trigger landed animation when rider landing completes
+                if (wasLanding && onGround() && isVehicle()) {
+                    triggerAnim("action", "landed");  // Trigger as one-shot animation
+                    lockRiderControls(30);  // Lock controls for 1.50 seconds while animation plays
+                }
             }
             return;
         }
@@ -2592,7 +2624,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
      */
     private void handleAmbientSounds() {
         // Suppress ambient sounds during transitions to prevent animation snapping
-        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0) return;
+        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0 || areRiderControlsLocked()) return;
         ambientSoundTimer++;
 
         // Time to make some noise?
@@ -3512,6 +3544,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tag.putLong("LastLandingGameTime", lastLandingGameTime);
         tag.putBoolean("LandingFlag", landingFlag);
         tag.putInt("LandingTimer", landingTimer);
+        tag.putBoolean("LandedFlag", landedFlag);
+        tag.putInt("LandedTimer", landedTimer);
 
         // Save lock states (transient rider/takeoff locks intentionally omitted)
 
@@ -3548,6 +3582,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.lastLandingGameTime = tag.contains("LastLandingGameTime") ? tag.getLong("LastLandingGameTime") : Long.MIN_VALUE;
         this.landingFlag = tag.contains("LandingFlag") && tag.getBoolean("LandingFlag");
         this.landingTimer = tag.contains("LandingTimer") ? tag.getInt("LandingTimer") : 0;
+        this.landedFlag = tag.contains("LandedFlag") && tag.getBoolean("LandedFlag");
+        this.landedTimer = tag.contains("LandedTimer") ? tag.getInt("LandedTimer") : 0;
 
         // Reset tick counters to prevent state inconsistencies (like Cindervane)
         // This prevents the dragon from thinking it just started flying when reloading mid-flight
@@ -4055,10 +4091,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public void removePassenger(@Nonnull Entity passenger) {
-        // Prevent dismounting while rider controls are locked (e.g., Summon Storm windup)
-        if (areRiderControlsLocked() && passenger == getControllingPassenger()) {
-            return;
+        // CRITICAL: Always allow dismounting and clear control lock
+        // Preventing dismount causes bugs where player gets stuck in locked state
+        if (passenger == getControllingPassenger()) {
+            clearRiderControlLock();
         }
+
         boolean shouldRecallOwner = !this.level().isClientSide
                 && passenger == getControllingPassenger()
                 && passenger == getOwner()
