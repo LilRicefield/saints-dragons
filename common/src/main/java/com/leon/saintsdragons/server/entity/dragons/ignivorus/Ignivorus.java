@@ -612,8 +612,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public void clearRiderControlLock() {
-        riderControlLockTicks = 0;
-        this.entityData.set(DATA_RIDER_LOCKED, false);
+        if (riderControlLockTicks > 0 || this.entityData.get(DATA_RIDER_LOCKED)) {
+            riderControlLockTicks = 0;
+            this.entityData.set(DATA_RIDER_LOCKED, false);
+        }
     }
 
     private void tickCinematicZoom() {
@@ -667,6 +669,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         } else {
             resetFireAimDirection();
         }
+    }
+
+    @Override
+    public void removePassenger(@NotNull Entity passenger) {
+        // CRITICAL: Always clear control lock when passenger is removed to prevent stuck state
+        if (passenger == getControllingPassenger()) {
+            clearRiderControlLock();
+        }
+        super.removePassenger(passenger);
     }
 
     @Override

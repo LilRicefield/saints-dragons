@@ -271,6 +271,13 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         }
     }
 
+    public void clearRiderControlLock() {
+        if (riderControlLockTicks > 0 || this.entityData.get(DATA_RIDER_LOCKED)) {
+            riderControlLockTicks = 0;
+            this.entityData.set(DATA_RIDER_LOCKED, false);
+        }
+    }
+
     public void lockAbilities(int ticks) {
         combatManager.lockGlobalCooldown(ticks);
     }
@@ -911,6 +918,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public void removePassenger(@NotNull Entity passenger) {
+        // CRITICAL: Always clear control lock when passenger is removed to prevent stuck state
+        if (passenger == getControllingPassenger()) {
+            clearRiderControlLock();
+        }
+
         super.removePassenger(passenger);
         if (!this.level().isClientSide && !this.isTame() && wildRideActive) {
             endWildRide(false);
