@@ -33,6 +33,16 @@
 					]
 				},
 				{
+					"name": "passengerBone2",
+					"parent": "heightController",
+					"pivot": [0, 20, -4]
+				},
+				{
+					"name": "passengerBone1",
+					"parent": "heightController",
+					"pivot": [0, 20, -18]
+				},
+				{
 					"name": "tail1",
 					"parent": "heightController",
 					"pivot": [0, 14, 23],
@@ -170,11 +180,6 @@
 					]
 				},
 				{
-					"name": "magmaBone",
-					"parent": "skullController",
-					"pivot": [0, 11.58333, -148.5]
-				},
-				{
 					"name": "pharynx",
 					"parent": "skullController",
 					"pivot": [0, 18.5, -137],
@@ -258,26 +263,6 @@
 					"cubes": [
 						{"origin": [-2.75, 20.29941, -157.6948], "size": [5.5, 0, 5], "pivot": [0, 20.29941, -153.9448], "rotation": [-15, 0, 0], "uv": [918, 749]}
 					]
-				},
-				{
-					"name": "passengerBone1",
-					"parent": "neckController2",
-					"pivot": [0, 19, -122]
-				},
-				{
-					"name": "passengerBone2",
-					"parent": "neckController2",
-					"pivot": [0, 19, -112]
-				},
-				{
-					"name": "passengerBone3",
-					"parent": "neckController2",
-					"pivot": [0, 19, -102]
-				},
-				{
-					"name": "passengerBone4",
-					"parent": "neckController2",
-					"pivot": [0, 19, -92]
 				},
 				{
 					"name": "leftarm",
