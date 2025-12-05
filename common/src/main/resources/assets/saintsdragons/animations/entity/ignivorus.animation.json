@@ -31215,6 +31215,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "ignivorus_landed",
+					"locator": "body_locator"
+				}
 			}
 		},
 		"animation.ignivorus.stunned": {
