@@ -801,7 +801,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_landed",
-        "volume": 1.5,
+        "volume": 3.5,
         "pitch": 1.0
       }
     ]
