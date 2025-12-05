@@ -97,6 +97,10 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
             // Block keyframe sound - takeoff sound is handled by Ignivorus.setTakeoff()
             return true;
         }
+        if ("ignivorus_landed".equals(key)) {
+            playLandedSound(handler, dragon, locator);
+            return true;
+        }
         return false;
     }
 
@@ -165,5 +169,15 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         float vol = volume * 1.2f;
         float pit = pitch + (dragon.getRandom().nextFloat() - 0.5f) * 0.05f;
         dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, vol, pit, false);
+    }
+
+    private void playLandedSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "body_locator"
+        );
+        double x = at != null ? at.x : dragon.getX();
+        double y = at != null ? at.y : dragon.getY();
+        double z = at != null ? at.z : dragon.getZ();
+        dragon.level().playLocalSound(x, y, z, ModSounds.IGNIVORUS_LANDED.get(), SoundSource.NEUTRAL, 1.5f, 1.0f, false);
     }
 }

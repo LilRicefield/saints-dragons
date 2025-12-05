@@ -36,6 +36,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_GROWL_WARNING = registerSound("raevyx_growl_warning");
     public static final Supplier<SoundEvent> RAEVYX_WALK = registerSound("raevyx_walk");
     public static final Supplier<SoundEvent> RAEVYX_RUN = registerSound("raevyx_run");
+    public static final Supplier<SoundEvent> RAEVYX_LANDED = registerSound("raevyx_landed");
     public static final Supplier<SoundEvent> RAEVYX_HURT = registerSound("raevyx_hurt");
     public static final Supplier<SoundEvent> RAEVYX_BITE = registerSound("raevyx_bite");
     public static final Supplier<SoundEvent> RAEVYX_HORNGORE = registerSound("raevyx_horngore");
@@ -106,6 +107,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_ULTIMATE_START = registerSound("ignivorus_ultimate_start");
     public static final Supplier<SoundEvent> IGNIVORUS_ULTIMATE = registerSound("ignivorus_ultimate");
     public static final Supplier<SoundEvent> IGNIVORUS_ULTIMATE_END = registerSound("ignivorus_ultimate_end");
+    public static final Supplier<SoundEvent> IGNIVORUS_LANDED = registerSound("ignivorus_landed");
 
     private ModSounds() {
     }

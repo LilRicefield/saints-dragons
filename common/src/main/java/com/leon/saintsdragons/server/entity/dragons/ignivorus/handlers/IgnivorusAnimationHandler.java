@@ -16,6 +16,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.ignivorus.run");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.take_off");
     private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.ignivorus.landing");
+    private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.ignivorus.landed");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.ignivorus.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.ignivorus.glide_down");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.flap");
@@ -90,9 +91,9 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 return PlayState.CONTINUE;
             }
 
-            // Check for landing animation (second priority)
-            if (dragon.isLanding()) {
-                state.getController().transitionLength(1);
+            // Check for landing animation (second priority) - use rider landing blend for ridden dragons
+            if (dragon.isRiderLandingBlendActive() || dragon.isLanding()) {
+                state.getController().transitionLength(4);
                 state.setAndContinue(LANDING);
                 return PlayState.CONTINUE;
             }
@@ -103,7 +104,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
             // GLIDE_DOWN - only for RIDER diving (not AI flight)
             // This prevents AI dragons from always playing glide_down
-            if (dragon.isVehicle() && dragon.isGoingDown()) {
+            // Also prevent glide_down when landing blend is active (rider is landing)
+            if (dragon.isVehicle() && dragon.isGoingDown() && !dragon.isRiderLandingBlendActive()) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(GLIDE_DOWN);
                 return PlayState.CONTINUE;
@@ -170,8 +172,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
-        // Stop banking when controls are locked
-        if (dragon.areRiderControlsLocked()) {
+        // Stop banking when controls are locked or landing blend active
+        if (dragon.areRiderControlsLocked() || dragon.isRiderLandingBlendActive()) {
             return PlayState.STOP;
         }
 
@@ -194,8 +196,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
-        // Stop pitching when controls are locked
-        if (dragon.areRiderControlsLocked()) {
+        // Stop pitching when controls are locked or landing blend active
+        if (dragon.areRiderControlsLocked() || dragon.isRiderLandingBlendActive()) {
             return PlayState.STOP;
         }
 
@@ -292,6 +294,9 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Death animation
         actionController.triggerableAnim("die",
             RawAnimation.begin().thenPlay("animation.ignivorus.die"));
+
+        // Landed animation (plays after landing with rider)
+        actionController.triggerableAnim("landed", LANDED);
 
         // Ambient grumbles
         actionController.triggerableAnim("ignivorus_grumble1",

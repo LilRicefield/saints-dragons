@@ -383,8 +383,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.wake_up"));
 
         // Landed animation (plays after landing with rider)
-        actionController.triggerableAnim("landed",
-                RawAnimation.begin().thenPlay("animation.raevyx.landed"));
+        actionController.triggerableAnim("landed", LANDED);
 
         // Death animation
         actionController.triggerableAnim("die",
