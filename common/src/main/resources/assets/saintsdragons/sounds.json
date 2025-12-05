@@ -796,12 +796,32 @@
       }
     ]
   },
+  "ignivorus_landed": {
+    "subtitle": "Ignivorus lands heavily",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_landed",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_run": {
     "subtitle": "Raevyx sprints",
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_run",
         "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_landed": {
+    "subtitle": "Raevyx lands heavily",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_landed",
+        "volume": 1.0,
         "pitch": 1.0
       }
     ]

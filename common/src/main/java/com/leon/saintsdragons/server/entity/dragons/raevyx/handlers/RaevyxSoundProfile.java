@@ -86,6 +86,10 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
                 playRunSound(handler, dragon, locator);
                 yield true;
             }
+            case "raevyx_landed" -> {
+                playLandedSound(handler, dragon, locator);
+                yield true;
+            }
             case "raevyx_takeoff" -> {
                 // Block keyframe sound - takeoff sound is handled by Raevyx.setTakeoff()
                 yield true;
@@ -170,6 +174,13 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
                 locator != null && !locator.isEmpty() ? locator : "bodyLocator"
         );
         playClientSound(dragon, at, ModSounds.RAEVYX_RUN.get(), 1.0f, 1.0f);
+    }
+
+    private void playLandedSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "bodyLocator"
+        );
+        playClientSound(dragon, at, ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f);
     }
 
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
