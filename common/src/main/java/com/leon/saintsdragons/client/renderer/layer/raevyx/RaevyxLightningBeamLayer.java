@@ -84,7 +84,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             state.disappear = 0f;
             state.appear = Mth.clamp(state.appear + (1f / APPEAR_TICKS), 0f, 1f);
 
-           
+
             mouthWorld = getBoneWorldPosition(bakedModel, "beamBone", animatable, partialTick);
             if (mouthWorld == null) {
                 // Fallback to math calculation if bone not found
