@@ -84,10 +84,10 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             state.disappear = 0f;
             state.appear = Mth.clamp(state.appear + (1f / APPEAR_TICKS), 0f, 1f);
 
-            // Use bone-based beam origin (follows head/neck animations perfectly!)
-            mouthWorld = animatable.getClientLocatorPosition("beamBoneOrigin");
+           
+            mouthWorld = getBoneWorldPosition(bakedModel, "beamBone", animatable, partialTick);
             if (mouthWorld == null) {
-                // Fallback to math calculation if bone position not available yet
+                // Fallback to math calculation if bone not found
                 mouthWorld = animatable.computeHeadMouthOrigin(partialTick);
             }
 
@@ -363,5 +363,28 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
     private static ResourceLocation particle(String path) {
         return SaintsDragonsCommon.rl("textures/particle/raevyx/" + path + ".png");
+    }
+
+    /**
+     * Gets the world-space position of a bone directly from the current frame's bone matrix.
+     * This ensures zero-lag tracking since it reads from the actively rendering model.
+     */
+    private static net.minecraft.world.phys.Vec3 getBoneWorldPosition(BakedGeoModel model, String boneName,
+                                                                      Raevyx entity, float partialTick) {
+        if (model == null || boneName == null) return null;
+
+        var boneOpt = model.getBone(boneName);
+        if (boneOpt.isEmpty()) return null;
+
+        var bone = boneOpt.get();
+
+        // Get the bone's world-space matrix (already includes all parent transforms and animations)
+        org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
+
+        // Transform the bone's pivot point (0,0,0 in bone space) to world space
+        org.joml.Vector4f pivotWorld = new org.joml.Vector4f(0f, 0f, 0f, 1f);
+        worldMat.transform(pivotWorld);
+
+        return new net.minecraft.world.phys.Vec3(pivotWorld.x(), pivotWorld.y(), pivotWorld.z());
     }
 }
