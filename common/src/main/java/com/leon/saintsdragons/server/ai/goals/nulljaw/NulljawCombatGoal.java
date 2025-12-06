@@ -18,6 +18,7 @@ public class NulljawCombatGoal extends Goal {
     private static final double CHASE_SPEED = 1.5D;
     private static final double BITE_RANGE = 5.0D;   // Matched to bite ability (5.5) - slightly conservative for AI
     private static final double HORN_RANGE = 5.0D;   // Matched to horn gore ability (7.0) - slightly conservative for AI
+    private static final double CLAW_RANGE = 3.5D;   // Claw requires closer range - it's a swipe attack, not a lunge
     private static final int MIN_ATTACK_COOLDOWN_TICKS = 20;
 
     private final Nulljaw drake;
@@ -134,16 +135,22 @@ public class NulljawCombatGoal extends Goal {
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = drake.getSensing().hasLineOfSight(target);
 
-        if (gap > HORN_RANGE) {
-            // Out of range - chase to get closer
+        // In melee range - try to attack, but keep chasing if too far for selected ability
+        if (gap <= HORN_RANGE) {
+            // Stop and attack only if we're close enough OR already attacking
+            if (gap <= BITE_RANGE || isPerformingAttack()) {
+                drake.getNavigation().stop();
+                pathRecalcCooldown = 0;
+            } else {
+                // In horn range but not bite range - keep approaching for better attacks
+                updateChasePath(target);
+            }
+            tryPerformAttacks(target);
+        } else {
+            // Out of all melee ranges - chase to get closer
             if (!isPerformingAttack()) {
                 updateChasePath(target);
             }
-        } else {
-            // In melee range - stop moving and attack
-            drake.getNavigation().stop();
-            pathRecalcCooldown = 0;
-            tryPerformAttacks(target);
         }
     }
 
@@ -167,20 +174,25 @@ public class NulljawCombatGoal extends Goal {
         double gap = getGapToTarget(target);
         boolean phaseTwo = drake.isPhaseTwoActive();
 
-        if (gap <= BITE_RANGE) {
-            // Phase 2: alternate between bite2 and claw
-            if (phaseTwo && drake.getRandom().nextBoolean()) {
+        // Claw is close-range only (3.5 gap) - swipe attack that needs proximity
+        if (gap <= CLAW_RANGE) {
+            // Phase 2: prefer claw at very close range, alternate with bite2
+            if (phaseTwo && drake.getRandom().nextFloat() < 0.6f) {
                 return NulljawAbilities.NULLJAW_CLAW;
             }
             return phaseTwo ? NulljawAbilities.NULLJAW_BITE2 : NulljawAbilities.NULLJAW_BITE;
         }
+
+        // Bite range (5.0 gap) - medium close range
+        if (gap <= BITE_RANGE) {
+            return phaseTwo ? NulljawAbilities.NULLJAW_BITE2 : NulljawAbilities.NULLJAW_BITE;
+        }
+
+        // Horn range (5.0 gap) - can be used at bite range too
         if (gap <= HORN_RANGE) {
-            // Phase 2: alternate between horn gore and claw
-            if (phaseTwo && drake.getRandom().nextBoolean()) {
-                return NulljawAbilities.NULLJAW_CLAW;
-            }
             return NulljawAbilities.NULLJAW_HORN_GORE;
         }
+
         return null;
     }
 

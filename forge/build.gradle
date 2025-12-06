@@ -82,6 +82,11 @@ processResources {
     filesMatching('META-INF/mods.toml') {
         expand version: project.version
     }
+
+    // Ensure the mod logo is included for Forge (dev and built jars)
+    from("$rootDir/common/src/main/resources/assets/saintsdragons/saintsdragons.png") {
+        into "assets/saintsdragons"
+    }
 }
 
 shadowJar {
