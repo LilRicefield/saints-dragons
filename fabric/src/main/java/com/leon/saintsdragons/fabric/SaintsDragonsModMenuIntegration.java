@@ -100,7 +100,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ignivorusBuffer.bodySlamDamage = ignivorusCurrent.abilityDamage("body_slam",
                 ignivorusDefaults.abilityDamage("body_slam", 40.0D));
         ignivorusBuffer.fireBreathDamage = ignivorusCurrent.abilityDamage("fire_breath",
-                ignivorusDefaults.abilityDamage("fire_breath", 4.0D));
+                ignivorusDefaults.abilityDamage("fire_breath", 80.0D));
         ignivorusBuffer.ultimateDamage = ignivorusCurrent.abilityDamage("ultimate",
                 ignivorusDefaults.abilityDamage("ultimate", 200.0D));
         ignivorusBuffer.ultimatePenalty = ignivorusCurrent.extraDouble("ultimate_penalty_health",
@@ -451,7 +451,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.bodySlamDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_damage"), buffer.fireBreathDamage)
-                .setDefaultValue(defaults.abilityDamage("fire_breath", 4.0D))
+                .setDefaultValue(defaults.abilityDamage("fire_breath", 80.0D))
                 .setMin(0.1D)
                 .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.fireBreathDamage = value)
