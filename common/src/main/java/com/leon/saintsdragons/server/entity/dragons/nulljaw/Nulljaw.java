@@ -103,7 +103,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
 
     // Flight mode data accessor (not used for ground drake but required by interface)
@@ -136,7 +135,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private final MoveControl landMoveControl;
     private final DragonSwimMoveControl swimMoveControl;
     private final RiftDrakeLookController landLookControl;
-    private int riderControlLockTicks = 0;
     private NulljawSwimGoal waterSwimGoal;
     private NulljawGroundWanderGoal groundWanderGoal;
     private boolean swimming;
@@ -224,14 +222,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         }
     }
 
-    private void tickRiderControlLock() {
-        if (riderControlLockTicks > 0) {
-            riderControlLockTicks--;
-            if (riderControlLockTicks <= 0) {
-                this.entityData.set(DATA_RIDER_LOCKED, false);
-            }
-        }
-    }
 
     @Override
     protected float getRiderLockYawBlend() {
@@ -243,11 +233,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         return this.isPhaseTwoActive() ? 0.25F : 0.18F;
     }
 
+    @Override
     public boolean areRiderControlsLocked() {
-        boolean locked = level().isClientSide
-                ? this.entityData.get(DATA_RIDER_LOCKED)
-                : riderControlLockTicks > 0;
-        return locked || isWildRideActive();
+        // Nulljaw-specific: also consider wild ride active state
+        return super.areRiderControlsLocked() || isWildRideActive();
     }
 
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
@@ -255,9 +244,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
     }
 
+    @Override
     public void lockRiderControls(int ticks) {
-        riderControlLockTicks = Math.max(riderControlLockTicks, Math.max(0, ticks));
-        this.entityData.set(DATA_RIDER_LOCKED, true);
+        super.lockRiderControls(ticks);  // Base handles tick counting and entity data
+        // Nulljaw-specific: reset rider inputs and movement states during lock
         this.setAccelerating(false);
         this.setLastRiderForward(0.0F);
         this.setLastRiderStrafe(0.0F);
@@ -271,12 +261,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         }
     }
 
-    public void clearRiderControlLock() {
-        if (riderControlLockTicks > 0 || this.entityData.get(DATA_RIDER_LOCKED)) {
-            riderControlLockTicks = 0;
-            this.entityData.set(DATA_RIDER_LOCKED, false);
-        }
-    }
 
     public void lockAbilities(int ticks) {
         combatManager.lockGlobalCooldown(ticks);
@@ -375,7 +359,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         this.entityData.define(DATA_SWIM_TURN, 0);
         this.entityData.define(DATA_SWIM_PITCH, 0);
         this.entityData.define(DATA_PHASE_TWO, false);
-        this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
@@ -918,10 +901,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public void removePassenger(@NotNull Entity passenger) {
-        // CRITICAL: Always clear control lock when passenger is removed to prevent stuck state
-        if (passenger == getControllingPassenger()) {
-            clearRiderControlLock();
-        }
+        // Base implementation handles clearing control lock
 
         super.removePassenger(passenger);
         if (!this.level().isClientSide && !this.isTame() && wildRideActive) {

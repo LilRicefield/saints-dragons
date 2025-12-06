@@ -121,8 +121,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-    public static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
     /** Tracks whether the dragon is stunned during a taming attempt */
@@ -214,7 +212,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public int timeFlying = 0;
     private int airTicks;
     public int groundTicks;
-    private int riderControlLockTicks;
     private int riderLandingBlendTicks = 0;
 
     // ===== HARDCODED GROUND SPEEDS =====
@@ -317,7 +314,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
-        this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_FIRE_BREATHING, false);
         this.entityData.define(DATA_FIRE_BREATH_PROGRESS, 0);
         this.entityData.define(DATA_FIRE_START_SET, false);
@@ -488,14 +484,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return super.getRiddenInput(player, input);
     }
 
-    private void tickRiderControlLock() {
-        if (riderControlLockTicks > 0) {
-            riderControlLockTicks--;
-            if (riderControlLockTicks <= 0) {
-                this.entityData.set(DATA_RIDER_LOCKED, false);
-            }
-        }
-    }
 
     private void handleAmbientSounds() {
         if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || areRiderControlsLocked()) {
@@ -531,9 +519,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(range);
     }
 
-    public boolean areRiderControlsLocked() {
-        return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
-    }
 
     public boolean canFeed() {
         return this.entityData.get(DATA_FEEDING_COOLDOWN) <= 0;
@@ -596,9 +581,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return this.getMaxHealth() * TAMING_HEALTH_RATIO;
     }
 
+    @Override
     public void lockRiderControls(int ticks) {
-        riderControlLockTicks = Math.max(riderControlLockTicks, Math.max(0, ticks));
-        this.entityData.set(DATA_RIDER_LOCKED, true);
+        super.lockRiderControls(ticks);  // Base handles tick counting and entity data
+        // Ignivorus-specific: reset rider inputs and movement states during lock
         this.setAccelerating(false);
         this.setLastRiderForward(0.0F);
         this.setLastRiderStrafe(0.0F);
@@ -612,12 +598,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
-    public void clearRiderControlLock() {
-        if (riderControlLockTicks > 0 || this.entityData.get(DATA_RIDER_LOCKED)) {
-            riderControlLockTicks = 0;
-            this.entityData.set(DATA_RIDER_LOCKED, false);
-        }
-    }
 
     private void tickCinematicZoom() {
         prevCinematicZoomProgress = cinematicZoomProgress;
@@ -674,10 +654,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public void removePassenger(@NotNull Entity passenger) {
-        // CRITICAL: Always clear control lock when passenger is removed to prevent stuck state
-        if (passenger == getControllingPassenger()) {
-            clearRiderControlLock();
-        }
+        // Base implementation handles clearing control lock
         super.removePassenger(passenger);
     }
 

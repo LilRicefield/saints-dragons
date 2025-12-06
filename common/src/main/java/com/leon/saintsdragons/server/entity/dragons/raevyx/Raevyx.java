@@ -169,9 +169,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
-    /** Entity data accessor for rider controls locked state */
-    public static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
     /** Entity data accessor for beam end position set flag */
     public static final EntityDataAccessor<Boolean> DATA_BEAM_END_SET =
@@ -658,7 +655,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_BEAM_GLOW, false);
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
-        this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_BEAM_END_SET, false);
@@ -3592,7 +3588,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
 
         // Restore lock states (transient rider/takeoff locks reset on load)
-        this.riderControlLockTicks = 0;
+        this.clearRiderControlLock();
         this.takeoffLockTicks = 0;
 
         // Restore combat cooldowns
@@ -3867,40 +3863,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // DYNAMIC EYE HEIGHT SYSTEM
     // Will be calculated dynamically from renderer
 
-    // While > 0, rider input is ignored to keep action animation coherent (e.g., roar, summon storm)
-    private int riderControlLockTicks = 0;
-
-    public boolean areRiderControlsLocked() {
-        return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
-    }
-
-    private void tickRiderControlLock() {
-        if (riderControlLockTicks > 0) {
-            riderControlLockTicks--;
-            if (riderControlLockTicks <= 0) {
-                this.entityData.set(DATA_RIDER_LOCKED, false);
-            }
-        }
-    }
-
+    @Override
     public void lockRiderControls(int ticks) {
-        riderControlLockTicks = Math.max(riderControlLockTicks, Math.max(0, ticks));
-        this.entityData.set(DATA_RIDER_LOCKED, true);
+        super.lockRiderControls(ticks);  // Base handles tick counting and entity data
+        // Raevyx-specific: reset movement states during lock
         this.setAccelerating(false);
-        // Reset rider inputs
         this.setGoingUp(false);
         this.setGoingDown(false);
         this.setDeltaMovement(Vec3.ZERO);
         if (!this.level().isClientSide) {
             this.getNavigation().stop();
             this.setTarget(null);
-        }
-    }
-
-    public void clearRiderControlLock() {
-        if (riderControlLockTicks > 0 || this.entityData.get(DATA_RIDER_LOCKED)) {
-            riderControlLockTicks = 0;
-            this.entityData.set(DATA_RIDER_LOCKED, false);
         }
     }
 
@@ -4097,17 +4070,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public void removePassenger(@Nonnull Entity passenger) {
-        // CRITICAL: Always allow dismounting and clear control lock
-        // Preventing dismount causes bugs where player gets stuck in locked state
-        if (passenger == getControllingPassenger()) {
-            clearRiderControlLock();
-        }
-
         boolean shouldRecallOwner = !this.level().isClientSide
                 && passenger == getControllingPassenger()
                 && passenger == getOwner()
                 && !this.onGround();
-        // Call parent implementation to handle standard rideable wyvern cleanup
+        // Base implementation handles clearing control lock
         super.removePassenger(passenger);
         if (shouldRecallOwner) {
             triggerForcedOwnerFollow();
