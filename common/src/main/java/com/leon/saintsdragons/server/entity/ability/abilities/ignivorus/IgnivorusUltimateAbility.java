@@ -166,14 +166,13 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             return;
         }
 
-        // Apply health penalty to ALL dragons (both AI and player-controlled)
-        // This is the cost for using the ultimate ability
-        float current = dragon.getHealth();
-        float penaltyHealth = resolvePenaltyHealth();
-        if (current > penaltyHealth) {
-            dragon.setHealth(penaltyHealth);
-            // Only send message to rider if there is one
-            if (dragon.isVehicle()) {
+        // ONLY apply health penalty to tamed dragons when owner triggers it (being ridden)
+        // Wild dragons and AI-controlled tamed dragons use it for free
+        if (dragon.isTame() && dragon.isVehicle()) {
+            float current = dragon.getHealth();
+            float penaltyHealth = resolvePenaltyHealth();
+            if (current > penaltyHealth) {
+                dragon.setHealth(penaltyHealth);
                 sendPenaltyMessage();
             }
         }
