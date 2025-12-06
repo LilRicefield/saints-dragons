@@ -181,6 +181,16 @@
       }
     ]
   },
+  "cindervane_landed": {
+    "subtitle": "Cindervane lands heavily",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_landed",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "cindervane_grumble1": {
     "subtitle": "Cindervane grumbles",
     "sounds": [

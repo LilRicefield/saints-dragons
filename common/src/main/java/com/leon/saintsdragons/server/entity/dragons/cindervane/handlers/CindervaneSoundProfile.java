@@ -86,6 +86,12 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
             return true;
         }
 
+        if ("cindervane_landed".equals(key)) {
+            dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
+                    ModSounds.CINDERVANE_LANDED.get(), SoundSource.NEUTRAL, 1.0f, 1.0f, false);
+            return true;
+        }
+
         return false;
 
     }

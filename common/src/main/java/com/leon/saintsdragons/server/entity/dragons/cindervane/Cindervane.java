@@ -544,6 +544,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public void tick() {
         // === CORE TICK (every tick) ===
         super.tick();
+        tickRiderControlLock(); // Tick rider control lock from base class
         physicsController.tick(); // Physics/flight - needs every tick for smooth movement
 
         // === ANIMATION LOGIC (every tick for smooth visuals) ===
@@ -730,7 +731,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         // Suppress ambient sounds during transitions to prevent animation snapping
-        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0) {
+        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0 || areRiderControlsLocked()) {
             return;
         }
 
@@ -879,9 +880,17 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private void tickRiderLandingBlendTimer() {
         if (!isVehicle() || !isFlying() || onGround()) {
+            // If we were actively landing and now touched ground, trigger landed animation
+            boolean wasLanding = riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
             riderLandingBlendTicks = 0;
             if (!level().isClientSide) {
                 this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+
+                // Trigger landed animation when rider landing completes
+                if (wasLanding && onGround() && isVehicle()) {
+                    triggerAnim("actions", "landed");
+                    lockRiderControls(29);  // Lock controls for 1.46 seconds while animation plays
+                }
             }
             return;
         }
@@ -1351,7 +1360,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     protected float getRiddenSpeed(@Nonnull Player rider) {
         return riderController.getRiddenSpeed(rider);
     }
-    
+
+    @Override
+    protected boolean isRiderInputLocked(Player player) {
+        return areRiderControlsLocked();
+    }
+
     @Override
     protected void tickRidden(@Nonnull Player player, @Nonnull Vec3 travelVector) {
         super.tickRidden(player, travelVector);
@@ -1396,6 +1410,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     
     @Override
     public void travel(@NotNull Vec3 motion) {
+        // Block ALL movement when controls are locked (e.g., during landed animation)
+        if (areRiderControlsLocked()) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
 
         if (inWater && !level().isClientSide) {

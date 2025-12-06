@@ -19,6 +19,7 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.cindervane.sprint_flap");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.cindervane.takeoff");
     private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.cindervane.landing");
+    private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.cindervane.landed");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.cindervane.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.cindervane.run");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.cindervane.sit");
@@ -299,6 +300,10 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
         controller.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.cindervane.eat"));
+
+        // Landed animation (plays after landing with rider)
+        controller.triggerableAnim("landed", LANDED);
+
         controller.triggerableAnim("die",
                 RawAnimation.begin().thenPlay("animation.cindervane.die"));
 
