@@ -505,10 +505,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public void markLandedNow() {
-        // Clear landing/takeoff flags (like Cindervane)
+        setFlying(false);
         setLanding(false);
         setTakeoff(false);
         this.riderTakeoffTicks = 0;
+        this.timeFlying = 0;
 
         if (!level().isClientSide) {
             this.lastLandingGameTime = level().getGameTime();
@@ -2424,6 +2425,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
                 // Trigger landed animation when rider landing completes
                 if (wasLanding && onGround() && isVehicle()) {
+                    // Properly clear flight state to prevent T-pose gliding bug
+                    setFlying(false);
+                    setTakeoff(false);
+                    timeFlying = 0;
                     triggerAnim("action", "landed");  // Trigger as one-shot animation
                     lockRiderControls(30);  // Lock controls for 1.50 seconds while animation plays
                 }

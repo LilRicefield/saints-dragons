@@ -888,6 +888,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
                 // Trigger landed animation when rider landing completes
                 if (wasLanding && onGround() && isVehicle()) {
+                    // Properly clear flight state to prevent T-pose gliding bug
+                    setFlying(false);
+                    setTakeoff(false);
+                    timeFlying = 0;
                     triggerAnim("actions", "landed");
                     lockRiderControls(29);  // Lock controls for 1.46 seconds while animation plays
                 }
@@ -2133,9 +2137,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public void markLandedNow() {
+        setFlying(false);
         setLanding(false);
         setTakeoff(false);
         this.riderTakeoffTicks = 0;
+        this.timeFlying = 0;
     }
 
     public void setRiderTakeoffTicks(int ticks) {

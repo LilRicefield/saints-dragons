@@ -1900,6 +1900,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
                 // Trigger landed animation when rider landing completes
                 if (wasLanding && onGround() && isVehicle()) {
+                    // Properly clear flight state to prevent T-pose gliding bug
+                    setFlying(false);
+                    setTakeoff(false);
+                    timeFlying = 0;
                     triggerAnim("action", "landed");  // Trigger as one-shot animation
                     lockRiderControls(33);  // Lock controls for 1.67 seconds while animation plays
                 }
