@@ -49,6 +49,12 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         float partialTick = animationState.getPartialTick();
 
         if (entity.isAlive()) {
+            // Skip all procedural overlays while taming stunned so the raw stun animation isn't
+            // contaminated by head-look or banking offsets.
+            if (entity.isTamingStunned()) {
+                return;
+            }
+
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
             applyNeckFollow(entity, modelData, partialTick);
