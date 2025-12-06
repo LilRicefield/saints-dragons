@@ -10,7 +10,7 @@
       "damage": 40.0
     },
     "fire_breath": {
-      "damage": 4.0
+      "damage": 80.0
     },
     "ultimate": {
       "damage": 200.0

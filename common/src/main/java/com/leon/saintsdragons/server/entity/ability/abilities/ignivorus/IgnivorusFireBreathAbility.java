@@ -9,7 +9,6 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -38,7 +37,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     private static final double MAX_RANGE = 64.0D;  // Must match layer's MAX_VISUAL_DISTANCE!
     private static final double IMPACT_RADIUS = 1.25D;
-    private static final float BASE_DAMAGE = 4.0F;
+    private static final float DEFAULT_DAMAGE_PER_SECOND = 80.0F;  // Config value = damage per second
     private static final int FIRE_DURATION_SECONDS = 3;
 
     private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[]{
@@ -204,16 +203,18 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         }
     }
 
+    /**
+     * Computes damage per tick from the config value (which represents damage per second).
+     * Config value is divided by 20 since this is called every tick (20 ticks = 1 second).
+     * This ensures config value directly represents DPS for user-friendly configuration.
+     */
     private static float computeDamage(Ignivorus dragon, double sizeScale) {
-        double attackValue = dragon.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        float scaled = (float) (resolveBaseDamage() + attackValue * 0.25F);
-        return scaled * (float) (0.65D + (sizeScale * 0.2D));
-    }
-
-    private static float resolveBaseDamage() {
-        return (float) DragonAttributeConfigLoader.getInstance()
+        float configDamagePerSecond = (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
-                .abilityDamage("fire_breath", BASE_DAMAGE);
+                .abilityDamage("fire_breath", DEFAULT_DAMAGE_PER_SECOND);
+
+        // Convert damage per second to damage per tick (20 ticks = 1 second)
+        return configDamagePerSecond / 20.0F;
     }
 
     private Vec3 traceImpact(Ignivorus dragon, Vec3 origin, Vec3 direction) {
