@@ -3433,7 +3433,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         sleepReentryCooldownTicks = Math.max(sleepReentryCooldownTicks, ticks);
     }
     public boolean isSleepSuppressed() {
-        return sleepReentryCooldownTicks > 0;
+        return sleepReentryCooldownTicks > 0 || isTamingStunned();
     }
 
     // ===== INTERACTION =====
@@ -3753,7 +3753,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // All animations (combat, abilities, sleep, death) are triggered via triggerAnim()
         // Lightning wyvern = fast, aggressive combat - instant transitions
         AnimationController<Raevyx> actionController =
-                new AnimationController<>(this, "action", 2, state -> PlayState.STOP);
+                new AnimationController<>(this, "action", 2, state -> {
+                    // CRITICAL: Stop action controller during taming stun to prevent animation bleeding
+                    if (isTamingStunned()) {
+                        return PlayState.STOP;
+                    }
+                    return PlayState.STOP;
+                });
 
         // Sound keyframes - only register on relevant controllers to prevent duplication
         // Movement controller: handles footsteps, wing flaps during locomotion

@@ -129,6 +129,13 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.STOP;
         }
 
+        // Taming stunned - highest priority (should override sleep)
+        if (wyvern.isTamingStunned()) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(STUNNED);
+            return PlayState.CONTINUE;
+        }
+
         // Handle sleep: continuous animation for sleep loop, stop for transitions
         if (wyvern.isSleeping() && !wyvern.isSleepingEntering() && !wyvern.isSleepingExiting()) {
             state.getController().transitionLength(6);
@@ -146,12 +153,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         } else if (sitProgress > 0f) {
             return PlayState.STOP;
-        }
-
-        if (wyvern.isTamingStunned()) {
-            state.getController().transitionLength(4);
-            state.setAndContinue(STUNNED);
-            return PlayState.CONTINUE;
         }
 
         if (wyvern.isBaby()) {
@@ -446,8 +447,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
-        // Stop banking during sleep transitions or when controls are locked
-        if (wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting() || wyvern.areRiderControlsLocked()) {
+        // Stop banking during sleep transitions, taming stun, or when controls are locked
+        if (wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()
+                || wyvern.isTamingStunned() || wyvern.areRiderControlsLocked()) {
             return PlayState.STOP;
         }
 
@@ -472,8 +474,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
-        // Stop pitching during sleep transitions or when controls are locked
-        if (wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting() || wyvern.areRiderControlsLocked()) {
+        // Stop pitching during sleep transitions, taming stun, or when controls are locked
+        if (wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()
+                || wyvern.isTamingStunned() || wyvern.areRiderControlsLocked()) {
             return PlayState.STOP;
         }
 

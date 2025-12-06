@@ -954,7 +954,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public boolean isSleepSuppressed() {
-        return sleepSuppressionTicks > 0 || getTarget() != null || isFlying() || isInWaterOrBubble() || isVehicle();
+        return sleepSuppressionTicks > 0 || getTarget() != null || isFlying() || isInWaterOrBubble() || isVehicle() || isTamingStunned();
     }
 
     @Override
@@ -2199,7 +2199,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Action controller for triggerable animations (sit transitions, fire breath, etc.)
         AnimationController<Ignivorus> actionController =
-            new AnimationController<>(this, "action", 5, state -> software.bernie.geckolib.core.object.PlayState.STOP);
+            new AnimationController<>(this, "action", 5, state -> {
+                // CRITICAL: Stop action controller during taming stun to prevent animation bleeding
+                if (isTamingStunned()) {
+                    return software.bernie.geckolib.core.object.PlayState.STOP;
+                }
+                return software.bernie.geckolib.core.object.PlayState.STOP;
+            });
 
         AnimationController<Ignivorus> hurtController =
             new AnimationController<>(this, "hurt", 3, state -> software.bernie.geckolib.core.object.PlayState.STOP);
