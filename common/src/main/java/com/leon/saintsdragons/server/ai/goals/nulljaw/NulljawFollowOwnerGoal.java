@@ -11,9 +11,9 @@ import java.util.EnumSet;
  * Simple follow-owner goal tailored for the ground-based Rift Drake.
  */
 public class NulljawFollowOwnerGoal extends Goal {
-    private static final double START_DISTANCE = 7.0D;
-    private static final double STOP_DISTANCE = 7.0D;
-    private static final double RUN_DISTANCE = 9.0D;
+    private static final double START_DISTANCE = 20.0D;
+    private static final double STOP_DISTANCE = 16.0D;
+    private static final double RUN_DISTANCE = 25.0D;
     private static final double TELEPORT_DISTANCE = 64.0D;
 
     private final Nulljaw drake;
