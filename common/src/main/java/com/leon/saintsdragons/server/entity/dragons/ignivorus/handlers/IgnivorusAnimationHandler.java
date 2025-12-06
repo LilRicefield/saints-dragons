@@ -50,6 +50,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
+        // Taming stunned - highest priority on ground (plays exhausted/downed animation, should override sleep)
+        if (dragon.isTamingStunned()) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(STUNNED);
+            return PlayState.CONTINUE;
+        }
+
         // Handle sleep: continuous animation for sleep loop, stop for transitions
         if (dragon.isSleeping() && !dragon.isSleepingEntering() && !dragon.isSleepingExiting()) {
             state.getController().transitionLength(6);
@@ -58,13 +65,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         } else if (dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
             // Transition animations are triggered, don't interfere
             return PlayState.STOP;
-        }
-
-        // Taming stunned - highest priority on ground (plays exhausted/downed animation)
-        if (dragon.isTamingStunned()) {
-            state.getController().transitionLength(4);
-            state.setAndContinue(STUNNED);
-            return PlayState.CONTINUE;
         }
 
         // Check for sitting - highest priority after flying
@@ -172,8 +172,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
-        // Stop banking when controls are locked or landing blend active
-        if (dragon.areRiderControlsLocked() || dragon.isRiderLandingBlendActive()) {
+        // Stop banking when taming stunned, controls are locked, or landing blend active
+        if (dragon.isTamingStunned() || dragon.areRiderControlsLocked() || dragon.isRiderLandingBlendActive()) {
             return PlayState.STOP;
         }
 
@@ -196,8 +196,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
-        // Stop pitching when controls are locked or landing blend active
-        if (dragon.areRiderControlsLocked() || dragon.isRiderLandingBlendActive()) {
+        // Stop pitching when taming stunned, controls are locked, or landing blend active
+        if (dragon.isTamingStunned() || dragon.areRiderControlsLocked() || dragon.isRiderLandingBlendActive()) {
             return PlayState.STOP;
         }
 
