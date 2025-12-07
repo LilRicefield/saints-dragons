@@ -36,7 +36,7 @@ public class RaevyxLightningChainParticle extends TextureSheetParticle {
                                            double xSpeed, double ySpeed, double zSpeed,
                                            float size, SpriteSet spriteSet, Vec3 startPos, Vec3 endPos, boolean female) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-        TextureAtlasSprite[] resolved = RaevyxParticleSprites.arc(female);
+        TextureAtlasSprite[] resolved = RaevyxParticleSprites.storm(female);
         if (resolved.length == 0) {
             resolved = new TextureAtlasSprite[]{spriteSet.get(0, 1)};
         }
