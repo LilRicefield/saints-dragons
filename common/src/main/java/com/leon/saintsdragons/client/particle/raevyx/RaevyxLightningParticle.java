@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.client.particle.raevyx;
 
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
-import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningArcData;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -119,16 +118,6 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
         public Factory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
         @Override
         public Particle createParticle(@Nonnull RaevyxLightningStormData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new RaevyxLightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.female());
-        }
-    }
-
-    // Secondary factory to reuse the same renderer with a different ParticleOptions type
-    public static class FactoryArc implements ParticleProvider<RaevyxLightningArcData> {
-        private final SpriteSet spriteSet;
-        public FactoryArc(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
-        @Override
-        public Particle createParticle(@Nonnull RaevyxLightningArcData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             return new RaevyxLightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.female());
         }
     }

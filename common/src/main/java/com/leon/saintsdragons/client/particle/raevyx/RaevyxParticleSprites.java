@@ -34,42 +34,14 @@ final class RaevyxParticleSprites {
             "raevyx/female_lightning_storm_7"
     );
 
-    private static final ResourceLocation[] ARC_MALE = resourceArray(
-            "raevyx/lightning_arc_0",
-            "raevyx/lightning_arc_1",
-            "raevyx/lightning_arc_2",
-            "raevyx/lightning_arc_3",
-            "raevyx/lightning_arc_4",
-            "raevyx/lightning_arc_5",
-            "raevyx/lightning_arc_6",
-            "raevyx/lightning_arc_7"
-    );
-
-    private static final ResourceLocation[] ARC_FEMALE = resourceArray(
-            "raevyx/female_lightning_arc_0",
-            "raevyx/lightning_arc_1",      // shared white frame
-            "raevyx/lightning_arc_2",      // shared white frame
-            "raevyx/female_lightning_arc_3",
-            "raevyx/lightning_arc_4",      // shared white frame
-            "raevyx/female_lightning_arc_5",
-            "raevyx/female_lightning_arc_6",
-            "raevyx/female_lightning_arc_7"
-    );
-
     private static TextureAtlasSprite[] stormMaleSprites;
     private static TextureAtlasSprite[] stormFemaleSprites;
-    private static TextureAtlasSprite[] arcMaleSprites;
-    private static TextureAtlasSprite[] arcFemaleSprites;
 
     private RaevyxParticleSprites() {
     }
 
     static TextureAtlasSprite[] storm(boolean female) {
         return female ? getStormFemale() : getStormMale();
-    }
-
-    static TextureAtlasSprite[] arc(boolean female) {
-        return female ? getArcFemale() : getArcMale();
     }
 
     static int frameIndexByProgress(TextureAtlasSprite[] frames, float progress) {
@@ -92,20 +64,6 @@ final class RaevyxParticleSprites {
             stormFemaleSprites = resolveSprites(STORM_FEMALE);
         }
         return stormFemaleSprites;
-    }
-
-    private static TextureAtlasSprite[] getArcMale() {
-        if (arcMaleSprites == null) {
-            arcMaleSprites = resolveSprites(ARC_MALE);
-        }
-        return arcMaleSprites;
-    }
-
-    private static TextureAtlasSprite[] getArcFemale() {
-        if (arcFemaleSprites == null) {
-            arcFemaleSprites = resolveSprites(ARC_FEMALE);
-        }
-        return arcFemaleSprites;
     }
 
     private static TextureAtlasSprite[] resolveSprites(ResourceLocation[] resources) {

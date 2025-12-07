@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningArcData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.platform.RegistryHelper;
@@ -33,15 +32,6 @@ public final class ModParticles {
                         @Override
                         public com.mojang.serialization.Codec<RaevyxLightningStormData> codec() {
                             return RaevyxLightningStormData.CODEC(this);
-                        }
-                    });
-
-    public static final Supplier<ParticleType<RaevyxLightningArcData>> LIGHTNING_ARC =
-            REGISTER.register("lightning_arc",
-                    () -> new ParticleType<>(false, RaevyxLightningArcData.DESERIALIZER) {
-                        @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningArcData> codec() {
-                            return RaevyxLightningArcData.CODEC(this);
                         }
                     });
 

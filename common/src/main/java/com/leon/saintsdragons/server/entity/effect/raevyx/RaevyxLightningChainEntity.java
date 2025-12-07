@@ -263,51 +263,25 @@ public class RaevyxLightningChainEntity extends Entity {
     private void spawnImpactEffects(Vec3 impactPos) {
         if (!(this.level() instanceof ServerLevel server)) return;
         boolean female = isCasterFemale();
-        
-        // Spawn layered lightning arc impact effects for dramatic visual
-        float size = getSize() * 0.6f; // Reduced from 1.2f
-        
-        // Spawn multiple layered particles for impact effect
-        for (int layer = 0; layer < 4; layer++) {
-            float layerSize = size * (1.0f + layer * 0.25f);
-            float layerOffset = layer * 0.1f; // Reduced from 0.15f
-            
-            // Spawn particles in a small radius around the impact point
-            for (int i = 0; i < 6; i++) {
-                double angle = (i * Math.PI * 2) / 6.0;
-                double offsetX = Math.cos(angle) * layerOffset;
-                double offsetZ = Math.sin(angle) * layerOffset;
-                
-                server.sendParticles(new RaevyxLightningStormData(layerSize, female),
-                        impactPos.x + offsetX, impactPos.y + layerOffset, impactPos.z + offsetZ,
-                        1, 0, 0, 0, 0.0);
-            }
-        }
+
+        // Simple impact particle (removed excessive layering)
+        float size = getSize() * 0.8f;
+
+        server.sendParticles(new RaevyxLightningStormData(size, female),
+                impactPos.x, impactPos.y, impactPos.z,
+                1, 0, 0, 0, 0.0);
     }
 
     private void spawnChainImpactEffects(Vec3 chainPos) {
         if (!(this.level() instanceof ServerLevel server)) return;
         boolean female = isCasterFemale();
-        
-        // Spawn chain-specific impact effects (smaller, more focused)
-        float size = getSize() * 0.4f; // Reduced from 0.8f
-        
-        // Spawn fewer layers for chain impacts (more focused effect)
-        for (int layer = 0; layer < 3; layer++) {
-            float layerSize = size * (1.0f + layer * 0.2f);
-            float layerOffset = layer * 0.05f; // Reduced from 0.1f
-            
-            // Spawn particles in a tighter radius for chain effects
-            for (int i = 0; i < 4; i++) {
-                double angle = (i * Math.PI * 2) / 4.0;
-                double offsetX = Math.cos(angle) * layerOffset;
-                double offsetZ = Math.sin(angle) * layerOffset;
-                
-                server.sendParticles(new RaevyxLightningStormData(layerSize, female),
-                        chainPos.x + offsetX, chainPos.y + layerOffset, chainPos.z + offsetZ,
-                        1, 0, 0, 0, 0.0);
-            }
-        }
+
+        // Simple chain impact particle (removed excessive layering)
+        float size = getSize() * 0.6f;
+
+        server.sendParticles(new RaevyxLightningStormData(size, female),
+                chainPos.x, chainPos.y, chainPos.z,
+                1, 0, 0, 0, 0.0);
     }
 
     private void attemptChainLightning() {
