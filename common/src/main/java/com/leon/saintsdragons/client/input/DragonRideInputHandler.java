@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 public final class DragonRideInputHandler {
     private static final String KEY_CATEGORY = "key.categories.saintsdragons";
 
-    // NOTE: These default to UNKNOWN to avoid conflicts with vanilla controls on Fabric.
+    // NOTE: Ascend/Accelerate default to UNKNOWN to avoid conflicts with vanilla Jump/Sprint on Fabric.
     // The handler checks vanilla keybinds (Jump/Shift/Sprint) as fallbacks, so dragon
     // controls work out-of-box. Players can bind these to different keys if desired.
     public static final KeyMapping DRAGON_ASCEND = new KeyMapping(
@@ -35,7 +35,7 @@ public final class DragonRideInputHandler {
     public static final KeyMapping DRAGON_DESCEND = new KeyMapping(
             "key.saintsdragons.descend",
             InputConstants.Type.KEYSYM,
-            InputConstants.UNKNOWN.getValue(),
+            InputConstants.KEY_LALT,
             KEY_CATEGORY
     );
 
