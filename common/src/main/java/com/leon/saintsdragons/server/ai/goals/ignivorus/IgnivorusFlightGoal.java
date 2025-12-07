@@ -209,8 +209,8 @@ public class IgnivorusFlightGoal extends Goal {
         } else {
             double distanceToTarget = dragon.distanceToSqr(targetPosition);
 
-            // Reached target
-            if (distanceToTarget < 16.0) {
+            // Reached target - larger acceptance radius for smooth flight
+            if (distanceToTarget < 64.0) { // 8 blocks - matches Raevyx
                 needNewTarget = true;
             }
 
