@@ -8,7 +8,7 @@ import com.leon.saintsdragons.common.particle.raevyx.*;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
-import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxSmartFlightGoal;
+import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
@@ -2999,7 +2999,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this));
         // Sleep is now handled by DragonSleepBehavior in base class tick
         this.goalSelector.addGoal(3, new RaevyxAirCombatGoal(this));
         this.goalSelector.addGoal(3, new RaevyxGroundCombatGoal(this));
@@ -3013,7 +3012,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                                                                net.minecraft.world.item.Items.COD,
                                                                net.minecraft.world.item.Items.PUFFERFISH), false));
         
-        this.goalSelector.addGoal(11, new RaevyxSmartFlightGoal(this));
+        this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
         // Look goals that skip when being ridden (so rider has full control)
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
             @Override
