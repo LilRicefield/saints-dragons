@@ -2999,6 +2999,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
+        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal((com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable)this));
         // Sleep is now handled by DragonSleepBehavior in base class tick
         this.goalSelector.addGoal(3, new RaevyxAirCombatGoal(this));
         this.goalSelector.addGoal(3, new RaevyxGroundCombatGoal(this));

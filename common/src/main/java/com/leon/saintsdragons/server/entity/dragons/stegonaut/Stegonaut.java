@@ -151,6 +151,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this)); // CRITICAL: Must float in water to not drown!
+        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this)); // Escape water
         this.goalSelector.addGoal(3, new StegonautFleeFromPredatorsGoal(this, 0.6D, 12.0D)); // Flee from Raevyx and other Stegonauts
         this.goalSelector.addGoal(4, new StegonautFollowOwnerGoal(this));
         this.goalSelector.addGoal(5, new StegonautGroundWanderGoal(this, 0.35D, 120));
