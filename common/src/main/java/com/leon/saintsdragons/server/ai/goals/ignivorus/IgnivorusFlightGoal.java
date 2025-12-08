@@ -46,15 +46,10 @@ public class IgnivorusFlightGoal extends Goal {
             return false;
         }
 
-        // Tamed dragons should NEVER randomly fly - only when owner is flying or over danger
-        if (dragon.isTame() && dragon.getOwner() != null) {
-            LivingEntity owner = dragon.getOwner();
-            boolean ownerFlying = !owner.onGround() && owner.isAlive();
-
-            // Only allow flight when:
-            // 1. Over danger (water/lava below), OR
-            // 2. Owner is flying on another dragon
-            if (!isOverDanger() && !ownerFlying) {
+        // Tamed dragons should NEVER randomly patrol - only fly for danger escape
+        if (dragon.isTame()) {
+            // Only allow this goal if over immediate danger (water/lava/void)
+            if (!isOverDanger()) {
                 return false;
             }
         }
@@ -111,20 +106,15 @@ public class IgnivorusFlightGoal extends Goal {
             return false;
         }
 
-        // Tamed dragons only fly when over danger or following flying owner
-        if (dragon.isTame() && dragon.getOwner() != null) {
-            LivingEntity owner = dragon.getOwner();
-            boolean ownerFlying = owner.isAlive() && !owner.onGround();
-
-            if (!isOverDanger() && !ownerFlying) {
-                dragon.setGoingUp(false);
-                dragon.setGoingDown(false);
-                dragon.setLanding(true);
-                dragon.setFlying(false);
-                dragon.setHovering(false);
-                dragon.setTakeoff(false);
-                return false;
-            }
+        // Tamed dragons should land immediately once danger is cleared
+        if (dragon.isTame() && !isOverDanger()) {
+            dragon.setGoingUp(false);
+            dragon.setGoingDown(false);
+            dragon.setLanding(true);
+            dragon.setFlying(false);
+            dragon.setHovering(false);
+            dragon.setTakeoff(false);
+            return false;
         }
 
         // Stop if combat starts
@@ -188,17 +178,13 @@ public class IgnivorusFlightGoal extends Goal {
             }
         }
 
-        if (dragon.isTame() && dragon.getOwner() != null) {
-            LivingEntity owner = dragon.getOwner();
-            boolean ownerFlying = owner.isAlive() && !owner.onGround();
-
-            if (!isOverDanger() && !ownerFlying) {
-                dragon.setLanding(true);
-                dragon.setFlying(false);
-                dragon.setHovering(false);
-                dragon.setTakeoff(false);
-                return;
-            }
+        // Tamed dragons should land immediately once danger is cleared
+        if (dragon.isTame() && !isOverDanger()) {
+            dragon.setLanding(true);
+            dragon.setFlying(false);
+            dragon.setHovering(false);
+            dragon.setTakeoff(false);
+            return;
         }
 
         // Check if we need a new target

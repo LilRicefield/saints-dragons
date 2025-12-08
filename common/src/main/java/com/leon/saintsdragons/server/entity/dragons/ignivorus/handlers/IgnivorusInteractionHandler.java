@@ -199,7 +199,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             dragon.triggerAnim("action", "eat");
 
             // Set feeding cooldown
-            dragon.setFeedingCooldown(20);
+            dragon.setFeedingCooldown(23);
 
             // Heal the dragon
             float currentHealth = dragon.getHealth();
