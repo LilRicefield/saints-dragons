@@ -120,7 +120,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
 
-    private final AnimatableInstanceCache animCache = GeckoLibUtil.createInstanceCache(this);
+    public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
     private final NulljawInteractionHandler interactionHandler = new NulljawInteractionHandler(this);
@@ -465,7 +465,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return animCache;
+        return dragonCache;
     }
 
     public DragonSoundHandler getSoundHandler() {

@@ -55,7 +55,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     // Passive aura that applies resistance and absorption to allies
@@ -273,7 +273,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return this.cache;
+        return this.dragonCache;
     }
     
     @Override
