@@ -197,7 +197,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                             false, true, true)
                     .build();
 
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
     private final IgnivorusPhysicsController physicsController = new IgnivorusPhysicsController(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
@@ -2244,7 +2244,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
+        return dragonCache;
     }
 
     // ===== SOUND SYSTEM =====
