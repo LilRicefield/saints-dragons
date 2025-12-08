@@ -213,7 +213,11 @@ public record CindervaneRiderController(Cindervane dragon) {
             // === VERTICAL MOVEMENT (dive acceleration, no gravity) ===
             double newVerticalVel = currentVel.y;
 
-            if (dragon.isGoingUp()) {
+            if (dragon.isTakeoff()) {
+                // Give a firm upward shove during the takeoff window even if no input is held
+                double boost = ASCEND_THRUST * 0.85;
+                newVerticalVel = Math.max(newVerticalVel + boost, 0.45);
+            } else if (dragon.isGoingUp()) {
                 // Apply upward thrust
                 newVerticalVel += ASCEND_THRUST;
             } else if (dragon.isGoingDown()) {
@@ -372,6 +376,8 @@ public record CindervaneRiderController(Cindervane dragon) {
         if (!dragon.canTakeoff()) return;
 
         dragon.getNavigation().stop();
+        dragon.setGoingDown(false);
+        dragon.setGoingUp(true); // latch ascend so we don't depend on a follow-up packet
         dragon.setFlying(true);
         dragon.setTakeoff(true);
         dragon.setHovering(false);
@@ -379,7 +385,8 @@ public record CindervaneRiderController(Cindervane dragon) {
         dragon.setRiderTakeoffTicks(25);
 
         Vec3 current = dragon.getDeltaMovement();
-        double upward = Math.max(current.y, 0.25D);
+        double upward = Math.max(current.y, 0.55D); // strong initial shove to clear the ground smoothly
         dragon.setDeltaMovement(current.x, upward, current.z);
+        dragon.hasImpulse = true;
     }
 }
