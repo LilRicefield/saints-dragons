@@ -816,6 +816,16 @@
       }
     ]
   },
+  "ignivorus_eat": {
+    "subtitle": "Ignivorus eats",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_eat",
+        "volume": 3.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_run": {
     "subtitle": "Raevyx sprints",
     "sounds": [

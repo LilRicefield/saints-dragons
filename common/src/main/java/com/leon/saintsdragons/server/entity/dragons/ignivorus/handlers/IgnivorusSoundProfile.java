@@ -36,6 +36,11 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
             playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_BITE.get(), 1.2f, 0.95f, 0.1f);
             return true;
         }
+
+        if ("ignivorus_eat".equals(key)) {
+            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_EAT.get(), 1.2f, 0.95f, 0.1f);
+            return true;
+        }
         if ("ignivorus_body_slam".equals(key)) {
             // Use body locator for slam impact
             Vec3 body = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "body_locator");
