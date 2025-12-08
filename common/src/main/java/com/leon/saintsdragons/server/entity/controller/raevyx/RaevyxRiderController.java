@@ -196,7 +196,13 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // === VERTICAL MOVEMENT (dive acceleration, no gravity) ===
             double verticalVel = currentVelocity.y;
 
-            if (wyvern.isGoingUp()) {
+            // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
+            if (wyvern.getRiderTakeoffTicks() > 0) {
+                // During automated takeoff, apply a firm upward shove so climb begins immediately
+                // and stays smooth even if the rider isn't pitching/pressing anything yet.
+                double boost = ASCEND_THRUST * 0.85;
+                verticalVel = Math.max(verticalVel + boost, 0.45);
+            } else if (wyvern.isGoingUp()) {
                 // Apply upward thrust
                 verticalVel += ASCEND_THRUST;
             } else if (wyvern.isGoingDown()) {
@@ -339,12 +345,17 @@ public record RaevyxRiderController(Raevyx wyvern) {
         if (lastLand != Long.MIN_VALUE && (now - lastLand) < 5.0) { // ~1s cooldown
             return;
         }
-        
+
+        // Ensure clean state and give the takeoff request some upward intent even before new input packets arrive
+        wyvern.getNavigation().stop();
+        wyvern.setGoingDown(false);
+        wyvern.setGoingUp(true); // Latch ascend so we don't rely on a follow-up look/move packet
+
         // Reset all flight states for a fresh takeoff
         wyvern.timeFlying = 0;
         wyvern.landingFlag = false;
         wyvern.landingTimer = 0;
-        
+
         // Initiate takeoff sequence
         wyvern.setFlying(true);
         wyvern.setTakeoff(true);
@@ -352,5 +363,11 @@ public record RaevyxRiderController(Raevyx wyvern) {
         wyvern.setLanding(false);
         // Keep takeoff active for a brief window so server flight logic applies upward force
         wyvern.setRiderTakeoffTicks(30);
+
+        // Give an initial upward push so the wyvern actually leaves the ground before rider input changes
+        Vec3 current = wyvern.getDeltaMovement();
+        double upward = Math.max(current.y, 0.55D); // big first shove to eliminate post-takeoff stutter
+        wyvern.setDeltaMovement(current.x, upward, current.z);
+        wyvern.hasImpulse = true;
     }
 }

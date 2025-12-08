@@ -2075,6 +2075,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Decrement rider takeoff window (no-op while dying)
         if (!level().isClientSide && riderTakeoffTicks > 0 && !isDying()) {
             riderTakeoffTicks--;
+
+            // Apply upward boost during takeoff window
+            Vec3 velocity = this.getDeltaMovement();
+            double boost = this.isFlying() ? 0.08D : 0.12D;
+            if (velocity.y < boost) {
+                this.setDeltaMovement(velocity.x, boost, velocity.z);
+            }
+            this.hasImpulse = true;
         }
     }
     
