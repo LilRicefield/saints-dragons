@@ -4,6 +4,8 @@ import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
@@ -26,11 +28,11 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     /** Entity data accessor for melee mode (0=primary melee, 1=secondary melee) */
     private static final EntityDataAccessor<Integer> DATA_MELEE_MODE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(RideableDragonBase.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.INT);
 
     /** Entity data accessor for rider control lock state (synced to client) */
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(RideableDragonBase.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
 
     /** Server-side tick counter for rider control lock duration */
     private int riderControlLockTicks = 0;
@@ -111,7 +113,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     protected void onRiderToggleMelee(Player player) {
         // Check if this dragon has a secondary melee attack
         if (!hasSecondaryMelee()) {
-            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable("saintsdragons.message.no_secondary_melee"),
                     true // Action bar
@@ -215,13 +217,13 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("MeleeMode", getMeleeMode());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("MeleeMode")) {
             setMeleeMode(tag.getInt("MeleeMode"));

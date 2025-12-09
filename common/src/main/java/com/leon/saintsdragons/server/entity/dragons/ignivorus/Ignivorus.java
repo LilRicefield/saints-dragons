@@ -369,11 +369,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    public @Nullable SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level,
-                                                  @NotNull DifficultyInstance difficulty,
-                                                  @NotNull MobSpawnType spawnType,
-                                                  @Nullable SpawnGroupData spawnData,
-                                                  @Nullable CompoundTag dataTag) {
+    public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level,
+                                                 @NotNull DifficultyInstance difficulty,
+                                                 @NotNull MobSpawnType spawnType,
+                                                 @Nullable SpawnGroupData spawnData,
+                                                 @Nullable CompoundTag dataTag) {
         SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
         applyConfiguredAttributes();
         return data;

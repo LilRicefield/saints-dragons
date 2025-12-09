@@ -2894,8 +2894,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private boolean shouldSpawnBabies = false;
     private int babiesToSpawn = 0;
 
-    @Nullable
-    public SpawnGroupData finalizeSpawn(
+    public @NotNull SpawnGroupData finalizeSpawn(
             @Nonnull net.minecraft.world.level.ServerLevelAccessor level,
             @Nonnull net.minecraft.world.DifficultyInstance difficulty,
             @Nonnull MobSpawnType spawnReason,

@@ -1,8 +1,11 @@
 package com.leon.saintsdragons.server.entity.handler;
 
+import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,9 +27,9 @@ public class DragonCombatHandler {
 
     // ===== PERSISTENCE =====
     // Persist global + per-ability cooldowns across save/load
-    public void saveToNBT(net.minecraft.nbt.CompoundTag tag) {
+    public void saveToNBT(CompoundTag tag) {
         tag.putInt("GlobalAbilityCooldown", Math.max(0, globalCooldown));
-        net.minecraft.nbt.CompoundTag cd = new net.minecraft.nbt.CompoundTag();
+        CompoundTag cd = new CompoundTag();
         for (Map.Entry<DragonAbilityType<?, ?>, Integer> e : abilityCooldowns.entrySet()) {
             String name = com.leon.saintsdragons.common.registry.AbilityRegistry.getName(e.getKey());
             if (name != null && !name.isEmpty()) {
@@ -38,13 +41,13 @@ public class DragonCombatHandler {
         }
     }
 
-    public void loadFromNBT(net.minecraft.nbt.CompoundTag tag) {
+    public void loadFromNBT(CompoundTag tag) {
         this.globalCooldown = Math.max(0, tag.getInt("GlobalAbilityCooldown"));
         this.abilityCooldowns.clear();
-        if (tag.contains("AbilityCooldowns", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
-            net.minecraft.nbt.CompoundTag cd = tag.getCompound("AbilityCooldowns");
+        if (tag.contains("AbilityCooldowns", Tag.TAG_COMPOUND)) {
+            CompoundTag cd = tag.getCompound("AbilityCooldowns");
             for (String key : cd.getAllKeys()) {
-                var type = com.leon.saintsdragons.common.registry.AbilityRegistry.get(key);
+                var type = AbilityRegistry.get(key);
                 if (type != null) {
                     int val = Math.max(0, cd.getInt(key));
                     if (val > 0) this.abilityCooldowns.put(type, val);

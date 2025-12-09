@@ -10,11 +10,6 @@ import net.minecraft.resources.ResourceLocation;
  * Displays current health with wyvern-specific theming.
  */
 public class DragonHealthBar extends DragonUIElement {
-    private static final ResourceLocation LIGHTNING_HEALTH_BORDER =
-            SaintsDragonsCommon.rl("textures/entity/lightningdragon/health_border.png");
-    private static final ResourceLocation LIGHTNING_HEALTH_FILL =
-            SaintsDragonsCommon.rl("textures/entity/lightningdragon/health_fill.png");
-    
     private DragonEntity dragon;
     private float currentHealthPercent = 1.0f;
     private float targetHealthPercent = 1.0f;
