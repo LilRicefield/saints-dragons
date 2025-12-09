@@ -1557,12 +1557,14 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             double tamingChanceConfig = config.extraDoubles().getOrDefault("taming_chance", 6.0);
 
             // Convert config value to per-tick success chance
-            // taming_chance of 1.0 = guaranteed tame after MIN_WILD_TAME_TICKS
-            // Higher values = lower per-tick chance (e.g., 6.0 = ~1/6 chance per eligible tick)
-            float baseChance = 1.0F / (float) tamingChanceConfig;
+            // Higher values = much harder to tame (exponential scaling)
+            // taming_chance of 6.0 means base chance of 1/6 per eligible tick
+            // But we divide by 100 to make it a reasonable per-tick rate since this runs every tick
+            float baseChance = 1.0F / (float) (tamingChanceConfig * 100.0);
 
-            // Scale with progress: starts at baseChance, increases up to 2x with full progress
-            float successChance = baseChance * (1.0F + progressFactor);
+            // Scale with progress: only becomes reasonable at high progress
+            // This encourages players to stay on longer for better odds
+            float successChance = baseChance * (1.0F + (progressFactor * progressFactor * 4.0F));
 
             if (this.getRandom().nextFloat() < successChance) {
                 this.tame(rider);
