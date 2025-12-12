@@ -51,6 +51,9 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
 
 
         if (entity.isAlive()){
+            if (entity.isDeadOrDying()){
+                return;
+            }
             applyBodyRotationDeviation(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
