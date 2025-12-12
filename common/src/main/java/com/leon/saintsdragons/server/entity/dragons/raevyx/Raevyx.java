@@ -20,6 +20,7 @@ import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxPhysicsContr
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
@@ -262,6 +263,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.5D;
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
+
+    // Position tracking for FLY_IDLE detection (xo/yo/zo are synced too early in tick cycle)
+    private double lastCheckedX = 0;
+    private double lastCheckedY = 0;
+    private double lastCheckedZ = 0;
+    private int ticksSinceLastMovement = 0;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", "action", "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble2", "action", "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
@@ -1174,6 +1181,38 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (this.isTame() && this.isVehicle()) {
             Entity rider = this.getControllingPassenger();
             if (rider instanceof Player player && this.isOwnedBy(player)) {
+                // Track position changes manually (xo/yo/zo are synced before getFlightMode() is called)
+                double deltaX = this.getX() - lastCheckedX;
+                double deltaY = this.getY() - lastCheckedY;
+                double deltaZ = this.getZ() - lastCheckedZ;
+                double positionChangeSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+
+                boolean goingUp = isGoingUp();
+                boolean goingDown = isGoingDown();
+                boolean accelerating = isAccelerating();
+
+                // Update position tracking and movement timer
+                if (positionChangeSqr > 0.0001 || goingUp || goingDown || accelerating) {
+                    // Dragon is moving or player is giving directional input
+                    ticksSinceLastMovement = 0;
+                    lastCheckedX = this.getX();
+                    lastCheckedY = this.getY();
+                    lastCheckedZ = this.getZ();
+                } else {
+                    // No movement detected
+                    ticksSinceLastMovement++;
+                }
+
+                // Only switch to FLY_IDLE after being stationary for a bit (prevents flicker)
+                if (ticksSinceLastMovement > 3) { // 3 ticks = 0.15 seconds of no movement
+                    return 5; // FLY_IDLE - stationary rider hover
+                }
+
+                // Check for sprinting
+                if (accelerating) {
+                    return 4; // SPRINT_FLAP
+                }
+
                 int groundY = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         Mth.floor(this.getX()), Mth.floor(this.getZ()));
                 double altitudeAboveTerrain = this.getY() - groundY;

@@ -182,14 +182,15 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         if (wyvern.isFlying()) {
             int syncedMode = wyvern.getSyncedFlightMode();
             Vec3 vNow = wyvern.getDeltaMovement();
-            boolean sprintingSynced = Boolean.TRUE.equals(wyvern.getAnimData(DragonAnimTickets.FLIGHT_SPRINTING));
 
+            // Mode 3: Takeoff
             if (syncedMode == 3) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
             }
 
+            // Rider landing blend (overrides flight mode)
             if (wyvern.isRiderLandingBlendActive()) {
                 state.getController().transitionLength(4);
                 currentFlightAnimation = LANDING;
@@ -197,66 +198,54 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            boolean manualRiderControl = wyvern.isTame() && wyvern.isVehicle() && wyvern.isControlledByLocalInstance();
-            if (manualRiderControl) {
-                Vec3 vel = wyvern.getDeltaMovement();
-                boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01;
-                boolean isMovingVertically = Math.abs(vel.y) > 0.02;
-                boolean isStationary = !isMovingHorizontally && !isMovingVertically;
-
-                if (wyvern.isGoingDown() && !wyvern.isRiderLandingBlendActive()) {
-                    RawAnimation descend = GLIDE_DOWN;
-                    if (currentFlightAnimation != descend) {
-                        state.getController().transitionLength(6);
-                        currentFlightAnimation = descend;
-                    }
-                    state.setAndContinue(descend);
-                    return PlayState.CONTINUE;
+            // Special case: GLIDE_DOWN for ridden dragons pitching down
+            if (wyvern.isVehicle() && wyvern.isGoingDown() && !wyvern.isRiderLandingBlendActive()) {
+                RawAnimation descend = GLIDE_DOWN;
+                if (currentFlightAnimation != descend) {
+                    state.getController().transitionLength(6);
+                    currentFlightAnimation = descend;
                 }
-
-                if (isStationary) {
-                    RawAnimation hover = FLY_IDLE;
-                    if (currentFlightAnimation != hover) {
-                        state.getController().transitionLength(6);
-                        currentFlightAnimation = hover;
-                    }
-                    state.setAndContinue(hover);
-                    return PlayState.CONTINUE;
-                }
-
-                boolean sprinting = wyvern.isAccelerating() || sprintingSynced;
-
-                if (sprinting && isMovingHorizontally) {
-                    RawAnimation sprint = SPRINT_FLAP;
-                    if (currentFlightAnimation != sprint) {
-                        state.getController().transitionLength(3);
-                        currentFlightAnimation = sprint;
-                    }
-                    state.setAndContinue(sprint);
-                    return PlayState.CONTINUE;
-                }
-
-                if (wyvern.isGoingUp()) {
-                    RawAnimation upward = FLAP;
-                    if (currentFlightAnimation != upward) {
-                        state.getController().transitionLength(4);
-                        currentFlightAnimation = upward;
-                    }
-                    state.setAndContinue(upward);
-                    return PlayState.CONTINUE;
-                }
+                state.setAndContinue(descend);
+                return PlayState.CONTINUE;
             }
 
+            // Mode 5: FLY_IDLE (stationary rider hover)
+            if (syncedMode == 5) {
+                RawAnimation hover = FLY_IDLE;
+                if (currentFlightAnimation != hover) {
+                    state.getController().transitionLength(6);
+                    currentFlightAnimation = hover;
+                }
+                state.setAndContinue(hover);
+                return PlayState.CONTINUE;
+            }
+
+            // Mode 4: SPRINT_FLAP
+            if (syncedMode == 4) {
+                RawAnimation sprint = SPRINT_FLAP;
+                if (currentFlightAnimation != sprint) {
+                    state.getController().transitionLength(3);
+                    currentFlightAnimation = sprint;
+                }
+                state.setAndContinue(sprint);
+                return PlayState.CONTINUE;
+            }
+
+            // Mode 2: Hover
             if (syncedMode == 2) {
                 state.getController().transitionLength(6);
-                state.setAndContinue(sprintingSynced ? SPRINT_FLAP : FLAP);
+                state.setAndContinue(FLAP);
                 return PlayState.CONTINUE;
             }
+
+            // Mode 1: Forward flight (flap)
             if (syncedMode == 1) {
                 state.getController().transitionLength(4);
-                state.setAndContinue(sprintingSynced ? SPRINT_FLAP : FLAP);
+                state.setAndContinue(FLAP);
                 return PlayState.CONTINUE;
             }
+
+            // Mode 0: Glide
             if (syncedMode == 0) {
                 state.getController().transitionLength(12);
                 state.setAndContinue(resolveGlideAnimation(vNow));

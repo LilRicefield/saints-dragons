@@ -268,6 +268,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int clientAnimInitTicks = 0;
     private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
 
+    // Position tracking for FLY_IDLE detection (xo/yo/zo are synced too early in tick cycle)
+    // Public for physics controller access
+    public double lastCheckedX = 0;
+    public double lastCheckedY = 0;
+    public double lastCheckedZ = 0;
+    public int ticksSinceLastMovement = 0;
+
     // Sitting transition state (1.88 seconds = 38 ticks for both down and up animations)
     private int sitTransitionTicks = 0;
     private boolean isSittingDown = false;

@@ -81,29 +81,24 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
         if (dragon.isFlying()) {
             // Get synced flight mode from physics controller
-            // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, -1 = ground
+            // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
             int syncedMode = dragon.getSyncedFlightMode();
-            boolean sprinting = dragon.isAccelerating() || Boolean.TRUE.equals(dragon.getAnimData(DragonAnimTickets.FLIGHT_SPRINTING));
+            var vel = dragon.getDeltaMovement();
+            boolean sprinting = dragon.isAccelerating();
 
-            // Check for takeoff animation (highest priority)
+            // Mode 3: Takeoff (highest priority)
             if (syncedMode == 3 || dragon.isTakeoff() || dragon.timeFlying < 30) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
             }
 
-            // Check for landing animation (second priority) - use rider landing blend for ridden dragons
+            // Landing animation (second priority) - use rider landing blend for ridden dragons
             if (dragon.isRiderLandingBlendActive() || dragon.isLanding()) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(LANDING);
                 return PlayState.CONTINUE;
             }
-
-            // Check velocity for movement detection
-            var vel = dragon.getDeltaMovement();
-            boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.0005 || sprinting;
-            boolean isMovingVertically = Math.abs(vel.y) > 0.02;
-            boolean isStationary = !isMovingHorizontally && !isMovingVertically;
 
             // GLIDE_DOWN - only for RIDER diving (not AI flight)
             // This prevents AI dragons from always playing glide_down
@@ -114,15 +109,15 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 return PlayState.CONTINUE;
             }
 
-            // FLY_IDLE - stationary hovering (rider only)
-            if (dragon.isVehicle() && isStationary && !dragon.isRiderLandingBlendActive()) {
+            // Mode 5: FLY_IDLE - stationary rider hover
+            if (syncedMode == 5) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(FLY_IDLE);
                 return PlayState.CONTINUE;
             }
 
-            // SPRINT_FLAP - accelerating flight
-            if (sprinting && (isMovingHorizontally || sprinting)) {
+            // Mode 4: SPRINT_FLAP - accelerating flight
+            if (syncedMode == 4) {
                 state.getController().transitionLength(3);
                 state.setAndContinue(SPRINT_FLAP);
                 return PlayState.CONTINUE;
