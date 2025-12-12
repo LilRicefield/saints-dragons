@@ -17,8 +17,8 @@ import net.minecraft.world.item.Item;
 
 import java.util.function.Supplier;
 
-public final class ModItems {
-    private static final RegistryHelper.RegistryWrapper<Item> REGISTER =
+public class ModItems {
+    public static final RegistryHelper.RegistryWrapper<Item> REGISTER =
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.ITEM, () -> BuiltInRegistries.ITEM, SaintsDragonsCommon.MOD_ID);
 

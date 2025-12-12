@@ -4,10 +4,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.common.network.NetworkHandler;
-import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.common.registry.ModItems;
-import com.leon.saintsdragons.common.registry.ModParticles;
-import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.*;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
@@ -41,6 +38,7 @@ public final class SaintsDragonsCommon {
         ModItems.register();
         ModSounds.register();
         ModParticles.register();
+        SaintsCreativeTab.register();
 
         // Ensure ability registries are loaded on both logical sides.
         RaevyxAbilities.init();
