@@ -21,6 +21,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.ignivorus.glide_down");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.flap");
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.sprint_flap");
+    private static final RawAnimation FLY_IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.fly_idle");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.ignivorus.sit");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.ignivorus.swim");
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.ignivorus.stunned");
@@ -101,6 +102,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             // Check velocity for movement detection
             var vel = dragon.getDeltaMovement();
             boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.0005 || sprinting;
+            boolean isMovingVertically = Math.abs(vel.y) > 0.02;
+            boolean isStationary = !isMovingHorizontally && !isMovingVertically;
 
             // GLIDE_DOWN - only for RIDER diving (not AI flight)
             // This prevents AI dragons from always playing glide_down
@@ -108,6 +111,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             if (dragon.isVehicle() && dragon.isGoingDown() && !dragon.isRiderLandingBlendActive()) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(GLIDE_DOWN);
+                return PlayState.CONTINUE;
+            }
+
+            // FLY_IDLE - stationary hovering (rider only)
+            if (dragon.isVehicle() && isStationary && !dragon.isRiderLandingBlendActive()) {
+                state.getController().transitionLength(6);
+                state.setAndContinue(FLY_IDLE);
                 return PlayState.CONTINUE;
             }
 

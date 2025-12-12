@@ -40,6 +40,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private static final float DEFAULT_DAMAGE_PER_SECOND = 80.0F;  // Config value = damage per second
     private static final int FIRE_DURATION_SECONDS = 3;
 
+    // Block destruction settings
+    private static final int ABILITY_ACTIVE_BEFORE_MELTING = 80;  // Ability must be active for 4 seconds before melting starts
+    private static final int BLOCK_MELT_TICKS = 40;  // Each block takes 2 seconds of continuous exposure to melt
+
     private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[]{
         new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
         new AbilitySectionDuration(ACTIVE, RIDER_ACTIVE_TICKS)
@@ -53,6 +57,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     // Animation state tracking (follows Raevyx pattern)
     private boolean breathStartPlayed = false;
     private boolean breathLoopActive = false;
+
+    // Track total active ticks for ability-wide block destruction
+    private int totalActiveTicks = 0;
 
     public IgnivorusFireBreathAbility(DragonAbilityType<Ignivorus, IgnivorusFireBreathAbility> type,
                                       Ignivorus user) {
@@ -80,6 +87,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             // Play startup animation but don't show fire cone yet
             breathStartPlayed = true;
             breathLoopActive = false;
+            totalActiveTicks = 0;  // Reset total active time
             dragon.setBreathingFire(false);  // NO fire cone during startup
             dragon.setFireBreathProgress(0);  // Reset progress
             dragon.clearFireBreathPath();
@@ -117,6 +125,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         dragon.setBreathingFire(false);
         dragon.setFireBreathProgress(0);  // Reset progress on interrupt
         dragon.clearFireBreathPath();
+        totalActiveTicks = 0;  // Reset active time
         triggerBreathStop(dragon);
         super.interrupt();
     }
@@ -166,6 +175,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             }
         }
 
+        // Increment total active time - this determines when blocks start breaking
+        totalActiveTicks++;
+
         // Increment stream progress for extending animation (0-40, like Ice & Fire)
         int currentProgress = dragon.getFireBreathProgress();
         if (currentProgress < 40) {
@@ -199,7 +211,20 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             double progressRatio = Math.min(1.0, currentProgress / 40.0);
             Vec3 currentImpact = origin.add(impact.subtract(origin).scale(progressRatio));
 
-            DragonDestructionManager.applyFireBreathImpact(serverLevel, dragon, currentImpact, radius, damage, FIRE_DURATION_SECONDS);
+            // Determine if blocks can start melting based on total ability active time
+            // After 4 seconds, blocks begin melting (each block takes 2 seconds to fully melt)
+            boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING;
+
+            DragonDestructionManager.applyFireBreathImpact(
+                serverLevel,
+                dragon,
+                currentImpact,
+                radius,
+                damage,
+                FIRE_DURATION_SECONDS,
+                BLOCK_MELT_TICKS,  // Each block needs 2 seconds of continuous exposure
+                canMeltBlocks
+            );
         }
     }
 
