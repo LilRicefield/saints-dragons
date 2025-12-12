@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -143,22 +144,20 @@ public class RaevyxTamingHandler {
                     wyvern.setHealth(wyvern.getMaxHealth());
 
                     // Notify nearby players about the timeout
-                    if (!level.isClientSide) {
-                        var nearbyPlayers = level.getEntitiesOfClass(
-                            net.minecraft.world.entity.player.Player.class,
-                            wyvern.getBoundingBox().inflate(32.0),
-                            p -> p instanceof net.minecraft.server.level.ServerPlayer
-                        );
-                        for (var player : nearbyPlayers) {
-                            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                                serverPlayer.displayClientMessage(
-                                    net.minecraft.network.chat.Component.translatable(
-                                        "entity.saintsdragons.raevyx.taming_timeout",
-                                        wyvern.getName()
-                                    ),
-                                    true
-                                );
-                            }
+                    var nearbyPlayers = level.getEntitiesOfClass(
+                        net.minecraft.world.entity.player.Player.class,
+                        wyvern.getBoundingBox().inflate(32.0),
+                        p -> p instanceof ServerPlayer
+                    );
+                    for (var player : nearbyPlayers) {
+                        if (player instanceof ServerPlayer serverPlayer) {
+                            serverPlayer.displayClientMessage(
+                                net.minecraft.network.chat.Component.translatable(
+                                    "entity.saintsdragons.raevyx.taming_timeout",
+                                    wyvern.getName()
+                                ),
+                                true
+                            );
                         }
                     }
 

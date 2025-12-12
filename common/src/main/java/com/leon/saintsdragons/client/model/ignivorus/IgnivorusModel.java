@@ -55,6 +55,9 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
                 return;
             }
 
+            if (entity.isDeadOrDying()){
+                return;
+            }
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
             applyNeckFollow(entity, modelData, partialTick);

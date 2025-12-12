@@ -3,7 +3,6 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -73,7 +72,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
         }
 
         // Check feeding cooldown to prevent spam-feeding
-        if (!wyvern.canFeed()) {
+        if (wyvern.canFeed()) {
             if (!client && player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
                     Component.translatable("entity.saintsdragons.raevyx.still_eating", wyvern.getName()),
@@ -198,7 +197,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
         boolean client = wyvern.level().isClientSide;
 
         // Check feeding cooldown to prevent spam-feeding
-        if (!wyvern.canFeed()) {
+        if (wyvern.canFeed()) {
             if (!client && player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
                     Component.translatable("entity.saintsdragons.raevyx.still_eating", wyvern.getName()),
@@ -246,7 +245,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
      */
     private InteractionResult handleFeeding(Player player, ItemStack itemstack) {
         // Check feeding cooldown to prevent spam-feeding
-        if (!wyvern.canFeed()) {
+        if (wyvern.canFeed()) {
             if (!wyvern.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
                     Component.translatable("entity.saintsdragons.raevyx.still_eating", wyvern.getName()),

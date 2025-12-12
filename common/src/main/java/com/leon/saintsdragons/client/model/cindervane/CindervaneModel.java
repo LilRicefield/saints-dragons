@@ -35,6 +35,10 @@ public CindervaneModel() {
         float partialTick = animationState.getPartialTick();
 
         if (entity.isAlive()) {
+
+            if (entity.isDeadOrDying()){
+                return;
+            }
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
             applyNeckFollow(entity, modelData, partialTick);

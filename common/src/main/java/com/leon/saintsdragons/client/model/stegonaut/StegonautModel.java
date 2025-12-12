@@ -49,6 +49,9 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         float partialTick = animationState.getPartialTick();
 
         if(entity.isAlive()) {
+            if (entity.isDeadOrDying()){
+                return;
+            }
             applyBodyRotationDeviation(entity, partialTick);
             applyTailDrag(entity, partialTick);
             applyNeckFollow(entity, modelData, partialTick);

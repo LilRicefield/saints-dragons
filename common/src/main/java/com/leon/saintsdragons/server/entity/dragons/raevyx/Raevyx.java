@@ -15,6 +15,7 @@ import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.ai.goals.raevyx.baby.RaevyxFollowParentGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
+import com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxPhysicsController;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -350,25 +351,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
     
     /**
-     * Helper method for integer entity data setting
-     */
-    private void setIntegerData(EntityDataAccessor<Integer> accessor, int value) {
-        this.entityData.set(accessor, value);
-    }
-    
-    /**
      * Helper method for float entity data access
      */
     private float getFloatData(EntityDataAccessor<Float> accessor) {
         return this.entityData.get(accessor);
     }
 
-    /**
-     * Helper method for float entity data setting
-     */
-    private void setFloatData(EntityDataAccessor<Float> accessor, float value) {
-        this.entityData.set(accessor, value);
-    }
 
     // ===== STATE VARIABLES (Package-private for controller access) =====
     public int timeFlying = 0;
@@ -430,7 +418,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public boolean canFeed() {
         int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
-        return cooldownTicks <= 0;
+        return cooldownTicks > 0;
     }
 
     public void setFeedingCooldown(int ticks) {
@@ -443,10 +431,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public void enterTamingStun() {
         tamingController.enterStun();
-    }
-
-    public void enterTamingHoldState() {
-        tamingController.enterHoldState();
     }
 
     public void setTamingRecoveryTarget(float targetHealth) {
@@ -463,10 +447,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public void resetTamingFailures() {
         tamingController.resetFailures();
-    }
-
-    public int getTamingFailureCounter() {
-        return tamingController.getFailureCounter();
     }
 
     public boolean isAwaitingTamingFeed() {
@@ -1290,9 +1270,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return super.getEffectiveGroundState();
     }
 
-    // Expose last-tick vertical delta for robust flight-mode decisions
-    public double getYDelta() { return this.getY() - this.yo; }
-
     // Allow AI goals to set ground move state explicitly
     public void setGroundMoveStateFromAI(int state) {
         if (!this.level().isClientSide) {
@@ -1991,8 +1968,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             Vec3 targetPoint = target.getEyePosition().add(0, -0.25, 0).add(wobbleOffset);
 
             // Smooth approach: only move 10% toward desired position each tick
-            Vec3 approach = targetPoint.subtract(currentTarget).scale(0.1F).add(currentTarget);
-            beamServerTarget = approach;
+            beamServerTarget = targetPoint.subtract(currentTarget).scale(0.1F).add(currentTarget);
         } else {
             // No target - slowly sweep the beam forward
             Vec3 sweepOffset = new Vec3(
@@ -2001,8 +1977,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                 6
             ).yRot((float) Math.toRadians(-this.yBodyRot));
             Vec3 sweepTarget = shootFrom.add(sweepOffset);
-            Vec3 approach = sweepTarget.subtract(currentTarget).scale(0.1F).add(currentTarget);
-            beamServerTarget = approach;
+            beamServerTarget = sweepTarget.subtract(currentTarget).scale(0.1F).add(currentTarget);
         }
     }
 
@@ -2348,7 +2323,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                         animationHandler.triggerSitUpAnimation();
                         // Allow stand-up by clearing sit lock
                         setOrderedToSit(false);
-                        return;
                     } else {
                         // sit_up finished
                         setSleeping(false);
@@ -2531,7 +2505,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             if (isGoingDown()) {
                 double altitude = getAltitudeAboveTerrain();
                 // Trigger landing blend when descending below threshold altitude
-                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= RIDER_LANDING_BLEND_ALTITUDE) {
+                if (altitude >= -0.25D && altitude <= RIDER_LANDING_BLEND_ALTITUDE) {
                     // Trigger landing blend immediately when below altitude threshold
                     desiredDir = 0; // Stop pitching down
                     triggerRiderLandingBlend();
@@ -2651,12 +2625,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             resetAmbientSoundTimer();
         }
     }
-
-    private void suppressAmbientSounds(int ticks) {
-        this.sleepAmbientCooldownTicks = Math.max(this.sleepAmbientCooldownTicks, ticks);
-        this.ambientSoundTimer = 0;
-        this.nextAmbientSoundDelay = Math.max(this.nextAmbientSoundDelay, ticks);
-    }
     /**
      * Resets the ambient sound timer with some randomness
      */
@@ -2725,12 +2693,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
                     this.setHovering(false);
                     this.setLanding(false);
                     this.switchToGroundNavigation();
-                }
-
-
-                // Ensure vertical input works
-                if (this.isVehicle()) {
-                    // Vertical input is handled in applyRiderVerticalInput
                 }
             }
         }
@@ -2841,7 +2803,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         double worldX = strafe * cos - forward * sin;
         double worldZ = forward * cos + strafe * sin;
 
-        double dx = worldX * 0.6D * swimSpeed; // Reduced from Nulljaw's 0.85
+        double dx = worldX * 0.6D * swimSpeed;
         double dz = worldZ * 0.6D * swimSpeed;
 
         // Y is handled in handleWaterSwimming
@@ -2907,7 +2869,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Use a custom SpawnGroupData to track if we've already spawned babies
         if (spawnReason == MobSpawnType.CHUNK_GENERATION) {
             // Check if this is the parent (not a baby we're spawning)
-            if (spawnData == null || !(spawnData instanceof RaevyxFamilyData)) {
+            if (!(spawnData instanceof RaevyxFamilyData)) {
                 // 60% chance to spawn with babies
                 if (this.random.nextFloat() < 0.6F) {
                     // Mark this as a family spawn (false = don't spawn baby via vanilla logic)
@@ -3117,47 +3079,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // Prevent lightning strikes from igniting or applying any side effects
     @Override
     public void thunderHit(@Nonnull ServerLevel level, @Nonnull LightningBolt lightning) {
-        // Do not call super; ignore ignition and effects
         if (this.isOnFire()) this.clearFire();
     }
     // ===== ANIMATION HELPER METHODS =====
-    
-    /**
-     * Gets the current bank direction for animation purposes
-     * @return -1 for left, 0 for none, 1 for right
-     */
-    public int getBankDirection() {
-        return bankDir;
-    }
-
-    /**
-     * Gets the current bank angle in degrees. Positive values bank right, negative bank left.
-     */
-    public float getBankAngleDegrees() {
-        return bankAngle;
-    }
-
-    /**
-     * Interpolated bank angle for smooth client-side rendering.
-     */
     public float getBankAngleDegrees(float partialTick) {
         return Mth.lerp(partialTick, prevBankAngle, bankAngle);
     }
-    
-    /**
-     * Gets the current pitch direction for animation purposes
-     * @return -1 for up, 0 for none, 1 for down
-     */
     public int getPitchDirection() {
         return pitchDir;
-    }
-
-    /**
-     * Checks if the wyvern is currently summoning (controls locked for ability)
-     * @return true if summoning
-     */
-    public boolean isSummoning() {
-        return false;
     }
 
     // ===== SUPERCHARGE (Summon Storm) =====
@@ -3205,7 +3134,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             float size = 0.5f + this.random.nextFloat() * 0.25f; // smaller sprites
             emitMicroArc(server, from, to, size);
         }
-        // A couple of sparks near center (smaller spread)
         server.sendParticles(net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
                 center.x, center.y, center.z,
                 3, radius * 0.15, radius * 0.15, radius * 0.15, 0.0);
@@ -3218,7 +3146,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         net.minecraft.world.phys.Vec3 dir = step.lengthSqr() > 1.0e-6 ? step.normalize() : randomUnit(this.random);
         boolean female = this.isFemale();
         for (int i = 0; i <= steps; i++) {
-            // Randomly drop some points for a crackly feel
             if (this.random.nextFloat() < 0.7f) {
                 server.sendParticles(new RaevyxLightningStormData(size, female),
                         pos.x, pos.y, pos.z, 1, dir.x, dir.y, dir.z, 0.0);
@@ -3239,70 +3166,31 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public boolean isInSitTransition() {
         return isSittingDown || isStandingUp;
     }
-
     public boolean isSittingDownAnimation() {
         return isSittingDown;
     }
-
     public boolean isStandingUpAnimation() {
         return isStandingUp;
     }
 
     // ===== ANIMATION TIMING HELPERS =====
-    /**
-     * Returns the duration in ticks for the sit down animation.
-     * Uses shared animation name - both baby and adult use 1.5s animation.
-     */
     private int getSitDownAnimationTicks() {
         return 30; // 1.5s for both baby and adult (unified)
     }
-
-    /**
-     * Returns the duration in ticks for the sit up animation.
-     * Uses shared animation name - both baby and adult use 1.0s animation.
-     */
     private int getSitUpAnimationTicks() {
         return 20; // 1.0s - matches actual animation length
     }
-
-    /**
-     * Returns the duration in ticks for the fall asleep animation.
-     * Uses shared animation name - both baby and adult use 2.5s animation.
-     */
     private int getFallAsleepAnimationTicks() {
         return 50; // 2.5s for both baby and adult (unified)
     }
-
-    /**
-     * Returns the duration in ticks for the wake up animation.
-     * Uses shared animation name - both baby and adult use 2.625s animation.
-     */
     private int getWakeUpAnimationTicks() {
         return 53; // 2.625s for both baby and adult (unified, ~2.65s)
-    }
-
-    // Exposed durations for AI goals (sleep sequencing)
-    public int getSleepSitDownDuration() {
-        return getSitDownAnimationTicks();
     }
 
     public int getSleepSitUpDuration() {
         return getSitUpAnimationTicks();
     }
 
-    public int getSleepFallAsleepDuration() {
-        return getFallAsleepAnimationTicks();
-    }
-
-    public int getSleepWakeUpDuration() {
-        return getWakeUpAnimationTicks();
-    }
-
-
-    /**
-     * Override max sit ticks to match the actual sit_down animation length.
-     * This prevents visual desync where the SIT loop starts before sit_down finishes.
-     */
     @Override
     public float maxSitTicks() {
         return 30.0F; // Matches sit_down animation (1.5s = 30 ticks)
@@ -3310,9 +3198,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     // ===== SLEEPING =====
     @Override
-    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
         // Raevyx are daylight sleepers (avoid thunderstorms)
-        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.DIURNAL();
+        return DragonSleepBehavior.DragonSleepPreferences.DIURNAL();
     }
 
     @Override
@@ -3480,11 +3368,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             this.setRunning(false);
             this.getNavigation().stop();
         } else if (wasSitting) {
-            // ONLY clear flight states if we were ACTUALLY sitting and are now standing up
-            // Don't clear during reload (wasSitting == false) - flight state is restored separately
-            // Don't clear sitProgress here; let updateSittingProgress() play the stand-up animation first.
             if (!level().isClientSide) {
-                // Ensure we are in ground navigation mode and not stuck in legacy flight flags
                 switchToGroundNavigation();
                 if (isFlying()) {
                     setFlying(false);
@@ -3556,30 +3440,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tag.putInt("TimeFlying", timeFlying);
         tag.putBoolean("UsingAirNav", usingAirNav);
         tag.putInt("RiderTakeoffTicks", riderTakeoffTicks);
-
-        // Save critical flight state variables that were missing
         tag.putLong("LastLandingGameTime", lastLandingGameTime);
         tag.putBoolean("LandingFlag", landingFlag);
         tag.putInt("LandingTimer", landingTimer);
         tag.putBoolean("LandedFlag", landedFlag);
         tag.putInt("LandedTimer", landedTimer);
-
-        // Save lock states (transient rider/takeoff locks intentionally omitted)
-
-        // Persist combat cooldowns
         this.combatManager.saveToNBT(tag);
-
-        // Persist supercharge timer so logout/login doesn't clear buff early
         tag.putInt("SuperchargeTicks", Math.max(0, this.superchargeTicks));
-
-        // Persist temporary invulnerability timer (e.g., during Summon Storm windup)
         tag.putInt("TempInvulnTicks", Math.max(0, this.tempInvulnTicks));
         tag.putBoolean("AllowGroundBeamStorm", this.allowGroundBeamDuringStorm);
-
-        // Sleep state is ephemeral - not persisted (sleep goal re-evaluates on load)
         tag.putBoolean("ManualSitCommand", this.manualSitCommand);
-
-        // Persist feeding cooldown (synced via entity data but saved for redundancy)
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tamingController.save(tag);
 
@@ -3594,32 +3464,21 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.timeFlying = tag.getInt("TimeFlying");
         this.usingAirNav = tag.getBoolean("UsingAirNav");
         this.riderTakeoffTicks = tag.contains("RiderTakeoffTicks") ? tag.getInt("RiderTakeoffTicks") : 0;
-
-        // Restore critical flight state variables that were missing
         this.lastLandingGameTime = tag.contains("LastLandingGameTime") ? tag.getLong("LastLandingGameTime") : Long.MIN_VALUE;
         this.landingFlag = tag.contains("LandingFlag") && tag.getBoolean("LandingFlag");
         this.landingTimer = tag.contains("LandingTimer") ? tag.getInt("LandingTimer") : 0;
         this.landedFlag = tag.contains("LandedFlag") && tag.getBoolean("LandedFlag");
         this.landedTimer = tag.contains("LandedTimer") ? tag.getInt("LandedTimer") : 0;
-
-        // Reset tick counters to prevent state inconsistencies (like Cindervane)
-        // This prevents the dragon from thinking it just started flying when reloading mid-flight
         if (!savedFlying) {
             landingTimer = 0;
         }
-
-        // Restore lock states (transient rider/takeoff locks reset on load)
         this.clearRiderControlLock();
         this.takeoffLockTicks = 0;
-
         // Restore combat cooldowns
         this.combatManager.loadFromNBT(tag);
-
-        // Restore supercharge timer if present
         if (tag.contains("SuperchargeTicks")) {
             this.superchargeTicks = Math.max(0, tag.getInt("SuperchargeTicks"));
         }
-        // Restore temporary invulnerability
         if (tag.contains("TempInvulnTicks")) {
             this.tempInvulnTicks = Math.max(0, tag.getInt("TempInvulnTicks"));
             if (this.tempInvulnTicks > 0) {
@@ -3630,10 +3489,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         if (tag.contains("AllowGroundBeamStorm")) {
             this.allowGroundBeamDuringStorm = tag.getBoolean("AllowGroundBeamStorm");
         }
-
-        // Sleep state is ephemeral - not loaded (cleaned up below, sleep goal re-evaluates)
-
-        // Restore feeding cooldown (synced via entity data but loaded for redundancy)
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
@@ -3648,15 +3503,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         } else {
             switchToGroundNavigation();
         }
-
-        // Safety: if we reloaded while flagged as sitting but owner command isn't "sit",
-        // clear the stuck sitting state so pathfinding goals can resume.
         if (this.getCommand() != 1 && this.isOrderedToSit()) {
             this.setOrderedToSit(false);
         }
 
-        // Clear all sleep state on world load (sleep is ephemeral, not persisted)
-        // Sleep goal will re-evaluate conditions and put dragon back to sleep if appropriate
         if (this.sleepLocked || this.isSleepingEntering() || this.isSleepingExiting() || this.entityData.get(DATA_SLEEPING)) {
             this.releaseSleepLock();
             this.wakeUpImmediately();
@@ -3668,9 +3518,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         this.entityData.set(DATA_SLEEPING, false);
         this.sleepCommandSnapshot = -1;
         this.followFailsafeCooldown = 0;
-
-        // CRITICAL: Set NoGravity for flying dragons on reload (like Cindervane)
-        // This prevents dragons from falling when reloading mid-flight
         boolean shouldHaveNoGravity = isFlying() || isHovering();
         this.setNoGravity(shouldHaveNoGravity);
 
@@ -3705,11 +3552,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         applyConfiguredAttributes();
     }
 
-    /**
-     * Override to prevent Minecraft from repositioning flying dragons after world reload.
-     * When this returns false, the entity keeps its loaded position, which is critical for
-     * flying dragons with passengers - otherwise passengers get ejected during the repositioning.
-     */
     @Override
     protected boolean repositionEntityAfterLoad() {
         // Flying dragons should NOT be repositioned - keep exact loaded position
@@ -3761,30 +3603,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // ===== GECKOLIB =====
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // Use entity-specific controller names to prevent animation bleeding between dragons
-        // Update frequency: run every tick to maintain accurate keyframe timing
         AnimationController<Raevyx> movementController =
                 new AnimationController<>(this, "movement", 5, animationHandler::handleMovementAnimation);
-
-        // Action controller uses ONLY triggers (no predicate logic)
-        // All animations (combat, abilities, sleep, death) are triggered via triggerAnim()
-        // Lightning wyvern = fast, aggressive combat - instant transitions
         AnimationController<Raevyx> actionController =
                 new AnimationController<>(this, "action", 2, state -> {
-                    // CRITICAL: Stop action controller during taming stun to prevent animation bleeding
                     if (isTamingStunned()) {
                         return PlayState.STOP;
                     }
                     return PlayState.STOP;
                 });
 
-        // Sound keyframes - only register on relevant controllers to prevent duplication
-        // Movement controller: handles footsteps, wing flaps during locomotion
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
-        // Action controller: handles combat sounds, ability sounds, vocalizations
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
-
-        // Setup animation triggers via animation handler
         animationHandler.setupActionController(actionController);
 
         // Dedicated controller for instant hurt reactions (no transition easing)
@@ -3826,7 +3656,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
+    public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         // Use melee mode to switch between bite and horn gore
         // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
         return getMeleeMode() == 0 ?
@@ -3835,12 +3665,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getRoaringAbility() {
+    public DragonAbilityType<?, ?> getRoaringAbility() {
         return RaevyxAbilities.RAEVYX_ROAR;
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getChannelingAbility() {
+    public DragonAbilityType<?, ?> getChannelingAbility() {
         return RaevyxAbilities.RAEVYX_SUMMON_STORM;
     }
 
@@ -3950,7 +3780,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     }
 
     @Override
-    public EntityDimensions getDimensions(@Nonnull Pose pose) {
+    public @NotNull EntityDimensions getDimensions(@Nonnull Pose pose) {
         // Scale down hitbox for babies to prevent pushing parent dragon
         EntityDimensions baseDimensions = super.getDimensions(pose);
         if (this.isBaby()) {
@@ -3997,11 +3827,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public boolean canBreed() {
-        // Allow breeding even when tamed (bypass TamableAnimal's sitting requirement)
-        // Requirements:
-        // 1. Not a baby
-        // 2. Has love hearts (in love mode from feeding)
-        // 3. Health is sufficient
         return !this.isBaby() && this.getHealth() >= this.getMaxHealth() && this.isInLove();
     }
 
@@ -4157,42 +3982,22 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     public float getFlightSpeed() {
         return 1.0f; // Base flight speed
     }
-    
+
     @Override
     public double getPreferredFlightAltitude() {
-        return 15.0; // Preferred altitude above ground
+        return 15.0;
     }
     
     @Override
     public boolean canTakeoff() {
         return !isInWaterOrBubble() && !isInLava() && onGround();
     }
-    @Override
-    public boolean canSleepNow() {
-        return !isCharging() && !isBeaming() && !isVehicle();
-    }
 
     private boolean shouldStaySeatedCommand() {
         return this.isTame() && this.getCommand() == 1;
     }
-    
-    // ===== LIGHTNING DRAGON SPECIFIC METHODS =====
-    
-    public void playLightningEffect(Vec3 position) {
-        // Lightning effect implementation
-        if (level().isClientSide) {
-            // Client-side lightning effect
-            level().addParticle(new RaevyxLightningStormData(1.0f, this.isFemale()),
-                position.x, position.y, position.z, 0.0, 0.0, 0.0);
-        }
-    }
-    public boolean isCharging() {
-        // Check if Lightning Dragon is charging
-        return false; // Implement based on your charging logic
-    }
 
     // ===== ELECTRICAL CONDUCTIVITY =====
-
     private static final ElectricalConductivityProfile CONDUCTIVITY_PROFILE =
             new ElectricalConductivityProfile(1.0f, 0.5f, 0.0f, 1.0, 0.3, 0.0);
 
@@ -4211,15 +4016,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         return this;
     }
 
-    /**
-     * Check if this wyvern can be bound (not playing dead, not sleeping, etc.)
-     */
     public boolean canBeBound() {
-        return !isSleeping() && !isDying() && !isCharging() && !isBeaming();
+        return !isSleeping() && !isDying() && !isBeaming();
     }
 
     // ===== SCREEN SHAKE INTERFACE IMPLEMENTATION =====
-    
     @Override
     public float getScreenShakeAmount(float partialTicks) {
         float currentAmount = getFloatData(DATA_SCREEN_SHAKE_AMOUNT);
@@ -4233,16 +4034,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     @Override
     public boolean canFeelShake(Entity player) {
-        // Allow screen shake regardless of whether player is on ground
-        // This is important for wyvern riding scenarios
         return true;
     }
-
-    /**
-     * Triggers screen shake for the specified intensity.
-     * 
-     * @param intensity The shake intensity (0.0 to 1.0+)
-     */
     public void triggerScreenShake(float intensity) {
         this.screenShakeAmount = Math.max(this.screenShakeAmount, intensity);
         this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);

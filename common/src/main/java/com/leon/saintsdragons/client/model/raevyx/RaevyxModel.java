@@ -74,6 +74,9 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
                 return;
             }
 
+            if (entity.isDeadOrDying()){
+                return;
+            }
             applyBodyRotationDeviation(entity, partialTick);  // Same as Nulljaw/Stegonaut
             applyBankingRoll(entity, animationState);
             applyNeckFollow(entity, modelData, partialTick);   // Base head tracking first (uses animation snapshot)
