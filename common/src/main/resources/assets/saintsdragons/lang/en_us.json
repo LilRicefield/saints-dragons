@@ -32,16 +32,16 @@
 
   "saintsdragons.tooltip.stegonaut_binder.description": "§e§lA steadfast core. Strength radiates quietly within.§r§r",
   "saintsdragons.tooltip.stegonaut_binder.empty": "Right-click on a tamed Stegonaut to bind it",
-  "saintsdragons.tooltip.stegonaut_binder.right_click_to_release": "Right-click on ground to release bound drake",
+  "saintsdragons.tooltip.stegonaut_binder.right_click_to_release": "Right-click on ground to release bound Stegonaut",
   "saintsdragons.tooltip.stegonaut_binder.bound": "Contains: %s",
   "saintsdragons.tooltip.stegonaut_binder.bound_desc": "Provides resistance buff while carried",
 
 
   "saintsdragons.tooltip.raevyx_binder.description": "§4Holds the storm at bay. §r§4§l§oFor now.§r§r§r",
   "saintsdragons.tooltip.raevyx_binder.empty": "Right-click on a tamed Raevyx to bind it",
-  "saintsdragons.tooltip.raevyx_binder.right_click_dragon_to_bind": "Right-click on ground to release bound wyvern",
+  "saintsdragons.tooltip.raevyx_binder.right_click_dragon_to_bind": "Right-click on ground to release bound Raevyx",
   "saintsdragons.tooltip.raevyx_binder.bound": "Contains: %s",
-  "saintsdragons.tooltip.raevyx_binder.right_click_to_release": "Right-click on ground to release bound wyvern",
+  "saintsdragons.tooltip.raevyx_binder.right_click_to_release": "Right-click on ground to release bound Raevyx",
 
 
   "saintsdragons.tooltip.cindervane_binder.description": "§6The wind hums within, restless yet graceful.§r",
@@ -56,7 +56,7 @@
   "saintsdragons.tooltip.ignivorus_binder.right_click_ignivorus_to_bind": "Ensure the Ignivorus is grounded before binding",
 
 
-  "saintsdragons.tooltip.nulljaw.description": "§lA shard of the abyss hums quietly inside.§r",
+  "saintsdragons.tooltip.nulljaw.description": "§1A shard of the abyss hums quietly inside.§1",
   "saintsdragons.tooltip.nulljaw.empty": "Right-click on a tamed Nulljaw to bind it",
   "saintsdragons.tooltip.nulljaw.right_click_nulljaw_to_bind": "Right-click on ground to release bound Nulljaw",
   "saintsdragons.tooltip.nulljaw.bound": "Contains: %s",
