@@ -85,8 +85,7 @@ public class CindervaneAnimationHandler {
             if (dragon.isFlying()) {
                 // Check if actually moving to determine hover vs active flight
                 var vel = dragon.getDeltaMovement();
-                boolean sprintingSynced = Boolean.TRUE.equals(dragon.getAnimData(DragonAnimTickets.FLIGHT_SPRINTING));
-                boolean sprinting = dragon.isAccelerating() || sprintingSynced;
+                boolean sprinting = dragon.isAccelerating();
                 boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01 || sprinting;
                 boolean isMovingVertically = Math.abs(vel.y) > 0.02;
                 boolean isStationary = !isMovingHorizontally && !isMovingVertically;
@@ -109,7 +108,7 @@ public class CindervaneAnimationHandler {
                     return PlayState.CONTINUE;
                 }
                 // SPRINT FLYING - third priority after dive/landing/takeoff
-                if (sprinting && (isMovingHorizontally || sprintingSynced)) {
+                if (sprinting && isMovingHorizontally) {
                     state.getController().transitionLength(3);
                     state.setAndContinue(SPRINT_FLAP);
                     return PlayState.CONTINUE;
@@ -184,8 +183,7 @@ public class CindervaneAnimationHandler {
                     state.getController().transitionLength(6);
                     state.setAndContinue(GLIDE_DOWN);
                 } else {
-                    boolean sprintingSynced = Boolean.TRUE.equals(dragon.getAnimData(DragonAnimTickets.FLIGHT_SPRINTING));
-                    boolean sprinting = dragon.isAccelerating() || sprintingSynced;
+                    boolean sprinting = dragon.isAccelerating();
                     boolean isMovingHorizontally = dragon.getDeltaMovement().horizontalDistanceSqr() > 0.01 || sprinting;
 
                     // Wild dragons alternate between FLAP and GLIDE for natural flight

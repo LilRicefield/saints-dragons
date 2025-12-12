@@ -93,6 +93,41 @@ public class IgnivorusPhysicsController {
             return 2;
         }
 
+        // Check for ridden flight modes (sprint and fly_idle) before altitude-based logic
+        if (isRiddenByOwner()) {
+            // Track position changes manually (xo/yo/zo are synced before this is called)
+            double deltaX = dragon.getX() - dragon.lastCheckedX;
+            double deltaY = dragon.getY() - dragon.lastCheckedY;
+            double deltaZ = dragon.getZ() - dragon.lastCheckedZ;
+            double positionChangeSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+
+            boolean goingUp = dragon.isGoingUp();
+            boolean goingDown = dragon.isGoingDown();
+            boolean accelerating = dragon.isAccelerating();
+
+            // Update position tracking and movement timer
+            if (positionChangeSqr > 0.0001 || goingUp || goingDown || accelerating) {
+                // Dragon is moving or player is giving directional input
+                dragon.ticksSinceLastMovement = 0;
+                dragon.lastCheckedX = dragon.getX();
+                dragon.lastCheckedY = dragon.getY();
+                dragon.lastCheckedZ = dragon.getZ();
+            } else {
+                // No movement detected
+                dragon.ticksSinceLastMovement++;
+            }
+
+            // FLY_IDLE - stationary hover (only after being still for 3+ ticks)
+            if (dragon.ticksSinceLastMovement > 3) {
+                return 5; // FLY_IDLE
+            }
+
+            // SPRINT_FLAP - accelerating
+            if (accelerating) {
+                return 4; // SPRINT_FLAP
+            }
+        }
+
         double altitude = dragon.getY() - dragon.level().getHeight(
                 net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 (int) dragon.getX(),

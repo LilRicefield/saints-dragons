@@ -462,7 +462,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         // Update entity data and sync to clients
         boolean groundStateChanged = this.entityData.get(getGroundMoveStateAccessor()) != moveState;
         boolean flightModeChanged = this.entityData.get(getFlightModeAccessor()) != flightMode;
-        boolean sprintChanged = false;
 
         if (groundStateChanged) {
             this.entityData.set(getGroundMoveStateAccessor(), moveState);
@@ -472,16 +471,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             this.entityData.set(getFlightModeAccessor(), flightMode);
         }
 
-        // Track flight sprint state (accelerating while flying) for synced animation selection
-        boolean flightSprinting = isFlying() && isAccelerating();
-        Boolean prevSprint = this.getAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.FLIGHT_SPRINTING);
-        if (prevSprint == null || prevSprint != flightSprinting) {
-            sprintChanged = true;
-            this.setAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.FLIGHT_SPRINTING, flightSprinting);
-        }
-
         // Send animation state sync to clients when states change
-        if (groundStateChanged || flightModeChanged || sprintChanged) {
+        if (groundStateChanged || flightModeChanged) {
             this.syncAnimState(moveState, flightMode);
         }
 
