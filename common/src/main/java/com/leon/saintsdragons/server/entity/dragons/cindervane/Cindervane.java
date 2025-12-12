@@ -21,7 +21,6 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.Cinderva
 import java.util.Map;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
-import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
@@ -1414,8 +1413,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (!level().isClientSide && !isFlying()) {
             float fwd = (float) Mth.clamp(input.z, -1.0, 1.0);
             float str = (float) Mth.clamp(input.x, -1.0, 1.0);
-            this.entityData.set(DATA_RIDER_FORWARD, RideableDragonData.applyInputThreshold(fwd));
-            this.entityData.set(DATA_RIDER_STRAFE, RideableDragonData.applyInputThreshold(str));
+            // Apply simple threshold to filter noise
+            this.entityData.set(DATA_RIDER_FORWARD, Math.abs(fwd) > 0.02f ? fwd : 0f);
+            this.entityData.set(DATA_RIDER_STRAFE, Math.abs(str) > 0.02f ? str : 0f);
         }
 
         return input;

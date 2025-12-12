@@ -359,7 +359,9 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
                 // Check if entity is actually moving
                 double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                initialGroundState = RideableDragonData.getGroundStateFromVelocity(velSqr);
+                // 0=idle, 1=walk, 2=run (GeckoLib threshold at 0.000001 handles actual animation)
+                if (velSqr > 0.02) initialGroundState = 2;
+                else if (velSqr > 0.0008) initialGroundState = 1;
             } else if (isFlying()) {
                 initialFlightMode = getFlightMode();
             }
@@ -379,7 +381,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
                 // Recalculate ground movement state based on current velocity
                 double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                currentGroundState = RideableDragonData.getGroundStateFromVelocity(velSqr);
+                if (velSqr > 0.02) currentGroundState = 2;
+                else if (velSqr > 0.0008) currentGroundState = 1;
             }
 
             int currentFlightMode = getFlightMode();
@@ -403,8 +406,9 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         if (!level().isClientSide && !isFlying()) {
             float fwd = (float) Mth.clamp(input.z, -1.0, 1.0);
             float str = (float) Mth.clamp(input.x, -1.0, 1.0);
-            this.setLastRiderForward(RideableDragonData.applyInputThreshold(fwd));
-            this.setLastRiderStrafe(RideableDragonData.applyInputThreshold(str));
+            // Apply simple threshold to filter noise
+            this.setLastRiderForward(Math.abs(fwd) > 0.02f ? fwd : 0f);
+            this.setLastRiderStrafe(Math.abs(str) > 0.02f ? str : 0f);
         }
 
         return input;
@@ -442,17 +446,20 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
                 float fwd = this.entityData.get(getRiderForwardAccessor());
                 float str = this.entityData.get(getRiderStrafeAccessor());
 
-                if (RideableDragonData.isSignificantRiderInput(fwd, str)) {
+                // Check if rider has significant input (threshold 0.05)
+                if (Math.abs(fwd) + Math.abs(str) > 0.05f) {
                     moveState = this.isAccelerating() ? 2 : 1;
                 } else {
                     // Fallback while ridden: use actual velocity so observers still see walk/run
                     double speedSqr = getDeltaMovement().horizontalDistanceSqr();
-                    moveState = RideableDragonData.getRiddenGroundStateFromVelocity(speedSqr);
+                    if (speedSqr > 0.08) moveState = 2;
+                    else if (speedSqr > 0.005) moveState = 1;
                 }
             } else {
                 // Use horizontal velocity for AI classification
                 double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                moveState = RideableDragonData.getGroundStateFromVelocity(velSqr);
+                if (velSqr > 0.02) moveState = 2;
+                else if (velSqr > 0.0008) moveState = 1;
             }
         }
 
@@ -474,17 +481,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         // Send animation state sync to clients when states change
         if (groundStateChanged || flightModeChanged) {
             this.syncAnimState(moveState, flightMode);
-        }
-
-        // Decay rider inputs slightly each tick to avoid sticking when packets drop
-        if (this.entityData.get(getRiderForwardAccessor()) != 0f ||
-                this.entityData.get(getRiderStrafeAccessor()) != 0f) {
-
-            float nf = RideableDragonData.decayRiderInput(this.entityData.get(getRiderForwardAccessor()));
-            float ns = RideableDragonData.decayRiderInput(this.entityData.get(getRiderStrafeAccessor()));
-
-            this.entityData.set(getRiderForwardAccessor(), nf);
-            this.entityData.set(getRiderStrafeAccessor(), ns);
         }
 
         // Stop running if not moving

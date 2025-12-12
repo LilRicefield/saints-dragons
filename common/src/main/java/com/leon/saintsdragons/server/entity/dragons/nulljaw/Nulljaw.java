@@ -61,7 +61,6 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
-import com.leon.saintsdragons.server.entity.base.RideableDragonData;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.Map;
@@ -864,8 +863,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         if (!level().isClientSide) {
             float fwd = (float) Mth.clamp(input.z, -1.0D, 1.0D);
             float str = (float) Mth.clamp(input.x, -1.0D, 1.0D);
-            setLastRiderForward(RideableDragonData.applyInputThreshold(fwd));
-            setLastRiderStrafe(RideableDragonData.applyInputThreshold(str));
+            // Apply simple threshold to filter noise
+            setLastRiderForward(Math.abs(fwd) > 0.02f ? fwd : 0f);
+            setLastRiderStrafe(Math.abs(str) > 0.02f ? str : 0f);
         }
         return input;
     }
