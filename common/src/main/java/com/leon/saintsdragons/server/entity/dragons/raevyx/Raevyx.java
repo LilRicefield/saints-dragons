@@ -247,7 +247,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
     private int ownerDistanceCacheTime = -1;
-    private List<Projectile> cachedNearbyProjectiles = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private List<Projectile> cachedNearbyProjectiles = new java.util.ArrayList<>();
     private int nearbyProjectilesCacheTime = -1;
     private int projectileCacheIntervalTicks = 3; // dynamic backoff (min 3)
     private int emptyProjectileScans = 0;
@@ -632,6 +632,19 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        if (config == null) {
+            // Log an error and return default attributes to prevent a crash
+            // You should have a logger instance in your main mod class to use here
+            // For now, just printing to stderr
+            System.err.println("CRITICAL: Raevyx dragon attribute config is missing. Using default values.");
+            return TamableAnimal.createMobAttributes()
+                    .add(Attributes.MAX_HEALTH, 20.0D) // Default fallback
+                    .add(Attributes.MOVEMENT_SPEED, 0.25D)
+                    .add(Attributes.FOLLOW_RANGE, 80.0D)
+                    .add(Attributes.FLYING_SPEED, 0.4D) // Default fallback
+                    .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                    .add(Attributes.ARMOR, 5.0D); // Default fallback
+        }
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.25D) // Hardcoded AI pathfinding speed
@@ -1484,6 +1497,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             tickFollowFailsafe();
         }
 
+        if (tickCount % 100 == 0) {
+            tickRecentAggroCleanup();
+        }
+
         // === SERVER-SIDE: SLEEP WAKE-UP LOGIC ===
         // Wake up if mounted or target appears/aggression
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
@@ -1638,7 +1655,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     // Tuneable constants
     private static final double WATER_EFFECT_MAX_HEIGHT = 8.0;   // Max height above water to trigger effect
-    private static final double WATER_EFFECT_INTENSITY = 1.2;    // Multiplier for particle count (smaller than Cindervane)
+    private static final double WATER_EFFECT_INTENSITY = 0.6;    // Multiplier for particle count (smaller than Cindervane)
 
     /**
      * Creates water disturbance effects when flying over water.
@@ -3813,6 +3830,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             }
         }
         return out;
+    }
+
+    private void tickRecentAggroCleanup() {
+        if (recentAggroIds.isEmpty()) {
+            return;
+        }
+        long now = this.level().getGameTime();
+        recentAggroIds.entrySet().removeIf(entry -> entry.getValue() < now);
     }
 
     @Override
