@@ -123,7 +123,7 @@ public class IgnivorusFollowOwnerGoal extends Goal {
             // Start landing sequence when close enough to owner AND owner is on ground
             dragon.setLanding(true);
             dragon.setFlying(false);
-            dragon.setHovering(true);
+            dragon.setHovering(false);
             pathRecalcCooldown = 0;
         } else if (!shouldFly && dragon.isFlying()) {
             // Owner is airborne but close - maintain flight without landing
