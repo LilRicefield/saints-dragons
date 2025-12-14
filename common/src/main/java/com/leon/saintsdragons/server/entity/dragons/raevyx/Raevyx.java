@@ -97,7 +97,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 //Just everything
-public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAttackMob,
+public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         DragonFlightCapable, ShakesScreen, SoundHandledDragon, ElectricalConductivityCapable {
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
 
@@ -2862,7 +2862,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed, Vec3 velocity) {
         double strafe = wishDir.x;
         double forward = wishDir.z;
-        float yawRad = this.getYRot() * ((float)Math.PI / 180F);
+        float yawRad = this.getYRot() * ((float) Math.PI / 180F);
         double sin = Math.sin(yawRad);
         double cos = Math.cos(yawRad);
 
@@ -2875,15 +2875,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         // Y is handled in handleWaterSwimming
         return new Vec3(dx, 0, dz);
     }
-
-    // ===== RANGED ATTACK IMPLEMENTATION =====
-    @Override
-    public void performRangedAttack(@Nonnull LivingEntity target, float distanceFactor) {
-        // No ranged logic for now; ground melee goal handles combat
-        // Intentionally left blank to avoid unintended ranged behavior
-    }
-
-    // Attack resolution is handled by DragonMeleeAttackGoal via abilities
 
 
     // ===== UTILITY METHODS =====
