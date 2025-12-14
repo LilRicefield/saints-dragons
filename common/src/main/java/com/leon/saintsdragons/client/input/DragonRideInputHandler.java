@@ -178,7 +178,8 @@ public final class DragonRideInputHandler {
 
         // Only send takeoff request for dragons that can fly
         if (ascendDown && !wasAscendPressed && !dragon.isFlying() && dragon.canTakeoff()) {
-            sendInput(false, false, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
+            // Preserve the current ascend/descend state so the server keeps Space latched on takeoff
+            sendInput(ascendDown, descendDown, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
         }
 
         if (toggleMeleeDown && !wasToggleMeleeDown && meleeCooldownTicks == 0) {

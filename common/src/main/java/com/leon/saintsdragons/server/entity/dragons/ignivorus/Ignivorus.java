@@ -438,6 +438,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             setFlightMode(newFlightMode);
         }
 
+        // Auto-complete landing once we're actually on ground to avoid hover-stuck states
+        if (!level().isClientSide && isLanding() && onGround()) {
+            markLandedNow();
+        }
+        // Safety: clear hover flag if grounded to re-enable gravity/takeoff transitions
+        if (!level().isClientSide && !isFlying() && isHovering() && onGround()) {
+            setHovering(false);
+        }
+
         // CRITICAL: Disable gravity when flying/hovering (fixes grounding issue)
         this.setNoGravity(isFlying() || isHovering());
 
@@ -1216,6 +1225,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         setFlying(false);
         setLanding(false);
         setTakeoff(false);
+        setHovering(false);
         timeFlying = 0;
     }
 
