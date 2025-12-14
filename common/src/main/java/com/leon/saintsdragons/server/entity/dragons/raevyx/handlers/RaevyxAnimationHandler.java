@@ -12,9 +12,6 @@ import software.bernie.geckolib.core.object.PlayState;
  * Extracted from Raevyx to improve organization and maintainability
  */
 public record RaevyxAnimationHandler(Raevyx wyvern) {
-    private static final int TAKEOFF_ANIM_MAX_TICKS = 35;
-    private static final int TAKEOFF_ANIM_EARLY_TICKS = 30;
-
     // ===== ANIMATION CONSTANTS =====
 
     /** Ground idle animation */
@@ -252,12 +249,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            if (shouldPlayTakeoff()) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(TAKEOFF);
-                return PlayState.CONTINUE;
-            }
-
             float hoverWeight = wyvern.getHoveringFraction();
             float flapWeight = wyvern.getFlappingFraction();
             boolean descendingNow = vNow.y < -0.03;
@@ -392,14 +383,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         });
     }
 
-    private boolean shouldPlayTakeoff() {
-        if (wyvern.timeFlying < TAKEOFF_ANIM_EARLY_TICKS) {
-            return true;
-        }
-        boolean airborne = !wyvern.onGround();
-        boolean ascending = wyvern.getDeltaMovement().y > 0.08;
-        return (wyvern.timeFlying < TAKEOFF_ANIM_MAX_TICKS) && (airborne || ascending);
-    }
 
     private RawAnimation resolveGlideAnimation(Vec3 velocity) {
         if (!wyvern.isTame()) {

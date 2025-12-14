@@ -3,11 +3,16 @@ package com.leon.saintsdragons.server.entity.controller.raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-/** 
+/**
  * Clean physics controller for Raevyx - simple and maintainable
  */
 public class RaevyxPhysicsController {
     private final Raevyx wyvern;
+    private boolean riderHighAltitudeGlide = false;
+
+    // Takeoff animation timing
+    private static final int TAKEOFF_ANIM_MAX_TICKS = 35;
+    private static final int TAKEOFF_ANIM_EARLY_TICKS = 30;
 
     // Physics envelopes for renderer effects
     private final Envelope01 glideEnv = new Envelope01(0.25f, 0.25f);
@@ -59,6 +64,67 @@ public class RaevyxPhysicsController {
         prevHoveringFraction = hoveringFraction;
 
         updatePhysicsEnvelopes();
+    }
+
+    /**
+     * Computes the flight mode for network sync
+     * 0 = glide, 1 = flap/forward, 2 = hover, 3 = takeoff, -1 = ground/none
+     */
+    public int computeFlightModeForSync() {
+        if (!wyvern.isFlying()) {
+            riderHighAltitudeGlide = false;
+            return -1;
+        }
+
+        // CRITICAL: Check takeoff FIRST
+        if (shouldPlayTakeoff()) {
+            riderHighAltitudeGlide = false;
+            return 3;
+        }
+
+        if (wyvern.isHovering() || wyvern.isLanding()) {
+            riderHighAltitudeGlide = false;
+            return 2;
+        }
+
+        Vec3 velocity = wyvern.getDeltaMovement();
+        boolean ascending = velocity.y > 0.02;
+        boolean riderAscending = wyvern.isVehicle() && wyvern.isGoingUp();
+
+        // Use physics envelope to determine flap vs glide for smooth transitions
+        float flapWeight = flappingFraction;
+        float glideWeight = glidingFraction;
+
+        // Hysteresis: require stronger evidence to switch states
+        boolean shouldFlap = (flapWeight > 0.35f) || (glideWeight < 0.55f);
+
+        if (ascending || riderAscending) {
+            return 1; // Always flap when ascending
+        }
+
+        return shouldFlap ? 1 : 0;
+    }
+
+    /**
+     * Determines if takeoff animation should play
+     */
+    private boolean shouldPlayTakeoff() {
+        int timeFlying = wyvern.timeFlying;
+
+        // Play takeoff if explicitly flagged
+        if (wyvern.isTakeoff()) {
+            return true;
+        }
+
+        // Or play based on timeFlying counter
+        if (timeFlying < TAKEOFF_ANIM_EARLY_TICKS) {
+            return true;
+        }
+
+        boolean airborne = !wyvern.onGround();
+        boolean ascending = wyvern.getDeltaMovement().y > 0.08;
+
+        return (timeFlying < TAKEOFF_ANIM_MAX_TICKS) && (airborne || ascending);
     }
 
     private void updatePhysicsEnvelopes() {

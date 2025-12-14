@@ -542,15 +542,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
 
     //FLIGHT
     public float getGlidingFraction() {
-        return animationController.glidingFraction;
+        return physicsController.glidingFraction;
     }
     public float getFlappingFraction() {
-        return animationController.flappingFraction;
+        return physicsController.flappingFraction;
     }
     public float getHoveringFraction() {
-        return animationController.hoveringFraction;
+        return physicsController.hoveringFraction;
     }
-    private final RaevyxPhysicsController animationController = new RaevyxPhysicsController(this);
+    private final RaevyxPhysicsController physicsController = new RaevyxPhysicsController(this);
 
     // Animation controller is internal-only; external integration goes via GeckoLib controllers.
 
@@ -1161,6 +1161,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     // Flight mode accessor for controllers (avoids accessing protected entityData outside entity)
     public int getSyncedFlightMode() { return getIntegerData(DATA_FLIGHT_MODE); }
 
+    public void setFlightMode(int mode) {
+        this.entityData.set(DATA_FLIGHT_MODE, mode);
+    }
+
     // Debug/inspection helper: expose raw ground move state
     public int getGroundMoveState() { return getIntegerData(DATA_GROUND_MOVE_STATE); }
     
@@ -1172,7 +1176,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             inHighAltitudeGlide = false; // Reset when not flying
             return -1; // Ground state
         }
-        if (isTakeoff()) return 3;  // Takeoff
+        // Treat the first few ticks of flight as takeoff even if the explicit flag cleared early
+        if (isTakeoff() || this.timeFlying < 35) return 3;  // Takeoff
         if (isHovering()) return 2; // Hover
         if (isLanding()) return 2;  // Landing (treat as hover)
 
@@ -1398,7 +1403,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
     @Override
     public void tick() {
         // === CORE TICK (every tick) ===
-        animationController.tick();
+        physicsController.tick();
         super.tick();
         tickControllers(); // Physics/flight - needs every tick for smooth movement
 
@@ -1431,6 +1436,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
             timeFlying++;
         } else {
             timeFlying = 0;
+        }
+
+        // Update flight mode for animation system (server side only)
+        if (!level().isClientSide && isFlying()) {
+            int newFlightMode = physicsController.computeFlightModeForSync();
+            setFlightMode(newFlightMode);
         }
 
         // When ridden and flying, never stay in 'hovering' unless explicitly landing/beaming/takeoff
@@ -3491,7 +3502,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tamingController.save(tag);
 
-        animationController.writeToNBT(tag);
+        physicsController.writeToNBT(tag);
     }
 
     @Override
@@ -3532,7 +3543,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal, RangedAt
         }
         tamingController.load(tag);
 
-        animationController.readFromNBT(tag);
+        physicsController.readFromNBT(tag);
 
         this.manualSitCommand = tag.contains("ManualSitCommand") && tag.getBoolean("ManualSitCommand");
 
