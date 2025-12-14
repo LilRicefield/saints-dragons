@@ -311,6 +311,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
+        if (config == null) {
+            System.err.println("CRITICAL: Cindervane dragon attribute config is missing. Using default values.");
+            return TamableAnimal.createMobAttributes()
+                    .add(Attributes.MAX_HEALTH, 100.0D) // Default fallback
+                    .add(Attributes.MOVEMENT_SPEED, 0.45D)
+                    .add(Attributes.FOLLOW_RANGE, 48.0D)
+                    .add(Attributes.FLYING_SPEED, 0.4D) // Default fallback
+                    .add(Attributes.ARMOR, 8.0D); // Default fallback
+        }
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.45D) // Hardcoded AI pathfinding speed
@@ -1041,7 +1050,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     // Tuneable constants
     private static final double WATER_EFFECT_MAX_HEIGHT = 10.0;  // Max height above water to trigger effect
-    private static final double WATER_EFFECT_INTENSITY = 1.5;    // Multiplier for particle count (bigger = more splash)
+    private static final double WATER_EFFECT_INTENSITY = 0.6;    // Multiplier for particle count (bigger = more splash)
 
     /**
      * Creates water disturbance effects when flying over water.

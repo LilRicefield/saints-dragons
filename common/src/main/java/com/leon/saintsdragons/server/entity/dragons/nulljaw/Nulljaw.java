@@ -342,6 +342,16 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        if (config == null) {
+            System.err.println("CRITICAL: Nulljaw dragon attribute config is missing. Using default values.");
+            return TamableAnimal.createLivingAttributes()
+                    .add(Attributes.MAX_HEALTH, 120.0D) // Default fallback
+                    .add(Attributes.MOVEMENT_SPEED, 0.28D)
+                    .add(Attributes.FOLLOW_RANGE, 40.0D)
+                    .add(Attributes.KNOCKBACK_RESISTANCE, 0.5D)
+                    .add(Attributes.ARMOR, 8.0D)
+                    .add(Attributes.ATTACK_DAMAGE, 10.0D);
+        }
         return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.28D) // Hardcoded AI pathfinding speed

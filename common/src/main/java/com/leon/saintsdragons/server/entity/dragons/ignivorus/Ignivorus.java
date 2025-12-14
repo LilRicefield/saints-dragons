@@ -170,7 +170,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final int RIDER_WATER_SCAN_RADIUS = 2;
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
     private static final double WATER_EFFECT_MAX_HEIGHT = 8.0D;
-    private static final double WATER_EFFECT_INTENSITY = 1.15D;
+    private static final double WATER_EFFECT_INTENSITY = 0.6D;
     private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.0D;
     private static final int RIDER_LANDING_BLEND_DURATION = 5;
 
@@ -347,6 +347,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        if (config == null) {
+            System.err.println("CRITICAL: Ignivorus dragon attribute config is missing. Using default values.");
+            return createMobAttributes()
+                    .add(Attributes.MAX_HEALTH, 150.0D) // Default fallback
+                    .add(Attributes.MOVEMENT_SPEED, 0.3D)
+                    .add(Attributes.FLYING_SPEED, 0.5D) // Default fallback
+                    .add(Attributes.ATTACK_DAMAGE, 15.0D) // Default fallback
+                    .add(Attributes.FOLLOW_RANGE, 128.0D)
+                    .add(Attributes.ARMOR, 10.0D) // Default fallback
+                    .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
+        }
         double attackDamage = config.abilityDamage("bite", 15.0D);
         return createMobAttributes()
             .add(Attributes.MAX_HEALTH, config.maxHealth())

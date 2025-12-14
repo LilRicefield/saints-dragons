@@ -192,9 +192,6 @@ public class RaevyxFlightGoal extends Goal {
 
         // Clear takeoff flag once airborne
         if (wyvern.isTakeoff() && wyvern.isFlying() && !wyvern.onGround()) {
-            if (!wyvern.level().isClientSide) {
-                System.out.println("[RaevyxFlightGoal] Clearing takeoff flag - now airborne (Y: " + wyvern.getY() + ")");
-            }
             wyvern.setTakeoff(false);
         }
 
