@@ -318,24 +318,81 @@ public class IgnivorusFlightGoal extends Goal {
     private double findSafeFlightHeight(double x, double z, boolean tethered) {
         int ix = (int) x;
         int iz = (int) z;
-        int groundY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+
+        // Check if dragon is currently in a cave/enclosed space
+        BlockPos dragonPos = dragon.blockPosition();
+        boolean canSeeSky = dragon.level().canSeeSky(dragonPos);
+
+        int groundY;
+        double capAboveGround;
+
+        if (canSeeSky) {
+            // OUTDOOR: Use heightmap for normal flight
+            groundY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+            capAboveGround = tethered ? 40.0 : 60.0;
+        } else {
+            // CAVE/INDOOR: Find actual floor and ceiling, fly between them
+            int surfaceY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+            groundY = findGroundInCave(x, surfaceY, z);
+            int ceilingY = findCeilingInCave(x, groundY, z);
+
+            // Fly between 50-75% of the distance from floor to ceiling (fire dragons more aggressive)
+            double caveFactor = tethered ? (0.45 + dragon.getRandom().nextDouble() * 0.2) : // 45-65% for tethered
+                                          (0.55 + dragon.getRandom().nextDouble() * 0.2);  // 55-75% for free
+            capAboveGround = (ceilingY - groundY) * caveFactor;
+
+            // Ensure minimum clearance
+            capAboveGround = Math.max(capAboveGround, tethered ? 10.0 : 15.0);
+        }
 
         double base;
         if (tethered) {
             // Tamed: moderate altitude around owner
-            base = 15.0 + dragon.getRandom().nextDouble() * 15.0;
+            base = canSeeSky ? (15.0 + dragon.getRandom().nextDouble() * 15.0) :
+                               (8.0 + dragon.getRandom().nextDouble() * 12.0); // Lower base in caves
         } else {
             // Wild: aggressive patrol at medium-high altitude
-            base = 20.0 + dragon.getRandom().nextDouble() * 25.0;
+            base = canSeeSky ? (20.0 + dragon.getRandom().nextDouble() * 25.0) :
+                               (10.0 + dragon.getRandom().nextDouble() * 18.0); // Lower base in caves
         }
-
-        double capAboveGround = tethered ? 40.0 : 60.0;
 
         double target = groundY + base;
         double cap = groundY + capAboveGround;
         double worldCap = dragon.level().getMaxBuildHeight() - 10.0;
 
         return Math.min(Math.min(target, cap), worldCap);
+    }
+
+    /**
+     * Finds the actual ground level in a cave by searching downward
+     */
+    private int findGroundInCave(double x, double currentY, double z) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, currentY, z);
+
+        // Search down to find solid ground
+        while (pos.getY() > dragon.level().getMinBuildHeight() &&
+               !dragon.level().getBlockState(pos).isSolid() &&
+               dragon.level().getFluidState(pos).isEmpty()) {
+            pos.move(0, -1, 0);
+        }
+
+        return pos.getY();
+    }
+
+    /**
+     * Finds the ceiling in a cave by searching upward from the floor
+     */
+    private int findCeilingInCave(double x, double floorY, double z) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, floorY + 2, z);
+
+        // Search up to find ceiling
+        while (pos.getY() < dragon.level().getMaxBuildHeight() &&
+               !dragon.level().getBlockState(pos).isSolid()) {
+            pos.move(0, 1, 0);
+        }
+
+        // Return ceiling position (subtract 1 to get the air block just below the solid ceiling)
+        return Math.max((int) floorY + 10, pos.getY() - 1);
     }
 
     private Vec3 getFlightAnchor() {

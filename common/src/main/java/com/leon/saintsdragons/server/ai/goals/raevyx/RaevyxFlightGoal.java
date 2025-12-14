@@ -174,10 +174,13 @@ public class RaevyxFlightGoal extends Goal {
 
     @Override
     public void start() {
+        boolean wasOnGround = wyvern.onGround();
         wyvern.setFlying(true);
-        wyvern.setTakeoff(false);
+        // Set takeoff animation if dragon is on the ground
+        wyvern.setTakeoff(wasOnGround);
         wyvern.setLanding(false);
         wyvern.setHovering(false);
+
         if (targetPosition != null) {
             wyvern.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0);
         }
@@ -186,6 +189,14 @@ public class RaevyxFlightGoal extends Goal {
     @Override
     public void tick() {
         timeSinceTargetChange++;
+
+        // Clear takeoff flag once airborne
+        if (wyvern.isTakeoff() && wyvern.isFlying() && !wyvern.onGround()) {
+            if (!wyvern.level().isClientSide) {
+                System.out.println("[RaevyxFlightGoal] Clearing takeoff flag - now airborne (Y: " + wyvern.getY() + ")");
+            }
+            wyvern.setTakeoff(false);
+        }
 
         // If wyvern wants to land, let it handle that
         if (wyvern.isLanding()) {
@@ -306,21 +317,79 @@ public class RaevyxFlightGoal extends Goal {
     private double findSafeFlightHeight(double x, double z) {
         int ix = (int) x;
         int iz = (int) z;
-        int groundY = wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
 
-        // Base hover altitude above ground
-        double base = 15.0 + wyvern.getRandom().nextDouble() * 20.0; // 15..35 above surface
+        // Check if dragon is currently in a cave/enclosed space
+        BlockPos dragonPos = wyvern.blockPosition();
+        boolean canSeeSky = wyvern.level().canSeeSky(dragonPos);
 
-        // Weather-based cap above ground
+        int groundY;
+        double capAboveGround;
+
+        // Weather snapshot
         boolean thundering = wyvern.level().isThundering();
         boolean raining = !thundering && wyvern.level().isRaining();
-        double capAboveGround = thundering ? 90.0 : (raining ? 70.0 : 50.0);
+
+        if (canSeeSky) {
+            // OUTDOOR: Use heightmap for normal flight
+            groundY = wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+
+            // Weather-based cap above ground - lightning wyverns love storms
+            capAboveGround = thundering ? 90.0 : (raining ? 70.0 : 50.0);
+        } else {
+            // CAVE/INDOOR: Find actual floor and ceiling, fly between them
+            int surfaceY = wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+            groundY = findGroundInCave(x, surfaceY, z);
+            int ceilingY = findCeilingInCave(x, groundY, z);
+
+            // Fly between 60-80% of the distance from floor to ceiling (lightning wyverns fly high)
+            double caveFactor = 0.6 + wyvern.getRandom().nextDouble() * 0.2; // 60-80%
+            capAboveGround = (ceilingY - groundY) * caveFactor;
+
+            // Ensure minimum clearance
+            capAboveGround = Math.max(capAboveGround, 12.0);
+        }
+
+        // Base hover altitude above ground
+        double base = canSeeSky ? (15.0 + wyvern.getRandom().nextDouble() * 20.0) : // 15-35 outdoors
+                                  (10.0 + wyvern.getRandom().nextDouble() * 15.0); // 10-25 in caves
 
         double target = groundY + base;
         double cap = groundY + capAboveGround;
         double worldCap = wyvern.level().getMaxBuildHeight() - 10.0;
 
         return Math.min(Math.min(target, cap), worldCap);
+    }
+
+    /**
+     * Finds the actual ground level in a cave by searching downward
+     */
+    private int findGroundInCave(double x, double currentY, double z) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, currentY, z);
+
+        // Search down to find solid ground
+        while (pos.getY() > wyvern.level().getMinBuildHeight() &&
+               !wyvern.level().getBlockState(pos).isSolid() &&
+               wyvern.level().getFluidState(pos).isEmpty()) {
+            pos.move(0, -1, 0);
+        }
+
+        return pos.getY();
+    }
+
+    /**
+     * Finds the ceiling in a cave by searching upward from the floor
+     */
+    private int findCeilingInCave(double x, double floorY, double z) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, floorY + 2, z);
+
+        // Search up to find ceiling
+        while (pos.getY() < wyvern.level().getMaxBuildHeight() &&
+               !wyvern.level().getBlockState(pos).isSolid()) {
+            pos.move(0, 1, 0);
+        }
+
+        // Return ceiling position (subtract 1 to get the air block just below the solid ceiling)
+        return Math.max((int) floorY + 10, pos.getY() - 1);
     }
 
     private boolean isValidFlightTarget(Vec3 target) {
