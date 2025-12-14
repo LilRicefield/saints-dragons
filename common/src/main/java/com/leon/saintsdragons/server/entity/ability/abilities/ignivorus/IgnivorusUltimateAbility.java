@@ -53,8 +53,6 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             Component.translatable("saintsdragons.message.ignivorus.ultimate_penalty");
     private static final Component REQUIREMENT_MESSAGE =
             Component.translatable("saintsdragons.message.ignivorus.ultimate_requires_full_health");
-    private static final Component GROUND_MESSAGE =
-            Component.translatable("saintsdragons.message.ignivorus.ultimate_ground_only");
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, TOTAL_SEQUENCE_TICKS),
@@ -78,14 +76,6 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     @Override
     public boolean tryAbility() {
         Ignivorus dragon = getUser();
-        if (!dragon.onGround()) {
-            sendGroundMessage();
-            return false;
-        }
-        if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff() || dragon.isLanding()) {
-            sendGroundMessage();
-            return false;
-        }
 
         // Only enforce full health requirement for ridden dragons (player-controlled)
         // AI-controlled wild dragons can use it regardless of health
@@ -109,11 +99,19 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             // Lock controls for the full sequence duration
             dragon.lockRiderControls(TOTAL_SEQUENCE_TICKS);
             lockedControls = true;
-            dragon.markLandedNow();
-            dragon.setHovering(false);
-            dragon.setLanding(false);
-            dragon.setTakeoff(false);
-            dragon.setDeltaMovement(Vec3.ZERO);
+
+            // Check if dragon is airborne (flying or in air)
+            boolean isAirborne = dragon.isFlying() || !dragon.onGround();
+
+            if (!isAirborne) {
+                // Ground version - lock movement
+                dragon.markLandedNow();
+                dragon.setHovering(false);
+                dragon.setLanding(false);
+                dragon.setTakeoff(false);
+                dragon.setDeltaMovement(Vec3.ZERO);
+            }
+
             dragon.setUltimateCameraZoomActive(true);
 
             // Reset animation tracking flags
@@ -123,8 +121,12 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             lastLoopDamageTick = -LOOP_DAMAGE_INTERVAL;
             penaltyApplied = false;
 
-            // Play ONLY the first animation (start)
-            dragon.triggerAnim("action", "ultimate_start");
+            // Play ONLY the first animation (start) - use _air variant if airborne
+            if (isAirborne) {
+                dragon.triggerAnim("action", "ultimate_start_air");
+            } else {
+                dragon.triggerAnim("action", "ultimate_start");
+            }
             startAnimPlayed = true;
             applyPenaltyHealth(dragon);
         }
@@ -140,11 +142,18 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
         int ticks = getTicksInSection();
 
+        // Check if dragon is airborne (check once at start to maintain consistency)
+        boolean isAirborne = dragon.isFlying() || !dragon.onGround();
+
         // Manually trigger each animation when the previous one finishes
         // This prevents gaps/flickers between animations
 
         if (!loopAnimPlayed && ticks >= START_END_TICK) {
-            dragon.triggerAnim("action", "ultimate");
+            if (isAirborne) {
+                dragon.triggerAnim("action", "ultimate_air");
+            } else {
+                dragon.triggerAnim("action", "ultimate");
+            }
             loopAnimPlayed = true;
         }
 
@@ -158,7 +167,11 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         }
 
         if (!endAnimPlayed && ticks >= LOOP_END_TICK) {
-            dragon.triggerAnim("action", "ultimate_end");
+            if (isAirborne) {
+                dragon.triggerAnim("action", "ultimate_end_air");
+            } else {
+                dragon.triggerAnim("action", "ultimate_end");
+            }
             endAnimPlayed = true;
         }
     }
@@ -193,13 +206,6 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         Player rider = getUser().getRidingPlayer();
         if (rider != null) {
             rider.displayClientMessage(PENALTY_MESSAGE, true);
-        }
-    }
-
-    private void sendGroundMessage() {
-        Player rider = getUser().getRidingPlayer();
-        if (rider != null) {
-            rider.displayClientMessage(GROUND_MESSAGE, true);
         }
     }
 
