@@ -311,15 +311,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
-        if (config == null) {
-            System.err.println("CRITICAL: Cindervane dragon attribute config is missing. Using default values.");
-            return TamableAnimal.createMobAttributes()
-                    .add(Attributes.MAX_HEALTH, 100.0D) // Default fallback
-                    .add(Attributes.MOVEMENT_SPEED, 0.45D)
-                    .add(Attributes.FOLLOW_RANGE, 48.0D)
-                    .add(Attributes.FLYING_SPEED, 0.4D) // Default fallback
-                    .add(Attributes.ARMOR, 8.0D); // Default fallback
-        }
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.45D) // Hardcoded AI pathfinding speed
