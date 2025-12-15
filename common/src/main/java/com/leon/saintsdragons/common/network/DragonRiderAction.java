@@ -10,5 +10,7 @@ public enum DragonRiderAction {
     STOP_ACCELERATE,
     ABILITY_USE,
     ABILITY_STOP,
-    TOGGLE_MELEE
+    TOGGLE_MELEE,
+    DODGE_LEFT,
+    DODGE_RIGHT
 }

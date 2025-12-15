@@ -100,6 +100,13 @@ public final class DragonRideInputHandler {
     private static boolean lastAscendDown = false;
     private static boolean lastDescendDown = false;
 
+    // Double-tap dodge detection
+    private static long lastLeftTapTime = 0;
+    private static long lastRightTapTime = 0;
+    private static boolean wasLeftKeyDown = false;
+    private static boolean wasRightKeyDown = false;
+    private static final long DOUBLE_TAP_WINDOW_MS = 300;
+
     private DragonRideInputHandler() {
     }
 
@@ -200,6 +207,32 @@ public final class DragonRideInputHandler {
             }
         }
 
+        // Double-tap dodge detection (only for Raevyx)
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+            boolean leftDown = mc.options.keyLeft.isDown();
+            boolean rightDown = mc.options.keyRight.isDown();
+            long currentTime = System.currentTimeMillis();
+
+            // Detect left dodge (double-tap A)
+            if (leftDown && !wasLeftKeyDown) {
+                if (currentTime - lastLeftTapTime < DOUBLE_TAP_WINDOW_MS) {
+                    sendInput(ascendDown, descendDown, DragonRiderAction.DODGE_LEFT, null, forward, strafe, yaw);
+                }
+                lastLeftTapTime = currentTime;
+            }
+
+            // Detect right dodge (double-tap D)
+            if (rightDown && !wasRightKeyDown) {
+                if (currentTime - lastRightTapTime < DOUBLE_TAP_WINDOW_MS) {
+                    sendInput(ascendDown, descendDown, DragonRiderAction.DODGE_RIGHT, null, forward, strafe, yaw);
+                }
+                lastRightTapTime = currentTime;
+            }
+
+            wasLeftKeyDown = leftDown;
+            wasRightKeyDown = rightDown;
+        }
+
         handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
         handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
         handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
@@ -274,5 +307,9 @@ public final class DragonRideInputHandler {
         lastYaw = 0f;
         lastAscendDown = false;
         lastDescendDown = false;
+        lastLeftTapTime = 0;
+        lastRightTapTime = 0;
+        wasLeftKeyDown = false;
+        wasRightKeyDown = false;
     }
 }

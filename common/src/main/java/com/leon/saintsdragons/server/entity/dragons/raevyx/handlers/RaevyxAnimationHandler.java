@@ -100,6 +100,20 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         wyvern.triggerAnim("action", "wake_up");
     }
 
+    /**
+     * Triggers the dodge left animation
+     */
+    public void triggerDodgeLeftAnimation() {
+        wyvern.triggerAnim("action", "dodge_left");
+    }
+
+    /**
+     * Triggers the dodge right animation
+     */
+    public void triggerDodgeRightAnimation() {
+        wyvern.triggerAnim("action", "dodge_right");
+    }
+
 
     // ===== MOVEMENT CONTROLLER =====
     public PlayState handleMovementAnimation(AnimationState<Raevyx> state) {
@@ -321,8 +335,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.lightning_bite"));
         actionController.triggerableAnim("horn_gore",
                 RawAnimation.begin().thenPlay("animation.raevyx.horn_gore"));
-        actionController.triggerableAnim("dodge",
-                RawAnimation.begin().thenPlay("animation.raevyx.dodge"));
+
+        // Dodge animations
+        actionController.triggerableAnim("dodge_left",
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
+        actionController.triggerableAnim("dodge_right",
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_right"));
 
         // Lightning beam ability
         actionController.triggerableAnim("lightning_beam_start",

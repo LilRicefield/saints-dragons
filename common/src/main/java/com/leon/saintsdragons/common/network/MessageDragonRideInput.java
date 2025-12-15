@@ -52,6 +52,7 @@ public record MessageDragonRideInput(
         if (player == null) {
             return;
         }
+
         Entity vehicle = player.getVehicle();
         if (vehicle instanceof RideableDragonBase dragon && dragon.canBeControlledBy(player)) {
             dragon.handleRiderNetworkInput(player, msg);
