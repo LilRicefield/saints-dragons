@@ -160,6 +160,15 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             return handleFeeding(player, itemstack);
         }
 
+        // Handle texture variant changes (only for owner)
+        if (isOwner) {
+            if (itemstack.is(net.minecraft.world.item.Items.AMETHYST_SHARD)) {
+                return handleTextureVariantChange(player, itemstack, 1);
+            } else if (itemstack.is(net.minecraft.world.item.Items.COAL)) {
+                return handleTextureVariantChange(player, itemstack, 0);
+            }
+        }
+
         // Handle owner commands and mounting
         if (isOwner) {
             // Command cycling - Shift+Right-click cycles through commands
@@ -225,6 +234,50 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                     true
                 );
             }
+        }
+
+        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+    }
+
+    /**
+     * Handle texture variant changes using items.
+     */
+    private InteractionResult handleTextureVariantChange(Player player, ItemStack itemstack, int targetVariant) {
+        // Check if already in the target variant
+        if (dragon.getTextureVariant() == targetVariant) {
+            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                String messageKey = targetVariant == 1
+                    ? "entity.saintsdragons.ignivorus.already_variant_two"
+                    : "entity.saintsdragons.ignivorus.already_variant_default";
+                serverPlayer.displayClientMessage(
+                    Component.translatable(messageKey, dragon.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        // Change variant on server side only
+        if (!dragon.level().isClientSide) {
+            if (!player.getAbilities().instabuild) {
+                itemstack.shrink(1);
+            }
+
+            dragon.setTextureVariant(targetVariant);
+
+            // Send feedback message
+            if (player instanceof ServerPlayer serverPlayer) {
+                String messageKey = targetVariant == 1
+                    ? "entity.saintsdragons.ignivorus.variant_changed_to_two"
+                    : "entity.saintsdragons.ignivorus.variant_changed_to_default";
+                serverPlayer.displayClientMessage(
+                    Component.translatable(messageKey, dragon.getName()),
+                    true
+                );
+            }
+
+            // Play success effect
+            dragon.level().broadcastEntityEvent(dragon, (byte) 7);
         }
 
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
