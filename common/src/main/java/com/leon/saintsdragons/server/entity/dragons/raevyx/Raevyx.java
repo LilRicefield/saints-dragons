@@ -385,9 +385,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private int pitchDir = 0; // -1 down, 0 none, 1 up
 
     // Dodge system
+    private static final double DODGE_HORIZONTAL_DRAG = 0.92D;
+    private static final double DODGE_VERTICAL_DRAG = 0.95D;
     boolean dodging = false;
     int dodgeTicksLeft = 0;
     Vec3 dodgeVec = Vec3.ZERO;
+    int dodgeCooldownTicks = 0; // Cooldown between dodges (2 seconds = 40 ticks)
+    int dodgeIFramesTicks = 0; // Invulnerability frames during dodge
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -858,6 +862,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             case TOGGLE_MELEE -> {
                 if (!locked) {
                     toggleMeleeMode();
+                }
+            }
+            case DODGE_LEFT -> {
+                if (!locked) {
+                    onRiderDodge(player, true);
+                }
+            }
+            case DODGE_RIGHT -> {
+                if (!locked) {
+                    onRiderDodge(player, false);
                 }
             }
             default -> { }
@@ -1390,8 +1404,95 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.dodging = true;
         this.dodgeVec = vec;
         this.dodgeTicksLeft = Math.max(1, ticks);
+        this.setDeltaMovement(vec);
         this.getNavigation().stop();
         this.hasImpulse = true;
+    }
+
+    @Override
+    protected void onRiderDodge(net.minecraft.world.entity.player.Player player, boolean isLeft) {
+        // Only allow dodge on ground - dragon is fast enough in air with strafe
+        if (isFlying()) {
+            return;
+        }
+
+        // Check cooldown
+        if (dodgeCooldownTicks > 0) {
+            return;
+        }
+
+        // Dodge constants
+        final int DODGE_DURATION = 12;
+        final int DODGE_COOLDOWN = 30;
+        final int DODGE_IFRAMES = 8;
+        final int DODGE_CONTROL_LOCK = 12; // 1 second rider lock so attacks/abilities don't override dodge
+        final double DODGE_DISTANCE = 16; // blocks
+
+        // Get right vector (perpendicular to facing direction)
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+        double rightX = Math.cos(yawRad);
+        double rightZ = Math.sin(yawRad);
+
+        // Account for drag so the integrated distance over the duration is ~DODGE_DISTANCE
+        double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION);
+        double perTickSpeed = DODGE_DISTANCE * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
+
+        // Calculate dodge direction (left or right)
+        // FLIPPED: was backwards, A went right and D went left!
+        double dodgeDirX = rightX * (isLeft ? 1 : -1);
+        double dodgeDirZ = rightZ * (isLeft ? 1 : -1);
+
+        // Create dodge vector (horizontal only, no vertical component)
+        Vec3 dodgeVector = new Vec3(dodgeDirX * perTickSpeed, 0, dodgeDirZ * perTickSpeed);
+
+        // Begin dodge
+        beginDodge(dodgeVector, DODGE_DURATION);
+        lockRiderControls(DODGE_CONTROL_LOCK);
+
+        // Set cooldown and i-frames
+        dodgeCooldownTicks = DODGE_COOLDOWN;
+        dodgeIFramesTicks = DODGE_IFRAMES;
+
+        // Trigger dodge animation
+        if (isLeft) {
+            animationHandler.triggerDodgeLeftAnimation();
+        } else {
+            animationHandler.triggerDodgeRightAnimation();
+        }
+
+        // Play sound and particles
+        if (!level().isClientSide) {
+            // Sound: whoosh + electric crackle
+            level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
+                    this.getSoundSource(), 1.0F, 1.2F);
+
+            // Particle trail (lightning particles for Raevyx theme)
+            spawnDodgeParticles(isLeft);
+        }
+    }
+
+    private void spawnDodgeParticles(boolean isLeft) {
+        if (level().isClientSide) return;
+
+        // Spawn trail of lightning particles along dodge path
+        for (int i = 0; i < 8; i++) {
+            double offsetX = this.random.nextGaussian() * 0.3;
+            double offsetY = this.random.nextDouble() * this.getBbHeight() * 0.8;
+            double offsetZ = this.random.nextGaussian() * 0.3;
+
+            ((net.minecraft.server.level.ServerLevel) level()).sendParticles(
+                    net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
+                    this.getX() + offsetX,
+                    this.getY() + offsetY,
+                    this.getZ() + offsetZ,
+                    1, // count
+                    0.1, 0.1, 0.1, // spread
+                    0.02 // speed
+            );
+        }
     }
 
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
@@ -1468,6 +1569,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         tickFeedingCooldown();
         if (tamingAbortCalmTicks > 0) {
             tamingAbortCalmTicks--;
+        }
+        // Dodge system cooldowns
+        if (dodgeCooldownTicks > 0) {
+            dodgeCooldownTicks--;
+        }
+        if (dodgeIFramesTicks > 0) {
+            dodgeIFramesTicks--;
         }
         tamingController.tickServer();
         tickSleepTransition();
@@ -2703,10 +2811,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private void handleDodgeMovement() {
-        Vec3 current = this.getDeltaMovement();
-        Vec3 boosted = current.add(dodgeVec.scale(0.25));
-        this.setDeltaMovement(boosted.multiply(0.92, 0.95, 0.92));
+        // Apply the dodge velocity; travel() will process the delta move normally.
+        this.setDeltaMovement(dodgeVec);
         this.hasImpulse = true;
+
+        // Decay for next tick
+        dodgeVec = dodgeVec.multiply(DODGE_HORIZONTAL_DRAG, DODGE_VERTICAL_DRAG, DODGE_HORIZONTAL_DRAG);
 
         if (--dodgeTicksLeft <= 0) {
             dodging = false;
@@ -2717,18 +2827,19 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // ===== TRAVEL METHOD =====
     @Override
     public void travel(@NotNull Vec3 motion) {
-        // Handle sitting/dodging/dying states first
+        // During a dodge, preserve the stored dodge velocity and let vanilla travel apply it without rider overrides.
+        if (this.isDodging()) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
+        // Handle sitting/dying states
         boolean sittingLocked = (this.isOrderedToSit() || this.isInSittingPose()) && postStandUnlockTicks <= 0;
-        if (sittingLocked || this.isDodging() || this.isDying() || this.isSleeping() || this.isSleepTransitioning()) {
+        if (sittingLocked || this.isDying() || this.isSleeping() || this.isSleepTransitioning()) {
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
             }
             motion = Vec3.ZERO;
-            super.travel(motion);
-            return;
-        }
-
-        if (dodging) {
             super.travel(motion);
             return;
         }
@@ -3062,6 +3173,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public boolean hurt(@Nonnull DamageSource damageSource, float amount) {
         // During dying sequence, ignore all damage (entity is already dead, playing death animation)
         if (isDying()) {
+            return false;
+        }
+        // Invulnerability during dodge (i-frames)
+        if (dodgeIFramesTicks > 0) {
             return false;
         }
         // Immune to lightning damage

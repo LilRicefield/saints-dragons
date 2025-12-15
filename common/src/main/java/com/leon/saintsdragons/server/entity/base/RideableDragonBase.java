@@ -99,6 +99,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         if (action == null) {
             return;
         }
+
         switch (action) {
             case TAKEOFF_REQUEST -> { if (!locked) onRiderTakeoffRequest(player); }
             case ACCELERATE -> { if (!locked) onRiderAccelerationStart(player); }
@@ -106,8 +107,19 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             case ABILITY_USE -> { if (!locked) onRiderAbilityUse(player, abilityName); }
             case ABILITY_STOP -> { if (!locked) onRiderAbilityStop(player, abilityName); }
             case TOGGLE_MELEE -> { if (!locked) onRiderToggleMelee(player); }
+            case DODGE_LEFT -> { if (!locked) onRiderDodge(player, true); }
+            case DODGE_RIGHT -> { if (!locked) onRiderDodge(player, false); }
             default -> { }
         }
+    }
+
+    /**
+     * Called when rider requests a dodge. Override in subclasses to implement dodge mechanics.
+     * @param player The player riding
+     * @param isLeft True if dodging left, false if dodging right
+     */
+    protected void onRiderDodge(Player player, boolean isLeft) {
+        // Default: no dodge (override in dragon classes that support it)
     }
 
     protected void onRiderToggleMelee(Player player) {

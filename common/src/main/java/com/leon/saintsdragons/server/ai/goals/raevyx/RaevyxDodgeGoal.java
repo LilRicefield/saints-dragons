@@ -14,12 +14,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-/**
- * - picks the projectile MOST moving toward us (dot product)
- * - chooses the better lateral side (left/right)
- * - predicts impact line and initiates a multi-tick dodge burst via entity.beginDodge(...)
- */
+//AI STUFF - NOT INTENDED TO BE USED
+/*
 public class RaevyxDodgeGoal extends Goal {
     private final Raevyx wyvern;
 
@@ -116,11 +112,11 @@ public class RaevyxDodgeGoal extends Goal {
     }
 
     @Override public boolean canContinueToUse() { return false; }
-    @Override public void stop() { /* nothing; cooldown is time-based */ }
+    @Override public void stop() { /* nothing; cooldown is time-based */
 
-    // ========== HELPERS ==========
 
-    private Vec3 guessProjectileDestination(Projectile projectile) {
+
+   /* private Vec3 guessProjectileDestination(Projectile projectile) {
         Vec3 from = projectile.position();
         Vec3 vel  = projectile.getDeltaMovement();
         if (vel.lengthSqr() < 1.0e-6) return from;
@@ -149,3 +145,5 @@ public class RaevyxDodgeGoal extends Goal {
         return bestEnt;
     }
 }
+*/
+
