@@ -20,6 +20,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_3 = registerSound("stegonaut_grumble3");
     public static final Supplier<SoundEvent> STEGONAUT_HURT = registerSound("stegonaut_hurt");
     public static final Supplier<SoundEvent> STEGONAUT_DIE = registerSound("stegonaut_die");
+    public static final Supplier<SoundEvent> STEGONAUT_EAT = registerSound("stegonaut_eat");
 
     // Raevyx
     public static final Supplier<SoundEvent> RAEVYX_PURR = registerSound("raevyx_purr");
@@ -49,6 +50,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAM_START = registerSound("raevyx_lightning_beam_start");
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAMING = registerSound("raevyx_lightning_beaming");
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAM_STOP = registerSound("raevyx_lightning_beam_stop");
+    public static final Supplier<SoundEvent> RAEVYX_EAT = registerSound("raevyx_eat");
 
     // Baby Raevyx
     public static final Supplier<SoundEvent> BABY_RAEVYX_HURT = registerSound("baby_raevyx_hurt");
@@ -67,6 +69,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> CINDERVANE_FLAP = registerSound("cindervane_flap");
     public static final Supplier<SoundEvent> CINDERVANE_TAKEOFF = registerSound("cindervane_takeoff");
     public static final Supplier<SoundEvent> CINDERVANE_LANDED = registerSound("cindervane_landed");
+    public static final Supplier<SoundEvent> CINDERVANE_EAT = registerSound("cindervane_eat");
 
     // Nulljaw
     public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_1 = registerSound("nulljaw_grumble1");
@@ -87,6 +90,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> NULLJAW_HORNGORE = registerSound("nulljaw_horngore");
     public static final Supplier<SoundEvent> NULLJAW_HURT = registerSound("nulljaw_hurt");
     public static final Supplier<SoundEvent> NULLJAW_DIE = registerSound("nulljaw_die");
+    public static final Supplier<SoundEvent> NULLJAW_EAT = registerSound("nulljaw_eat");
 
     // Ignivorus
     public static final Supplier<SoundEvent> IGNIVORUS_ROAR = registerSound("ignivorus_roar");

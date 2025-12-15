@@ -54,9 +54,17 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
         if ("stegonaut_hurt".equals(key)) {
             return true; // Server broadcasts hurt vocal instantly
         }
+
+        // Check if this is a vocal key that should use the vocal entry system
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
             playVocalEntry(handler, dragon, vocalKey, locator);
+            return true;
+        }
+
+        // Handle non-vocal animation sounds
+        if ("stegonaut_eat".equals(key)) {
+            playSimpleSound(handler, dragon, "mouth_origin", ModSounds.STEGONAUT_EAT.get(), 1.0f, 1.0f, 0.0f);
             return true;
         }
 
@@ -80,7 +88,8 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
     }
 
     /**
-     * Play vocal entry with proper positioning and pitch variation
+     * Play vocal entry with proper positioning and pitch variation.
+     * Follows Raevyx approach with sleep/sitting state checks.
      */
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
         DragonEntity.VocalEntry entry = dragon.getVocalEntries().get(vocalKey);
@@ -108,8 +117,21 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
         }
 
-        // Play sound on client side using local playback
         playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+    }
+
+    /**
+     * Play simple sound with locator support and pitch variance.
+     */
+    private void playSimpleSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                  net.minecraft.sounds.SoundEvent sound, float volume, float basePitch, float variance) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        float pitch = basePitch;
+        if (variance != 0f) {
+            pitch += dragon.getRandom().nextFloat() * variance;
+        }
+
+        playClientSound(dragon, at, sound, volume, pitch);
     }
 
     /**

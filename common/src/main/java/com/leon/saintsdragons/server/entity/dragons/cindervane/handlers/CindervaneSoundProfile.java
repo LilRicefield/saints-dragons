@@ -51,49 +51,41 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
         // Handler already blocks server-side, we're only called on client
 
-        if ("cindervane_walk".equals(key)) {
-            dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
-                    ModSounds.CINDERVANE_WALK.get(), SoundSource.NEUTRAL, 1.0f, 1.0f, false);
-            return true;
-        }
-
-        if ("cindervane_run".equals(key)) {
-            dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
-                    ModSounds.CINDERVANE_RUN.get(), SoundSource.NEUTRAL, 1.0f, 1.0f, false);
-            return true;
-        }
-
-        if ("cindervane_bite".equals(key)) {
-            Vec3 mouthPos = handler.resolveLocatorWorldPos("mouth_origin");
-            float pitch = 0.95f + dragon.getRandom().nextFloat() * 0.1f;
-
-            // Client-side local playback
-            double x = mouthPos != null ? mouthPos.x : dragon.getX();
-            double y = mouthPos != null ? mouthPos.y : dragon.getY();
-            double z = mouthPos != null ? mouthPos.z : dragon.getZ();
-            dragon.level().playLocalSound(x, y, z, ModSounds.CINDERVANE_BITE.get(),
-                    SoundSource.NEUTRAL, 1.0f, pitch, false);
-            return true;
-        }
-
-        if ("cindervane_hurt".equals(key)) {
-            return true; // Server now broadcasts hurt vocal immediately
-        }
-
+        // Check if this is a vocal key that should use the vocal entry system
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
+            // Hurt sound is handled by server broadcast
+            if ("cindervane_hurt".equals(key)) {
+                return true;
+            }
             playVocalEntry(handler, dragon, vocalKey, locator);
             return true;
         }
 
-        if ("cindervane_landed".equals(key)) {
-            dragon.level().playLocalSound(dragon.getX(), dragon.getY(), dragon.getZ(),
-                    ModSounds.CINDERVANE_LANDED.get(), SoundSource.NEUTRAL, 1.0f, 1.0f, false);
-            return true;
-        }
-
-        return false;
-
+        // Handle non-vocal animation sounds
+        return switch (key) {
+            case "cindervane_walk" -> {
+                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_WALK.get(), 1.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "cindervane_run" -> {
+                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_RUN.get(), 1.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "cindervane_bite" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.CINDERVANE_BITE.get(), 1.0f, 0.95f, 0.1f);
+                yield true;
+            }
+            case "cindervane_landed" -> {
+                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "cindervane_eat" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.CINDERVANE_EAT.get(), 1.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            default -> false;
+        };
     }
 
     @Override
@@ -115,6 +107,10 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         return true;
     }
 
+    /**
+     * Play vocal entry with proper positioning and pitch variation.
+     * Follows Raevyx approach with sleep/sitting state checks.
+     */
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
         DragonEntity.VocalEntry entry = dragon.getVocalEntries().get(vocalKey);
         if (entry == null) {
@@ -123,6 +119,8 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         if (entry == null) {
             return;
         }
+
+        // Check if allowed during sleep/sitting
         if (!entry.allowDuringSleep() && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
             return;
         }
@@ -130,17 +128,42 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
             return;
         }
 
-        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator.trim() : "mouth_origin");
+        // Resolve position (use mouth_origin for vocals, or entity position as fallback)
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+
+        // Calculate pitch with variance
         float pitch = entry.basePitch();
         if (entry.pitchVariance() != 0f) {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
         }
 
-        double x = at != null ? at.x : dragon.getX();
-        double y = at != null ? at.y : dragon.getY();
-        double z = at != null ? at.z : dragon.getZ();
+        playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+    }
 
-        dragon.level().playLocalSound(x, y, z, entry.soundSupplier().get(),
-                SoundSource.NEUTRAL, entry.volume(), pitch, false);
+    /**
+     * Play simple sound with locator support and pitch variance.
+     */
+    private void playSimpleSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                  net.minecraft.sounds.SoundEvent sound, float volume, float basePitch, float variance) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        float pitch = basePitch;
+        if (variance != 0f) {
+            pitch += dragon.getRandom().nextFloat() * variance;
+        }
+
+        playClientSound(dragon, at, sound, volume, pitch);
+    }
+
+    /**
+     * Play sound on client side using local playback.
+     * More efficient than server broadcast for animation keyframe sounds.
+     */
+    private void playClientSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent sound,
+                                 float volume, float pitch) {
+        double x = position != null ? position.x : dragon.getX();
+        double y = position != null ? position.y : dragon.getY();
+        double z = position != null ? position.z : dragon.getZ();
+
+        dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
     }
 }

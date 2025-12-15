@@ -264,7 +264,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             wyvern.triggerAnim("action", "eat");
 
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
-            wyvern.setFeedingCooldown(61);
+            wyvern.setFeedingCooldown(22);
 
             boolean heartyMeal = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             if (heartyMeal) {

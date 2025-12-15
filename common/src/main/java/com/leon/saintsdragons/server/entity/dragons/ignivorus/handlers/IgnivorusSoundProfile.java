@@ -18,107 +18,107 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
 
     public static final IgnivorusSoundProfile INSTANCE = new IgnivorusSoundProfile();
 
-    private static final Map<String, Integer> VOCAL_WINDOWS = Map.of(
-            "ignivorus_roar", 64
+    private static final Map<String, Integer> VOCAL_WINDOWS = Map.ofEntries(
+            Map.entry("roar", 64),
+            Map.entry("grumble1", 80),
+            Map.entry("grumble2", 85),
+            Map.entry("grumble3", 90)
+    );
+
+    private static final Map<String, String> EFFECT_TO_VOCAL_KEY = Map.ofEntries(
+            Map.entry("ignivorus_roar", "roar"),
+            Map.entry("ignivorus_grumble1", "grumble1"),
+            Map.entry("ignivorus_grumble2", "grumble2"),
+            Map.entry("ignivorus_grumble3", "grumble3")
     );
 
     private static final Map<String, DragonEntity.VocalEntry> FALLBACK_VOCALS =
             new DragonEntity.VocalEntryBuilder()
-                    .add("ignivorus_roar", "action", "animation.ignivorus.roar",
+                    .add("roar", "action", "animation.ignivorus.roar",
                             ModSounds.IGNIVORUS_ROAR, 1.8f, 0.85f, 0.15f, false, false, false)
+                    .add("grumble1", "action", "animation.ignivorus.grumble1",
+                            ModSounds.IGNIVORUS_GRUMBLE_1, 1.1f, 0.95f, 0.05f, false, false, false)
+                    .add("grumble2", "action", "animation.ignivorus.grumble2",
+                            ModSounds.IGNIVORUS_GRUMBLE_2, 1.15f, 1.0f, 0.05f, false, false, false)
+                    .add("grumble3", "action", "animation.ignivorus.grumble3",
+                            ModSounds.IGNIVORUS_GRUMBLE_3, 1.2f, 0.9f, 0.05f, false, false, false)
                     .build();
 
     private IgnivorusSoundProfile() {}
 
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
-        if ("ignivorus_bite".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_BITE.get(), 1.2f, 0.95f, 0.1f);
+        // Check if this is a vocal key that should use the vocal entry system
+        String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
+        if (vocalKey != null) {
+            // Roar sound is handled by ability with precise timing
+            if ("roar".equals(vocalKey)) {
+                return true;
+            }
+            playVocalEntry(handler, dragon, vocalKey, locator);
             return true;
         }
 
-        if ("ignivorus_eat".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_EAT.get(), 1.2f, 0.95f, 0.1f);
-            return true;
-        }
-        if ("ignivorus_body_slam".equals(key)) {
-            // Use body locator for slam impact
-            Vec3 body = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "body_locator");
-            double x = body != null ? body.x : dragon.getX();
-            double y = body != null ? body.y : dragon.getY();
-            double z = body != null ? body.z : dragon.getZ();
-            float pitch = 0.9f + dragon.getRandom().nextFloat() * 0.15f;
-            dragon.level().playLocalSound(x, y, z, ModSounds.IGNIVORUS_BODY_SLAM.get(), SoundSource.NEUTRAL, 2.0f, pitch, false);
-            return true;
-        }
-        if ("ignivorus_walk".equals(key)) {
-            playMovementSound(handler, dragon, locator, ModSounds.IGNIVORUS_WALK.get(), 1.0f, 0.85f);
-            return true;
-        }
-        if ("ignivorus_run".equals(key)) {
-            playMovementSound(handler, dragon, locator, ModSounds.IGNIVORUS_RUN.get(), 1.1f, 0.9f);
-            return true;
-        }
-        if ("ignivorus_grumble1".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_GRUMBLE_1.get(), 1.1f, 0.95f, 0.05f);
-            return true;
-        }
-        if ("ignivorus_grumble2".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_GRUMBLE_2.get(), 1.15f, 1.0f, 0.05f);
-            return true;
-        }
-        if ("ignivorus_grumble3".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_GRUMBLE_3.get(), 1.2f, 0.9f, 0.05f);
-            return true;
-        }
-        if ("ignivorus_roar".equals(key)) {
-            return true; // Roar ability plays the synced audio
-        }
-        if ("ignivorus_ultimate_start".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_ULTIMATE_START.get(), 2.0f, 1.0f, 0.0f);
-            return true;
-        }
-        if ("ignivorus_ultimate".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_ULTIMATE.get(), 2.5f, 1.0f, 0.0f);
-            return true;
-        }
-        if ("ignivorus_ultimate_end".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_ULTIMATE_END.get(), 2.0f, 1.0f, 0.0f);
-            return true;
-        }
-        if ("ignivorus_ultimate_start_air".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_ULTIMATE_START_AIR.get(), 2.0f, 1.0f, 0.0f);
-            return true;
-        }
-        if ("ignivorus_ultimate_air".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 2.5f, 1.0f, 0.0f);
-            return true;
-        }
-        if ("ignivorus_ultimate_end_air".equals(key)) {
-            playMouthSound(handler, dragon, locator, ModSounds.IGNIVORUS_ULTIMATE_END_AIR.get(), 2.0f, 1.0f, 0.0f);
-            return true;
-        }
-        if ("ignivorus_fire_breath_start".equals(key)) {
-            // Block keyframe sound - fire breath start is handled by IgnivorusFireBreathAbility
-            return true;
-        }
-        if ("ignivorus_fire_breathing".equals(key)) {
-            // Block keyframe sound - fire breath loop is handled by IgnivorusFireBreathSoundController
-            return true;
-        }
-        if ("ignivorus_fire_breath_end".equals(key)) {
-            // Block keyframe sound - fire breath end is handled by IgnivorusFireBreathAbility
-            return true;
-        }
-        if ("ignivorus_takeoff".equals(key)) {
-            // Block keyframe sound - takeoff sound is handled by Ignivorus.setTakeoff()
-            return true;
-        }
-        if ("ignivorus_landed".equals(key)) {
-            playLandedSound(handler, dragon, locator);
-            return true;
-        }
-        return false;
+        // Handle non-vocal animation sounds
+        return switch (key) {
+            case "ignivorus_bite" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_BITE.get(), 1.2f, 0.95f, 0.1f);
+                yield true;
+            }
+            case "ignivorus_eat" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_EAT.get(), 1.2f, 0.95f, 0.1f);
+                yield true;
+            }
+            case "ignivorus_body_slam" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_BODY_SLAM.get(), 2.0f, 0.9f, 0.15f);
+                yield true;
+            }
+            case "ignivorus_walk" -> {
+                playMovementSound(handler, dragon, locator, ModSounds.IGNIVORUS_WALK.get(), 1.0f, 0.85f);
+                yield true;
+            }
+            case "ignivorus_run" -> {
+                playMovementSound(handler, dragon, locator, ModSounds.IGNIVORUS_RUN.get(), 1.1f, 0.9f);
+                yield true;
+            }
+            case "ignivorus_ultimate_start" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_ULTIMATE_START.get(), 2.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_ultimate" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_ULTIMATE.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_ultimate_end" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_ULTIMATE_END.get(), 2.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_ultimate_start_air" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_ULTIMATE_START_AIR.get(), 2.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_ultimate_air" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_ultimate_end_air" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_ULTIMATE_END_AIR.get(), 2.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_fire_breath_start", "ignivorus_fire_breathing", "ignivorus_fire_breath_end" -> {
+                // Block keyframe sounds - fire breath is handled by IgnivorusFireBreathAbility/Controller
+                yield true;
+            }
+            case "ignivorus_takeoff" -> {
+                // Block keyframe sound - takeoff is handled by Ignivorus.setTakeoff()
+                yield true;
+            }
+            case "ignivorus_landed" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LANDED.get(), 1.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            default -> false;
+        };
     }
 
     @Override
@@ -151,23 +151,58 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         return DragonSoundProfile.super.resolveLocator(handler, dragon, locator);
     }
 
-    private void playMouthSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
-                                net.minecraft.sounds.SoundEvent sound, float volume,
-                                float basePitch, float variance) {
-        Vec3 mouth = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+    /**
+     * Play vocal entry with proper positioning and pitch variation.
+     * Follows Raevyx approach with sleep/sitting state checks.
+     */
+    private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
+        DragonEntity.VocalEntry entry = dragon.getVocalEntries().get(vocalKey);
+        if (entry == null) {
+            entry = FALLBACK_VOCALS.get(vocalKey);
+        }
+        if (entry == null) {
+            return;
+        }
+
+        // Check if allowed during sleep/sitting
+        if (!entry.allowDuringSleep() && (dragon.isSleeping() || dragon.isSleepTransitioning())) {
+            return;
+        }
+        if (!entry.allowWhenSitting() && dragon.isStayOrSitMuted()) {
+            return;
+        }
+
+        // Resolve position (use mouth_origin for vocals, or entity position as fallback)
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+
+        // Calculate pitch with variance
+        float pitch = entry.basePitch();
+        if (entry.pitchVariance() != 0f) {
+            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+        }
+
+        playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+    }
+
+    /**
+     * Play simple sound with locator support and pitch variance.
+     */
+    private void playSimpleSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                  net.minecraft.sounds.SoundEvent sound, float volume, float basePitch, float variance) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
         float pitch = basePitch;
         if (variance != 0f) {
             pitch += dragon.getRandom().nextFloat() * variance;
         }
-        double x = mouth != null ? mouth.x : dragon.getX();
-        double y = mouth != null ? mouth.y : dragon.getY();
-        double z = mouth != null ? mouth.z : dragon.getZ();
 
-        dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
+        playClientSound(dragon, at, sound, volume, pitch);
     }
 
+    /**
+     * Play movement sound with cooldown to prevent rapid-fire step sounds.
+     */
     private void playMovementSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
-                                   SoundEvent sound, float volume, float pitch) {
+                                   SoundEvent sound, float volume, float basePitch) {
         // Add cooldown to prevent rapid-fire step sounds during animation transitions
         if (dragon instanceof Ignivorus) {
             long currentTick = dragon.tickCount;
@@ -180,21 +215,22 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         }
 
         Vec3 body = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "body_locator");
-        double x = body != null ? body.x : dragon.getX();
-        double y = body != null ? body.y : dragon.getY();
-        double z = body != null ? body.z : dragon.getZ();
         float vol = volume * 1.2f;
-        float pit = pitch + (dragon.getRandom().nextFloat() - 0.5f) * 0.05f;
-        dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, vol, pit, false);
+        float pitch = basePitch + (dragon.getRandom().nextFloat() - 0.5f) * 0.05f;
+
+        playClientSound(dragon, body, sound, vol, pitch);
     }
 
-    private void playLandedSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
-        Vec3 at = handler.resolveLocatorWorldPos(
-                locator != null && !locator.isEmpty() ? locator : "body_locator"
-        );
-        double x = at != null ? at.x : dragon.getX();
-        double y = at != null ? at.y : dragon.getY();
-        double z = at != null ? at.z : dragon.getZ();
-        dragon.level().playLocalSound(x, y, z, ModSounds.IGNIVORUS_LANDED.get(), SoundSource.NEUTRAL, 1.5f, 1.0f, false);
+    /**
+     * Play sound on client side using local playback.
+     * More efficient than server broadcast for animation keyframe sounds.
+     */
+    private void playClientSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent sound,
+                                 float volume, float pitch) {
+        double x = position != null ? position.x : dragon.getX();
+        double y = position != null ? position.y : dragon.getY();
+        double z = position != null ? position.z : dragon.getZ();
+
+        dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
     }
 }
