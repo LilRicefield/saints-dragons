@@ -1426,7 +1426,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         final int DODGE_COOLDOWN = 30;
         final int DODGE_IFRAMES = 8;
         final int DODGE_CONTROL_LOCK = 12; // 1 second rider lock so attacks/abilities don't override dodge
-        final double DODGE_DISTANCE = 16; // blocks
+        final double DODGE_DISTANCE = 20; // blocks
 
         // Get right vector (perpendicular to facing direction)
         float yawRad = (float) Math.toRadians(this.getYRot());
@@ -1460,38 +1460,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             animationHandler.triggerDodgeLeftAnimation();
         } else {
             animationHandler.triggerDodgeRightAnimation();
-        }
-
-        // Play sound and particles
-        if (!level().isClientSide) {
-            // Sound: whoosh + electric crackle
-            level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                    net.minecraft.sounds.SoundEvents.PLAYER_ATTACK_SWEEP,
-                    this.getSoundSource(), 1.0F, 1.2F);
-
-            // Particle trail (lightning particles for Raevyx theme)
-            spawnDodgeParticles(isLeft);
-        }
-    }
-
-    private void spawnDodgeParticles(boolean isLeft) {
-        if (level().isClientSide) return;
-
-        // Spawn trail of lightning particles along dodge path
-        for (int i = 0; i < 8; i++) {
-            double offsetX = this.random.nextGaussian() * 0.3;
-            double offsetY = this.random.nextDouble() * this.getBbHeight() * 0.8;
-            double offsetZ = this.random.nextGaussian() * 0.3;
-
-            ((net.minecraft.server.level.ServerLevel) level()).sendParticles(
-                    net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
-                    this.getX() + offsetX,
-                    this.getY() + offsetY,
-                    this.getZ() + offsetZ,
-                    1, // count
-                    0.1, 0.1, 0.1, // spread
-                    0.02 // speed
-            );
         }
     }
 

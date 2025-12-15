@@ -130,6 +130,10 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
                 playEatSound(handler, dragon, locator);
                 yield true;
             }
+            case "raevyx_dodge" -> {
+                playDodgeSound(handler, dragon, locator);
+                yield true;
+            }
             default -> false;
         };
     }
@@ -248,6 +252,10 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
     private void playSummonStormAirLoop(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
         playClientSound(dragon, at, ModSounds.RAEVYX_SUMMON_STORM_AIR.get(), 1.6f, 1.0f);
+    }
+    private void playDodgeSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "bodyLocator");
+        playClientSound(dragon, at, ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f);
     }
 
     /**
