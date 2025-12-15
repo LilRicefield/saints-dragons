@@ -632,19 +632,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-        if (config == null) {
-            // Log an error and return default attributes to prevent a crash
-            // You should have a logger instance in your main mod class to use here
-            // For now, just printing to stderr
-            System.err.println("CRITICAL: Raevyx dragon attribute config is missing. Using default values.");
-            return TamableAnimal.createMobAttributes()
-                    .add(Attributes.MAX_HEALTH, 20.0D) // Default fallback
-                    .add(Attributes.MOVEMENT_SPEED, 0.25D)
-                    .add(Attributes.FOLLOW_RANGE, 80.0D)
-                    .add(Attributes.FLYING_SPEED, 0.4D) // Default fallback
-                    .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
-                    .add(Attributes.ARMOR, 5.0D); // Default fallback
-        }
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.25D) // Hardcoded AI pathfinding speed
