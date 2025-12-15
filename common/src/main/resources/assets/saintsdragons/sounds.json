@@ -918,5 +918,15 @@
         "pitch": 1.0
       }
     ]
+  },
+  "raevyx_dodge": {
+    "subtitle": "Raevyx dodges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_dodge",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
   }
 }

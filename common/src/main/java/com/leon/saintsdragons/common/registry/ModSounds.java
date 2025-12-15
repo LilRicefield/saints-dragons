@@ -51,6 +51,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAMING = registerSound("raevyx_lightning_beaming");
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAM_STOP = registerSound("raevyx_lightning_beam_stop");
     public static final Supplier<SoundEvent> RAEVYX_EAT = registerSound("raevyx_eat");
+    public static final Supplier<SoundEvent> RAEVYX_DODGE = registerSound("raevyx_dodge");
 
     // Baby Raevyx
     public static final Supplier<SoundEvent> BABY_RAEVYX_HURT = registerSound("baby_raevyx_hurt");
