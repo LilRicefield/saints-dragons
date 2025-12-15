@@ -127,6 +127,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
+    /** Tracks the texture variant (0 = default, 1 = second variant) */
+    public static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
+
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FIRE_BREATH_PROGRESS =
@@ -335,6 +339,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
+        this.entityData.define(DATA_TEXTURE_VARIANT, 0);
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
@@ -553,6 +558,16 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public void setFeedingCooldown(int ticks) {
         this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, ticks));
+    }
+
+    // ===== TEXTURE VARIANT SYSTEM =====
+
+    public int getTextureVariant() {
+        return this.entityData.get(DATA_TEXTURE_VARIANT);
+    }
+
+    public void setTextureVariant(int variant) {
+        this.entityData.set(DATA_TEXTURE_VARIANT, variant);
     }
 
     // ===== TAMING SYSTEM =====
@@ -2325,6 +2340,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.combatManager.saveToNBT(tag);
         this.physicsController.writeToNBT(tag);  // Save physics envelope state
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
+        tag.putInt("TextureVariant", this.entityData.get(DATA_TEXTURE_VARIANT));
         tamingController.save(tag);
     }
 
@@ -2337,6 +2353,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.physicsController.readFromNBT(tag);  // Restore physics envelope state
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
+        }
+        if (tag.contains("TextureVariant")) {
+            this.entityData.set(DATA_TEXTURE_VARIANT, tag.getInt("TextureVariant"));
         }
         tamingController.load(tag);
         applyConfiguredAttributes();

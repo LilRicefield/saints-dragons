@@ -21,6 +21,8 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/ignivorus.animation.json");
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_female.png");
+    private static final ResourceLocation TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant.png");
+    private static final ResourceLocation FEMALE_TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant_female.png");
 
 
     @Override
@@ -30,7 +32,18 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
 
     @Override
     public ResourceLocation getTextureResource(Ignivorus entity) {
-        return entity != null && entity.isFemale() ? FEMALE_TEXTURE : TEXTURE;
+        if (entity == null) {
+            return TEXTURE;
+        }
+
+        int variant = entity.getTextureVariant();
+        boolean isFemale = entity.isFemale();
+
+        if (variant == 1) {
+            return isFemale ? FEMALE_TEXTURE_SECOND_VARIANT : TEXTURE_SECOND_VARIANT;
+        } else {
+            return isFemale ? FEMALE_TEXTURE : TEXTURE;
+        }
     }
 
     @Override
