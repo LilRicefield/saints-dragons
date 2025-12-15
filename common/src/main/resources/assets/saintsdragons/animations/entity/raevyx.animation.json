@@ -9291,7 +9291,7 @@
 				}
 			}
 		},
-		"animation.raevyx.roar_ground": {
+		"animation.raevyx.roar": {
 			"animation_length": 4.375,
 			"bones": {
 				"neckstart": {
