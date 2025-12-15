@@ -49,6 +49,16 @@
       }
     ]
   },
+  "raevyx_eat": {
+    "subtitle": "Raevyx eats",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_eat",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_lightning_beam_start": {
     "subtitle": "Raevyx charges lightning",
     "sounds": [
@@ -261,6 +271,16 @@
       }
     ]
   },
+  "cindervane_eat": {
+    "subtitle": "Cindervane eats",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_eat",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_bite": {
     "subtitle": "Raevyx bites",
     "sounds": [
@@ -406,6 +426,16 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/stegonaut/stegonaut_hurt",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_eat": {
+    "subtitle": "Stegonaut eats",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_eat",
         "volume": 0.8,
         "pitch": 1.0
       }
@@ -586,6 +616,16 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/nulljaw/nulljaw_die",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_eat": {
+    "subtitle": "Nulljaw eats",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_eat",
         "volume": 1.0,
         "pitch": 1.0
       }
@@ -854,7 +894,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_eat",
-        "volume": 3.5,
+        "volume": 2.0,
         "pitch": 1.0
       }
     ]

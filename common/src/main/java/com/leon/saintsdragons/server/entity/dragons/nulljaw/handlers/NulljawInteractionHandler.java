@@ -67,7 +67,7 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             }
 
             drake.triggerAnim("action", "eat");
-            drake.setFeedingCooldown(50);
+            drake.setFeedingCooldown(40);
 
             boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             float healAmount = heartyMeal ? 35.0F : 5.0F;
