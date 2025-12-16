@@ -257,6 +257,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     // Bulldoze toggle state
     private boolean bulldozing = false;
     private int bulldozeCooldownTicks = 0;
+    private final java.util.Map<Integer, Integer> bulldozeHitCooldowns = new java.util.HashMap<>(); // entityId -> cooldown ticks
 
     // Screen shake system
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
@@ -661,6 +662,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 bulldozeCooldownTicks--;
             }
 
+            // Tick down hit cooldowns for all entities
+            bulldozeHitCooldowns.entrySet().removeIf(entry -> {
+                entry.setValue(entry.getValue() - 1);
+                return entry.getValue() <= 0;
+            });
+
             // Force sprint while bulldozing (even during transition lock)
             if (bulldozing && this.isVehicle() && !this.isAccelerating()) {
                 setAccelerating(true);
@@ -673,35 +680,53 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 setAccelerating(false);
                 bulldozeCooldownTicks = 40; // 2 second cooldown
                 clearRiderControlLock(); // Clear any transition lock
+                bulldozeHitCooldowns.clear(); // Clear hit tracking
             }
 
-            // Handle collision damage while bulldozing
+            // Handle collision damage while bulldozing - SUPER DISRESPECTFUL
             if (bulldozing && this.isVehicle()) {
-                // Get all entities in a small radius around the dragon
-                AABB searchBox = this.getBoundingBox().inflate(1.0D);
+                // Get mouth position as knockback origin
+                Vec3 mouthPos = getMouthPosition();
+
+                // Combine hitbox + mouth area for MAXIMUM coverage
+                // Use full dragon hitbox inflated, PLUS mouth area
+                AABB dragonBox = this.getBoundingBox().inflate(1.5D);
+                AABB mouthBox = new AABB(mouthPos, mouthPos).inflate(2.5D);
+                AABB combinedBox = dragonBox.minmax(mouthBox);
+
                 java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
                     LivingEntity.class,
-                    searchBox,
+                    combinedBox,
                     entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlliedTo(entity)
                 );
 
                 // Damage and knockback each entity
                 for (LivingEntity target : entities) {
-                    // Apply damage (5 HP)
-                    target.hurt(this.damageSources().mobAttack(this), 5.0F);
+                    int entityId = target.getId();
 
-                    // Apply knockback (level 2)
+                    // Check if entity is on cooldown (hit recently)
+                    if (bulldozeHitCooldowns.containsKey(entityId)) {
+                        continue; // Skip this entity, still on cooldown
+                    }
+
+                    // Apply damage (10 HP)
+                    target.hurt(this.damageSources().mobAttack(this), 10.0F);
+
+                    // Apply knockback from mouth position for that DISRESPECTFUL shove
                     double knockbackStrength = 2.0D;
-                    double dx = target.getX() - this.getX();
-                    double dz = target.getZ() - this.getZ();
+                    double dx = target.getX() - mouthPos.x;
+                    double dz = target.getZ() - mouthPos.z;
                     double dist = Math.sqrt(dx * dx + dz * dz);
                     if (dist > 0) {
                         target.knockback(
                             knockbackStrength,
-                            -dx / dist,  // Opposite direction
+                            -dx / dist,  // Shove away from mouth
                             -dz / dist
                         );
                     }
+
+                    // Add cooldown: 5 ticks = 0.25 seconds = 4 hits per second per entity
+                    bulldozeHitCooldowns.put(entityId, 5);
                 }
             }
         }
@@ -1263,6 +1288,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void onRiderBulldoze(Player player) {
+        // Only allow bulldoze on ground (not while flying)
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return;
+        }
+
         // Check cooldown
         if (bulldozeCooldownTicks > 0) {
             return;

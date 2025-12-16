@@ -628,7 +628,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.35D) // Hardcoded AI pathfinding speed
+                .add(Attributes.MOVEMENT_SPEED, 0.25D) // Hardcoded AI pathfinding speed
                 .add(Attributes.FOLLOW_RANGE, 80.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
