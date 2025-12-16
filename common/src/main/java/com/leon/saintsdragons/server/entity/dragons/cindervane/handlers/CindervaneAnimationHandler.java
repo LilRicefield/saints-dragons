@@ -17,6 +17,7 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.glide_down");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.cindervane.flap");
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.cindervane.sprint_flap");
+    private static final RawAnimation FLY_IDLE = RawAnimation.begin().thenLoop("animation.cindervane.fly_idle");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.cindervane.takeoff");
     private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.cindervane.landing");
     private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.cindervane.landed");
@@ -83,15 +84,12 @@ public class CindervaneAnimationHandler {
         if (dragon.isVehicle()) {
             state.getController().transitionLength(4);
             if (dragon.isFlying()) {
-                // Check if actually moving to determine hover vs active flight
-                var vel = dragon.getDeltaMovement();
-                boolean sprinting = dragon.isAccelerating();
-                boolean isMovingHorizontally = vel.horizontalDistanceSqr() > 0.01 || sprinting;
-                boolean isMovingVertically = Math.abs(vel.y) > 0.02;
-                boolean isStationary = !isMovingHorizontally && !isMovingVertically;
+                // Get synced flight mode from physics controller
+                // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
+                int syncedMode = dragon.getSyncedFlightMode();
 
                 // Check for takeoff first (highest priority)
-                if (dragon.getSyncedFlightMode() == 3) {
+                if (syncedMode == 3) {
                     state.setAndContinue(TAKEOFF);
                     return PlayState.CONTINUE;
                 }
@@ -107,14 +105,23 @@ public class CindervaneAnimationHandler {
                     state.setAndContinue(GLIDE_DOWN);
                     return PlayState.CONTINUE;
                 }
-                // SPRINT FLYING - third priority after dive/landing/takeoff
-                if (sprinting && isMovingHorizontally) {
+
+                // Mode 5: FLY_IDLE - stationary rider hover (physics controller detects via position tracking)
+                if (syncedMode == 5) {
+                    state.getController().transitionLength(6);
+                    state.setAndContinue(FLY_IDLE);
+                    return PlayState.CONTINUE;
+                }
+
+                // Mode 4: SPRINT_FLAP - accelerating flight (detected by physics controller)
+                if (syncedMode == 4) {
                     state.getController().transitionLength(3);
                     state.setAndContinue(SPRINT_FLAP);
                     return PlayState.CONTINUE;
                 }
-                // HOVER - next priority: truly stationary in air
-                if (isStationary) {
+
+                // Mode 2: HOVER
+                if (syncedMode == 2) {
                     state.getController().transitionLength(6);
                     state.setAndContinue(FLAP);
                     return PlayState.CONTINUE;

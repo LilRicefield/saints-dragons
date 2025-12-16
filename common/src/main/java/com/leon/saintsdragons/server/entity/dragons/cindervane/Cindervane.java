@@ -14,7 +14,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
-import com.leon.saintsdragons.server.entity.controller.cindervane.CindervanePhysicsController;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
@@ -123,7 +122,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final CindervaneAnimationHandler animationHandler = new CindervaneAnimationHandler(this);
-    private final CindervanePhysicsController physicsController = new CindervanePhysicsController(this);
+    // Flight mode state (moved inline from physics controller for performance)
+    private boolean riderHighAltitudeGlide = false;
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
@@ -160,6 +160,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
     private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
+
+    // Position tracking for FLY_IDLE detection (xo/yo/zo are synced too early in tick cycle)
+    // Public for physics controller access
+    public double lastCheckedX = 0;
+    public double lastCheckedY = 0;
+    public double lastCheckedZ = 0;
+    public int ticksSinceLastMovement = 0;
 
     private float prevScreenShakeAmount = 0f;
     private float screenShakeAmount = 0f;
@@ -552,7 +559,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // === CORE TICK (every tick) ===
         super.tick();
         tickRiderControlLock(); // Tick rider control lock from base class
-        physicsController.tick(); // Physics/flight - needs every tick for smooth movement
 
         // === ANIMATION LOGIC (every tick for smooth visuals) ===
         tickBankingLogic();
@@ -1229,8 +1235,158 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public int getFlightMode() {
-        // Delegate to physics controller for consistent flight mode computation
-        return physicsController.computeFlightModeForSync();
+        // Flight mode computation (moved inline from physics controller for performance)
+        // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
+        if (!isFlying()) {
+            riderHighAltitudeGlide = false;
+            return -1;
+        }
+        if (shouldPlayTakeoff()) {
+            riderHighAltitudeGlide = false;
+            return 3;
+        }
+
+        if (isHovering() || isLanding()) {
+            riderHighAltitudeGlide = false;
+            return 2;
+        }
+
+        // Check for ridden flight modes (sprint and fly_idle) before altitude-based logic
+        if (isRiddenByOwner()) {
+            // Track position changes manually (xo/yo/zo are synced too early in tick cycle)
+            double deltaX = getX() - lastCheckedX;
+            double deltaY = getY() - lastCheckedY;
+            double deltaZ = getZ() - lastCheckedZ;
+            double positionChangeSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+
+            boolean goingUp = isGoingUp();
+            boolean goingDown = isGoingDown();
+            boolean accelerating = isAccelerating();
+
+            // Update position tracking and movement timer
+            if (positionChangeSqr > 0.0001 || goingUp || goingDown || accelerating) {
+                ticksSinceLastMovement = 0;
+                lastCheckedX = getX();
+                lastCheckedY = getY();
+                lastCheckedZ = getZ();
+            } else {
+                ticksSinceLastMovement++;
+            }
+
+            // Only switch to FLY_IDLE after being stationary for 3+ ticks
+            if (ticksSinceLastMovement > 3) {
+                return 5; // FLY_IDLE
+            }
+
+            // Check for sprinting - SPRINT_FLAP mode
+            if (accelerating) {
+                return 4; // SPRINT_FLAP
+            }
+        }
+
+        double altitude = getY() - level().getHeight(
+                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                (int) getX(),
+                (int) getZ());
+
+        Vec3 velocity = getDeltaMovement();
+        boolean ascending = velocity.y > 0.02;
+        boolean riderAscending = isVehicle() && isGoingUp();
+
+        if (isRiddenByOwner()) {
+            if (shouldForceSurfaceGlide(altitude)) {
+                riderHighAltitudeGlide = false;
+                return 0;
+            }
+
+            if (ascending || riderAscending) {
+                return 1;
+            }
+
+            if (riderHighAltitudeGlide) {
+                if (altitude > RIDER_GLIDE_ALTITUDE_EXIT) {
+                    return 0;
+                }
+                riderHighAltitudeGlide = false;
+            } else if (altitude > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
+                riderHighAltitudeGlide = true;
+                return 0;
+            }
+
+            return 1;
+        } else {
+            riderHighAltitudeGlide = false;
+        }
+
+        if (ascending || riderAscending) {
+            return 1;
+        }
+
+        return altitude > 35.0 ? 0 : 1;
+    }
+
+    private boolean shouldPlayTakeoff() {
+        // Get timeFlying from entity
+        int timeFlying = getTimeFlying();
+
+        // Play takeoff at the very start of flight
+        if (timeFlying < 28) return true; // TAKEOFF_ANIM_EARLY_TICKS
+
+        // Continue playing if still within max ticks AND conditions are met
+        boolean airborne = !onGround();
+        boolean ascending = getDeltaMovement().y > 0.05;
+
+        return (timeFlying < 30) && (airborne || ascending); // TAKEOFF_ANIM_MAX_TICKS
+    }
+
+    private boolean isRiddenByOwner() {
+        if (!isTame() || !isVehicle()) {
+            return false;
+        }
+        if (!(getControllingPassenger() instanceof Player player)) {
+            return false;
+        }
+        return isOwnedBy(player);
+    }
+
+    private boolean shouldForceSurfaceGlide(double altitudeAboveTerrain) {
+        return altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD || isNearWaterSurface();
+    }
+
+    private boolean isNearWaterSurface() {
+        if (level() == null) {
+            return false;
+        }
+
+        double dragonY = getY();
+        if (dragonY > RIDER_WATER_SURFACE_LEVEL + RIDER_WATER_SURFACE_TOLERANCE) {
+            return false;
+        }
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int baseX = Mth.floor(getX());
+        int baseY = Mth.floor(dragonY);
+        int baseZ = Mth.floor(getZ());
+
+        for (int dx = -RIDER_WATER_SCAN_RADIUS; dx <= RIDER_WATER_SCAN_RADIUS; dx++) {
+            for (int dz = -RIDER_WATER_SCAN_RADIUS; dz <= RIDER_WATER_SCAN_RADIUS; dz++) {
+                for (int dy = 0; dy <= RIDER_WATER_SCAN_DEPTH; dy++) {
+                    cursor.set(baseX + dx, baseY - dy, baseZ + dz);
+                    if (!level().hasChunkAt(cursor)) {
+                        continue;
+                    }
+                    BlockState state = level().getBlockState(cursor);
+                    if (!state.getFluidState().isEmpty()) {
+                        double surfaceY = cursor.getY() + 1.0;
+                        if (Math.abs(dragonY - surfaceY) <= RIDER_WATER_SURFACE_TOLERANCE) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     @Override
