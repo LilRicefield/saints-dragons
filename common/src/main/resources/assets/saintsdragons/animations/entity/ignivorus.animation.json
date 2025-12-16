@@ -41113,6 +41113,12 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "ignivorus_bulldozer_enter",
+					"locator": "mouth_origin"
+				}
 			}
 		},
 		"animation.ignivorus.bulldozer_idle": {
@@ -42349,7 +42355,8 @@
 						}
 					}
 				}
-			}
+			},
+			"sound_effects": {}
 		},
 		"animation.ignivorus.bulldozing": {
 			"loop": true,
@@ -43530,6 +43537,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "ignivorus_bulldozing",
+					"locator": "body_locator"
 				}
 			}
 		},
@@ -45006,6 +45019,12 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "ignivorus_bulldozer_exit",
+					"locator": "mouth_origin"
 				}
 			}
 		}

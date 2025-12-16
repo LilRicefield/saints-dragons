@@ -641,6 +641,36 @@
       }
     ]
   },
+  "ignivorus_bulldozing": {
+    "subtitle": "Ignivorus charges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_bulldozing",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_bulldozer_enter": {
+    "subtitle": "Ignivorus lowers its body",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_bulldozer_enter",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_bulldozer_exit": {
+    "subtitle": "Ignivorus lifts its body",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_bulldozer_exit",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ignivorus_body_slam": {
     "subtitle": "Ignivorus slams its body",
     "sounds": [

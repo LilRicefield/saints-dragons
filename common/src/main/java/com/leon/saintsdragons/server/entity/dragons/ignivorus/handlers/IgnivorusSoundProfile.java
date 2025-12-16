@@ -117,6 +117,18 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LANDED.get(), 1.5f, 1.0f, 0.0f);
                 yield true;
             }
+            case "ignivorus_bulldozer_enter" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_BULLDOZER_ENTER.get(), 1.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_bulldozing" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_BULLDOZING.get(), 1.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_bulldozer_exit" -> {
+                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_BULLDOZER_EXIT.get(), 1.5f, 1.0f, 0.0f);
+                yield true;
+            }
             default -> false;
         };
     }
