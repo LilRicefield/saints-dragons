@@ -26,6 +26,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.ignivorus.swim");
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.ignivorus.stunned");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.ignivorus.sleep");
+    private static final RawAnimation BULLDOZER_IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.bulldozer_idle");
+    private static final RawAnimation BULLDOZING = RawAnimation.begin().thenLoop("animation.ignivorus.bulldozing");
 
     /**
      * Main animation predicate - handles idle, walk, run, fly, and sit animations
@@ -66,6 +68,18 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         } else if (dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
             // Transition animations are triggered, don't interfere
             return PlayState.STOP;
+        }
+
+        // Check for bulldozing - highest priority for ground movement
+        if (!dragon.isFlying() && dragon.getEntityData().get(Ignivorus.DATA_BULLDOZING)) {
+            // Check if moving (check velocity or forward input)
+            boolean isMoving = Math.abs(dragon.getDeltaMovement().x) > 0.01 || Math.abs(dragon.getDeltaMovement().z) > 0.01;
+            if (isMoving) {
+                state.setAndContinue(BULLDOZING);
+            } else {
+                state.setAndContinue(BULLDOZER_IDLE);
+            }
+            return PlayState.CONTINUE;
         }
 
         // Check for sitting - highest priority after flying
@@ -246,6 +260,14 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         dragon.triggerAnim("action", "wake_up");
     }
 
+    public void triggerBulldozeEnterAnimation() {
+        dragon.triggerAnim("action", "bulldozer_enter");
+    }
+
+    public void triggerBulldozeExitAnimation() {
+        dragon.triggerAnim("action", "bulldozer_exit");
+    }
+
     /**
      * Sets up all GeckoLib animation triggers for the action controller.
      * Follows the same pattern as Raevyx for consistent ability animation handling.
@@ -310,6 +332,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
         // Landed animation (plays after landing with rider)
         actionController.triggerableAnim("landed", LANDED);
+
+        // Bulldoze animations
+        actionController.triggerableAnim("bulldozer_enter",
+            RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_enter"));
+        actionController.triggerableAnim("bulldozer_exit",
+            RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_exit"));
 
         // Ambient grumbles
         actionController.triggerableAnim("ignivorus_grumble1",
