@@ -17,7 +17,6 @@ import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusPhysicsController;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
@@ -203,8 +202,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
-    private final IgnivorusPhysicsController physicsController = new IgnivorusPhysicsController(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
+
+    // Flight mode state (moved from physics controller for performance)
+    private boolean riderHighAltitudeGlide = false;
     private final IgnivorusRiderController riderController;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
     private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
@@ -396,7 +397,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         super.tick();
         soundHandler.tick();
         tickRiderControlLock();
-        physicsController.tick();
         tickScreenShake();
         tickCinematicZoom();
 
@@ -428,7 +428,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Update flight mode for animation system (server side only)
         if (!level().isClientSide && isFlying()) {
-            int newFlightMode = physicsController.computeFlightModeForSync();
+            int newFlightMode = computeFlightModeForSync();
             setFlightMode(newFlightMode);
         }
 
@@ -1361,6 +1361,140 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public void setFlightMode(int mode) {
         this.entityData.set(DATA_FLIGHT_MODE, mode);
+    }
+
+    /**
+     * Computes flight mode for network sync (moved inline from physics controller for performance)
+     * 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
+     */
+    private int computeFlightModeForSync() {
+        if (!isFlying()) {
+            riderHighAltitudeGlide = false;
+            return -1;
+        }
+
+        // Takeoff check
+        if (timeFlying < 5 || (timeFlying < 30 && (!onGround() || getDeltaMovement().y > 0.05))) {
+            riderHighAltitudeGlide = false;
+            return 3;
+        }
+
+        if (isHovering() || isLanding()) {
+            riderHighAltitudeGlide = false;
+            return 2;
+        }
+
+        // Rider-specific modes (sprint and fly_idle)
+        if (isTame() && isVehicle()) {
+            Entity rider = getControllingPassenger();
+            if (rider instanceof Player player && isOwnedBy(player)) {
+                // Track position changes manually (xo/yo/zo are synced too early)
+                double deltaX = getX() - lastCheckedX;
+                double deltaY = getY() - lastCheckedY;
+                double deltaZ = getZ() - lastCheckedZ;
+                double positionChangeSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
+
+                boolean goingUp = isGoingUp();
+                boolean goingDown = isGoingDown();
+                boolean accelerating = isAccelerating();
+
+                // Update position tracking and movement timer
+                if (positionChangeSqr > 0.0001 || goingUp || goingDown || accelerating) {
+                    ticksSinceLastMovement = 0;
+                    lastCheckedX = getX();
+                    lastCheckedY = getY();
+                    lastCheckedZ = getZ();
+                } else {
+                    ticksSinceLastMovement++;
+                }
+
+                // FLY_IDLE after 3+ ticks stationary
+                if (ticksSinceLastMovement > 3) {
+                    return 5;
+                }
+
+                // SPRINT_FLAP when accelerating
+                if (accelerating) {
+                    return 4;
+                }
+            }
+        }
+
+        double altitude = getY() - level().getHeight(
+                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                (int) getX(),
+                (int) getZ());
+
+        Vec3 velocity = getDeltaMovement();
+        boolean ascending = velocity.y > 0.02;
+        boolean riderAscending = isVehicle() && isGoingUp();
+
+        // Rider altitude-based logic
+        if (isTame() && isVehicle() && getControllingPassenger() instanceof Player player && isOwnedBy(player)) {
+            // Force glide near terrain/water
+            if (altitude <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD || isNearWaterSurface()) {
+                riderHighAltitudeGlide = false;
+                return 0;
+            }
+
+            if (ascending || riderAscending) {
+                return 1;
+            }
+
+            // High altitude glide state machine
+            if (riderHighAltitudeGlide) {
+                if (altitude > RIDER_GLIDE_ALTITUDE_EXIT) {
+                    return 0;
+                }
+                riderHighAltitudeGlide = false;
+            } else if (altitude > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
+                riderHighAltitudeGlide = true;
+                return 0;
+            }
+
+            return 1;
+        } else {
+            riderHighAltitudeGlide = false;
+        }
+
+        // AI flight: flap when ascending
+        if (ascending || riderAscending) {
+            return 1;
+        }
+
+        // AI flight: altitude-based
+        return altitude > 35.0 ? 0 : 1;
+    }
+
+    private boolean isNearWaterSurface() {
+        if (level() == null) return false;
+
+        double dragonY = getY();
+        if (dragonY > RIDER_WATER_SURFACE_LEVEL + RIDER_WATER_SURFACE_TOLERANCE) {
+            return false;
+        }
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int baseX = Mth.floor(getX());
+        int baseY = Mth.floor(dragonY);
+        int baseZ = Mth.floor(getZ());
+
+        for (int dx = -RIDER_WATER_SCAN_RADIUS; dx <= RIDER_WATER_SCAN_RADIUS; dx++) {
+            for (int dz = -RIDER_WATER_SCAN_RADIUS; dz <= RIDER_WATER_SCAN_RADIUS; dz++) {
+                for (int dy = 0; dy <= RIDER_WATER_SCAN_DEPTH; dy++) {
+                    cursor.set(baseX + dx, baseY - dy, baseZ + dz);
+                    if (!level().hasChunkAt(cursor)) continue;
+
+                    if (!level().getBlockState(cursor).getFluidState().isEmpty()) {
+                        double surfaceY = cursor.getY() + 1.0;
+                        if (Math.abs(dragonY - surfaceY) <= RIDER_WATER_SURFACE_TOLERANCE) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public boolean isBreathingFire() {
@@ -2327,7 +2461,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         saveRideableData(tag);  // Save flight state (flying, hovering, takeoff, etc.)
         tag.putInt("TimeFlying", timeFlying);  // Save flying duration
         this.combatManager.saveToNBT(tag);
-        this.physicsController.writeToNBT(tag);  // Save physics envelope state
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tag.putInt("TextureVariant", this.entityData.get(DATA_TEXTURE_VARIANT));
         tamingController.save(tag);
@@ -2339,7 +2472,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         loadRideableData(tag);  // Restore flight state
         this.timeFlying = tag.getInt("TimeFlying");  // Restore flying duration
         this.combatManager.loadFromNBT(tag);
-        this.physicsController.readFromNBT(tag);  // Restore physics envelope state
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }

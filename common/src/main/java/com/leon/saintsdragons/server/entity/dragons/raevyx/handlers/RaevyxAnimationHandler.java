@@ -258,54 +258,14 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             // Mode 0: Glide
             if (syncedMode == 0) {
                 state.getController().transitionLength(12);
-                state.setAndContinue(resolveGlideAnimation(vNow));
+                state.setAndContinue(FLY_GLIDE);
                 return PlayState.CONTINUE;
             }
 
-            float hoverWeight = wyvern.getHoveringFraction();
-            float flapWeight = wyvern.getFlappingFraction();
-            boolean descendingNow = vNow.y < -0.03;
-            if (wyvern.isVehicle()) {
-                descendingNow |= wyvern.isGoingDown();
-            } else {
-                descendingNow |= wyvern.getPitchDirection() > 0;
-            }
-
-            boolean shouldFlapBase = (currentFlightAnimation == FLAP)
-                    ? (flapWeight > 0.55f || hoverWeight > 0.65f)
-                    : (flapWeight > 0.22f || hoverWeight > 0.28f);
-
-            if (hoverWeight > 0.45f) {
-                state.getController().transitionLength(6);
-                currentFlightAnimation = FLAP;
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            boolean ascendingNow = wyvern.isGoingUp() || vNow.y > 0.02;
-            if (ascendingNow) {
-                if (currentFlightAnimation != FLAP) {
-                    state.getController().transitionLength(4);
-                    currentFlightAnimation = FLAP;
-                }
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            } else if (shouldFlapBase) {
-                if (currentFlightAnimation != FLAP) {
-                    state.getController().transitionLength(4);
-                    currentFlightAnimation = FLAP;
-                }
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            } else {
-                RawAnimation glideAnimation = resolveGlideAnimation(vNow);
-                if (currentFlightAnimation != glideAnimation) {
-                    state.getController().transitionLength(8);
-                    currentFlightAnimation = glideAnimation;
-                }
-                state.setAndContinue(glideAnimation);
-                return PlayState.CONTINUE;
-            }
+            // Fallback: should not reach here with proper sync, but default to glide
+            state.getController().transitionLength(12);
+            state.setAndContinue(FLY_GLIDE);
+            return PlayState.CONTINUE;
         }
 
         if (wyvern.isActuallyRunning()) {
@@ -401,27 +361,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     }
 
 
-    private RawAnimation resolveGlideAnimation(Vec3 velocity) {
-        if (!wyvern.isTame()) {
-            return FLY_GLIDE;
-        }
-
-        Vec3 motion = velocity == null ? Vec3.ZERO : velocity;
-        double verticalSpeed = motion.y;
-        double horizontalSpeedSqr = motion.horizontalDistanceSqr();
-
-        boolean riderDescending = wyvern.isVehicle() && wyvern.isGoingDown();
-        boolean pitchingDown = !wyvern.isVehicle() && wyvern.getPitchDirection() > 0;
-        boolean fallingFast = verticalSpeed < -0.06;
-        boolean moderateDescent = verticalSpeed < -0.025;
-        boolean sustainedGlide = wyvern.getGlidingFraction() > 0.18f || wyvern.getFlappingFraction() < 0.35f;
-        boolean hasForwardSpeed = horizontalSpeedSqr > 0.0009;
-
-        if ((pitchingDown || riderDescending || fallingFast || moderateDescent) && sustainedGlide && hasForwardSpeed) {
-            return GLIDE_DOWN;
-        }
-        return FLY_GLIDE;
-    }
+    // Removed: resolveGlideAnimation() is no longer needed with synced flight modes
 
     // ===== ANIMATION PREDICATES =====
 

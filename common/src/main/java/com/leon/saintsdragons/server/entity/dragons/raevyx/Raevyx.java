@@ -16,7 +16,6 @@ import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.ai.goals.raevyx.baby.RaevyxFollowParentGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior;
-import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxPhysicsController;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -526,7 +525,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     // ===== HARDCODED GROUND SPEEDS =====
     public static final double RIDER_WALK_SPEED = 0.18D;
-    public static final double RIDER_RUN_SPEED = 0.30D;
+    public static final double RIDER_RUN_SPEED = 0.40D;
 
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
@@ -545,16 +544,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // GeckoLib cache is now handled by base DragonEntity class
 
     //FLIGHT
-    public float getGlidingFraction() {
-        return physicsController.glidingFraction;
-    }
-    public float getFlappingFraction() {
-        return physicsController.flappingFraction;
-    }
-    public float getHoveringFraction() {
-        return physicsController.hoveringFraction;
-    }
-    private final RaevyxPhysicsController physicsController = new RaevyxPhysicsController(this);
+    // (Flight mode logic is already inline in getFlightMode() - no physics controller needed)
 
     // Animation controller is internal-only; external integration goes via GeckoLib controllers.
 
@@ -638,7 +628,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.25D) // Hardcoded AI pathfinding speed
+                .add(Attributes.MOVEMENT_SPEED, 0.35D) // Hardcoded AI pathfinding speed
                 .add(Attributes.FOLLOW_RANGE, 80.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
@@ -1274,7 +1264,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         return 1; // Forward flight
     }
-    
+
+    /**
+     * Computes flight mode for network sync (delegates to getFlightMode)
+     * 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
+     */
+    private int computeFlightModeForSync() {
+        return getFlightMode();
+    }
+
     @Override
     protected boolean isDragonFlying() {
         return getBooleanData(DATA_FLYING);
@@ -1472,7 +1470,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     public void tick() {
         // === CORE TICK (every tick) ===
-        physicsController.tick();
         super.tick();
         tickControllers(); // Physics/flight - needs every tick for smooth movement
 
@@ -1509,7 +1506,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // Update flight mode for animation system (server side only)
         if (!level().isClientSide && isFlying()) {
-            int newFlightMode = physicsController.computeFlightModeForSync();
+            int newFlightMode = computeFlightModeForSync();
             setFlightMode(newFlightMode);
         }
 
@@ -3579,8 +3576,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         tag.putBoolean("ManualSitCommand", this.manualSitCommand);
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tamingController.save(tag);
-
-        physicsController.writeToNBT(tag);
     }
 
     @Override
@@ -3620,8 +3615,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
         tamingController.load(tag);
-
-        physicsController.readFromNBT(tag);
 
         this.manualSitCommand = tag.contains("ManualSitCommand") && tag.getBoolean("ManualSitCommand");
 
