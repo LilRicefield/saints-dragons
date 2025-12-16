@@ -100,11 +100,16 @@ public final class DragonRideInputHandler {
     private static boolean lastAscendDown = false;
     private static boolean lastDescendDown = false;
 
-    // Double-tap dodge detection
+    // Double-tap dodge detection (Raevyx)
     private static long lastLeftTapTime = 0;
     private static long lastRightTapTime = 0;
     private static boolean wasLeftKeyDown = false;
     private static boolean wasRightKeyDown = false;
+
+    // Double-tap bulldoze detection (Ignivorus)
+    private static long lastForwardTapTime = 0;
+    private static boolean wasForwardKeyDown = false;
+
     private static final long DOUBLE_TAP_WINDOW_MS = 300;
 
     private DragonRideInputHandler() {
@@ -233,6 +238,22 @@ public final class DragonRideInputHandler {
             wasRightKeyDown = rightDown;
         }
 
+        // Double-tap bulldoze toggle (only for Ignivorus)
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus) {
+            boolean forwardDown = mc.options.keyUp.isDown();
+            long currentTime = System.currentTimeMillis();
+
+            // Detect bulldoze toggle (double-tap W)
+            if (forwardDown && !wasForwardKeyDown) {
+                if (currentTime - lastForwardTapTime < DOUBLE_TAP_WINDOW_MS) {
+                    sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_W, null, forward, strafe, yaw);
+                }
+                lastForwardTapTime = currentTime;
+            }
+
+            wasForwardKeyDown = forwardDown;
+        }
+
         handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
         handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
         handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
@@ -311,5 +332,7 @@ public final class DragonRideInputHandler {
         lastRightTapTime = 0;
         wasLeftKeyDown = false;
         wasRightKeyDown = false;
+        lastForwardTapTime = 0;
+        wasForwardKeyDown = false;
     }
 }
