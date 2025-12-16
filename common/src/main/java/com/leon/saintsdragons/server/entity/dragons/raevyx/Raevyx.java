@@ -44,7 +44,6 @@ import java.util.Map;
 //Minecraft
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -392,6 +391,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     Vec3 dodgeVec = Vec3.ZERO;
     int dodgeCooldownTicks = 0; // Cooldown between dodges (2 seconds = 40 ticks)
     int dodgeIFramesTicks = 0; // Invulnerability frames during dodge
+    private float preDodgeStepHeight = 1.0F;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -1402,6 +1402,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     public void beginDodge(Vec3 vec, int ticks) {
         this.dodging = true;
+        this.preDodgeStepHeight = this.maxUpStep();
+        this.setMaxUpStep(Math.max(this.maxUpStep(), 1.5F));
         this.dodgeVec = vec;
         this.dodgeTicksLeft = Math.max(1, ticks);
         this.setDeltaMovement(vec);
@@ -2779,8 +2781,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private void handleDodgeMovement() {
-        // Apply the dodge velocity; travel() will process the delta move normally.
-        this.setDeltaMovement(dodgeVec);
+        // Apply the dodge velocity; add a small vertical nudge so step logic can clear 1-block stairs during the dash.
+        Vec3 applied = dodgeVec;
+        if (!this.isFlying() && dodgeVec.horizontalDistanceSqr() > 1.0e-4) {
+            double stepBoost = Math.min(0.42D, this.maxUpStep() * 0.6D);
+            applied = applied.add(0.0D, stepBoost, 0.0D);
+        }
+        this.setDeltaMovement(applied);
         this.hasImpulse = true;
 
         // Decay for next tick
@@ -2789,6 +2796,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (--dodgeTicksLeft <= 0) {
             dodging = false;
             dodgeVec = Vec3.ZERO;
+            this.setMaxUpStep(preDodgeStepHeight);
         }
     }
 
