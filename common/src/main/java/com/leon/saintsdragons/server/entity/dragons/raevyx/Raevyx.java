@@ -854,12 +854,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     toggleMeleeMode();
                 }
             }
-            case DODGE_LEFT -> {
+            case DOUBLE_TAP_A -> {
                 if (!locked) {
                     onRiderDodge(player, true);
                 }
             }
-            case DODGE_RIGHT -> {
+            case DOUBLE_TAP_D -> {
                 if (!locked) {
                     onRiderDodge(player, false);
                 }

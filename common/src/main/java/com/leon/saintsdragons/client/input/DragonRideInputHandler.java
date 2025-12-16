@@ -216,7 +216,7 @@ public final class DragonRideInputHandler {
             // Detect left dodge (double-tap A)
             if (leftDown && !wasLeftKeyDown) {
                 if (currentTime - lastLeftTapTime < DOUBLE_TAP_WINDOW_MS) {
-                    sendInput(ascendDown, descendDown, DragonRiderAction.DODGE_LEFT, null, forward, strafe, yaw);
+                    sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_A, null, forward, strafe, yaw);
                 }
                 lastLeftTapTime = currentTime;
             }
@@ -224,7 +224,7 @@ public final class DragonRideInputHandler {
             // Detect right dodge (double-tap D)
             if (rightDown && !wasRightKeyDown) {
                 if (currentTime - lastRightTapTime < DOUBLE_TAP_WINDOW_MS) {
-                    sendInput(ascendDown, descendDown, DragonRiderAction.DODGE_RIGHT, null, forward, strafe, yaw);
+                    sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_D, null, forward, strafe, yaw);
                 }
                 lastRightTapTime = currentTime;
             }
