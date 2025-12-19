@@ -2049,13 +2049,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
         tag.putBoolean("PhaseTwo", isPhaseTwoActive());
-        tag.putBoolean("Sleeping", isSleeping());
-        tag.putBoolean("SleepingEntering", isSleepingEntering());
-        tag.putBoolean("SleepingExiting", isSleepingExiting());
-        tag.putBoolean("SleepLocked", sleepLocked);
-        tag.putInt("SleepTransitionTicks", sleepTransitionTicks);
-        tag.putInt("SleepAmbientCooldown", sleepAmbientCooldownTicks);
-        tag.putInt("SleepReentryCooldown", sleepReentryCooldownTicks);
 
         // Sleep state is ephemeral - not persisted (sleep goal re-evaluates on load)
         tag.putInt("SleepCancelTicks", sleepCancelTicks);
@@ -2069,15 +2062,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     public void readAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         loadRideableData(tag);
-        setSleeping(tag.getBoolean("Sleeping"));
-        setSleepingEntering(tag.getBoolean("SleepingEntering"));
-        setSleepingExiting(tag.getBoolean("SleepingExiting"));
-        sleepLocked = tag.getBoolean("SleepLocked");
-        sleepTransitionTicks = tag.getInt("SleepTransitionTicks");
-        sleepAmbientCooldownTicks = tag.getInt("SleepAmbientCooldown");
-        sleepReentryCooldownTicks = tag.getInt("SleepReentryCooldown");
 
-        // Sleep state is ephemeral - not loaded (cleaned up below, sleep goal re-evaluates)
+        // Sleep state is ephemeral - not loaded (sleep goal re-evaluates naturally)
 
         // Restore feeding cooldown (synced via entity data but loaded for redundancy)
         if (tag.contains("FeedingCooldownTicks")) {
@@ -2087,20 +2073,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         sleepCancelTicks = tag.getInt("SleepCancelTicks");
         sleepCommandSnapshot = tag.contains("SleepCommandSnapshot") ? tag.getInt("SleepCommandSnapshot") : -1;
 
-        // Clear all sleep state on world load (sleep is ephemeral, not persisted)
-        // Sleep goal will re-evaluate conditions and put dragon back to sleep if appropriate
-        if (!level().isClientSide) {
-            if (sleepLocked || isSleepingEntering() || isSleepingExiting() || isSleeping()) {
-                releaseSleepLock();
-                wakeUpImmediately();
-                suppressSleep(200);
-            }
-            setSleepingEntering(false);
-            setSleepingExiting(false);
-            sleepTransitionTicks = 0;
-            sleepSitUpTriggered = false;
-            setSleeping(false);
-        }
+        // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
+        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
         if (tag.contains("PhaseTwo")) {
             setPhaseTwoActive(tag.getBoolean("PhaseTwo"), false);
         }

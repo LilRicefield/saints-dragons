@@ -3611,17 +3611,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             this.setOrderedToSit(false);
         }
 
-        if (this.sleepLocked || this.isSleepingEntering() || this.isSleepingExiting() || this.entityData.get(DATA_SLEEPING)) {
-            this.releaseSleepLock();
-            this.wakeUpImmediately();
-            this.suppressSleep(200);
-        }
-        this.setSleepingEntering(false);
-        this.setSleepingExiting(false);
-        this.sleepTransitionTicks = 0;
-        this.entityData.set(DATA_SLEEPING, false);
-        this.sleepCommandSnapshot = -1;
-        this.followFailsafeCooldown = 0;
+        // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
+        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
         boolean shouldHaveNoGravity = isFlying() || isHovering();
         this.setNoGravity(shouldHaveNoGravity);
 
