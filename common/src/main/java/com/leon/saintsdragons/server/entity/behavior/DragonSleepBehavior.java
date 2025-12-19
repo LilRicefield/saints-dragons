@@ -30,9 +30,6 @@ public class DragonSleepBehavior {
      * NOTE: Does NOT check environment (ground, water, etc.) because entity may not be settled yet on spawn/reload
      */
     private boolean shouldSleepBasedOnConditions() {
-        // Don't check canSleepInCurrentEnvironment() here - entity might not be on ground yet during construction!
-        // Environment checks happen during tick evaluation after entity has settled
-
         // Check sleep preferences (time/weather - stable conditions)
         DragonSleepPreferences prefs = dragon.getSleepPreferences();
         if (!prefs.canSleepDuringConditions(dragon.level())) {
