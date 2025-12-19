@@ -17,12 +17,11 @@ public class DragonSleepBehavior {
     public DragonSleepBehavior(DragonEntity dragon) {
         this.dragon = dragon;
         // Only apply delay if sleep conditions are NOT currently met
-        // This allows immediate re-entry on chunk reload if it's still sleep time (like Naturalist)
+        // This allows immediate re-entry on chunk reload if it's still sleep time
         if (!shouldSleepBasedOnConditions()) {
             // Not sleep time - apply random delay before first sleep check
             delaySleep(100, 300); // 5-15 seconds of wandering before first sleep check
         }
-        // else: Sleep conditions met - no delay, will immediately attempt sleep like Naturalist's SleepGoal
     }
 
     /**
