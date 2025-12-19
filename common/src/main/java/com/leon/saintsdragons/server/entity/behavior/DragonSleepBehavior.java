@@ -16,9 +16,37 @@ public class DragonSleepBehavior {
 
     public DragonSleepBehavior(DragonEntity dragon) {
         this.dragon = dragon;
-        // Initialize with random delay to prevent newly-spawned dragons from sleeping immediately
-        // This prevents multiple dragons spawning at the same time from overlapping during sleep
-        delaySleep(100, 300); // 5-15 seconds of wandering before first sleep check
+        // Only apply delay if sleep conditions are NOT currently met
+        // This allows immediate re-entry on chunk reload if it's still sleep time (like Naturalist)
+        if (!shouldSleepBasedOnConditions()) {
+            // Not sleep time - apply random delay before first sleep check
+            delaySleep(100, 300); // 5-15 seconds of wandering before first sleep check
+        }
+        // else: Sleep conditions met - no delay, will immediately attempt sleep like Naturalist's SleepGoal
+    }
+
+    /**
+     * Check if dragon should be sleeping based on current conditions (time, weather, owner)
+     * Used during construction to determine if initial delay should be applied
+     * NOTE: Does NOT check environment (ground, water, etc.) because entity may not be settled yet on spawn/reload
+     */
+    private boolean shouldSleepBasedOnConditions() {
+        // Don't check canSleepInCurrentEnvironment() here - entity might not be on ground yet during construction!
+        // Environment checks happen during tick evaluation after entity has settled
+
+        // Check sleep preferences (time/weather - stable conditions)
+        DragonSleepPreferences prefs = dragon.getSleepPreferences();
+        if (!prefs.canSleepDuringConditions(dragon.level())) {
+            return false;
+        }
+
+        // Tamed dragons: only sleep if owner is sleeping nearby
+        if (dragon.isTame()) {
+            return isOwnerSleepingNearby();
+        }
+
+        // Wild dragons: should sleep based on time of day (if it's daytime and dragon is diurnal, etc.)
+        return true;
     }
 
     /**

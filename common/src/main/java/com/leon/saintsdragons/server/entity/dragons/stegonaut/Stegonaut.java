@@ -1069,18 +1069,8 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         refreshCommandState();
         this.setOrderedToSit(restoredOrderedSit);
 
-        // Clear all sleep state on world load (sleep is ephemeral, not persisted)
-        // Sleep goal will re-evaluate conditions and put dragon back to sleep if appropriate
-        sleeping = false;
-        sleepTransitioning = false;
-        sleepingEntering = false;
-        sleepingExiting = false;
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        sleepTransitionTicks = 0;
-        this.entityData.set(DATA_SLEEPING, false);
-        this.entityData.set(DATA_SLEEPING_ENTERING, false);
-        this.entityData.set(DATA_SLEEPING_EXITING, false);
+        // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
+        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
     }
     
     // ===== DRAKE BINDER FUNCTIONALITY =====
