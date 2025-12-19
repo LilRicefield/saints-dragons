@@ -836,18 +836,10 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
 
     public void handleJumpRequest() {
-        if (areRiderControlsLocked()) {
-            return;
-        }
-        if (this.isInWater()) {
-            // Enhanced water jump - more powerful for aquatic creature
-            Vec3 jump = new Vec3(0.0D, 0.6D, 0.0D);
-            this.setDeltaMovement(this.getDeltaMovement().add(jump));
-            this.hasImpulse = true;
-        } else if (this.onGround()) {
+        if (this.onGround()) {
             // Ground jump - standard jump height
             Vec3 movement = this.getDeltaMovement();
-            this.setDeltaMovement(movement.x, 0.42D, movement.z);
+            this.setDeltaMovement(movement.x, 1.0, movement.z);
             this.hasImpulse = true;
         }
     }
@@ -868,14 +860,6 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             setLastRiderStrafe(Math.abs(str) > 0.02f ? str : 0f);
         }
         return input;
-    }
-
-    @Override
-    protected float getRiddenSpeed(@Nonnull @NotNull Player rider) {
-        if (areRiderControlsLocked()) {
-            return 0.0F;
-        }
-        return riderController.getRiddenSpeed(rider);
     }
 
     @Override
@@ -918,7 +902,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     // Let RideableDragonBase handle tickAnimationStates() for proper networking
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource source) {
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, @NotNull DamageSource source) {
         if (fallDistance <= 16.0F) {
             return false;
         }
@@ -1612,7 +1596,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     private void applyWildRideMotion() {
         // Frantic running - pick random sprint targets
-        if (this.getNavigation().isDone() || this.getRandom().nextInt(35) == 0) {
+        if (this.getNavigation().isDone()) {
             double targetX = this.getX() + (this.getRandom().nextDouble() - 0.5D) * 22.0D;
             double targetZ = this.getZ() + (this.getRandom().nextDouble() - 0.5D) * 22.0D;
             double targetY = this.getY();
