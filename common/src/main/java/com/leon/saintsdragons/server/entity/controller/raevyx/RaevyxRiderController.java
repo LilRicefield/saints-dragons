@@ -198,10 +198,9 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
             // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
             if (wyvern.getRiderTakeoffTicks() > 0) {
-                // During automated takeoff, apply a firm upward shove so climb begins immediately
-                // and stays smooth even if the rider isn't pitching/pressing anything yet.
-                double boost = ASCEND_THRUST * 0.85;
-                verticalVel = Math.max(verticalVel + boost, 0.45);
+                // During automated takeoff, apply upward thrust matching normal ascent
+                // to ensure smooth transition when boost window ends
+                verticalVel += ASCEND_THRUST;
             } else if (wyvern.isGoingUp()) {
                 // Apply upward thrust
                 verticalVel += ASCEND_THRUST;

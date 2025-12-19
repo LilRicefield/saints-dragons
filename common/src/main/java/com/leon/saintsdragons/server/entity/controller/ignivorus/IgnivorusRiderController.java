@@ -215,14 +215,11 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
             double verticalVel = currentVelocity.y;
 
-            // Vertical control - require explicit ascend input; takeoff only helps if Space is held
-            if (dragon.isTakeoff()) {
-                if (dragon.isGoingUp()) {
-                    double boost = ASCEND_THRUST * 0.65; // modest assist while Space is held
-                    verticalVel = Math.max(verticalVel + boost, 0.20);
-                } else {
-                    verticalVel *= VERTICAL_DRAG;
-                }
+            // Vertical control - takeoff provides optional boost but doesn't block descent
+            if (dragon.isTakeoff() && dragon.isGoingUp()) {
+                // Apply modest boost during takeoff if Space is held
+                double boost = ASCEND_THRUST * 0.65;
+                verticalVel = Math.max(verticalVel + boost, 0.20);
             } else if (dragon.isGoingUp()) {
                 verticalVel += ASCEND_THRUST;
             } else if (dragon.isGoingDown()) {

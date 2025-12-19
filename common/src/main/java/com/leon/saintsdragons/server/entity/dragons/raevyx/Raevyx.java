@@ -1165,10 +1165,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // Flight mode accessor for controllers (avoids accessing protected entityData outside entity)
     public int getSyncedFlightMode() { return getIntegerData(DATA_FLIGHT_MODE); }
 
-    public void setFlightMode(int mode) {
-        this.entityData.set(DATA_FLIGHT_MODE, mode);
-    }
-
     // Debug/inspection helper: expose raw ground move state
     public int getGroundMoveState() { return getIntegerData(DATA_GROUND_MOVE_STATE); }
     
@@ -1263,14 +1259,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         return 1; // Forward flight
-    }
-
-    /**
-     * Computes flight mode for network sync (delegates to getFlightMode)
-     * 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
-     */
-    private int computeFlightModeForSync() {
-        return getFlightMode();
     }
 
     @Override
@@ -1491,7 +1479,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // === SERVER-SIDE: EVERY TICK (lightweight or critical) ===
         tickSittingState();
-        // tickPostLoadStabilization(); // DISABLED - no longer needed with vanilla travel
         tickRiderTakeoff();
         tickHurtSoundCooldown();
         tickDismountRecall();
@@ -1502,12 +1489,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             timeFlying++;
         } else {
             timeFlying = 0;
-        }
-
-        // Update flight mode for animation system (server side only)
-        if (!level().isClientSide && isFlying()) {
-            int newFlightMode = computeFlightModeForSync();
-            setFlightMode(newFlightMode);
         }
 
         // When ridden and flying, never stay in 'hovering' unless explicitly landing/beaming/takeoff
@@ -2177,13 +2158,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (!level().isClientSide && riderTakeoffTicks > 0 && !isDying()) {
             riderTakeoffTicks--;
 
-            // Apply upward boost during takeoff window
-            Vec3 velocity = this.getDeltaMovement();
-            double boost = this.isFlying() ? 0.08D : 0.12D;
-            if (velocity.y < boost) {
-                this.setDeltaMovement(velocity.x, boost, velocity.z);
+            // Only apply boost if NOT being ridden (rider controller handles takeoff boost instead)
+            if (getControllingPassenger() == null) {
+                // Apply upward boost during takeoff window
+                Vec3 velocity = this.getDeltaMovement();
+                double boost = this.isFlying() ? 0.08D : 0.12D;
+                if (velocity.y < boost) {
+                    this.setDeltaMovement(velocity.x, boost, velocity.z);
+                }
+                this.hasImpulse = true;
             }
-            this.hasImpulse = true;
         }
     }
     
