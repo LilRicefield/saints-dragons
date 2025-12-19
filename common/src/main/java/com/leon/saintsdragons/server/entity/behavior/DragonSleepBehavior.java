@@ -16,6 +16,9 @@ public class DragonSleepBehavior {
 
     public DragonSleepBehavior(DragonEntity dragon) {
         this.dragon = dragon;
+        // Initialize with random delay to prevent newly-spawned dragons from sleeping immediately
+        // This prevents multiple dragons spawning at the same time from overlapping during sleep
+        delaySleep(100, 300); // 5-15 seconds of wandering before first sleep check
     }
 
     /**
