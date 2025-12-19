@@ -213,8 +213,10 @@ public record CindervaneRiderController(Cindervane dragon) {
             // === VERTICAL MOVEMENT (dive acceleration, no gravity) ===
             double newVerticalVel = currentVel.y;
 
-            if (dragon.isTakeoff()) {
-                // Give a firm upward shove during the takeoff window even if no input is held
+            // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
+            if (dragon.getRiderTakeoffTicks() > 0) {
+                // During automated takeoff, apply a firm upward shove so climb begins immediately
+                // and stays smooth even if the rider isn't pitching/pressing anything yet.
                 double boost = ASCEND_THRUST * 0.85;
                 newVerticalVel = Math.max(newVerticalVel + boost, 0.45);
             } else if (dragon.isGoingUp()) {
