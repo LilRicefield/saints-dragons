@@ -437,6 +437,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             timeFlying = 0;
         }
 
+        // Sync flight mode to entity data for animation system
+        if (!level().isClientSide && isFlying()) {
+            this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
+        }
+
         // Auto-complete landing once we're actually on ground to avoid hover-stuck states
         if (!level().isClientSide && isLanding() && onGround()) {
             markLandedNow();
