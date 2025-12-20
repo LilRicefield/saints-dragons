@@ -28,6 +28,13 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
 
         ItemStack itemstack = player.getItemInHand(hand);
 
+        // Handle texture variant changes (works on both tamed and untamed)
+        if (itemstack.is(net.minecraft.world.item.Items.AMETHYST_SHARD)) {
+            return handleTextureVariantChange(player, itemstack, 1);
+        } else if (itemstack.is(net.minecraft.world.item.Items.COAL)) {
+            return handleTextureVariantChange(player, itemstack, 0);
+        }
+
         if (!dragon.isTame()) {
             return handleUntamedInteraction(player, itemstack);
         } else {
@@ -158,15 +165,6 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
         // Handle feeding for healing
         if (dragon.isFood(itemstack)) {
             return handleFeeding(player, itemstack);
-        }
-
-        // Handle texture variant changes (only for owner)
-        if (isOwner) {
-            if (itemstack.is(net.minecraft.world.item.Items.AMETHYST_SHARD)) {
-                return handleTextureVariantChange(player, itemstack, 1);
-            } else if (itemstack.is(net.minecraft.world.item.Items.COAL)) {
-                return handleTextureVariantChange(player, itemstack, 0);
-            }
         }
 
         // Handle owner commands and mounting
