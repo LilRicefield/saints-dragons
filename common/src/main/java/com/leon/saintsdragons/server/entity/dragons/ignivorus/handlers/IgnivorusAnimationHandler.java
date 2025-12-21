@@ -72,8 +72,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
         // Check for bulldozing - highest priority for ground movement
         if (!dragon.isFlying() && dragon.getEntityData().get(Ignivorus.DATA_BULLDOZING)) {
-            // Check if moving (check velocity or forward input)
-            boolean isMoving = Math.abs(dragon.getDeltaMovement().x) > 0.01 || Math.abs(dragon.getDeltaMovement().z) > 0.01;
+            // Check if moving (use synced rider input instead of velocity for proper client-side sync)
+            float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
+            float riderStrafe = dragon.getEntityData().get(Ignivorus.DATA_RIDER_STRAFE);
+            boolean isMoving = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
             if (isMoving) {
                 state.setAndContinue(BULLDOZING);
             } else {

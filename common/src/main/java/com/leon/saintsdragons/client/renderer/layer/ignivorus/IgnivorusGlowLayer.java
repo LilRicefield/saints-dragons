@@ -25,8 +25,6 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
             SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_glow_female.png");
     private static final ResourceLocation GLOW_TEXTURE_SECOND_VARIANT =
             SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant_glow.png");
-    private static final ResourceLocation FEMALE_GLOW_TEXTURE_SECOND_VARIANT =
-            SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant_glow_female.png");
 
     public IgnivorusGlowLayer(GeoRenderer<Ignivorus> renderer) {
         super(renderer);
@@ -82,7 +80,8 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
         boolean isFemale = animatable.isFemale();
 
         if (variant == 1) {
-            return isFemale ? FEMALE_GLOW_TEXTURE_SECOND_VARIANT : GLOW_TEXTURE_SECOND_VARIANT;
+            // Second variant uses same glow for both male and female
+            return GLOW_TEXTURE_SECOND_VARIANT;
         } else {
             return isFemale ? FEMALE_GLOW_TEXTURE : GLOW_TEXTURE;
         }
