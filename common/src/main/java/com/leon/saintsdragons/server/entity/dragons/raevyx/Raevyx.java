@@ -216,6 +216,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
+    /** Entity data accessor for dashing state */
+    public static final EntityDataAccessor<Boolean> DATA_DASHING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    /** Entity data accessor for dash alternating state (true = last was right, false = last was left) */
+    public static final EntityDataAccessor<Boolean> DATA_LAST_DASH_RIGHT =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
     /** Entity data accessor for sleeping state */
     public static final EntityDataAccessor<Boolean> DATA_SLEEPING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
@@ -391,6 +399,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     int dodgeCooldownTicks = 0; // Cooldown between dodges (2 seconds = 40 ticks)
     int dodgeIFramesTicks = 0; // Invulnerability frames during dodge
     private float preDodgeStepHeight = 1.0F;
+
+    // Dash forward system
+    private static final double DASH_HORIZONTAL_DRAG = 0.92D;
+    private static final double DASH_VERTICAL_DRAG = 0.95D;
+    private boolean dashing = false;
+    private int dashTicksLeft = 0; // Duration: 25 ticks = 1.25 seconds
+    private int dashCooldownTicks = 0; // Cooldown between dashes
+    private Vec3 dashVec = Vec3.ZERO;
+    private boolean lastDashWasRight = false; // Track which dash animation to play next (alternating)
+    private final java.util.Map<Integer, Integer> dashHitCooldowns = new java.util.HashMap<>(); // entityId -> cooldown ticks
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -676,6 +694,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
+        this.entityData.define(DATA_DASHING, false);
+        this.entityData.define(DATA_LAST_DASH_RIGHT, false);
     }
 
     // Implementation of abstract accessor methods
@@ -862,6 +882,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             case DOUBLE_TAP_D -> {
                 if (!locked) {
                     onRiderDodge(player, false);
+                }
+            }
+            case DOUBLE_TAP_W -> {
+                if (!locked) {
+                    onRiderDash(player);
                 }
             }
             default -> { }
@@ -1386,6 +1411,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // Dodge system
     public boolean isDodging() { return dodging; }
 
+    public boolean isDashing() {
+        // Use synced entity data so client can see dashing state for animations
+        return this.entityData.get(DATA_DASHING);
+    }
+
+    public boolean wasLastDashRight() {
+        // Use synced entity data so client can determine which animation to play
+        return this.entityData.get(DATA_LAST_DASH_RIGHT);
+    }
+
     public void beginDodge(Vec3 vec, int ticks) {
         this.dodging = true;
         this.dodgeVec = vec;
@@ -1400,6 +1435,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // Only allow dodge on ground - dragon is fast enough in air with strafe
         if (isFlying()) {
             return;
+        }
+
+        // Cancel dash if currently dashing (dodge interrupts dash)
+        if (dashing) {
+            dashing = false;
+            dashTicksLeft = 0;
+            dashVec = Vec3.ZERO;
+            this.entityData.set(DATA_DASHING, false);
+            dashHitCooldowns.clear();
         }
 
         // Check cooldown
@@ -1447,6 +1491,117 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         } else {
             animationHandler.triggerDodgeRightAnimation();
         }
+    }
+
+    // Dash forward system
+    private void tickDashState() {
+        // Tick down cooldown
+        if (dashCooldownTicks > 0) {
+            dashCooldownTicks--;
+        }
+
+        // Tick down hit cooldowns for all entities
+        dashHitCooldowns.entrySet().removeIf(entry -> {
+            entry.setValue(entry.getValue() - 1);
+            return entry.getValue() <= 0;
+        });
+
+        // Handle collision damage while dashing
+        if (dashing && this.isVehicle()) {
+            // Get mouth position as damage origin
+            Vec3 mouthPos = getMouthPosition();
+
+            // Combine hitbox + mouth area for coverage
+            AABB dragonBox = this.getBoundingBox().inflate(1.5D);
+            AABB mouthBox = new AABB(mouthPos, mouthPos).inflate(2.0D);
+            AABB combinedBox = dragonBox.minmax(mouthBox);
+
+            java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
+                LivingEntity.class,
+                combinedBox,
+                entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlliedTo(entity)
+            );
+
+            // Damage and knockback each entity
+            for (LivingEntity target : entities) {
+                int entityId = target.getId();
+
+                // Check if entity is on cooldown (hit recently)
+                if (dashHitCooldowns.containsKey(entityId)) {
+                    continue; // Skip this entity, still on cooldown
+                }
+
+                // Apply damage (10 HP)
+                target.hurt(this.damageSources().mobAttack(this), 10.0F);
+
+                // Apply knockback from mouth position
+                double knockbackStrength = 1.5D;
+                double dx = target.getX() - mouthPos.x;
+                double dz = target.getZ() - mouthPos.z;
+                double dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist > 0) {
+                    target.knockback(
+                        knockbackStrength,
+                        -dx / dist,  // Shove away from mouth
+                        -dz / dist
+                    );
+                }
+
+                // Add cooldown: 5 ticks = 0.25 seconds = 4 hits per second per entity
+                dashHitCooldowns.put(entityId, 5);
+            }
+        }
+    }
+
+    @Override
+    protected void onRiderDash(Player player) {
+        // Only allow dash on ground
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return;
+        }
+
+        // Check cooldown
+        if (dashCooldownTicks > 0) {
+            return;
+        }
+
+        // Check if already dashing
+        if (dashing) {
+            return;
+        }
+
+        // Dash constants
+        final int DASH_DURATION = 25; // 1.25 seconds
+        final int DASH_COOLDOWN = 40; // 2 seconds
+        final double DASH_DISTANCE = 25; // blocks
+
+        // Get forward vector (direction dragon is facing)
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+
+        // Account for drag so the integrated distance over the duration is ~DASH_DISTANCE
+        double dragScale = 1.0D - Math.pow(DASH_HORIZONTAL_DRAG, DASH_DURATION);
+        double perTickSpeed = DASH_DISTANCE * (1.0D - DASH_HORIZONTAL_DRAG) / dragScale;
+
+        // Create dash vector (forward direction, no vertical component)
+        Vec3 dashVector = new Vec3(forwardX * perTickSpeed, 0, forwardZ * perTickSpeed);
+
+        // Begin dash
+        dashing = true;
+        this.entityData.set(DATA_DASHING, true);
+        dashTicksLeft = DASH_DURATION;
+        dashCooldownTicks = DASH_COOLDOWN;
+        dashVec = dashVector;
+        this.setDeltaMovement(dashVector);
+        this.getNavigation().stop();
+        this.hasImpulse = true;
+
+        // Toggle which dash animation will play next (movement controller handles the actual animation)
+        lastDashWasRight = !lastDashWasRight;
+        this.entityData.set(DATA_LAST_DASH_RIGHT, lastDashWasRight);
+
+        // No control lock - allow melee attacks during dash!
     }
 
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
@@ -1523,6 +1678,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (dodgeIFramesTicks > 0) {
             dodgeIFramesTicks--;
         }
+
+        // Dash system
+        tickDashState();
+
         tamingController.tickServer();
         tickSleepTransition();
         tickSleepCooldowns();
@@ -1568,11 +1727,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             super.tickAnimationStates();
         }
 
-        // === SERVER-SIDE: DODGE & BEAM TRACKING (every tick for smooth control) ===
+        // === SERVER-SIDE: DODGE, DASH & BEAM TRACKING (every tick for smooth control) ===
         // Handle dodge movement first
         if (this.isDodging()) {
             handleDodgeMovement();
             return;
+        }
+
+        // Handle dash movement
+        if (dashing) {
+            handleDashMovement();
+            // Don't return - allow beam tracking and other systems during dash
         }
 
         // Beam head tracking - needs every tick for smooth aiming
@@ -2773,11 +2938,33 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
     }
 
+    private void handleDashMovement() {
+        // Apply the dash velocity directly
+        this.setDeltaMovement(dashVec);
+        this.hasImpulse = true;
+
+        // Decay for next tick
+        dashVec = dashVec.multiply(DASH_HORIZONTAL_DRAG, DASH_VERTICAL_DRAG, DASH_HORIZONTAL_DRAG);
+
+        if (--dashTicksLeft <= 0) {
+            dashing = false;
+            dashVec = Vec3.ZERO;
+            this.entityData.set(DATA_DASHING, false);
+            dashHitCooldowns.clear();
+        }
+    }
+
     // ===== TRAVEL METHOD =====
     @Override
     public void travel(@NotNull Vec3 motion) {
         // During a dodge, preserve the stored dodge velocity and let vanilla travel apply it without rider overrides.
         if (this.isDodging()) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
+        // During a dash, preserve the stored dash velocity and let vanilla travel apply it without rider overrides.
+        if (dashing) {
             super.travel(Vec3.ZERO);
             return;
         }

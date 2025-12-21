@@ -958,5 +958,15 @@
         "pitch": 1.0
       }
     ]
+  },
+  "raevyx_dash": {
+    "subtitle": "Raevyx dashes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_dash",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
   }
 }

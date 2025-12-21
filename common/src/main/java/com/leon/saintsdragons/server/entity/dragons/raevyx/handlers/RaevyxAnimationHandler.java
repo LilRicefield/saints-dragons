@@ -52,6 +52,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     /** Dodge animation */
     private static final RawAnimation DODGE = RawAnimation.begin().thenPlay("animation.raevyx.dodge");
 
+    /** Dash forward right animation (movement animation like DODGE) */
+    private static final RawAnimation DASH_FORWARD_RIGHT = RawAnimation.begin().thenPlay("animation.raevyx.dash_forward_right");
+
+    /** Dash forward left animation (movement animation like DODGE) */
+    private static final RawAnimation DASH_FORWARD_LEFT = RawAnimation.begin().thenPlay("animation.raevyx.dash_forward_left");
+
     /** Swim animation (overrides all others when in water) */
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.raevyx.swim");
 
@@ -180,7 +186,20 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         }
 
         if (wyvern.isDodging()) {
+            state.getController().transitionLength(2);
             state.setAndContinue(DODGE);
+            return PlayState.CONTINUE;
+        }
+
+        // Check for dashing (movement animation like dodge) - allows action animations to play alongside
+        if (wyvern.isDashing()) {
+            state.getController().transitionLength(2);
+            // Alternate between left and right dash animations
+            if (wyvern.wasLastDashRight()) {
+                state.setAndContinue(DASH_FORWARD_LEFT);
+            } else {
+                state.setAndContinue(DASH_FORWARD_RIGHT);
+            }
             return PlayState.CONTINUE;
         }
 
