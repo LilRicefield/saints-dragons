@@ -238,12 +238,13 @@ public final class DragonRideInputHandler {
             wasRightKeyDown = rightDown;
         }
 
-        // Double-tap bulldoze toggle (only for Ignivorus)
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus) {
+        // Double-tap W detection (Ignivorus = bulldoze toggle, Raevyx = dash forward)
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ||
+            dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
             boolean forwardDown = mc.options.keyUp.isDown();
             long currentTime = System.currentTimeMillis();
 
-            // Detect bulldoze toggle (double-tap W)
+            // Detect double-tap W
             if (forwardDown && !wasForwardKeyDown) {
                 if (currentTime - lastForwardTapTime < DOUBLE_TAP_WINDOW_MS) {
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_W, null, forward, strafe, yaw);
