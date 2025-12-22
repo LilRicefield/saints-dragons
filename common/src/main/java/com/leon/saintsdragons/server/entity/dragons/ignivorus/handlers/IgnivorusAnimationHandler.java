@@ -188,7 +188,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             // This value is set by:
             // - applyRiderMovementInput() when ridden
             // - setGroundMoveStateFromAI() when AI-controlled
-            int groundState = dragon.getEntityData().get(dragon.DATA_GROUND_MOVE_STATE);
+            int groundState = dragon.getEntityData().get(Ignivorus.DATA_GROUND_MOVE_STATE);
 
             switch (groundState) {
                 case 2 -> state.setAndContinue(RUN);   // Running/sprinting
@@ -326,6 +326,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
         actionController.triggerableAnim("wing_swipe_right",
             RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
+
+        // Stomp animations (Phase 2 alternate melee attacks)
+        actionController.triggerableAnim("stomp_left",
+            RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_left"));
+        actionController.triggerableAnim("stomp_right",
+            RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_right"));
 
         // Body slam ability animation
         actionController.triggerableAnim("body_slam",
