@@ -959,6 +959,17 @@
       }
     ]
   },
+  "ignivorus_stomp": {
+    "subtitle": "Ignivorus stomps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_stomp",
+        "volume": 2.0,
+        "pitch": 0.95,
+        "attenuation_distance": 64
+      }
+    ]
+  },
   "ignivorus_landed": {
     "subtitle": "Ignivorus lands heavily",
     "sounds": [

@@ -77,6 +77,10 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_BODY_SLAM.get(), 2.0f, 0.9f, 0.15f);
                 yield true;
             }
+            case "ignivorus_stomp" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_STOMP.get(), 1.5f, 0.9f, 0.15f);
+                yield true;
+            }
             case "ignivorus_walk" -> {
                 playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_WALK.get(), 1.0f, 0.85f);
                 yield true;

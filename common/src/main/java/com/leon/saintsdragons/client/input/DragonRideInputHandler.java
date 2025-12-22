@@ -92,8 +92,6 @@ public final class DragonRideInputHandler {
     private static boolean wasAttackDown = false;
     private static boolean wasToggleMeleeDown = false;
 
-    private static int meleeCooldownTicks = 0;
-
     private static float lastForward = 0f;
     private static float lastStrafe = 0f;
     private static float lastYaw = 0f;
@@ -145,10 +143,6 @@ public final class DragonRideInputHandler {
     }
 
     private static void handleControls(Minecraft mc, LocalPlayer player, RideableDragonBase dragon) {
-        if (meleeCooldownTicks > 0) {
-            meleeCooldownTicks--;
-        }
-
         // CLIENT-SIDE LOCK CHECK: Block all input if controls are locked
         // This prevents client-side prediction from moving the dragon before server can block it
         if (dragon.areRiderControlsLocked()) {
@@ -198,10 +192,9 @@ public final class DragonRideInputHandler {
             sendInput(ascendDown, descendDown, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
         }
 
-        if (toggleMeleeDown && !wasToggleMeleeDown && meleeCooldownTicks == 0) {
+        if (toggleMeleeDown && !wasToggleMeleeDown) {
             if (dragon.hasSecondaryMelee()) {
                 sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
-                meleeCooldownTicks = 60;
 
                 int newMode = (dragon.getMeleeMode() + 1) % 2;
                 DragonStatusUIManager.getInstance()
@@ -343,7 +336,6 @@ public final class DragonRideInputHandler {
         wasSecondaryAbilityDown = false;
         wasAttackDown = false;
         wasToggleMeleeDown = false;
-        meleeCooldownTicks = 0;
         lastForward = 0f;
         lastStrafe = 0f;
         lastYaw = 0f;

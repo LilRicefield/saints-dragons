@@ -9,6 +9,7 @@ import com.leon.saintsdragons.client.renderer.nulljaw.NulljawRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
+import com.leon.saintsdragons.client.renderer.VisualFallingBlockRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -26,6 +27,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.IGNIVORUS.get(), IgnivorusRenderer::new);
         registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), IgnivorusMagmaPillarRenderer::new);
+        registrar.register(ModEntities.VISUAL_FALLING_BLOCK.get(), VisualFallingBlockRenderer::new);
     }
 
     @FunctionalInterface

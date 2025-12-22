@@ -980,9 +980,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             case ABILITY_USE -> {
                 if (!locked && abilityName != null && !abilityName.isEmpty()) {
                     // Block non-attack abilities while in Phase 2
-                    // Wing swipe and fire breath are allowed in Phase 2
+                    // Wing swipe, stomp, and fire breath are allowed in Phase 2
                     if (isPhase2Active() &&
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID) &&
+                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID) &&
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID)) {
                         return;
                     }
@@ -1303,9 +1304,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        // Phase 2 always uses wing swipe
+        // Phase 2 uses melee mode toggle (wing swipe or stomp)
         if (isPhase2Active()) {
-            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID, RiderAbilityBinding.Activation.PRESS);
+            String abilityId = getMeleeMode() == 1
+                    ? IgnivorusAbilities.IGNIVORUS_STOMP_ID
+                    : IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID;
+            return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
         }
 
         // Normal mode uses melee mode toggle (bite or body slam)
@@ -2106,9 +2110,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        // Phase 2 always uses wing swipe
+        // Phase 2 uses melee mode toggle (wing swipe or stomp)
         if (isPhase2Active()) {
-            return IgnivorusAbilities.IGNIVORUS_WING_SWIPE;
+            return getMeleeMode() == 1 ? IgnivorusAbilities.IGNIVORUS_STOMP : IgnivorusAbilities.IGNIVORUS_WING_SWIPE;
         }
 
         // Normal mode uses melee mode toggle (bite or body slam)

@@ -127,6 +127,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_EXIT = registerSound("ignivorus_phase2_exit");
     public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_WALK = registerSound("ignivorus_phase2_walk");
     public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_RUN = registerSound("ignivorus_phase2_run");
+    public static final Supplier<SoundEvent> IGNIVORUS_STOMP = registerSound("ignivorus_stomp");
 
     private ModSounds() {
     }
