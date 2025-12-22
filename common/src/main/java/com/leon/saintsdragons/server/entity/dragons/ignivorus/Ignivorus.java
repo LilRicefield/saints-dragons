@@ -414,7 +414,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                                                  @Nullable CompoundTag dataTag) {
         SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
         applyConfiguredAttributes();
-        // Set health to max after applying config to handle increased max_health values
         this.setHealth(this.getMaxHealth());
         return data;
     }
