@@ -122,6 +122,11 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_BULLDOZER_ENTER = registerSound("ignivorus_bulldozer_enter");
     public static final Supplier<SoundEvent> IGNIVORUS_BULLDOZING = registerSound("ignivorus_bulldozing");
     public static final Supplier<SoundEvent> IGNIVORUS_BULLDOZER_EXIT = registerSound("ignivorus_bulldozer_exit");
+    public static final Supplier<SoundEvent> IGNIVORUS_WING_SWIPE = registerSound("ignivorus_wing_swipe");
+    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_ENTER = registerSound("ignivorus_phase2_enter");
+    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_EXIT = registerSound("ignivorus_phase2_exit");
+    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_WALK = registerSound("ignivorus_phase2_walk");
+    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_RUN = registerSound("ignivorus_phase2_run");
 
     private ModSounds() {
     }

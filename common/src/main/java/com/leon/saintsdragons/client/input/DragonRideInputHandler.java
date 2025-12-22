@@ -110,6 +110,10 @@ public final class DragonRideInputHandler {
     private static long lastForwardTapTime = 0;
     private static boolean wasForwardKeyDown = false;
 
+    // Double-tap Phase 2 detection (Ignivorus)
+    private static long lastBackwardTapTime = 0;
+    private static boolean wasBackwardKeyDown = false;
+
     private static final long DOUBLE_TAP_WINDOW_MS = 300;
 
     private DragonRideInputHandler() {
@@ -255,6 +259,22 @@ public final class DragonRideInputHandler {
             wasForwardKeyDown = forwardDown;
         }
 
+        // Double-tap S detection (Ignivorus = Phase 2 toggle)
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus) {
+            boolean backwardDown = mc.options.keyDown.isDown();
+            long currentTime = System.currentTimeMillis();
+
+            // Detect double-tap S
+            if (backwardDown && !wasBackwardKeyDown) {
+                if (currentTime - lastBackwardTapTime < DOUBLE_TAP_WINDOW_MS) {
+                    sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_S, null, forward, strafe, yaw);
+                }
+                lastBackwardTapTime = currentTime;
+            }
+
+            wasBackwardKeyDown = backwardDown;
+        }
+
         handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
         handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
         handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
@@ -335,5 +355,7 @@ public final class DragonRideInputHandler {
         wasRightKeyDown = false;
         lastForwardTapTime = 0;
         wasForwardKeyDown = false;
+        lastBackwardTapTime = 0;
+        wasBackwardKeyDown = false;
     }
 }

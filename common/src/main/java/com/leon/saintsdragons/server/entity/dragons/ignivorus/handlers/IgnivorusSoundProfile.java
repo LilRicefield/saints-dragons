@@ -65,6 +65,10 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_BITE.get(), 1.2f, 0.95f, 0.1f);
                 yield true;
             }
+            case "ignivorus_wing_swipe" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_WING_SWIPE.get(), 1.2f, 0.95f, 0.1f);
+                yield true;
+            }
             case "ignivorus_eat" -> {
                 playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_EAT.get(), 1.2f, 0.95f, 0.1f);
                 yield true;
@@ -74,11 +78,27 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 yield true;
             }
             case "ignivorus_walk" -> {
-                playMovementSound(handler, dragon, locator, ModSounds.IGNIVORUS_WALK.get(), 1.0f, 0.85f);
+                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_WALK.get(), 1.0f, 0.85f);
+                yield true;
+            }
+            case "ignivorus_phase2_walk" -> {
+                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_WALK.get(), 1.0f, 0.85f);
+                yield true;
+            }
+            case "ignivorus_phase2_enter" -> {
+                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0f, 0.85f);
+                yield true;
+            }
+            case "ignivorus_phase2_exit" -> {
+                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_EXIT.get(), 1.0f, 0.85f);
+                yield true;
+            }
+            case "ignivorus_phase2_run" -> {
+                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_RUN.get(), 1.0f, 0.85f);
                 yield true;
             }
             case "ignivorus_run" -> {
-                playMovementSound(handler, dragon, locator, ModSounds.IGNIVORUS_RUN.get(), 1.1f, 0.9f);
+                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_RUN.get(), 1.1f, 0.9f);
                 yield true;
             }
             case "ignivorus_ultimate_start" -> {

@@ -11,7 +11,8 @@ public enum DragonRiderAction {
     ABILITY_USE,
     ABILITY_STOP,
     TOGGLE_MELEE,
+    DOUBLE_TAP_W,
     DOUBLE_TAP_A,
+    DOUBLE_TAP_S,
     DOUBLE_TAP_D,
-    DOUBLE_TAP_W
 }
