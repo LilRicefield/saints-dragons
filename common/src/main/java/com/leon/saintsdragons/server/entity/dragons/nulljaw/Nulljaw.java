@@ -218,6 +218,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
         if (!level.isClientSide) {
             applyConfiguredAttributes();
+            // Set health to max after applying config to handle increased max_health values
+            this.setHealth(this.getMaxHealth());
         }
     }
 
