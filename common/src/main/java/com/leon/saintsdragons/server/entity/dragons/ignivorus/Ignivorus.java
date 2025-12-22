@@ -124,6 +124,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final EntityDataAccessor<Boolean> DATA_BULLDOZING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
+    public static final EntityDataAccessor<Boolean> DATA_PHASE2 =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
     /** Tracks whether the dragon is stunned during a taming attempt */
@@ -227,6 +230,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final double RIDER_WALK_SPEED = 0.225D;
     public static final double RIDER_RUN_SPEED = 0.6D;
 
+    // Phase 2 speeds (slower for dramatic effect)
+    public static final double RIDER_PHASE2_WALK_SPEED = 0.15D;
+    public static final double RIDER_PHASE2_RUN_SPEED = 0.32D;
+
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 45.0F;
     private Vec3 fireAimDir;
@@ -258,6 +265,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private boolean bulldozing = false;
     private int bulldozeCooldownTicks = 0;
     private final java.util.Map<Integer, Integer> bulldozeHitCooldowns = new java.util.HashMap<>(); // entityId -> cooldown ticks
+    private boolean bulldozeWasVehicle = false;
+
+    // Phase 2 toggle state
+    private boolean phase2Active = false;
+    private int phase2CooldownTicks = 0;
+    private boolean useRightWingSwipe = true; // Alternates between left and right
+    private boolean phase2WasVehicle = false;
 
     // Screen shake system
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
@@ -336,6 +350,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_BULLDOZING, false);
+        this.entityData.define(DATA_PHASE2, false);
         this.entityData.define(DATA_FIRE_BREATHING, false);
         this.entityData.define(DATA_FIRE_BREATH_PROGRESS, 0);
         this.entityData.define(DATA_FIRE_START_SET, false);
@@ -408,6 +423,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         soundHandler.tick();
         tickRiderControlLock();
         tickBulldozeState();
+        tickPhase2State();
         tickScreenShake();
         tickCinematicZoom();
 
@@ -656,6 +672,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private void tickBulldozeState() {
         // Only server handles bulldoze logic
         if (!level().isClientSide) {
+            boolean currentlyVehicle = this.isVehicle();
+
             // Tick down cooldown
             if (bulldozeCooldownTicks > 0) {
                 bulldozeCooldownTicks--;
@@ -668,12 +686,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             });
 
             // Force sprint while bulldozing (even during transition lock)
-            if (bulldozing && this.isVehicle() && !this.isAccelerating()) {
+            if (bulldozing && currentlyVehicle && !this.isAccelerating()) {
                 setAccelerating(true);
             }
 
             // Disable bulldozing if player dismounts
-            if (bulldozing && !this.isVehicle()) {
+            if (bulldozing && bulldozeWasVehicle && !currentlyVehicle) {
                 bulldozing = false;
                 this.entityData.set(DATA_BULLDOZING, false);
                 setAccelerating(false);
@@ -683,7 +701,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
 
             // Handle collision damage while bulldozing - SUPER DISRESPECTFUL
-            if (bulldozing && this.isVehicle()) {
+            if (bulldozing && currentlyVehicle) {
                 // Get mouth position as knockback origin
                 Vec3 mouthPos = getMouthPosition();
 
@@ -728,6 +746,30 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     bulldozeHitCooldowns.put(entityId, 5);
                 }
             }
+
+            bulldozeWasVehicle = currentlyVehicle;
+        }
+    }
+
+    private void tickPhase2State() {
+        // Only server handles phase 2 logic
+        if (!level().isClientSide) {
+            boolean currentlyVehicle = this.isVehicle();
+
+            // Tick down cooldown
+            if (phase2CooldownTicks > 0) {
+                phase2CooldownTicks--;
+            }
+
+            // Disable Phase 2 if player dismounts
+            if (phase2Active && phase2WasVehicle && !currentlyVehicle) {
+                phase2Active = false;
+                this.entityData.set(DATA_PHASE2, false);
+                phase2CooldownTicks = 40; // 2 second cooldown
+                clearRiderControlLock(); // Clear any transition lock
+            }
+
+            phase2WasVehicle = currentlyVehicle;
         }
     }
 
@@ -898,7 +940,28 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
 
-        // Block all other actions while bulldozing (but allow toggle)
+        // Allow DOUBLE_TAP_S to toggle Phase 2 on/off
+        // (locked check happens inside onRiderPhase2Toggle)
+        if (action == DragonRiderAction.DOUBLE_TAP_S) {
+            if (!locked) {
+                onRiderPhase2Toggle(player);
+            }
+            return;
+        }
+
+        // Always allow movement controls (ACCELERATE/STOP_ACCELERATE)
+        if (action == DragonRiderAction.ACCELERATE) {
+            if (!locked) {
+                setAccelerating(true);
+            }
+            return;
+        }
+        if (action == DragonRiderAction.STOP_ACCELERATE) {
+            setAccelerating(false);
+            return;
+        }
+
+        // Block all other actions while bulldozing (but allow toggle and movement)
         if (bulldozing) {
             return;
         }
@@ -909,12 +972,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     requestRiderTakeoff();
                 }
             }
-            case ACCELERATE -> {
-                if (!locked) {
-                    setAccelerating(true);
-                }
-            }
-            case STOP_ACCELERATE -> setAccelerating(false);
             case TOGGLE_MELEE -> {
                 if (!locked) {
                     onRiderToggleMelee(player);
@@ -922,6 +979,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
             case ABILITY_USE -> {
                 if (!locked && abilityName != null && !abilityName.isEmpty()) {
+                    // Block non-attack abilities while in Phase 2
+                    // Wing swipe and fire breath are allowed in Phase 2
+                    if (isPhase2Active() &&
+                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID) &&
+                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID)) {
+                        return;
+                    }
                     useRidingAbility(abilityName);
                 }
             }
@@ -1239,6 +1303,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
+        // Phase 2 always uses wing swipe
+        if (isPhase2Active()) {
+            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID, RiderAbilityBinding.Activation.PRESS);
+        }
+
+        // Normal mode uses melee mode toggle (bite or body slam)
         String abilityId = getMeleeMode() == 1
                 ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM_ID
                 : IgnivorusAbilities.IGNIVORUS_BITE_ID;
@@ -1319,6 +1389,56 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             lockRiderControls(20); // Lock controls for 1 second during enter animation
             animationHandler.triggerBulldozeEnterAnimation();
         }
+    }
+
+    protected void onRiderPhase2Toggle(Player player) {
+        // Only allow Phase 2 on ground (not while flying)
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return;
+        }
+
+        // Can't use Phase 2 while bulldozing
+        if (bulldozing) {
+            return;
+        }
+
+        // Check cooldown
+        if (phase2CooldownTicks > 0) {
+            return;
+        }
+
+        // Check if controls are locked (transition in progress)
+        if (areRiderControlsLocked()) {
+            return;
+        }
+
+        // Toggle Phase 2 on/off
+        if (phase2Active) {
+            // Turn OFF
+            phase2Active = false;
+            this.entityData.set(DATA_PHASE2, false);
+            phase2CooldownTicks = 40; // 2 second cooldown
+            lockRiderControls(25); // Lock controls for 1.25 seconds during exit animation
+            animationHandler.triggerPhase2ExitAnimation();
+        } else {
+            // Turn ON
+            phase2Active = true;
+            this.entityData.set(DATA_PHASE2, true);
+            lockRiderControls(25); // Lock controls for 1.25 seconds during enter animation
+            animationHandler.triggerPhase2EnterAnimation();
+        }
+    }
+
+    public boolean isPhase2Active() {
+        return level().isClientSide ? this.entityData.get(DATA_PHASE2) : phase2Active;
+    }
+
+    public boolean shouldUseRightWingSwipe() {
+        return useRightWingSwipe;
+    }
+
+    public void toggleWingSwipeSide() {
+        useRightWingSwipe = !useRightWingSwipe;
     }
 
     @Override
@@ -1986,6 +2106,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
+        // Phase 2 always uses wing swipe
+        if (isPhase2Active()) {
+            return IgnivorusAbilities.IGNIVORUS_WING_SWIPE;
+        }
+
+        // Normal mode uses melee mode toggle (bite or body slam)
         return getMeleeMode() == 1 ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM : IgnivorusAbilities.IGNIVORUS_BITE;
     }
 
@@ -2003,16 +2129,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
-
-    @Override
-    public DragonAbilityType<?, ?> getRoaringAbility() {
-        return IgnivorusAbilities.IGNIVORUS_ROAR;
-    }
-
-    @Override
-    public DragonAbilityType<?, ?> getChannelingAbility() {
-        return IgnivorusAbilities.IGNIVORUS_FIRE_BREATH;
-    }
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
@@ -2595,6 +2711,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.combatManager.saveToNBT(tag);
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tag.putInt("TextureVariant", this.entityData.get(DATA_TEXTURE_VARIANT));
+        tag.putBoolean("Bulldozing", bulldozing);
+        tag.putInt("BulldozeCooldownTicks", Math.max(0, bulldozeCooldownTicks));
+        tag.putBoolean("Phase2Active", phase2Active);
+        tag.putInt("Phase2CooldownTicks", Math.max(0, phase2CooldownTicks));
         tamingController.save(tag);
     }
 
@@ -2610,6 +2730,23 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (tag.contains("TextureVariant")) {
             this.entityData.set(DATA_TEXTURE_VARIANT, tag.getInt("TextureVariant"));
         }
+        if (tag.contains("Bulldozing")) {
+            bulldozing = tag.getBoolean("Bulldozing");
+            this.entityData.set(DATA_BULLDOZING, bulldozing);
+        }
+        if (tag.contains("BulldozeCooldownTicks")) {
+            bulldozeCooldownTicks = Math.max(0, tag.getInt("BulldozeCooldownTicks"));
+        }
+        if (tag.contains("Phase2Active")) {
+            phase2Active = tag.getBoolean("Phase2Active");
+            this.entityData.set(DATA_PHASE2, phase2Active);
+        }
+        if (tag.contains("Phase2CooldownTicks")) {
+            phase2CooldownTicks = Math.max(0, tag.getInt("Phase2CooldownTicks"));
+        }
+        // Treat initial load as "no prior rider" so we don't auto-clear these states before passengers are restored.
+        bulldozeWasVehicle = false;
+        phase2WasVehicle = false;
         tamingController.load(tag);
         applyConfiguredAttributes();
     }

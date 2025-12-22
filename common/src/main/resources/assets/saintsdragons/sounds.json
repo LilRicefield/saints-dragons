@@ -641,6 +641,16 @@
       }
     ]
   },
+  "ignivorus_wing_swipe": {
+    "subtitle": "Ignivorus swipes with its wing",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_wing_swipe",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ignivorus_bulldozing": {
     "subtitle": "Ignivorus charges",
     "sounds": [
@@ -711,11 +721,51 @@
       }
     ]
   },
+  "ignivorus_phase2_enter": {
+    "subtitle": "Ignivorus switches stance",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_enter",
+        "volume": 0.6,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_phase2_exit": {
+    "subtitle": "Ignivorus reverts stance",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_exit",
+        "volume": 0.6,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_phase2_walk": {
+    "subtitle": "Ignivorus steps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_walk",
+        "volume": 0.6,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ignivorus_run": {
     "subtitle": "Ignivorus charges",
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_run",
+        "volume": 0.9,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_phase2_run": {
+    "subtitle": "Ignivorus charges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_run",
         "volume": 0.9,
         "pitch": 1.0
       }

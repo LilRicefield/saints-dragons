@@ -154,14 +154,17 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         // Check if actually moving to prevent sprint animation when standing still
         boolean isMoving = dragon.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
 
+        // Check if in Phase 2 mode for slower speeds
+        boolean isPhase2 = dragon.getEntityData().get(Ignivorus.DATA_PHASE2);
+
         if (dragon.isAccelerating() && isMoving) {
-            // L-Ctrl pressed AND moving - trigger run animation and use hardcoded run speed
+            // L-Ctrl pressed AND moving - trigger run animation and use appropriate run speed
             dragon.setRunning(true);
-            return (float) Ignivorus.RIDER_RUN_SPEED;
+            return (float) (isPhase2 ? Ignivorus.RIDER_PHASE2_RUN_SPEED : Ignivorus.RIDER_RUN_SPEED);
         } else {
-            // Normal ground speed - use walk animation and hardcoded walk speed
+            // Normal ground speed - use walk animation and appropriate walk speed
             dragon.setRunning(false);
-            return (float) Ignivorus.RIDER_WALK_SPEED;
+            return (float) (isPhase2 ? Ignivorus.RIDER_PHASE2_WALK_SPEED : Ignivorus.RIDER_WALK_SPEED);
         }
     }
 

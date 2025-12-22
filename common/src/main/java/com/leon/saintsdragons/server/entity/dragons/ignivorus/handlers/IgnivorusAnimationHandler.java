@@ -28,6 +28,9 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.ignivorus.sleep");
     private static final RawAnimation BULLDOZER_IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.bulldozer_idle");
     private static final RawAnimation BULLDOZING = RawAnimation.begin().thenLoop("animation.ignivorus.bulldozing");
+    private static final RawAnimation PHASE2_IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_idle");
+    private static final RawAnimation PHASE2_WALK = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_walk");
+    private static final RawAnimation PHASE2_RUN = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_run");
 
     /**
      * Main animation predicate - handles idle, walk, run, fly, and sit animations
@@ -80,6 +83,23 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 state.setAndContinue(BULLDOZING);
             } else {
                 state.setAndContinue(BULLDOZER_IDLE);
+            }
+            return PlayState.CONTINUE;
+        }
+
+        // Check for Phase 2 - second priority for ground movement
+        if (!dragon.isFlying() && dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
+            // Check if moving (use synced rider input instead of velocity for proper client-side sync)
+            float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
+            float riderStrafe = dragon.getEntityData().get(Ignivorus.DATA_RIDER_STRAFE);
+            boolean isMoving = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+
+            if (isMoving) {
+                // Check if running (sprinting) - use DATA_ACCELERATING which is properly synced
+                boolean isRunning = dragon.getEntityData().get(Ignivorus.DATA_ACCELERATING);
+                state.setAndContinue(isRunning ? PHASE2_RUN : PHASE2_WALK);
+            } else {
+                state.setAndContinue(PHASE2_IDLE);
             }
             return PlayState.CONTINUE;
         }
@@ -270,6 +290,14 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         dragon.triggerAnim("action", "bulldozer_exit");
     }
 
+    public void triggerPhase2EnterAnimation() {
+        dragon.triggerAnim("action", "phase2_enter");
+    }
+
+    public void triggerPhase2ExitAnimation() {
+        dragon.triggerAnim("action", "phase2_exit");
+    }
+
     /**
      * Sets up all GeckoLib animation triggers for the action controller.
      * Follows the same pattern as Raevyx for consistent ability animation handling.
@@ -292,6 +320,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             RawAnimation.begin().thenPlay("animation.ignivorus.bite"));
         actionController.triggerableAnim("eat",
             RawAnimation.begin().thenPlay("animation.ignivorus.eat"));
+
+        // Wing swipe animations (Phase 2 melee attacks)
+        actionController.triggerableAnim("wing_swipe_left",
+            RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
+        actionController.triggerableAnim("wing_swipe_right",
+            RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
 
         // Body slam ability animation
         actionController.triggerableAnim("body_slam",
@@ -340,6 +374,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_enter"));
         actionController.triggerableAnim("bulldozer_exit",
             RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_exit"));
+
+        // Phase 2 animations
+        actionController.triggerableAnim("phase2_enter",
+            RawAnimation.begin().thenPlay("animation.ignivorus.phase2_enter"));
+        actionController.triggerableAnim("phase2_exit",
+            RawAnimation.begin().thenPlay("animation.ignivorus.phase2_exit"));
 
         // Ambient grumbles
         actionController.triggerableAnim("ignivorus_grumble1",
