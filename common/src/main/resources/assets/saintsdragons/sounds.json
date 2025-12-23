@@ -691,6 +691,26 @@
       }
     ]
   },
+  "ignivorus_impact": {
+    "subtitle": "Ignivorus slams its body",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_impact",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_leap": {
+    "subtitle": "Ignivorus leaps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_leap",
+        "volume": 2.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ignivorus_roar": {
     "subtitle": "Ignivorus roars",
     "sounds": [
