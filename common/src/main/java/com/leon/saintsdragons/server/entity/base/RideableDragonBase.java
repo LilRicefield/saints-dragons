@@ -366,6 +366,24 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.setXRot(blendedPitch);
     }
 
+    protected void copyRiderYaw(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        float currentYaw = this.getYRot();
+        float targetYaw = player.getYRot();
+        float yawDelta = Mth.wrapDegrees(targetYaw - currentYaw);
+        float yawBlend = getRiderLockYawBlend();
+        float blendedYaw = currentYaw + yawDelta * yawBlend;
+
+        this.setYRot(blendedYaw);
+        this.yBodyRotO = this.yBodyRot;
+        this.yBodyRot = blendedYaw;
+        this.yHeadRotO = this.yHeadRot;
+        this.setYHeadRot(blendedYaw);
+    }
+
     // ===== ANIMATION SYNC IMPLEMENTATION =====
 
     @Override

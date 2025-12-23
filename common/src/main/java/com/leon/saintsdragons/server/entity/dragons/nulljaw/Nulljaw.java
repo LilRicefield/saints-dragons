@@ -874,7 +874,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             player.fallDistance = 0.0F;
             this.fallDistance = 0.0F;
             this.setTarget(null);
-            copyRiderLook(player);
+            copyRiderYaw(player);
             this.setAccelerating(false);
             this.setGoingUp(false);
             this.setGoingDown(false);

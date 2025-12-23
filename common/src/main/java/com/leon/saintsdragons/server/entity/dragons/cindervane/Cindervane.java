@@ -1547,13 +1547,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             // Normal riding: use rider controller for rotation
             riderController.tickRidden(player, travelVector);
         } else {
-            // Controls locked (e.g., during landed animation): use copyRiderLook for smooth rotation
+            // Controls locked (e.g., during landed animation): use yaw-only rider rotation
             // Only when not using any ability to preserve ability-specific pitch animation
             if (combatManager.getActiveAbility() == null && !combatManager.hasActiveOverlay()) {
                 player.fallDistance = 0.0F;
                 this.fallDistance = 0.0F;
                 this.setTarget(null);
-                copyRiderLook(player);
+                copyRiderYaw(player);
 
                 // Stop acceleration during lock
                 this.setAccelerating(false);
