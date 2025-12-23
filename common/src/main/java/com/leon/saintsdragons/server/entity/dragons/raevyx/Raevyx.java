@@ -3174,6 +3174,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         applyConfiguredAttributes();
+        this.setHealth(this.getMaxHealth());
         return spawnData;
     }
 
