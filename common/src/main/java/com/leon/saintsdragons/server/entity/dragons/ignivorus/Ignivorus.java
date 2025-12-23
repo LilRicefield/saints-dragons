@@ -76,6 +76,8 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 import java.util.Map;
 
 public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
@@ -126,6 +128,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public static final EntityDataAccessor<Boolean> DATA_PHASE2 =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+
+    public static final EntityDataAccessor<Boolean> DATA_LEAPING =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+
+    public static final EntityDataAccessor<Integer> DATA_LEAP_ANIM_STATE =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
 
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
@@ -273,6 +281,32 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private boolean useRightWingSwipe = true; // Alternates between left and right
     private boolean phase2WasVehicle = false;
 
+    // Leaping body slam system (Phase 2 replacement for bulldoze)
+    private static final double LEAP_HORIZONTAL_SPEED = 2.75D; // Horizontal speed per tick - POWERFUL leap forward!
+    private static final double LEAP_VERTICAL_BOOST = 1.15D; // Initial upward velocity - MASSIVE jump!
+    private static final double LEAP_HORIZONTAL_DRAG = 0.94D; // Air resistance (less drag = more distance)
+    private static final double LEAP_GRAVITY = 0.06D; // Gravity applied during leap (lower = floatier arc)
+    private static final float LEAP_SLAM_DAMAGE = 50.0F; // Damage on landing
+    private static final double LEAP_SLAM_RADIUS = 20.0D; // AoE damage radius on landing
+    private static final double LEAP_KNOCKBACK = 5.5D; // Knockback strength
+    private static final double LEAP_LIFT = 0.8D; // Upward launch on hit
+    private static final double LEAP_IMPACT_TRIGGER_HEIGHT = 7.0D; // Trigger impact anim just before landing
+
+    // Leap animation states
+    private static final int LEAP_STATE_NONE = 0;
+    private static final int LEAP_STATE_TAKEOFF = 1;  // Single leap sequence (jump -> slam in one clip)
+
+    private boolean leaping = false;
+    private int leapAnimState = LEAP_STATE_NONE;
+    private Vec3 leapVelocity = Vec3.ZERO;
+    private int leapCooldownTicks = 0;
+    private int leapImpactRecoveryTicks = 0; // Blocks ambient sounds during impact animation
+    private boolean leapImpactTriggered = false;
+    private boolean wasAirborneBeforeLanding = false; // Track if we were in the air before landing
+
+    // Animation timing constants (in ticks, 20 ticks = 1 second)
+    private static final int LEAP_IMPACT_RECOVERY_DURATION = 25; // 1.767 seconds (1s + 46 frames at 60fps)
+
     // Screen shake system
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
     private float prevScreenShakeAmount = 0.0F;
@@ -351,6 +385,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_BULLDOZING, false);
         this.entityData.define(DATA_PHASE2, false);
+        this.entityData.define(DATA_LEAPING, false);
+        this.entityData.define(DATA_LEAP_ANIM_STATE, 0);
         this.entityData.define(DATA_FIRE_BREATHING, false);
         this.entityData.define(DATA_FIRE_BREATH_PROGRESS, 0);
         this.entityData.define(DATA_FIRE_START_SET, false);
@@ -424,6 +460,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         tickRiderControlLock();
         tickBulldozeState();
         tickPhase2State();
+        tickLeapState();
         tickScreenShake();
         tickCinematicZoom();
 
@@ -542,7 +579,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (isOrderedToSit() || this.isStayOrSitMuted()) {
             return;
         }
-        if (bulldozing) {
+        if (bulldozing || leaping || leapImpactRecoveryTicks > 0) {
             return;
         }
 
@@ -773,6 +810,442 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
+    private void tickLeapState() {
+        // Only server handles leap logic
+        if (!level().isClientSide) {
+            boolean currentlyVehicle = this.isVehicle();
+
+            // Tick down cooldown
+            if (leapCooldownTicks > 0) {
+                leapCooldownTicks--;
+            }
+
+            // Tick down impact recovery (blocks ambient sounds + locks controls)
+            if (leapImpactRecoveryTicks > 0) {
+                leapImpactRecoveryTicks--;
+
+                // Clear animation state when recovery ends
+                if (leapImpactRecoveryTicks == 0 && leapAnimState != LEAP_STATE_NONE) {
+                    leapAnimState = LEAP_STATE_NONE;
+                    this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_NONE);
+                }
+            }
+
+            // Cancel leap if player dismounts mid-leap
+            if (leaping && !currentlyVehicle) {
+                leaping = false;
+                this.entityData.set(DATA_LEAPING, false);
+                leapAnimState = LEAP_STATE_NONE;
+                this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_NONE);
+                leapVelocity = Vec3.ZERO;
+                setDeltaMovement(Vec3.ZERO);
+                wasAirborneBeforeLanding = false;
+                leapImpactTriggered = false;
+                leapCooldownTicks = 60; // 3 second cooldown
+                leapImpactRecoveryTicks = 0; // Clear recovery timer
+            }
+
+            // Handle leap physics and landing detection
+            if (leaping) {
+                handleLeapMovement();
+            }
+        }
+    }
+
+    private void handleLeapMovement() {
+        // Track if we've left the ground
+        if (!onGround()) {
+            wasAirborneBeforeLanding = true;
+        }
+
+        // Trigger impact animation slightly before touchdown when descending
+        if (!leapImpactTriggered && wasAirborneBeforeLanding && leapVelocity.y < -0.05D) {
+            double groundDistance = getLeapGroundDistance();
+            if (groundDistance >= 0.0D && groundDistance <= LEAP_IMPACT_TRIGGER_HEIGHT) {
+                animationHandler.triggerLeapImpactAnimation();
+                leapImpactTriggered = true;
+            }
+        }
+
+        // Apply physics: horizontal drag + gravity
+        double newX = leapVelocity.x * LEAP_HORIZONTAL_DRAG;
+        double newZ = leapVelocity.z * LEAP_HORIZONTAL_DRAG;
+        double newY = leapVelocity.y - LEAP_GRAVITY; // Apply gravity
+
+        // Update stored velocity
+        leapVelocity = new Vec3(newX, newY, newZ);
+
+        // Apply to entity
+        setDeltaMovement(leapVelocity);
+        hasImpulse = true;
+
+        // Check for landing
+        if (onGround() && wasAirborneBeforeLanding) {
+            // We've landed! Apply slam damage
+            applyLeapSlamDamage();
+            if (!leapImpactTriggered) {
+                animationHandler.triggerLeapImpactAnimation();
+                leapImpactTriggered = true;
+            }
+
+            // End leap movement but keep state for impact animation
+            leaping = false;
+            this.entityData.set(DATA_LEAPING, false);
+            // DON'T reset anim state yet - let impact recovery handle it
+            leapVelocity = Vec3.ZERO;
+            wasAirborneBeforeLanding = false;
+            leapImpactTriggered = false;
+            leapCooldownTicks = 20;
+            leapImpactRecoveryTicks = LEAP_IMPACT_RECOVERY_DURATION; // Block ambient sounds + lock controls during impact
+
+            // Lock controls during impact animation
+            lockRiderControls(LEAP_IMPACT_RECOVERY_DURATION);
+
+            // Clear velocity completely to stop sliding
+            setDeltaMovement(Vec3.ZERO);
+
+            // Animation handled by IgnivorusAnimationHandler.handleMovementAnimation()
+        }
+    }
+
+    private void applyLeapSlamDamage() {
+        Level level = level();
+        if (!(level instanceof ServerLevel server)) {
+            return;
+        }
+
+        // Get landing position
+        Vec3 landPos = position();
+
+        // Spawn visual effects - blocks and particles
+        spawnLeapImpactBlockEffect(server);
+        spawnLeapImpactDirtParticles(server);
+
+        // Create damage area around landing point
+        AABB damageArea = new AABB(
+            landPos.x - LEAP_SLAM_RADIUS,
+            landPos.y - 1.0,
+            landPos.z - LEAP_SLAM_RADIUS,
+            landPos.x + LEAP_SLAM_RADIUS,
+            landPos.y + getBbHeight() + 1.0,
+            landPos.z + LEAP_SLAM_RADIUS
+        );
+
+        // Find all targets in range
+        List<LivingEntity> targets = server.getEntitiesOfClass(LivingEntity.class, damageArea,
+                entity -> entity != this && entity.isAlive() && entity.attackable() && !isAlly(entity));
+
+        if (targets.isEmpty()) {
+            return;
+        }
+
+        // Apply configurable damage
+        float damage = resolveLeapSlamDamage();
+        DamageSource source = server.damageSources().mobAttack(this);
+
+        for (LivingEntity target : targets) {
+            // Deal damage
+            target.hurt(source, damage);
+
+            // Knockback away from landing point
+            Vec3 push = target.position().subtract(landPos);
+            if (push.lengthSqr() < 1.0E-4) {
+                push = new Vec3(0, 0, 1);
+            }
+            push = push.normalize();
+            target.push(push.x * LEAP_KNOCKBACK, LEAP_LIFT, push.z * LEAP_KNOCKBACK);
+            target.hasImpulse = true;
+        }
+    }
+
+    private float resolveLeapSlamDamage() {
+        double attack = getAttributeValue(Attributes.ATTACK_DAMAGE);
+        float baseDamage = (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("leap_slam", LEAP_SLAM_DAMAGE);
+        return baseDamage + (float) (attack * 0.75D);
+    }
+
+    /**
+     * Spawns visual falling blocks in rings around the leap impact point
+     */
+    private void spawnLeapImpactBlockEffect(ServerLevel level) {
+        RandomSource random = getRandom();
+        BlockPos dragonPos = blockPosition();
+        java.util.List<net.minecraft.core.BlockPos> blockPositions = new java.util.ArrayList<>();
+
+        // Spawn blocks in rings based on leap radius (20 blocks)
+        // Outer ring - radius 16-20 blocks
+        addRingBlockPositions(blockPositions, dragonPos, 16, 20, random, 25);
+
+        // Middle ring - radius 10-15 blocks
+        addRingBlockPositions(blockPositions, dragonPos, 10, 15, random, 20);
+
+        // Inner ring - radius 5-9 blocks
+        addRingBlockPositions(blockPositions, dragonPos, 5, 9, random, 15);
+
+        // Spawn falling blocks at each position
+        for (net.minecraft.core.BlockPos pos : blockPositions) {
+            spawnLeapFallingBlockAt(level, pos, random);
+        }
+    }
+
+    /**
+     * Spawns dirt particles in expanding rings around the leap impact
+     */
+    private void spawnLeapImpactDirtParticles(ServerLevel level) {
+        RandomSource random = getRandom();
+        Vec3 dragonPos = position();
+        net.minecraft.core.particles.BlockParticleOption dirtParticles =
+            new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK,
+            net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState());
+
+        // Inner ring - 5-10 block radius, 40 particles
+        spawnLeapParticleRing(level, dragonPos, dirtParticles, 5, 10, 40, random);
+
+        // Middle ring - 10-15 block radius, 60 particles
+        spawnLeapParticleRing(level, dragonPos, dirtParticles, 10, 15, 60, random);
+
+        // Outer ring - 15-20 block radius, 80 particles
+        spawnLeapParticleRing(level, dragonPos, dirtParticles, 15, 20, 80, random);
+    }
+
+    private void addRingBlockPositions(java.util.List<net.minecraft.core.BlockPos> positions, BlockPos center,
+                                       int minRadius, int maxRadius, RandomSource random, int count) {
+        for (int i = 0; i < count; i++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double radius = minRadius + random.nextDouble() * (maxRadius - minRadius);
+            int xOffset = (int) Math.round(Math.cos(angle) * radius);
+            int zOffset = (int) Math.round(Math.sin(angle) * radius);
+            BlockPos targetPos = center.offset(xOffset, 0, zOffset);
+            positions.add(targetPos);
+        }
+    }
+
+    private void spawnLeapFallingBlockAt(ServerLevel level, BlockPos pos, RandomSource random) {
+        BlockPos groundPos = findGroundLevel(pos);
+        if (groundPos == null) {
+            return;
+        }
+
+        net.minecraft.world.level.block.state.BlockState groundState = level.getBlockState(groundPos);
+        if (groundState.isAir() || groundState.liquid() || groundState.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
+            return;
+        }
+
+        double startX = groundPos.getX() + 0.5;
+        double startY = groundPos.getY() + 0.5;
+        double startZ = groundPos.getZ() + 0.5;
+
+        com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity fallingBlock =
+            new com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity(
+                com.leon.saintsdragons.common.registry.ModEntities.VISUAL_FALLING_BLOCK.get(),
+                level,
+                startX,
+                startY,
+                startZ,
+                groundState,
+                200
+            );
+
+        double upwardVelocity = 0.5 + random.nextDouble() * 0.7;
+        fallingBlock.setDeltaMovement(0, upwardVelocity, 0);
+        level.addFreshEntity(fallingBlock);
+    }
+
+    private void spawnLeapParticleRing(ServerLevel level, Vec3 center,
+                                       net.minecraft.core.particles.BlockParticleOption particleType,
+                                       int minRadius, int maxRadius, int count, RandomSource random) {
+        for (int i = 0; i < count; i++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double radius = minRadius + random.nextDouble() * (maxRadius - minRadius);
+            double x = center.x + Math.cos(angle) * radius;
+            double z = center.z + Math.sin(angle) * radius;
+
+            BlockPos groundPos = findGroundLevel(new BlockPos((int)x, (int)center.y, (int)z));
+            if (groundPos == null) {
+                continue;
+            }
+
+            net.minecraft.world.level.block.state.BlockState groundState = level.getBlockState(groundPos);
+            if (groundState.isAir() || groundState.liquid()) {
+                continue;
+            }
+
+            double particleY = groundPos.getY() + 1.02;
+            int burstCount = 6;
+            for (int j = 0; j < burstCount; j++) {
+                double velX = (random.nextDouble() - 0.5) * 0.9;
+                double velY = 0.25 + random.nextDouble() * 0.85;
+                double velZ = (random.nextDouble() - 0.5) * 0.9;
+                level.sendParticles(particleType, x, particleY, z, 0, velX, velY, velZ, 1.0);
+            }
+        }
+    }
+
+    private BlockPos findGroundLevel(BlockPos startPos) {
+        int dragonY = blockPosition().getY();
+        for (int y = dragonY; y > level().getMinBuildHeight(); y--) {
+            BlockPos checkPos = new BlockPos(startPos.getX(), y, startPos.getZ());
+            net.minecraft.world.level.block.state.BlockState state = level().getBlockState(checkPos);
+            if (!state.isAir() && !state.liquid() && state.isSolidRender(level(), checkPos)) {
+                return checkPos;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Breaks ground in a circle pattern - temporarily removes blocks and restores them after a delay
+     * Inspired by Epic Fight's Demolition Leap
+     */
+    private void breakGroundCircle(ServerLevel level, Vec3 center, double radius) {
+        // Check if mob griefing is allowed
+        if (!level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
+            return;
+        }
+
+        int centerX = (int) Math.floor(center.x);
+        int centerY = (int) Math.floor(center.y);
+        int centerZ = (int) Math.floor(center.z);
+
+        int radiusInt = (int) Math.ceil(radius);
+        java.util.List<net.minecraft.core.BlockPos> blocksToRestore = new java.util.ArrayList<>();
+        java.util.Map<net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState> originalStates = new java.util.HashMap<>();
+
+        // Scan in a circle pattern
+        for (int x = -radiusInt; x <= radiusInt; x++) {
+            for (int z = -radiusInt; z <= radiusInt; z++) {
+                // Check if within circle radius
+                double distSqr = x * x + z * z;
+                if (distSqr > radius * radius) {
+                    continue;
+                }
+
+                BlockPos targetPos = new BlockPos(centerX + x, centerY, centerZ + z);
+                BlockPos groundPos = findGroundLevelForBreaking(level, targetPos);
+
+                if (groundPos == null) {
+                    continue;
+                }
+
+                net.minecraft.world.level.block.state.BlockState state = level.getBlockState(groundPos);
+
+                // Skip if not breakable
+                if (!canBreakBlock(level, groundPos, state)) {
+                    continue;
+                }
+
+                // Save original state
+                originalStates.put(groundPos.immutable(), state);
+                blocksToRestore.add(groundPos.immutable());
+
+                // Remove block (set to air)
+                level.setBlock(groundPos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+
+                // Spawn visual falling block at this position
+                spawnBreakingFallingBlock(level, groundPos, state);
+            }
+        }
+
+        // Schedule block restoration after 100 ticks (5 seconds)
+        if (!blocksToRestore.isEmpty()) {
+            scheduleBlockRestoration(level, originalStates, 100);
+        }
+    }
+
+    private BlockPos findGroundLevelForBreaking(ServerLevel level, BlockPos startPos) {
+        // Search down from impact point to find solid ground
+        for (int y = startPos.getY(); y > level.getMinBuildHeight(); y--) {
+            BlockPos checkPos = new BlockPos(startPos.getX(), y, startPos.getZ());
+            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(checkPos);
+
+            if (!state.isAir() && !state.liquid() && state.isSolidRender(level, checkPos)) {
+                return checkPos;
+            }
+        }
+        return null;
+    }
+
+    private boolean canBreakBlock(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+        // Don't break air, liquids, bedrock, or blocks with tile entities
+        if (state.isAir() || state.liquid()) {
+            return false;
+        }
+
+        if (state.is(net.minecraft.world.level.block.Blocks.BEDROCK) ||
+            state.is(net.minecraft.world.level.block.Blocks.END_PORTAL) ||
+            state.is(net.minecraft.world.level.block.Blocks.END_PORTAL_FRAME) ||
+            state.is(net.minecraft.world.level.block.Blocks.END_GATEWAY)) {
+            return false;
+        }
+
+        // Don't break blocks with block entities (chests, furnaces, etc.)
+        if (state.getBlock() instanceof net.minecraft.world.level.block.EntityBlock) {
+            return false;
+        }
+
+        // Check if block has a solid collision shape
+        return state.isSolidRender(level, pos);
+    }
+
+    private void spawnBreakingFallingBlock(ServerLevel level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+        double startX = pos.getX() + 0.5;
+        double startY = pos.getY() + 0.5;
+        double startZ = pos.getZ() + 0.5;
+
+        com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity fallingBlock =
+            new com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity(
+                com.leon.saintsdragons.common.registry.ModEntities.VISUAL_FALLING_BLOCK.get(),
+                level,
+                startX,
+                startY,
+                startZ,
+                state,
+                100 // Lifetime - blocks will be restored before this expires
+            );
+
+        // Give it upward velocity
+        double upwardVelocity = 0.3 + level.random.nextDouble() * 0.4;
+        fallingBlock.setDeltaMovement(0, upwardVelocity, 0);
+        level.addFreshEntity(fallingBlock);
+    }
+
+    private void scheduleBlockRestoration(ServerLevel level, java.util.Map<net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState> blocks, int delayTicks) {
+        // Use Minecraft's server tick scheduler to restore blocks
+        level.getServer().tell(new net.minecraft.server.TickTask(
+            level.getServer().getTickCount() + delayTicks,
+            () -> {
+                for (java.util.Map.Entry<net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState> entry : blocks.entrySet()) {
+                    BlockPos pos = entry.getKey();
+                    net.minecraft.world.level.block.state.BlockState state = entry.getValue();
+
+                    // Only restore if the block is still air (player hasn't placed something)
+                    if (level.getBlockState(pos).isAir()) {
+                        level.setBlock(pos, state, 3);
+                    }
+                }
+            }
+        ));
+    }
+
+    private double getLeapGroundDistance() {
+        int groundY = level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(getX()), Mth.floor(getZ()));
+        if (groundY <= level().getMinBuildHeight()) {
+            return -1.0D;
+        }
+        return getY() - (groundY + 1.0D);
+    }
+
+    public boolean isLeaping() {
+        return level().isClientSide ? this.entityData.get(DATA_LEAPING) : leaping;
+    }
+
+    public int getLeapAnimState() {
+        // Use synced entity data on client side, server-side variable on server
+        return level().isClientSide ? this.entityData.get(DATA_LEAP_ANIM_STATE) : leapAnimState;
+    }
+
     public void setUltimateCameraZoomActive(boolean active) {
         this.entityData.set(DATA_CINEMATIC_ZOOM_ACTIVE, active);
     }
@@ -824,6 +1297,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public void travel(@NotNull Vec3 travelVec) {
+        // Handle leap FIRST - preserve leap velocity and ignore rider input
+        if (leaping) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
         // Block ALL movement when controls are locked (e.g., during ultimate ability)
         if (areRiderControlsLocked()) {
             super.travel(Vec3.ZERO);
@@ -961,8 +1440,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
 
-        // Block all other actions while bulldozing (but allow toggle and movement)
-        if (bulldozing) {
+        // Block all other actions while bulldozing or leaping (but allow toggle and movement)
+        if (bulldozing || leaping) {
             return;
         }
 
@@ -1361,18 +1840,25 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void onRiderBulldoze(Player player) {
-        // Only allow bulldoze on ground (not while flying)
+        // Only allow bulldoze/leap on ground (not while flying)
         if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
-            return;
-        }
-
-        // Check cooldown
-        if (bulldozeCooldownTicks > 0) {
             return;
         }
 
         // Check if controls are locked (transition in progress)
         if (areRiderControlsLocked()) {
+            return;
+        }
+
+        // Phase 2: Use leaping body slam instead of bulldoze
+        if (isPhase2Active()) {
+            onRiderLeapSlam(player);
+            return;
+        }
+
+        // Phase 1: Normal bulldoze logic
+        // Check cooldown
+        if (bulldozeCooldownTicks > 0) {
             return;
         }
 
@@ -1395,14 +1881,60 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
+    protected void onRiderLeapSlam(Player player) {
+        // Check cooldown
+        if (leapCooldownTicks > 0) {
+            return;
+        }
+
+        // Check if already leaping
+        if (leaping) {
+            return;
+        }
+
+        // Get player's look direction (horizontal only)
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+
+        // Create leap velocity with horizontal and vertical components
+        Vec3 leapVec = new Vec3(
+            forwardX * LEAP_HORIZONTAL_SPEED,
+            LEAP_VERTICAL_BOOST,  // Upward boost
+            forwardZ * LEAP_HORIZONTAL_SPEED
+        );
+
+        // Begin leap
+        leaping = true;
+        this.entityData.set(DATA_LEAPING, true);
+        leapAnimState = LEAP_STATE_TAKEOFF; // Start in takeoff state
+        this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_TAKEOFF);
+        leapVelocity = leapVec;
+        wasAirborneBeforeLanding = false;
+        leapImpactTriggered = false;
+        this.setDeltaMovement(leapVec);
+        this.getNavigation().stop();
+        this.hasImpulse = true;
+
+        // Break ground at takeoff position
+        if (level() instanceof ServerLevel server) {
+            breakGroundCircle(server, position(), 8.0D);
+        }
+
+        // Don't lock controls - the leap state itself blocks other actions
+        // Control is restored immediately on landing
+
+        // Animation handled automatically by IgnivorusAnimationHandler.handleMovementAnimation()
+    }
+
     protected void onRiderPhase2Toggle(Player player) {
         // Only allow Phase 2 on ground (not while flying)
         if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
             return;
         }
 
-        // Can't use Phase 2 while bulldozing
-        if (bulldozing) {
+        // Can't use Phase 2 while bulldozing or leaping
+        if (bulldozing || leaping) {
             return;
         }
 
@@ -2719,6 +3251,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         tag.putInt("BulldozeCooldownTicks", Math.max(0, bulldozeCooldownTicks));
         tag.putBoolean("Phase2Active", phase2Active);
         tag.putInt("Phase2CooldownTicks", Math.max(0, phase2CooldownTicks));
+        tag.putBoolean("Leaping", leaping);
+        tag.putInt("LeapAnimState", leapAnimState);
+        tag.putInt("LeapCooldownTicks", Math.max(0, leapCooldownTicks));
         tamingController.save(tag);
     }
 
@@ -2747,6 +3282,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
         if (tag.contains("Phase2CooldownTicks")) {
             phase2CooldownTicks = Math.max(0, tag.getInt("Phase2CooldownTicks"));
+        }
+        if (tag.contains("Leaping")) {
+            leaping = tag.getBoolean("Leaping");
+            this.entityData.set(DATA_LEAPING, leaping);
+        }
+        if (tag.contains("LeapAnimState")) {
+            leapAnimState = tag.getInt("LeapAnimState");
+            this.entityData.set(DATA_LEAP_ANIM_STATE, leapAnimState);
+        }
+        if (tag.contains("LeapCooldownTicks")) {
+            leapCooldownTicks = Math.max(0, tag.getInt("LeapCooldownTicks"));
         }
         // Treat initial load as "no prior rider" so we don't auto-clear these states before passengers are restored.
         bulldozeWasVehicle = false;

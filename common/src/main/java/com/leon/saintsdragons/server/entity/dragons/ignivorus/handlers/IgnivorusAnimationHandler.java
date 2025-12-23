@@ -31,6 +31,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation PHASE2_IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_idle");
     private static final RawAnimation PHASE2_WALK = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_walk");
     private static final RawAnimation PHASE2_RUN = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_run");
+    private static final RawAnimation LEAP_TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_leap");
 
     /**
      * Main animation predicate - handles idle, walk, run, fly, and sit animations
@@ -73,7 +74,14 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
-        // Check for bulldozing - highest priority for ground movement
+        // Check for leaping OR impact recovery - highest priority for movement (Phase 2 only)
+        if (dragon.isLeaping() || dragon.getLeapAnimState() != 0) {
+            state.getController().transitionLength(2);
+            state.setAndContinue(LEAP_TAKEOFF);
+            return PlayState.CONTINUE;
+        }
+
+        // Check for bulldozing - second priority for ground movement
         if (!dragon.isFlying() && dragon.getEntityData().get(Ignivorus.DATA_BULLDOZING)) {
             // Check if moving (use synced rider input instead of velocity for proper client-side sync)
             float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
@@ -87,7 +95,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
-        // Check for Phase 2 - second priority for ground movement
+        // Check for Phase 2 - third priority for ground movement
         if (!dragon.isFlying() && dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
             // Check if moving (use synced rider input instead of velocity for proper client-side sync)
             float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
@@ -298,6 +306,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         dragon.triggerAnim("action", "phase2_exit");
     }
 
+    public void triggerLeapImpactAnimation() {
+        dragon.triggerAnim("action", "leap_impact");
+    }
+
     /**
      * Sets up all GeckoLib animation triggers for the action controller.
      * Follows the same pattern as Raevyx for consistent ability animation handling.
@@ -336,6 +348,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Body slam ability animation
         actionController.triggerableAnim("body_slam",
             RawAnimation.begin().thenPlay("animation.ignivorus.body_slam"));
+
+        // Leap impact animation
+        actionController.triggerableAnim("leap_impact",
+            RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_impact"));
 
         // Fire breath ability animations
         // Start animation plays for ~75ms (4 ticks) before actual fire spawns
