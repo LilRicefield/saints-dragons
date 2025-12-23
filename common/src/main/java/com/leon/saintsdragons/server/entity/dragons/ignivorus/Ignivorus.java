@@ -305,7 +305,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private boolean wasAirborneBeforeLanding = false; // Track if we were in the air before landing
 
     // Animation timing constants (in ticks, 20 ticks = 1 second)
-    private static final int LEAP_IMPACT_RECOVERY_DURATION = 25; // 1.767 seconds (1s + 46 frames at 60fps)
+    private static final int LEAP_IMPACT_RECOVERY_DURATION = 20; // 1.767 seconds (1s + 46 frames at 60fps)
 
     // Screen shake system
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
