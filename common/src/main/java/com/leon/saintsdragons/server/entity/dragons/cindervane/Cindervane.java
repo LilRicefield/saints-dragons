@@ -292,6 +292,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         applyConfiguredAttributes();
+        this.setHealth(this.getMaxHealth());
         return data;
     }
 
