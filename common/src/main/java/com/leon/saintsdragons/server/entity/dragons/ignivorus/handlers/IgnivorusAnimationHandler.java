@@ -31,6 +31,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation PHASE2_IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_idle");
     private static final RawAnimation PHASE2_WALK = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_walk");
     private static final RawAnimation PHASE2_RUN = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_run");
+    private static final RawAnimation PHASE2_TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_takeoff");
+    private static final RawAnimation PHASE2_LANDED = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_landed");
     private static final RawAnimation LEAP_TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_leap");
 
     /**
@@ -133,7 +135,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             // Mode 3: Takeoff (highest priority)
             if (syncedMode == 3 || dragon.isTakeoff() || dragon.timeFlying < 30) {
                 state.getController().transitionLength(4);
-                state.setAndContinue(TAKEOFF);
+                // Use Phase 2 takeoff animation if dragon is in Phase 2 mode
+                if (dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
+                    state.setAndContinue(PHASE2_TAKEOFF);
+                } else {
+                    state.setAndContinue(TAKEOFF);
+                }
                 return PlayState.CONTINUE;
             }
 
@@ -315,6 +322,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
      * Follows the same pattern as Raevyx for consistent ability animation handling.
      */
     public void setupActionController(AnimationController<Ignivorus> actionController) {
+
         // Sit transition animations
         actionController.triggerableAnim("sit_down",
             RawAnimation.begin().thenPlay("animation.ignivorus.down"));
@@ -390,6 +398,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
         // Landed animation (plays after landing with rider)
         actionController.triggerableAnim("landed", LANDED);
+        actionController.triggerableAnim("phase2_landed", PHASE2_LANDED);
 
         // Bulldoze animations
         actionController.triggerableAnim("bulldozer_enter",

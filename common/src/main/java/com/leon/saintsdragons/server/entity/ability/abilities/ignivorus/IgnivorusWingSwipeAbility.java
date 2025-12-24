@@ -44,12 +44,14 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
 
     public IgnivorusWingSwipeAbility(DragonAbilityType<Ignivorus, IgnivorusWingSwipeAbility> type,
                                      Ignivorus user) {
-        super(type, user, TRACK, 25); // Matches 1.25s animation length
+        super(type, user, TRACK, 3);
     }
 
     @Override
     public boolean tryAbility() {
-        return getUser().isPhase2Active();
+        // Wing swipe only works in Phase 2 while grounded
+        // When flying, falls back to bite attack
+        return getUser().isPhase2Active() && !getUser().isFlying();
     }
 
     @Override
