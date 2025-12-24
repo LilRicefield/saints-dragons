@@ -56,12 +56,14 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
 
     public IgnivorusStompAbility(DragonAbilityType<Ignivorus, IgnivorusStompAbility> type,
                                  Ignivorus user) {
-        super(type, user, TRACK, 25); // Matches 1.25s animation length
+        super(type, user, TRACK, 6);
     }
 
     @Override
     public boolean tryAbility() {
-        return getUser().isPhase2Active();
+        // Stomp only works in Phase 2 while grounded
+        // When flying, falls back to bite attack
+        return getUser().isPhase2Active() && !getUser().isFlying();
     }
 
     @Override

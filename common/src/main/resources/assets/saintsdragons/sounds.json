@@ -1000,6 +1000,16 @@
       }
     ]
   },
+  "ignivorus_phase2_landed": {
+    "subtitle": "Ignivorus lands heavily",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_landed",
+        "volume": 3.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ignivorus_eat": {
     "subtitle": "Ignivorus eats",
     "sounds": [
