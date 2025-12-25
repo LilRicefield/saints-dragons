@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -24,7 +25,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
     // "10 health" = 10 damage points (5 hearts)
-    private static final float DAMAGE = 15.0f;
+    private static final float DEFAULT_DAMAGE = 15.0f;
 
     // Massive AoE radius for wing swipe - hits everything around the dragon
     private static final double AOE_RADIUS = 22.0;
@@ -105,13 +106,19 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
     private void applyHit(Ignivorus dragon, LivingEntity target) {
         // Apply damage as a direct melee hit
         DamageSource physicalSource = dragon.level().damageSources().mobAttack(dragon);
-        target.hurt(physicalSource, DAMAGE);
+        target.hurt(physicalSource, resolveDamage());
 
         // Apply massive knockback
         Vec3 knockbackDir = target.position().subtract(dragon.position()).normalize();
         Vec3 push = knockbackDir.scale(KNOCKBACK_STRENGTH);
         target.push(push.x, 0.5, push.z); // Extra vertical launch
         target.hurtMarked = true; // Force velocity sync to client
+    }
+
+    private float resolveDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("wing_swipe", DEFAULT_DAMAGE);
     }
 
     private List<LivingEntity> selectTargets() {
