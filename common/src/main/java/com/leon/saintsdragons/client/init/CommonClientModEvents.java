@@ -1,9 +1,10 @@
 package com.leon.saintsdragons.client.init;
 
-import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.client.renderer.cindervane.CindervaneMagmaBlockRenderer;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.client.renderer.cindervane.CindervaneRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusRenderer;
+import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusMagmaBlockRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusMagmaPillarRenderer;
 import com.leon.saintsdragons.client.renderer.nulljaw.NulljawRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRenderer;
@@ -26,6 +27,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.NULLJAW.get(), NulljawRenderer::new);
         registrar.register(ModEntities.IGNIVORUS.get(), IgnivorusRenderer::new);
         registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneMagmaBlockRenderer::new);
+        registrar.register(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), IgnivorusMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), IgnivorusMagmaPillarRenderer::new);
         registrar.register(ModEntities.VISUAL_FALLING_BLOCK.get(), VisualFallingBlockRenderer::new);
     }

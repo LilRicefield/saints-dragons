@@ -1488,6 +1488,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID) &&
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_BITE_ID) &&
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID) &&
+                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID) &&
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID)) {
                         return;
                     }
@@ -1793,6 +1794,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
+        if (isPhase2Active()) {
+            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.PRESS);
+        }
         return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
     }
 

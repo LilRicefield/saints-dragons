@@ -106,6 +106,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_START = registerSound("ignivorus_fire_breath_start");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATHING = registerSound("ignivorus_fire_breathing");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_END = registerSound("ignivorus_fire_breath_end");
+    public static final Supplier<SoundEvent> IGNIVORUS_FIREBALL_SHOOTS = registerSound("ignivorus_fireball_shoots");
     public static final Supplier<SoundEvent> IGNIVORUS_TAKEOFF = registerSound("ignivorus_takeoff");
     public static final Supplier<SoundEvent> IGNIVORUS_FLAP = registerSound("ignivorus_flap");
     public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_1 = registerSound("ignivorus_grumble1");
