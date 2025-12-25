@@ -42,12 +42,13 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     @SuppressWarnings("unused")
     private static final int LOOP_END_TICK = ULTIMATE_START_TICKS + ULTIMATE_LOOP_TICKS;
 
-    private static final double EXPLOSION_RADIUS = 32.0D; // Reduced from 64 for better visibility
+    private static final double EXPLOSION_RADIUS = 32.0D;
     private static final float EXPLOSION_DAMAGE = 200.0F;
     private static final int EXPLOSION_FIRE_SECONDS = 8;
-    private static final int EXPLOSION_PARTICLE_POINTS = 64; // Doubled for denser particle ring
-    private static final int LOOP_DAMAGE_INTERVAL = 5; // ticks between pulses while ultimate animation plays
-    private static final int LOOP_DAMAGE_WARMUP = 20;  // delay before first pulse (ticks inside loop)
+    private static final int EXPLOSION_PARTICLE_POINTS = 64;
+    private static final int LOOP_DAMAGE_INTERVAL = 5;
+    private static final int LOOP_DAMAGE_WARMUP = 20;
+    private static final int PHASE2_DAMAGE_DELAY = 10;
     private static final float PENALTY_HEALTH = 50.0F;
     private static final Component PENALTY_MESSAGE =
             Component.translatable("saintsdragons.message.ignivorus.ultimate_penalty");
@@ -66,6 +67,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean endAnimPlayed;
     private int lastLoopDamageTick;
     private boolean penaltyApplied;
+    private boolean isPhase2GroundMode; // Instant attack mode for Phase 2 ground
+    private boolean phase2DamageApplied; // Track if Phase 2 damage has been applied
 
     public IgnivorusUltimateAbility(DragonAbilityType<Ignivorus, IgnivorusUltimateAbility> type,
                                     Ignivorus user) {
@@ -96,39 +99,65 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
 
         if (section.sectionType == STARTUP) {
-            // Lock controls for the full sequence duration
-            dragon.lockRiderControls(TOTAL_SEQUENCE_TICKS);
-            lockedControls = true;
-
             // Check if dragon is airborne (flying or in air)
             boolean isAirborne = dragon.isFlying() || !dragon.onGround();
 
-            if (!isAirborne) {
-                // Ground version - lock movement
+            // Check if in Phase 2 ground mode (instant attack)
+            isPhase2GroundMode = dragon.isPhase2Active() && !isAirborne;
+
+            if (isPhase2GroundMode) {
+                // Phase 2 ground ultimate - quick attack with 5 tick delay
+                dragon.lockRiderControls(ULTIMATE_LOOP_TICKS); // 5.42 seconds (108 ticks)
+                lockedControls = true;
+
+                // Lock movement
                 dragon.markLandedNow();
                 dragon.setHovering(false);
                 dragon.setLanding(false);
                 dragon.setTakeoff(false);
                 dragon.setDeltaMovement(Vec3.ZERO);
-            }
 
-            dragon.setUltimateCameraZoomActive(true);
+                dragon.setUltimateCameraZoomActive(true);
 
-            // Reset animation tracking flags
-            startAnimPlayed = false;
-            loopAnimPlayed = false;
-            endAnimPlayed = false;
-            lastLoopDamageTick = -LOOP_DAMAGE_INTERVAL;
-            penaltyApplied = false;
+                // Play Phase 2 ultimate animation
+                dragon.triggerAnim("action", "phase2_ultimate");
 
-            // Play ONLY the first animation (start) - use _air variant if airborne
-            if (isAirborne) {
-                dragon.triggerAnim("action", "ultimate_start_air");
+                // Initialize damage tracking flag
+                phase2DamageApplied = false;
+
+                applyPenaltyHealth(dragon);
             } else {
-                dragon.triggerAnim("action", "ultimate_start");
+                // Normal ultimate or Phase 2 air ultimate - use multi-stage animation
+                dragon.lockRiderControls(TOTAL_SEQUENCE_TICKS);
+                lockedControls = true;
+
+                if (!isAirborne) {
+                    // Ground version - lock movement
+                    dragon.markLandedNow();
+                    dragon.setHovering(false);
+                    dragon.setLanding(false);
+                    dragon.setTakeoff(false);
+                    dragon.setDeltaMovement(Vec3.ZERO);
+                }
+
+                dragon.setUltimateCameraZoomActive(true);
+
+                // Reset animation tracking flags
+                startAnimPlayed = false;
+                loopAnimPlayed = false;
+                endAnimPlayed = false;
+                lastLoopDamageTick = -LOOP_DAMAGE_INTERVAL;
+                penaltyApplied = false;
+
+                // Play ONLY the first animation (start) - use _air variant if airborne
+                if (isAirborne) {
+                    dragon.triggerAnim("action", "ultimate_start_air");
+                } else {
+                    dragon.triggerAnim("action", "ultimate_start");
+                }
+                startAnimPlayed = true;
+                applyPenaltyHealth(dragon);
             }
-            startAnimPlayed = true;
-            applyPenaltyHealth(dragon);
         }
     }
 
@@ -139,8 +168,22 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             return;
         }
 
-        Ignivorus dragon = getUser();
         int ticks = getTicksInSection();
+
+        // Handle Phase 2 ground mode damage with delay, then end early
+        if (isPhase2GroundMode) {
+            if (!phase2DamageApplied && ticks >= PHASE2_DAMAGE_DELAY) {
+                triggerRingExplosion(true);
+                phase2DamageApplied = true;
+            }
+            // End ability after animation completes (108 ticks)
+            if (ticks >= ULTIMATE_LOOP_TICKS) {
+                end();
+            }
+            return;
+        }
+
+        Ignivorus dragon = getUser();
 
         // Check if dragon is airborne (check once at start to maintain consistency)
         boolean isAirborne = dragon.isFlying() || !dragon.onGround();

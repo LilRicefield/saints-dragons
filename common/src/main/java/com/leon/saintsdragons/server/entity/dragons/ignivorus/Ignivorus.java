@@ -1482,12 +1482,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             case ABILITY_USE -> {
                 if (!locked && abilityName != null && !abilityName.isEmpty()) {
                     // Block non-attack abilities while in Phase 2
-                    // Wing swipe, stomp, bite (for air), and fire breath are allowed in Phase 2
+                    // Wing swipe, stomp, bite (for air), fire breath, and ultimate are allowed in Phase 2
                     if (isPhase2Active() &&
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID) &&
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID) &&
                         !abilityName.equals(IgnivorusAbilities.IGNIVORUS_BITE_ID) &&
-                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID)) {
+                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID) &&
+                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID)) {
                         return;
                     }
                     useRidingAbility(abilityName);

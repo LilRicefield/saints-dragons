@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -38,6 +39,7 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
     private static final double AURA_VERTICAL = 2.5D;
     private static final float BASE_DAMAGE = 3.0F;
     private static final int FIRE_SECONDS = 4;
+    private static final double COOKING_RADIUS = 3.5D;
     private static final int ALLY_FIRE_RESIST_TICKS = 60;
     private static final int ALLY_DAMAGE_RESIST_TICKS = 40;
 
@@ -100,6 +102,9 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
         if (!level.isClientSide) {
             activeTicks++;
             applyFireAura((ServerLevel) level, dragon);
+            if (dragon.onGround() && dragon.getControllingPassenger() != null) {
+                DragonDestructionManager.applyFireBodyCookingAura((ServerLevel) level, dragon.position(), COOKING_RADIUS);
+            }
             if (activeTicks % 20 == 0) {
                 level.playSound(null, dragon.blockPosition(), SoundEvents.BLAZE_SHOOT, dragon.getSoundSource(), 0.6F, 0.9F + dragon.getRandom().nextFloat() * 0.2F);
             }
