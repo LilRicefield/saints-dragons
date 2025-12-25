@@ -62,6 +62,8 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -865,6 +867,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
 
     @Override
     protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
+        if (!level().isClientSide) {
+            player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 220, 0, true, false, false));
+        }
         if (isWildRideActive()) {
             handleUntamedRideWhileMounted(player);
             return;

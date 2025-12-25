@@ -33,6 +33,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation PHASE2_RUN = RawAnimation.begin().thenLoop("animation.ignivorus.phase2_run");
     private static final RawAnimation PHASE2_TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_takeoff");
     private static final RawAnimation PHASE2_LANDED = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_landed");
+    private static final RawAnimation PHASE2_ULTIMATE = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_ultimate");
     private static final RawAnimation LEAP_TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_leap");
 
     /**
@@ -391,6 +392,9 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_air"));
         actionController.triggerableAnim("ultimate_end_air",
             RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end_air"));
+
+        // Phase 2 ultimate (instant ground attack)
+        actionController.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
 
         // Death animation
         actionController.triggerableAnim("die",
