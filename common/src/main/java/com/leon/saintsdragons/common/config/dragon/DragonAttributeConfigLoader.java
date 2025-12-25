@@ -125,6 +125,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "body_slam", DragonAbilityOverride.ofDamage(40.0D),
                         // Default DPS bumped to 80 to match bundled datapack and Forge behavior
                         "fire_breath", DragonAbilityOverride.ofDamage(80.0D),
+                        "fireball", DragonAbilityOverride.ofDamage(70.0D),
                         "ultimate", DragonAbilityOverride.ofDamage(200.0D)
                 ),
                 Map.of(

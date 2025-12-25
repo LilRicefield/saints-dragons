@@ -373,6 +373,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         actionController.triggerableAnim("fire_breath_stop",
             RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
 
+        // Fireball charge animations (Phase 2 primary)
+        actionController.triggerableAnim("fireball_shoots",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fireball_shoots"));
+
         // Roar animation
         actionController.triggerableAnim("roar",
             RawAnimation.begin().thenPlay("animation.ignivorus.roar"));

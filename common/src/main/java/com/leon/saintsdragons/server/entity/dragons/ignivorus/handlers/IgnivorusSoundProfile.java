@@ -133,6 +133,11 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 // Block keyframe sounds - fire breath is handled by IgnivorusFireBreathAbility/Controller
                 yield true;
             }
+
+            case "ignivorus_fireball_shoots" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_FIREBALL_SHOOTS.get(), 2.0f, 1.0f, 0.0f);
+                yield true;
+            }
             case "ignivorus_takeoff" -> {
                 // Block keyframe sound - takeoff is handled by Ignivorus.setTakeoff()
                 yield true;
