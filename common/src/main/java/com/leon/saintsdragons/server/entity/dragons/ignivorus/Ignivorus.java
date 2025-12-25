@@ -3271,6 +3271,33 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return this.clientLocatorCache.get(name);
     }
 
+    // ===== SERVER BONE POSITION CACHE (synced from client for hitboxes) =====
+
+    private final Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * Called by network packet to update bone positions on server.
+     * These positions come from the client's GeckoLib renderer.
+     */
+    public void setServerBonePosition(String boneName, Vec3 position) {
+        if (boneName == null || position == null) return;
+        this.serverBonePositionCache.put(boneName, position);
+    }
+
+    /**
+     * Get a bone position for hitbox placement.
+     * On client: uses clientLocatorCache (from renderer)
+     * On server: uses serverBonePositionCache (synced from client)
+     */
+    public Vec3 getBonePositionForHitbox(String boneName) {
+        if (boneName == null) return null;
+        if (this.level().isClientSide) {
+            return this.clientLocatorCache.get(boneName);
+        } else {
+            return this.serverBonePositionCache.get(boneName);
+        }
+    }
+
     // ===== BREEDING (placeholder) =====
 
     @Override
