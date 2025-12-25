@@ -138,6 +138,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         // Default: no dash (override in dragon classes that support it)
     }
 
+    /**
+     * Called when rider requests a backward dodge. Override in subclasses to implement backward dodge mechanics.
+     * @param player The player riding
+     */
+    protected void onRiderBackwardDodge(Player player) {
+        // Default: no backward dodge (override in dragon classes that support it)
+    }
+
     protected void onRiderToggleMelee(Player player) {
         // Check if this dragon has a secondary melee attack
         if (!hasSecondaryMelee()) {

@@ -252,8 +252,9 @@ public final class DragonRideInputHandler {
             wasForwardKeyDown = forwardDown;
         }
 
-        // Double-tap S detection (Ignivorus = Phase 2 toggle)
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus) {
+        // Double-tap S detection (Ignivorus = Phase 2 toggle, Raevyx = backward dodge)
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ||
+            dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
             boolean backwardDown = mc.options.keyDown.isDown();
             long currentTime = System.currentTimeMillis();
 
