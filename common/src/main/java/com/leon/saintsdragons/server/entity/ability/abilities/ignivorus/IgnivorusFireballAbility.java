@@ -23,7 +23,7 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             new AbilitySectionDuration(STARTUP, 31)
     };
 
-    private static final int COOLDOWN_TICKS = 15;
+    private static final int COOLDOWN_TICKS = 5;
     private static final int FIRE_AT_TICK = 15;
     private static final int MAGMA_LIFETIME_TICKS = 200;
     private static final float FIREBALL_SCALE = 4.0F;
