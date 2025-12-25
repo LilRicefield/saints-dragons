@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -34,7 +35,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
     // Heavy stomp damage
-    private static final float DAMAGE = 18.0f;
+    private static final float DEFAULT_DAMAGE = 18.0f;
 
     // Broad sphere radius for stomp damage
     private static final double AOE_RADIUS = 18.0;
@@ -130,11 +131,17 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
     private void applyHit(Ignivorus dragon, LivingEntity target) {
         // Apply damage as a direct melee hit
         DamageSource physicalSource = dragon.level().damageSources().mobAttack(dragon);
-        target.hurt(physicalSource, DAMAGE);
+        target.hurt(physicalSource, resolveDamage());
 
         // Launch enemies upward instead of away - stomp creates an upward shockwave
         target.push(0, UPWARD_FORCE, 0);
         target.hurtMarked = true; // Force velocity sync to client
+    }
+
+    private float resolveDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("stomp", DEFAULT_DAMAGE);
     }
 
     private List<LivingEntity> selectTargets() {

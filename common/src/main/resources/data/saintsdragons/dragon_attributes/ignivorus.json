@@ -12,6 +12,15 @@
     "fire_breath": {
       "damage": 80.0
     },
+    "fireball": {
+      "damage": 70.0
+    },
+    "wing_swipe": {
+      "damage": 15.0
+    },
+    "stomp": {
+      "damage": 18.0
+    },
     "ultimate": {
       "damage": 200.0
     }
