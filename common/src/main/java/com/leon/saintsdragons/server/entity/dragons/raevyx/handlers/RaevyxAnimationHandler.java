@@ -120,6 +120,13 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         wyvern.triggerAnim("action", "dodge_right");
     }
 
+    /**
+     * Triggers the dodge backward animation
+     */
+    public void triggerDodgeBackwardAnimation() {
+        wyvern.triggerAnim("action", "dash_backward");
+    }
+
 
     // ===== MOVEMENT CONTROLLER =====
     public PlayState handleMovementAnimation(AnimationState<Raevyx> state) {
@@ -320,6 +327,8 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
         actionController.triggerableAnim("dodge_right",
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_right"));
+        actionController.triggerableAnim("dash_backward",
+                RawAnimation.begin().thenPlay("animation.raevyx.dash_backward"));
 
         // Lightning beam ability
         actionController.triggerableAnim("lightning_beam_start",

@@ -138,6 +138,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         // Default: no dash (override in dragon classes that support it)
     }
 
+    /**
+     * Called when rider requests a backward dodge. Override in subclasses to implement backward dodge mechanics.
+     * @param player The player riding
+     */
+    protected void onRiderBackwardDodge(Player player) {
+        // Default: no backward dodge (override in dragon classes that support it)
+    }
+
     protected void onRiderToggleMelee(Player player) {
         // Check if this dragon has a secondary melee attack
         if (!hasSecondaryMelee()) {
@@ -364,6 +372,24 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         float blendedPitch = Mth.lerp(getRiderLockPitchBlend(), this.getXRot(), targetPitch);
         this.xRotO = this.getXRot();
         this.setXRot(blendedPitch);
+    }
+
+    protected void copyRiderYaw(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        float currentYaw = this.getYRot();
+        float targetYaw = player.getYRot();
+        float yawDelta = Mth.wrapDegrees(targetYaw - currentYaw);
+        float yawBlend = getRiderLockYawBlend();
+        float blendedYaw = currentYaw + yawDelta * yawBlend;
+
+        this.setYRot(blendedYaw);
+        this.yBodyRotO = this.yBodyRot;
+        this.yBodyRot = blendedYaw;
+        this.yHeadRotO = this.yHeadRot;
+        this.setYHeadRot(blendedYaw);
     }
 
     // ===== ANIMATION SYNC IMPLEMENTATION =====

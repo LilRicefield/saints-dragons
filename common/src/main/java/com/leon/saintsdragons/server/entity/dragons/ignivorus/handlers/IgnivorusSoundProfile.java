@@ -133,12 +133,21 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 // Block keyframe sounds - fire breath is handled by IgnivorusFireBreathAbility/Controller
                 yield true;
             }
+
+            case "ignivorus_fireball_shoots" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_FIREBALL_SHOOTS.get(), 2.0f, 1.0f, 0.0f);
+                yield true;
+            }
             case "ignivorus_takeoff" -> {
                 // Block keyframe sound - takeoff is handled by Ignivorus.setTakeoff()
                 yield true;
             }
             case "ignivorus_landed" -> {
                 playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LANDED.get(), 1.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_phase2_landed" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.5f, 1.0f, 0.0f);
                 yield true;
             }
             case "ignivorus_bulldozer_enter" -> {
@@ -151,6 +160,14 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
             }
             case "ignivorus_bulldozer_exit" -> {
                 playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_BULLDOZER_EXIT.get(), 1.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_leap" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LEAP.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_impact" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_IMPACT.get(), 2.5f, 1.0f, 0.0f);
                 yield true;
             }
             default -> false;

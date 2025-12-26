@@ -106,6 +106,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_START = registerSound("ignivorus_fire_breath_start");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATHING = registerSound("ignivorus_fire_breathing");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_END = registerSound("ignivorus_fire_breath_end");
+    public static final Supplier<SoundEvent> IGNIVORUS_FIREBALL_SHOOTS = registerSound("ignivorus_fireball_shoots");
     public static final Supplier<SoundEvent> IGNIVORUS_TAKEOFF = registerSound("ignivorus_takeoff");
     public static final Supplier<SoundEvent> IGNIVORUS_FLAP = registerSound("ignivorus_flap");
     public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_1 = registerSound("ignivorus_grumble1");
@@ -118,6 +119,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_ULTIMATE_AIR = registerSound("ignivorus_ultimate_air");
     public static final Supplier<SoundEvent> IGNIVORUS_ULTIMATE_END_AIR = registerSound("ignivorus_ultimate_end_air");
     public static final Supplier<SoundEvent> IGNIVORUS_LANDED = registerSound("ignivorus_landed");
+    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_LANDED = registerSound("ignivorus_phase2_landed");
     public static final Supplier<SoundEvent> IGNIVORUS_EAT = registerSound("ignivorus_eat");
     public static final Supplier<SoundEvent> IGNIVORUS_BULLDOZER_ENTER = registerSound("ignivorus_bulldozer_enter");
     public static final Supplier<SoundEvent> IGNIVORUS_BULLDOZING = registerSound("ignivorus_bulldozing");
@@ -128,6 +130,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_WALK = registerSound("ignivorus_phase2_walk");
     public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_RUN = registerSound("ignivorus_phase2_run");
     public static final Supplier<SoundEvent> IGNIVORUS_STOMP = registerSound("ignivorus_stomp");
+    public static final Supplier<SoundEvent> IGNIVORUS_IMPACT = registerSound("ignivorus_impact");
+    public static final Supplier<SoundEvent> IGNIVORUS_LEAP = registerSound("ignivorus_leap");
 
     private ModSounds() {
     }

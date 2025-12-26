@@ -101,6 +101,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.abilityDamage("body_slam", 40.0D));
         ignivorusBuffer.fireBreathDamage = ignivorusCurrent.abilityDamage("fire_breath",
                 ignivorusDefaults.abilityDamage("fire_breath", 80.0D));
+        ignivorusBuffer.fireballDamage = ignivorusCurrent.abilityDamage("fireball",
+                ignivorusDefaults.abilityDamage("fireball", 70.0D));
+        ignivorusBuffer.wingSwipeDamage = ignivorusCurrent.abilityDamage("wing_swipe",
+                ignivorusDefaults.abilityDamage("wing_swipe", 15.0D));
+        ignivorusBuffer.stompDamage = ignivorusCurrent.abilityDamage("stomp",
+                ignivorusDefaults.abilityDamage("stomp", 18.0D));
         ignivorusBuffer.ultimateDamage = ignivorusCurrent.abilityDamage("ultimate",
                 ignivorusDefaults.abilityDamage("ultimate", 200.0D));
         ignivorusBuffer.ultimatePenalty = ignivorusCurrent.extraDouble("ultimate_penalty_health",
@@ -456,6 +462,24 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.fireBreathDamage = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fireball_damage"), buffer.fireballDamage)
+                .setDefaultValue(defaults.abilityDamage("fireball", 70.0D))
+                .setMin(1.0D)
+                .setMax(500.0D)
+                .setSaveConsumer(value -> buffer.fireballDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.wing_swipe_damage"), buffer.wingSwipeDamage)
+                .setDefaultValue(defaults.abilityDamage("wing_swipe", 15.0D))
+                .setMin(1.0D)
+                .setMax(500.0D)
+                .setSaveConsumer(value -> buffer.wingSwipeDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.stomp_damage"), buffer.stompDamage)
+                .setDefaultValue(defaults.abilityDamage("stomp", 18.0D))
+                .setMin(1.0D)
+                .setMax(500.0D)
+                .setSaveConsumer(value -> buffer.stompDamage = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_damage"), buffer.ultimateDamage)
                 .setDefaultValue(defaults.abilityDamage("ultimate", 200.0D))
                 .setMin(10.0D)
@@ -562,6 +586,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ignivorusAbilities.put("bite", DragonAbilityOverride.ofDamage(ignivorusBuffer.biteDamage));
         ignivorusAbilities.put("body_slam", DragonAbilityOverride.ofDamage(ignivorusBuffer.bodySlamDamage));
         ignivorusAbilities.put("fire_breath", DragonAbilityOverride.ofDamage(ignivorusBuffer.fireBreathDamage));
+        ignivorusAbilities.put("fireball", DragonAbilityOverride.ofDamage(ignivorusBuffer.fireballDamage));
+        ignivorusAbilities.put("wing_swipe", DragonAbilityOverride.ofDamage(ignivorusBuffer.wingSwipeDamage));
+        ignivorusAbilities.put("stomp", DragonAbilityOverride.ofDamage(ignivorusBuffer.stompDamage));
         ignivorusAbilities.put("ultimate", DragonAbilityOverride.ofDamage(ignivorusBuffer.ultimateDamage));
         DragonAttributeConfig updatedIgnivorus = new DragonAttributeConfig(
                 ignivorusBuffer.maxHealth,
@@ -624,6 +651,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double biteDamage;
         double bodySlamDamage;
         double fireBreathDamage;
+        double fireballDamage;
+        double wingSwipeDamage;
+        double stompDamage;
         double ultimateDamage;
         double ultimatePenalty;
         double tamingChanceBase;

@@ -21,6 +21,23 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     private static final String MOUTH_LOCATOR_BONE = "mouth_origin";
     private static final String BODY_LOCATOR_BONE = "body_locator";
 
+    // Bones for hitbox parts
+    private static final String HEAD_BONE = "headController";
+    private static final String NECK_BONE = "neck3Controller";
+    private static final String HIP_BONE = "hip";
+    private static final String LEFT_WING_BONE = "leftwing";
+    private static final String RIGHT_WING_BONE = "rightwing";
+    private static final String LEFT_WING_JOINT_BONE = "leftwingjoint";
+    private static final String RIGHT_WING_JOINT_BONE = "rightwingjoint";
+    private static final String TAIL1_BONE = "tail1";
+    private static final String TAIL2_BONE = "tail2";
+    private static final String TAIL3_BONE = "tail3";
+    private static final String TAIL4_BONE = "tail4";
+    private static final String LEFT_FRONT_LEG_BONE = "leftfrontleg";
+    private static final String RIGHT_FRONT_LEG_BONE = "rightfrontleg";
+    private static final String LEFT_BACK_LEG_BONE = "leftbackleg";
+    private static final String RIGHT_BACK_LEG_BONE = "rightbackleg";
+
     private BakedGeoModel lastBakedModel;
 
     public IgnivorusRenderer(EntityRendererProvider.Context renderManager) {
@@ -71,6 +88,23 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         model.getBone(FIRE_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(MOUTH_LOCATOR_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(BODY_LOCATOR_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+
+        // Enable tracking for hitbox bones
+        model.getBone(HEAD_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(NECK_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(HIP_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(LEFT_WING_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(RIGHT_WING_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(LEFT_WING_JOINT_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(RIGHT_WING_JOINT_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(TAIL1_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(TAIL2_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(TAIL3_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(TAIL4_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(LEFT_FRONT_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(RIGHT_FRONT_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(LEFT_BACK_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(RIGHT_BACK_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
     }
 
     @Override
@@ -107,6 +141,60 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
             if (world != null) {
                 entity.setClientLocatorPosition("body_locator", world);
+            }
+        });
+
+        // Track hitbox bone positions and sync to server
+        trackBone(HEAD_BONE, "headController", entity);
+        trackBone(NECK_BONE, "neck3Controller", entity);
+        trackBone(HIP_BONE, "hip", entity);
+        trackBone(LEFT_WING_BONE, "leftwing", entity);
+        trackBone(RIGHT_WING_BONE, "rightwing", entity);
+        trackBone(LEFT_WING_JOINT_BONE, "leftwingjoint", entity);
+        trackBone(RIGHT_WING_JOINT_BONE, "rightwingjoint", entity);
+        trackBone(TAIL1_BONE, "tail1", entity);
+        trackBone(TAIL2_BONE, "tail2", entity);
+        trackBone(TAIL3_BONE, "tail3", entity);
+        trackBone(TAIL4_BONE, "tail4", entity);
+        trackBone(LEFT_FRONT_LEG_BONE, "leftfrontleg", entity);
+        trackBone(RIGHT_FRONT_LEG_BONE, "rightfrontleg", entity);
+        trackBone(LEFT_BACK_LEG_BONE, "leftbackleg", entity);
+        trackBone(RIGHT_BACK_LEG_BONE, "rightbackleg", entity);
+
+        // Send bone positions to server for hitbox sync (every few frames to reduce network load)
+        sendBonePositionsToServer(entity);
+    }
+
+    private int syncTickCounter = 0;
+    private static final int SYNC_INTERVAL = 2; // Sync every 2 frames
+
+    private void sendBonePositionsToServer(Ignivorus entity) {
+        syncTickCounter++;
+        if (syncTickCounter < SYNC_INTERVAL) {
+            return;
+        }
+        syncTickCounter = 0;
+
+        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>();
+        for (String boneName : com.leon.saintsdragons.common.network.MessageDragonBonePositions.SYNCED_BONES) {
+            net.minecraft.world.phys.Vec3 pos = entity.getClientLocatorPosition(boneName);
+            if (pos != null) {
+                positions.put(boneName, pos);
+            }
+        }
+
+        if (!positions.isEmpty()) {
+            com.leon.saintsdragons.common.network.NetworkHandler.sendToServer(
+                new com.leon.saintsdragons.common.network.MessageDragonBonePositions(entity.getId(), positions)
+            );
+        }
+    }
+
+    private void trackBone(String boneName, String locatorName, Ignivorus entity) {
+        this.lastBakedModel.getBone(boneName).ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
+            if (world != null) {
+                entity.setClientLocatorPosition(locatorName, world);
             }
         });
     }

@@ -889,6 +889,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     onRiderDash(player);
                 }
             }
+            case DOUBLE_TAP_S -> {
+                if (!locked) {
+                    onRiderBackwardDodge(player);
+                }
+            }
             default -> { }
         }
     }
@@ -1491,6 +1496,62 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         } else {
             animationHandler.triggerDodgeRightAnimation();
         }
+    }
+
+    @Override
+    protected void onRiderBackwardDodge(net.minecraft.world.entity.player.Player player) {
+        // Only allow dodge on ground - dragon is fast enough in air with strafe
+        if (isFlying()) {
+            return;
+        }
+
+        // Cancel dash if currently dashing (dodge interrupts dash)
+        if (dashing) {
+            dashing = false;
+            dashTicksLeft = 0;
+            dashVec = Vec3.ZERO;
+            this.entityData.set(DATA_DASHING, false);
+            dashHitCooldowns.clear();
+        }
+
+        // Check cooldown
+        if (dodgeCooldownTicks > 0) {
+            return;
+        }
+
+        // Dodge constants
+        final int DODGE_DURATION = 12;
+        final int DODGE_COOLDOWN = 30;
+        final int DODGE_IFRAMES = 8;
+        final int DODGE_CONTROL_LOCK = 12; // 1 second rider lock so attacks/abilities don't override dodge
+        final double DODGE_DISTANCE = 20; // blocks
+
+        // Get backward vector (opposite of facing direction)
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+
+        // Account for drag so the integrated distance over the duration is ~DODGE_DISTANCE
+        double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION);
+        double perTickSpeed = DODGE_DISTANCE * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
+
+        // Calculate backward dodge direction (opposite of forward)
+        double dodgeDirX = -forwardX;
+        double dodgeDirZ = -forwardZ;
+
+        // Create dodge vector (horizontal only, no vertical component)
+        Vec3 dodgeVector = new Vec3(dodgeDirX * perTickSpeed, 0, dodgeDirZ * perTickSpeed);
+
+        // Begin dodge
+        beginDodge(dodgeVector, DODGE_DURATION);
+        lockRiderControls(DODGE_CONTROL_LOCK);
+
+        // Set cooldown and i-frames
+        dodgeCooldownTicks = DODGE_COOLDOWN;
+        dodgeIFramesTicks = DODGE_IFRAMES;
+
+        // Trigger backward dodge animation
+        animationHandler.triggerDodgeBackwardAnimation();
     }
 
     // Dash forward system
@@ -3174,6 +3235,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         applyConfiguredAttributes();
+        this.setHealth(this.getMaxHealth());
         return spawnData;
     }
 
@@ -4166,11 +4228,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (!areRiderControlsLocked()) {
             riderController.tickRidden(player, travelVector);
         } else {
-            // While locked, keep rider safe and aligned but do not apply rider-driven yaw/pitch changes
+            // While locked, keep rider safe and aligned but do not apply rider-driven pitch changes
             player.fallDistance = 0.0F;
             this.fallDistance = 0.0F;
             this.setTarget(null);
-            copyRiderLook(player);
+            copyRiderYaw(player);
             // Stop acceleration & vertical intents during lock
             this.setAccelerating(false);
             if (!this.isFlying()) {
