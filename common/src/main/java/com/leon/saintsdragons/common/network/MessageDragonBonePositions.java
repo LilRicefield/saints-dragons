@@ -20,8 +20,11 @@ public record MessageDragonBonePositions(
     public static final String[] SYNCED_BONES = {
             "headController",
             "neck3Controller",
+            "hip",
             "leftwing",
             "rightwing",
+            "leftwingjoint",
+            "rightwingjoint",
             "tail1",
             "tail2",
             "tail3",
