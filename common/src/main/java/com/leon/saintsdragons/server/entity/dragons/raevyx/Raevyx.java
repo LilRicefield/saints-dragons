@@ -3367,6 +3367,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // Neutral behavior: do not proactively target players. Only retaliate when hurt or defend owner.
     }
 
+    /**
+     * Returns a larger bounding box for frustum culling to prevent the model from
+     * disappearing when the entity's collision box is off-screen but the visual model
+     * (wings, tail, etc.) should still be visible.
+     */
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        return super.getBoundingBoxForCulling().inflate(5.0, 3.0, 5.0);
+    }
+
     @Override
     public boolean hurt(@Nonnull DamageSource damageSource, float amount) {
         // During dying sequence, ignore all damage (entity is already dead, playing death animation)
