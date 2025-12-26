@@ -2012,6 +2012,16 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         return super.hurt(source, amount);
     }
 
+    /**
+     * Returns a larger bounding box for frustum culling to prevent the model from
+     * disappearing when the entity's collision box is off-screen but the visual model
+     * (wings, tail, etc.) should still be visible.
+     */
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        return super.getBoundingBoxForCulling().inflate(6.0, 3.0, 6.0);
+    }
+
     @Override
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
         return CindervaneAbilities.DIE;
