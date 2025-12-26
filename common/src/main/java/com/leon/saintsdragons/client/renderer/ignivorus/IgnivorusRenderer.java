@@ -24,8 +24,11 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     // Bones for hitbox parts
     private static final String HEAD_BONE = "headController";
     private static final String NECK_BONE = "neck3Controller";
+    private static final String HIP_BONE = "hip";
     private static final String LEFT_WING_BONE = "leftwing";
     private static final String RIGHT_WING_BONE = "rightwing";
+    private static final String LEFT_WING_JOINT_BONE = "leftwingjoint";
+    private static final String RIGHT_WING_JOINT_BONE = "rightwingjoint";
     private static final String TAIL1_BONE = "tail1";
     private static final String TAIL2_BONE = "tail2";
     private static final String TAIL3_BONE = "tail3";
@@ -77,6 +80,8 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
+    private boolean hasLoggedBones = false;
+
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) {
             return;
@@ -89,8 +94,11 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         // Enable tracking for hitbox bones
         model.getBone(HEAD_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(NECK_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(HIP_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(LEFT_WING_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(RIGHT_WING_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(LEFT_WING_JOINT_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(RIGHT_WING_JOINT_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(TAIL1_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(TAIL2_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(TAIL3_BONE).ifPresent(b -> b.setTrackingMatrices(true));
@@ -99,6 +107,17 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         model.getBone(RIGHT_FRONT_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(LEFT_BACK_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(RIGHT_BACK_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+
+        // Debug: log which bones were found (only once)
+        if (!hasLoggedBones) {
+            hasLoggedBones = true;
+            System.out.println("[Ignivorus Hitbox Debug] Checking bones:");
+            System.out.println("  headController: " + model.getBone(HEAD_BONE).isPresent());
+            System.out.println("  neck3Controller: " + model.getBone(NECK_BONE).isPresent());
+            System.out.println("  leftwing: " + model.getBone(LEFT_WING_BONE).isPresent());
+            System.out.println("  rightwing: " + model.getBone(RIGHT_WING_BONE).isPresent());
+            System.out.println("  tail1: " + model.getBone(TAIL1_BONE).isPresent());
+        }
     }
 
     @Override
@@ -141,8 +160,11 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         // Track hitbox bone positions and sync to server
         trackBone(HEAD_BONE, "headController", entity);
         trackBone(NECK_BONE, "neck3Controller", entity);
+        trackBone(HIP_BONE, "hip", entity);
         trackBone(LEFT_WING_BONE, "leftwing", entity);
         trackBone(RIGHT_WING_BONE, "rightwing", entity);
+        trackBone(LEFT_WING_JOINT_BONE, "leftwingjoint", entity);
+        trackBone(RIGHT_WING_JOINT_BONE, "rightwingjoint", entity);
         trackBone(TAIL1_BONE, "tail1", entity);
         trackBone(TAIL2_BONE, "tail2", entity);
         trackBone(TAIL3_BONE, "tail3", entity);

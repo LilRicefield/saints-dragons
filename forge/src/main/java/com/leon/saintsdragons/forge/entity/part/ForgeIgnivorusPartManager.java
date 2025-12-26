@@ -25,8 +25,8 @@ public class ForgeIgnivorusPartManager {
     private final Map<String, ForgeDragonPart> parts = new LinkedHashMap<>();
     private ForgeDragonPart[] partsArray;
 
-    // How far each hitbox stretches toward its neighbor (0.6 = 60% of the way)
-    private static final float STRETCH_FACTOR = 0.6f;
+    // How far each hitbox stretches toward its neighbor (0.75 = 75% of the way)
+    private static final float STRETCH_FACTOR = 0.75f;
 
     public ForgeIgnivorusPartManager(Ignivorus dragon) {
         this.dragon = dragon;
@@ -46,21 +46,27 @@ public class ForgeIgnivorusPartManager {
     private record PartConfig(String boneName, float width, float height, float damageMultiplier, String stretchTowardBone) {}
 
     private void initializePartConfigs() {
-        // Head - precision hits deal bonus damage, stretches toward neck
-        partConfigs.put("head", new PartConfig("headController", 2.5f, 2.5f, 1.25f, "neck3Controller"));
+        // Head - precision hits deal bonus damage, longer/narrower box that stretches back to neck
+        partConfigs.put("head", new PartConfig("headController", 3.0f, 2.5f, 1.25f, "neck3Controller"));
 
-        // Neck - slight bonus, stretches toward tail (body connection)
-        partConfigs.put("neck", new PartConfig("neck3Controller", 2.0f, 2.0f, 1.1f, "tail1"));
+        // Neck - slight bonus, stretches toward body to close the gap
+        partConfigs.put("neck", new PartConfig("neck3Controller", 2.5f, 2.5f, 1.1f, "hip"));
 
-        // Wings - reduced damage (thin targets), no stretching needed
-        partConfigs.put("leftWing", new PartConfig("leftwing", 3.5f, 2.0f, 0.9f, null));
-        partConfigs.put("rightWing", new PartConfig("rightwing", 3.5f, 2.0f, 0.9f, null));
+        // Body - covers the main torso area, stretches toward tail
+        partConfigs.put("body", new PartConfig("hip", 4.5f, 4.0f, 1.0f, "tail1"));
+
+        // Wings - reduced damage, stretch toward wing joints
+        partConfigs.put("leftWing", new PartConfig("leftwing", 4.0f, 2.5f, 0.9f, "leftwingjoint"));
+        partConfigs.put("rightWing", new PartConfig("rightwing", 4.0f, 2.5f, 0.9f, "rightwingjoint"));
+        // Outer wings - much larger standalone hitboxes at the wing joints to cover wing span
+        partConfigs.put("leftWingOuter", new PartConfig("leftwingjoint", 8.0f, 3.0f, 0.9f, null));
+        partConfigs.put("rightWingOuter", new PartConfig("rightwingjoint", 8.0f, 3.0f, 0.9f, null));
 
         // Tail segments - reduced damage, each stretches to the next
-        partConfigs.put("tail1", new PartConfig("tail1", 2.0f, 2.0f, 0.85f, "tail2"));
-        partConfigs.put("tail2", new PartConfig("tail2", 1.8f, 1.8f, 0.8f, "tail3"));
-        partConfigs.put("tail3", new PartConfig("tail3", 1.5f, 1.5f, 0.8f, "tail4"));
-        partConfigs.put("tail4", new PartConfig("tail4", 1.2f, 1.2f, 0.75f, null));
+        partConfigs.put("tail1", new PartConfig("tail1", 2.5f, 2.5f, 0.85f, "tail2"));
+        partConfigs.put("tail2", new PartConfig("tail2", 2.0f, 2.0f, 0.8f, "tail3"));
+        partConfigs.put("tail3", new PartConfig("tail3", 1.8f, 1.8f, 0.8f, "tail4"));
+        partConfigs.put("tail4", new PartConfig("tail4", 3.0f, 2.0f, 0.75f, null));  // Larger tip hitbox
 
         // Legs - normal damage, no stretching needed
         partConfigs.put("leftFrontLeg", new PartConfig("leftfrontleg", 1.5f, 2.5f, 1.0f, null));
@@ -116,8 +122,11 @@ public class ForgeIgnivorusPartManager {
                 switch (partName) {
                     case "head" -> { forward = 6.0; up = 4.0; }
                     case "neck" -> { forward = 4.0; up = 3.5; }
+                    case "body" -> { forward = 0.0; up = 3.0; }
                     case "leftWing" -> { forward = 0.0; up = 3.0; side = -4.0; }
                     case "rightWing" -> { forward = 0.0; up = 3.0; side = 4.0; }
+                    case "leftWingOuter" -> { forward = 0.0; up = 3.0; side = -8.0; }
+                    case "rightWingOuter" -> { forward = 0.0; up = 3.0; side = 8.0; }
                     case "tail1" -> { forward = -3.0; up = 2.0; }
                     case "tail2" -> { forward = -5.0; up = 1.5; }
                     case "tail3" -> { forward = -7.0; up = 1.0; }
