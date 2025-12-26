@@ -80,8 +80,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
-    private boolean hasLoggedBones = false;
-
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) {
             return;
@@ -107,17 +105,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         model.getBone(RIGHT_FRONT_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(LEFT_BACK_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(RIGHT_BACK_LEG_BONE).ifPresent(b -> b.setTrackingMatrices(true));
-
-        // Debug: log which bones were found (only once)
-        if (!hasLoggedBones) {
-            hasLoggedBones = true;
-            System.out.println("[Ignivorus Hitbox Debug] Checking bones:");
-            System.out.println("  headController: " + model.getBone(HEAD_BONE).isPresent());
-            System.out.println("  neck3Controller: " + model.getBone(NECK_BONE).isPresent());
-            System.out.println("  leftwing: " + model.getBone(LEFT_WING_BONE).isPresent());
-            System.out.println("  rightwing: " + model.getBone(RIGHT_WING_BONE).isPresent());
-            System.out.println("  tail1: " + model.getBone(TAIL1_BONE).isPresent());
-        }
     }
 
     @Override
