@@ -192,8 +192,16 @@ public class FabricClientEventHandler {
         if (player.isPassenger() && player.getVehicle() instanceof Ignivorus ignivorus && camera.isDetached()) {
             // Determine target zoom based on flight state
             boolean isFlying = ignivorus.isFlying();
+            boolean isPhase2 = ignivorus.isPhase2Active();
 
-            ignivorusCameraZoomTarget = isFlying ? 30F : 15F;
+            // Phase 2 only affects grounded camera zoom
+            if (isFlying) {
+                ignivorusCameraZoomTarget = 30F;
+            } else if (isPhase2) {
+                ignivorusCameraZoomTarget = 25F; // Phase 2 grounded = zoom out more
+            } else {
+                ignivorusCameraZoomTarget = 15F; // Normal grounded
+            }
 
             // Smooth transition
             float blendRate = 0.05F;

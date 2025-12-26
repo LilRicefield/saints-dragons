@@ -37,6 +37,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerServerbound(
+                MessageDragonBonePositions.class,
+                id("dragon_bone_positions"),
+                MessageDragonBonePositions::encode,
+                MessageDragonBonePositions::decode,
+                MessageDragonBonePositions::handle
+        );
+
+        NETWORK.registerServerbound(
                 MessageDragonAllyManagement.class,
                 id("dragon_ally_management"),
                 MessageDragonAllyManagement::encode,

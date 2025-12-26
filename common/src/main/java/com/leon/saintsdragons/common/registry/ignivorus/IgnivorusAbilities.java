@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusBodySlamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusBiteAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusRoarAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusStompAbility;
@@ -22,6 +23,7 @@ public final class IgnivorusAbilities {
     public static final String IGNIVORUS_FIRE_BREATH_ID = "ignivorus_fire_breath";
     public static final String IGNIVORUS_BITE_ID = "ignivorus_bite";
     public static final String IGNIVORUS_ROAR_ID = "ignivorus_roar";
+    public static final String IGNIVORUS_FIREBALL_ID = "ignivorus_fireball";
     public static final String IGNIVORUS_BODY_SLAM_ID = "ignivorus_body_slam";
     public static final String IGNIVORUS_WING_SWIPE_ID = "ignivorus_wing_swipe";
     public static final String IGNIVORUS_STOMP_ID = "ignivorus_stomp";
@@ -37,6 +39,9 @@ public final class IgnivorusAbilities {
 
     public static final DragonAbilityType<Ignivorus, IgnivorusRoarAbility> IGNIVORUS_ROAR =
             AbilityRegistry.register(new DragonAbilityType<>(IGNIVORUS_ROAR_ID, IgnivorusRoarAbility::new));
+
+    public static final DragonAbilityType<Ignivorus, IgnivorusFireballAbility> IGNIVORUS_FIREBALL =
+            AbilityRegistry.register(new DragonAbilityType<>(IGNIVORUS_FIREBALL_ID, IgnivorusFireballAbility::new));
 
     public static final DragonAbilityType<Ignivorus, IgnivorusBodySlamAbility> IGNIVORUS_BODY_SLAM =
             AbilityRegistry.register(new DragonAbilityType<>(IGNIVORUS_BODY_SLAM_ID, IgnivorusBodySlamAbility::new));
