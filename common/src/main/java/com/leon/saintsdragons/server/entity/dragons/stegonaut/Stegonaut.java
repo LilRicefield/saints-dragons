@@ -252,6 +252,16 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         return super.hurt(source, amount);
     }
 
+    /**
+     * Returns a larger bounding box for frustum culling to prevent the model from
+     * disappearing when the entity's collision box is off-screen but the visual model
+     * should still be visible.
+     */
+    @Override
+    public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
+        return super.getBoundingBoxForCulling().inflate(6.0, 3.0, 6.0);
+    }
+
     @Override
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
         return StegonautAbilities.STEGONAUT_DIE;
