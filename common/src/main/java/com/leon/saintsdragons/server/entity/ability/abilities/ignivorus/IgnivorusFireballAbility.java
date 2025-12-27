@@ -41,7 +41,8 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     @Override
     public boolean tryAbility() {
         Ignivorus dragon = getUser();
-        return dragon.isPhase2Active() && dragon.getControllingPassenger() != null;
+        boolean airborne = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
+        return (dragon.isPhase2Active() || airborne) && dragon.getControllingPassenger() != null;
     }
 
     @Override
