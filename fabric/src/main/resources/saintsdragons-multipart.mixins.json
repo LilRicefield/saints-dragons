@@ -1,6 +1,7 @@
 {
   "required": true,
-  "package": "com.leon.saintsdragons.forge.mixin",
+  "minVersion": "0.8",
+  "package": "com.leon.saintsdragons.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "IgnivorusMultipartMixin",
@@ -8,12 +9,9 @@
     "ServerGamePacketListenerMixin"
   ],
   "client": [
+    "ClientLevelAccessor"
   ],
-  "server": [
-  ],
-
   "injectors": {
     "defaultRequire": 1
-  },
-  "minVersion": "0.8"
+  }
 }

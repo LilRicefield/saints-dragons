@@ -165,6 +165,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private boolean sleepSitUpTriggered = false;
     private int sleepCommandSnapshot = -1;
     private boolean wasVehicleLastTick = false;
+    private static final int PHASE_TWO_LINGER_TICKS = 20 * 30;
+    private int phaseTwoLingerTicks = 0;
 
     // ===== UNTAMED RIDE / TAMING STATE =====
     private static final int MIN_WILD_TAME_TICKS = 60;
@@ -611,6 +613,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             this.tickAnimationStates();
             this.updateSwimOrientationState();
             this.tickWildRideState();
+            tickPhaseTwoLinger();
         }
 
         tickClientSideUpdates();
@@ -1845,6 +1848,48 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             cooldownTicks--;
             this.entityData.set(DATA_FEEDING_COOLDOWN, cooldownTicks);
         }
+    }
+
+    private void tickPhaseTwoLinger() {
+        if (this.isVehicle()) {
+            phaseTwoLingerTicks = 0;
+            return;
+        }
+
+        if (!this.isPhaseTwoActive()) {
+            phaseTwoLingerTicks = 0;
+            return;
+        }
+
+        if (this.isAbilityActive(NulljawAbilities.NULLJAW_PHASE_SHIFT)) {
+            return;
+        }
+
+        LivingEntity target = this.getTarget();
+        boolean targetTooFar = target != null && isTargetTooFar(target);
+
+        if (target == null || targetTooFar) {
+            if (phaseTwoLingerTicks <= 0) {
+                phaseTwoLingerTicks = PHASE_TWO_LINGER_TICKS;
+            } else {
+                phaseTwoLingerTicks--;
+            }
+
+            if (phaseTwoLingerTicks <= 0) {
+                this.combatManager.tryUseAbility(NulljawAbilities.NULLJAW_PHASE_SHIFT);
+            }
+        } else {
+            phaseTwoLingerTicks = 0;
+        }
+    }
+
+    private boolean isTargetTooFar(LivingEntity target) {
+        double followRange = this.getAttributeValue(Attributes.FOLLOW_RANGE);
+        if (followRange <= 0.0D) {
+            followRange = 16.0D;
+        }
+        double maxDistanceSq = followRange * followRange;
+        return this.distanceToSqr(target) > maxDistanceSq;
     }
 
     // ===== SIT TRANSITION HELPERS =====

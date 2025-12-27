@@ -38,7 +38,7 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
     private static final int ACTIVE_TICKS = 6;
     private static final int RECOVERY_TICKS = 8;
     private static final int CONTROL_LOCK_TICKS = 29; // ~1.46s
-    private static final int COOLDOWN_TICKS = 30;
+    private static final int COOLDOWN_TICKS = 10;
 
     private static final float BASE_DAMAGE = 40.0f;
     private static final double PUSH_STRENGTH = 1.1D;
