@@ -2095,6 +2095,16 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         return super.hurt(damageSource, amount);
     }
 
+    /**
+     * Returns a larger bounding box for frustum culling to prevent the model from
+     * disappearing when the entity's collision box is off-screen but the visual model
+     * (wings, tail, etc.) should still be visible.
+     */
+    @Override
+    public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
+        return super.getBoundingBoxForCulling().inflate(8.0, 4.0, 8.0);
+    }
+
     @Override
     public void addAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
