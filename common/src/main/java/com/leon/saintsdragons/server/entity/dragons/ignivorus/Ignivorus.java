@@ -1771,6 +1771,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (abilityName == null || abilityName.isEmpty()) {
             return;
         }
+        if ((isFlying() || isTakeoff() || isLanding() || isHovering())
+                && IgnivorusAbilities.IGNIVORUS_ROAR_ID.equals(abilityName)) {
+            abilityName = IgnivorusAbilities.IGNIVORUS_FIREBALL_ID;
+        }
         Entity controller = this.getControllingPassenger();
         if (!(controller instanceof LivingEntity living)) {
             return;
@@ -1805,6 +1809,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.PRESS);
+        }
         if (isPhase2Active()) {
             return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.PRESS);
         }
