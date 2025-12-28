@@ -426,7 +426,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             // Trigger death ability based on age
             DragonAbilityType<?, ?> deathAbility = getDeathAbilityType();
             if (deathAbility != null && !level().isClientSide) {
-                combatManager.tryUseAbility(deathAbility);
+                combatManager.forceUseAbility(deathAbility);
             }
         }
         super.die(cause);

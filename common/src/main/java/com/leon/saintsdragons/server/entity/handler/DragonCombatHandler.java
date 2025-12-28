@@ -169,6 +169,35 @@ public class DragonCombatHandler {
         }
     }
 
+    public void forceUseAbility(DragonAbilityType<?, ?> abilityType) {
+        if (abilityType == null || dragon.level().isClientSide) {
+            return;
+        }
+
+        processingAbility = true;
+        try {
+            forceEndActiveAbility();
+            globalCooldown = 0;
+
+            @SuppressWarnings("unchecked")
+            var ability = ((DragonAbilityType<DragonEntity, ?>) abilityType).makeInstance(dragon);
+
+            if (!ability.tryAbility()) {
+                return;
+            }
+
+            boolean overlay = isOverlayAbilityType(abilityType);
+            if (overlay) {
+                overlayAbility = ability;
+            } else {
+                setActiveAbility(ability);
+            }
+            ability.start();
+        } finally {
+            processingAbility = false;
+        }
+    }
+
     public void forceEndActiveAbility() {
         if (activeAbility != null) {
             DragonAbility<?> finished = activeAbility;
