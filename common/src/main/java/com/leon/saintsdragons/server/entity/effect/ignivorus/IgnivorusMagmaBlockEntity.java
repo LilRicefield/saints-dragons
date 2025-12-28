@@ -18,10 +18,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,8 +43,8 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     private int lifetimeTicks;
     private int livedTicks;
 
-    private static final SphereOffsets OFFSETS_RADIUS_4 = SphereOffsets.create(4);
-    private static final SphereOffsets OFFSETS_RADIUS_8 = SphereOffsets.create(8);
+    private static final SphereOffsets OFFSETS_RADIUS_6 = SphereOffsets.create(6);
+    private static final SphereOffsets OFFSETS_RADIUS_12 = SphereOffsets.create(12);
 
     public IgnivorusMagmaBlockEntity(EntityType<? extends IgnivorusMagmaBlockEntity> type, Level level) {
         super(type, level);
@@ -120,9 +123,21 @@ public class IgnivorusMagmaBlockEntity extends Entity {
                 this
         ));
 
-        boolean hitBlock = hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK;
+        boolean hitBlock = hitResult.getType() == HitResult.Type.BLOCK;
+        EntityHitResult entityHit = findEntityHit(currentPos, nextPos);
+        boolean hitEntity = entityHit != null;
 
-        if (hitBlock) {
+        if (hitEntity && hitBlock) {
+            double blockDist = hitResult.getLocation().distanceToSqr(currentPos);
+            double entityDist = entityHit.getLocation().distanceToSqr(currentPos);
+            if (entityDist <= blockDist) {
+                this.setPos(entityHit.getLocation());
+            } else {
+                this.setPos(hitResult.getLocation());
+            }
+        } else if (hitEntity) {
+            this.setPos(entityHit.getLocation());
+        } else if (hitBlock) {
             // Move to impact point
             this.setPos(hitResult.getLocation());
         } else {
@@ -143,6 +158,12 @@ public class IgnivorusMagmaBlockEntity extends Entity {
                 return;
             }
 
+            // Explode on entity hit
+            if (hitEntity) {
+                explode();
+                return;
+            }
+
             // Explode on block hit
             if (hitBlock) {
                 explode();
@@ -157,6 +178,28 @@ public class IgnivorusMagmaBlockEntity extends Entity {
             // Spawn trail particles
             spawnTrailParticles();
         }
+    }
+
+    @Nullable
+    private EntityHitResult findEntityHit(Vec3 start, Vec3 end) {
+        if (level().isClientSide) {
+            return null;
+        }
+        AABB bounds = getBoundingBox().expandTowards(end.subtract(start)).inflate(1.0D);
+        return ProjectileUtil.getEntityHitResult(level(), this, start, end, bounds, target -> {
+            if (!(target instanceof net.minecraft.world.entity.LivingEntity living)) {
+                return false;
+            }
+            if (!living.isAlive()) {
+                return false;
+            }
+            if (owner != null) {
+                if (target == owner || owner.isAlliedTo(target)) {
+                    return false;
+                }
+            }
+            return true;
+        });
     }
 
     private void spawnTrailParticles() {
@@ -184,51 +227,33 @@ public class IgnivorusMagmaBlockEntity extends Entity {
 
         // Enhanced effects for larger fireballs (charge level 2+)
         if (scale >= 6.0F) {
-            // Multiple explosion clouds spread around
-            server.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 1.0D, impact.z, capParticles(3, scale / 4.0F, 16),
-                    1.0D * scale, 0.6D * scale, 1.0D * scale, 0.02D);
             // Dense smoke plume
             server.sendParticles(ParticleTypes.LARGE_SMOKE, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
                     0.9D * scale, 0.7D * scale, 0.9D * scale, 0.06D);
-            // Campfire sparks rising
-            server.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, impact.x, impact.y + 0.3D * scale, impact.z, capParticles(5, scale, 30),
-                    0.5D * scale, 0.3D * scale, 0.5D * scale, 0.04D);
             // Falling debris particles
             server.sendParticles(ParticleTypes.ASH, impact.x, impact.y + 2.0D * scale, impact.z, capParticles(10, scale, 50),
                     1.2D * scale, 1.0D * scale, 1.2D * scale, 0.1D);
 
-            // Destroy blocks for charge level 2+ (radius 4 = ~9 block diameter crater)
-            destroyBlocks(server, impactPos, 4, false);
+            // Destroy blocks for charge level 2+ (radius 6 = ~13 block diameter crater)
+            destroyBlocks(server, impactPos, 6, false);
         }
 
         // Max charge explosion (charge level 3) - DEVASTATING
         if (scale >= 8.0F) {
-            // Soul fire ring
-            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(18, scale, 80),
+            // Center explosion emitter
+            server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y + 0.5D, impact.z, 1,
+                    0.0D, 0.0D, 0.0D, 0.0D);
+            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(16, scale, 60),
                     2.0D * scale, 1.0D * scale, 2.0D * scale, 0.2D);
-            // Massive lava burst
-            server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 1.0D * scale, impact.z, capParticles(22, scale, 90),
-                    2.5D * scale, 1.5D * scale, 2.5D * scale, 0.1D);
-            // Shockwave dust ring
-            server.sendParticles(ParticleTypes.CLOUD, impact.x, impact.y + 0.2D, impact.z, capParticles(14, scale, 60),
-                    3.0D * scale, 0.5D, 3.0D * scale, 0.03D);
-            // Falling ember rain
-            server.sendParticles(ParticleTypes.FALLING_LAVA, impact.x, impact.y + 8.0D, impact.z, capParticles(22, scale, 90),
-                    4.0D * scale, 2.0D, 4.0D * scale, 0.0D);
 
-            // Massive block destruction radius for max charge (radius 8 = ~17 block diameter crater)
-            destroyBlocks(server, impactPos, 8, true);
+            // Massive block destruction radius for max charge (radius 12 = ~25 block diameter crater)
+            destroyBlocks(server, impactPos, 12, true);
         }
 
         // Sound - louder and lower pitch for bigger explosions
         float volume = 1.0F + (scale * 0.2F);
         float pitch = Math.max(0.4F, 0.9F / scale);
         server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, getSoundSource(), volume, pitch);
-
-        // Additional dramatic sound for max charge
-        if (scale >= 8.0F) {
-            server.playSound(null, blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, getSoundSource(), 0.6F, 0.6F);
-        }
 
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius);
@@ -253,7 +278,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     }
 
     private void destroyBlocks(ServerLevel server, BlockPos center, int radius, boolean maxPower) {
-        SphereOffsets offsets = radius == 8 ? OFFSETS_RADIUS_8 : OFFSETS_RADIUS_4;
+        SphereOffsets offsets = radius == 12 ? OFFSETS_RADIUS_12 : OFFSETS_RADIUS_6;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         double innerCore = maxPower ? radius * 0.6 : radius * 0.5;
         double outerRadius = radius - innerCore;
@@ -277,20 +302,20 @@ public class IgnivorusMagmaBlockEntity extends Entity {
             if (hardness > 100.0F) continue; // Never destroy reinforced blocks
 
             if (distance <= innerCore) {
-                server.destroyBlock(pos, true, owner);
+                server.setBlock(pos, Blocks.AIR.defaultBlockState(), 11);
                 continue;
             }
 
             double distanceFactor = 1.0 - ((distance - innerCore) / outerRadius);
             if (maxPower) {
                 if (server.random.nextDouble() < distanceFactor * 0.9) {
-                    server.destroyBlock(pos, true, owner);
+                    server.setBlock(pos, Blocks.AIR.defaultBlockState(), 11);
                 }
             } else {
                 double hardnessFactor = hardness > 3.0F ? 0.8 : 1.0;
                 double breakChance = distanceFactor * hardnessFactor;
                 if (server.random.nextDouble() < breakChance) {
-                    server.destroyBlock(pos, true, owner);
+                    server.setBlock(pos, Blocks.AIR.defaultBlockState(), 11);
                 }
             }
         }

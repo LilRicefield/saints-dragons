@@ -41,7 +41,7 @@ public class DragonUIEventHandler {
         if (ui.getCurrentDragon() instanceof Ignivorus ignivorus) {
             FireballChargeIndicator chargeIndicator = ui.getFireballChargeIndicator();
             chargeIndicator.setChargeLevel(ignivorus.getFireballChargeLevel());
-            chargeIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight);
+            chargeIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
         }
     }
     
