@@ -1,14 +1,12 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -21,9 +19,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Hold R to charge, release to fire. Longer charge = bigger, more explosive fireball.
  *
  * Charge levels:
- * - Level 1 (0-20 ticks): Base fireball
- * - Level 2 (20-40 ticks): 1.5x damage/radius/scale
- * - Level 3 (40-60 ticks): 2x damage/radius/scale (max)
+ * - Level 1 (0-40 ticks): Base fireball
+ * - Level 2 (40-80 ticks): 1.5x damage/radius/scale
+ * - Level 3 (80-120 ticks): 2x damage/radius/scale (max)
  */
 public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     // Use infinite section - ability continues until key release
@@ -37,9 +35,10 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     private static final int FIRE_RELEASE_TICKS = 15;
 
     // Charge thresholds (in ticks, 20 ticks = 1 second)
-    private static final int CHARGE_LEVEL_2_TICKS = 20;
-    private static final int CHARGE_LEVEL_3_TICKS = 40;
-    private static final int MAX_CHARGE_TICKS = 60;
+    private static final int CHARGE_LEVEL_2_TICKS = 25;
+    private static final int CHARGE_LEVEL_3_TICKS = 50;
+    private static final int MAX_CHARGE_TICKS = 95;
+    private static final int MIN_CHARGE_DISPLAY_TICKS = 3;
 
     // Base stats (Level 1)
     private static final float BASE_SCALE = 4.0F;
@@ -51,11 +50,12 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     private static final float LEVEL_3_MULTIPLIER = 2.0F;
 
     private int chargeTicks = 0;
-    private int lastChargeLevel = 0;
+    private int lastChargeAnimLevel = 0;
     private boolean hasFired = false;
     private boolean releaseRequested = false;
     private int releaseTicks = 0;
     private int releaseChargeTicks = 0;
+    private boolean level3HoldActive = false;
 
     public IgnivorusFireballAbility(DragonAbilityType<Ignivorus, IgnivorusFireballAbility> type,
                                     Ignivorus user) {
@@ -77,14 +77,13 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         if (section.sectionType == ACTIVE) {
             // Start charging
             chargeTicks = 0;
-            lastChargeLevel = 0;
             hasFired = false;
             releaseRequested = false;
             releaseTicks = 0;
             releaseChargeTicks = 0;
+            level3HoldActive = false;
+            lastChargeAnimLevel = 0;
             getUser().setFireballChargeLevel(0);
-            // Play initial charge sound
-            playChargeSound(0);
         }
     }
 
@@ -118,13 +117,17 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         // Calculate current charge level (1-3)
         int currentChargeLevel = getChargeLevel(chargeTicks);
 
-        // Update dragon's charge level for UI sync
-        getUser().setFireballChargeLevel(currentChargeLevel);
+        boolean displayCharge = chargeTicks >= MIN_CHARGE_DISPLAY_TICKS;
+        getUser().setFireballChargeLevel(displayCharge ? currentChargeLevel : 0);
 
-        // Play sound when reaching new charge level
-        if (currentChargeLevel > lastChargeLevel) {
-            playChargeSound(currentChargeLevel);
-            lastChargeLevel = currentChargeLevel;
+        if (displayCharge && currentChargeLevel > lastChargeAnimLevel) {
+            triggerChargeAnimation(currentChargeLevel);
+            lastChargeAnimLevel = currentChargeLevel;
+        }
+
+        if (chargeTicks >= MAX_CHARGE_TICKS && !level3HoldActive) {
+            triggerHoldAnimation();
+            level3HoldActive = true;
         }
     }
 
@@ -148,7 +151,7 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         releaseTicks = 0;
         releaseChargeTicks = Math.max(1, chargeTicks);
         getUser().setFireballChargeLevel(0);
-        getUser().triggerAnim("action", "fireball_shoots");
+        triggerShootAnimation(getChargeLevel(releaseChargeTicks));
     }
 
     private int getChargeLevel(int ticks) {
@@ -170,35 +173,6 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         };
     }
 
-    private void playChargeSound(int level) {
-        Ignivorus dragon = getUser();
-        if (dragon.level().isClientSide) {
-            return;
-        }
-
-        // Use existing sounds with different pitches for charge levels
-        float pitch = switch (level) {
-            case 0 -> 0.5F;  // Initial low rumble
-            case 1 -> 0.7F;  // Level 1 reached
-            case 2 -> 0.9F;  // Level 2 reached
-            case 3 -> 1.2F;  // Max charge reached
-            default -> 0.5F;
-        };
-
-        float volume = switch (level) {
-            case 0 -> 0.6F;
-            case 1 -> 0.8F;
-            case 2 -> 1.0F;
-            case 3 -> 1.2F;
-            default -> 0.6F;
-        };
-
-        // Use fire breath start sound for charging feedback
-        dragon.level().playSound(null, dragon.blockPosition(),
-                ModSounds.IGNIVORUS_FIRE_BREATH_START.get(),
-                SoundSource.HOSTILE, volume, pitch);
-    }
-
     private void fireFireball(int chargeAtRelease) {
         Ignivorus dragon = getUser();
         if (!(dragon.level() instanceof ServerLevel server)) {
@@ -215,7 +189,6 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
 
         IgnivorusMagmaBlockEntity fireball = new IgnivorusMagmaBlockEntity(server, spawnPos, dragon,
                 radius, damage, MAGMA_LIFETIME_TICKS);
-        fireball.setNoGravity(true);
         fireball.setDeltaMovement(direction.scale(FIREBALL_SPEED));
         fireball.setVisualScale(scale);
         fireball.hasImpulse = true;
@@ -224,11 +197,12 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
 
     private void resetChargeState() {
         chargeTicks = 0;
-        lastChargeLevel = 0;
+        lastChargeAnimLevel = 0;
         hasFired = false;
         releaseRequested = false;
         releaseTicks = 0;
         releaseChargeTicks = 0;
+        level3HoldActive = false;
         getUser().setFireballChargeLevel(0);
     }
 
@@ -253,5 +227,27 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         return (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
                 .abilityDamage("fireball", DEFAULT_IMPACT_DAMAGE);
+    }
+
+    private void triggerChargeAnimation(int level) {
+        switch (level) {
+            case 1 -> getUser().triggerAnim("action", "fireball_level1_charge");
+            case 2 -> getUser().triggerAnim("action", "fireball_level2_charge");
+            case 3 -> getUser().triggerAnim("action", "fireball_level3_charge");
+            default -> { }
+        }
+    }
+
+    private void triggerHoldAnimation() {
+        getUser().triggerAnim("action", "fireball_level3_hold");
+    }
+
+    private void triggerShootAnimation(int level) {
+        switch (level) {
+            case 1 -> getUser().triggerAnim("action", "fireball_level1_shoot");
+            case 2 -> getUser().triggerAnim("action", "fireball_level2_shoot");
+            case 3 -> getUser().triggerAnim("action", "fireball_level3_shoot");
+            default -> getUser().triggerAnim("action", "fireball_level1_shoot");
+        }
     }
 }

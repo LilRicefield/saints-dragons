@@ -843,11 +843,61 @@
       }
     ]
   },
-  "ignivorus_fireball_shoots": {
+  "ignivorus_level1_charge": {
+    "subtitle": "Ignivorus charges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_level1_charge",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_level1_shoots": {
     "subtitle": "Ignivorus shoots a fireball",
     "sounds": [
       {
-        "name": "saintsdragons:entity/ignivorus/ignivorus_fireball_shoots",
+        "name": "saintsdragons:entity/ignivorus/ignivorus_level1_shoots",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_level2_charge": {
+    "subtitle": "Ignivorus charges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_level2_charge",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_level2_shoots": {
+    "subtitle": "Ignivorus shoots a fireball",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_level2_shoots",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_level3_charge": {
+    "subtitle": "Ignivorus charges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_level3_charge",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_level3_shoots": {
+    "subtitle": "Ignivorus shoots a fireball",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_level3_shoots",
         "volume": 2.0,
         "pitch": 1.0
       }

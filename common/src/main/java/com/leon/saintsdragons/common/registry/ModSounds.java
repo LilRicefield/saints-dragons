@@ -106,7 +106,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_START = registerSound("ignivorus_fire_breath_start");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATHING = registerSound("ignivorus_fire_breathing");
     public static final Supplier<SoundEvent> IGNIVORUS_FIRE_BREATH_END = registerSound("ignivorus_fire_breath_end");
-    public static final Supplier<SoundEvent> IGNIVORUS_FIREBALL_SHOOTS = registerSound("ignivorus_fireball_shoots");
     public static final Supplier<SoundEvent> IGNIVORUS_TAKEOFF = registerSound("ignivorus_takeoff");
     public static final Supplier<SoundEvent> IGNIVORUS_FLAP = registerSound("ignivorus_flap");
     public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_1 = registerSound("ignivorus_grumble1");
@@ -132,6 +131,12 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_STOMP = registerSound("ignivorus_stomp");
     public static final Supplier<SoundEvent> IGNIVORUS_IMPACT = registerSound("ignivorus_impact");
     public static final Supplier<SoundEvent> IGNIVORUS_LEAP = registerSound("ignivorus_leap");
+    public static final Supplier<SoundEvent> IGNIVORUS_LEVEL1_CHARGE = registerSound("ignivorus_level1_charge");
+    public static final Supplier<SoundEvent> IGNIVORUS_LEVEL1_SHOOTS = registerSound("ignivorus_level1_shoots");
+    public static final Supplier<SoundEvent> IGNIVORUS_LEVEL2_CHARGE = registerSound("ignivorus_level2_charge");
+    public static final Supplier<SoundEvent> IGNIVORUS_LEVEL2_SHOOTS = registerSound("ignivorus_level2_shoots");
+    public static final Supplier<SoundEvent> IGNIVORUS_LEVEL3_CHARGE = registerSound("ignivorus_level3_charge");
+    public static final Supplier<SoundEvent> IGNIVORUS_LEVEL3_SHOOTS = registerSound("ignivorus_level3_shoots");
 
     private ModSounds() {
     }

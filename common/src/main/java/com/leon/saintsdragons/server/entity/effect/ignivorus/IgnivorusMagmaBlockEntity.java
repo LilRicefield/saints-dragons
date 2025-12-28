@@ -40,6 +40,9 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     private int lifetimeTicks;
     private int livedTicks;
 
+    private static final SphereOffsets OFFSETS_RADIUS_4 = SphereOffsets.create(4);
+    private static final SphereOffsets OFFSETS_RADIUS_8 = SphereOffsets.create(8);
+
     public IgnivorusMagmaBlockEntity(EntityType<? extends IgnivorusMagmaBlockEntity> type, Level level) {
         super(type, level);
         this.blocksBuilding = true;
@@ -174,58 +177,47 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         BlockPos impactPos = BlockPos.containing(impact);
 
         // Core explosion particles - scale with fireball size
-        server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, (int)(20 * scale),
+        server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(10, scale, 60),
                 0.6D * scale, 0.4D * scale, 0.6D * scale, 0.05D);
-        server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D * scale, impact.z, (int)(35 * scale),
+        server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
                 0.7D * scale, 0.5D * scale, 0.7D * scale, 0.1D);
 
         // Enhanced effects for larger fireballs (charge level 2+)
         if (scale >= 6.0F) {
             // Multiple explosion clouds spread around
-            server.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 1.0D, impact.z, (int)(5 * (scale / 4.0F)),
+            server.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 1.0D, impact.z, capParticles(3, scale / 4.0F, 16),
                     1.0D * scale, 0.6D * scale, 1.0D * scale, 0.02D);
             // Dense smoke plume
-            server.sendParticles(ParticleTypes.LARGE_SMOKE, impact.x, impact.y + 0.5D * scale, impact.z, (int)(40 * scale),
+            server.sendParticles(ParticleTypes.LARGE_SMOKE, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
                     0.9D * scale, 0.7D * scale, 0.9D * scale, 0.06D);
             // Campfire sparks rising
-            server.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, impact.x, impact.y + 0.3D * scale, impact.z, (int)(12 * scale),
+            server.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, impact.x, impact.y + 0.3D * scale, impact.z, capParticles(5, scale, 30),
                     0.5D * scale, 0.3D * scale, 0.5D * scale, 0.04D);
             // Falling debris particles
-            server.sendParticles(ParticleTypes.ASH, impact.x, impact.y + 2.0D * scale, impact.z, (int)(30 * scale),
+            server.sendParticles(ParticleTypes.ASH, impact.x, impact.y + 2.0D * scale, impact.z, capParticles(10, scale, 50),
                     1.2D * scale, 1.0D * scale, 1.2D * scale, 0.1D);
 
-            // Destroy blocks for charge level 2+ (radius 6 = ~13 block diameter crater)
-            destroyBlocks(server, impactPos, 6, false);
+            // Destroy blocks for charge level 2+ (radius 4 = ~9 block diameter crater)
+            destroyBlocks(server, impactPos, 4, false);
         }
 
         // Max charge explosion (charge level 3) - DEVASTATING
         if (scale >= 8.0F) {
-            // Multiple explosion emitters spread across the blast zone
-            server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y + 0.5D, impact.z, 1,
-                    0.0D, 0.0D, 0.0D, 0.0D);
-            for (int i = 0; i < 8; i++) {
-                double angle = (i / 8.0) * Math.PI * 2;
-                double offsetX = Math.cos(angle) * 4.0;
-                double offsetZ = Math.sin(angle) * 4.0;
-                server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x + offsetX, impact.y + 0.5D, impact.z + offsetZ, 1,
-                        0.0D, 0.0D, 0.0D, 0.0D);
-            }
-
             // Soul fire ring
-            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, impact.x, impact.y + 0.5D * scale, impact.z, (int)(60 * scale),
+            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(18, scale, 80),
                     2.0D * scale, 1.0D * scale, 2.0D * scale, 0.2D);
             // Massive lava burst
-            server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 1.0D * scale, impact.z, (int)(80 * scale),
+            server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 1.0D * scale, impact.z, capParticles(22, scale, 90),
                     2.5D * scale, 1.5D * scale, 2.5D * scale, 0.1D);
             // Shockwave dust ring
-            server.sendParticles(ParticleTypes.CLOUD, impact.x, impact.y + 0.2D, impact.z, (int)(50 * scale),
+            server.sendParticles(ParticleTypes.CLOUD, impact.x, impact.y + 0.2D, impact.z, capParticles(14, scale, 60),
                     3.0D * scale, 0.5D, 3.0D * scale, 0.03D);
             // Falling ember rain
-            server.sendParticles(ParticleTypes.FALLING_LAVA, impact.x, impact.y + 8.0D, impact.z, (int)(100 * scale),
+            server.sendParticles(ParticleTypes.FALLING_LAVA, impact.x, impact.y + 8.0D, impact.z, capParticles(22, scale, 90),
                     4.0D * scale, 2.0D, 4.0D * scale, 0.0D);
 
-            // Massive block destruction radius for max charge (radius 12 = ~25 block diameter crater)
-            destroyBlocks(server, impactPos, 12, true);
+            // Massive block destruction radius for max charge (radius 8 = ~17 block diameter crater)
+            destroyBlocks(server, impactPos, 8, true);
         }
 
         // Sound - louder and lower pitch for bigger explosions
@@ -261,51 +253,44 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     }
 
     private void destroyBlocks(ServerLevel server, BlockPos center, int radius, boolean maxPower) {
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    // Spherical destruction pattern
-                    double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                    if (distance > radius) continue;
+        SphereOffsets offsets = radius == 8 ? OFFSETS_RADIUS_8 : OFFSETS_RADIUS_4;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        double innerCore = maxPower ? radius * 0.6 : radius * 0.5;
+        double outerRadius = radius - innerCore;
 
-                    BlockPos pos = center.offset(dx, dy, dz);
-                    BlockState state = server.getBlockState(pos);
+        for (int i = 0; i < offsets.size; i++) {
+            int dx = offsets.dx[i];
+            int dy = offsets.dy[i];
+            int dz = offsets.dz[i];
+            float distance = offsets.distance[i];
+            pos.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
 
-                    // Skip air and unbreakable blocks
-                    if (state.isAir()) continue;
-                    float hardness = state.getDestroySpeed(server, pos);
-                    if (hardness < 0) continue; // Bedrock, etc.
+            BlockState state = server.getBlockState(pos);
 
-                    // Don't destroy obsidian (hardness 50) unless max power
-                    if (!maxPower && hardness > 50.0F) continue;
-                    if (hardness > 100.0F) continue; // Never destroy reinforced blocks
+            // Skip air and unbreakable blocks
+            if (state.isAir()) continue;
+            float hardness = state.getDestroySpeed(server, pos);
+            if (hardness < 0) continue; // Bedrock, etc.
 
-                    // Max power mode: guaranteed destruction in larger core, destroys stone easily
-                    if (maxPower) {
-                        // Inner 60%: guaranteed destruction
-                        if (distance <= radius * 0.6) {
-                            server.destroyBlock(pos, true, owner);
-                        }
-                        // Outer ring: very high chance, ignores hardness
-                        else {
-                            double distanceFactor = 1.0 - ((distance - radius * 0.6) / (radius * 0.4));
-                            if (server.random.nextDouble() < distanceFactor * 0.9) {
-                                server.destroyBlock(pos, true, owner);
-                            }
-                        }
-                    } else {
-                        // Normal mode: Inner 50% guaranteed, outer ring has chance
-                        if (distance <= radius * 0.5) {
-                            server.destroyBlock(pos, true, owner);
-                        } else {
-                            double distanceFactor = 1.0 - ((distance - radius * 0.5) / (radius * 0.5));
-                            double hardnessFactor = hardness > 3.0F ? 0.8 : 1.0;
-                            double breakChance = distanceFactor * hardnessFactor;
-                            if (server.random.nextDouble() < breakChance) {
-                                server.destroyBlock(pos, true, owner);
-                            }
-                        }
-                    }
+            // Don't destroy obsidian (hardness 50) unless max power
+            if (!maxPower && hardness > 50.0F) continue;
+            if (hardness > 100.0F) continue; // Never destroy reinforced blocks
+
+            if (distance <= innerCore) {
+                server.destroyBlock(pos, true, owner);
+                continue;
+            }
+
+            double distanceFactor = 1.0 - ((distance - innerCore) / outerRadius);
+            if (maxPower) {
+                if (server.random.nextDouble() < distanceFactor * 0.9) {
+                    server.destroyBlock(pos, true, owner);
+                }
+            } else {
+                double hardnessFactor = hardness > 3.0F ? 0.8 : 1.0;
+                double breakChance = distanceFactor * hardnessFactor;
+                if (server.random.nextDouble() < breakChance) {
+                    server.destroyBlock(pos, true, owner);
                 }
             }
         }
@@ -314,34 +299,41 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     private void igniteArea(ServerLevel server, BlockPos base) {
         float scale = getVisualScale();
         int radius = (int) Math.ceil(scale) + 1; // Slightly larger fire spread
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos below = new BlockPos.MutableBlockPos();
+        int minY = base.getY() - radius;
+        int maxY = base.getY() + radius;
+        int radiusSq = (radius + 1) * (radius + 1);
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
-                // Check multiple Y levels to handle terrain
-                for (int dy = -radius; dy <= radius; dy++) {
-                    BlockPos pos = base.offset(dx, dy, dz);
+                if (dx * dx + dz * dz > radiusSq) {
+                    continue;
+                }
+                for (int y = maxY; y >= minY; y--) {
+                    pos.set(base.getX() + dx, y, base.getZ() + dz);
                     BlockState state = server.getBlockState(pos);
-
-                    // Need air to place fire
-                    if (!state.isAir()) continue;
-
-                    BlockPos below = pos.below();
-                    BlockState belowState = server.getBlockState(below);
-
-                    // Place fire if there's a solid block below
-                    if (!belowState.isAir() && belowState.isSolid() && Blocks.FIRE.defaultBlockState().canSurvive(server, pos)) {
-                        // Higher chance closer to center
-                        double distance = Math.sqrt(dx * dx + dz * dz);
-                        double chance = 1.0 - (distance / (radius + 1)) * 0.5;
-                        if (server.random.nextDouble() < chance) {
-                            server.setBlock(pos, Blocks.FIRE.defaultBlockState(), 11);
-                        }
-                        break; // Only place one fire per column
+                    if (!state.isAir()) {
+                        continue;
                     }
+
+                    below.set(pos.getX(), y - 1, pos.getZ());
+                    BlockState belowState = server.getBlockState(below);
+                    if (belowState.isAir() || !belowState.isSolid() || !Blocks.FIRE.defaultBlockState().canSurvive(server, pos)) {
+                        continue;
+                    }
+
+                    double distance = Math.sqrt(dx * dx + dz * dz);
+                    double chance = 1.0 - (distance / (radius + 1)) * 0.5;
+                    if (server.random.nextDouble() < chance) {
+                        server.setBlock(pos, Blocks.FIRE.defaultBlockState(), 11);
+                    }
+                    break; // Only place one fire per column
                 }
             }
         }
     }
+
 
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
@@ -433,5 +425,52 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     @Nullable
     public Ignivorus getOwner() {
         return owner;
+    }
+
+    private static int capParticles(int base, float scale, int max) {
+        return Math.min(max, Math.max(1, (int) (base * scale)));
+    }
+
+    private static final class SphereOffsets {
+        private final int[] dx;
+        private final int[] dy;
+        private final int[] dz;
+        private final float[] distance;
+        private final int size;
+
+        private SphereOffsets(int[] dx, int[] dy, int[] dz, float[] distance, int size) {
+            this.dx = dx;
+            this.dy = dy;
+            this.dz = dz;
+            this.distance = distance;
+            this.size = size;
+        }
+
+        private static SphereOffsets create(int radius) {
+            int maxCount = (radius * 2 + 1);
+            maxCount = maxCount * maxCount * maxCount;
+            int[] dx = new int[maxCount];
+            int[] dy = new int[maxCount];
+            int[] dz = new int[maxCount];
+            float[] distance = new float[maxCount];
+            int count = 0;
+            int radiusSq = radius * radius;
+            for (int x = -radius; x <= radius; x++) {
+                for (int y = -radius; y <= radius; y++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        int distSq = x * x + y * y + z * z;
+                        if (distSq > radiusSq) {
+                            continue;
+                        }
+                        dx[count] = x;
+                        dy[count] = y;
+                        dz[count] = z;
+                        distance[count] = (float) Math.sqrt(distSq);
+                        count++;
+                    }
+                }
+            }
+            return new SphereOffsets(dx, dy, dz, distance, count);
+        }
     }
 }

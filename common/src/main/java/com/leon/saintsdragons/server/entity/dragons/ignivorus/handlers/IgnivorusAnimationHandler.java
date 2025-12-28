@@ -373,9 +373,20 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         actionController.triggerableAnim("fire_breath_stop",
             RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
 
-        // Fireball charge animations (Phase 2 primary)
-        actionController.triggerableAnim("fireball_shoots",
-            RawAnimation.begin().thenPlay("animation.ignivorus.fireball_shoots"));
+        actionController.triggerableAnim("fireball_level1_charge",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_charge"));
+        actionController.triggerableAnim("fireball_level2_charge",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_charge"));
+        actionController.triggerableAnim("fireball_level3_charge",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_charge"));
+        actionController.triggerableAnim("fireball_level3_hold",
+            RawAnimation.begin().thenLoop("animation.ignivorus.fireball_level3_hold"));
+        actionController.triggerableAnim("fireball_level1_shoot",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_shoots"));
+        actionController.triggerableAnim("fireball_level2_shoot",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_shoots"));
+        actionController.triggerableAnim("fireball_level3_shoot",
+            RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_shoots"));
 
         // Roar animation
         actionController.triggerableAnim("roar",

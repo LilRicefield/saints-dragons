@@ -146,8 +146,7 @@ public final class DragonRideInputHandler {
         // CLIENT-SIDE LOCK CHECK: Block all input if controls are locked
         // This prevents client-side prediction from moving the dragon before server can block it
         if (dragon.areRiderControlsLocked()) {
-            // Reset state tracking so we don't send stale inputs when unlocked
-            resetStateTracking();
+            handleLockedInputs(mc, dragon);
             return;
         }
 
@@ -308,6 +307,42 @@ public final class DragonRideInputHandler {
             } else if (!currentDown && previousDown) {
                 sendInput(false, false, DragonRiderAction.ABILITY_STOP, abilityId, forward, strafe, yaw);
             }
+        }
+    }
+
+    private static void handleLockedInputs(Minecraft mc, RideableDragonBase dragon) {
+        boolean tertiaryDown = DRAGON_TERTIARY_ABILITY.isDown();
+        boolean primaryDown = DRAGON_PRIMARY_ABILITY.isDown();
+        boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
+        boolean attackDown = mc.options.keyAttack.isDown();
+        boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
+
+        handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
+        handleLockedAbilityRelease(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown);
+        handleLockedAbilityRelease(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown);
+        handleLockedAbilityRelease(dragon.getAttackRiderAbility(), attackDown, wasAttackDown);
+
+        // Reset movement/double-tap tracking, but keep ability key states to avoid re-trigger on unlock.
+        resetStateTracking();
+        wasTertiaryAbilityDown = tertiaryDown;
+        wasPrimaryAbilityDown = primaryDown;
+        wasSecondaryAbilityDown = secondaryDown;
+        wasAttackDown = attackDown;
+        wasToggleMeleeDown = toggleMeleeDown;
+    }
+
+    private static void handleLockedAbilityRelease(RiderAbilityBinding binding,
+                                                   boolean currentDown,
+                                                   boolean previousDown) {
+        if (binding == null || binding.activation() != Activation.HOLD) {
+            return;
+        }
+        String abilityId = binding.abilityId();
+        if (abilityId == null || abilityId.isEmpty()) {
+            return;
+        }
+        if (!currentDown && previousDown) {
+            sendInput(false, false, DragonRiderAction.ABILITY_STOP, abilityId, 0f, 0f, 0f);
         }
     }
 
