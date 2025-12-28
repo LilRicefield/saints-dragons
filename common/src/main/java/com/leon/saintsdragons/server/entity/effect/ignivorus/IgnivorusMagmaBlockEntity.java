@@ -16,7 +16,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.Level;
@@ -58,6 +57,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         this.setDeltaMovement(Vec3.ZERO);
         this.setBlockState(Blocks.MAGMA_BLOCK.defaultBlockState());
         this.setVisualScale(1.0F);
+        this.noPhysics = true; // Disable block collision physics
         this.refreshDimensions();
     }
 
@@ -86,7 +86,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
 
     @Override
     public void tick() {
-        // Don't call super.tick() - handle movement manually like FallingBlockEntity does
+        // Don't call super.tick() - handle movement manually
 
         if (this.getBlockState().isAir()) {
             discard();
@@ -95,19 +95,43 @@ public class IgnivorusMagmaBlockEntity extends Entity {
 
         livedTicks++;
 
-        // Apply gravity (on both sides for smooth client prediction)
+        // Gradual arc: gravity increases over time for a natural arc trajectory
+        // Starts with no gravity, then gradually increases
         if (!this.isNoGravity()) {
-            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.04D, 0.0D));
+            // Gravity ramps up over the first 20 ticks, then stays constant
+            float gravityProgress = Math.min(1.0f, livedTicks / 20.0f);
+            double gravity = -0.05D * gravityProgress; // Max gravity of -0.05
+            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, gravity, 0.0D));
         }
 
-        // Move (on both sides)
-        this.move(MoverType.SELF, this.getDeltaMovement());
+        Vec3 currentPos = this.position();
+        Vec3 motion = this.getDeltaMovement();
+        Vec3 nextPos = currentPos.add(motion);
+
+        // Raycast to check for block collision along the path
+        net.minecraft.world.phys.BlockHitResult hitResult = level().clip(new net.minecraft.world.level.ClipContext(
+                currentPos,
+                nextPos,
+                net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE,
+                this
+        ));
+
+        boolean hitBlock = hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK;
+
+        if (hitBlock) {
+            // Move to impact point
+            this.setPos(hitResult.getLocation());
+        } else {
+            // Move freely without physics collision
+            this.setPos(nextPos);
+        }
 
         // Server-side logic only
         if (!level().isClientSide) {
-            // Apply air resistance only for gravity-driven shots
+            // Apply air resistance
             if (!this.isNoGravity()) {
-                this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
+                this.setDeltaMovement(this.getDeltaMovement().scale(0.99D));
             }
 
             // Check lifetime
@@ -116,17 +140,15 @@ public class IgnivorusMagmaBlockEntity extends Entity {
                 return;
             }
 
-            // Check for ground impact
-            if (this.onGround()) {
-                Vec3 motion = this.getDeltaMovement();
-                this.setDeltaMovement(motion.x * 0.7D, -motion.y * 0.5D, motion.z * 0.7D);
+            // Explode on block hit
+            if (hitBlock) {
                 explode();
                 return;
             }
         } else {
-            // Client-side: apply same air resistance for prediction (gravity-driven only)
+            // Client-side: apply same air resistance for prediction
             if (!this.isNoGravity()) {
-                this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
+                this.setDeltaMovement(this.getDeltaMovement().scale(0.99D));
             }
 
             // Spawn trail particles
@@ -149,11 +171,72 @@ public class IgnivorusMagmaBlockEntity extends Entity {
 
         Vec3 impact = position();
         float scale = getVisualScale();
-        server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, (int)(18 * scale),
-                0.5D * scale, 0.3D * scale, 0.5D * scale, 0.04D);
-        server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D * scale, impact.z, (int)(30 * scale),
-                0.6D * scale, 0.4D * scale, 0.6D * scale, 0.08D);
-        server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, getSoundSource(), 0.7F * scale, 1.1F / scale);
+        BlockPos impactPos = BlockPos.containing(impact);
+
+        // Core explosion particles - scale with fireball size
+        server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, (int)(20 * scale),
+                0.6D * scale, 0.4D * scale, 0.6D * scale, 0.05D);
+        server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D * scale, impact.z, (int)(35 * scale),
+                0.7D * scale, 0.5D * scale, 0.7D * scale, 0.1D);
+
+        // Enhanced effects for larger fireballs (charge level 2+)
+        if (scale >= 6.0F) {
+            // Multiple explosion clouds spread around
+            server.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 1.0D, impact.z, (int)(5 * (scale / 4.0F)),
+                    1.0D * scale, 0.6D * scale, 1.0D * scale, 0.02D);
+            // Dense smoke plume
+            server.sendParticles(ParticleTypes.LARGE_SMOKE, impact.x, impact.y + 0.5D * scale, impact.z, (int)(40 * scale),
+                    0.9D * scale, 0.7D * scale, 0.9D * scale, 0.06D);
+            // Campfire sparks rising
+            server.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, impact.x, impact.y + 0.3D * scale, impact.z, (int)(12 * scale),
+                    0.5D * scale, 0.3D * scale, 0.5D * scale, 0.04D);
+            // Falling debris particles
+            server.sendParticles(ParticleTypes.ASH, impact.x, impact.y + 2.0D * scale, impact.z, (int)(30 * scale),
+                    1.2D * scale, 1.0D * scale, 1.2D * scale, 0.1D);
+
+            // Destroy blocks for charge level 2+ (radius 6 = ~13 block diameter crater)
+            destroyBlocks(server, impactPos, 6, false);
+        }
+
+        // Max charge explosion (charge level 3) - DEVASTATING
+        if (scale >= 8.0F) {
+            // Multiple explosion emitters spread across the blast zone
+            server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y + 0.5D, impact.z, 1,
+                    0.0D, 0.0D, 0.0D, 0.0D);
+            for (int i = 0; i < 8; i++) {
+                double angle = (i / 8.0) * Math.PI * 2;
+                double offsetX = Math.cos(angle) * 4.0;
+                double offsetZ = Math.sin(angle) * 4.0;
+                server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x + offsetX, impact.y + 0.5D, impact.z + offsetZ, 1,
+                        0.0D, 0.0D, 0.0D, 0.0D);
+            }
+
+            // Soul fire ring
+            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, impact.x, impact.y + 0.5D * scale, impact.z, (int)(60 * scale),
+                    2.0D * scale, 1.0D * scale, 2.0D * scale, 0.2D);
+            // Massive lava burst
+            server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 1.0D * scale, impact.z, (int)(80 * scale),
+                    2.5D * scale, 1.5D * scale, 2.5D * scale, 0.1D);
+            // Shockwave dust ring
+            server.sendParticles(ParticleTypes.CLOUD, impact.x, impact.y + 0.2D, impact.z, (int)(50 * scale),
+                    3.0D * scale, 0.5D, 3.0D * scale, 0.03D);
+            // Falling ember rain
+            server.sendParticles(ParticleTypes.FALLING_LAVA, impact.x, impact.y + 8.0D, impact.z, (int)(100 * scale),
+                    4.0D * scale, 2.0D, 4.0D * scale, 0.0D);
+
+            // Massive block destruction radius for max charge (radius 12 = ~25 block diameter crater)
+            destroyBlocks(server, impactPos, 12, true);
+        }
+
+        // Sound - louder and lower pitch for bigger explosions
+        float volume = 1.0F + (scale * 0.2F);
+        float pitch = Math.max(0.4F, 0.9F / scale);
+        server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, getSoundSource(), volume, pitch);
+
+        // Additional dramatic sound for max charge
+        if (scale >= 8.0F) {
+            server.playSound(null, blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, getSoundSource(), 0.6F, 0.6F);
+        }
 
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius);
@@ -163,26 +246,98 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         for (net.minecraft.world.entity.LivingEntity target : hits) {
             target.hurt(server.damageSources().explosion(this, owner != null ? owner : this), impactDamage);
             target.setSecondsOnFire((int)(4 * scale));
+
+            // Knockback for larger explosions - stronger for max charge
+            if (scale >= 6.0F) {
+                double knockbackStrength = scale >= 8.0F ? scale * 0.25D : scale * 0.15D;
+                double upwardBoost = scale >= 8.0F ? 0.5D : 0.3D;
+                Vec3 knockback = target.position().subtract(impact).normalize().scale(knockbackStrength);
+                target.push(knockback.x, knockback.y + upwardBoost, knockback.z);
+            }
         }
 
-        igniteArea(server, BlockPos.containing(impact));
+        igniteArea(server, impactPos);
         discard();
+    }
+
+    private void destroyBlocks(ServerLevel server, BlockPos center, int radius, boolean maxPower) {
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    // Spherical destruction pattern
+                    double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                    if (distance > radius) continue;
+
+                    BlockPos pos = center.offset(dx, dy, dz);
+                    BlockState state = server.getBlockState(pos);
+
+                    // Skip air and unbreakable blocks
+                    if (state.isAir()) continue;
+                    float hardness = state.getDestroySpeed(server, pos);
+                    if (hardness < 0) continue; // Bedrock, etc.
+
+                    // Don't destroy obsidian (hardness 50) unless max power
+                    if (!maxPower && hardness > 50.0F) continue;
+                    if (hardness > 100.0F) continue; // Never destroy reinforced blocks
+
+                    // Max power mode: guaranteed destruction in larger core, destroys stone easily
+                    if (maxPower) {
+                        // Inner 60%: guaranteed destruction
+                        if (distance <= radius * 0.6) {
+                            server.destroyBlock(pos, true, owner);
+                        }
+                        // Outer ring: very high chance, ignores hardness
+                        else {
+                            double distanceFactor = 1.0 - ((distance - radius * 0.6) / (radius * 0.4));
+                            if (server.random.nextDouble() < distanceFactor * 0.9) {
+                                server.destroyBlock(pos, true, owner);
+                            }
+                        }
+                    } else {
+                        // Normal mode: Inner 50% guaranteed, outer ring has chance
+                        if (distance <= radius * 0.5) {
+                            server.destroyBlock(pos, true, owner);
+                        } else {
+                            double distanceFactor = 1.0 - ((distance - radius * 0.5) / (radius * 0.5));
+                            double hardnessFactor = hardness > 3.0F ? 0.8 : 1.0;
+                            double breakChance = distanceFactor * hardnessFactor;
+                            if (server.random.nextDouble() < breakChance) {
+                                server.destroyBlock(pos, true, owner);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void igniteArea(ServerLevel server, BlockPos base) {
         float scale = getVisualScale();
-        int radius = (int)Math.ceil(scale);
+        int radius = (int) Math.ceil(scale) + 1; // Slightly larger fire spread
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
-                BlockPos pos = base.offset(dx, 0, dz);
-                BlockState state = server.getBlockState(pos);
-                if (!state.isAir()) continue;
+                // Check multiple Y levels to handle terrain
+                for (int dy = -radius; dy <= radius; dy++) {
+                    BlockPos pos = base.offset(dx, dy, dz);
+                    BlockState state = server.getBlockState(pos);
 
-                BlockPos below = pos.below();
-                BlockState belowState = server.getBlockState(below);
-                if (!belowState.isAir() && Blocks.FIRE.defaultBlockState().canSurvive(server, pos)) {
-                    server.setBlock(pos, Blocks.FIRE.defaultBlockState(), 11);
+                    // Need air to place fire
+                    if (!state.isAir()) continue;
+
+                    BlockPos below = pos.below();
+                    BlockState belowState = server.getBlockState(below);
+
+                    // Place fire if there's a solid block below
+                    if (!belowState.isAir() && belowState.isSolid() && Blocks.FIRE.defaultBlockState().canSurvive(server, pos)) {
+                        // Higher chance closer to center
+                        double distance = Math.sqrt(dx * dx + dz * dz);
+                        double chance = 1.0 - (distance / (radius + 1)) * 0.5;
+                        if (server.random.nextDouble() < chance) {
+                            server.setBlock(pos, Blocks.FIRE.defaultBlockState(), 11);
+                        }
+                        break; // Only place one fire per column
+                    }
                 }
             }
         }

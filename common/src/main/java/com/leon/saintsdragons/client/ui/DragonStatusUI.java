@@ -20,6 +20,7 @@ public class DragonStatusUI {
     private final DragonHealthBar healthBar;
     private final DragonSpeedIndicator speedIndicator;
     private final MeleeModeNotification meleeModeNotification;
+    private final FireballChargeIndicator fireballChargeIndicator;
     private int cachedScreenWidth = -1;
     private int cachedScreenHeight = -1;
 
@@ -37,6 +38,7 @@ public class DragonStatusUI {
         this.healthBar = new DragonHealthBar(0, 0);
         this.speedIndicator = new DragonSpeedIndicator(0, 0);
         this.meleeModeNotification = new MeleeModeNotification();
+        this.fireballChargeIndicator = new FireballChargeIndicator();
 
         elements.add(healthBar);
         elements.add(speedIndicator);
@@ -252,6 +254,20 @@ public class DragonStatusUI {
      */
     public MeleeModeNotification getMeleeModeNotification() {
         return meleeModeNotification;
+    }
+
+    /**
+     * Get the fireball charge indicator instance
+     */
+    public FireballChargeIndicator getFireballChargeIndicator() {
+        return fireballChargeIndicator;
+    }
+
+    /**
+     * Get the current dragon (for UI elements that need to check dragon type)
+     */
+    public DragonEntity getCurrentDragon() {
+        return currentDragon;
     }
 
     /**

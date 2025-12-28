@@ -145,6 +145,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
 
+    /** Tracks the fireball charge level for UI display (0 = not charging, 1-3 = charge level) */
+    public static final EntityDataAccessor<Integer> DATA_FIREBALL_CHARGE =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
+
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FIRE_BREATH_PROGRESS =
@@ -404,6 +408,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
+        this.entityData.define(DATA_FIREBALL_CHARGE, 0);
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
@@ -637,6 +642,29 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public void setTextureVariant(int variant) {
         this.entityData.set(DATA_TEXTURE_VARIANT, variant);
+    }
+
+    // ===== FIREBALL CHARGE SYSTEM =====
+
+    /**
+     * Gets the current fireball charge level (0 = not charging, 1-3 = charge level)
+     */
+    public int getFireballChargeLevel() {
+        return this.entityData.get(DATA_FIREBALL_CHARGE);
+    }
+
+    /**
+     * Sets the fireball charge level for UI display sync
+     */
+    public void setFireballChargeLevel(int level) {
+        this.entityData.set(DATA_FIREBALL_CHARGE, Math.max(0, Math.min(3, level)));
+    }
+
+    /**
+     * Returns true if currently charging a fireball
+     */
+    public boolean isChargingFireball() {
+        return getFireballChargeLevel() > 0;
     }
 
     // ===== TAMING SYSTEM =====
@@ -1810,10 +1838,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
         if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
-            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.PRESS);
+            // Fireball is now a HOLD ability - charge and release
+            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.HOLD);
         }
         if (isPhase2Active()) {
-            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.PRESS);
+            // Fireball is now a HOLD ability - charge and release
+            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.HOLD);
         }
         return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
     }
