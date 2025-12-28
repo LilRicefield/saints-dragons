@@ -133,11 +133,6 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 // Block keyframe sounds - fire breath is handled by IgnivorusFireBreathAbility/Controller
                 yield true;
             }
-
-            case "ignivorus_fireball_shoots" -> {
-                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_FIREBALL_SHOOTS.get(), 2.0f, 1.0f, 0.0f);
-                yield true;
-            }
             case "ignivorus_takeoff" -> {
                 // Block keyframe sound - takeoff is handled by Ignivorus.setTakeoff()
                 yield true;
@@ -168,6 +163,30 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
             }
             case "ignivorus_impact" -> {
                 playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_IMPACT.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_level1_charge" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LEVEL1_CHARGE.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_level1_shoots" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LEVEL1_SHOOTS.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_level2_charge" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LEVEL2_CHARGE.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_level2_shoots" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LEVEL2_SHOOTS.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_level3_charge" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LEVEL3_CHARGE.get(), 2.5f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "ignivorus_level3_shoots" -> {
+                playSimpleSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_LEVEL3_SHOOTS.get(), 2.5f, 1.0f, 0.0f);
                 yield true;
             }
             default -> false;
