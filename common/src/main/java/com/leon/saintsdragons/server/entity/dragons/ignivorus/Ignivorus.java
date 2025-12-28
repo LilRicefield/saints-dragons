@@ -18,6 +18,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
@@ -1536,6 +1537,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
             case ABILITY_STOP -> {
                 if (abilityName != null && !abilityName.isEmpty()) {
+                    if (IgnivorusAbilities.IGNIVORUS_FIREBALL_ID.equals(abilityName)) {
+                        var active = combatManager.getActiveAbility();
+                        if (active != null && active.getAbilityType() == IgnivorusAbilities.IGNIVORUS_FIREBALL) {
+                            ((IgnivorusFireballAbility) active).requestRelease();
+                            return;
+                        }
+                    }
                     forceEndActiveAbility();
                 }
             }
