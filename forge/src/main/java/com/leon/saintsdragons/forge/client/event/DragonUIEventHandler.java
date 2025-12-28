@@ -2,6 +2,8 @@ package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.DragonStatusUIManager;
 import com.leon.saintsdragons.client.ui.DragonStatusUI;
+import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
@@ -29,10 +31,18 @@ public class DragonUIEventHandler {
             ui.render(event.getGuiGraphics(), -1, -1, event.getPartialTick());
         }
 
-        // Always render melee mode notification (independent of UI visibility)
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+
+        // Always render melee mode notification (independent of UI visibility)
         ui.getMeleeModeNotification().render(event.getGuiGraphics(), screenWidth, screenHeight);
+
+        // Render fireball charge indicator when riding Ignivorus
+        if (ui.getCurrentDragon() instanceof Ignivorus ignivorus) {
+            FireballChargeIndicator chargeIndicator = ui.getFireballChargeIndicator();
+            chargeIndicator.setChargeLevel(ignivorus.getFireballChargeLevel());
+            chargeIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight);
+        }
     }
     
     @SubscribeEvent
@@ -42,8 +52,13 @@ public class DragonUIEventHandler {
             manager.update();
             DragonUIKeybinds.handleKeybinds();
 
+            DragonStatusUI ui = manager.getDragonStatusUI();
+
             // Always tick melee mode notification
-            manager.getDragonStatusUI().getMeleeModeNotification().tick();
+            ui.getMeleeModeNotification().tick();
+
+            // Tick fireball charge indicator for smooth animation
+            ui.getFireballChargeIndicator().tick();
         }
     }
 }
