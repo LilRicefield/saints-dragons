@@ -71,7 +71,7 @@ public final class FabricDragonUI {
             if (ui.getCurrentDragon() instanceof Ignivorus ignivorus) {
                 FireballChargeIndicator chargeIndicator = ui.getFireballChargeIndicator();
                 chargeIndicator.setChargeLevel(ignivorus.getFireballChargeLevel());
-                chargeIndicator.render(graphics, width, height);
+                chargeIndicator.render(graphics, width, height, tickDelta);
             }
         });
     }
