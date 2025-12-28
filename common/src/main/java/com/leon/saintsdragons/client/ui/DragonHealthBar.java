@@ -2,28 +2,33 @@ package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
 /**
  * Health bar UI element for dragons.
- * Displays current health with wyvern-specific theming.
+ * Displays current health with dragon-specific theming.
  */
 public class DragonHealthBar extends DragonUIElement {
+    private static final ResourceLocation RAEVYX_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/raevyx/raevyx_base.png");
+    private static final ResourceLocation RAEVYX_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/raevyx/raevyx_overlay.png");
+
+    private static final ResourceLocation MALE_ICON = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/genders/male.png");
+    private static final ResourceLocation FEMALE_ICON = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/genders/female.png");
+
+    // Texture dimensions
+    private static final int TEXTURE_WIDTH = 32;
+    private static final int TEXTURE_HEIGHT = 128;
+    private static final int GENDER_ICON_SIZE = 16;
+
     private DragonEntity dragon;
     private float currentHealthPercent = 1.0f;
     private float targetHealthPercent = 1.0f;
     private long lastHealthUpdate = 0;
-
-    // Cached text rendering values
-    private String cachedHealthText = "";
-    private int cachedTextWidth = 0;
-    private float cachedHealth = -1;
-    private float cachedMaxHealth = -1;
-    private boolean cachedGender = false;
     
     public DragonHealthBar(int x, int y) {
-        super(x, y, 18, 100); // Compact vertical health bar
+        super(x, y, TEXTURE_WIDTH, TEXTURE_HEIGHT); // Vertical health bar
     }
     
     public void setDragon(DragonEntity dragon) {
@@ -36,48 +41,69 @@ public class DragonHealthBar extends DragonUIElement {
         if (!visible || dragon == null || dragon.isDeadOrDying()) {
             return;
         }
-        
+
         updateHealth();
-        
-        // Render health border (always full) - use colored rectangles for now
-        guiGraphics.fill(x, y, x + width, y + height, 0x80FF0000); // Semi-transparent red border
-        
-        // Render health fill (clipped to health percentage)
-        int fillHeight = (int) (height * currentHealthPercent);
-        if (fillHeight > 0) {
-            // Render from bottom up
-            int fillY = y + height - fillHeight;
-            guiGraphics.fill(x + 2, fillY + 2, x + width - 2, y + height - 2, 0xFF800000); // Dark red fill
-        }
-        
-        // Render health text anchored to the left so longer values stay visible
-        // Include gender symbol (♂/♀) for quick identification
-        // Cache the text to avoid expensive String.format() every frame
-        float currentHealth = dragon.getHealth();
-        float maxHealth = dragon.getMaxHealth();
-        boolean isFemale = dragon.isFemale();
 
-        if (currentHealth != cachedHealth || maxHealth != cachedMaxHealth || isFemale != cachedGender) {
-            String genderSymbol = isFemale ? "♀" : "♂";
-            cachedHealthText = String.format("%s %.0f/%.0f", genderSymbol, currentHealth, maxHealth);
-            cachedTextWidth = minecraft.font.width(cachedHealthText);
-            cachedHealth = currentHealth;
-            cachedMaxHealth = maxHealth;
-            cachedGender = isFemale;
+        boolean isRaevyx = dragon instanceof Raevyx;
+
+        if (isRaevyx) {
+            // Render textured health bar for Raevyx
+            renderTexturedHealthBar(guiGraphics, RAEVYX_BASE, RAEVYX_OVERLAY);
+        } else {
+            // Fallback to colored rectangles for other dragons
+            renderFallbackHealthBar(guiGraphics);
         }
 
-        int textX = Math.max(4, x - cachedTextWidth - 8);
-        int textY = y + (height - minecraft.font.lineHeight) / 2;
-
-        guiGraphics.fill(textX - 2, textY - 2, textX + cachedTextWidth + 2, textY + minecraft.font.lineHeight + 2, 0x80000000);
-        guiGraphics.drawString(minecraft.font, cachedHealthText, textX, textY, 0xFFFFFF);
-
-        
+        // Render gender icon
+        renderGenderIcon(guiGraphics);
 
         // Render drag handle when hovering
         if (isMouseOver(mouseX, mouseY)) {
             renderDragHandle(guiGraphics);
         }
+    }
+
+    private void renderTexturedHealthBar(GuiGraphics guiGraphics, ResourceLocation baseTexture, ResourceLocation overlayTexture) {
+        // Render overlay texture (background/backing) FIRST - always full size
+        guiGraphics.blit(overlayTexture, x, y, 0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+
+        // Calculate how much of the base texture to show (bottom-up)
+        int fillHeight = (int) (TEXTURE_HEIGHT * currentHealthPercent);
+
+        if (fillHeight > 0) {
+            // Render base texture (health fill) ON TOP - clips from top, renders from bottom up
+            // For vertical bars that fill bottom-up, we need to:
+            // 1. Skip the top portion of the texture (v offset)
+            // 2. Render starting from where the health begins
+
+            int vOffset = TEXTURE_HEIGHT - fillHeight; // How much of the texture to skip from top
+            int renderY = y + vOffset; // Where to start rendering on screen
+
+            // blit(ResourceLocation, x, y, u, v, width, height, textureWidth, textureHeight)
+            guiGraphics.blit(baseTexture, x, renderY, 0, vOffset, TEXTURE_WIDTH, fillHeight, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+        }
+    }
+
+    private void renderFallbackHealthBar(GuiGraphics guiGraphics) {
+        // Old colored rectangle rendering for non-Raevyx dragons
+        guiGraphics.fill(x, y, x + width, y + height, 0x80FF0000); // Semi-transparent red border
+
+        int fillHeight = (int) (height * currentHealthPercent);
+        if (fillHeight > 0) {
+            int fillY = y + height - fillHeight;
+            guiGraphics.fill(x + 2, fillY + 2, x + width - 2, y + height - 2, 0xFF800000); // Dark red fill
+        }
+    }
+
+    private void renderGenderIcon(GuiGraphics guiGraphics) {
+        boolean isFemale = dragon.isFemale();
+        ResourceLocation genderIcon = isFemale ? FEMALE_ICON : MALE_ICON;
+
+        // Position the gender icon to the right of the health bar, vertically centered
+        int iconX = x + width + 4;
+        int iconY = y + (height - GENDER_ICON_SIZE) / 2;
+
+        guiGraphics.blit(genderIcon, iconX, iconY, 0, 0, GENDER_ICON_SIZE, GENDER_ICON_SIZE, GENDER_ICON_SIZE, GENDER_ICON_SIZE);
     }
     
     private void updateHealth() {
