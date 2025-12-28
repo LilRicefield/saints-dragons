@@ -34,6 +34,7 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     private static final int COOLDOWN_TICKS = 20;
     private static final int MAGMA_LIFETIME_TICKS = 200;
     private static final double FIREBALL_SPEED = 3.5D;
+    private static final int FIRE_RELEASE_TICKS = 15;
 
     // Charge thresholds (in ticks, 20 ticks = 1 second)
     private static final int CHARGE_LEVEL_2_TICKS = 20;
@@ -52,6 +53,9 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     private int chargeTicks = 0;
     private int lastChargeLevel = 0;
     private boolean hasFired = false;
+    private boolean releaseRequested = false;
+    private int releaseTicks = 0;
+    private int releaseChargeTicks = 0;
 
     public IgnivorusFireballAbility(DragonAbilityType<Ignivorus, IgnivorusFireballAbility> type,
                                     Ignivorus user) {
@@ -75,6 +79,9 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             chargeTicks = 0;
             lastChargeLevel = 0;
             hasFired = false;
+            releaseRequested = false;
+            releaseTicks = 0;
+            releaseChargeTicks = 0;
             getUser().setFireballChargeLevel(0);
             // Play initial charge sound
             playChargeSound(0);
@@ -93,13 +100,23 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             return;
         }
 
+        if (releaseRequested) {
+            releaseTicks++;
+            if (releaseTicks >= FIRE_RELEASE_TICKS) {
+                fireFireball(releaseChargeTicks);
+                hasFired = true;
+                end();
+            }
+            return;
+        }
+
         // Increment charge (cap at max)
         if (chargeTicks < MAX_CHARGE_TICKS) {
             chargeTicks++;
         }
 
         // Calculate current charge level (1-3)
-        int currentChargeLevel = getChargeLevel();
+        int currentChargeLevel = getChargeLevel(chargeTicks);
 
         // Update dragon's charge level for UI sync
         getUser().setFireballChargeLevel(currentChargeLevel);
@@ -113,40 +130,39 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
 
     @Override
     public void interrupt() {
-        // Fire the fireball on key release (interrupt)
-        if (!hasFired && chargeTicks > 0) {
-            fireFireball();
-            hasFired = true;
-        }
-        // Reset charge level on dragon
-        getUser().setFireballChargeLevel(0);
+        resetChargeState();
         super.interrupt();
     }
 
     @Override
     public void end() {
-        // Also fire if ability ends naturally
-        if (!hasFired && chargeTicks > 0) {
-            fireFireball();
-            hasFired = true;
-        }
-        // Reset charge level on dragon
-        getUser().setFireballChargeLevel(0);
+        resetChargeState();
         super.end();
     }
 
-    private int getChargeLevel() {
-        if (chargeTicks >= CHARGE_LEVEL_3_TICKS) {
+    public void requestRelease() {
+        if (hasFired || releaseRequested) {
+            return;
+        }
+        releaseRequested = true;
+        releaseTicks = 0;
+        releaseChargeTicks = Math.max(1, chargeTicks);
+        getUser().setFireballChargeLevel(0);
+        getUser().triggerAnim("action", "fireball_shoots");
+    }
+
+    private int getChargeLevel(int ticks) {
+        if (ticks >= CHARGE_LEVEL_3_TICKS) {
             return 3;
-        } else if (chargeTicks >= CHARGE_LEVEL_2_TICKS) {
+        } else if (ticks >= CHARGE_LEVEL_2_TICKS) {
             return 2;
         } else {
             return 1;
         }
     }
 
-    private float getChargeMultiplier() {
-        int level = getChargeLevel();
+    private float getChargeMultiplier(int ticks) {
+        int level = getChargeLevel(ticks);
         return switch (level) {
             case 3 -> LEVEL_3_MULTIPLIER;
             case 2 -> LEVEL_2_MULTIPLIER;
@@ -183,22 +199,16 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
                 SoundSource.HOSTILE, volume, pitch);
     }
 
-    private void fireFireball() {
+    private void fireFireball(int chargeAtRelease) {
         Ignivorus dragon = getUser();
         if (!(dragon.level() instanceof ServerLevel server)) {
             return;
         }
 
-        // Trigger the shoot animation
-        dragon.triggerAnim("action", "fireball_shoots");
-
-        // Play shoot sound
-        dragon.playSound(ModSounds.IGNIVORUS_FIREBALL_SHOOTS.get(), 1.5F, 0.9F + dragon.getRandom().nextFloat() * 0.2F);
-
         Vec3 direction = getAimDirection(dragon);
         Vec3 spawnPos = getMouthPosition(dragon);
 
-        float multiplier = getChargeMultiplier();
+        float multiplier = getChargeMultiplier(chargeAtRelease);
         float damage = resolveImpactDamage() * multiplier;
         double radius = BASE_IMPACT_RADIUS * multiplier;
         float scale = BASE_SCALE * multiplier;
@@ -210,6 +220,16 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         fireball.setVisualScale(scale);
         fireball.hasImpulse = true;
         server.addFreshEntity(fireball);
+    }
+
+    private void resetChargeState() {
+        chargeTicks = 0;
+        lastChargeLevel = 0;
+        hasFired = false;
+        releaseRequested = false;
+        releaseTicks = 0;
+        releaseChargeTicks = 0;
+        getUser().setFireballChargeLevel(0);
     }
 
     private Vec3 getMouthPosition(Ignivorus dragon) {
