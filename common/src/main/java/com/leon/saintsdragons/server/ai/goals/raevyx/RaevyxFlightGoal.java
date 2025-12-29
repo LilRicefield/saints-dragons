@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -19,13 +20,18 @@ public class RaevyxFlightGoal extends Goal {
 
     private final Raevyx wyvern;
     private Vec3 targetPosition;
+    private Vec3 landingPosition;
+    private boolean landingApproach;
+    private int landingApproachTicks = 0;
+    private boolean landingForceDrop = false;
     private int stuckCounter = 0;
     private int timeSinceTargetChange = 0;
 
     // NEW: Landing cooldown to prevent immediate takeoff after landing
     private static final int LANDING_COOLDOWN_TICKS = 100; // 5 seconds minimum on ground
     private long lastLandingTime = 0;
-    
+    private static final int LANDING_FORCE_DROP_TICKS = 80;
+    private static final int LANDING_EMERGENCY_GROUNDING_TICKS = 100; // 5 seconds - force ground if stuck
     // Flight decision cooldown
     private int flightDecisionCooldown = 0;
     
@@ -50,6 +56,11 @@ public class RaevyxFlightGoal extends Goal {
 
         // Don't interfere with important behaviors
         if (wyvern.isVehicle() || wyvern.isPassenger() || wyvern.isOrderedToSit()) {
+            return false;
+        }
+
+        // Don't take off while sleeping or waking up
+        if (wyvern.isSleeping() || wyvern.isSleepingExiting()) {
             return false;
         }
 
@@ -123,11 +134,18 @@ public class RaevyxFlightGoal extends Goal {
             if (wyvern.isFlying()) {
                 isFlying = shouldKeepFlying(thundering, raining);
             } else {
-                isFlying = shouldTakeOff(thundering, raining);
+                // Check for clearance before takeoff
+                if (!hasTakeoffClearance()) {
+                    isFlying = false;
+                } else {
+                    isFlying = shouldTakeOff(thundering, raining);
+                }
             }
         }
 
         if (isFlying) {
+            landingApproach = false;
+            landingPosition = null;
             this.targetPosition = findFlightTarget();
             // Reset cooldown for next decision
             this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
@@ -141,6 +159,14 @@ public class RaevyxFlightGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (landingApproach) {
+            if (wyvern.onGround()) {
+                finishLanding();
+                return false;
+            }
+            return true;
+        }
+
         // Let landing system take over
         if (wyvern.isLanding()) {
             return false;
@@ -160,12 +186,8 @@ public class RaevyxFlightGoal extends Goal {
         boolean thundering = wyvern.level().isThundering();
         boolean raining = !thundering && wyvern.level().isRaining();
         if (wyvern.isFlying() && !shouldKeepFlying(thundering, raining)) {
-            // Dragon wants to land - trigger landing sequence
-            wyvern.setLanding(true);
-            wyvern.setFlying(false);
-            wyvern.setTakeoff(false);
-            wyvern.setHovering(false);
-            return false;
+            beginLandingApproach();
+            return true;
         }
 
         // Continue if we're flying and have a target
@@ -180,6 +202,8 @@ public class RaevyxFlightGoal extends Goal {
         wyvern.setTakeoff(wasOnGround);
         wyvern.setLanding(false);
         wyvern.setHovering(false);
+        landingApproach = false;
+        landingPosition = null;
 
         if (targetPosition != null) {
             wyvern.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0);
@@ -189,6 +213,81 @@ public class RaevyxFlightGoal extends Goal {
     @Override
     public void tick() {
         timeSinceTargetChange++;
+
+        if (landingApproach) {
+            if (wyvern.isInWaterOrBubble()) {
+                landingApproach = false;
+                landingApproachTicks = 0;
+                landingForceDrop = false;
+                targetPosition = null;
+                landingPosition = null;
+                wyvern.setLanding(false);
+                wyvern.setHovering(false);
+                wyvern.setTakeoff(false);
+                wyvern.setFlying(false);
+                return;
+            }
+            landingApproachTicks++;
+
+            // Emergency grounding: if stuck floating for too long, abort landing and let entity fall
+            if (landingApproachTicks > LANDING_EMERGENCY_GROUNDING_TICKS && !wyvern.onGround()) {
+                landingApproach = false;
+                landingApproachTicks = 0;
+                landingForceDrop = false;
+                targetPosition = null;
+                landingPosition = null;
+                wyvern.setNoGravity(false);
+                wyvern.setFlying(false);
+                wyvern.setLanding(true);
+                // Goal will stop, let gravity take over
+                return;
+            }
+
+            if (!landingForceDrop && landingApproachTicks > LANDING_FORCE_DROP_TICKS) {
+                landingForceDrop = true;
+                Vec3 dropTarget = findValidDropTarget();
+                if (dropTarget != null) {
+                    landingPosition = dropTarget;
+                } else {
+                    // Can't find anywhere to drop - abort landing
+                    landingApproach = false;
+                    landingApproachTicks = 0;
+                    wyvern.setLanding(false);
+                    return;
+                }
+            }
+            if (landingPosition != null) {
+                BlockPos landingGround = BlockPos.containing(landingPosition.x, landingPosition.y - 1.0, landingPosition.z);
+                if (!landingForceDrop && !isWideLandingSurface(landingGround)) {
+                    landingPosition = findLandingTarget();
+                    if (landingPosition == null) {
+                        // No valid surface - abort landing
+                        landingApproach = false;
+                        landingApproachTicks = 0;
+                        wyvern.setLanding(false);
+                        return;
+                    }
+                }
+                double altitude = wyvern.getY() - landingPosition.y;
+
+                // Apply downward velocity throughout descent, not just when far away
+                if (!wyvern.isInWaterOrBubble() && !wyvern.onGround()) {
+                    Vec3 motion = wyvern.getDeltaMovement();
+                    // Stronger descent when high, gentler when close
+                    double descentRate = altitude > Raevyx.LANDING_BLEND_ALTITUDE ? 0.18 : 0.08;
+                    double newY = Math.max(motion.y - descentRate, -1.6);
+                    wyvern.setDeltaMovement(motion.x, newY, motion.z);
+                }
+
+                wyvern.getMoveControl().setWantedPosition(landingPosition.x, landingPosition.y, landingPosition.z, 1.6);
+                if (!wyvern.isLanding()
+                        && altitude >= -0.25D
+                        && altitude <= Raevyx.LANDING_BLEND_ALTITUDE) {
+                    wyvern.setLanding(true);
+                }
+            }
+            return;
+        }
 
         // Clear takeoff flag once airborne
         if (wyvern.isTakeoff() && wyvern.isFlying() && !wyvern.onGround()) {
@@ -253,6 +352,10 @@ public class RaevyxFlightGoal extends Goal {
     @Override
     public void stop() {
         targetPosition = null;
+        landingPosition = null;
+        landingApproach = false;
+        landingApproachTicks = 0;
+        landingForceDrop = false;
         stuckCounter = 0;
         timeSinceTargetChange = 0;
         wyvern.getNavigation().stop();
@@ -279,6 +382,128 @@ public class RaevyxFlightGoal extends Goal {
 
         // Fallback: safe position above current location
         return new Vec3(dragonPos.x, findSafeFlightHeight(dragonPos.x, dragonPos.z), dragonPos.z);
+    }
+
+    private void beginLandingApproach() {
+        if (landingApproach) {
+            return;
+        }
+
+        landingPosition = findLandingTarget();
+        if (landingPosition == null) {
+            // No valid landing spot found - abort landing and keep flying
+            return;
+        }
+
+        landingApproach = true;
+        landingApproachTicks = 0;
+        landingForceDrop = false;
+        targetPosition = landingPosition;
+        wyvern.setHovering(false);
+        wyvern.setTakeoff(false);
+    }
+
+    private void finishLanding() {
+        landingApproach = false;
+        landingApproachTicks = 0;
+        landingForceDrop = false;
+        targetPosition = null;
+        landingPosition = null;
+        wyvern.handleAiLandingComplete();
+        wyvern.setHovering(false);
+        wyvern.setFlying(false);
+    }
+
+    private Vec3 findLandingTarget() {
+        BlockPos origin = wyvern.blockPosition();
+        int radius = 16; // Increased search radius
+
+        for (int attempt = 0; attempt < 24; attempt++) {
+            int dx = wyvern.getRandom().nextInt(radius * 2 + 1) - radius;
+            int dz = wyvern.getRandom().nextInt(radius * 2 + 1) - radius;
+            BlockPos column = origin.offset(dx, 0, dz);
+            if (!wyvern.level().hasChunkAt(column)) {
+                continue;
+            }
+
+            // Use WORLD_SURFACE to get actual ground, not tree trunks
+            int surfaceY = wyvern.level().getHeight(Heightmap.Types.WORLD_SURFACE,
+                    column.getX(), column.getZ());
+            BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+            if (isWideLandingSurface(ground)) {
+                return new Vec3(column.getX() + 0.5, ground.getY() + 1.0, column.getZ() + 0.5);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Finds a valid drop target that's actually solid ground, not water
+     * Searches in expanding radius around current position
+     */
+    private Vec3 findValidDropTarget() {
+        BlockPos origin = wyvern.blockPosition();
+
+        // Search in expanding radius for solid ground
+        for (int radius = 0; radius <= 32; radius += 8) {
+            for (int attempt = 0; attempt < 12; attempt++) {
+                int dx = radius == 0 ? 0 : wyvern.getRandom().nextInt(radius * 2 + 1) - radius;
+                int dz = radius == 0 ? 0 : wyvern.getRandom().nextInt(radius * 2 + 1) - radius;
+                BlockPos checkPos = origin.offset(dx, 0, dz);
+
+                if (!wyvern.level().hasChunkAt(checkPos)) {
+                    continue;
+                }
+
+                // Get surface level
+                int surfaceY = wyvern.level().getHeight(Heightmap.Types.WORLD_SURFACE,
+                        checkPos.getX(), checkPos.getZ());
+                BlockPos groundPos = new BlockPos(checkPos.getX(), surfaceY - 1, checkPos.getZ());
+
+                var state = wyvern.level().getBlockState(groundPos);
+
+                // Must be solid and not fluid
+                if (!state.isAir() && state.getFluidState().isEmpty() &&
+                    state.isFaceSturdy(wyvern.level(), groundPos, Direction.UP)) {
+                    return new Vec3(checkPos.getX() + 0.5, groundPos.getY() + 1.0, checkPos.getZ() + 0.5);
+                }
+            }
+        }
+
+        return null; // No valid drop target found
+    }
+
+    /**
+     * Checks if the landing surface is wide enough for the dragon's bounding box
+     * Dragons are large creatures, so we check a 3x3 area
+     */
+    private boolean isWideLandingSurface(BlockPos ground) {
+        if (!wyvern.level().hasChunkAt(ground)) {
+            return false;
+        }
+
+        var state = wyvern.level().getBlockState(ground);
+        if (state.isAir() || !state.getFluidState().isEmpty()) {
+            return false;
+        }
+        if (!state.isFaceSturdy(wyvern.level(), ground, Direction.UP)) {
+            return false;
+        }
+        return isLandingSpaceClear(ground);
+    }
+
+    private boolean isLandingSpaceClear(BlockPos ground) {
+        BlockPos above = ground.above();
+        BlockPos aboveTwo = above.above();
+        var aboveState = wyvern.level().getBlockState(above);
+        if (!aboveState.getCollisionShape(wyvern.level(), above).isEmpty()
+                || !aboveState.getFluidState().isEmpty()) {
+            return false;
+        }
+        var aboveTwoState = wyvern.level().getBlockState(aboveTwo);
+        return aboveTwoState.getCollisionShape(wyvern.level(), aboveTwo).isEmpty()
+                && aboveTwoState.getFluidState().isEmpty();
     }
 
     private Vec3 generateFlightCandidate(Vec3 dragonPos, int attempt) {
@@ -462,6 +687,56 @@ public class RaevyxFlightGoal extends Goal {
     }
 
     // ===== UTILITY METHODS =====
+
+    /**
+     * Check if there's enough vertical clearance above the dragon to safely take off
+     * Prevents takeoff when surrounded by trees/blocks
+     */
+    private boolean hasTakeoffClearance() {
+        BlockPos dragonPos = wyvern.blockPosition();
+        double dragonWidth = wyvern.getBbWidth();
+        int checkRadius = (int) Math.ceil(dragonWidth / 2.0);
+        int checkHeight = 10; // Check 10 blocks up
+
+        // Check a cylinder above the dragon
+        for (int dy = 1; dy <= checkHeight; dy++) {
+            for (int dx = -checkRadius; dx <= checkRadius; dx++) {
+                for (int dz = -checkRadius; dz <= checkRadius; dz++) {
+                    // Skip corners for more natural cylinder shape
+                    if (Math.abs(dx) + Math.abs(dz) > checkRadius + 1) {
+                        continue;
+                    }
+
+                    BlockPos checkPos = dragonPos.offset(dx, dy, dz);
+                    var state = wyvern.level().getBlockState(checkPos);
+
+                    // Allow takeoff through leaves and other breakable vegetation
+                    if (state.isAir() || isBreakableVegetation(state)) {
+                        continue;
+                    }
+
+                    // Blocked by solid block
+                    if (!state.getCollisionShape(wyvern.level(), checkPos).isEmpty()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true; // Clear path upward
+    }
+
+    /**
+     * Check if a block is breakable vegetation that won't stop takeoff
+     */
+    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
+        var block = state.getBlock();
+        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
+               block instanceof net.minecraft.world.level.block.VineBlock ||
+               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
+               block instanceof net.minecraft.world.level.block.FlowerBlock ||
+               block instanceof net.minecraft.world.level.block.DoublePlantBlock;
+    }
 
     /**
      * Check if there are baby Raevyx nearby that this parent should protect

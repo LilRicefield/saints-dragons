@@ -194,7 +194,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
     private static final double WATER_EFFECT_MAX_HEIGHT = 8.0D;
     private static final double WATER_EFFECT_INTENSITY = 0.6D;
-    private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.0D;
+    public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     private static final int RIDER_LANDING_BLEND_DURATION = 5;
 
     // Vocal entries (placeholder - sounds to be added later)
@@ -489,6 +489,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             groundTicks = 0;
             timeFlying++;
 
+            // Break vegetation blocks during takeoff
+            if (isTakeoff()) {
+                breakBlocksDuringTakeoff();
+            }
+
             // Clear takeoff flag after animation completes (30 ticks = 1.5s)
             if (isTakeoff() && timeFlying > 30) {
                 setTakeoff(false);
@@ -506,7 +511,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Auto-complete landing once we're actually on ground to avoid hover-stuck states
         if (!level().isClientSide && isLanding() && onGround()) {
-            markLandedNow();
+            handleAiLandingComplete();
         }
         // Safety: clear hover flag if grounded to re-enable gravity/takeoff transitions
         if (!level().isClientSide && !isFlying() && isHovering() && onGround()) {
@@ -2120,6 +2125,19 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         timeFlying = 0;
     }
 
+    public void handleAiLandingComplete() {
+        if (isInWaterOrBubble()) {
+            suppressSleep(60);
+            markLandedNow();
+            return;
+        }
+        if (!level().isClientSide) {
+            triggerAnim("action", "landed");
+            suppressSleep(60);
+        }
+        markLandedNow();
+    }
+
     @Override
     public float getFlightSpeed() {
         return (float) this.getAttributeValue(Attributes.FLYING_SPEED);
@@ -2200,6 +2218,53 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             float pitch = 0.9f + this.getRandom().nextFloat() * 0.15f;
             this.playSound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.4f, pitch);
         }
+    }
+
+    /**
+     * Break vegetation blocks that the dragon collides with during takeoff
+     * Prevents wobbling when taking off near trees
+     */
+    private void breakBlocksDuringTakeoff() {
+        if (level().isClientSide) return;
+
+        // Get bounding box
+        var bb = this.getBoundingBox();
+
+        // Expand slightly to catch blocks we're about to hit
+        bb = bb.inflate(0.2);
+
+        // Check all block positions within the bounding box
+        BlockPos minPos = BlockPos.containing(bb.minX, bb.minY, bb.minZ);
+        BlockPos maxPos = BlockPos.containing(bb.maxX, bb.maxY, bb.maxZ);
+
+        for (BlockPos pos : BlockPos.betweenClosed(minPos, maxPos)) {
+            var state = level().getBlockState(pos);
+
+            // Skip air
+            if (state.isAir()) {
+                continue;
+            }
+
+            // Check if it's breakable vegetation
+            if (isBreakableVegetation(state)) {
+                // Break the block without drops (just destroy it)
+                level().destroyBlock(pos, false);
+            }
+        }
+    }
+
+    /**
+     * Check if a block is breakable vegetation
+     */
+    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
+        var block = state.getBlock();
+        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
+               block instanceof net.minecraft.world.level.block.VineBlock ||
+               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
+               block instanceof net.minecraft.world.level.block.FlowerBlock ||
+               block instanceof net.minecraft.world.level.block.DoublePlantBlock ||
+               block instanceof net.minecraft.world.level.block.SaplingBlock ||
+               block instanceof net.minecraft.world.level.block.BushBlock;
     }
 
     public void setHovering(boolean hovering) {
@@ -2898,7 +2963,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             // Trigger landing blend when descending near ground
             if (isGoingDown()) {
                 double altitude = getAltitudeAboveTerrain();
-                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= RIDER_LANDING_BLEND_ALTITUDE) {
+                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
                     desiredDir = 0; // Stop pitching down
                     triggerRiderLandingBlend();
                 }

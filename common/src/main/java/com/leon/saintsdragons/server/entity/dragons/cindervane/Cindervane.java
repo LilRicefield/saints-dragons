@@ -180,7 +180,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
 
     // ===== RIDER LANDING BLEND SYSTEM =====
-    private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.0D; // Trigger landing animation at this altitude
+    public static final double LANDING_BLEND_ALTITUDE = 8.0D; // Trigger landing animation at this altitude
     private static final int RIDER_LANDING_BLEND_DURATION = 3; // ticks to keep landing blend active
     private int riderLandingBlendTicks = 0;
 
@@ -512,17 +512,23 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 groundTicks = 0;
                 this.fallDistance = 0.0F;
 
+                // Break vegetation blocks during takeoff
+                if (isTakeoff()) {
+                    breakBlocksDuringTakeoff();
+                }
+
+                // Clear takeoff flag after animation completes (5 ticks in air)
                 if (isTakeoff() && !onGroundNow && airTicks > 5) {
                     setTakeoff(false);
                 }
 
                 if (onGroundNow && !isTakeoff()) {
-                    if (!isLanding()) {
-                        setLanding(true);
+                    if (isLanding()) {
+                        handleAiLandingComplete();
+                    } else {
+                        setLanding(false);
                     }
                     setFlying(false);
-                } else if (isLanding() && !onGroundNow) {
-                    setLanding(false);
                 }
             } else {
                 groundTicks++;
@@ -992,7 +998,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             // Trigger landing blend when descending close to ground
             if (isGoingDown()) {
                 double altitude = getAltitudeAboveTerrain();
-                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= RIDER_LANDING_BLEND_ALTITUDE) {
+                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
                     desiredDir = 0; // Stop pitching down
                     triggerRiderLandingBlend();
                 }
@@ -2267,6 +2273,53 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
+    /**
+     * Break vegetation blocks that the dragon collides with during takeoff
+     * Prevents wobbling when taking off near trees
+     */
+    private void breakBlocksDuringTakeoff() {
+        if (level().isClientSide) return;
+
+        // Get bounding box
+        var bb = this.getBoundingBox();
+
+        // Expand slightly to catch blocks we're about to hit
+        bb = bb.inflate(0.2);
+
+        // Check all block positions within the bounding box
+        BlockPos minPos = BlockPos.containing(bb.minX, bb.minY, bb.minZ);
+        BlockPos maxPos = BlockPos.containing(bb.maxX, bb.maxY, bb.maxZ);
+
+        for (BlockPos pos : BlockPos.betweenClosed(minPos, maxPos)) {
+            var state = level().getBlockState(pos);
+
+            // Skip air
+            if (state.isAir()) {
+                continue;
+            }
+
+            // Check if it's breakable vegetation
+            if (isBreakableVegetation(state)) {
+                // Break the block without drops (just destroy it)
+                level().destroyBlock(pos, false);
+            }
+        }
+    }
+
+    /**
+     * Check if a block is breakable vegetation
+     */
+    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
+        var block = state.getBlock();
+        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
+               block instanceof net.minecraft.world.level.block.VineBlock ||
+               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
+               block instanceof net.minecraft.world.level.block.FlowerBlock ||
+               block instanceof net.minecraft.world.level.block.DoublePlantBlock ||
+               block instanceof net.minecraft.world.level.block.SaplingBlock ||
+               block instanceof net.minecraft.world.level.block.BushBlock;
+    }
+
     private boolean riderOverridesSittingCommand() {
         return this.isVehicle() && this.getControllingPassenger() instanceof Player;
     }
@@ -2332,6 +2385,19 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         setTakeoff(false);
         this.riderTakeoffTicks = 0;
         this.timeFlying = 0;
+    }
+
+    public void handleAiLandingComplete() {
+        if (isInWaterOrBubble()) {
+            suppressSleep(60);
+            markLandedNow();
+            return;
+        }
+        if (!level().isClientSide) {
+            triggerAnim("actions", "landed");
+            suppressSleep(60);
+        }
+        markLandedNow();
     }
 
     public int getRiderTakeoffTicks() {

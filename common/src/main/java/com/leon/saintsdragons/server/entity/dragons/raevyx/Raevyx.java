@@ -265,7 +265,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
     private static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     private static final int RIDER_WATER_SCAN_RADIUS = 2;
-    private static final double RIDER_LANDING_BLEND_ALTITUDE = 8.5D;
+    public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
 
@@ -540,6 +540,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // This path only handles AI/non-rider landings
     }
 
+    public void handleAiLandingComplete() {
+        if (isInWaterOrBubble()) {
+            suppressSleep(60);
+            markLandedNow();
+            return;
+        }
+        if (!level().isClientSide) {
+            triggerAnim("action", "landed");
+            suppressSleep(60);
+        }
+        markLandedNow();
+    }
 
     // Navigation (Package-private for controller access)
     public final GroundPathNavigation groundNav;
@@ -1137,6 +1149,53 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             float pitch = 0.94f + this.getRandom().nextFloat() * 0.12f;
             this.playSound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch);
         }
+    }
+
+    /**
+     * Break vegetation blocks that the dragon collides with during takeoff
+     * Prevents wobbling when taking off near trees
+     */
+    private void breakBlocksDuringTakeoff() {
+        if (level().isClientSide) return;
+
+        // Get bounding box
+        var bb = this.getBoundingBox();
+
+        // Expand slightly to catch blocks we're about to hit
+        bb = bb.inflate(0.2);
+
+        // Check all block positions within the bounding box
+        BlockPos minPos = BlockPos.containing(bb.minX, bb.minY, bb.minZ);
+        BlockPos maxPos = BlockPos.containing(bb.maxX, bb.maxY, bb.maxZ);
+
+        for (BlockPos pos : BlockPos.betweenClosed(minPos, maxPos)) {
+            var state = level().getBlockState(pos);
+
+            // Skip air
+            if (state.isAir()) {
+                continue;
+            }
+
+            // Check if it's breakable vegetation
+            if (isBreakableVegetation(state)) {
+                // Break the block without drops (just destroy it)
+                level().destroyBlock(pos, false);
+            }
+        }
+    }
+
+    /**
+     * Check if a block is breakable vegetation
+     */
+    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
+        var block = state.getBlock();
+        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
+               block instanceof net.minecraft.world.level.block.VineBlock ||
+               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
+               block instanceof net.minecraft.world.level.block.FlowerBlock ||
+               block instanceof net.minecraft.world.level.block.DoublePlantBlock ||
+               block instanceof net.minecraft.world.level.block.SaplingBlock ||
+               block instanceof net.minecraft.world.level.block.BushBlock;
     }
 
     public void setHovering(boolean hovering) {
@@ -1941,19 +2000,24 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             if (isFlying()) {
                 this.fallDistance = 0.0F;
 
-                // Clear takeoff flag after full animation completes (40 ticks = 2 seconds)
-                if (isTakeoff() && !onGroundNow && timeFlying > 35) {
+                // Break vegetation blocks during takeoff
+                if (isTakeoff()) {
+                    breakBlocksDuringTakeoff();
+                }
+
+                // Clear takeoff flag after animation completes (35 ticks)
+                if (isTakeoff() && timeFlying > 35) {
                     setTakeoff(false);
                 }
 
                 // Auto-land when touching ground (like Cindervane)
                 if (onGroundNow && !isTakeoff()) {
-                    if (!isLanding()) {
-                        setLanding(true);
+                    if (isLanding()) {
+                        handleAiLandingComplete();
+                    } else {
+                        setLanding(false);
                     }
                     setFlying(false);
-                } else if (isLanding() && !onGroundNow) {
-                    setLanding(false);
                 }
             }
 
@@ -2949,7 +3013,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             if (isGoingDown()) {
                 double altitude = getAltitudeAboveTerrain();
                 // Trigger landing blend when descending below threshold altitude
-                if (altitude >= -0.25D && altitude <= RIDER_LANDING_BLEND_ALTITUDE) {
+                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
                     // Trigger landing blend immediately when below altitude threshold
                     desiredDir = 0; // Stop pitching down
                     triggerRiderLandingBlend();
