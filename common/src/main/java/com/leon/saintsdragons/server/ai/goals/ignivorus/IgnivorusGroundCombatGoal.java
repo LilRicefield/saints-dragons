@@ -35,6 +35,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
     // Fire breath cooldown mechanic (AI only - 3 minute cooldown)
     private int breathCooldown = 0;
     private static final int BREATH_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
+    private static final float BREATH_RANDOM_CHANCE = 0.12f; // 12% chance per attack window
 
     public IgnivorusGroundCombatGoal(Ignivorus dragon) {
         this.dragon = dragon;
@@ -45,7 +46,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
     public boolean canUse() {
         LivingEntity target = dragon.getTarget();
 
-        if (target == null || !target.isAlive()) {
+        if (!dragon.isTargetValid(target)) {
             return false;
         }
 
@@ -76,7 +77,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
     public boolean canContinueToUse() {
         LivingEntity target = dragon.getTarget();
 
-        if (target == null || !target.isAlive()) {
+        if (!dragon.isTargetValid(target)) {
             return false;
         }
 
@@ -181,7 +182,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         LivingEntity target = dragon.getTarget();
-        if (target == null || !target.isAlive()) {
+        if (!dragon.isTargetValid(target)) {
             // Target died or disappeared - immediately cancel fire breath
             cancelFireBreathIfActive();
             updateGroundMoveState();
@@ -204,27 +205,17 @@ public class IgnivorusGroundCombatGoal extends Goal {
                 hasUsedUltimateOpener = true;
 
                 // Check if ultimate actually started (may fail due to requirements)
-                if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE)) {
-                    // Ultimate successfully started - set long cooldown
-                    attackCooldown = 180; // Cooldown after ultimate (9 seconds - longer than ultimate duration)
-                } else {
-                    // Ultimate failed (likely due to ground/flight state) - skip to normal combat immediately
-                    attackCooldown = 0; // No cooldown, proceed with normal attacks
-                }
+                // Ultimate should not stall follow-up attacks
+                attackCooldown = 0;
             }
         }
 
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
 
-        // Only use fire breath when target is far away (>32 blocks) AND breath is off cooldown
-        if (gap > fireBreathMinRange && hasLineOfSight && breathCooldown <= 0) {
-            // Long range and breath available - stop and use breath
-            if (!isCurrentlyAttacking()) {
-                dragon.getNavigation().stop();
-                pathRecalcCooldown = 0;
-            }
-            tryAttack(target);
+        if (tryRandomBreath(target, hasLineOfSight)) {
+            updateGroundMoveState();
+            return;
         } else if (gap > meleeEngageRange) {
             // Medium-long range (6-32 blocks) OR breath on cooldown - chase to get closer
             if (!isCurrentlyAttacking()) {
@@ -280,12 +271,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         double gap = getGapToTarget(target);
 
-        // Fire breath at long range (>32 blocks) when available
-        if (gap > fireBreathMinRange && breathCooldown <= 0) {
-            dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
-            attackCooldown = 60; // Long cooldown after breath
-            breathCooldown = BREATH_COOLDOWN_TICKS; // 3 minute cooldown for AI breath
-        } else if (gap <= meleeEngageRange) {
+        if (gap <= meleeEngageRange) {
             // Melee attacks ONLY in melee range (<6 blocks)
             // Randomly choose between bite and body slam for unpredictability
             if (dragon.getRandom().nextBoolean()) {
@@ -296,7 +282,26 @@ public class IgnivorusGroundCombatGoal extends Goal {
                 attackCooldown = 20; // Slightly faster cooldown for bite
             }
         }
-        // No attack in 6-32 block range (or when breath on cooldown at >32 blocks) - just chase
+        // No attack in 6-32 block range - just chase
+    }
+
+    private boolean tryRandomBreath(LivingEntity target, boolean hasLineOfSight) {
+        if (attackCooldown > 0 || isCurrentlyAttacking()) {
+            return false;
+        }
+        if (!hasLineOfSight || breathCooldown > 0) {
+            return false;
+        }
+        if (dragon.getRandom().nextFloat() >= BREATH_RANDOM_CHANCE) {
+            return false;
+        }
+
+        dragon.getNavigation().stop();
+        pathRecalcCooldown = 0;
+        dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
+        attackCooldown = 60;
+        breathCooldown = BREATH_COOLDOWN_TICKS;
+        return true;
     }
 
     /**

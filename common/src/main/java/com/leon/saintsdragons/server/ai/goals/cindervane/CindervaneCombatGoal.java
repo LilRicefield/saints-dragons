@@ -33,7 +33,7 @@ public class CindervaneCombatGoal extends Goal {
     public boolean canUse() {
         LivingEntity target = amphithere.getTarget();
 
-        if (target == null || !target.isAlive()) {
+        if (!amphithere.isTargetValid(target)) {
             return false;
         }
 
@@ -52,7 +52,7 @@ public class CindervaneCombatGoal extends Goal {
     public boolean canContinueToUse() {
         LivingEntity target = amphithere.getTarget();
 
-        if (target == null || !target.isAlive()) {
+        if (!amphithere.isTargetValid(target)) {
             return false;
         }
 

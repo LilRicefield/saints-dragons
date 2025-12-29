@@ -51,7 +51,7 @@ public class RaevyxAirCombatGoal extends Goal {
     public boolean canUse() {
         LivingEntity target = dragon.getTarget();
 
-        if (target == null || !target.isAlive()) {
+        if (!dragon.isTargetValid(target)) {
             return false;
         }
 
@@ -91,7 +91,7 @@ public class RaevyxAirCombatGoal extends Goal {
     public boolean canContinueToUse() {
         LivingEntity target = dragon.getTarget();
 
-        if (target == null || !target.isAlive()) {
+        if (!dragon.isTargetValid(target)) {
             return false;
         }
 
@@ -190,7 +190,7 @@ public class RaevyxAirCombatGoal extends Goal {
         }
 
         LivingEntity target = dragon.getTarget();
-        if (target == null || !target.isAlive()) {
+        if (!dragon.isTargetValid(target)) {
             return;
         }
 

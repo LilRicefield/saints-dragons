@@ -393,10 +393,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // Dodge system
     private static final double DODGE_HORIZONTAL_DRAG = 0.92D;
     private static final double DODGE_VERTICAL_DRAG = 0.95D;
+    private static final int DODGE_DURATION_TICKS = 12;
+    private static final int DODGE_IFRAMES_TICKS = 8;
+    private static final int RIDER_DODGE_COOLDOWN_TICKS = 30;
+    private static final int AI_DODGE_COOLDOWN_TICKS = 60;
+    private static final double DODGE_DISTANCE_BLOCKS = 20;
     boolean dodging = false;
     int dodgeTicksLeft = 0;
     Vec3 dodgeVec = Vec3.ZERO;
-    int dodgeCooldownTicks = 0; // Cooldown between dodges (2 seconds = 40 ticks)
+    int dodgeCooldownTicks = 0; // Rider dodge cooldown
+    int aiDodgeCooldownTicks = 0; // AI dodge cooldown
     int dodgeIFramesTicks = 0; // Invulnerability frames during dodge
     private float preDodgeStepHeight = 1.0F;
 
@@ -1457,11 +1463,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         // Dodge constants
-        final int DODGE_DURATION = 12;
-        final int DODGE_COOLDOWN = 30;
-        final int DODGE_IFRAMES = 8;
         final int DODGE_CONTROL_LOCK = 12; // 1 second rider lock so attacks/abilities don't override dodge
-        final double DODGE_DISTANCE = 20; // blocks
 
         // Get right vector (perpendicular to facing direction)
         float yawRad = (float) Math.toRadians(this.getYRot());
@@ -1471,8 +1473,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         double rightZ = Math.sin(yawRad);
 
         // Account for drag so the integrated distance over the duration is ~DODGE_DISTANCE
-        double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION);
-        double perTickSpeed = DODGE_DISTANCE * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
+        double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION_TICKS);
+        double perTickSpeed = DODGE_DISTANCE_BLOCKS * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
 
         // Calculate dodge direction (left or right)
         // FLIPPED: was backwards, A went right and D went left!
@@ -1483,12 +1485,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         Vec3 dodgeVector = new Vec3(dodgeDirX * perTickSpeed, 0, dodgeDirZ * perTickSpeed);
 
         // Begin dodge
-        beginDodge(dodgeVector, DODGE_DURATION);
+        beginDodge(dodgeVector, DODGE_DURATION_TICKS);
         lockRiderControls(DODGE_CONTROL_LOCK);
 
         // Set cooldown and i-frames
-        dodgeCooldownTicks = DODGE_COOLDOWN;
-        dodgeIFramesTicks = DODGE_IFRAMES;
+        dodgeCooldownTicks = RIDER_DODGE_COOLDOWN_TICKS;
+        dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
 
         // Trigger dodge animation
         if (isLeft) {
@@ -1520,11 +1522,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         // Dodge constants
-        final int DODGE_DURATION = 12;
-        final int DODGE_COOLDOWN = 30;
-        final int DODGE_IFRAMES = 8;
         final int DODGE_CONTROL_LOCK = 12; // 1 second rider lock so attacks/abilities don't override dodge
-        final double DODGE_DISTANCE = 20; // blocks
 
         // Get backward vector (opposite of facing direction)
         float yawRad = (float) Math.toRadians(this.getYRot());
@@ -1532,8 +1530,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         double forwardZ = Math.cos(yawRad);
 
         // Account for drag so the integrated distance over the duration is ~DODGE_DISTANCE
-        double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION);
-        double perTickSpeed = DODGE_DISTANCE * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
+        double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION_TICKS);
+        double perTickSpeed = DODGE_DISTANCE_BLOCKS * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
 
         // Calculate backward dodge direction (opposite of forward)
         double dodgeDirX = -forwardX;
@@ -1543,15 +1541,123 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         Vec3 dodgeVector = new Vec3(dodgeDirX * perTickSpeed, 0, dodgeDirZ * perTickSpeed);
 
         // Begin dodge
-        beginDodge(dodgeVector, DODGE_DURATION);
+        beginDodge(dodgeVector, DODGE_DURATION_TICKS);
         lockRiderControls(DODGE_CONTROL_LOCK);
 
         // Set cooldown and i-frames
-        dodgeCooldownTicks = DODGE_COOLDOWN;
-        dodgeIFramesTicks = DODGE_IFRAMES;
+        dodgeCooldownTicks = RIDER_DODGE_COOLDOWN_TICKS;
+        dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
 
         // Trigger backward dodge animation
         animationHandler.triggerDodgeBackwardAnimation();
+    }
+
+    public boolean tryAIGroundDodge(@Nullable LivingEntity threat) {
+        // Only allow dodge on ground - dragon is fast enough in air with strafe
+        if (isFlying() || isDodging()) {
+            return false;
+        }
+
+        // Cancel dash if currently dashing (dodge interrupts dash)
+        if (dashing) {
+            dashing = false;
+            dashTicksLeft = 0;
+            dashVec = Vec3.ZERO;
+            this.entityData.set(DATA_DASHING, false);
+            dashHitCooldowns.clear();
+        }
+
+        // Check cooldown
+        if (aiDodgeCooldownTicks > 0) {
+            return false;
+        }
+
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+        double rightX = Math.cos(yawRad);
+        double rightZ = Math.sin(yawRad);
+
+        double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION_TICKS);
+        double perTickSpeed = DODGE_DISTANCE_BLOCKS * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
+
+        boolean doBackward = threat != null
+                && this.distanceToSqr(threat) < 36.0D
+                && this.getRandom().nextFloat() < 0.35f;
+        boolean isLeft = this.getRandom().nextBoolean();
+
+        Vec3 dodgeVector;
+        if (doBackward) {
+            dodgeVector = new Vec3(-forwardX * perTickSpeed, 0, -forwardZ * perTickSpeed);
+        } else {
+            double dodgeDirX = rightX * (isLeft ? 1 : -1);
+            double dodgeDirZ = rightZ * (isLeft ? 1 : -1);
+            dodgeVector = new Vec3(dodgeDirX * perTickSpeed, 0, dodgeDirZ * perTickSpeed);
+        }
+
+        beginDodge(dodgeVector, DODGE_DURATION_TICKS);
+        aiDodgeCooldownTicks = AI_DODGE_COOLDOWN_TICKS;
+        dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
+
+        if (doBackward) {
+            animationHandler.triggerDodgeBackwardAnimation();
+        } else if (isLeft) {
+            animationHandler.triggerDodgeLeftAnimation();
+        } else {
+            animationHandler.triggerDodgeRightAnimation();
+        }
+
+        return true;
+    }
+
+    public boolean tryAIGroundDash(@Nullable LivingEntity target) {
+        // Only allow dash on ground
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return false;
+        }
+        if (dashing || isDodging()) {
+            return false;
+        }
+        if (dashCooldownTicks > 0) {
+            return false;
+        }
+
+        if (target != null) {
+            double dx = target.getX() - this.getX();
+            double dz = target.getZ() - this.getZ();
+            if (dx * dx + dz * dz > 0.0001) {
+                float targetYaw = (float) (Math.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
+                this.setYRot(targetYaw);
+                this.yBodyRot = targetYaw;
+            }
+        }
+
+        final int DASH_DURATION = 25; // 1.25 seconds
+        final int DASH_COOLDOWN = 40; // 2 seconds
+        final double DASH_DISTANCE = 25; // blocks
+
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+
+        double dragScale = 1.0D - Math.pow(DASH_HORIZONTAL_DRAG, DASH_DURATION);
+        double perTickSpeed = DASH_DISTANCE * (1.0D - DASH_HORIZONTAL_DRAG) / dragScale;
+
+        Vec3 dashVector = new Vec3(forwardX * perTickSpeed, 0, forwardZ * perTickSpeed);
+
+        dashing = true;
+        this.entityData.set(DATA_DASHING, true);
+        dashTicksLeft = DASH_DURATION;
+        dashCooldownTicks = DASH_COOLDOWN;
+        dashVec = dashVector;
+        this.setDeltaMovement(dashVector);
+        this.getNavigation().stop();
+        this.hasImpulse = true;
+
+        lastDashWasRight = !lastDashWasRight;
+        this.entityData.set(DATA_LAST_DASH_RIGHT, lastDashWasRight);
+
+        return true;
     }
 
     // Dash forward system
@@ -1735,6 +1841,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // Dodge system cooldowns
         if (dodgeCooldownTicks > 0) {
             dodgeCooldownTicks--;
+        }
+        if (aiDodgeCooldownTicks > 0) {
+            aiDodgeCooldownTicks--;
         }
         if (dodgeIFramesTicks > 0) {
             dodgeIFramesTicks--;
