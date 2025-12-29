@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ClipContext;
@@ -18,12 +19,18 @@ import java.util.EnumSet;
 public class IgnivorusFlightGoal extends Goal {
     private final Ignivorus dragon;
     private Vec3 targetPosition;
+    private Vec3 landingPosition;
+    private boolean landingApproach;
+    private int landingApproachTicks = 0;
+    private boolean landingForceDrop = false;
     private int stuckCounter = 0;
     private int timeSinceTargetChange = 0;
 
     // Landing cooldown to prevent immediate takeoff after landing
     private static final int LANDING_COOLDOWN_TICKS = 60; // 3 seconds minimum on ground
     private long lastLandingTime = 0;
+    private static final int LANDING_FORCE_DROP_TICKS = 80;
+    private static final int LANDING_EMERGENCY_GROUNDING_TICKS = 100; // 5 seconds - force ground if stuck
 
     // Flight decision cooldown
     private int flightDecisionCooldown = 0;
@@ -43,6 +50,11 @@ public class IgnivorusFlightGoal extends Goal {
 
         // Don't interfere with important behaviors
         if (dragon.isVehicle() || dragon.isPassenger() || dragon.isOrderedToSit()) {
+            return false;
+        }
+
+        // Don't take off while sleeping or waking up
+        if (dragon.isSleeping() || dragon.isSleepingExiting()) {
             return false;
         }
 
@@ -80,11 +92,18 @@ public class IgnivorusFlightGoal extends Goal {
             if (dragon.isFlying()) {
                 shouldFly = shouldKeepFlying();
             } else {
-                shouldFly = shouldTakeOff();
+                // Check for clearance before takeoff
+                if (!hasTakeoffClearance()) {
+                    shouldFly = false;
+                } else {
+                    shouldFly = shouldTakeOff();
+                }
             }
         }
 
         if (shouldFly) {
+            landingApproach = false;
+            landingPosition = null;
             this.targetPosition = findFlightTarget();
             this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
             return true;
@@ -96,6 +115,14 @@ public class IgnivorusFlightGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (landingApproach) {
+            if (dragon.onGround()) {
+                finishLanding();
+                return false;
+            }
+            return true;
+        }
+
         // Let landing system take over
         if (dragon.isLanding()) {
             return false;
@@ -108,13 +135,8 @@ public class IgnivorusFlightGoal extends Goal {
 
         // Tamed dragons should land immediately once danger is cleared
         if (dragon.isTame() && !isOverDanger()) {
-            dragon.setGoingUp(false);
-            dragon.setGoingDown(false);
-            dragon.setLanding(true);
-            dragon.setFlying(false);
-            dragon.setHovering(false);
-            dragon.setTakeoff(false);
-            return false;
+            beginLandingApproach();
+            return true;
         }
 
         // Stop if combat starts
@@ -125,21 +147,14 @@ public class IgnivorusFlightGoal extends Goal {
 
         // Check if dragon wants to land naturally
         if (dragon.isFlying() && !shouldKeepFlying() && !isOverDanger()) {
-            dragon.setLanding(true);
-            dragon.setFlying(false);
-            dragon.setTakeoff(false);
-            dragon.setHovering(false);
-            return false;
+            beginLandingApproach();
+            return true;
         }
 
         // Handle stuck state where isFlying=true but onGround=true
         if (dragon.isFlying() && dragon.onGround()) {
             if (timeSinceTargetChange > 5) { // Grace period for takeoff
-                dragon.setLanding(true);
-                dragon.setFlying(false);
-                dragon.setTakeoff(false);
-                dragon.setHovering(false);
-                dragon.markLandedNow();
+                finishLanding();
                 return false;
             }
         }
@@ -152,6 +167,8 @@ public class IgnivorusFlightGoal extends Goal {
         dragon.setFlying(true);
         dragon.setLanding(false);
         dragon.setHovering(false);
+        landingApproach = false;
+        landingPosition = null;
         if (targetPosition != null) {
             dragon.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, dragon.getFlightSpeed());
         }
@@ -161,6 +178,80 @@ public class IgnivorusFlightGoal extends Goal {
     public void tick() {
         timeSinceTargetChange++;
 
+        if (landingApproach) {
+            if (dragon.isInWaterOrBubble()) {
+                landingApproach = false;
+                landingApproachTicks = 0;
+                landingForceDrop = false;
+                targetPosition = null;
+                landingPosition = null;
+                dragon.setLanding(false);
+                dragon.setHovering(false);
+                dragon.setTakeoff(false);
+                dragon.setFlying(false);
+                return;
+            }
+            landingApproachTicks++;
+
+            // Emergency grounding: if stuck floating for too long, abort landing and let entity fall
+            if (landingApproachTicks > LANDING_EMERGENCY_GROUNDING_TICKS && !dragon.onGround()) {
+                landingApproach = false;
+                landingApproachTicks = 0;
+                landingForceDrop = false;
+                targetPosition = null;
+                landingPosition = null;
+                dragon.setNoGravity(false);
+                dragon.setFlying(false);
+                dragon.setLanding(true);
+                // Goal will stop, let gravity take over
+                return;
+            }
+
+            if (!landingForceDrop && landingApproachTicks > LANDING_FORCE_DROP_TICKS) {
+                landingForceDrop = true;
+                Vec3 dropTarget = findValidDropTarget();
+                if (dropTarget != null) {
+                    landingPosition = dropTarget;
+                } else {
+                    // Can't find anywhere to drop - abort landing
+                    landingApproach = false;
+                    landingApproachTicks = 0;
+                    dragon.setLanding(false);
+                    return;
+                }
+            }
+            if (landingPosition != null) {
+                BlockPos landingGround = BlockPos.containing(landingPosition.x, landingPosition.y - 1.0, landingPosition.z);
+                if (!landingForceDrop && !isWideLandingSurface(landingGround)) {
+                    landingPosition = findLandingTarget();
+                    if (landingPosition == null) {
+                        // No valid surface - abort landing
+                        landingApproach = false;
+                        landingApproachTicks = 0;
+                        dragon.setLanding(false);
+                        return;
+                    }
+                }
+                double altitude = dragon.getY() - landingPosition.y;
+
+                // Apply downward velocity throughout descent, not just when far away
+                if (!dragon.isInWaterOrBubble() && !dragon.onGround()) {
+                    Vec3 motion = dragon.getDeltaMovement();
+                    // Stronger descent when high, gentler when close
+                    double descentRate = altitude > Ignivorus.LANDING_BLEND_ALTITUDE ? 0.18 : 0.08;
+                    double newY = Math.max(motion.y - descentRate, -1.6);
+                    dragon.setDeltaMovement(motion.x, newY, motion.z);
+                }
+                dragon.getMoveControl().setWantedPosition(landingPosition.x, landingPosition.y, landingPosition.z, 1.6);
+                if (!dragon.isLanding()
+                        && altitude >= -0.25D
+                        && altitude <= Ignivorus.LANDING_BLEND_ALTITUDE) {
+                    dragon.setLanding(true);
+                }
+            }
+            return;
+        }
+
         // If dragon wants to land, let it handle that
         if (dragon.isLanding()) {
             return;
@@ -169,21 +260,14 @@ public class IgnivorusFlightGoal extends Goal {
         // Handle stuck state where isFlying=true but onGround=true
         if (dragon.isFlying() && dragon.onGround()) {
             if (timeSinceTargetChange > 5) {
-                dragon.setLanding(true);
-                dragon.setFlying(false);
-                dragon.setTakeoff(false);
-                dragon.setHovering(false);
-                dragon.markLandedNow();
+                finishLanding();
                 return;
             }
         }
 
         // Tamed dragons should land immediately once danger is cleared
         if (dragon.isTame() && !isOverDanger()) {
-            dragon.setLanding(true);
-            dragon.setFlying(false);
-            dragon.setHovering(false);
-            dragon.setTakeoff(false);
+            beginLandingApproach();
             return;
         }
 
@@ -240,6 +324,10 @@ public class IgnivorusFlightGoal extends Goal {
     @Override
     public void stop() {
         targetPosition = null;
+        landingPosition = null;
+        landingApproach = false;
+        landingApproachTicks = 0;
+        landingForceDrop = false;
         stuckCounter = 0;
         timeSinceTargetChange = 0;
         dragon.getNavigation().stop();
@@ -267,6 +355,128 @@ public class IgnivorusFlightGoal extends Goal {
 
         // Fallback: safe position above anchor
         return new Vec3(anchor.x, findSafeFlightHeight(anchor.x, anchor.z, false), anchor.z);
+    }
+
+    private void beginLandingApproach() {
+        if (landingApproach) {
+            return;
+        }
+
+        landingPosition = findLandingTarget();
+        if (landingPosition == null) {
+            // No valid landing spot found - abort landing and keep flying
+            return;
+        }
+
+        landingApproach = true;
+        landingApproachTicks = 0;
+        landingForceDrop = false;
+        targetPosition = landingPosition;
+        dragon.setHovering(false);
+        dragon.setTakeoff(false);
+    }
+
+    private void finishLanding() {
+        landingApproach = false;
+        landingApproachTicks = 0;
+        landingForceDrop = false;
+        targetPosition = null;
+        landingPosition = null;
+        dragon.handleAiLandingComplete();
+        dragon.setHovering(false);
+        dragon.setFlying(false);
+    }
+
+    private Vec3 findLandingTarget() {
+        BlockPos origin = dragon.blockPosition();
+        int radius = 16; // Increased search radius
+
+        for (int attempt = 0; attempt < 24; attempt++) {
+            int dx = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+            int dz = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+            BlockPos column = origin.offset(dx, 0, dz);
+            if (!dragon.level().hasChunkAt(column)) {
+                continue;
+            }
+
+            // Use WORLD_SURFACE to get actual ground, not tree trunks
+            int surfaceY = dragon.level().getHeight(Heightmap.Types.WORLD_SURFACE,
+                    column.getX(), column.getZ());
+            BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+            if (isWideLandingSurface(ground)) {
+                return new Vec3(column.getX() + 0.5, ground.getY() + 1.0, column.getZ() + 0.5);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Finds a valid drop target that's actually solid ground, not water
+     * Searches in expanding radius around current position
+     */
+    private Vec3 findValidDropTarget() {
+        BlockPos origin = dragon.blockPosition();
+
+        // Search in expanding radius for solid ground
+        for (int radius = 0; radius <= 32; radius += 8) {
+            for (int attempt = 0; attempt < 12; attempt++) {
+                int dx = radius == 0 ? 0 : dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                int dz = radius == 0 ? 0 : dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                BlockPos checkPos = origin.offset(dx, 0, dz);
+
+                if (!dragon.level().hasChunkAt(checkPos)) {
+                    continue;
+                }
+
+                // Get surface level
+                int surfaceY = dragon.level().getHeight(Heightmap.Types.WORLD_SURFACE,
+                        checkPos.getX(), checkPos.getZ());
+                BlockPos groundPos = new BlockPos(checkPos.getX(), surfaceY - 1, checkPos.getZ());
+
+                var state = dragon.level().getBlockState(groundPos);
+
+                // Must be solid and not fluid
+                if (!state.isAir() && state.getFluidState().isEmpty() &&
+                    state.isFaceSturdy(dragon.level(), groundPos, Direction.UP)) {
+                    return new Vec3(checkPos.getX() + 0.5, groundPos.getY() + 1.0, checkPos.getZ() + 0.5);
+                }
+            }
+        }
+
+        return null; // No valid drop target found
+    }
+
+    /**
+     * Checks if the landing surface is wide enough for the dragon's bounding box
+     * Dragons are large creatures, so we check a 3x3 area
+     */
+    private boolean isWideLandingSurface(BlockPos ground) {
+        if (!dragon.level().hasChunkAt(ground)) {
+            return false;
+        }
+
+        var state = dragon.level().getBlockState(ground);
+        if (state.isAir() || !state.getFluidState().isEmpty()) {
+            return false;
+        }
+        if (!state.isFaceSturdy(dragon.level(), ground, Direction.UP)) {
+            return false;
+        }
+        return isLandingSpaceClear(ground);
+    }
+
+    private boolean isLandingSpaceClear(BlockPos ground) {
+        BlockPos above = ground.above();
+        BlockPos aboveTwo = above.above();
+        var aboveState = dragon.level().getBlockState(above);
+        if (!aboveState.getCollisionShape(dragon.level(), above).isEmpty()
+                || !aboveState.getFluidState().isEmpty()) {
+            return false;
+        }
+        var aboveTwoState = dragon.level().getBlockState(aboveTwo);
+        return aboveTwoState.getCollisionShape(dragon.level(), aboveTwo).isEmpty()
+                && aboveTwoState.getFluidState().isEmpty();
     }
 
     private Vec3 generateFlightCandidate(Vec3 anchor, Vec3 dragonPos, int attempt) {
@@ -460,6 +670,56 @@ public class IgnivorusFlightGoal extends Goal {
     }
 
     // ===== UTILITY METHODS =====
+
+    /**
+     * Check if there's enough vertical clearance above the dragon to safely take off
+     * Prevents takeoff when surrounded by trees/blocks
+     */
+    private boolean hasTakeoffClearance() {
+        BlockPos dragonPos = dragon.blockPosition();
+        double dragonWidth = dragon.getBbWidth();
+        int checkRadius = (int) Math.ceil(dragonWidth / 2.0);
+        int checkHeight = 10; // Check 10 blocks up
+
+        // Check a cylinder above the dragon
+        for (int dy = 1; dy <= checkHeight; dy++) {
+            for (int dx = -checkRadius; dx <= checkRadius; dx++) {
+                for (int dz = -checkRadius; dz <= checkRadius; dz++) {
+                    // Skip corners for more natural cylinder shape
+                    if (Math.abs(dx) + Math.abs(dz) > checkRadius + 1) {
+                        continue;
+                    }
+
+                    BlockPos checkPos = dragonPos.offset(dx, dy, dz);
+                    var state = dragon.level().getBlockState(checkPos);
+
+                    // Allow takeoff through leaves and other breakable vegetation
+                    if (state.isAir() || isBreakableVegetation(state)) {
+                        continue;
+                    }
+
+                    // Blocked by solid block
+                    if (!state.getCollisionShape(dragon.level(), checkPos).isEmpty()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true; // Clear path upward
+    }
+
+    /**
+     * Check if a block is breakable vegetation that won't stop takeoff
+     */
+    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
+        var block = state.getBlock();
+        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
+               block instanceof net.minecraft.world.level.block.VineBlock ||
+               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
+               block instanceof net.minecraft.world.level.block.FlowerBlock ||
+               block instanceof net.minecraft.world.level.block.DoublePlantBlock;
+    }
 
     private boolean isOverDanger() {
         BlockPos dragonPos = dragon.blockPosition();
