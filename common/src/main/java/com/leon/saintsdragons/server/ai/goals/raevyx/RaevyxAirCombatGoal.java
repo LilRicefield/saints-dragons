@@ -22,13 +22,14 @@ public class RaevyxAirCombatGoal extends Goal {
     private final Raevyx dragon;
 
     // Combat ranges
-    private final double biteRange = 16.0;              // Close-range melee
+    private final double biteRange = 6.0;               // Close-range melee (matches ability reach better)
     private final double beamMinRange = 20.0;          // Beam at medium-long range
     private final double beamMaxRange = 64.0;          // Max effective range
 
     // Flight positioning
     private static final double HOVER_HEIGHT_OFFSET = 2.0; // Stay slightly above target
-    private static final double ENGAGEMENT_DISTANCE = 30.0; // Preferred combat distance
+    private static final double ENGAGEMENT_DISTANCE = 30.0; // Preferred beam distance
+    private static final double BITE_APPROACH_DISTANCE = 4.0; // Hold near mouth range
 
     private int attackCooldown = 0;
     private int repositionCooldown = 0;
@@ -209,7 +210,7 @@ public class RaevyxAirCombatGoal extends Goal {
                 tryAttack(target, distance);
             }
             // Maintain position for bite
-            maintainCombatPosition(target);
+            maintainBitePosition(target);
         } else if (distance >= beamMinRange && distance <= beamMaxRange && hasLineOfSight && beamCooldown <= 0) {
             // Medium-long range - lightning beam
             if (!isCurrentlyAttacking()) {
@@ -327,6 +328,30 @@ public class RaevyxAirCombatGoal extends Goal {
         );
 
         repositionCooldown = 20; // Reposition every second
+    }
+
+    /**
+     * Maintain a tight position for bite attempts.
+     */
+    private void maintainBitePosition(LivingEntity target) {
+        double targetY = target.getY() + target.getBbHeight() * 0.5 + HOVER_HEIGHT_OFFSET;
+
+        Vec3 toTarget = new Vec3(
+            target.getX() - dragon.getX(),
+            targetY - dragon.getY(),
+            target.getZ() - dragon.getZ()
+        );
+
+        double dist = toTarget.length();
+        if (dist < 1.0E-4) {
+            return;
+        }
+
+        Vec3 dir = toTarget.scale(1.0 / dist);
+        Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
+
+        double speed = dist > BITE_APPROACH_DISTANCE ? 1.2 : 0.6;
+        dragon.getMoveControl().setWantedPosition(desired.x, desired.y, desired.z, speed);
     }
 
     /**

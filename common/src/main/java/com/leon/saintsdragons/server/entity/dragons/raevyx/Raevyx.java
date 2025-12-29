@@ -404,7 +404,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     int dodgeCooldownTicks = 0; // Rider dodge cooldown
     int aiDodgeCooldownTicks = 0; // AI dodge cooldown
     int dodgeIFramesTicks = 0; // Invulnerability frames during dodge
-    private float preDodgeStepHeight = 1.0F;
 
     // Dash forward system
     private static final double DASH_HORIZONTAL_DRAG = 0.92D;
@@ -2368,11 +2367,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         if (target != null && target.isAlive()) {
-            // Start with huge random offset around target
+            // Start with a moderate random offset around target
             Vec3 randomOffset = new Vec3(
-                -50 + random.nextFloat() * 100F,  // ±50 blocks X
-                -20 + random.nextFloat() * 40F,    // ±20 blocks Y
-                -50 + random.nextFloat() * 100F    // ±50 blocks Z
+                -12 + random.nextFloat() * 24F,
+                -6 + random.nextFloat() * 12F,
+                -12 + random.nextFloat() * 24F
             );
             return target.position().add(randomOffset);
         } else {
@@ -2394,23 +2393,23 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         Vec3 currentTarget = beamServerTarget != null ? beamServerTarget : shootFrom;
 
         if (target != null && target.isAlive()) {
-            // Calculate accuracy: starts at 100% inaccurate, converges to 0% over 60 ticks
-            float maxBeamTime = 60.0F;
-            float time = (float) beamTime / maxBeamTime;
-            float accuracy = 1.0F - (Math.min(0.75F, time) / 0.75F);
+            // Calculate accuracy: starts inaccurate, converges quickly
+            float maxBeamTime = 30.0F;
+            float time = Math.min(beamTime, (int) maxBeamTime) / maxBeamTime;
+            float accuracy = 1.0F - time;
 
             // Create dynamic wobble pattern that scales with inaccuracy
             Vec3 wobbleOffset = new Vec3(
-                Math.sin(tickCount * 0.2F) * 4.0,
-                Math.sin(tickCount * 0.15F) * 2.0,
-                Math.cos(tickCount * 0.2F) * -4.0
+                Math.sin(tickCount * 0.2F) * 2.5,
+                Math.sin(tickCount * 0.15F) * 1.5,
+                Math.cos(tickCount * 0.2F) * -2.5
             ).yRot((float) Math.toRadians(-this.yBodyRot)).scale(accuracy);
 
             // Aim point with wobble
             Vec3 targetPoint = target.getEyePosition().add(0, -0.25, 0).add(wobbleOffset);
 
-            // Smooth approach: only move 10% toward desired position each tick
-            beamServerTarget = targetPoint.subtract(currentTarget).scale(0.1F).add(currentTarget);
+            // Smooth approach: move 20% toward desired position each tick
+            beamServerTarget = targetPoint.subtract(currentTarget).scale(0.2F).add(currentTarget);
         } else {
             // No target - slowly sweep the beam forward
             Vec3 sweepOffset = new Vec3(
