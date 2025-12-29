@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "iceandfire:fire_dragon",
+    "iceandfire:ice_dragon",
+    "iceandfire:lightning_dragon",
+    "saintsdragons:ignivorus",
+    "saintsdragons:raevyx",
+    "saintsdragons:nulljaw"
+  ]
+}

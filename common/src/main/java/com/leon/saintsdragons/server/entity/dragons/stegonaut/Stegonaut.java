@@ -49,7 +49,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * No complex abilities, just basic AI and cute behavior.
  * Features:
  * - Sleep behavior: Sleeps at night, awake during day.
- * - Flee behavior: Runs away from Raevyx and other Stegonauts when threatened
+ * - Flee behavior: Runs away from tagged predators when threatened
  * - Protective aura: Grants resistance and absorption to nearby players and allies
  * - NOT rideable: Too small and simple to be a mount
  */
@@ -152,7 +152,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this)); // CRITICAL: Must float in water to not drown!
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this)); // Escape water
-        this.goalSelector.addGoal(3, new StegonautFleeFromPredatorsGoal(this, 0.6D, 12.0D)); // Flee from Raevyx and other Stegonauts
+        this.goalSelector.addGoal(3, new StegonautFleeFromPredatorsGoal(this, 0.6D, 12.0D)); // Flee from tagged predators
         this.goalSelector.addGoal(4, new StegonautFollowOwnerGoal(this));
         this.goalSelector.addGoal(5, new StegonautGroundWanderGoal(this, 0.35D, 120));
         this.goalSelector.addGoal(6, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));

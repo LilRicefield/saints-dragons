@@ -9,8 +9,11 @@ import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
@@ -886,6 +889,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public boolean canTarget(net.minecraft.world.entity.Entity entity) {
         if (entity == null) return false;
 
+        if (entity instanceof LivingEntity living && !isTargetValid(living)) {
+            return false;
+        }
+
         // Never target allies
         if (isAlly(entity)) {
             return false;
@@ -908,6 +915,63 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
 
         return true;
+    }
+
+    /**
+     * Check whether a living target should be treated as "alive" for combat.
+     * Handles IaF-style corpse entities that remain alive while flagged as model-dead.
+     */
+    public boolean isTargetValid(@Nullable LivingEntity target) {
+        if (target == null) return false;
+        if (!target.isAlive() || target.isRemoved()) return false;
+        return !isIafMobDead(target);
+    }
+
+    private static final ConcurrentHashMap<Class<?>, Optional<Method>> IAF_DEAD_METHODS =
+            new ConcurrentHashMap<>();
+
+    private static boolean isIafMobDead(LivingEntity target) {
+        String className = target.getClass().getName();
+        if (!className.startsWith("com.github.alexthe666.iceandfire.")
+                && !className.startsWith("com.iafenvoy.iceandfire.")) {
+            return false;
+        }
+
+        Optional<Method> method = IAF_DEAD_METHODS.computeIfAbsent(
+                target.getClass(),
+                DragonEntity::resolveIafDeadMethod
+        );
+
+        if (method.isEmpty()) {
+            return false;
+        }
+
+        try {
+            Object result = method.get().invoke(target);
+            return result instanceof Boolean && (Boolean) result;
+        } catch (ReflectiveOperationException e) {
+            return false;
+        }
+    }
+
+    private static Optional<Method> resolveIafDeadMethod(Class<?> type) {
+        Method method = findNoArgBoolean(type, "isMobDead");
+        if (method == null) {
+            method = findNoArgBoolean(type, "isModelDead");
+        }
+        return Optional.ofNullable(method);
+    }
+
+    private static Method findNoArgBoolean(Class<?> type, String name) {
+        try {
+            Method method = type.getMethod(name);
+            if (method.getReturnType() == boolean.class) {
+                return method;
+            }
+        } catch (NoSuchMethodException ignored) {
+            return null;
+        }
+        return null;
     }
 
     /**

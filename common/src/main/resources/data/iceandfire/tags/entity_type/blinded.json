@@ -2,8 +2,9 @@
   "replace": false,
   "values": [
     "saintsdragons:raevyx",
-    "saintsdragons:cindervane",
     "saintsdragons:nulljaw",
-    "saintsdragons:ignivorus"
+    "saintsdragons:cindervane",
+    "saintsdragons:ignivorus",
+    "saintsdragons:stegonaut"
   ]
 }

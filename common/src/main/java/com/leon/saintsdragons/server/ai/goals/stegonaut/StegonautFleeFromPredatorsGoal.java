@@ -1,9 +1,12 @@
 package com.leon.saintsdragons.server.ai.goals.stegonaut;
 
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
@@ -14,10 +17,12 @@ import java.util.EnumSet;
 import java.util.List;
 
 /**
- * Simple flee behavior for Stegonaut - runs away from Raevyx and Nulljaw (predators).
+ * Simple flee behavior for Stegonaut - runs away from tagged predators.
  * Based on vanilla Minecraft's AvoidEntityGoal pattern.
  */
 public class StegonautFleeFromPredatorsGoal extends Goal {
+    private static final TagKey<EntityType<?>> STEGONAUT_FLEE_TAG =
+            TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("saintsdragons", "stegonaut_flee"));
     private final Stegonaut stegonaut;
     private final double fleeSpeed;
     private final double detectionRange;
@@ -164,24 +169,15 @@ public class StegonautFleeFromPredatorsGoal extends Goal {
      * Check if an entity is threatening to the Stegonaut
      */
     private boolean isThreateningEntity(LivingEntity entity) {
-        // Flee from Raevyx (dangerous predator)
-        if (entity instanceof Raevyx raevyx) {
-            // If tamed, only flee from wild Raevyx
-            if (stegonaut.isTame()) {
-                return !raevyx.isTame();
-            }
-            return true;
+        if (!entity.getType().is(STEGONAUT_FLEE_TAG)) {
+            return false;
         }
 
-        // Flee from Nulljaw (aquatic predator)
-        if (entity instanceof Nulljaw nulljaw) {
-            // If tamed, only flee from wild Nulljaw
-            if (stegonaut.isTame()) {
-                return !nulljaw.isTame();
-            }
-            return true;
+        // If tamed, only flee from wild tamables.
+        if (stegonaut.isTame() && entity instanceof TamableAnimal tamable) {
+            return !tamable.isTame();
         }
 
-        return false;
+        return true;
     }
 }

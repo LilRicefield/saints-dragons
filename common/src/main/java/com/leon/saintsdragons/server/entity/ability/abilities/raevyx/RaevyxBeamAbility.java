@@ -225,10 +225,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             var p = start.add(dir.scale(d));
             var aabb = new net.minecraft.world.phys.AABB(p, p).inflate(RADIUS);
             var list = server.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, aabb,
-                    e -> e != wyvern && e.isAlive() && e.attackable() && !isAllied(wyvern, e));
+                    e -> e != wyvern && wyvern.isTargetValid(e) && e.attackable() && !isAllied(wyvern, e));
             for (var le : list) {
                 if (hitThisBeam.add(le)) {
-                    le.hurt(wyvern.level().damageSources().lightningBolt(), DAMAGE);
+                    le.hurt(resolveBeamDamageSource(wyvern, le), DAMAGE);
                     // Stronger knockback for single hit
                     var away = le.position().subtract(p).normalize();
                     le.push(away.x * 0.15, 0.08, away.z * 0.15);
@@ -249,7 +249,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
      */
     private boolean isValidTarget(net.minecraft.world.entity.LivingEntity target) {
         if (target == null) return false;
-        if (!target.isAlive()) return false;
+        if (!getUser().isTargetValid(target)) return false;
         if (target.isRemoved()) return false;
 
         // Stop beaming if target switches to creative mode
@@ -260,6 +260,19 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
 
         return true;
+    }
+
+    private net.minecraft.world.damagesource.DamageSource resolveBeamDamageSource(Raevyx wyvern, net.minecraft.world.entity.LivingEntity target) {
+        if (isIafLightningDragon(target)) {
+            return wyvern.level().damageSources().mobAttack(wyvern);
+        }
+        return wyvern.level().damageSources().lightningBolt();
+    }
+
+    private boolean isIafLightningDragon(net.minecraft.world.entity.LivingEntity entity) {
+        String className = entity.getClass().getName();
+        return "com.github.alexthe666.iceandfire.entity.EntityLightningDragon".equals(className)
+                || "com.iafenvoy.iceandfire.entity.LightningDragonEntity".equals(className);
     }
 
     private record BeamPath(net.minecraft.world.phys.Vec3 origin, net.minecraft.world.phys.Vec3 impact) {}
