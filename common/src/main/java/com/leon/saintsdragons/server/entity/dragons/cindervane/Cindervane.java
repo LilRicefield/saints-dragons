@@ -583,8 +583,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         tickRiderTakeoff();
         tickMountedState();
         updateSittingProgress();
-        tickWaterSlicing();
-        handleFireBodyCrash();
+        if (isFlying() && tickCount % 2 == 0) {
+            tickWaterSlicing();
+        }
+        if (isBreathingFire() || fireBodyCrashArmed) {
+            handleFireBodyCrash();
+        }
 
         // Ensure sit animation is cleared for riders even if packets arrive late
         if (isVehicle() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {

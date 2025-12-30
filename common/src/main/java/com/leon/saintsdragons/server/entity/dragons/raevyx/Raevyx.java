@@ -65,7 +65,6 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -253,10 +252,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // Simple per-field caches - more maintainable than generic system
     private double cachedOwnerDistance = Double.MAX_VALUE;
     private int ownerDistanceCacheTime = -1;
-    private List<Projectile> cachedNearbyProjectiles = new java.util.ArrayList<>();
-    private int nearbyProjectilesCacheTime = -1;
-    private int projectileCacheIntervalTicks = 3; // dynamic backoff (min 3)
-    private int emptyProjectileScans = 0;
     private double cachedHorizontalSpeed = 0.0;
     private int horizontalSpeedCacheTime = -1;
     private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
@@ -1888,7 +1883,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // === SERVER-SIDE: EVERY 2 TICKS (input/movement - slight delay acceptable) ===
         if (tickCount % 2 == 0) {
             tickRiderControlLockMovement();
-            tickWaterDisturbance();
+            if (isFlying()) {
+                tickWaterDisturbance();
+            }
         }
 
         // === SERVER-SIDE: EVERY TICK (precise timing needed) ===
@@ -1908,13 +1905,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         // Dash system
-        tickDashState();
+        if (dashing || dashCooldownTicks > 0 || !dashHitCooldowns.isEmpty()) {
+            tickDashState();
+        }
 
         tamingController.tickServer();
         tickSleepTransition();
         tickSleepCooldowns();
         handleAmbientSounds();
-        tickFlightPhysics(); // Apply takeoff/landing forces
+        if (isFlying() || isTakeoff()) {
+            tickFlightPhysics(); // Apply takeoff/landing forces
+        }
 
         // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
         if (tickCount % 5 == 0) {
@@ -1968,8 +1969,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             // Don't return - allow beam tracking and other systems during dash
         }
 
-        // Beam head tracking - needs every tick for smooth aiming
-        tickBeamLook();
+        // Beam head tracking - only needed when beaming or cleaning up beam offsets
+        if (isBeaming() || beamAimDir != null) {
+            tickBeamLook();
+        }
 
         if (!level().isClientSide && isBaby()) {
             if (getTarget() != null) {
@@ -4215,27 +4218,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             ownerDistanceCacheTime = currentTick;
         }
         return cachedOwnerDistance;
-    }
-    public List<Projectile> getCachedNearbyProjectiles() {
-        // Server-side only; clients don't need this heavy scan
-        if (!(this.level() instanceof net.minecraft.server.level.ServerLevel)) {
-            return java.util.Collections.emptyList();
-        }
-        if (tickCount - nearbyProjectilesCacheTime >= projectileCacheIntervalTicks) {
-            List<Projectile> found = DragonMathUtil.getEntitiesNearby(this, Projectile.class, 30.0);
-            cachedNearbyProjectiles = found;
-            nearbyProjectilesCacheTime = tickCount;
-
-            if (found.isEmpty()) {
-                emptyProjectileScans = Math.min(emptyProjectileScans + 1, 4);
-                // Back off up to ~11 ticks when calm (3,5,7,9,11)
-                projectileCacheIntervalTicks = 3 + (emptyProjectileScans * 2);
-            } else {
-                emptyProjectileScans = 0;
-                projectileCacheIntervalTicks = 3;
-            }
-        }
-        return cachedNearbyProjectiles;
     }
     // DYNAMIC EYE HEIGHT SYSTEM
     // Will be calculated dynamically from renderer

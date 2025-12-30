@@ -611,9 +611,15 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             }
 
             this.tickAnimationStates();
-            this.updateSwimOrientationState();
-            this.tickWildRideState();
-            tickPhaseTwoLinger();
+            if (swimming || isInWaterOrBubble()) {
+                this.updateSwimOrientationState();
+            }
+            if (wildRideActive) {
+                this.tickWildRideState();
+            }
+            if (this.isPhaseTwoActive()) {
+                tickPhaseTwoLinger();
+            }
         }
 
         tickClientSideUpdates();

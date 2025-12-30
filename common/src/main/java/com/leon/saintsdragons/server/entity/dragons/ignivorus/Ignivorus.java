@@ -532,7 +532,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             tamingController.tickServer();
             tickTerrainClearing();
             handleAmbientSounds();
-            if (tickCount % 2 == 0) {
+            if (isFlying() && tickCount % 2 == 0) {
                 tickWaterDisturbance();
             }
 
