@@ -2318,7 +2318,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             aimDir = beamAimDir;
             updateBeamOffsets(aimDir);
         }
-        applyBeamLook(aimDir);
+
+        // CRITICAL: Only apply beam look when NOT rider-controlled
+        // When riding, the rider controller sets dragon rotation - applyBeamLook would fight it
+        if (!riderControlled) {
+            applyBeamLook(aimDir);
+        }
     }
 
     public Vec3 getBeamAimDirection() {
@@ -4412,12 +4417,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 resetBeamAim();
                 copyRiderLook(player);
             } else {
+                // Calculate beam aim direction for server-side beam path, but DON'T apply it to dragon rotation
+                // The rider controller (line 4412) already handles rotation - applyBeamLook would fight it
                 Vec3 aim = refreshBeamAimDirection(start, true);
-                if (aim != null) {
-                    applyBeamLook(aim);
-                } else {
+                if (aim == null) {
                     copyRiderLook(player);
                 }
+                // Skip applyBeamLook when riding - rider controller handles rotation
             }
         }
     }

@@ -59,6 +59,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         float disappear;   // 0 -> 1 while fading out
         net.minecraft.world.phys.Vec3 lastMouth;
         net.minecraft.world.phys.Vec3 lastEnd;
+        net.minecraft.world.phys.Vec3 smoothedEnd; // Smoothly lerped end position for delayed following
     }
     private static final Map<Raevyx, BeamState> STATES = new WeakHashMap<>();
     private static final float APPEAR_TICKS = 5f;      // ~0.25s
@@ -84,25 +85,45 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             state.disappear = 0f;
             state.appear = Mth.clamp(state.appear + (1f / APPEAR_TICKS), 0f, 1f);
 
+            // Get mouth position from bone, but we need to interpolate the entity position
+            net.minecraft.world.phys.Vec3 bonePos = getBoneWorldPositionInterpolated(bakedModel, "beamBone", animatable, partialTick);
+            net.minecraft.world.phys.Vec3 computedPos = animatable.computeHeadMouthOrigin(partialTick);
 
-            mouthWorld = getBoneWorldPosition(bakedModel, "beamBone", animatable, partialTick);
-            if (mouthWorld == null) {
-                // Fallback to math calculation if bone not found
-                mouthWorld = animatable.computeHeadMouthOrigin(partialTick);
-            }
+            // Always prefer bone position when available - it's the visual source of truth
+            mouthWorld = bonePos != null ? bonePos : computedPos;
 
             // Predict visual beam end and clamp to neck capability
             net.minecraft.world.phys.Vec3 predictedEnd = predictBeamEnd(animatable, mouthWorld, partialTick);
             // Server-synced end (authoritative for damage)
             net.minecraft.world.phys.Vec3 serverEnd = animatable.getClientBeamEndPosition(partialTick);
-            if (serverEnd == null) {
-                end = predictedEnd;
+
+            // When riding, ALWAYS use predicted end (rider's camera is source of truth, no lag)
+            // When not riding (AI), blend with server position based on movement
+            boolean isRiding = animatable.getControllingPassenger() != null;
+
+            net.minecraft.world.phys.Vec3 targetEnd;
+            if (isRiding) {
+                targetEnd = predictedEnd;
+            } else if (serverEnd == null) {
+                targetEnd = predictedEnd;
             } else {
                 double hspeed = animatable.getDeltaMovement().horizontalDistance();
                 float turnRate = Math.abs(net.minecraft.util.Mth.degreesDifference(animatable.yHeadRotO, animatable.yHeadRot));
                 float weight = net.minecraft.util.Mth.clamp((float) (hspeed * 3.0 + (turnRate / 90.0f)), 0.0f, 1.0f);
-                end = lerpVec(serverEnd, predictedEnd, weight);
+                targetEnd = lerpVec(serverEnd, predictedEnd, weight);
             }
+
+            // Apply smooth delayed following (beam catches up to target)
+            if (state.smoothedEnd == null) {
+                state.smoothedEnd = targetEnd;
+            }
+
+            // Lerp factor: higher = faster catch-up, lower = more delay
+            // 0.3 = beam follows with noticeable but smooth delay
+            float smoothFactor = 0.3f;
+            state.smoothedEnd = lerpVec(state.smoothedEnd, targetEnd, smoothFactor);
+            end = state.smoothedEnd;
+
             state.lastMouth = mouthWorld;
             state.lastEnd = end;
         } else {
@@ -227,18 +248,22 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     }
 
     private static net.minecraft.world.phys.Vec3 predictBeamEnd(Raevyx dragon, net.minecraft.world.phys.Vec3 mouthWorld, float partialTicks) {
-        // Prefer the dragon's smoothed beam aim direction so visuals track the same arc.
-        net.minecraft.world.phys.Vec3 aimDir = dragon.getBeamAimDirection();
-        if (aimDir == null || aimDir.lengthSqr() < 1.0e-6) {
-            dragon.refreshBeamAimDirection(mouthWorld, true);
-            aimDir = dragon.getBeamAimDirection();
-        }
+        net.minecraft.world.phys.Vec3 aimDir;
 
-        if (aimDir == null || aimDir.lengthSqr() < 1.0e-6) {
-            net.minecraft.world.entity.Entity cp = dragon.getControllingPassenger();
-            if (cp instanceof net.minecraft.world.entity.LivingEntity rider) {
-                aimDir = rider.getViewVector(partialTicks).normalize();
-            } else {
+        // When riding, ALWAYS use rider's view vector directly (zero lag)
+        // When AI-controlled, use server-calculated beam aim direction
+        net.minecraft.world.entity.Entity cp = dragon.getControllingPassenger();
+        if (cp instanceof net.minecraft.world.entity.LivingEntity rider) {
+            aimDir = rider.getViewVector(partialTicks).normalize();
+        } else {
+            // AI-controlled: prefer the dragon's smoothed beam aim direction
+            aimDir = dragon.getBeamAimDirection();
+            if (aimDir == null || aimDir.lengthSqr() < 1.0e-6) {
+                dragon.refreshBeamAimDirection(mouthWorld, true);
+                aimDir = dragon.getBeamAimDirection();
+            }
+
+            if (aimDir == null || aimDir.lengthSqr() < 1.0e-6) {
                 net.minecraft.world.entity.LivingEntity tgt = dragon.getTarget();
                 if (tgt != null && tgt.isAlive()) {
                     net.minecraft.world.phys.Vec3 aimPoint = tgt.getEyePosition(partialTicks).add(0, -0.25, 0);
@@ -366,25 +391,44 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     }
 
     /**
-     * Gets the world-space position of a bone directly from the current frame's bone matrix.
-     * This ensures zero-lag tracking since it reads from the actively rendering model.
+     * Gets the world-space position of a bone with interpolated entity position.
+     * The bone matrix from GeckoLib uses non-interpolated entity position, so we need to correct it.
      */
-    private static net.minecraft.world.phys.Vec3 getBoneWorldPosition(BakedGeoModel model, String boneName,
-                                                                      Raevyx entity, float partialTick) {
-        if (model == null || boneName == null) return null;
+    private static net.minecraft.world.phys.Vec3 getBoneWorldPositionInterpolated(BakedGeoModel model, String boneName,
+                                                                                   Raevyx entity, float partialTick) {
+        if (model == null || boneName == null || entity == null) return null;
 
         var boneOpt = model.getBone(boneName);
         if (boneOpt.isEmpty()) return null;
 
         var bone = boneOpt.get();
 
-        // Get the bone's world-space matrix (already includes all parent transforms and animations)
+        // Get the bone's world-space matrix (includes entity position, but NOT interpolated)
         org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
 
-        // Transform the bone's pivot point (0,0,0 in bone space) to world space
+        // Transform the bone's pivot point to get its world position
         org.joml.Vector4f pivotWorld = new org.joml.Vector4f(0f, 0f, 0f, 1f);
         worldMat.transform(pivotWorld);
 
-        return new net.minecraft.world.phys.Vec3(pivotWorld.x(), pivotWorld.y(), pivotWorld.z());
+        // The bone position includes the entity's NON-interpolated position
+        // We need to subtract the non-interpolated entity pos and add the interpolated one
+        double entityX = entity.getX();
+        double entityY = entity.getY();
+        double entityZ = entity.getZ();
+
+        double entityOldX = entity.xo;
+        double entityOldY = entity.yo;
+        double entityOldZ = entity.zo;
+
+        double interpX = net.minecraft.util.Mth.lerp(partialTick, entityOldX, entityX);
+        double interpY = net.minecraft.util.Mth.lerp(partialTick, entityOldY, entityY);
+        double interpZ = net.minecraft.util.Mth.lerp(partialTick, entityOldZ, entityZ);
+
+        // Calculate the offset: (bone world pos) - (entity non-interp pos) + (entity interp pos)
+        double correctedX = pivotWorld.x() - entityX + interpX;
+        double correctedY = pivotWorld.y() - entityY + interpY;
+        double correctedZ = pivotWorld.z() - entityZ + interpZ;
+
+        return new net.minecraft.world.phys.Vec3(correctedX, correctedY, correctedZ);
     }
 }
