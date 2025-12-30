@@ -76,12 +76,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
         // Pitch control: ONLY use vertical input (Space/L-Alt), NOT mouse look
         if (flying) {
-            float targetPitch = 0.0F;
-            if (dragon.isGoingUp()) {
-                targetPitch = -25.0F; // Pitch up when ascending
-            } else if (dragon.isGoingDown()) {
-                targetPitch = 20.0F; // Pitch down when descending
-            }
+            float targetPitch = Mth.clamp(player.getXRot() * 0.55f, -35.0f, 30.0f);
             dragon.setXRot(targetPitch);
         } else {
             dragon.setXRot(0.0F);

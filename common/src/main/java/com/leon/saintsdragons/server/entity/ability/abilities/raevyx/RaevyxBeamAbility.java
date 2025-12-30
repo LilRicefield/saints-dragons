@@ -26,7 +26,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 80) // 4 seconds for AI
     };
-    private static final double MAX_BEAM_RANGE = 128.0D;
+    private static final double MAX_BEAM_RANGE = 64;
     private static final float DEFAULT_BEAM_DAMAGE = 35.0f;
 
     private boolean hasBeamFired = false; // Track if beam has been fired this activation

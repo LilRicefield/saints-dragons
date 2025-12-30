@@ -62,8 +62,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         net.minecraft.world.phys.Vec3 smoothedEnd; // Smoothly lerped end position for delayed following
     }
     private static final Map<Raevyx, BeamState> STATES = new WeakHashMap<>();
-    private static final float APPEAR_TICKS = 5f;      // ~0.25s
-    private static final float DISAPPEAR_TICKS = 6f;   // ~0.3s
+    private static final float APPEAR_TICKS = 5f;
+    private static final float DISAPPEAR_TICKS = 10f;
 
     // No local offsets needed - beamBone position from model is already accurate
 
@@ -276,7 +276,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             }
         }
 
-        final double MAX_DISTANCE = 24.0; // blocks
+        final double MAX_DISTANCE = 64; // blocks
         net.minecraft.world.phys.Vec3 tentativeEnd = mouthWorld.add(aimDir.scale(MAX_DISTANCE));
         var hit = dragon.level().clip(new net.minecraft.world.level.ClipContext(
                 mouthWorld,

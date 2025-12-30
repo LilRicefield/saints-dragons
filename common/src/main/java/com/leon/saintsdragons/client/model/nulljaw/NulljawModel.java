@@ -95,10 +95,6 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     }
 
     private void applyNeckFollow(Nulljaw entity, EntityModelData modelData, float partialTick) {
-        var headOpt = getBone("headController");
-        if (headOpt.isEmpty()) return;
-
-        GeoBone head = headOpt.get();
 
         // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
@@ -107,10 +103,6 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
-
-        // Reset head controller to snapshot (let neck bones handle the tracking)
-        head.setRotX(head.getInitialSnapshot().getRotX());
-        head.setRotY(head.getInitialSnapshot().getRotY());
 
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.35f);
