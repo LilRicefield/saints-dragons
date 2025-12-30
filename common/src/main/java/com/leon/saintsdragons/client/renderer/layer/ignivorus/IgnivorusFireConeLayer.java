@@ -53,6 +53,7 @@ public class IgnivorusFireConeLayer extends GeoRenderLayer<Ignivorus> {
         float disappear;   // 0 -> 1 while fading out
         Vec3 lastStart;
         Vec3 lastEnd;
+        Vec3 smoothedEnd;  // Smoothly lerped end position for delayed following
     }
     private static final Map<Ignivorus, ConeState> STATES = new WeakHashMap<>();
     private static final float APPEAR_TICKS = 5f;      // ~0.25s
@@ -78,25 +79,49 @@ public class IgnivorusFireConeLayer extends GeoRenderLayer<Ignivorus> {
             state.disappear = 0f;
             state.appear = Mth.clamp(state.appear + (1f / APPEAR_TICKS), 0f, 1f);
 
-            // Get fire start position from bone or fallback
-            startWorld = animatable.getFireBreathStartAnchor(partialTick);
+            // Get fire start position with interpolated bone position
+            startWorld = getFireStartInterpolated(animatable, bakedModel, partialTick);
             if (startWorld == null) {
                 return;
             }
 
-            // Calculate end position using dragon's aim direction
-            Vec3 aimDir = Vec3.directionFromRotation(animatable.getXRot(), animatable.yHeadRot);
+            // Calculate aim direction - use rider's view vector directly when riding for zero lag
+            Vec3 aimDir;
+            net.minecraft.world.entity.Entity rider = animatable.getControllingPassenger();
+            if (rider instanceof net.minecraft.world.entity.LivingEntity livingRider) {
+                aimDir = livingRider.getViewVector(partialTick).normalize();
+            } else {
+                // AI-controlled: use dragon's aim direction
+                aimDir = Vec3.directionFromRotation(animatable.getXRot(), animatable.yHeadRot);
+            }
+
             Vec3 visualEnd = startWorld.add(aimDir.scale(MAX_VISUAL_DISTANCE));
 
-            // Use server-synced end if available for accuracy
+            // When riding, always use predicted end; when AI, blend with server
             Vec3 serverEnd = animatable.getFireBreathTarget();
-            endWorld = (serverEnd != null) ? serverEnd : visualEnd;
+            Vec3 targetEnd;
+            if (rider != null) {
+                targetEnd = visualEnd;
+            } else {
+                targetEnd = (serverEnd != null) ? serverEnd : visualEnd;
+            }
 
             // Clamp to MAX_VISUAL_DISTANCE
-            Vec3 delta = endWorld.subtract(startWorld);
+            Vec3 delta = targetEnd.subtract(startWorld);
             if (delta.length() > MAX_VISUAL_DISTANCE) {
-                endWorld = startWorld.add(delta.normalize().scale(MAX_VISUAL_DISTANCE));
+                targetEnd = startWorld.add(delta.normalize().scale(MAX_VISUAL_DISTANCE));
             }
+
+            // Apply smooth delayed following (fire cone catches up to target)
+            if (state.smoothedEnd == null) {
+                state.smoothedEnd = targetEnd;
+            }
+
+            // Lerp factor: higher = faster catch-up, lower = more delay
+            // 0.3 = fire cone follows with noticeable but smooth delay
+            float smoothFactor = 0.3f;
+            state.smoothedEnd = lerpVec(state.smoothedEnd, targetEnd, smoothFactor);
+            endWorld = state.smoothedEnd;
 
             state.lastStart = startWorld;
             state.lastEnd = endWorld;
@@ -275,6 +300,11 @@ public class IgnivorusFireConeLayer extends GeoRenderLayer<Ignivorus> {
         return 1f - p * p * p;
     }
 
+    private static Vec3 lerpVec(Vec3 a, Vec3 b, float t) {
+        t = Mth.clamp(t, 0.0f, 1.0f);
+        return a.add(b.subtract(a).scale(t));
+    }
+
     /**
      * Spawns flame particles along the fire breath cone path.
      * Creates a visual trail of flames, embers, and smoke that follows the breath stream.
@@ -372,5 +402,45 @@ public class IgnivorusFireConeLayer extends GeoRenderLayer<Ignivorus> {
                     (random.nextDouble() - 0.5) * 0.02);
             }
         }
+    }
+
+    /**
+     * Gets the fire breath start position with interpolated bone position.
+     * Reads from fireBone in the model and applies entity position interpolation to prevent lag when moving fast.
+     */
+    private Vec3 getFireStartInterpolated(Ignivorus entity, BakedGeoModel model, float partialTick) {
+        // Try to get bone position
+        if (model != null) {
+            var boneOpt = model.getBone("fireBone");
+            if (boneOpt.isPresent()) {
+                var bone = boneOpt.get();
+
+                // Get bone's world-space matrix (includes non-interpolated entity position)
+                org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
+
+                // Transform bone pivot to world space
+                org.joml.Vector4f pivotWorld = new org.joml.Vector4f(0f, 0f, 0f, 1f);
+                worldMat.transform(pivotWorld);
+
+                // Correct for entity position interpolation
+                double entityX = entity.getX();
+                double entityY = entity.getY();
+                double entityZ = entity.getZ();
+
+                double interpX = Mth.lerp(partialTick, entity.xo, entityX);
+                double interpY = Mth.lerp(partialTick, entity.yo, entityY);
+                double interpZ = Mth.lerp(partialTick, entity.zo, entityZ);
+
+                // Apply interpolation correction: (bone pos) - (current entity pos) + (interpolated entity pos)
+                double correctedX = pivotWorld.x() - entityX + interpX;
+                double correctedY = pivotWorld.y() - entityY + interpY;
+                double correctedZ = pivotWorld.z() - entityZ + interpZ;
+
+                return new Vec3(correctedX, correctedY, correctedZ);
+            }
+        }
+
+        // Fallback to entity's fire breath anchor
+        return entity.getFireBreathStartAnchor(partialTick);
     }
 }

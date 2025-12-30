@@ -1346,12 +1346,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 if (start == null) {
                     start = getEyePosition();
                 }
+                // Calculate fire aim direction for server-side fire path, but DON'T apply it to dragon rotation
+                // The rider controller already handles rotation - applyFireLook would fight it
                 Vec3 aim = refreshFireAimDirection(start, true);
-                if (aim != null) {
-                    applyFireLook(aim);
-                } else {
+                if (aim == null) {
                     copyRiderLook(player);
                 }
+                // Skip applyFireLook when riding - rider controller handles rotation
         } else {
             resetFireAimDirection();
         }

@@ -204,25 +204,26 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         // This prevents instant block burning at full range
         if (currentProgress > 10 && dragon.level() instanceof ServerLevel serverLevel) {
             double sizeScale = Math.max(0.8D, dragon.getBbWidth());
-            float damage = computeDamage(dragon, sizeScale);
-            double radius = IMPACT_RADIUS * sizeScale;
+            float damagePerTick = computeDamage(dragon, sizeScale);
+            double baseRadius = IMPACT_RADIUS * sizeScale;
 
             // Calculate current impact point based on progress (0-40 → 0.0-1.0)
             double progressRatio = Math.min(1.0, currentProgress / 40.0);
             Vec3 currentImpact = origin.add(impact.subtract(origin).scale(progressRatio));
 
-            // Determine if blocks can start melting based on total ability active time
-            // After 4 seconds, blocks begin melting (each block takes 2 seconds to fully melt)
-            boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING;
+            // Damage entities along the ENTIRE cone path (flamethrower style)
+            damageAlongCone(serverLevel, dragon, origin, currentImpact, baseRadius, damagePerTick);
 
+            // Apply block effects only at the impact point to avoid excessive destruction
+            boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING;
             DragonDestructionManager.applyFireBreathImpact(
                 serverLevel,
                 dragon,
                 currentImpact,
-                radius,
-                damage,
+                baseRadius,
+                0.0f,  // Zero damage here - we handle entity damage in damageAlongCone
                 FIRE_DURATION_SECONDS,
-                BLOCK_MELT_TICKS,  // Each block needs 2 seconds of continuous exposure
+                BLOCK_MELT_TICKS,
                 canMeltBlocks
             );
         }
@@ -250,6 +251,56 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             return reach;
         }
         return hit.getLocation();
+    }
+
+    /**
+     * Damages entities along the entire cone path (flamethrower-style).
+     * Samples points along the path from origin to currentImpact and damages entities
+     * within an expanding cone radius. Uses a HashSet to prevent double-hitting entities.
+     */
+    private void damageAlongCone(ServerLevel level, Ignivorus dragon, Vec3 origin, Vec3 currentImpact,
+                                 double baseRadius, float damagePerTick) {
+        Vec3 direction = currentImpact.subtract(origin);
+        double distance = direction.length();
+        if (distance < 1.0E-6) {
+            return;
+        }
+
+        Vec3 step = direction.normalize();
+        // Sample every 1.5 blocks along the path for performance
+        int sampleCount = Math.max(1, (int) (distance / 1.5));
+
+        // Track entities we've already damaged this tick to avoid double-hitting
+        java.util.Set<LivingEntity> hitEntities = new java.util.HashSet<>();
+
+        for (int i = 0; i <= sampleCount; i++) {
+            double ratio = sampleCount > 0 ? (double) i / sampleCount : 1.0;
+            Vec3 samplePoint = origin.add(step.scale(distance * ratio));
+
+            // Cone expands as it travels: start at 40% of base radius, expand to 100%
+            double coneRadius = baseRadius * (0.4 + 0.6 * ratio);
+
+            // Find entities within this sample sphere
+            net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(
+                samplePoint.x - coneRadius, samplePoint.y - coneRadius, samplePoint.z - coneRadius,
+                samplePoint.x + coneRadius, samplePoint.y + coneRadius, samplePoint.z + coneRadius
+            );
+
+            for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
+                // Skip if already hit this tick, or if it's the dragon itself, or a passenger
+                if (hitEntities.contains(entity) || entity == dragon || dragon.getPassengers().contains(entity)) {
+                    continue;
+                }
+
+                // Check if entity is actually within the cone radius
+                if (entity.position().distanceTo(samplePoint) <= coneRadius) {
+                    // Apply damage and fire
+                    entity.hurt(level.damageSources().dragonBreath(), damagePerTick);
+                    entity.setSecondsOnFire(FIRE_DURATION_SECONDS);
+                    hitEntities.add(entity);
+                }
+            }
+        }
     }
 
     /**
