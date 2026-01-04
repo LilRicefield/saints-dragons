@@ -5109,66 +5109,6 @@
 				}
 			}
 		},
-		"animation.cindervane.banking_off": {
-			"loop": true,
-			"bones": {
-				"body": {
-					"rotation": {
-						"vector": [0, 0, 0]
-					}
-				}
-			}
-		},
-		"animation.cindervane.banking_right": {
-			"loop": true,
-			"bones": {
-				"body": {
-					"rotation": {
-						"vector": [0, 0, -25]
-					}
-				}
-			}
-		},
-		"animation.cindervane.banking_left": {
-			"loop": true,
-			"bones": {
-				"body": {
-					"rotation": {
-						"vector": [0, 0, 25]
-					}
-				}
-			}
-		},
-		"animation.cindervane.pitching_off": {
-			"loop": true,
-			"bones": {
-				"root": {
-					"rotation": {
-						"vector": [0, 0, 0]
-					}
-				}
-			}
-		},
-		"animation.cindervane.pitching_up": {
-			"loop": true,
-			"bones": {
-				"root": {
-					"rotation": {
-						"vector": [-27.5, 0, 0]
-					}
-				}
-			}
-		},
-		"animation.cindervane.pitching_down": {
-			"loop": true,
-			"bones": {
-				"root": {
-					"rotation": {
-						"vector": [27.5, 0, 0]
-					}
-				}
-			}
-		},
 		"animation.cindervane.glide_down": {
 			"loop": true,
 			"animation_length": 1.25,

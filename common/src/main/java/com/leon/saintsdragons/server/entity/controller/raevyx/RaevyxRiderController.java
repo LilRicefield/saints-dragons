@@ -88,13 +88,13 @@ public record RaevyxRiderController(Raevyx wyvern) {
         wyvern.yBodyRot = newYaw;
         wyvern.yHeadRot = newYaw;
 
-        // Pitch control
-        if (flying) {
-            float targetPitch = Mth.clamp(player.getXRot() * 0.9f, -90.0f, 90.0f);
-            wyvern.setXRot(targetPitch);
-        } else {
+        // Pitch control - DON'T set entity xRot when flying
+        // Visual pitch is handled by velocity-based flightPitchRad in tickPitchingLogic()
+        // Only reset pitch when on ground
+        if (!flying) {
             wyvern.setXRot(0.0F);
         }
+        // When flying, xRot stays at 0 - visual pitch comes from the model's applyFlightPitch()
 
         // Extra safety: if we just touched ground, ensure rider has no fall damage
         if (wyvern.onGround()) {
@@ -147,8 +147,9 @@ public record RaevyxRiderController(Raevyx wyvern) {
             boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
 
             // Calculate world-space direction from player input
+            // Use PLAYER's pitch for 3D flight direction, not wyvern's (which is 0 for visual reasons)
             float yawRad = (float) Math.toRadians(wyvern.getYRot());
-            float pitchRad = (float) Math.toRadians(wyvern.getXRot());
+            float pitchRad = (float) Math.toRadians(player.getXRot());  // Player camera pitch
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
             double forwardY = -Math.sin(pitchRad);

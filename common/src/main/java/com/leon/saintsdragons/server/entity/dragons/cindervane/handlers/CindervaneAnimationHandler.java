@@ -99,11 +99,15 @@ public class CindervaneAnimationHandler {
                     state.setAndContinue(LANDING);
                     return PlayState.CONTINUE;
                 }
-                // GLIDE_DOWN - third priority, absolute lock (nothing overrides diving)
-                else if (dragon.getXRot() > 15.0f && !dragon.isRiderLandingBlendActive()) {
-                    state.getController().transitionLength(6);
-                    state.setAndContinue(GLIDE_DOWN);
-                    return PlayState.CONTINUE;
+                // GLIDE_DOWN - third priority (diving past 30 degrees), absolute lock
+                // Note: pitch is negated, so looking down = negative pitch
+                else {
+                    float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
+                    if (pitchDegrees < -30.0f && !dragon.isRiderLandingBlendActive()) {
+                        state.getController().transitionLength(6);
+                        state.setAndContinue(GLIDE_DOWN);
+                        return PlayState.CONTINUE;
+                    }
                 }
 
                 // Mode 5: FLY_IDLE - stationary rider hover (physics controller detects via position tracking)
@@ -185,7 +189,9 @@ public class CindervaneAnimationHandler {
             }
 
             // Check if descending when being ridden (for GLIDE_DOWN animation)
-                boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && dragon.getXRot() > 15.0f;
+            // Note: pitch is negated, so looking down = negative pitch
+            float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
+            boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && pitchDegrees < -30.0f;
                 if (riderDescending) {
                     state.getController().transitionLength(6);
                     state.setAndContinue(GLIDE_DOWN);
@@ -241,60 +247,24 @@ public class CindervaneAnimationHandler {
         return PlayState.CONTINUE;
     }
 
+    /**
+     * DEPRECATED: Banking is now fully procedural via model bone rotations
+     * This controller is kept for compatibility but always returns STOP
+     */
     public PlayState bankingPredicate(AnimationState<Cindervane> state) {
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
-            state.setAndContinue(BANK_OFF);
-            return PlayState.CONTINUE;
-        }
-
-        // Stop banking during sleep transitions
-        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
-            return PlayState.STOP;
-        }
-
-        if (dragon.isInWater() || dragon.isInWaterOrBubble()) {
-            return PlayState.STOP;
-        }
-        state.getController().transitionLength(8); // Longer transitions for smoother banking
-        float smoothDir = dragon.getSmoothBankDirection();
-
-        if (smoothDir > 0.2f) {
-            state.setAndContinue(BANK_RIGHT);
-        } else if (smoothDir < -0.2f) {
-            state.setAndContinue(BANK_LEFT);
-        } else {
-            state.setAndContinue(BANK_OFF);
-        }
-        return PlayState.CONTINUE;
+        // Banking is handled procedurally in CindervaneModel.applyBankingRoll()
+        // No keyframed animations needed
+        return PlayState.STOP;
     }
 
+    /**
+     * DEPRECATED: Pitching is now fully procedural via model bone rotations
+     * This controller is kept for compatibility but always returns STOP
+     */
     public PlayState pitchingPredicate(AnimationState<Cindervane> state) {
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
-            state.setAndContinue(PITCH_OFF);
-            return PlayState.CONTINUE;
-        }
-
-        // Stop pitching during sleep transitions
-        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
-            return PlayState.STOP;
-        }
-
-        if (dragon.isInWater() || dragon.isInWaterOrBubble()) {
-            return PlayState.STOP;
-        }
-        state.getController().transitionLength(4);
-        int dir = dragon.getPitchDirection();
-
-        if (dir > 0) {
-            state.setAndContinue(PITCH_DOWN);
-        } else if (dir < 0) {
-            state.setAndContinue(PITCH_UP);
-        } else {
-            state.setAndContinue(PITCH_OFF);
-        }
-        return PlayState.CONTINUE;
+        // Pitching is handled procedurally in CindervaneModel.applyFlightPitch()
+        // No keyframed animations needed
+        return PlayState.STOP;
     }
 
     public void setupActionController(AnimationController<Cindervane> controller) {

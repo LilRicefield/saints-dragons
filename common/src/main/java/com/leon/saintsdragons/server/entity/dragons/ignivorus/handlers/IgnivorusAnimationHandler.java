@@ -152,10 +152,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 return PlayState.CONTINUE;
             }
 
-            // GLIDE_DOWN - only for RIDER diving (not AI flight)
+            // GLIDE_DOWN - only for RIDER diving past 30 degrees (not AI flight)
+            // Note: pitch is negated, so looking down = negative pitch
             // This prevents AI dragons from always playing glide_down
             // Also prevent glide_down when landing blend is active (rider is landing)
-            if (dragon.isVehicle() && dragon.getXRot() > 15.0f && !dragon.isRiderLandingBlendActive()) {
+            float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
+            if (dragon.isVehicle() && pitchDegrees < -30.0f && !dragon.isRiderLandingBlendActive()) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(GLIDE_DOWN);
                 return PlayState.CONTINUE;
@@ -216,58 +218,23 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     /**
-     * Banking animation based on turn direction
+     * DEPRECATED: Banking is now fully procedural via model bone rotations
+     * This controller is kept for compatibility but always returns STOP
      */
     public PlayState bankingPredicate(AnimationState<Ignivorus> state) {
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.banking_off"));
-            return PlayState.CONTINUE;
-        }
-
-        if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
-            return PlayState.STOP;
-        }
-
-        // Stop banking when taming stunned, controls are locked, or landing blend active
-        if (dragon.isTamingStunned() || dragon.areRiderControlsLocked() || dragon.isRiderLandingBlendActive()) {
-            return PlayState.STOP;
-        }
-
-        // Simple version - can expand later
-        state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.banking_off"));
-        return PlayState.CONTINUE;
+        // Banking is handled procedurally in IgnivorusModel.applyBankingRoll()
+        // No keyframed animations needed
+        return PlayState.STOP;
     }
 
     /**
-     * Pitching animation based on pitch direction
+     * DEPRECATED: Pitching is now fully procedural via model bone rotations
+     * This controller is kept for compatibility but always returns STOP
      */
     public PlayState pitchingPredicate(AnimationState<Ignivorus> state) {
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.pitching_off"));
-            return PlayState.CONTINUE;
-        }
-
-        if (dragon.isDying() || dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
-            return PlayState.STOP;
-        }
-
-        // Stop pitching when taming stunned, controls are locked, or landing blend active
-        if (dragon.isTamingStunned() || dragon.areRiderControlsLocked() || dragon.isRiderLandingBlendActive()) {
-            return PlayState.STOP;
-        }
-
-        double pitchDir = dragon.getPitchDirection();
-
-        if (pitchDir > 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.pitching_down"));
-        } else if (pitchDir < 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.pitching_up"));
-        } else {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.ignivorus.pitching_off"));
-        }
-        return PlayState.CONTINUE;
+        // Pitching is handled procedurally in IgnivorusModel.applyFlightPitch()
+        // No keyframed animations needed
+        return PlayState.STOP;
     }
 
     /**

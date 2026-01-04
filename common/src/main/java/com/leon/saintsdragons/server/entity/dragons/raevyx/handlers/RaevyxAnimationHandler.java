@@ -234,8 +234,10 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            // Special case: GLIDE_DOWN for ridden dragons pitching down
-            if (wyvern.isVehicle() && wyvern.getXRot() > 25.0f && !wyvern.isRiderLandingBlendActive()) {
+            // Special case: GLIDE_DOWN for ridden dragons pitching down past 30 degrees
+            // Note: pitch is negated, so looking down = negative pitch
+            float pitchDegrees = (float)Math.toDegrees(wyvern.getFlightPitchRadians(state.getPartialTick()));
+            if (wyvern.isVehicle() && pitchDegrees < -30.0f && !wyvern.isRiderLandingBlendActive()) {
                 RawAnimation descend = GLIDE_DOWN;
                 if (currentFlightAnimation != descend) {
                     state.getController().transitionLength(6);
@@ -394,65 +396,23 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     // ===== ANIMATION PREDICATES =====
 
     /**
-     * Handles banking animation based on bank direction
-     * Disabled when in water - swimming has its own movement animations
+     * DEPRECATED: Banking is now fully procedural via model bone rotations
+     * This controller is kept for compatibility but always returns STOP
      */
     public PlayState bankingPredicate(AnimationState<Raevyx> state) {
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_off"));
-            return PlayState.CONTINUE;
-        }
-
-        // Stop banking during sleep transitions, taming stun, or when controls are locked
-        if (wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()
-                || wyvern.isTamingStunned() || wyvern.areRiderControlsLocked()) {
-            return PlayState.STOP;
-        }
-
-        // Disable banking when in water
-        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
-        if (inWater) {
-            return PlayState.STOP;
-        }
-
-        state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.banking_off"));
-        return PlayState.CONTINUE;
+        // Banking is handled procedurally in RaevyxModel.applyBankingRoll()
+        // No keyframed animations needed
+        return PlayState.STOP;
     }
 
     /**
-     * Handles pitching animation based on pitch direction
-     * Disabled when in water - swimming has its own movement animations
+     * DEPRECATED: Pitching is now fully procedural via model bone rotations
+     * This controller is kept for compatibility but always returns STOP
      */
     public PlayState pitchingPredicate(AnimationState<Raevyx> state) {
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.pitching_off"));
-            return PlayState.CONTINUE;
-        }
-
-        // Stop pitching during sleep transitions, taming stun, or when controls are locked
-        if (wyvern.isSleeping() || wyvern.isSleepingEntering() || wyvern.isSleepingExiting()
-                || wyvern.isTamingStunned() || wyvern.areRiderControlsLocked()) {
-            return PlayState.STOP;
-        }
-
-        // Disable pitching when in water
-        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
-        if (inWater) {
-            return PlayState.STOP;
-        }
-
-        double pitchDir = wyvern.getPitchDirection();
-
-        if (pitchDir > 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.pitching_down"));
-        } else if (pitchDir < 0) {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.pitching_up"));
-        } else {
-            state.setAndContinue(RawAnimation.begin().thenLoop("animation.raevyx.pitching_off"));
-        }
-        return PlayState.CONTINUE;
+        // Pitching is handled procedurally in RaevyxModel.applyFlightPitch()
+        // No keyframed animations needed
+        return PlayState.STOP;
     }
 
 }

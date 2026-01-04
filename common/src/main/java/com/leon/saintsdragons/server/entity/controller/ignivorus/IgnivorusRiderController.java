@@ -74,12 +74,13 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         dragon.yBodyRot = newYaw;
         dragon.yHeadRot = newYaw;
 
-        if (flying) {
-            float targetPitch = Mth.clamp(player.getXRot() * 0.8f, -90.0f, 90.0f);
-            dragon.setXRot(targetPitch);
-        } else {
+        // Pitch control - DON'T set entity xRot when flying
+        // Visual pitch is handled by velocity-based flightPitchRad in tickPitchingLogic()
+        // Only reset pitch when on ground
+        if (!flying) {
             dragon.setXRot(0.0F);
         }
+        // When flying, xRot stays at 0 - visual pitch comes from the model's applyFlightPitch()
 
         // Landing logic for riders
         if (flying && !dragon.isTakeoff()) {
@@ -179,8 +180,10 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             double strafeInput = motion.x;
             boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
 
+            // Calculate world-space direction from player input
+            // Use PLAYER's pitch for 3D flight direction, not dragon's (which is 0 for visual reasons)
             float yawRad = (float) Math.toRadians(dragon.getYRot());
-            float pitchRad = (float) Math.toRadians(dragon.getXRot());
+            float pitchRad = (float) Math.toRadians(player.getXRot());  // Player camera pitch
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
             double forwardY = -Math.sin(pitchRad);

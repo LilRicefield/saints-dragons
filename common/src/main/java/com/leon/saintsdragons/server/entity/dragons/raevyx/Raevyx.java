@@ -376,19 +376,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public int landingTimer = 0;
     public int landedTimer = 0;
     int runningTicks = 0;
-    // Banking smoothing state
+    // Banking smoothing state (procedural - no animation controllers needed)
     private float bankSmoothedYaw = 0f;
-    private int bankHoldTicks = 0;
-    private int bankDir = 0; // -1 left, 0 none, 1 right
     private float bankAngle = 0f;
     private float prevBankAngle = 0f;
 
-    // Pitching smoothing state
-    private float pitchSmoothedPitch = 0f;
-    private int pitchHoldTicks = 0;
-    private int pitchDir = 0; // -1 down, 0 none, 1 up
+    // Pitching smoothing state (procedural - no animation controllers needed)
+    private float pitchSmoothedPitch = 0f; // Used for AI pitch detection only
     private float flightPitchRad = 0f;
     private float prevFlightPitchRad = 0f;
+    private float smoothedPlayerPitchRad = 0f; // Input smoothing for rider camera pitch (like bankSmoothedYaw)
 
     // Dodge system
     private static final double DODGE_HORIZONTAL_DRAG = 0.92D;
@@ -2883,13 +2880,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // Reset banking when in water, not flying, or when controls are locked - instant snap back
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
         if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
-            if (bankDir != 0 || bankAngle != 0f || bankSmoothedYaw != 0f) {
-                bankDir = 0;
-                bankSmoothedYaw = 0f;
-                bankHoldTicks = 0;
-                bankAngle = 0f;
-                prevBankAngle = 0f;
-            }
+            bankSmoothedYaw = 0f;
+            bankAngle = 0f;
+            prevBankAngle = 0f;
             return;
         }
 
@@ -2904,28 +2897,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (Math.abs(bankAngle) < 0.01f) {
             bankAngle = 0f;
         }
-
-        // Update coarse direction for animation fallbacks / sound hooks
-        float enter = 10.0f;
-        float exit = 4.0f;
-
-        int desiredDir = bankDir;
-        if (bankAngle > enter) desiredDir = 1;
-        else if (bankAngle < -enter) desiredDir = -1;
-        else if (Math.abs(bankAngle) < exit) desiredDir = 0;  // banking_off when flying straight
-
-        if (desiredDir != bankDir) {
-            // If transitioning to "off" (0), use very short hold time for instant reset
-            int holdTime = (desiredDir == 0) ? 1 : 2;
-            if (bankHoldTicks >= holdTime) {
-                bankDir = desiredDir;
-                bankHoldTicks = 0;
-            } else {
-                bankHoldTicks++;
-            }
-        } else {
-            bankHoldTicks = Math.min(bankHoldTicks + 1, 10);  // Reduced max from 20 to 10
-        }
+        // Banking is now fully procedural - no need for animation controller directions
     }
     
     private void tickRiderLandingBlendTimer() {
@@ -3005,27 +2977,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         tickRiderLandingBlendTimer();
         prevFlightPitchRad = flightPitchRad;
         if (level().isClientSide) {
-            float syncedPitch = this.entityData.get(DATA_FLIGHT_PITCH);
-            if (Math.abs(syncedPitch) <= 1.0E-4f && isFlying()) {
-                Vec3 velocity = getDeltaMovement();
-                double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-                if (horizontalSpeed > 0.01 || Math.abs(velocity.y) > 0.01) {
-                    syncedPitch = (float)Math.atan2(velocity.y, horizontalSpeed);
-                    syncedPitch = Mth.clamp(syncedPitch, -Mth.HALF_PI, Mth.HALF_PI);
-                }
-            }
-            flightPitchRad = syncedPitch;
+            // Client: Just use synced pitch from server (calculated in server logic below)
+            flightPitchRad = this.entityData.get(DATA_FLIGHT_PITCH);
             return;
         }
         // Reset pitching when in water, not flying, or when controls are locked - INSTANT reset
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
         if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
-            if (pitchDir != 0) {
-                pitchDir = 0;
-                pitchSmoothedPitch = 0f;
-                pitchHoldTicks = 0;
-            }
+            pitchSmoothedPitch = 0f;
             flightPitchRad = 0f;
+            smoothedPlayerPitchRad = 0f; // Reset input smoothing
             this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
             return;
         }
@@ -3033,73 +2994,51 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         Vec3 velocity = getDeltaMovement();
         double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         float targetPitchRad = 0f;
+
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            // RIDING: Use player camera for visual pitch WHEN MOVING
             float riderForward = player.zza;
             float riderStrafe = player.xxa;
-            if (Math.abs(riderForward) < 0.01f && Math.abs(riderStrafe) < 0.01f) {
+            boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+
+            if (hasMovementInput) {
+                // Player is pressing WASD → use camera pitch for visuals
+                // Negate because Minecraft xRot is positive=down, but we want dragon to pitch up when looking up
+                float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
+
+                // Exponential smoothing on player pitch input to avoid jitter (matches banking system)
+                smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
+
+                targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+            } else {
+                // Hovering (no WASD) → pitch = 0, even if ascending/descending with Spacebar/L-Alt
+                smoothedPlayerPitchRad = 0f; // Reset smoothing when not moving
                 targetPitchRad = 0f;
-            } else if (horizontalSpeed > 0.01 || Math.abs(velocity.y) > 0.01) {
+            }
+        } else {
+            // NOT RIDING (AI): Use velocity-based pitch
+            if (horizontalSpeed > 0.15) {
                 targetPitchRad = (float)Math.atan2(velocity.y, horizontalSpeed);
                 targetPitchRad = Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-                if (horizontalSpeed < 0.35) {
-                    float pitchScale = (float)Mth.clamp(horizontalSpeed / 0.35, 0.0, 1.0);
-                    targetPitchRad *= pitchScale;
-                }
-            }
-        } else if (horizontalSpeed > 0.01 || Math.abs(velocity.y) > 0.01) {
-            targetPitchRad = (float)Math.atan2(velocity.y, horizontalSpeed);
-            targetPitchRad = Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-            if (horizontalSpeed < 0.35) {
-                float pitchScale = (float)Mth.clamp(horizontalSpeed / 0.35, 0.0, 1.0);
-                targetPitchRad *= pitchScale;
             }
         }
-        flightPitchRad = Mth.lerp(0.6f, flightPitchRad, targetPitchRad);
+        // Smooth pitch transitions (matches banking lerp speed for consistent feel)
+        // Banking uses 0.40f, we use slightly slower 0.35f for more graceful pitch changes
+        // NOTE: Input is already smoothed above, so this is the second level of smoothing
+        flightPitchRad = Mth.lerp(0.35f, flightPitchRad, targetPitchRad);
         if (Math.abs(flightPitchRad) < 0.001f) {
             flightPitchRad = 0f;
         }
         this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
 
-        int desiredDir = pitchDir;
-
-        if (this.isVehicle() && this.getControllingPassenger() instanceof Player) {
-            // Riding: Space/L-Alt should not drive pitch animations (mouse handles pitch)
-            desiredDir = 0;
-            if (isGoingDown()) {
-                double altitude = getAltitudeAboveTerrain();
-                // Trigger landing blend when descending below threshold altitude
-                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
-                    // Trigger landing blend immediately when below altitude threshold
-                    desiredDir = 0; // Stop pitching down
-                    triggerRiderLandingBlend();
-                }
+        // Trigger landing blend when descending close to ground while ridden
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player && isGoingDown()) {
+            double altitude = getAltitudeAboveTerrain();
+            if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
+                triggerRiderLandingBlend();
             }
-        } else {
-            float pitchChange = getXRot() - xRotO;
-            pitchSmoothedPitch = pitchSmoothedPitch * 0.85f + pitchChange * 0.15f;
-
-            // Hysteresis thresholds - tighter for more responsive straight flight
-            float enter = 3.0f;
-            float exit = 3.0f;
-
-            if (pitchSmoothedPitch > enter) desiredDir = 1;
-            else if (pitchSmoothedPitch < -enter) desiredDir = -1;
-            else if (Math.abs(pitchSmoothedPitch) < exit) desiredDir = 0;  // pitching_off when flying straight
         }
-
-        // Faster reset to off state (reduced hold time)
-        if (desiredDir != pitchDir) {
-            // If transitioning to "off" (0), use shorter hold time for faster reset
-            int holdTime = (desiredDir == 0) ? 1 : 2;
-            if (pitchHoldTicks >= holdTime) {
-                pitchDir = desiredDir;
-                pitchHoldTicks = 0;
-            } else {
-                pitchHoldTicks++;
-            }
-        } else {
-            pitchHoldTicks = Math.min(pitchHoldTicks + 1, 20);
-        }
+        // Pitching is now fully procedural - no need for animation controller directions
     }
 
     @Override
@@ -3681,9 +3620,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
     public float getFlightPitchRadians(float partialTick) {
         return Mth.lerp(partialTick, prevFlightPitchRad, flightPitchRad);
-    }
-    public int getPitchDirection() {
-        return pitchDir;
     }
 
     // ===== SUPERCHARGE (Summon Storm) =====
