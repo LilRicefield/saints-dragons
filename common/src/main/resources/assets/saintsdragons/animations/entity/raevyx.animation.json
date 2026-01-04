@@ -7716,7 +7716,7 @@
 			"bones": {
 				"root": {
 					"rotation": {
-						"vector": [40, 0, 0]
+						"vector": [0, 0, 0]
 					}
 				}
 			}
