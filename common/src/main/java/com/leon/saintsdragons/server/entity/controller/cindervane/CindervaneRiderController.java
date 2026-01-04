@@ -148,20 +148,50 @@ public record CindervaneRiderController(Cindervane dragon) {
             // === SETUP ===
             final double baseSpeed = dragon.getAttributeValue(Attributes.FLYING_SPEED);
             final boolean sprinting = dragon.isAccelerating();
-            final double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
+            double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
+
+            // Current velocity
+            Vec3 currentVel = dragon.getDeltaMovement();
+
+            // === DIVE SPEED BOOST ===
+            // Progressive speed boost when diving steeply (like real birds)
+            // NOTE: Minecraft xRot is POSITIVE when looking down (90° = straight down)
+            float pitchRad = (float) Math.toRadians(player.getXRot());  // Player camera pitch
+            float pitchDegrees = (float) Math.toDegrees(pitchRad);
+            double diveMultiplier = 1.0;
+            double diveAcceleration = ACCELERATION; // Default 0.15
+            double diveDrag = DRAG_WITH_INPUT; // Default 0.08
+
+            if (pitchDegrees >= 60.0f) {
+                // Steep dive (60° to 90°): 1.3x to 1.5x speed
+                float t = (pitchDegrees - 60.0f) / 30.0f; // 0 at 60°, 1 at 90°
+                t = Mth.clamp(t, 0.0f, 1.0f);
+                diveMultiplier = 1.3 + (t * 0.2);
+                // Moderately faster acceleration and reduced drag
+                diveAcceleration = 0.20;
+                diveDrag = 0.05;
+            } else if (pitchDegrees >= 45.0f) {
+                // Medium dive (45° to 60°): 1.15x to 1.3x speed
+                float t = (pitchDegrees - 45.0f) / 15.0f; // 0 at 45°, 1 at 60°
+                t = Mth.clamp(t, 0.0f, 1.0f);
+                diveMultiplier = 1.15 + (t * 0.15);
+                // Slightly faster acceleration and slightly less drag
+                diveAcceleration = 0.18;
+                diveDrag = 0.06;
+            }
+            // Below 45°: no dive boost (diveMultiplier = 1.0)
+
+            targetSpeed *= diveMultiplier;
 
             // Get inputs (local space: motion.x = strafe, motion.z = forward)
             double forwardInput = motion.z;
             double strafeInput = motion.x;
 
-            // Current velocity
-            Vec3 currentVel = dragon.getDeltaMovement();
-
             // === DIRECTIONAL CONTROL ===
             // Calculate world-space direction from player input
             // Use PLAYER's pitch for 3D flight direction, not dragon's (which is 0 for visual reasons)
             float yawRad = (float) Math.toRadians(dragon.getYRot());
-            float pitchRad = (float) Math.toRadians(player.getXRot());  // Player camera pitch
+            // pitchRad already calculated above for dive speed
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
             double forwardY = -Math.sin(pitchRad);
@@ -192,15 +222,15 @@ public record CindervaneRiderController(Cindervane dragon) {
                     targetDirZ * targetSpeed
                 );
 
-                // Lerp current velocity toward target (acceleration)
+                // Lerp current velocity toward target (acceleration - faster when diving)
                 newVelocity = new Vec3(
-                    Mth.lerp(ACCELERATION, currentVel.x, targetVelocity.x),
-                    Mth.lerp(ACCELERATION, currentVel.y, targetVelocity.y),
-                    Mth.lerp(ACCELERATION, currentVel.z, targetVelocity.z)
+                    Mth.lerp(diveAcceleration, currentVel.x, targetVelocity.x),
+                    Mth.lerp(diveAcceleration, currentVel.y, targetVelocity.y),
+                    Mth.lerp(diveAcceleration, currentVel.z, targetVelocity.z)
                 );
 
-                // Apply gentle drag
-                newVelocity = newVelocity.scale(1.0 - DRAG_WITH_INPUT);
+                // Apply drag (reduced when diving for higher top speed)
+                newVelocity = newVelocity.scale(1.0 - diveDrag);
 
             } else {
                 // === COASTING: strong braking for immediate stop ===
@@ -221,22 +251,29 @@ public record CindervaneRiderController(Cindervane dragon) {
             // === VERTICAL MOVEMENT (dive acceleration, no gravity) ===
             double newVerticalVel = newVelocity.y;
 
-            // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
-            if (dragon.getRiderTakeoffTicks() > 0) {
-                // During automated takeoff, apply a firm upward shove so climb begins immediately
-                // and stays smooth even if the rider isn't pitching/pressing anything yet.
-                double boost = ASCEND_THRUST * 0.85;
-                newVerticalVel = Math.max(newVerticalVel + boost, 0.45);
-            } else if (dragon.isGoingUp()) {
-                // Apply upward thrust
-                newVerticalVel += ASCEND_THRUST;
-            } else if (dragon.isGoingDown()) {
-                // Apply downward thrust - DIVES ACCELERATE!
-                newVerticalVel -= DESCEND_THRUST;
-            }
+            // When diving (pitch >= 45°), use the physics-calculated velocity - don't override!
+            // This allows dive speed boost to work properly
+            boolean isDiving = pitchDegrees >= 45.0f && hasInput;
 
-            // Clamp to terminal velocity during dives
-            newVerticalVel = Mth.clamp(newVerticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
+            if (!isDiving) {
+                // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
+                if (dragon.getRiderTakeoffTicks() > 0) {
+                    // During automated takeoff, apply a firm upward shove so climb begins immediately
+                    // and stays smooth even if the rider isn't pitching/pressing anything yet.
+                    double boost = ASCEND_THRUST * 0.85;
+                    newVerticalVel = Math.max(newVerticalVel + boost, 0.45);
+                } else if (dragon.isGoingUp()) {
+                    // Apply upward thrust
+                    newVerticalVel += ASCEND_THRUST;
+                } else if (dragon.isGoingDown()) {
+                    // Apply downward thrust - DIVES ACCELERATE!
+                    newVerticalVel -= DESCEND_THRUST;
+                }
+
+                // Clamp to terminal velocity (only when not diving)
+                newVerticalVel = Mth.clamp(newVerticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
+            }
+            // When diving, vertical velocity is already calculated by physics above - no override needed!
 
             // === FINAL VELOCITY & MOVEMENT ===
             Vec3 finalVelocity = new Vec3(newVelocity.x, newVerticalVel, newVelocity.z);

@@ -138,10 +138,40 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // === SETUP ===
             final double baseSpeed = wyvern.getAttributeValue(Attributes.FLYING_SPEED);
             final boolean sprinting = wyvern.isAccelerating();
-            final double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
+            double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
 
             // Get current velocity (split horizontal and vertical for independent control)
             Vec3 currentVelocity = wyvern.getDeltaMovement();
+
+            // === DIVE SPEED BOOST ===
+            // Progressive speed boost when diving steeply (like real birds)
+            // NOTE: Minecraft xRot is POSITIVE when looking down (90° = straight down)
+            float pitchRad = getEffectivePitchRadians(player);
+            float pitchDegrees = (float) Math.toDegrees(pitchRad);
+            double diveMultiplier = 1.0;
+            double diveAcceleration = ACCELERATION; // Default 0.15
+            double diveDrag = DRAG_WITH_INPUT; // Default 0.08
+
+            if (pitchDegrees >= 60.0f) {
+                // Steep dive (60° to 90°): 1.3x to 1.5x speed
+                float t = (pitchDegrees - 60.0f) / 30.0f; // 0 at 60°, 1 at 90°
+                t = Mth.clamp(t, 0.0f, 1.0f);
+                diveMultiplier = 1.3 + (t * 0.2);
+                // Moderately faster acceleration and reduced drag
+                diveAcceleration = 0.20;
+                diveDrag = 0.05;
+            } else if (pitchDegrees >= 45.0f) {
+                // Medium dive (45° to 60°): 1.15x to 1.3x speed
+                float t = (pitchDegrees - 45.0f) / 15.0f; // 0 at 45°, 1 at 60°
+                t = Mth.clamp(t, 0.0f, 1.0f);
+                diveMultiplier = 1.15 + (t * 0.15);
+                // Slightly faster acceleration and slightly less drag
+                diveAcceleration = 0.18;
+                diveDrag = 0.06;
+            }
+            // Below 45°: no dive boost (diveMultiplier = 1.0)
+
+            targetSpeed *= diveMultiplier;
 
             // === INPUT PROCESSING ===
             double forwardInput = motion.z;   // W/S keys (-1 to 1)
@@ -151,7 +181,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // Calculate world-space direction from player input
             // Use PLAYER's pitch for 3D flight direction, not wyvern's (which is 0 for visual reasons)
             float yawRad = (float) Math.toRadians(wyvern.getYRot());
-            float pitchRad = getEffectivePitchRadians(player);
+            // pitchRad already calculated above for dive speed
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
             double forwardY = -Math.sin(pitchRad);
@@ -181,15 +211,15 @@ public record RaevyxRiderController(Raevyx wyvern) {
                     targetDirZ * targetSpeed
                 );
 
-                // Smoothly accelerate toward target velocity
+                // Smoothly accelerate toward target velocity (faster when diving)
                 newVelocity = new Vec3(
-                    Mth.lerp(ACCELERATION, currentVelocity.x, targetVelocity.x),
-                    Mth.lerp(ACCELERATION, currentVelocity.y, targetVelocity.y),
-                    Mth.lerp(ACCELERATION, currentVelocity.z, targetVelocity.z)
+                    Mth.lerp(diveAcceleration, currentVelocity.x, targetVelocity.x),
+                    Mth.lerp(diveAcceleration, currentVelocity.y, targetVelocity.y),
+                    Mth.lerp(diveAcceleration, currentVelocity.z, targetVelocity.z)
                 );
 
-                // Apply gentle drag for smooth cruising
-                newVelocity = newVelocity.scale(1.0 - DRAG_WITH_INPUT);
+                // Apply drag (reduced when diving for higher top speed)
+                newVelocity = newVelocity.scale(1.0 - diveDrag);
 
             } else {
                 // === COASTING (player released keys) ===
@@ -205,21 +235,28 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // === VERTICAL MOVEMENT (ascend/descend overrides) ===
             double verticalVel = newVelocity.y;
 
-            // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
-            if (wyvern.getRiderTakeoffTicks() > 0) {
-                // During automated takeoff, apply upward thrust matching normal ascent
-                // to ensure smooth transition when boost window ends
-                verticalVel += ASCEND_THRUST;
-            } else if (wyvern.isGoingUp()) {
-                // Apply upward thrust
-                verticalVel += ASCEND_THRUST;
-            } else if (wyvern.isGoingDown()) {
-                // Apply downward thrust - DIVES ACCELERATE!
-                verticalVel -= DESCEND_THRUST;
-            }
+            // When diving (pitch >= 45°), use the physics-calculated velocity - don't override!
+            // This allows dive speed boost to work properly
+            boolean isDiving = pitchDegrees >= 45.0f && hasInput;
 
-            // Clamp to terminal velocity during dives
-            verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
+            if (!isDiving) {
+                // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
+                if (wyvern.getRiderTakeoffTicks() > 0) {
+                    // During automated takeoff, apply upward thrust matching normal ascent
+                    // to ensure smooth transition when boost window ends
+                    verticalVel += ASCEND_THRUST;
+                } else if (wyvern.isGoingUp()) {
+                    // Apply upward thrust
+                    verticalVel += ASCEND_THRUST;
+                } else if (wyvern.isGoingDown()) {
+                    // Apply downward thrust - DIVES ACCELERATE!
+                    verticalVel -= DESCEND_THRUST;
+                }
+
+                // Clamp to terminal velocity (only when not diving)
+                verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
+            }
+            // When diving, vertical velocity is already calculated by physics above - no override needed!
 
             // === APPLY MOVEMENT ===
             Vec3 finalVelocity = new Vec3(newVelocity.x, verticalVel, newVelocity.z);

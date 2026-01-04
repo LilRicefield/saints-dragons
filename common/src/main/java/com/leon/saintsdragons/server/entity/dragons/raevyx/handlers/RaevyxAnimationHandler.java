@@ -237,7 +237,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             // Special case: GLIDE_DOWN for ridden dragons pitching down past 30 degrees
             // Note: pitch is negated, so looking down = negative pitch
             float pitchDegrees = (float)Math.toDegrees(wyvern.getFlightPitchRadians(state.getPartialTick()));
-            if (wyvern.isVehicle() && pitchDegrees < -30.0f && !wyvern.isRiderLandingBlendActive()) {
+            if (wyvern.isVehicle() && pitchDegrees < -10.0f && !wyvern.isRiderLandingBlendActive()) {
                 RawAnimation descend = GLIDE_DOWN;
                 if (currentFlightAnimation != descend) {
                     state.getController().transitionLength(6);

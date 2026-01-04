@@ -157,7 +157,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             // This prevents AI dragons from always playing glide_down
             // Also prevent glide_down when landing blend is active (rider is landing)
             float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
-            if (dragon.isVehicle() && pitchDegrees < -30.0f && !dragon.isRiderLandingBlendActive()) {
+            if (dragon.isVehicle() && pitchDegrees < -10.0f && !dragon.isRiderLandingBlendActive()) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(GLIDE_DOWN);
                 return PlayState.CONTINUE;

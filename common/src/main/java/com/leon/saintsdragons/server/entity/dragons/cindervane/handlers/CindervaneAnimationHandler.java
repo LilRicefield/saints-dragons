@@ -191,7 +191,7 @@ public class CindervaneAnimationHandler {
             // Check if descending when being ridden (for GLIDE_DOWN animation)
             // Note: pitch is negated, so looking down = negative pitch
             float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
-            boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && pitchDegrees < -30.0f;
+            boolean riderDescending = dragon.isVehicle() && dragon.getControllingPassenger() != null && pitchDegrees < -10.0f;
                 if (riderDescending) {
                     state.getController().transitionLength(6);
                     state.setAndContinue(GLIDE_DOWN);
