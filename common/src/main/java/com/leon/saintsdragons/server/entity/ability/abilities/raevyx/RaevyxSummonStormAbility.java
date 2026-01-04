@@ -19,13 +19,13 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private static final int SUPERCHARGE_TICKS = 20 * 60; // 60s (1 minute)
     private static final int COOLDOWN_TICKS = 20 * 240; // 240s
-    private static final int GROUND_START_TICKS = 38; // 1.88s animation.raevyx.summon_storm_ground_start
-    private static final int GROUND_LOOP_TICKS = 114; // 5.71s animation.raevyx.summon_storm_ground
-    private static final int GROUND_END_TICKS = 38; // 1.88s animation.raevyx.summon_storm_ground_end
+    private static final int GROUND_START_TICKS = 29; // 1.4583s animation.raevyx.summon_storm_ground_start
+    private static final int GROUND_LOOP_TICKS = 83; // 4.1667s animation.raevyx.summon_storm_ground
+    private static final int GROUND_END_TICKS = 29; // 1.4583s animation.raevyx.summon_storm_ground_end
     private static final int GROUND_TOTAL_SEQUENCE_TICKS = GROUND_START_TICKS + GROUND_LOOP_TICKS + GROUND_END_TICKS;
-    private static final int AIR_START_TICKS = 38; // 1.88s animation.raevyx.summon_storm_air_start
-    private static final int AIR_LOOP_TICKS = 114; // 5.71s animation.raevyx.summon_storm_air
-    private static final int AIR_END_TICKS = 38; // 1.88s animation.raevyx.summon_storm_air_end
+    private static final int AIR_START_TICKS = 29; // 1.4583s animation.raevyx.summon_storm_air_start
+    private static final int AIR_LOOP_TICKS = 83; // 4.1667s animation.raevyx.summon_storm_air
+    private static final int AIR_END_TICKS = 29; // 1.4583s animation.raevyx.summon_storm_air_end
     private static final int AIR_TOTAL_SEQUENCE_TICKS = AIR_START_TICKS + AIR_LOOP_TICKS + AIR_END_TICKS;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {

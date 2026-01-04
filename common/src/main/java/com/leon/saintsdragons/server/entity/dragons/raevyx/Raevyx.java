@@ -1685,7 +1685,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             }
         }
 
-        final int DASH_DURATION = 25; // 1.25 seconds
+        final int DASH_DURATION = 20;
         final int DASH_COOLDOWN = 40; // 2 seconds
         final double DASH_DISTANCE = 25; // blocks
 
@@ -1791,9 +1791,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         // Dash constants
-        final int DASH_DURATION = 25; // 1.25 seconds
+        final int DASH_DURATION = 20;
         final int DASH_COOLDOWN = 40; // 2 seconds
-        final double DASH_DISTANCE = 25; // blocks
+        final double DASH_DISTANCE = 30; // blocks
 
         // Get forward vector (direction dragon is facing)
         float yawRad = (float) Math.toRadians(this.getYRot());
@@ -4138,7 +4138,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Raevyx> movementController =
-                new AnimationController<>(this, "movement", 5, animationHandler::handleMovementAnimation);
+                new AnimationController<>(this, "movement", 8, animationHandler::handleMovementAnimation);
         AnimationController<Raevyx> actionController =
                 new AnimationController<>(this, "action", 2, state -> {
                     if (isTamingStunned()) {

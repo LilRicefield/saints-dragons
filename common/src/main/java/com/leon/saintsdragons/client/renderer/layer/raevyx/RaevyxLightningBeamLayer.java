@@ -26,20 +26,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     // Core textures: inner (crisp) + outer (soft)
     private static final ResourceLocation INNER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/lightning_beam_inner.png");
     private static final ResourceLocation OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/lightning_beam_outer.png");
-    private static final ResourceLocation FEMALE_INNER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/female_lightning_beam_inner.png");
-    private static final ResourceLocation FEMALE_OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/female_lightning_beam_outer.png");
-    private static final ResourceLocation[] MALE_STORM_FRAMES = buildStormFrames("lightning_storm_", 8);
-    // Female export only shipped a subset of frames, so build a looping sequence that reuses what exists.
-    private static final ResourceLocation[] FEMALE_STORM_SEQUENCE = new ResourceLocation[]{
-            particle("female_lightning_storm_0"),
-            particle("female_lightning_storm_3"),
-            particle("female_lightning_storm_5"),
-            particle("female_lightning_storm_6"),
-            particle("female_lightning_storm_7"),
-            particle("female_lightning_storm_6"),
-            particle("female_lightning_storm_5"),
-            particle("female_lightning_storm_3")
-    };
+    private static final ResourceLocation[] STORM_FRAMES = buildStormFrames("lightning_storm_", 8);
     // Beam tuning constants - adjust these to change beam appearance
     private static final float BASE_BEAM_WIDTH = 0.45F;        // Base width of the beam
     private static final float OUTER_BEAM_BONUS = 0.15F;      // Extra width for outer glow layer
@@ -179,11 +166,9 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         float scaledWidth = Math.max(0.001f, BASE_BEAM_WIDTH * (0.75f + 0.25f * visScale));
 
         // Render inner beam
-        ResourceLocation innerTex = animatable.isFemale() ? FEMALE_INNER_TEX : INNER_TEX;
-        ResourceLocation outerTex = animatable.isFemale() ? FEMALE_OUTER_TEX : OUTER_TEX;
-        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, true, innerTex);
+        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, true, INNER_TEX);
         // Render outer beam
-        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, false, outerTex);
+        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, false, OUTER_TEX);
         renderLightningStormLayer(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, visScale);
 
         poseStack.popPose();
@@ -330,12 +315,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
     private static ResourceLocation getStormFrameTexture(Raevyx entity, float partialTicks) {
         float ticks = (entity.tickCount + partialTicks) / LIGHTNING_FRAME_INTERVAL_TICKS;
-        if (entity.isFemale()) {
-            int idx = (int) (ticks % FEMALE_STORM_SEQUENCE.length);
-            return FEMALE_STORM_SEQUENCE[idx];
-        }
-        int idx = (int) (ticks % MALE_STORM_FRAMES.length);
-        return MALE_STORM_FRAMES[idx];
+        int idx = (int) (ticks % STORM_FRAMES.length);
+        return STORM_FRAMES[idx];
     }
 
     private void renderLightningPlane(VertexConsumer consumer, Matrix4f poseMatrix, Matrix3f normalMatrix,
