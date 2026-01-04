@@ -3015,6 +3015,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 smoothedPlayerPitchRad = 0f; // Reset smoothing when not moving
                 targetPitchRad = 0f;
             }
+
+            boolean wantsLanding = isGoingDown() || player.getXRot() > 30.0f;
+            if (wantsLanding) {
+                double altitude = getAltitudeAboveTerrain();
+                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
+                    float landingPitchRad = (float) -Math.toRadians(35.0f);
+                    targetPitchRad = Math.min(targetPitchRad, landingPitchRad);
+                }
+            }
         } else {
             // NOT RIDING (AI): Use velocity-based pitch
             if (horizontalSpeed > 0.15) {
@@ -3032,10 +3041,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
 
         // Trigger landing blend when descending close to ground while ridden
-        if (this.isVehicle() && this.getControllingPassenger() instanceof Player && isGoingDown()) {
-            double altitude = getAltitudeAboveTerrain();
-            if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
-                triggerRiderLandingBlend();
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            boolean wantsLanding = isGoingDown() || player.getXRot() > 30.0f;
+            if (wantsLanding) {
+                double altitude = getAltitudeAboveTerrain();
+                if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
+                    triggerRiderLandingBlend();
+                }
             }
         }
         // Pitching is now fully procedural - no need for animation controller directions
