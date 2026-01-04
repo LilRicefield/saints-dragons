@@ -74,9 +74,8 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         dragon.yBodyRot = newYaw;
         dragon.yHeadRot = newYaw;
 
-        // Pitch control: ONLY use vertical input (Space/L-Alt), NOT mouse look
         if (flying) {
-            float targetPitch = Mth.clamp(player.getXRot() * 0.55f, -35.0f, 30.0f);
+            float targetPitch = Mth.clamp(player.getXRot() * 0.8f, -90.0f, 90.0f);
             dragon.setXRot(targetPitch);
         } else {
             dragon.setXRot(0.0F);
@@ -175,43 +174,51 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             final double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
 
             Vec3 currentVelocity = dragon.getDeltaMovement();
-            Vec3 horizontalVel = new Vec3(currentVelocity.x, 0.0, currentVelocity.z);
 
             double forwardInput = motion.z;
             double strafeInput = motion.x;
             boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
 
             float yawRad = (float) Math.toRadians(dragon.getYRot());
-            double forwardX = -Math.sin(yawRad);
-            double forwardZ = Math.cos(yawRad);
+            float pitchRad = (float) Math.toRadians(dragon.getXRot());
+            double forwardXZ = Math.cos(pitchRad);
+            double forwardX = -Math.sin(yawRad) * forwardXZ;
+            double forwardY = -Math.sin(pitchRad);
+            double forwardZ = Math.cos(yawRad) * forwardXZ;
             double rightX = Math.cos(yawRad);
             double rightZ = Math.sin(yawRad);
 
             double targetDirX = forwardX * forwardInput + rightX * (strafeInput * STRAFE_POWER);
+            double targetDirY = forwardY * forwardInput * 1.35;
             double targetDirZ = forwardZ * forwardInput + rightZ * (strafeInput * STRAFE_POWER);
-            double dirLength = Math.hypot(targetDirX, targetDirZ);
+            double dirLength = Math.sqrt(targetDirX * targetDirX + targetDirY * targetDirY + targetDirZ * targetDirZ);
 
-            Vec3 newHorizontalVel;
+            Vec3 newVelocity;
 
             if (hasInput && dirLength > 0.01) {
                 targetDirX /= dirLength;
+                targetDirY /= dirLength;
                 targetDirZ /= dirLength;
 
-                Vec3 targetVelocity = new Vec3(targetDirX * targetSpeed, 0, targetDirZ * targetSpeed);
-                newHorizontalVel = new Vec3(
-                    Mth.lerp(ACCELERATION, horizontalVel.x, targetVelocity.x),
-                    0,
-                    Mth.lerp(ACCELERATION, horizontalVel.z, targetVelocity.z)
+                Vec3 targetVelocity = new Vec3(
+                    targetDirX * targetSpeed,
+                    targetDirY * targetSpeed,
+                    targetDirZ * targetSpeed
                 );
-                newHorizontalVel = newHorizontalVel.scale(1.0 - DRAG_WITH_INPUT);
+                newVelocity = new Vec3(
+                    Mth.lerp(ACCELERATION, currentVelocity.x, targetVelocity.x),
+                    Mth.lerp(ACCELERATION, currentVelocity.y, targetVelocity.y),
+                    Mth.lerp(ACCELERATION, currentVelocity.z, targetVelocity.z)
+                );
+                newVelocity = newVelocity.scale(1.0 - DRAG_WITH_INPUT);
             } else {
-                newHorizontalVel = horizontalVel.scale(1.0 - DRAG_NO_INPUT);
-                if (newHorizontalVel.length() < 0.01) {
-                    newHorizontalVel = Vec3.ZERO;
+                newVelocity = currentVelocity.scale(1.0 - DRAG_NO_INPUT);
+                if (newVelocity.length() < 0.01) {
+                    newVelocity = Vec3.ZERO;
                 }
             }
 
-            double verticalVel = currentVelocity.y;
+            double verticalVel = newVelocity.y;
 
             // Vertical control - takeoff provides optional boost but doesn't block descent
             if (dragon.isTakeoff() && dragon.isGoingUp()) {
@@ -222,12 +229,10 @@ public record IgnivorusRiderController(Ignivorus dragon) {
                 verticalVel += ASCEND_THRUST;
             } else if (dragon.isGoingDown()) {
                 verticalVel -= DESCEND_THRUST;
-            } else {
-                verticalVel *= VERTICAL_DRAG;
             }
             verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
 
-            Vec3 finalVelocity = new Vec3(newHorizontalVel.x, verticalVel, newHorizontalVel.z);
+            Vec3 finalVelocity = new Vec3(newVelocity.x, verticalVel, newVelocity.z);
             dragon.move(MoverType.SELF, finalVelocity);
             dragon.setDeltaMovement(finalVelocity);
             dragon.calculateEntityAnimation(true);

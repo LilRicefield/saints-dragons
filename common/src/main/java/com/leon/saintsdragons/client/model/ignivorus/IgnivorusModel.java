@@ -72,6 +72,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
             }
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
+            applyFlightPitch(entity, animationState);
             applyNeckFollow(entity, modelData, partialTick);
             applyNeckBankingLean(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
@@ -100,6 +101,20 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
         body.setRotZ(snap.getRotZ() + bankAngleRad);
+    }
+
+    private void applyFlightPitch(Ignivorus entity, AnimationState<Ignivorus> state) {
+        var bodyOpt = getBone("body");
+        if (bodyOpt.isEmpty()) return;
+
+        GeoBone body = bodyOpt.get();
+        var snap = body.getInitialSnapshot();
+
+        float partialTick = state.getPartialTick();
+        float pitchRad = entity.getFlightPitchRadians(partialTick);
+        pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+
+        body.setRotX(snap.getRotX() + pitchRad);
     }
 
     private void applyNeckBankingLean(Ignivorus entity, float partialTick) {
@@ -150,6 +165,9 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
 
         // Simple pitch conversion (NO CLAMPING - let body control handle it)
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        if (entity.isFlying()) {
+            lookPitchRad *= 0.5f;
+        }
 
 
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)

@@ -68,8 +68,7 @@ public record CindervaneRiderController(Cindervane dragon) {
         float f = player.zza < 0.0F ? 0.5F : 1.0F;
 
         if (dragon.isFlying()) {
-            // Flying movement – NO pitch-based vertical movement.
-            // Vertical is controlled exclusively by ascend/descend keybinds.
+            // Flying movement - pitch affects vertical direction for 3D flight feel.
             return new Vec3(player.xxa * 0.3F, 0.0F, player.zza * 0.8F * f);
         } else {
             // Ground movement - no vertical component, responsive controls
@@ -105,7 +104,7 @@ public record CindervaneRiderController(Cindervane dragon) {
 
         // Pitch control
         if (flying) {
-            float targetPitch = Mth.clamp(player.getXRot() * 0.4f, -35.0f, 30.0f);
+            float targetPitch = Mth.clamp(player.getXRot() * 0.9f, -90.0f, 90.0f);
             dragon.setXRot(targetPitch);
         } else {
             dragon.setXRot(0.0F);
@@ -157,61 +156,69 @@ public record CindervaneRiderController(Cindervane dragon) {
 
             // Current velocity
             Vec3 currentVel = dragon.getDeltaMovement();
-            Vec3 horizontalVel = new Vec3(currentVel.x, 0.0, currentVel.z);
 
             // === DIRECTIONAL CONTROL ===
             // Convert input to world space
             float yawRad = (float) Math.toRadians(dragon.getYRot());
-            double forwardX = -Math.sin(yawRad);
-            double forwardZ = Math.cos(yawRad);
+            float pitchRad = (float) Math.toRadians(dragon.getXRot());
+            double forwardXZ = Math.cos(pitchRad);
+            double forwardX = -Math.sin(yawRad) * forwardXZ;
+            double forwardY = -Math.sin(pitchRad);
+            double forwardZ = Math.cos(yawRad) * forwardXZ;
             double strafeX = Math.cos(yawRad);
             double strafeZ = Math.sin(yawRad);
 
             // Calculate target direction with constant strafe power
             double targetDirX = forwardX * forwardInput + strafeX * strafeInput * STRAFE_POWER;
+            double targetDirY = forwardY * forwardInput * 1.35;
             double targetDirZ = forwardZ * forwardInput + strafeZ * strafeInput * STRAFE_POWER;
-            double dirLength = Math.hypot(targetDirX, targetDirZ);
+            double dirLength = Math.sqrt(targetDirX * targetDirX + targetDirY * targetDirY + targetDirZ * targetDirZ);
 
             // === ARCADE PHYSICS WITH TWO MODES ===
-            Vec3 newHorizontalVel;
+            Vec3 newVelocity;
             boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
 
             if (hasInput && dirLength > 0.01) {
                 // === ACTIVE FLYING: smooth acceleration with gentle drag ===
                 targetDirX /= dirLength;
+                targetDirY /= dirLength;
                 targetDirZ /= dirLength;
 
                 // Target velocity in desired direction
-                Vec3 targetVelocity = new Vec3(targetDirX * targetSpeed, 0, targetDirZ * targetSpeed);
+                Vec3 targetVelocity = new Vec3(
+                    targetDirX * targetSpeed,
+                    targetDirY * targetSpeed,
+                    targetDirZ * targetSpeed
+                );
 
                 // Lerp current velocity toward target (acceleration)
-                newHorizontalVel = new Vec3(
-                    Mth.lerp(ACCELERATION, horizontalVel.x, targetVelocity.x),
-                    0,
-                    Mth.lerp(ACCELERATION, horizontalVel.z, targetVelocity.z)
+                newVelocity = new Vec3(
+                    Mth.lerp(ACCELERATION, currentVel.x, targetVelocity.x),
+                    Mth.lerp(ACCELERATION, currentVel.y, targetVelocity.y),
+                    Mth.lerp(ACCELERATION, currentVel.z, targetVelocity.z)
                 );
 
                 // Apply gentle drag
-                newHorizontalVel = newHorizontalVel.scale(1.0 - DRAG_WITH_INPUT);
+                newVelocity = newVelocity.scale(1.0 - DRAG_WITH_INPUT);
 
             } else {
                 // === COASTING: strong braking for immediate stop ===
-                newHorizontalVel = horizontalVel.scale(1.0 - DRAG_NO_INPUT);
+                newVelocity = currentVel.scale(1.0 - DRAG_NO_INPUT);
 
                 // Hard stop at very low speeds to prevent endless drift
-                if (newHorizontalVel.length() < 0.01) {
-                    newHorizontalVel = Vec3.ZERO;
+                if (newVelocity.length() < 0.01) {
+                    newVelocity = Vec3.ZERO;
                 }
             }
 
             // Final speed cap (single clamp, no double clamping)
-            double finalSpeed = newHorizontalVel.length();
+            double finalSpeed = newVelocity.length();
             if (finalSpeed > targetSpeed) {
-                newHorizontalVel = newHorizontalVel.scale(targetSpeed / finalSpeed);
+                newVelocity = newVelocity.scale(targetSpeed / finalSpeed);
             }
 
             // === VERTICAL MOVEMENT (dive acceleration, no gravity) ===
-            double newVerticalVel = currentVel.y;
+            double newVerticalVel = newVelocity.y;
 
             // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
             if (dragon.getRiderTakeoffTicks() > 0) {
@@ -225,16 +232,13 @@ public record CindervaneRiderController(Cindervane dragon) {
             } else if (dragon.isGoingDown()) {
                 // Apply downward thrust - DIVES ACCELERATE!
                 newVerticalVel -= DESCEND_THRUST;
-            } else {
-                // Coasting - MASSIVE air resistance from huge wings
-                newVerticalVel *= VERTICAL_DRAG;
             }
 
             // Clamp to terminal velocity during dives
             newVerticalVel = Mth.clamp(newVerticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
 
             // === FINAL VELOCITY & MOVEMENT ===
-            Vec3 finalVelocity = new Vec3(newHorizontalVel.x, newVerticalVel, newHorizontalVel.z);
+            Vec3 finalVelocity = new Vec3(newVelocity.x, newVerticalVel, newVelocity.z);
             dragon.move(MoverType.SELF, finalVelocity);
             dragon.setDeltaMovement(finalVelocity);
             dragon.calculateEntityAnimation(true);

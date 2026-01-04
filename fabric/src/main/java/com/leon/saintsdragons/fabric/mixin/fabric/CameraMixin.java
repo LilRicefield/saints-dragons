@@ -18,6 +18,15 @@ public abstract class CameraMixin implements CameraAccessor {
     @Shadow
     protected abstract double getMaxZoom(double distance);
 
+    @Shadow
+    protected abstract void setRotation(float yaw, float pitch);
+
+    @Shadow
+    protected abstract float getXRot();
+
+    @Shadow
+    protected abstract float getYRot();
+
     /**
      * Accessor methods for other parts of the mod to call.
      */
@@ -29,6 +38,21 @@ public abstract class CameraMixin implements CameraAccessor {
     @Override
     public double saintsdragons$invokeGetMaxZoom(double distance) {
         return this.getMaxZoom(distance);
+    }
+
+    @Override
+    public void saintsdragons$invokeSetRotation(float yaw, float pitch) {
+        this.setRotation(yaw, pitch);
+    }
+
+    @Override
+    public float saintsdragons$invokeGetXRot() {
+        return this.getXRot();
+    }
+
+    @Override
+    public float saintsdragons$invokeGetYRot() {
+        return this.getYRot();
     }
 
     /**

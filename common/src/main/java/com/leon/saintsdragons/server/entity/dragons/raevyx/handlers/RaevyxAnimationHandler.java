@@ -235,7 +235,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             }
 
             // Special case: GLIDE_DOWN for ridden dragons pitching down
-            if (wyvern.isVehicle() && wyvern.isGoingDown() && !wyvern.isRiderLandingBlendActive()) {
+            if (wyvern.isVehicle() && wyvern.getXRot() > 25.0f && !wyvern.isRiderLandingBlendActive()) {
                 RawAnimation descend = GLIDE_DOWN;
                 if (currentFlightAnimation != descend) {
                     state.getController().transitionLength(6);

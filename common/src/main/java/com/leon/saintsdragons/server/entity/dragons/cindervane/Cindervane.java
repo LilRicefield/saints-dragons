@@ -153,6 +153,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private float pitchSmoothedPitch = 0f;
     private int pitchHoldTicks = 0;
     private int pitchDir = 0;
+    private float flightPitchRad = 0f;
+    private float prevFlightPitchRad = 0f;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -378,6 +380,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
 
     // Sleep system entity data accessors
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
@@ -400,6 +404,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.entityData.define(DATA_FIRE_BREATHING, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0f);
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
+        this.entityData.define(DATA_FLIGHT_PITCH, 0f);
         // Define sleep system data
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
@@ -978,6 +983,20 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private void tickPitchingLogic() {
         tickRiderLandingBlendTimer();
+        prevFlightPitchRad = flightPitchRad;
+        if (level().isClientSide) {
+            float syncedPitch = this.entityData.get(DATA_FLIGHT_PITCH);
+            if (Math.abs(syncedPitch) <= 1.0E-4f && isFlying()) {
+                Vec3 velocity = getDeltaMovement();
+                double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+                if (horizontalSpeed > 0.01 || Math.abs(velocity.y) > 0.01) {
+                    syncedPitch = (float)Math.atan2(velocity.y, horizontalSpeed);
+                    syncedPitch = Mth.clamp(syncedPitch, -Mth.HALF_PI, Mth.HALF_PI);
+                }
+            }
+            flightPitchRad = syncedPitch;
+            return;
+        }
         // Reset pitching when not flying or when controls are locked - INSTANT reset
         if (!isFlying() || isLanding() || isHovering() || (isOrderedToSit() && !riderOverridesSittingCommand())) {
             if (pitchDir != 0) {
@@ -985,20 +1004,46 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 pitchSmoothedPitch = 0f;
                 pitchHoldTicks = 0;
             }
+            flightPitchRad = 0f;
+            this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
             return;
         }
+
+        Vec3 velocity = getDeltaMovement();
+        double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        float targetPitchRad = 0f;
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            float riderForward = player.zza;
+            float riderStrafe = player.xxa;
+            if (Math.abs(riderForward) < 0.01f && Math.abs(riderStrafe) < 0.01f) {
+                targetPitchRad = 0f;
+            } else if (horizontalSpeed > 0.01 || Math.abs(velocity.y) > 0.01) {
+                targetPitchRad = (float)Math.atan2(velocity.y, horizontalSpeed);
+                targetPitchRad = Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+                if (horizontalSpeed < 0.35) {
+                    float pitchScale = (float)Mth.clamp(horizontalSpeed / 0.35, 0.0, 1.0);
+                    targetPitchRad *= pitchScale;
+                }
+            }
+        } else if (horizontalSpeed > 0.01 || Math.abs(velocity.y) > 0.01) {
+            targetPitchRad = (float)Math.atan2(velocity.y, horizontalSpeed);
+            targetPitchRad = Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+            if (horizontalSpeed < 0.35) {
+                float pitchScale = (float)Mth.clamp(horizontalSpeed / 0.35, 0.0, 1.0);
+                targetPitchRad *= pitchScale;
+            }
+        }
+        flightPitchRad = Mth.lerp(0.6f, flightPitchRad, targetPitchRad);
+        if (Math.abs(flightPitchRad) < 0.001f) {
+            flightPitchRad = 0f;
+        }
+        this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
 
         int desiredDir = pitchDir;
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player) {
-            // Handle rider input for pitching
-            if (isGoingUp()) {
-                desiredDir = -1;  // Pitching up
-            } else if (isGoingDown()) {
-                desiredDir = 1;   // Pitching down
-            } else {
-                desiredDir = 0;   // No pitching
-            }
+            // Riding: Space/L-Alt should not drive pitch animations (mouse handles pitch)
+            desiredDir = 0;
             // Trigger landing blend when descending close to ground
             if (isGoingDown()) {
                 double altitude = getAltitudeAboveTerrain();
@@ -1157,6 +1202,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
      */
     public float getBankAngleDegrees(float partialTick) {
         return Mth.lerp(partialTick, prevBankAngle, bankAngle);
+    }
+    public float getFlightPitchRadians(float partialTick) {
+        return Mth.lerp(partialTick, prevFlightPitchRad, flightPitchRad);
     }
 
     /**
@@ -1940,9 +1988,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         AnimationController<Cindervane> banking = new AnimationController<>(this, "banking", 10, animationHandler::bankingPredicate);
         controllers.add(banking);
-
-        AnimationController<Cindervane> pitching = new AnimationController<>(this, "pitching", 10, animationHandler::pitchingPredicate);
-        controllers.add(pitching);
 
         AnimationController<Cindervane> actions = new AnimationController<>(this, "actions", 5, animationHandler::actionPredicate);
         animationHandler.setupActionController(actions);

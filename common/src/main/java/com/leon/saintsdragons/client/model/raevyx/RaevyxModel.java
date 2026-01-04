@@ -78,6 +78,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
             }
             applyBodyRotationDeviation(entity, partialTick);  // Same as Nulljaw/Stegonaut
             applyBankingRoll(entity, animationState);
+            applyFlightPitch(entity, animationState);
             applyNeckFollow(entity, modelData, partialTick);   // Base head tracking first (uses animation snapshot)
             applyNeckBankingLean(entity, partialTick); // Then layer procedural leans so they add on top
             applyGroundNeckTurn(entity, partialTick);  // Same for ground turning
@@ -130,6 +131,22 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         // Set directly from snapshot + bank angle (no lerp with previous frame's bone rotation)
         // This prevents sync bleeding between multiple dragons rendering in the same frame
         body.setRotZ(snap.getRotZ() + bankAngleRad);
+    }
+
+    private void applyFlightPitch(Raevyx entity, AnimationState<Raevyx> state) {
+        var bodyOpt = getBone("body");
+        if (bodyOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone body = bodyOpt.get();
+        var snap = body.getInitialSnapshot();
+
+        float partialTick = state.getPartialTick();
+        float pitchRad = entity.getFlightPitchRadians(partialTick);
+        pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+
+        body.setRotX(snap.getRotX() + pitchRad);
     }
 
     /**
@@ -212,13 +229,16 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
         // Simple pitch conversion (NO CLAMPING - let body control handle it)
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        if (entity.isFlying()) {
+            lookPitchRad *= 0.5f;
+        }
 
 
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
-        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.25f);  // Base
-        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.30f);  // Lower-mid
-        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.35f);  // Upper-mid
-        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.40f);  // Tip
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.1f);  // Base
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.3f);  // Lower-mid
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.5f);  // Upper-mid
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.7f);  // Tip
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
