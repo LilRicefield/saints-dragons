@@ -26,15 +26,6 @@ public final class ModParticles {
                         }
                     });
 
-    public static final Supplier<ParticleType<RaevyxLightningStormData>> LIGHTNING_STORM_FEMALE =
-            REGISTER.register("lightning_storm_female",
-                    () -> new ParticleType<>(false, RaevyxLightningStormData.DESERIALIZER) {
-                        @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningStormData> codec() {
-                            return RaevyxLightningStormData.CODEC(this);
-                        }
-                    });
-
     public static final Supplier<ParticleType<RaevyxLightningChainData>> LIGHTNING_CHAIN =
             REGISTER.register("lightning_chain",
                     () -> new ParticleType<>(false, RaevyxLightningChainData.DESERIALIZER) {

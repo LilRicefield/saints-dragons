@@ -3691,10 +3691,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         net.minecraft.world.phys.Vec3 step = delta.scale(1.0 / steps);
         net.minecraft.world.phys.Vec3 pos = from;
         net.minecraft.world.phys.Vec3 dir = step.lengthSqr() > 1.0e-6 ? step.normalize() : randomUnit(this.random);
-        boolean female = this.isFemale();
         for (int i = 0; i <= steps; i++) {
             if (this.random.nextFloat() < 0.7f) {
-                server.sendParticles(new RaevyxLightningStormData(size, female),
+                server.sendParticles(new RaevyxLightningStormData(size),
                         pos.x, pos.y, pos.z, 1, dir.x, dir.y, dir.z, 0.0);
             }
             pos = pos.add(step);

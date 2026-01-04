@@ -18,53 +18,44 @@ import java.util.Locale;
  * Server-safe ParticleOptions payload for the lightning_storm particle.
  * Holds a single float parameter: size.
  */
-public record RaevyxLightningStormData(float size, boolean female) implements ParticleOptions {
+public record RaevyxLightningStormData(float size) implements ParticleOptions {
     public static final ParticleOptions.Deserializer<RaevyxLightningStormData> DESERIALIZER = new ParticleOptions.Deserializer<>() {
         @Override
         public @NotNull RaevyxLightningStormData fromCommand(@Nonnull ParticleType<RaevyxLightningStormData> type, @Nonnull StringReader reader) throws CommandSyntaxException {
             reader.expect(' ');
             float size = reader.readFloat();
-            boolean female = false;
-            if (reader.canRead() && reader.peek() == ' ') {
-                reader.expect(' ');
-                female = reader.readBoolean();
-            }
-            return new RaevyxLightningStormData(size, female);
+            return new RaevyxLightningStormData(size);
         }
 
         @Override
         public @NotNull RaevyxLightningStormData fromNetwork(@Nonnull ParticleType<RaevyxLightningStormData> type, @Nonnull FriendlyByteBuf buf) {
-            return new RaevyxLightningStormData(buf.readFloat(), buf.readBoolean());
+            return new RaevyxLightningStormData(buf.readFloat());
         }
     };
 
     public static Codec<RaevyxLightningStormData> CODEC(@SuppressWarnings("unused") ParticleType<RaevyxLightningStormData> type) {
         return RecordCodecBuilder.create(b -> b.group(
-                Codec.FLOAT.fieldOf("size").forGetter(RaevyxLightningStormData::size),
-                Codec.BOOL.optionalFieldOf("female", false).forGetter(RaevyxLightningStormData::female)
+                Codec.FLOAT.fieldOf("size").forGetter(RaevyxLightningStormData::size)
         ).apply(b, RaevyxLightningStormData::new));
     }
 
     @Override
     public void writeToNetwork(@Nonnull FriendlyByteBuf buf) {
         buf.writeFloat(this.size);
-        buf.writeBoolean(this.female);
     }
 
     @Override
     public @NotNull String writeToString() {
-        ParticleType<RaevyxLightningStormData> type = female ? ModParticles.LIGHTNING_STORM_FEMALE.get() : ModParticles.LIGHTNING_STORM.get();
         return String.format(
                 Locale.ROOT,
-                "%s %.2f %s",
-                BuiltInRegistries.PARTICLE_TYPE.getKey(type),
-                this.size,
-                Boolean.toString(this.female)
+                "%s %.2f",
+                BuiltInRegistries.PARTICLE_TYPE.getKey(ModParticles.LIGHTNING_STORM.get()),
+                this.size
         );
     }
 
     @Override
     public @NotNull ParticleType<RaevyxLightningStormData> getType() {
-        return female ? ModParticles.LIGHTNING_STORM_FEMALE.get() : ModParticles.LIGHTNING_STORM.get();
+        return ModParticles.LIGHTNING_STORM.get();
     }
 }

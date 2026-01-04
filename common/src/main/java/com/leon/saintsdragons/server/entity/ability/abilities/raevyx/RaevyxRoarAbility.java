@@ -190,10 +190,10 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
         Vec3 pos = from;
         Vec3 dir = step.normalize();
         float size = 0.8f; // Smaller base size
-        
+
         // Spawn single particle at each position (no layering)
         for (int i = 0; i <= steps; i++) {
-            server.sendParticles(new RaevyxLightningStormData(size, female),
+            server.sendParticles(new RaevyxLightningStormData(size),
                     pos.x, pos.y, pos.z,
                     1, dir.x, dir.y, dir.z, 0.0);
             pos = pos.add(step);
