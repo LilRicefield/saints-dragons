@@ -27,6 +27,10 @@ public class DragonFlightMoveHelper extends MoveControl {
     private final double accelerationCap;
     private final double velocityBlendRate;
 
+    // Performance optimization: cache obstruction check
+    private int obstructionCheckCooldown = 0;
+    private boolean cachedObstructionResult = false;
+
     public DragonFlightMoveHelper(DragonFlightCapable dragon) {
         this(dragon, getDefaultParameters());
     }
@@ -111,6 +115,15 @@ public class DragonFlightMoveHelper extends MoveControl {
         float distY = (float) (this.wantedY - mob.getY());
         float distZ = (float) (this.wantedZ - mob.getZ());
 
+        // Performance optimization: check for obstruction once every 5 ticks instead of twice per tick
+        // This reduces expensive raycasting from ~64 calls/second to ~4 calls/second per dragon
+        if (obstructionCheckCooldown <= 0) {
+            cachedObstructionResult = isLineObstructed(mob.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ));
+            obstructionCheckCooldown = 5; // Check every 5 ticks (0.25 seconds)
+        } else {
+            obstructionCheckCooldown--;
+        }
+
         // Reduce Y influence on horizontal movement (guard against division by zero)
         double horizontalDist = Math.sqrt(distX * distX + distZ * distZ);
         if (horizontalDist > 1.0e-6) {
@@ -173,7 +186,7 @@ public class DragonFlightMoveHelper extends MoveControl {
         }
 
         // If straight path to wanted position is obstructed by blocks, damp speed to avoid wall pushing
-        if (isLineObstructed(mob.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ))) {
+        if (cachedObstructionResult) {
             targetSpeedFactor *= 0.5f;
         }
 
@@ -187,8 +200,8 @@ public class DragonFlightMoveHelper extends MoveControl {
         // Blend toward target velocity with per-axis acceleration cap to reduce twitch/overshoot
         Vec3 delta = targetVel.subtract(motion).scale(velocityBlendRate); // wyvern-specific blend rate
         double accelCap = accelerationCap;
-        // Additional dampening when obstructed
-        if (isLineObstructed(mob.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ))) {
+        // Additional dampening when obstructed (use cached result)
+        if (cachedObstructionResult) {
             accelCap *= 0.6D;
             delta = delta.scale(0.6D);
         }
