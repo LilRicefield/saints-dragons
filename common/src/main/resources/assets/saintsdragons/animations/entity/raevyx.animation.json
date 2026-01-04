@@ -7701,59 +7701,6 @@
 				}
 			}
 		},
-		"animation.raevyx.pitching_down": {
-			"loop": true,
-			"bones": {
-				"root": {
-					"rotation": {
-						"vector": [40, 0, 0]
-					}
-				}
-			}
-		},
-		"animation.raevyx.pitching_off": {
-			"loop": true,
-			"bones": {
-				"root": {
-					"rotation": {
-						"vector": [0, 0, 0]
-					}
-				}
-			}
-		},
-		"animation.raevyx.banking_right": {
-			"loop": true,
-			"bones": {
-				"body": {
-					"rotation": {
-						"vector": [0, 0, -25]
-					}
-				}
-			}
-		},
-		"animation.raevyx.pitching_up": {
-			"loop": true,
-			"bones": {
-				"root": {
-					"rotation": {
-						"vector": [-30, 0, 0]
-					}
-				}
-			}
-		},
-		"animation.raevyx.banking_left": {
-			"loop": true,
-			"bones": {
-				"body": {
-					"rotation": {
-						"vector": [0, 0, 25]
-					}
-				}
-			}
-		},
-		"animation.raevyx.banking_off": {
-			"loop": true
-		},
 		"animation.raevyx.landing": {
 			"loop": true,
 			"bones": {
