@@ -34,9 +34,9 @@ public class RaevyxLightningChainParticle extends TextureSheetParticle {
 
     protected RaevyxLightningChainParticle(ClientLevel level, double x, double y, double z,
                                            double xSpeed, double ySpeed, double zSpeed,
-                                           float size, SpriteSet spriteSet, Vec3 startPos, Vec3 endPos, boolean female) {
+                                           float size, SpriteSet spriteSet, Vec3 startPos, Vec3 endPos) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-        TextureAtlasSprite[] resolved = RaevyxParticleSprites.storm(female);
+        TextureAtlasSprite[] resolved = RaevyxParticleSprites.storm();
         if (resolved.length == 0) {
             resolved = new TextureAtlasSprite[]{spriteSet.get(0, 1)};
         }
@@ -143,7 +143,7 @@ public class RaevyxLightningChainParticle extends TextureSheetParticle {
         
         @Override
         public Particle createParticle(@Nonnull RaevyxLightningChainData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new RaevyxLightningChainParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.startPos(), data.endPos(), data.female());
+            return new RaevyxLightningChainParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.startPos(), data.endPos());
         }
     }
 }

@@ -16,7 +16,6 @@ public class ParticleClientRegistry {
     @SubscribeEvent
     public static void registerParticleFactories(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
-        event.registerSpriteSet(ModParticles.LIGHTNING_STORM_FEMALE.get(), RaevyxLightningParticle.Factory::new);
         event.registerSpriteSet(ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);
 
         // Fire breath particles

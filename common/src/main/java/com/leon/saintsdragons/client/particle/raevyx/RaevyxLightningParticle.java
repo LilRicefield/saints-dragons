@@ -18,7 +18,6 @@ import org.joml.Vector3f;
 
 public class RaevyxLightningParticle extends TextureSheetParticle {
     private final SpriteSet spriteSet;
-    private final boolean female;
 
     // Reusable objects to reduce garbage collection pressure
     private static final Vector3f[] CORNER_CACHE = new Vector3f[4];
@@ -30,10 +29,9 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
 
     protected RaevyxLightningParticle(ClientLevel level, double x, double y, double z,
                                       double xSpeed, double ySpeed, double zSpeed,
-                                      float size, SpriteSet spriteSet, boolean female) {
+                                      float size, SpriteSet spriteSet) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.spriteSet = spriteSet;
-        this.female = female;
         this.xd = xSpeed;
         this.yd = ySpeed;
         this.zd = zSpeed;
@@ -57,9 +55,7 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
     }
 
     private void updateSprite() {
-        // Calculate sprite index based on age and gender
-        // Male sprites: 0-7, Female sprites: skip female-specific ones and use male as base
-        // For simplicity, just use male sprites (0-7) for now since the JSON is mixed
+        // Calculate sprite index based on age (0-7 frames)
         float agePercent = (float) this.age / (float) this.lifetime;
         int spriteIndex = Math.min((int) (agePercent * 8), 7);
         this.setSprite(this.spriteSet.get(spriteIndex, 7));
@@ -118,7 +114,7 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
         public Factory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }
         @Override
         public Particle createParticle(@Nonnull RaevyxLightningStormData data, @Nonnull ClientLevel world, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            return new RaevyxLightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet, data.female());
+            return new RaevyxLightningParticle(world, x, y, z, xSpeed, ySpeed, zSpeed, data.size(), spriteSet);
         }
     }
 }
