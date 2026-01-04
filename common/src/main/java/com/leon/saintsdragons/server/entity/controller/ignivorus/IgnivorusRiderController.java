@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.ignivorus;
 
+import com.leon.saintsdragons.server.entity.ability.DragonAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -183,7 +185,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             // Calculate world-space direction from player input
             // Use PLAYER's pitch for 3D flight direction, not dragon's (which is 0 for visual reasons)
             float yawRad = (float) Math.toRadians(dragon.getYRot());
-            float pitchRad = (float) Math.toRadians(player.getXRot());  // Player camera pitch
+            float pitchRad = getEffectivePitchRadians(player);
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
             double forwardY = -Math.sin(pitchRad);
@@ -243,6 +245,14 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             player.fallDistance = 0.0F;
             dragon.fallDistance = 0.0F;
         }
+    }
+
+    private float getEffectivePitchRadians(Player player) {
+        DragonAbility<?> ability = dragon.getActiveAbility();
+        boolean lockPitch = dragon.isBreathingFire()
+                || (ability instanceof IgnivorusFireBreathAbility && ability.isUsing());
+        float pitchDegrees = lockPitch ? 0.0f : player.getXRot();
+        return (float) Math.toRadians(pitchDegrees);
     }
 
     public double getPassengersRidingOffset() {

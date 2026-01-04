@@ -2983,7 +2983,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
         // Reset pitching when in water, not flying, or when controls are locked - INSTANT reset
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-        if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
+        if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit() || isBeaming()) {
             pitchSmoothedPitch = 0f;
             flightPitchRad = 0f;
             smoothedPlayerPitchRad = 0f; // Reset input smoothing

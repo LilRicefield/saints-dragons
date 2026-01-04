@@ -2925,7 +2925,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
         // Reset pitching when in water, not flying, or when controls are locked - INSTANT reset
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-        if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit()) {
+        if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit() || isBreathingFire()) {
             pitchSmoothedPitch = 0f;
             flightPitchRad = 0f;
             smoothedPlayerPitchRad = 0f; // Reset input smoothing
