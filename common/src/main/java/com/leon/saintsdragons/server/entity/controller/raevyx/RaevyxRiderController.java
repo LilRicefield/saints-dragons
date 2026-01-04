@@ -54,8 +54,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
         float f = player.zza < 0.0F ? 0.5F : 1.0F;
 
         if (wyvern.isFlying()) {
-            // Flying movement – NO pitch-based vertical movement.
-            // Vertical is controlled exclusively by ascend/descend keybinds.
+            // Flying movement - pitch affects vertical direction for 3D flight feel.
             return new Vec3(player.xxa * 0.4F, 0.0F, player.zza * 1.0F * f);
         } else {
             // Ground movement - no vertical component, responsive controls
@@ -91,7 +90,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
         // Pitch control
         if (flying) {
-            float targetPitch = Mth.clamp(player.getXRot() * 0.55f, -35.0f, 30.0f);
+            float targetPitch = Mth.clamp(player.getXRot() * 0.9f, -90.0f, 90.0f);
             wyvern.setXRot(targetPitch);
         } else {
             wyvern.setXRot(0.0F);
@@ -141,8 +140,6 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
             // Get current velocity (split horizontal and vertical for independent control)
             Vec3 currentVelocity = wyvern.getDeltaMovement();
-            Vec3 horizontalVel = new Vec3(currentVelocity.x, 0.0, currentVelocity.z);
-            double currentSpeed = horizontalVel.length();
 
             // === INPUT PROCESSING ===
             double forwardInput = motion.z;   // W/S keys (-1 to 1)
@@ -151,50 +148,59 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
             // Calculate world-space direction from player input
             float yawRad = (float) Math.toRadians(wyvern.getYRot());
-            double forwardX = -Math.sin(yawRad);
-            double forwardZ = Math.cos(yawRad);
+            float pitchRad = (float) Math.toRadians(wyvern.getXRot());
+            double forwardXZ = Math.cos(pitchRad);
+            double forwardX = -Math.sin(yawRad) * forwardXZ;
+            double forwardY = -Math.sin(pitchRad);
+            double forwardZ = Math.cos(yawRad) * forwardXZ;
             double rightX = Math.cos(yawRad);
             double rightZ = Math.sin(yawRad);
 
             // Combine forward and strafe (strafe is constant power now)
             double targetDirX = forwardX * forwardInput + rightX * (strafeInput * STRAFE_POWER);
+            double targetDirY = forwardY * forwardInput * 1.35;
             double targetDirZ = forwardZ * forwardInput + rightZ * (strafeInput * STRAFE_POWER);
-            double dirLength = Math.hypot(targetDirX, targetDirZ);
+            double dirLength = Math.sqrt(targetDirX * targetDirX + targetDirY * targetDirY + targetDirZ * targetDirZ);
 
-            Vec3 newHorizontalVel;
+            Vec3 newVelocity;
 
             if (hasInput && dirLength > 0.01) {
                 // === ACTIVE FLYING (player is pressing keys) ===
                 // Normalize direction
                 targetDirX /= dirLength;
+                targetDirY /= dirLength;
                 targetDirZ /= dirLength;
 
                 // Calculate target velocity vector
-                Vec3 targetVelocity = new Vec3(targetDirX * targetSpeed, 0, targetDirZ * targetSpeed);
+                Vec3 targetVelocity = new Vec3(
+                    targetDirX * targetSpeed,
+                    targetDirY * targetSpeed,
+                    targetDirZ * targetSpeed
+                );
 
                 // Smoothly accelerate toward target velocity
-                newHorizontalVel = new Vec3(
-                    Mth.lerp(ACCELERATION, horizontalVel.x, targetVelocity.x),
-                    0,
-                    Mth.lerp(ACCELERATION, horizontalVel.z, targetVelocity.z)
+                newVelocity = new Vec3(
+                    Mth.lerp(ACCELERATION, currentVelocity.x, targetVelocity.x),
+                    Mth.lerp(ACCELERATION, currentVelocity.y, targetVelocity.y),
+                    Mth.lerp(ACCELERATION, currentVelocity.z, targetVelocity.z)
                 );
 
                 // Apply gentle drag for smooth cruising
-                newHorizontalVel = newHorizontalVel.scale(1.0 - DRAG_WITH_INPUT);
+                newVelocity = newVelocity.scale(1.0 - DRAG_WITH_INPUT);
 
             } else {
                 // === COASTING (player released keys) ===
                 // Apply strong braking for immediate stop feel
-                newHorizontalVel = horizontalVel.scale(1.0 - DRAG_NO_INPUT);
+                newVelocity = currentVelocity.scale(1.0 - DRAG_NO_INPUT);
 
                 // Stop completely if speed is very low (prevents endless drift)
-                if (newHorizontalVel.length() < 0.01) {
-                    newHorizontalVel = Vec3.ZERO;
+                if (newVelocity.length() < 0.01) {
+                    newVelocity = Vec3.ZERO;
                 }
             }
 
-            // === VERTICAL MOVEMENT (dive acceleration, no gravity) ===
-            double verticalVel = currentVelocity.y;
+            // === VERTICAL MOVEMENT (ascend/descend overrides) ===
+            double verticalVel = newVelocity.y;
 
             // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
             if (wyvern.getRiderTakeoffTicks() > 0) {
@@ -207,16 +213,13 @@ public record RaevyxRiderController(Raevyx wyvern) {
             } else if (wyvern.isGoingDown()) {
                 // Apply downward thrust - DIVES ACCELERATE!
                 verticalVel -= DESCEND_THRUST;
-            } else {
-                // Coasting - apply air resistance to slow vertical movement
-                verticalVel *= VERTICAL_DRAG;
             }
 
             // Clamp to terminal velocity during dives
             verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
 
             // === APPLY MOVEMENT ===
-            Vec3 finalVelocity = new Vec3(newHorizontalVel.x, verticalVel, newHorizontalVel.z);
+            Vec3 finalVelocity = new Vec3(newVelocity.x, verticalVel, newVelocity.z);
             wyvern.move(MoverType.SELF, finalVelocity);
             wyvern.setDeltaMovement(finalVelocity);
             wyvern.calculateEntityAnimation(true);

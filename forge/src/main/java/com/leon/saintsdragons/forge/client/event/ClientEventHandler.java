@@ -202,22 +202,25 @@ public class ClientEventHandler {
             ignivorusCameraShift += (targetCameraShift - ignivorusCameraShift) * shiftBlendRate;
 
             // Calculate vertical camera shift based on ascending/descending
-            double targetVerticalShift = 0.0;
+            double targetVerticalShift = isFlying ? 6.5 : 0.0;
             if (isFlying) {
                 if (ignivorus.isGoingUp()) {
-                    targetVerticalShift = 1.2; // Subtle upward shift when ascending
+                    targetVerticalShift += 1.2; // Subtle upward shift when ascending
                 } else if (ignivorus.isGoingDown()) {
-                    targetVerticalShift = -1.2; // Subtle downward shift when descending
+                    targetVerticalShift += -1.2; // Subtle downward shift when descending
                 }
             }
-            // Smooth vertical shift
-            double verticalBlendRate = 0.12;
-            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+            // Apply a fixed vertical shift for Ignivorus (no smoothing)
+            verticalCameraShift = targetVerticalShift;
 
             // Apply the smoothed zoom
             event.getCamera().move(-event.getCamera().getMaxZoom(ignivorusCameraZoom), 0, 0);
             // Apply lateral and vertical shifts
             event.getCamera().move(0, verticalCameraShift, ignivorusCameraShift);
+            // Slight downward tilt for better forward visibility
+            if (isFlying) {
+                event.setPitch(event.getPitch() + 8.0f);
+            }
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom and shift when not riding Ignivorus
             ignivorusCameraZoom = 10F;

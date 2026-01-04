@@ -227,17 +227,16 @@ public class FabricClientEventHandler {
             ignivorusCameraShift += (targetCameraShift - ignivorusCameraShift) * shiftBlendRate;
 
             // Calculate vertical camera shift based on ascending/descending
-            double targetVerticalShift = 0.0;
+            double targetVerticalShift = isFlying ? 6.5 : 0.0;
             if (isFlying) {
                 if (ignivorus.isGoingUp()) {
-                    targetVerticalShift = 1.2; // Subtle upward shift when ascending
+                    targetVerticalShift += 1.2; // Subtle upward shift when ascending
                 } else if (ignivorus.isGoingDown()) {
-                    targetVerticalShift = -1.2; // Subtle downward shift when descending
+                    targetVerticalShift += -1.2; // Subtle downward shift when descending
                 }
             }
-            // Smooth vertical shift
-            double verticalBlendRate = 0.12;
-            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+            // Apply a fixed vertical shift for Ignivorus (no smoothing)
+            verticalCameraShift = targetVerticalShift;
 
             // Apply the smoothed zoom using the mixin accessor
             CameraAccessor cameraAccessor = (CameraAccessor) camera;
@@ -245,6 +244,12 @@ public class FabricClientEventHandler {
             cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
             // Apply lateral and vertical shifts
             cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, ignivorusCameraShift);
+            // Slight downward tilt for better forward visibility
+            if (isFlying) {
+                float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
+                float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
+                cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, currentPitch + 8.0f);
+            }
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom and shift when not riding Ignivorus
             ignivorusCameraZoom = 15F;
