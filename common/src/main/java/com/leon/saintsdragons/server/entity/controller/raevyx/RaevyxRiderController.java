@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.raevyx;
 
+import com.leon.saintsdragons.server.entity.ability.DragonAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -149,7 +151,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // Calculate world-space direction from player input
             // Use PLAYER's pitch for 3D flight direction, not wyvern's (which is 0 for visual reasons)
             float yawRad = (float) Math.toRadians(wyvern.getYRot());
-            float pitchRad = (float) Math.toRadians(player.getXRot());  // Player camera pitch
+            float pitchRad = getEffectivePitchRadians(player);
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
             double forwardY = -Math.sin(pitchRad);
@@ -229,6 +231,14 @@ public record RaevyxRiderController(Raevyx wyvern) {
             player.fallDistance = 0.0F;
             wyvern.fallDistance = 0.0F;
         }
+    }
+
+    private float getEffectivePitchRadians(Player player) {
+        DragonAbility<?> ability = wyvern.getActiveAbility();
+        boolean lockPitch = wyvern.isBeaming()
+                || (ability instanceof RaevyxBeamAbility && ability.isUsing());
+        float pitchDegrees = lockPitch ? 0.0f : player.getXRot();
+        return (float) Math.toRadians(pitchDegrees);
     }
 
     // ===== RIDING SUPPORT =====
