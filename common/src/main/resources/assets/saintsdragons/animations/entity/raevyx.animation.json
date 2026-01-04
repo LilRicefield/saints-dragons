@@ -7712,7 +7712,14 @@
 			}
 		},
 		"animation.raevyx.pitching_off": {
-			"loop": true
+			"loop": true,
+			"bones": {
+				"root": {
+					"rotation": {
+						"vector": [40, 0, 0]
+					}
+				}
+			}
 		},
 		"animation.raevyx.banking_right": {
 			"loop": true,
