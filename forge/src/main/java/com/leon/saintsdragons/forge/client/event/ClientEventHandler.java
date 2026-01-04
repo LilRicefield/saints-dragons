@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
@@ -45,6 +46,10 @@ public class ClientEventHandler {
 
     // Shared vertical camera shift for ascending/descending (both dragons)
     private static double verticalCameraShift = 0.0;
+    // Camera pitch smoothing (per dragon)
+    private static float raevyxCameraPitch = 0.0f;
+    private static float cindervaneCameraPitch = 0.0f;
+    private static float ignivorusCameraPitch = 0.0f;
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
@@ -84,14 +89,7 @@ public class ClientEventHandler {
             raevyxCameraShift += (targetCameraShift - raevyxCameraShift) * shiftBlendRate;
 
             // Calculate vertical camera shift based on ascending/descending
-            double targetVerticalShift = 0.0;
-            if (isFlying) {
-                if (raevyx.isGoingUp()) {
-                    targetVerticalShift = 1.2; // Subtle upward shift when ascending
-                } else if (raevyx.isGoingDown()) {
-                    targetVerticalShift = -1.2; // Subtle downward shift when descending
-                }
-            }
+            double targetVerticalShift = isFlying ? 50.0 : 0.0;
             // Smooth vertical shift
             double verticalBlendRate = 0.12; // Slightly slower than lateral for smoother feel
             verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
@@ -100,12 +98,18 @@ public class ClientEventHandler {
             event.getCamera().move(-event.getCamera().getMaxZoom(raevyxCameraZoom), 0, 0);
             // Apply lateral and vertical shifts
             event.getCamera().move(0, verticalCameraShift, raevyxCameraShift);
+            // Slight downward tilt for better forward visibility
+            float raevyxTargetPitch = isFlying ? 6.0f : 0.0f;
+            float raevyxPitchBlendRate = 0.15f;
+            raevyxCameraPitch += (raevyxTargetPitch - raevyxCameraPitch) * raevyxPitchBlendRate;
+            event.setPitch(Mth.clamp(event.getPitch() + raevyxCameraPitch, -90.0f, 90.0f));
         } else {
             // Reset zoom and shift when not riding Raevyx
             raevyxCameraZoom = 10F;
             raevyxCameraZoomTarget = 10F;
             raevyxCameraShift = 0.0;
             verticalCameraShift = 0.0;
+            raevyxCameraPitch = 0.0f;
         }
 
         // Cindervane camera zoom adjustments
@@ -139,14 +143,7 @@ public class ClientEventHandler {
             cindervaneCameraShift += (targetCameraShift - cindervaneCameraShift) * shiftBlendRate;
 
             // Calculate vertical camera shift based on ascending/descending
-            double targetVerticalShift = 0.0;
-            if (isFlying) {
-                if (cindervane.isGoingUp()) {
-                    targetVerticalShift = 1.2; // Subtle upward shift when ascending
-                } else if (cindervane.isGoingDown()) {
-                    targetVerticalShift = -1.2; // Subtle downward shift when descending
-                }
-            }
+            double targetVerticalShift = isFlying ? 50.0 : 0.0;
             // Smooth vertical shift
             double verticalBlendRate = 0.12; // Slightly slower than lateral for smoother feel
             verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
@@ -155,12 +152,18 @@ public class ClientEventHandler {
             event.getCamera().move(-event.getCamera().getMaxZoom(cindervaneCameraZoom), 0, 0);
             // Apply lateral and vertical shifts
             event.getCamera().move(0, verticalCameraShift, cindervaneCameraShift);
+            // Slight downward tilt for better forward visibility
+            float cindervaneTargetPitch = isFlying ? 10.0f : 0.0f;
+            float cindervanePitchBlendRate = 0.15f;
+            cindervaneCameraPitch += (cindervaneTargetPitch - cindervaneCameraPitch) * cindervanePitchBlendRate;
+            event.setPitch(Mth.clamp(event.getPitch() + cindervaneCameraPitch, -90.0f, 90.0f));
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
             cindervaneCameraZoom = 15F;
             cindervaneCameraZoomTarget = 15F;
             cindervaneCameraShift = 0.0;
             verticalCameraShift = 0.0;
+            cindervaneCameraPitch = 0.0f;
         }
 
         // Ignivorus camera zoom adjustments
@@ -202,31 +205,27 @@ public class ClientEventHandler {
             ignivorusCameraShift += (targetCameraShift - ignivorusCameraShift) * shiftBlendRate;
 
             // Calculate vertical camera shift based on ascending/descending
-            double targetVerticalShift = isFlying ? 6.5 : 0.0;
-            if (isFlying) {
-                if (ignivorus.isGoingUp()) {
-                    targetVerticalShift += 1.2; // Subtle upward shift when ascending
-                } else if (ignivorus.isGoingDown()) {
-                    targetVerticalShift += -1.2; // Subtle downward shift when descending
-                }
-            }
-            // Apply a fixed vertical shift for Ignivorus (no smoothing)
-            verticalCameraShift = targetVerticalShift;
+            double targetVerticalShift = isFlying ? 70.0 : 0.0;
+            // Smooth vertical shift for Ignivorus
+            double verticalBlendRate = 0.12;
+            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
 
             // Apply the smoothed zoom
             event.getCamera().move(-event.getCamera().getMaxZoom(ignivorusCameraZoom), 0, 0);
             // Apply lateral and vertical shifts
             event.getCamera().move(0, verticalCameraShift, ignivorusCameraShift);
             // Slight downward tilt for better forward visibility
-            if (isFlying) {
-                event.setPitch(event.getPitch() + 8.0f);
-            }
+            float ignivorusTargetPitch = isFlying ? 10.0f : 0.0f;
+            float ignivorusPitchBlendRate = 0.15f;
+            ignivorusCameraPitch += (ignivorusTargetPitch - ignivorusCameraPitch) * ignivorusPitchBlendRate;
+            event.setPitch(Mth.clamp(event.getPitch() + ignivorusCameraPitch, -90.0f, 90.0f));
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom and shift when not riding Ignivorus
             ignivorusCameraZoom = 10F;
             ignivorusCameraZoomTarget = 15F;
             ignivorusCameraShift = 0.0;
             verticalCameraShift = 0.0;
+            ignivorusCameraPitch = 0.0f;
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof Nulljaw && event.getCamera().isDetached()) {
