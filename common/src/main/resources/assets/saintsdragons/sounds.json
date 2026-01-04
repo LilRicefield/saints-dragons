@@ -146,7 +146,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_roar",
-        "volume": 2.5,
+        "volume": 1.5,
         "pitch": 1.0
       }
     ]
@@ -973,6 +973,16 @@
       }
     ]
   },
+  "raevyx_summon_storm_air_end": {
+    "subtitle": "Storm ends",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_summon_storm_air_end",
+        "volume": 2.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ignivorus_ultimate_start": {
     "subtitle": "Ignivorus prepares ultimate attack",
     "sounds": [
@@ -1095,7 +1105,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_landed",
-        "volume": 1.0,
+        "volume": 2.0,
         "pitch": 1.0
       }
     ]
@@ -1115,7 +1125,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_dash",
-        "volume": 1.0,
+        "volume": 0.5,
         "pitch": 1.0
       }
     ]

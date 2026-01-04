@@ -9,10 +9,9 @@ import net.minecraft.util.Mth;
 
 /**
  * Lazy sprite cache for Raevyx lightning particles.
- * Provides gender-aware frame lists so we can swap textures per dragon gender.
  */
 final class RaevyxParticleSprites {
-    private static final ResourceLocation[] STORM_MALE = resourceArray(
+    private static final ResourceLocation[] STORM_SPRITES = resourceArray(
             "raevyx/lightning_storm_0",
             "raevyx/lightning_storm_1",
             "raevyx/lightning_storm_2",
@@ -23,25 +22,13 @@ final class RaevyxParticleSprites {
             "raevyx/lightning_storm_7"
     );
 
-    private static final ResourceLocation[] STORM_FEMALE = resourceArray(
-            "raevyx/female_lightning_storm_0",
-            "raevyx/lightning_storm_1",
-            "raevyx/lightning_storm_2",
-            "raevyx/female_lightning_storm_3",
-            "raevyx/lightning_storm_4",
-            "raevyx/female_lightning_storm_5",
-            "raevyx/female_lightning_storm_6",
-            "raevyx/female_lightning_storm_7"
-    );
-
-    private static TextureAtlasSprite[] stormMaleSprites;
-    private static TextureAtlasSprite[] stormFemaleSprites;
+    private static TextureAtlasSprite[] stormSprites;
 
     private RaevyxParticleSprites() {
     }
 
     static TextureAtlasSprite[] storm(boolean female) {
-        return female ? getStormFemale() : getStormMale();
+        return getStorm();
     }
 
     static int frameIndexByProgress(TextureAtlasSprite[] frames, float progress) {
@@ -52,18 +39,11 @@ final class RaevyxParticleSprites {
         return Mth.clamp((int) (clamped * frames.length), 0, frames.length - 1);
     }
 
-    private static TextureAtlasSprite[] getStormMale() {
-        if (stormMaleSprites == null) {
-            stormMaleSprites = resolveSprites(STORM_MALE);
+    private static TextureAtlasSprite[] getStorm() {
+        if (stormSprites == null) {
+            stormSprites = resolveSprites(STORM_SPRITES);
         }
-        return stormMaleSprites;
-    }
-
-    private static TextureAtlasSprite[] getStormFemale() {
-        if (stormFemaleSprites == null) {
-            stormFemaleSprites = resolveSprites(STORM_FEMALE);
-        }
-        return stormFemaleSprites;
+        return stormSprites;
     }
 
     private static TextureAtlasSprite[] resolveSprites(ResourceLocation[] resources) {

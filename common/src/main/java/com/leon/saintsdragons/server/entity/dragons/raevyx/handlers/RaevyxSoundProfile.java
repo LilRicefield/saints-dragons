@@ -126,6 +126,10 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
                 playSummonStormAirLoop(handler, dragon, locator);
                 yield true;
             }
+            case "raevyx_summon_storm_end" -> {
+                playSummonStormAirEnd(handler, dragon, locator);
+                yield true;
+            }
             case "raevyx_eat" -> {
                 playEatSound(handler, dragon, locator);
                 yield true;
@@ -257,6 +261,10 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
     private void playSummonStormAirLoop(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
         playClientSound(dragon, at, ModSounds.RAEVYX_SUMMON_STORM_AIR.get(), 1.6f, 1.0f);
+    }
+    private void playSummonStormAirEnd(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        playClientSound(dragon, at, ModSounds.RAEVYX_SUMMON_STORM_AIR_END.get(), 1.6f, 1.0f);
     }
     private void playDodgeSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "bodyLocator");

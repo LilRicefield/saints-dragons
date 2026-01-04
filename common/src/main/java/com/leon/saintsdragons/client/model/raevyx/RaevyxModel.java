@@ -154,9 +154,8 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         // Apply with increasing intensity toward the head (4 neck segments)
         applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.15f);  // Base - subtle
         applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.20f);  // Lower-mid
-        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.25f);  // Upper-mid
-        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.30f);  // Near head
-        applyNeckBoneRotation("head1Controller", neckLeanRad * 0.32f);   // Head - most pronounced
+        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.25f);  // Upper-midNear head
+        applyNeckBoneRotation("headController", neckLeanRad * 0.30f);   // Head - most pronounced
     }
 
     /**
@@ -183,8 +182,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         applyNeckBoneRotation("neck1Controller", turnRad * 0.1f);
         applyNeckBoneRotation("neck2Controller", turnRad * 0.2f);
         applyNeckBoneRotation("neck3Controller", turnRad * 0.3f);
-        applyNeckBoneRotation("neck4Controller", turnRad * 0.32f);
-        applyNeckBoneRotation("head1Controller", turnRad * 0.35f);
+        applyNeckBoneRotation("headController", turnRad * 0.35f);
     }
 
     /**
@@ -220,8 +218,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.25f);  // Base
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.30f);  // Lower-mid
         applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.35f);  // Upper-mid
-        applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.40f);  // Tip
-        applyNeckBoneFollow("head1Controller", lookPitchRad, totalYawRad, 0.42f);  // Tip
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.40f);  // Tip
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
