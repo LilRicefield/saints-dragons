@@ -174,9 +174,39 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         if (dragon.isFlying()) {
             final double baseSpeed = dragon.getAttributeValue(Attributes.FLYING_SPEED);
             final boolean sprinting = dragon.isAccelerating();
-            final double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
+            double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
 
             Vec3 currentVelocity = dragon.getDeltaMovement();
+
+            // === DIVE SPEED BOOST ===
+            // Progressive speed boost when diving steeply (like real birds)
+            // NOTE: Minecraft xRot is POSITIVE when looking down (90° = straight down)
+            float pitchRad = getEffectivePitchRadians(player);
+            float pitchDegrees = (float) Math.toDegrees(pitchRad);
+            double diveMultiplier = 1.0;
+            double diveAcceleration = ACCELERATION; // Default 0.15
+            double diveDrag = DRAG_WITH_INPUT; // Default 0.08
+
+            if (pitchDegrees >= 60.0f) {
+                // Steep dive (60° to 90°): 1.3x to 1.5x speed
+                float t = (pitchDegrees - 60.0f) / 30.0f; // 0 at 60°, 1 at 90°
+                t = Mth.clamp(t, 0.0f, 1.0f);
+                diveMultiplier = 1.3 + (t * 0.2);
+                // Moderately faster acceleration and reduced drag
+                diveAcceleration = 0.20;
+                diveDrag = 0.05;
+            } else if (pitchDegrees >= 45.0f) {
+                // Medium dive (45° to 60°): 1.15x to 1.3x speed
+                float t = (pitchDegrees - 45.0f) / 15.0f; // 0 at 45°, 1 at 60°
+                t = Mth.clamp(t, 0.0f, 1.0f);
+                diveMultiplier = 1.15 + (t * 0.15);
+                // Slightly faster acceleration and slightly less drag
+                diveAcceleration = 0.18;
+                diveDrag = 0.06;
+            }
+            // Below 45°: no dive boost (diveMultiplier = 1.0)
+
+            targetSpeed *= diveMultiplier;
 
             double forwardInput = motion.z;
             double strafeInput = motion.x;
@@ -185,7 +215,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             // Calculate world-space direction from player input
             // Use PLAYER's pitch for 3D flight direction, not dragon's (which is 0 for visual reasons)
             float yawRad = (float) Math.toRadians(dragon.getYRot());
-            float pitchRad = getEffectivePitchRadians(player);
+            // pitchRad already calculated above for dive speed
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
             double forwardY = -Math.sin(pitchRad);
@@ -210,12 +240,14 @@ public record IgnivorusRiderController(Ignivorus dragon) {
                     targetDirY * targetSpeed,
                     targetDirZ * targetSpeed
                 );
+                // Smoothly accelerate toward target velocity (faster when diving)
                 newVelocity = new Vec3(
-                    Mth.lerp(ACCELERATION, currentVelocity.x, targetVelocity.x),
-                    Mth.lerp(ACCELERATION, currentVelocity.y, targetVelocity.y),
-                    Mth.lerp(ACCELERATION, currentVelocity.z, targetVelocity.z)
+                    Mth.lerp(diveAcceleration, currentVelocity.x, targetVelocity.x),
+                    Mth.lerp(diveAcceleration, currentVelocity.y, targetVelocity.y),
+                    Mth.lerp(diveAcceleration, currentVelocity.z, targetVelocity.z)
                 );
-                newVelocity = newVelocity.scale(1.0 - DRAG_WITH_INPUT);
+                // Apply drag (reduced when diving for higher top speed)
+                newVelocity = newVelocity.scale(1.0 - diveDrag);
             } else {
                 newVelocity = currentVelocity.scale(1.0 - DRAG_NO_INPUT);
                 if (newVelocity.length() < 0.01) {
@@ -225,17 +257,25 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
             double verticalVel = newVelocity.y;
 
-            // Vertical control - takeoff provides optional boost but doesn't block descent
-            if (dragon.isTakeoff() && dragon.isGoingUp()) {
-                // Apply modest boost during takeoff if Space is held
-                double boost = ASCEND_THRUST * 0.65;
-                verticalVel = Math.max(verticalVel + boost, 0.20);
-            } else if (dragon.isGoingUp()) {
-                verticalVel += ASCEND_THRUST;
-            } else if (dragon.isGoingDown()) {
-                verticalVel -= DESCEND_THRUST;
+            // When diving (pitch >= 45°), use the physics-calculated velocity - don't override!
+            // This allows dive speed boost to work properly
+            boolean isDiving = pitchDegrees >= 45.0f && hasInput;
+
+            if (!isDiving) {
+                // Vertical control - takeoff provides optional boost but doesn't block descent
+                if (dragon.isTakeoff() && dragon.isGoingUp()) {
+                    // Apply modest boost during takeoff if Space is held
+                    double boost = ASCEND_THRUST * 0.65;
+                    verticalVel = Math.max(verticalVel + boost, 0.20);
+                } else if (dragon.isGoingUp()) {
+                    verticalVel += ASCEND_THRUST;
+                } else if (dragon.isGoingDown()) {
+                    verticalVel -= DESCEND_THRUST;
+                }
+                // Clamp to terminal velocity (only when not diving)
+                verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
             }
-            verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
+            // When diving, vertical velocity is already calculated by physics above - no override needed!
 
             Vec3 finalVelocity = new Vec3(newVelocity.x, verticalVel, newVelocity.z);
             dragon.move(MoverType.SELF, finalVelocity);
