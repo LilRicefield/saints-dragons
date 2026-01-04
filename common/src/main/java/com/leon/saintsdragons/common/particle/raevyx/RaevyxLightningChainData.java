@@ -19,7 +19,7 @@ import java.util.Locale;
  * ParticleOptions for animated lightning chain effects.
  * Carries start and end positions for the lightning arc.
  */
-public record RaevyxLightningChainData(float size, Vec3 startPos, Vec3 endPos, boolean female) implements ParticleOptions {
+public record RaevyxLightningChainData(float size, Vec3 startPos, Vec3 endPos) implements ParticleOptions {
     public static final ParticleOptions.Deserializer<RaevyxLightningChainData> DESERIALIZER = new ParticleOptions.Deserializer<>() {
         @Override
         public @NotNull RaevyxLightningChainData fromCommand(@Nonnull ParticleType<RaevyxLightningChainData> type, @Nonnull StringReader reader) throws CommandSyntaxException {
@@ -37,13 +37,8 @@ public record RaevyxLightningChainData(float size, Vec3 startPos, Vec3 endPos, b
             double endY = reader.readDouble();
             reader.expect(' ');
             double endZ = reader.readDouble();
-            boolean female = false;
-            if (reader.canRead() && reader.peek() == ' ') {
-                reader.expect(' ');
-                female = reader.readBoolean();
-            }
-            
-            return new RaevyxLightningChainData(size, new Vec3(startX, startY, startZ), new Vec3(endX, endY, endZ), female);
+
+            return new RaevyxLightningChainData(size, new Vec3(startX, startY, startZ), new Vec3(endX, endY, endZ));
         }
 
         @Override
@@ -55,9 +50,8 @@ public record RaevyxLightningChainData(float size, Vec3 startPos, Vec3 endPos, b
             double endX = buf.readDouble();
             double endY = buf.readDouble();
             double endZ = buf.readDouble();
-            boolean female = buf.readBoolean();
-            
-            return new RaevyxLightningChainData(size, new Vec3(startX, startY, startZ), new Vec3(endX, endY, endZ), female);
+
+            return new RaevyxLightningChainData(size, new Vec3(startX, startY, startZ), new Vec3(endX, endY, endZ));
         }
     };
 
@@ -65,8 +59,7 @@ public record RaevyxLightningChainData(float size, Vec3 startPos, Vec3 endPos, b
         return RecordCodecBuilder.create(b -> b.group(
                 Codec.FLOAT.fieldOf("size").forGetter(RaevyxLightningChainData::size),
                 Vec3.CODEC.fieldOf("startPos").forGetter(RaevyxLightningChainData::startPos),
-                Vec3.CODEC.fieldOf("endPos").forGetter(RaevyxLightningChainData::endPos),
-                Codec.BOOL.optionalFieldOf("female", false).forGetter(RaevyxLightningChainData::female)
+                Vec3.CODEC.fieldOf("endPos").forGetter(RaevyxLightningChainData::endPos)
         ).apply(b, RaevyxLightningChainData::new));
     }
 
@@ -79,16 +72,14 @@ public record RaevyxLightningChainData(float size, Vec3 startPos, Vec3 endPos, b
         buf.writeDouble(this.endPos.x);
         buf.writeDouble(this.endPos.y);
         buf.writeDouble(this.endPos.z);
-        buf.writeBoolean(this.female);
     }
 
     @Override
     public @NotNull String writeToString() {
-        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %.2f %.2f %.2f %.2f %s", 
+        return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %.2f %.2f %.2f %.2f",
                 BuiltInRegistries.PARTICLE_TYPE.getKey(ModParticles.LIGHTNING_CHAIN.get()), this.size,
                 this.startPos.x, this.startPos.y, this.startPos.z,
-                this.endPos.x, this.endPos.y, this.endPos.z,
-                Boolean.toString(this.female));
+                this.endPos.x, this.endPos.y, this.endPos.z);
     }
 
     @Override

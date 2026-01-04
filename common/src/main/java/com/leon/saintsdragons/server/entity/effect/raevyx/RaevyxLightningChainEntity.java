@@ -201,7 +201,7 @@ public class RaevyxLightningChainEntity extends Entity {
             if (getIsChain()) {
                 // Animated chain lightning arc
                 this.level().addAlwaysVisibleParticle(
-                    new RaevyxLightningChainData(getSize(), startPos, endPos, female),
+                    new RaevyxLightningChainData(getSize(), startPos, endPos),
                     startPos.x, startPos.y, startPos.z,
                     0, 0, 0
                 );

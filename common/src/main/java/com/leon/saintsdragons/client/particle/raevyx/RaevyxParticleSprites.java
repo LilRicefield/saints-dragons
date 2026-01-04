@@ -27,7 +27,7 @@ final class RaevyxParticleSprites {
     private RaevyxParticleSprites() {
     }
 
-    static TextureAtlasSprite[] storm(boolean female) {
+    static TextureAtlasSprite[] storm() {
         return getStorm();
     }
 
