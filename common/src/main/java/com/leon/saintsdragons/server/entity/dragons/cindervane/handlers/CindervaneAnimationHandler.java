@@ -31,14 +31,6 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.cindervane.fall_asleep");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.cindervane.sleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.cindervane.wake_up");
-
-    private static final RawAnimation BANK_LEFT = RawAnimation.begin().thenLoop("animation.cindervane.banking_left");
-    private static final RawAnimation BANK_RIGHT = RawAnimation.begin().thenLoop("animation.cindervane.banking_right");
-    private static final RawAnimation BANK_OFF = RawAnimation.begin().thenLoop("animation.cindervane.banking_off");
-
-    private static final RawAnimation PITCH_UP = RawAnimation.begin().thenLoop("animation.cindervane.pitching_up");
-    private static final RawAnimation PITCH_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.pitching_down");
-    private static final RawAnimation PITCH_OFF = RawAnimation.begin().thenLoop("animation.cindervane.pitching_off");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.cindervane.swim");
 
 
