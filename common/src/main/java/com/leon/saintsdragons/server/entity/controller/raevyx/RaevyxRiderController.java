@@ -152,7 +152,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
             double diveAcceleration = ACCELERATION; // Default 0.15
             double diveDrag = DRAG_WITH_INPUT; // Default 0.08
 
-            if (pitchDegrees >= 60.0f) {
+            if (pitchDegrees >= 40.0f) {
                 // Steep dive (60° to 90°): 1.3x to 1.5x speed
                 float t = (pitchDegrees - 60.0f) / 30.0f; // 0 at 60°, 1 at 90°
                 t = Mth.clamp(t, 0.0f, 1.0f);
@@ -160,7 +160,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
                 // Moderately faster acceleration and reduced drag
                 diveAcceleration = 0.20;
                 diveDrag = 0.05;
-            } else if (pitchDegrees >= 45.0f) {
+            } else if (pitchDegrees >= 30.0f) {
                 // Medium dive (45° to 60°): 1.15x to 1.3x speed
                 float t = (pitchDegrees - 45.0f) / 15.0f; // 0 at 45°, 1 at 60°
                 t = Mth.clamp(t, 0.0f, 1.0f);
