@@ -54,8 +54,6 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
             ticksSinceVolley = VOLLEY_INTERVAL_TICKS;
             volleysFired = 0;
             getUser().triggerAnim("actions", "magma_blast");
-            Level level = getLevel();
-            level.playSound(null, getUser().blockPosition(), SoundEvents.BLAZE_SHOOT, getUser().getSoundSource(), 1.4F, 0.8F + getUser().getRandom().nextFloat() * 0.2F);
         }
     }
 

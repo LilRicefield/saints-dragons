@@ -136,7 +136,7 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
         }
 
         var rng = dragon.getRandom();
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 6; i++) {
             double angle = rng.nextDouble() * (Math.PI * 2.0);
             double radius = 0.5D + rng.nextDouble() * (AURA_RADIUS - 0.5D);
             double height = rng.nextDouble() * AURA_VERTICAL;
@@ -148,15 +148,15 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
 
     private void spawnParticles(ServerLevel level, Vec3 sample) {
         double spread = 0.6D;
-        int flameCount = 12;
-        int emberCount = 9;
-        int smokeCount = 6;
+        int flameCount = 6;
+        int emberCount = 4;
+        int smokeCount = 3;
 
         level.sendParticles(ParticleTypes.FLAME, sample.x, sample.y, sample.z, flameCount,
                 spread, spread * 0.6D, spread, 0.05D);
         level.sendParticles(ParticleTypes.SMALL_FLAME, sample.x, sample.y, sample.z, emberCount,
                 spread * 0.4D, spread * 0.25D, spread * 0.4D, 0.02D);
-        level.sendParticles(ParticleTypes.LAVA, sample.x, sample.y, sample.z, 3,
+        level.sendParticles(ParticleTypes.LAVA, sample.x, sample.y, sample.z, 2,
                 spread * 0.2D, spread * 0.2D, spread * 0.2D, 0.07D);
         level.sendParticles(ParticleTypes.LARGE_SMOKE, sample.x, sample.y, sample.z, smokeCount,
                 spread * 0.8D, spread * 0.4D, spread * 0.8D, 0.0D);

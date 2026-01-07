@@ -31,7 +31,7 @@ public class ClientEventHandler {
     private static double raevyxCameraShift = 0.0;
 
     // Cindervane takeoff camera zoom transition
-    private static float cindervaneCameraZoom = 15F; // Base zoom
+    private static float cindervaneCameraZoom = 5F; // Base zoom
     private static float cindervaneCameraZoomTarget = 15F;
 
     // Cindervane camera shift smoothing (banking response)
@@ -117,8 +117,8 @@ public class ClientEventHandler {
             // Determine target zoom based on flight state
             boolean isFlying = cindervane.isFlying();
 
-            // Flying: zoom to 25F, grounded: 10F base
-            cindervaneCameraZoomTarget = isFlying ? 30F : 15F;
+            // Flying: zoom to 15F, grounded: 5F base
+            cindervaneCameraZoomTarget = isFlying ? 15F : 5F;
 
             // Smooth transition (slower blend rate for more gradual zoom)
             float blendRate = 0.05F; // Reduced from 0.15F for slower, smoother transitions
@@ -159,8 +159,8 @@ public class ClientEventHandler {
             event.setPitch(Mth.clamp(event.getPitch() + cindervaneCameraPitch, -90.0f, 90.0f));
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
-            cindervaneCameraZoom = 15F;
-            cindervaneCameraZoomTarget = 15F;
+            cindervaneCameraZoom = 5F;
+            cindervaneCameraZoomTarget = 5F;
             cindervaneCameraShift = 0.0;
             verticalCameraShift = 0.0;
             cindervaneCameraPitch = 0.0f;

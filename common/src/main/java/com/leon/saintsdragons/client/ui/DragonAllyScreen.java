@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.client.screen;
+package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDragonAllyManagement;

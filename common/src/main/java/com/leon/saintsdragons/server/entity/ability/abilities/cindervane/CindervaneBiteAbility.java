@@ -29,9 +29,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
     private static final float BASE_DAMAGE = 12.0f;
     private static final double BASE_RANGE = 10.0;
-    private static final double RIDDEN_RANGE_BONUS = 10.0;
     private static final double AIR_RANGE_BONUS = 0.6;
-    private static final double HIT_ANGLE_COS = Math.cos(Math.toRadians(75.0));
+    private static final double HIT_ANGLE_COS = Math.cos(Math.toRadians(35.0));
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 5),
@@ -109,9 +108,6 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
     private List<LivingEntity> selectTargets() {
         Cindervane dragon = getUser();
         double range = BASE_RANGE;
-        if (dragon.getControllingPassenger() != null) {
-            range += RIDDEN_RANGE_BONUS;
-        }
         if (dragon.isFlying()) {
             range += AIR_RANGE_BONUS;
         }

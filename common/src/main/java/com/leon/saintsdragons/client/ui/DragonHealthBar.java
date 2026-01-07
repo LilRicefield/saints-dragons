@@ -3,6 +3,8 @@ package com.leon.saintsdragons.client.ui;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
@@ -11,29 +13,69 @@ import net.minecraft.resources.ResourceLocation;
  * Displays current health with dragon-specific theming.
  */
 public class DragonHealthBar extends DragonUIElement {
-    private static final ResourceLocation RAEVYX_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/raevyx/raevyx_base.png");
-    private static final ResourceLocation RAEVYX_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/raevyx/raevyx_overlay.png");
+    // Raevyx textures (32x128)
+    private static final ResourceLocation RAEVYX_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/raevyx/raevyx_base.png");
+    private static final ResourceLocation RAEVYX_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/raevyx/raevyx_overlay.png");
+
+    // Cindervane textures (16x128)
+    private static final ResourceLocation CINDERVANE_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/cindervane/cindervane_base.png");
+    private static final ResourceLocation CINDERVANE_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/cindervane/cindervane_overlay.png");
+
+    // Nulljaw textures (32x128)
+    private static final ResourceLocation NULLJAW_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/nulljaw/nulljaw_base.png");
+    private static final ResourceLocation NULLJAW_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/nulljaw/nulljaw_overlay.png");
 
     private static final ResourceLocation MALE_ICON = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/genders/male.png");
     private static final ResourceLocation FEMALE_ICON = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/genders/female.png");
 
-    // Texture dimensions
-    private static final int TEXTURE_WIDTH = 32;
-    private static final int TEXTURE_HEIGHT = 128;
+    // Default dimensions
+    private static final int DEFAULT_WIDTH = 16;
+    private static final int DEFAULT_HEIGHT = 128;
     private static final int GENDER_ICON_SIZE = 16;
+
+    // Dragon-specific dimensions (set when dragon is assigned)
+    private int textureWidth = DEFAULT_WIDTH;
+    private int textureHeight = DEFAULT_HEIGHT;
 
     private DragonEntity dragon;
     private float currentHealthPercent = 1.0f;
     private float targetHealthPercent = 1.0f;
     private long lastHealthUpdate = 0;
+
+    // Cached text rendering values
+    private String cachedHealthText = "";
+    private int cachedTextWidth = 0;
+    private float cachedHealth = -1;
+    private float cachedMaxHealth = -1;
     
     public DragonHealthBar(int x, int y) {
-        super(x, y, TEXTURE_WIDTH, TEXTURE_HEIGHT); // Vertical health bar
+        super(x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT); // Vertical health bar
     }
-    
+
     public void setDragon(DragonEntity dragon) {
         this.dragon = dragon;
+        updateDimensions();
         updateHealth();
+    }
+
+    private void updateDimensions() {
+        if (dragon instanceof Raevyx) {
+            textureWidth = 32;
+            textureHeight = 128;
+        } else if (dragon instanceof Cindervane) {
+            textureWidth = 16;
+            textureHeight = 128;
+        } else if (dragon instanceof Nulljaw) {
+            textureWidth = 32;
+            textureHeight = 128;
+        } else {
+            textureWidth = DEFAULT_WIDTH;
+            textureHeight = DEFAULT_HEIGHT;
+        }
+
+        // Update the UI element dimensions
+        this.width = textureWidth;
+        this.height = textureHeight;
     }
     
     @Override
@@ -44,11 +86,13 @@ public class DragonHealthBar extends DragonUIElement {
 
         updateHealth();
 
-        boolean isRaevyx = dragon instanceof Raevyx;
-
-        if (isRaevyx) {
-            // Render textured health bar for Raevyx
+        // Render dragon-specific health bar
+        if (dragon instanceof Raevyx) {
             renderTexturedHealthBar(guiGraphics, RAEVYX_BASE, RAEVYX_OVERLAY);
+        } else if (dragon instanceof Cindervane) {
+            renderTexturedHealthBar(guiGraphics, CINDERVANE_BASE, CINDERVANE_OVERLAY);
+        } else if (dragon instanceof Nulljaw) {
+            renderTexturedHealthBar(guiGraphics, NULLJAW_BASE, NULLJAW_OVERLAY);
         } else {
             // Fallback to colored rectangles for other dragons
             renderFallbackHealthBar(guiGraphics);
@@ -56,6 +100,11 @@ public class DragonHealthBar extends DragonUIElement {
 
         // Render gender icon
         renderGenderIcon(guiGraphics);
+
+        // Render health numbers for dragons with custom health bars
+        if (dragon instanceof Raevyx || dragon instanceof Cindervane || dragon instanceof Nulljaw) {
+            renderHealthText(guiGraphics);
+        }
 
         // Render drag handle when hovering
         if (isMouseOver(mouseX, mouseY)) {
@@ -65,10 +114,10 @@ public class DragonHealthBar extends DragonUIElement {
 
     private void renderTexturedHealthBar(GuiGraphics guiGraphics, ResourceLocation baseTexture, ResourceLocation overlayTexture) {
         // Render overlay texture (background/backing) FIRST - always full size
-        guiGraphics.blit(overlayTexture, x, y, 0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+        guiGraphics.blit(overlayTexture, x, y, 0, 0, textureWidth, textureHeight, textureWidth, textureHeight);
 
         // Calculate how much of the base texture to show (bottom-up)
-        int fillHeight = (int) (TEXTURE_HEIGHT * currentHealthPercent);
+        int fillHeight = (int) (textureHeight * currentHealthPercent);
 
         if (fillHeight > 0) {
             // Render base texture (health fill) ON TOP - clips from top, renders from bottom up
@@ -76,11 +125,11 @@ public class DragonHealthBar extends DragonUIElement {
             // 1. Skip the top portion of the texture (v offset)
             // 2. Render starting from where the health begins
 
-            int vOffset = TEXTURE_HEIGHT - fillHeight; // How much of the texture to skip from top
+            int vOffset = textureHeight - fillHeight; // How much of the texture to skip from top
             int renderY = y + vOffset; // Where to start rendering on screen
 
             // blit(ResourceLocation, x, y, u, v, width, height, textureWidth, textureHeight)
-            guiGraphics.blit(baseTexture, x, renderY, 0, vOffset, TEXTURE_WIDTH, fillHeight, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+            guiGraphics.blit(baseTexture, x, renderY, 0, vOffset, textureWidth, fillHeight, textureWidth, textureHeight);
         }
     }
 
@@ -104,6 +153,41 @@ public class DragonHealthBar extends DragonUIElement {
         int iconY = y + (height - GENDER_ICON_SIZE) / 2;
 
         guiGraphics.blit(genderIcon, iconX, iconY, 0, 0, GENDER_ICON_SIZE, GENDER_ICON_SIZE, GENDER_ICON_SIZE, GENDER_ICON_SIZE);
+    }
+
+    private void renderHealthText(GuiGraphics guiGraphics) {
+        // Cache the text to avoid expensive String.format() every frame
+        float currentHealth = dragon.getHealth();
+        float maxHealth = dragon.getMaxHealth();
+
+        if (currentHealth != cachedHealth || maxHealth != cachedMaxHealth) {
+            cachedHealthText = String.format("%.0f/%.0f", currentHealth, maxHealth);
+            cachedTextWidth = minecraft.font.width(cachedHealthText);
+            cachedHealth = currentHealth;
+            cachedMaxHealth = maxHealth;
+        }
+
+        // Position text at the top of the health bar, centered
+        int textX = x + (width - cachedTextWidth) / 2;
+        int textY = y - minecraft.font.lineHeight - 1; // 1 pixel above the health bar
+
+        // Render black background
+        guiGraphics.fill(textX - 2, textY - 1, textX + cachedTextWidth + 2, textY + minecraft.font.lineHeight + 1, 0xFF000000);
+
+        // Render text with dragon-specific color
+        int textColor = getHealthTextColor();
+        guiGraphics.drawString(minecraft.font, cachedHealthText, textX, textY, textColor);
+    }
+
+    private int getHealthTextColor() {
+        if (dragon instanceof Raevyx) {
+            return 0xDC143C; // Crimson
+        } else if (dragon instanceof Cindervane) {
+            return 0xFFA500; // Orange
+        } else if (dragon instanceof Nulljaw) {
+            return 0x8B008B; // Dark purple
+        }
+        return 0xFFFFFF; // White fallback
     }
     
     private void updateHealth() {
