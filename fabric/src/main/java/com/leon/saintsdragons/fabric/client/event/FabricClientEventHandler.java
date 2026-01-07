@@ -31,7 +31,7 @@ public class FabricClientEventHandler {
     private static double raevyxCameraShift = 0.0;
 
     // Cindervane takeoff camera zoom transition
-    private static float cindervaneCameraZoom = 15F; // Base zoom
+    private static float cindervaneCameraZoom = 5F; // Base zoom
     private static float cindervaneCameraZoomTarget = 15F;
 
     // Cindervane camera shift smoothing (banking response)
@@ -141,8 +141,8 @@ public class FabricClientEventHandler {
             // Determine target zoom based on flight state
             boolean isFlying = cindervane.isFlying();
 
-            // Flying: zoom to 30F, grounded: 15F base
-            cindervaneCameraZoomTarget = isFlying ? 30F : 15F;
+            // Flying: zoom to 15F, grounded: 5F base
+            cindervaneCameraZoomTarget = isFlying ? 15F : 5F;
 
             // Smooth transition
             float blendRate = 0.05F;
@@ -190,8 +190,8 @@ public class FabricClientEventHandler {
             cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
-            cindervaneCameraZoom = 15F;
-            cindervaneCameraZoomTarget = 15F;
+            cindervaneCameraZoom = 5F;
+            cindervaneCameraZoomTarget = 5F;
             cindervaneCameraShift = 0.0;
             verticalCameraShift = 0.0;
             cindervaneCameraPitch = 0.0f;

@@ -42,8 +42,7 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
         if (section.sectionType == STARTUP) {
             // Fire the authored action clip; controller name is "actions" for Amphithere
             Cindervane dragon = getUser();
-            String trigger = dragon.isFlying() ? "roar_air" : "roar_ground";
-            dragon.triggerAnim("actions", trigger);
+            dragon.triggerAnim("actions", "roar");
             soundQueued = true;
         }
     }

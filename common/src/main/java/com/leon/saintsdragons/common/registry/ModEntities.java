@@ -30,7 +30,7 @@ public final class ModEntities {
 
     public static final Supplier<EntityType<Raevyx>> RAEVYX =
             REGISTER.register("raevyx", () -> EntityType.Builder.of(Raevyx::new, MobCategory.CREATURE)
-                    .sized(3.5F, 3.0F)
+                    .sized(4.5F, 4.5F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("raevyx"));
@@ -44,14 +44,14 @@ public final class ModEntities {
 
     public static final Supplier<EntityType<Cindervane>> CINDERVANE =
             REGISTER.register("cindervane", () -> EntityType.Builder.of(Cindervane::new, MobCategory.CREATURE)
-                    .sized(4.5F, 6.5F)
+                    .sized(2.5F, 2.5F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("cindervane"));
 
     public static final Supplier<EntityType<Nulljaw>> NULLJAW =
             REGISTER.register("nulljaw", () -> EntityType.Builder.of(Nulljaw::new, MobCategory.CREATURE)
-                    .sized(4.5F, 5.0F)
+                    .sized(4.5F, 3.5F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("nulljaw"));

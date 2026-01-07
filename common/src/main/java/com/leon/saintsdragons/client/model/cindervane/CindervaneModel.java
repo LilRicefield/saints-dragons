@@ -116,9 +116,11 @@ public CindervaneModel() {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 30.0f * Mth.DEG_TO_RAD;
 
-        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.5f);
-        applyNeckBoneRotation("neck2Controller", neckLeanRad * 1.0f);
-        applyNeckBoneRotation("skullController", neckLeanRad * 1.25f);
+        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.15f);
+        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.30f);
+        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.45f);
+        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.60f);
+        applyNeckBoneRotation("headController", neckLeanRad * 0.75f);
     }
 
     private void applyGroundNeckTurn(Cindervane entity, float partialTick) {
@@ -132,8 +134,11 @@ public CindervaneModel() {
 
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
 
-        applyNeckBoneRotation("neck1Controller", turnRad * 0.5f);
-        applyNeckBoneRotation("neck2Controller", turnRad * 1.0f);
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.15f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 0.30f);
+        applyNeckBoneRotation("neck3Controller", turnRad * 0.45f);
+        applyNeckBoneRotation("neck4Controller", turnRad * 0.60f);
+        applyNeckBoneRotation("headController", turnRad * 0.75f);
     }
 
     private void applyNeckBoneRotation(String boneName, float rotationY) {
@@ -159,9 +164,11 @@ public CindervaneModel() {
         float totalYawRad = lookYawRad + structuralYawRad;
 
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
-        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.35f);
-        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.55f);
-        applyNeckBoneFollow("skullController", lookPitchRad, totalYawRad, 0.60f);
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.15f);
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.30f);
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.45f);
+        applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.60f);
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.75f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
@@ -182,9 +189,11 @@ public CindervaneModel() {
         float targetVelocity = (float) velocity;
         float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity);
         float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
+        applyTailBoneRotation("bone", velocityRad * 0.75f);
         applyTailBoneRotation("tail1", velocityRad * 1.0f);
-        applyTailBoneRotation("tail2", velocityRad * 2.5f);
-        applyTailBoneRotation("tail3", velocityRad * 3.0f);
+        applyTailBoneRotation("tail2", velocityRad * 1.5f);
+        applyTailBoneRotation("tail3", velocityRad * 2.0f);
+        applyTailBoneRotation("tail4", velocityRad * 2.5f);
     }
 
     private void applyTailBoneRotation(String boneName, float rotationY) {

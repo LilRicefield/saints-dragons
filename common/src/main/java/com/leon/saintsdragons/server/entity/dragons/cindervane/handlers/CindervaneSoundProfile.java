@@ -22,8 +22,6 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
             Map.entry("grumble2", 150),
             Map.entry("grumble3", 75),
             Map.entry("roar", 45),
-            Map.entry("roar_ground", 45),
-            Map.entry("roar_air", 45),
             Map.entry("cindervane_hurt", 20),
             Map.entry("cindervane_die", 95)
     );
@@ -33,8 +31,6 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
             Map.entry("cindervane_grumble2", "grumble2"),
             Map.entry("cindervane_grumble3", "grumble3"),
             Map.entry("cindervane_roar", "roar"),
-            Map.entry("roar_ground", "roar_ground"),
-            Map.entry("roar_air", "roar_air"),
             Map.entry("cindervane_hurt", "cindervane_hurt"),
             Map.entry("cindervane_die", "cindervane_die")
     );
@@ -64,12 +60,12 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
 
         // Handle non-vocal animation sounds
         return switch (key) {
-            case "cindervane_walk" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_WALK.get(), 1.0f, 1.0f, 0.0f);
+            case "cindervane_magma_blast" -> {
+                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_MAGMA_BLAST.get(), 2.0f, 1.0f, 0.0f);
                 yield true;
             }
             case "cindervane_run" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_RUN.get(), 1.0f, 1.0f, 0.0f);
+                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_RUN.get(), 2.0f, 1.0f, 0.0f);
                 yield true;
             }
             case "cindervane_bite" -> {
@@ -77,7 +73,7 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
                 yield true;
             }
             case "cindervane_landed" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 0.0f);
+                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_LANDED.get(), 2.0f, 1.0f, 0.0f);
                 yield true;
             }
             case "cindervane_eat" -> {

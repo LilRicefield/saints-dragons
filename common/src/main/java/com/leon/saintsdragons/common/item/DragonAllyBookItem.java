@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.common.item;
 
-import com.leon.saintsdragons.client.screen.DragonAllyScreen;
+import com.leon.saintsdragons.client.ui.DragonAllyScreen;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;

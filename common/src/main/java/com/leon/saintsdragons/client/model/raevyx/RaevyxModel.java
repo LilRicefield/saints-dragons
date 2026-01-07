@@ -196,9 +196,9 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
 
         // Apply with same values as banking lean (4 neck segments)
-        applyNeckBoneRotation("neck1Controller", turnRad * 0.1f);
-        applyNeckBoneRotation("neck2Controller", turnRad * 0.2f);
-        applyNeckBoneRotation("neck3Controller", turnRad * 0.3f);
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.3f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 0.5f);
+        applyNeckBoneRotation("neck3Controller", turnRad * 0.7f);
         applyNeckBoneRotation("headController", turnRad * 0.35f);
     }
 
@@ -235,10 +235,10 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
 
 
         // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
-        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.1f);  // Base
-        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.3f);  // Lower-mid
-        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.5f);  // Upper-mid
-        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.7f);  // Tip
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.15f);  // Base
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.20f);  // Lower-mid
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.25f);  // Upper-mid
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.30f);  // Tip
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {

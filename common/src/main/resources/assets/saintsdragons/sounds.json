@@ -151,11 +151,11 @@
       }
     ]
   },
-  "cindervane_walk": {
-    "subtitle": "Cindervane steps",
+  "cindervane_magma_blast": {
+    "subtitle": "Cindervane shoots out magma",
     "sounds": [
       {
-        "name": "saintsdragons:entity/cindervane/cindervane_walk",
+        "name": "saintsdragons:entity/cindervane/cindervane_magma_blast",
         "volume": 1.1,
         "pitch": 1.0
       }

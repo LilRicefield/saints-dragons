@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.network;
 
 import com.leon.saintsdragons.client.DragonStatusUIManager;
-import com.leon.saintsdragons.client.screen.DragonAllyScreen;
+import com.leon.saintsdragons.client.ui.DragonAllyScreen;
 import com.leon.saintsdragons.common.network.MessageDragonAllyDelta;
 import com.leon.saintsdragons.common.network.MessageDragonAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
