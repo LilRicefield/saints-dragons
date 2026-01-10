@@ -152,15 +152,29 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 return PlayState.CONTINUE;
             }
 
-            // GLIDE_DOWN - only for RIDER diving past 30 degrees (not AI flight)
-            // Note: pitch is negated, so looking down = negative pitch
-            // This prevents AI dragons from always playing glide_down
-            // Also prevent glide_down when landing blend is active (rider is landing)
-            float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
-            if (dragon.isVehicle() && pitchDegrees < -10.0f && !dragon.isRiderLandingBlendActive()) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(GLIDE_DOWN);
-                return PlayState.CONTINUE;
+            // GLIDE_DOWN - for both ridden and AI dragons
+            if (dragon.isVehicle()) {
+                // Ridden: use player pitch
+                float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
+                if (pitchDegrees < -10.0f && !dragon.isRiderLandingBlendActive()) {
+                    state.getController().transitionLength(6);
+                    state.setAndContinue(GLIDE_DOWN);
+                    return PlayState.CONTINUE;
+                }
+            } else {
+                // AI: calculate pitch from velocity
+                net.minecraft.world.phys.Vec3 velocity = dragon.getDeltaMovement();
+                double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+                if (horizontalSpeed > 0.01) {
+                    double pitchRadians = Math.atan2(-velocity.y, horizontalSpeed);
+                    double pitchDegrees = Math.toDegrees(pitchRadians);
+
+                    if (pitchDegrees > 10.0) {
+                        state.getController().transitionLength(6);
+                        state.setAndContinue(GLIDE_DOWN);
+                        return PlayState.CONTINUE;
+                    }
+                }
             }
 
             // Mode 5: FLY_IDLE - stationary rider hover
