@@ -3027,7 +3027,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     // Use Phase 2 landed animation if in Phase 2 mode
                     String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
                     triggerAnim("action", landedAnim);  // Trigger as one-shot animation
-                    lockRiderControls(25);  // Lock controls for 1.25 seconds while animation plays
+                    lockRiderControls(13);  // Lock controls for 0.63 seconds while animation plays
                 }
             }
             return;
