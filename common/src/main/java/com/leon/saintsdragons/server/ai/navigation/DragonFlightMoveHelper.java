@@ -133,9 +133,13 @@ public class DragonFlightMoveHelper extends MoveControl {
             horizontalDist = Math.sqrt(distX * distX + distZ * distZ);
         }
         double totalDist = Math.sqrt(distX * distX + distZ * distZ + distY * distY);
-        if (totalDist < 1.0e-6) {
-            // We're essentially at the target; stop moving
+
+        // Use bounding box diagonal as threshold, with minimum of 5 blocks for smaller dragons
+        double hoverThreshold = Math.max(5.0, mob.getBoundingBox().getSize());
+        if (totalDist < hoverThreshold) {
             this.operation = Operation.WAIT;
+            // Gradually slow down instead of instant stop
+            mob.setDeltaMovement(mob.getDeltaMovement().scale(0.75));
             return;
         }
 

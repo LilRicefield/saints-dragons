@@ -7,8 +7,8 @@
 				"texture_width": 1024,
 				"texture_height": 1024,
 				"visible_bounds_width": 28,
-				"visible_bounds_height": 6.5,
-				"visible_bounds_offset": [0, 2.75, 0]
+				"visible_bounds_height": 10.5,
+				"visible_bounds_offset": [0, 4.75, 0]
 			},
 			"bones": [
 				{
@@ -520,12 +520,12 @@
 				{
 					"name": "tail1",
 					"parent": "body1",
-					"pivot": [0, 32.95, 54.4]
+					"pivot": [0, 44.95, 46.4]
 				},
 				{
 					"name": "tail1Controller",
 					"parent": "tail1",
-					"pivot": [0, 32.95, 54.4],
+					"pivot": [0, 46.95, 47.4],
 					"cubes": [
 						{"origin": [-12, 32.4, 38.4], "size": [24, 22.6, 48], "uv": [0, 0]},
 						{"origin": [19.6, 43, 52], "size": [0, 23, 38], "pivot": [19.6, 54.5, 71], "rotation": [0, 0, 90], "uv": [76, 315]},
@@ -564,12 +564,12 @@
 				{
 					"name": "tail2",
 					"parent": "tail1Controller",
-					"pivot": [0, 36.86668, 87.4]
+					"pivot": [0, 43.86668, 86.4]
 				},
 				{
 					"name": "tail2Controller",
 					"parent": "tail2",
-					"pivot": [0, 36.86668, 87.4],
+					"pivot": [0, 42.86668, 87.4],
 					"cubes": [
 						{"origin": [-10, 36.4, 82.4], "size": [20, 17.6, 48], "uv": [136, 137]},
 						{"origin": [13.6, 40, 90], "size": [0, 23, 38], "pivot": [13.6, 51.5, 109], "rotation": [0, 0, 90], "uv": [328, 0]},
@@ -626,12 +626,12 @@
 				{
 					"name": "tail3",
 					"parent": "tail2Controller",
-					"pivot": [0, 38.7, 130.4]
+					"pivot": [0, 46.7, 130.4]
 				},
 				{
 					"name": "tail3Controller",
 					"parent": "tail3",
-					"pivot": [0, 38.7, 130.4],
+					"pivot": [0, 47.7, 130.4],
 					"cubes": [
 						{"origin": [-9, 41.8, 126.4], "size": [18, 11.8, 36], "uv": [144, 44]},
 						{"origin": [9.6, 39, 128], "size": [0, 23, 38], "pivot": [9.6, 50.5, 147], "rotation": [0, 0, 90], "uv": [152, 376]},

@@ -22,3 +22,4 @@ forge/build/
 
 # IDE/tooling output
 bin/
+/cfr.jar

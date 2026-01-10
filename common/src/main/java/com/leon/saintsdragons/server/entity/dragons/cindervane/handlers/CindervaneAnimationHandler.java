@@ -173,31 +173,71 @@ public class CindervaneAnimationHandler {
         state.getController().setAnimationSpeed(1.0f);
 
         if (dragon.isFlying()) {
-            // Check for takeoff first (highest priority)
-            if (dragon.getSyncedFlightMode() == 3) {
+            int syncedMode = dragon.getSyncedFlightMode();
+
+            // Mode 3: Takeoff (highest priority)
+            if (syncedMode == 3) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(TAKEOFF);
                 return PlayState.CONTINUE;
             }
 
-            // Wild/AI dragons alternate between FLAP and GLIDE for natural flight
-            // Use vertical velocity to determine which animation to play
-            boolean sprinting = dragon.isAccelerating();
-            boolean isMovingHorizontally = dragon.getDeltaMovement().horizontalDistanceSqr() > 0.01 || sprinting;
-            double verticalVelocity = dragon.getDeltaMovement().y;
+            // GLIDE_DOWN check for AI dragons (calculate pitch from velocity)
+            if (!dragon.isVehicle()) {
+                net.minecraft.world.phys.Vec3 velocity = dragon.getDeltaMovement();
+                double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+                if (horizontalSpeed > 0.01) { // Only check pitch if moving horizontally
+                    // Calculate pitch angle from velocity (negative = diving down)
+                    double pitchRadians = Math.atan2(-velocity.y, horizontalSpeed);
+                    double pitchDegrees = Math.toDegrees(pitchRadians);
 
-            // Ascending or low-speed flight: flap wings
-            // Gliding: high-speed level flight or descending slowly
-            if (sprinting && isMovingHorizontally) {
+                    // If diving down steeply (pitch > 10 degrees downward)
+                    if (pitchDegrees > 10.0) {
+                        state.getController().transitionLength(6);
+                        state.setAndContinue(GLIDE_DOWN);
+                        return PlayState.CONTINUE;
+                    }
+                }
+            }
+
+            // Mode 5: FLY_IDLE (hovering still)
+            if (syncedMode == 5) {
+                state.getController().transitionLength(6);
+                state.setAndContinue(FLY_IDLE);
+                return PlayState.CONTINUE;
+            }
+
+            // Mode 4: SPRINT_FLAP
+            if (syncedMode == 4) {
                 state.getController().transitionLength(3);
                 state.setAndContinue(SPRINT_FLAP);
-            } else if (verticalVelocity > 0.02 || dragon.getDeltaMovement().horizontalDistanceSqr() < 0.1) {
+                return PlayState.CONTINUE;
+            }
+
+            // Mode 2: Hover (AI hovering/landing)
+            if (syncedMode == 2) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(FLAP);
-            } else {
+                return PlayState.CONTINUE;
+            }
+
+            // Mode 1: Forward flight (flapping)
+            if (syncedMode == 1) {
+                state.getController().transitionLength(6);
+                state.setAndContinue(FLAP);
+                return PlayState.CONTINUE;
+            }
+
+            // Mode 0: Glide
+            if (syncedMode == 0) {
                 state.getController().transitionLength(8);
                 state.setAndContinue(GLIDE);
+                return PlayState.CONTINUE;
             }
+
+            // Fallback: default to flap
+            state.getController().transitionLength(6);
+            state.setAndContinue(FLAP);
             return PlayState.CONTINUE;
         }
 

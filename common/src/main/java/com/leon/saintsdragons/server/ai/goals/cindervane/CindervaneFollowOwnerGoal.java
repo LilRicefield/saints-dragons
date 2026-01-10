@@ -1,15 +1,18 @@
 package com.leon.saintsdragons.server.ai.goals.cindervane;
 
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
 /**
- * Follow-owner behaviour tuned for Amphitheres.
+ * Follow-owner behaviour tuned for Cindervane.
  * Mirrors the Lightning dragon implementation but with glider-friendly constants.
  */
 public class CindervaneFollowOwnerGoal extends Goal {
@@ -143,6 +146,7 @@ public class CindervaneFollowOwnerGoal extends Goal {
 
         amphithere.getLookControl().setLookAt(owner, 10.0f, 10.0f);
 
+        boolean ownerAirborne = isOwnerAirborne(owner);
         boolean shouldFly = shouldTriggerFlight(owner, distance);
         if (shouldFly && !amphithere.isFlying()) {
             amphithere.setFlying(true);
@@ -150,8 +154,8 @@ public class CindervaneFollowOwnerGoal extends Goal {
             amphithere.setLanding(false);
             amphithere.setHovering(false);
             resetPathTracking();
-        } else if (amphithere.isFlying() && distance < STOP_FOLLOW_DIST * 1.5) {
-            // Properly land the dragon instead of making it hover in mid-air
+        } else if (amphithere.isFlying() && distance < STOP_FOLLOW_DIST * 1.5 && !ownerAirborne) {
+            // Land only if owner is on the ground (prevents drop-loop when owner hovers)
             amphithere.setLanding(true);
             amphithere.setFlying(false);
             amphithere.setHovering(false);
@@ -294,5 +298,26 @@ public class CindervaneFollowOwnerGoal extends Goal {
         this.lastOwnerX = Double.NaN;
         this.lastOwnerY = Double.NaN;
         this.lastOwnerZ = Double.NaN;
+    }
+
+    private boolean isOwnerAirborne(LivingEntity owner) {
+        if (owner == null || owner.level() != amphithere.level()) {
+            return false;
+        }
+        // Check if owner is riding something airborne
+        if (owner.isPassenger()) {
+            Entity vehicle = owner.getVehicle();
+            if (vehicle != null && !vehicle.onGround()) {
+                return true;
+            }
+        }
+        // Owner is on ground
+        if (owner.onGround()) {
+            return false;
+        }
+        // Check if owner is significantly above ground (not just jumping)
+        BlockPos pos = owner.blockPosition();
+        int groundY = owner.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos).getY();
+        return owner.getY() - groundY > 4.0;
     }
 }

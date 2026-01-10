@@ -26,12 +26,14 @@ public enum DragonType {
 
     /**
      * Fire element - flame attacks, heat affinity
-     * Immune to ALL fire damage types (fire, lava, magma blocks)
+     * Immune to vanilla environmental fire only (fire, lava, magma blocks)
+     * Vulnerable to magical fire (fire magic is enhanced with magic, not mundane)
      * Benefits from hot biomes (Nether, desert)
      */
     FIRE("fire", Element.FIRE, Cindervane.class, ModEntities.CINDERVANE,
         ElementalProfile.builder(Element.FIRE)
-            .immuneTo(DamageTypeTags.IS_FIRE)  // Covers fire, lava, magma blocks, etc.
+            // Note: Specific vanilla fire immunity is handled in Cindervane.hurt()
+            // This allows magical fire from mods to deal damage
             .build()),
 
     /**
@@ -53,14 +55,16 @@ public enum DragonType {
 
     /**
      * Fire element - massive fire-breathing dragon
-     * Immune to ALL fire damage types:
+     * Immune to vanilla environmental fire only:
      * - Fire (in_fire, on_fire)
      * - Lava (lava pools, lava buckets)
      * - Hot floor (magma blocks)
+     * Vulnerable to magical fire (fire magic is enhanced with magic, not mundane)
      */
     IGNIVORUS("ignivorus", Element.FIRE, com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus.class, ModEntities.IGNIVORUS,
         ElementalProfile.builder(Element.FIRE)
-            .immuneTo(DamageTypeTags.IS_FIRE)  // Covers fire, lava, magma blocks, etc.
+            // Note: Specific vanilla fire immunity is handled in Ignivorus.hurt()
+            // This allows magical fire from mods to deal damage
             .build());
 
     private final String name;

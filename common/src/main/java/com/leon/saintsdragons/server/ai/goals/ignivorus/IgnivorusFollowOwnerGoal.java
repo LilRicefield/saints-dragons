@@ -1,9 +1,12 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
@@ -109,6 +112,7 @@ public class IgnivorusFollowOwnerGoal extends Goal {
         dragon.getLookControl().setLookAt(owner, 10.0f, 10.0f);
 
         // Smart flight decision making
+        boolean ownerAirborne = isOwnerAirborne(owner);
         boolean shouldFly = shouldTriggerFlight(owner, distance);
 
         // Handle flight state changes
@@ -119,7 +123,7 @@ public class IgnivorusFollowOwnerGoal extends Goal {
             dragon.setLanding(false);
             dragon.setHovering(false);
             resetPathTracking();
-        } else if (dragon.isFlying() && distance < STOP_FOLLOW_DIST * 1.5 && owner.onGround()) {
+        } else if (dragon.isFlying() && distance < STOP_FOLLOW_DIST * 1.5 && !ownerAirborne) {
             // Start landing sequence when close enough to owner AND owner is on ground
             dragon.setLanding(true);
             dragon.setFlying(false);
@@ -311,5 +315,26 @@ public class IgnivorusFollowOwnerGoal extends Goal {
         this.lastOwnerX = Double.NaN;
         this.lastOwnerY = Double.NaN;
         this.lastOwnerZ = Double.NaN;
+    }
+
+    private boolean isOwnerAirborne(LivingEntity owner) {
+        if (owner == null || owner.level() != dragon.level()) {
+            return false;
+        }
+        // Check if owner is riding something airborne
+        if (owner.isPassenger()) {
+            Entity vehicle = owner.getVehicle();
+            if (vehicle != null && !vehicle.onGround()) {
+                return true;
+            }
+        }
+        // Owner is on ground
+        if (owner.onGround()) {
+            return false;
+        }
+        // Check if owner is significantly above ground (not just jumping)
+        BlockPos pos = owner.blockPosition();
+        int groundY = owner.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos).getY();
+        return owner.getY() - groundY > 4.0;
     }
 }

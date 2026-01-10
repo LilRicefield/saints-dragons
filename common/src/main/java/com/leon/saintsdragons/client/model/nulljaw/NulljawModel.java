@@ -57,6 +57,8 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
             applyBodyRotationDeviation(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
+            applySwimPitch(entity, partialTick);
+            applySwimRoll(entity, partialTick);
             applyNeckFollow(entity, modelData, partialTick);
         }
     }
@@ -138,6 +140,51 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         }
         GeoBone bone = boneOpt.get();
         applyAdditiveRotation(bone, 0.0f, rotationY, 0.0f);
+    }
+
+    /**
+     * Apply swim pitch to body bone for visual feedback when swimming
+     * (like how flying dragons tilt when diving)
+     */
+    private void applySwimPitch(Nulljaw entity, float partialTick) {
+        // Only apply swim pitch when actually in water and swimming
+        if (!entity.isInWater() && !entity.isInWaterOrBubble()) {
+            return;
+        }
+
+        var bodyOpt = getBone("heightController");
+        if (bodyOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone body = bodyOpt.get();
+        float swimPitchRad = entity.getSwimPitchRadians(partialTick);
+
+        // Apply pitch rotation to body bone (additive, preserves animations)
+        applyAdditiveRotation(body, swimPitchRad, 0.0f, 0.0f);
+    }
+
+    /**
+     * Apply swim roll (banking) when turning underwater
+     * (like how flying dragons bank when turning)
+     */
+    private void applySwimRoll(Nulljaw entity, float partialTick) {
+        // Only apply swim roll when actually in water and swimming
+        if (!entity.isInWater() && !entity.isInWaterOrBubble()) {
+            return;
+        }
+
+        var bodyOpt = getBone("heightController");
+        if (bodyOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone body = bodyOpt.get();
+        float swimRollDegrees = entity.getSwimRollAngleDegrees(partialTick);
+        float swimRollRad = swimRollDegrees * Mth.DEG_TO_RAD;
+
+        // Apply roll rotation to body bone (additive, preserves animations)
+        applyAdditiveRotation(body, 0.0f, 0.0f, swimRollRad);
     }
 
     private void applyAdditiveRotation(GeoBone bone, float addX, float addY, float addZ) {

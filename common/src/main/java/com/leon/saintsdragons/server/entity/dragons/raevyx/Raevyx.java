@@ -1288,7 +1288,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 boolean accelerating = isAccelerating();
 
                 // Update position tracking and movement timer
-                if (positionChangeSqr > 0.0001 || goingUp || goingDown || accelerating) {
+                // Increased threshold from 0.0001 to 0.01 (0.1 blocks) to ignore micro-movements from MoveHelper
+                if (positionChangeSqr > 0.01 || goingUp || goingDown || accelerating) {
                     // Dragon is moving or player is giving directional input
                     ticksSinceLastMovement = 0;
                     lastCheckedX = this.getX();
@@ -1299,8 +1300,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     ticksSinceLastMovement++;
                 }
 
-                // Only switch to FLY_IDLE after being stationary for a bit (prevents flicker)
-                if (ticksSinceLastMovement > 3) { // 3 ticks = 0.15 seconds of no movement
+                // Only switch to FLY_IDLE after being stationary for longer (prevents flicker from micro-movements)
+                // Increased from 3 to 10 ticks (0.5 seconds) for more stable hovering
+                if (ticksSinceLastMovement > 10) {
                     return 5; // FLY_IDLE - stationary rider hover
                 }
 
@@ -1343,14 +1345,23 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             inHighAltitudeGlide = false;
         }
 
-        // Fallback for wild/untamed dragons: Check if gliding (moving horizontally without significant vertical movement)
-        double horizontalSpeedSqr = getDeltaMovement().horizontalDistanceSqr();
+        // AI flight mode determination (tamed dragons following owner or wild dragons)
+        Vec3 velocity = getDeltaMovement();
+        double horizontalSpeedSqr = velocity.horizontalDistanceSqr();
         double yDelta = this.getY() - this.yo;
+
+        // Check if hovering still (reached destination or stationary)
+        // Threshold: 0.01 squared = 0.1 blocks/tick horizontal movement
+        if (horizontalSpeedSqr < 0.01 && Math.abs(yDelta) < 0.1) {
+            return 5; // FLY_IDLE - hovering still in air
+        }
+
+        // Check if gliding (moving horizontally without significant vertical movement)
         if (Math.abs(yDelta) < 0.06 && horizontalSpeedSqr > 0.01) {
             return 0; // Glide
         }
 
-        return 1; // Forward flight
+        return 1; // Forward flight (flapping)
     }
 
     @Override
@@ -1998,6 +2009,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             // Clear sit progress if not sitting
             if (!this.isOrderedToSit() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
                 this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            }
+
+            // Auto-complete landing once we're actually on ground (like Ignivorus)
+            // This check is OUTSIDE isFlying() because FollowOwnerGoal sets flying=false before touchdown
+            if (isLanding() && onGround()) {
+                handleAiLandingComplete();
             }
 
             // Only consider SOLID ground, not water (mirrors Cindervane)

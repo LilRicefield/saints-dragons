@@ -516,6 +516,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             // Only consider SOLID ground, not water (water should not trigger landing)
             boolean onGroundNow = this.onGround() && !this.isInWater();
 
+            // Auto-complete landing once we're actually on ground (like Ignivorus)
+            // This check is OUTSIDE isFlying() because FollowOwnerGoal sets flying=false before touchdown
+            if (isLanding() && onGround()) {
+                handleAiLandingComplete();
+            }
+
             if (isFlying()) {
                 airTicks++;
                 groundTicks = 0;
@@ -1299,6 +1305,16 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             riderHighAltitudeGlide = false;
         }
 
+        // AI flight mode determination (tamed dragons following owner or wild dragons)
+        double horizontalSpeedSqr = velocity.horizontalDistanceSqr();
+        double yDelta = getY() - yo;
+
+        // Check if hovering still (reached destination or stationary)
+        // Increased threshold from 0.0025 to 0.01 (0.1 blocks/tick) for smaller, lighter dragons
+        if (horizontalSpeedSqr < 0.01 && Math.abs(yDelta) < 0.1) {
+            return 5; // FLY_IDLE - hovering still in air
+        }
+
         if (ascending || riderAscending) {
             return 1;
         }
@@ -1887,7 +1903,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
-    // Fire immunity is now handled by DragonEntity base class via DragonType.FIRE elemental profile
+    // Fire immunity (vanilla environmental fire only) is handled in hurt() method above
+    // Magical fire is intentionally NOT blocked to allow compatibility with fire magic mods
 
     public boolean isBreathingFire() {
         return this.entityData.get(DATA_FIRE_BREATHING);
@@ -1977,7 +1994,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             return false;
         }
 
-        // Immune to fire damage (explicit check since IS_FIRE tag doesn't work reliably)
+        // Immune to vanilla environmental fire only (mundane fire can't harm fire dragons)
+        // Magical fire from mods (e.g., Iron's Spells) is NOT blocked - magic fire is different!
         if (source.is(net.minecraft.world.damagesource.DamageTypes.IN_FIRE) ||
             source.is(net.minecraft.world.damagesource.DamageTypes.ON_FIRE) ||
             source.is(net.minecraft.world.damagesource.DamageTypes.LAVA) ||

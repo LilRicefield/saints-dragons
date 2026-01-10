@@ -244,7 +244,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     // ===== HARDCODED GROUND SPEEDS =====
     public static final double RIDER_WALK_SPEED = 0.225D;
-    public static final double RIDER_RUN_SPEED = 0.6D;
+    public static final double RIDER_RUN_SPEED = 0.4D;
 
     // Phase 2 speeds (slower for dramatic effect)
     public static final double RIDER_PHASE2_WALK_SPEED = 0.15D;
@@ -562,8 +562,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (isDying()) {
             return false;
         }
-        // Immune to fire damage
-        if (damageSource.is(DamageTypes.IN_FIRE) || damageSource.is(DamageTypes.ON_FIRE) || damageSource.is(DamageTypes.LAVA)) {
+        // Immune to vanilla environmental fire only (mundane fire can't harm fire dragons)
+        // Magical fire from mods (e.g., Iron's Spells) is NOT blocked - magic fire is different!
+        if (damageSource.is(DamageTypes.IN_FIRE) ||
+            damageSource.is(DamageTypes.ON_FIRE) ||
+            damageSource.is(DamageTypes.LAVA) ||
+            damageSource.is(DamageTypes.HOT_FLOOR)) {
             return false;
         }
         // Wake if sleeping and suppress re-entry on damage
@@ -2052,13 +2056,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             phase2Active = false;
             this.entityData.set(DATA_PHASE2, false);
             phase2CooldownTicks = 40; // 2 second cooldown
-            lockRiderControls(25); // Lock controls for 1.25 seconds during exit animation
+            lockRiderControls(13); // Lock controls for 0.63 seconds during exit animation
             animationHandler.triggerPhase2ExitAnimation();
         } else {
             // Turn ON
             phase2Active = true;
             this.entityData.set(DATA_PHASE2, true);
-            lockRiderControls(25); // Lock controls for 1.25 seconds during enter animation
+            lockRiderControls(20); // Lock controls for 1 second during enter animation
             animationHandler.triggerPhase2EnterAnimation();
         }
     }
@@ -2401,6 +2405,16 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return 1;
         } else {
             riderHighAltitudeGlide = false;
+        }
+
+        // AI flight mode determination (tamed dragons following owner or wild dragons)
+        double horizontalSpeedSqr = velocity.horizontalDistanceSqr();
+        double yDelta = getY() - yo;
+
+        // Check if hovering still (reached destination or stationary)
+        // Threshold: 0.01 squared = 0.1 blocks/tick horizontal movement
+        if (horizontalSpeedSqr < 0.01 && Math.abs(yDelta) < 0.1) {
+            return 5; // FLY_IDLE - hovering still in air
         }
 
         // AI flight: flap when ascending

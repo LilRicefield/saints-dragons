@@ -234,17 +234,36 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            // Special case: GLIDE_DOWN for ridden dragons pitching down past 30 degrees
-            // Note: pitch is negated, so looking down = negative pitch
-            float pitchDegrees = (float)Math.toDegrees(wyvern.getFlightPitchRadians(state.getPartialTick()));
-            if (wyvern.isVehicle() && pitchDegrees < -10.0f && !wyvern.isRiderLandingBlendActive()) {
-                RawAnimation descend = GLIDE_DOWN;
-                if (currentFlightAnimation != descend) {
-                    state.getController().transitionLength(6);
-                    currentFlightAnimation = descend;
+            // GLIDE_DOWN check - for both ridden and AI dragons
+            if (wyvern.isVehicle()) {
+                // Ridden: use player pitch
+                float pitchDegrees = (float)Math.toDegrees(wyvern.getFlightPitchRadians(state.getPartialTick()));
+                if (pitchDegrees < -10.0f && !wyvern.isRiderLandingBlendActive()) {
+                    RawAnimation descend = GLIDE_DOWN;
+                    if (currentFlightAnimation != descend) {
+                        state.getController().transitionLength(6);
+                        currentFlightAnimation = descend;
+                    }
+                    state.setAndContinue(descend);
+                    return PlayState.CONTINUE;
                 }
-                state.setAndContinue(descend);
-                return PlayState.CONTINUE;
+            } else {
+                // AI: calculate pitch from velocity
+                double horizontalSpeed = Math.sqrt(vNow.x * vNow.x + vNow.z * vNow.z);
+                if (horizontalSpeed > 0.01) {
+                    double pitchRadians = Math.atan2(-vNow.y, horizontalSpeed);
+                    double pitchDegrees = Math.toDegrees(pitchRadians);
+
+                    if (pitchDegrees > 10.0) {
+                        RawAnimation descend = GLIDE_DOWN;
+                        if (currentFlightAnimation != descend) {
+                            state.getController().transitionLength(6);
+                            currentFlightAnimation = descend;
+                        }
+                        state.setAndContinue(descend);
+                        return PlayState.CONTINUE;
+                    }
+                }
             }
 
             // Mode 5: FLY_IDLE (stationary rider hover)

@@ -103,6 +103,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_SWIM_PITCH_RAD = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT); // Actual pitch angle for visuals
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
 
@@ -148,6 +149,13 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     // Continuous swim roll angle for smooth banking (like Raevyx's flight banking)
     private float swimRollAngle = 0f;
     private float prevSwimRollAngle = 0f;
+    // Swim pitch smoothing (procedural - visual tilt when swimming up/down)
+    private float swimPitchRad = 0f;
+    private float prevSwimPitchRad = 0f;
+    private float smoothedPlayerSwimPitchRad = 0f;
+    // Client-side smoothing for synced swim pitch (prevents jitter)
+    private float clientSwimPitchRad = 0f;
+    private float prevClientSwimPitchRad = 0f;
     private boolean useLeftClawNext = true; // Toggles between left/right claw attacks
     // ===== SCREEN SHAKE SYSTEM =====
     private static final float SHAKE_DECAY_PER_TICK = 0.02F;
@@ -362,6 +370,7 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         this.entityData.define(DATA_SWIMMING, false);
         this.entityData.define(DATA_SWIM_TURN, 0);
         this.entityData.define(DATA_SWIM_PITCH, 0);
+        this.entityData.define(DATA_SWIM_PITCH_RAD, 0.0F);
         this.entityData.define(DATA_PHASE_TWO, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_SLEEPING, false);
@@ -667,7 +676,8 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     public double getSwimSpeed() {
         double baseSpeed = configuredSwimSpeed;
         if (this.isVehicle()) {
-            baseSpeed += 0.2D; // Give riders a bit more responsiveness when mounted
+            // Reduced bonus for mounted swimming (camera-controlled is more direct)
+            baseSpeed *= 0.65D;
         }
         return baseSpeed;
     }
@@ -1104,11 +1114,17 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         this.entityData.set(DATA_SWIMMING, false);
         this.entityData.set(DATA_SWIM_TURN, 0);
         this.entityData.set(DATA_SWIM_PITCH, 0);
+        this.entityData.set(DATA_SWIM_PITCH_RAD, 0.0F);
         this.swimTurnSmoothedYaw = 0.0F;
         this.swimTurnState = 0;
         this.swimPitchStateTicks = 0;
         this.swimRollAngle = 0f;
         this.prevSwimRollAngle = 0f;
+        this.swimPitchRad = 0f;
+        this.prevSwimPitchRad = 0f;
+        this.smoothedPlayerSwimPitchRad = 0f;
+        this.clientSwimPitchRad = 0f;
+        this.prevClientSwimPitchRad = 0f;
     }
 
     private void updateSwimOrientationState() {
@@ -1188,6 +1204,15 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             swimRollAngle = 0f;
             prevSwimRollAngle = 0f;
             swimTurnSmoothedYaw = 0f;
+            swimPitchRad = 0f;
+            prevSwimPitchRad = 0f;
+            smoothedPlayerSwimPitchRad = 0f;
+            clientSwimPitchRad = 0f;
+            prevClientSwimPitchRad = 0f;
+            // Sync reset to client
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_SWIM_PITCH_RAD, 0.0F);
+            }
             return;
         }
 
@@ -1202,6 +1227,31 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         if (Math.abs(swimRollAngle) < 0.01f) {
             swimRollAngle = 0f;
         }
+
+        // === AI SWIM PITCH (velocity-based for non-ridden) ===
+        // Only update AI pitch when NOT being ridden (ridden uses camera-based pitch)
+        if (!this.isVehicle()) {
+            prevSwimPitchRad = swimPitchRad;
+
+            Vec3 velocity = this.getDeltaMovement();
+            double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+
+            float targetPitchRad = 0f;
+            if (horizontalSpeed > 0.05) {
+                // Calculate pitch from velocity (like Spinosaurus and flying dragon AI)
+                targetPitchRad = (float) Math.atan2(velocity.y, horizontalSpeed);
+                targetPitchRad = Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+            }
+
+            // Smooth pitch transitions (0.35f lerp - matches ridden smoothness)
+            swimPitchRad = Mth.lerp(0.35f, swimPitchRad, targetPitchRad);
+
+            // Sync to client for visuals (server-side only)
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_SWIM_PITCH_RAD, swimPitchRad);
+            }
+        }
+        // When ridden, swimPitchRad is updated in handleRiddenSwimming()
     }
 
     public boolean isSwimming() {
@@ -1255,6 +1305,28 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
      */
     public float getSwimRollAngleDegrees(float partialTick) {
         return Mth.lerp(partialTick, prevSwimRollAngle, swimRollAngle);
+    }
+
+    /**
+     * Get swim pitch in radians (for visual model tilting when swimming)
+     */
+    public float getSwimPitchRadians() {
+        // Client uses smoothed value, server uses local value
+        if (level().isClientSide) {
+            return clientSwimPitchRad;
+        }
+        return swimPitchRad;
+    }
+
+    /**
+     * Get interpolated swim pitch for smooth rendering
+     */
+    public float getSwimPitchRadians(float partialTick) {
+        // Client uses client-side interpolation, server uses server-side interpolation
+        if (level().isClientSide) {
+            return Mth.lerp(partialTick, prevClientSwimPitchRad, clientSwimPitchRad);
+        }
+        return Mth.lerp(partialTick, prevSwimPitchRad, swimPitchRad);
     }
 
     public boolean isPhaseTwoActive() {
@@ -1329,6 +1401,9 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
     }
 
     private void handleRiddenSwimming(Vec3 input) {
+        Player player = (Player) getControllingPassenger();
+        if (player == null) return;
+
         Vec3 velocity = this.getDeltaMovement();
 
         double swimSpeed = getSwimSpeed();
@@ -1336,46 +1411,89 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
             swimSpeed *= 1.6D;
         }
 
-        Vec3 desired = getVec3(input, swimSpeed, velocity);
+        // Get input direction
+        double forwardInput = input.z;
+        double strafeInput = input.x;
+        boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
+
+        // === VISUAL PITCH CALCULATION ===
+        // Update swim pitch for visual feedback (like flying dragons)
+        float targetPitchRad = 0f;
+        if (hasInput) {
+            // Player is swimming (WASD pressed) → use camera pitch for visuals
+            // Negate because Minecraft xRot is positive=down
+            float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
+
+            // Exponential smoothing on player pitch input to avoid jitter
+            smoothedPlayerSwimPitchRad = smoothedPlayerSwimPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
+
+            targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+        } else {
+            // Not swimming (no WASD) → level out
+            smoothedPlayerSwimPitchRad = 0f;
+            targetPitchRad = 0f;
+        }
+
+        // Smooth pitch transitions (0.35f lerp - matches flying dragons)
+        prevSwimPitchRad = swimPitchRad;
+        swimPitchRad = Mth.lerp(0.35f, swimPitchRad, targetPitchRad);
+
+        // Sync to client for visuals
+        this.entityData.set(DATA_SWIM_PITCH_RAD, swimPitchRad);
+
+        // Calculate 3D direction using player camera pitch (like flying dragons)
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        float pitchRad = (float) Math.toRadians(player.getXRot()); // Player camera pitch
+        double forwardXZ = Math.cos(pitchRad);
+        double forwardX = -Math.sin(yawRad) * forwardXZ;
+        double forwardY = -Math.sin(pitchRad);
+        double forwardZ = Math.cos(yawRad) * forwardXZ;
+        double rightX = Math.cos(yawRad);
+        double rightZ = Math.sin(yawRad);
+
+        // Combine forward and strafe
+        double targetDirX = forwardX * forwardInput + rightX * strafeInput * 0.5;
+        double targetDirY = forwardY * forwardInput * 1.2; // Vertical component when moving
+        double targetDirZ = forwardZ * forwardInput + rightZ * strafeInput * 0.5;
+        double dirLength = Math.sqrt(targetDirX * targetDirX + targetDirY * targetDirY + targetDirZ * targetDirZ);
+
+        Vec3 desired;
+        if (hasInput && dirLength > 0.01) {
+            // Normalize and scale by swim speed
+            targetDirX /= dirLength;
+            targetDirY /= dirLength;
+            targetDirZ /= dirLength;
+
+            desired = new Vec3(
+                targetDirX * swimSpeed,
+                targetDirY * swimSpeed,
+                targetDirZ * swimSpeed
+            );
+        } else {
+            // No input - drift with minimal vertical decay
+            desired = new Vec3(0, velocity.y * 0.9, 0);
+        }
+
+        // Smooth acceleration
         Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.28D));
 
+        // Apply drag
         double dragFactor = this.isControlledByLocalInstance() ? 0.92D : 0.94D;
         blended = blended.multiply(dragFactor, 0.96D, dragFactor);
 
-        if (!isGoingUp() && !isGoingDown() && getControllingPassenger() != null) {
-            blended = blended.multiply(1.0D, 0.0D, 1.0D);
-        } else if (!isGoingUp() && !isGoingDown() && getTarget() == null) {
-            blended = blended.add(0.0D, -0.01D, 0.0D);
+        // Spacebar/L-Alt override for quick vertical adjustments (legacy controls)
+        double verticalVel = blended.y;
+        if (isGoingUp()) {
+            verticalVel = Math.min(swimSpeed * 0.8, verticalVel + 0.12D * swimSpeed);
+        } else if (isGoingDown()) {
+            verticalVel = Math.max(-swimSpeed * 0.8, verticalVel - 0.12D * swimSpeed);
         }
+        // No sink when idle - maintains neutral buoyancy
+
+        blended = new Vec3(blended.x, verticalVel, blended.z);
 
         this.setDeltaMovement(blended);
         this.move(MoverType.SELF, this.getDeltaMovement());
-    }
-
-    private @NotNull Vec3 getVec3(Vec3 wishDir, double swimSpeed, Vec3 velocity) {
-        double strafe = wishDir.x;
-        double forward = wishDir.z;
-        float yawRad = this.getYRot() * ((float)Math.PI / 180F);
-        double sin = Math.sin(yawRad);
-        double cos = Math.cos(yawRad);
-
-        double worldX = strafe * cos - forward * sin;
-        double worldZ = forward * cos + strafe * sin;
-
-        double dx = worldX * 0.85D * swimSpeed;
-        double dz = worldZ * 0.85D * swimSpeed;
-
-        double dy = velocity.y;
-        if (isGoingUp()) {
-            dy = Math.min(swimSpeed, dy + 0.12D * swimSpeed);
-        } else if (isGoingDown()) {
-            dy = Math.max(-swimSpeed, dy - 0.12D * swimSpeed);
-        } else {
-            dy *= 0.90D;
-        }
-
-        Vec3 desired = new Vec3(dx, dy, dz);
-        return desired;
     }
 
     // Required methods for RideableDragon interface
@@ -1772,6 +1890,11 @@ public class Nulljaw extends RideableDragonBase implements AquaticDragon, Shakes
         if (level().isClientSide) {
             prevSitProgress = sitProgress;
             sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
+
+            // Smooth client-side swim pitch to prevent jitter from network updates
+            prevClientSwimPitchRad = clientSwimPitchRad;
+            float targetPitch = this.entityData.get(DATA_SWIM_PITCH_RAD);
+            clientSwimPitchRad = Mth.lerp(0.5f, clientSwimPitchRad, targetPitch);
         }
     }
 

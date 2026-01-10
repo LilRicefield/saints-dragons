@@ -30,7 +30,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     // Animation timing: 75ms startup matches fire_breath_starts animation duration
-    private static final int STARTUP_TICKS = 4;  // ~75ms (was 18, now synced to animation)
+    private static final int STARTUP_TICKS = 9;
     private static final int RIDER_ACTIVE_TICKS = 400;  // ~20 seconds for riders
     private static final int AI_ACTIVE_TICKS = 80;      // 4 seconds for AI
     private static final int COOLDOWN_TICKS = 40;
