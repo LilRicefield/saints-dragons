@@ -144,6 +144,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     /** Entity data accessor for flight pitch (radians) */
     public static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    /** Entity data accessor for rider pitch key mode */
+    public static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
     /** Tracks the texture variant (0 = default, 1 = second variant) */
     public static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
@@ -245,6 +248,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     // ===== HARDCODED GROUND SPEEDS =====
     public static final double RIDER_WALK_SPEED = 0.225D;
     public static final double RIDER_RUN_SPEED = 0.4D;
+    public static final float RIDER_KEY_PITCH_DEG = 25.0f;
 
     // Phase 2 speeds (slower for dramatic effect)
     public static final double RIDER_PHASE2_WALK_SPEED = 0.15D;
@@ -411,6 +415,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
+        this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
         this.entityData.define(DATA_FIREBALL_CHARGE, 0);
         this.entityData.define(DATA_SLEEPING, false);
@@ -1530,6 +1535,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             case TOGGLE_MELEE -> {
                 if (!locked) {
                     onRiderToggleMelee(player);
+                }
+            }
+            case TOGGLE_PITCH_MODE -> {
+                if (!locked) {
+                    setRiderPitchKeyMode(!isRiderPitchKeyMode());
                 }
             }
             case ABILITY_USE -> {
@@ -2952,27 +2962,41 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         float targetPitchRad = 0f;
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
-            // RIDING: Use player camera for visual pitch WHEN MOVING
-            float riderForward = player.zza;
-            float riderStrafe = player.xxa;
-            boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+            boolean useKeyPitch = isRiderPitchKeyMode();
 
-            if (hasMovementInput) {
-                // Player is pressing WASD → use camera pitch for visuals
-                // Negate because Minecraft xRot is positive=down, but we want dragon to pitch up when looking up
-                float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
+            if (useKeyPitch) {
+                float rawKeyPitchRad = 0f;
+                if (isGoingUp()) {
+                    rawKeyPitchRad = (float) Math.toRadians(RIDER_KEY_PITCH_DEG);
+                } else if (isGoingDown()) {
+                    rawKeyPitchRad = (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
+                }
 
-                // Exponential smoothing on player pitch input to avoid jitter (matches banking system)
-                smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
-
+                smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
                 targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
             } else {
-                // Hovering (no WASD) → pitch = 0, even if ascending/descending with Spacebar/L-Alt
-                smoothedPlayerPitchRad = 0f; // Reset smoothing when not moving
-                targetPitchRad = 0f;
+                // RIDING: Use player camera for visual pitch WHEN MOVING
+                float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+                float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+                boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+
+                if (hasMovementInput) {
+                    // Player is pressing WASD  use camera pitch for visuals
+                    // Negate because Minecraft xRot is positive=down, but we want dragon to pitch up when looking up
+                    float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
+
+                    // Exponential smoothing on player pitch input to avoid jitter (matches banking system)
+                    smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
+
+                    targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+                } else {
+                    // Hovering (no WASD)  pitch = 0, even if ascending/descending with Spacebar/L-Alt
+                    smoothedPlayerPitchRad = 0f; // Reset smoothing when not moving
+                    targetPitchRad = 0f;
+                }
             }
 
-            boolean wantsLanding = isGoingDown() || player.getXRot() > 30.0f;
+            boolean wantsLanding = isGoingDown() || (!useKeyPitch && player.getXRot() > 30.0f);
             if (wantsLanding) {
                 double altitude = getAltitudeAboveTerrain();
                 if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
@@ -2998,7 +3022,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Trigger landing blend when descending close to ground while ridden
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
-            boolean wantsLanding = isGoingDown() || player.getXRot() > 30.0f;
+            boolean wantsLanding = isGoingDown() || (!isRiderPitchKeyMode() && player.getXRot() > 30.0f);
             if (wantsLanding) {
                 double altitude = getAltitudeAboveTerrain();
                 if (altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE) {
@@ -3283,6 +3307,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return Mth.lerp(partialTick, prevFlightPitchRad, flightPitchRad);
     }
 
+    public boolean isRiderPitchKeyMode() {
+        return this.entityData.get(DATA_PITCH_KEY_MODE);
+    }
+
+    public void setRiderPitchKeyMode(boolean enabled) {
+        this.entityData.set(DATA_PITCH_KEY_MODE, enabled);
+    }
+
 
     // ===== GECKOLIB ANIMATION =====
 
@@ -3443,6 +3475,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.combatManager.saveToNBT(tag);
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tag.putInt("TextureVariant", this.entityData.get(DATA_TEXTURE_VARIANT));
+        tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putBoolean("Bulldozing", bulldozing);
         tag.putInt("BulldozeCooldownTicks", Math.max(0, bulldozeCooldownTicks));
         tag.putBoolean("Phase2Active", phase2Active);
@@ -3464,6 +3497,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
         if (tag.contains("TextureVariant")) {
             this.entityData.set(DATA_TEXTURE_VARIANT, tag.getInt("TextureVariant"));
+        }
+        if (tag.contains("RiderPitchKeyMode")) {
+            setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));
         }
         if (tag.contains("Bulldozing")) {
             bulldozing = tag.getBoolean("Bulldozing");

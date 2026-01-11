@@ -156,7 +156,7 @@ public record CindervaneRiderController(Cindervane dragon) {
             // === DIVE SPEED BOOST ===
             // Progressive speed boost when diving steeply (like real birds)
             // NOTE: Minecraft xRot is POSITIVE when looking down (90° = straight down)
-            float pitchRad = (float) Math.toRadians(player.getXRot());  // Player camera pitch
+            float pitchRad = getEffectivePitchRadians(player);
             float pitchDegrees = (float) Math.toDegrees(pitchRad);
             double diveMultiplier = 1.0;
             double diveAcceleration = ACCELERATION; // Default 0.15
@@ -285,6 +285,23 @@ public record CindervaneRiderController(Cindervane dragon) {
             player.fallDistance = 0.0F;
             dragon.fallDistance = 0.0F;
         }
+    }
+
+    private float getEffectivePitchRadians(Player player) {
+        if (dragon.isRiderPitchKeyMode()) {
+            return getKeyPitchRadians();
+        }
+        return (float) Math.toRadians(player.getXRot());
+    }
+
+    private float getKeyPitchRadians() {
+        if (dragon.isGoingUp()) {
+            return (float) -Math.toRadians(Cindervane.RIDER_KEY_PITCH_DEG);
+        }
+        if (dragon.isGoingDown()) {
+            return (float) Math.toRadians(Cindervane.RIDER_KEY_PITCH_DEG);
+        }
+        return 0.0f;
     }
 
     // ===== RIDING SUPPORT =====

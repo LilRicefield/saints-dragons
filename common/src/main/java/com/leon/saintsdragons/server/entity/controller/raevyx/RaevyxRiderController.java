@@ -274,8 +274,23 @@ public record RaevyxRiderController(Raevyx wyvern) {
         DragonAbility<?> ability = wyvern.getActiveAbility();
         boolean lockPitch = wyvern.isBeaming()
                 || (ability instanceof RaevyxBeamAbility && ability.isUsing());
-        float pitchDegrees = lockPitch ? 0.0f : player.getXRot();
-        return (float) Math.toRadians(pitchDegrees);
+        if (lockPitch) {
+            return 0.0f;
+        }
+        if (wyvern.isRiderPitchKeyMode()) {
+            return getKeyPitchRadians();
+        }
+        return (float) Math.toRadians(player.getXRot());
+    }
+
+    private float getKeyPitchRadians() {
+        if (wyvern.isGoingUp()) {
+            return (float) Math.toRadians(Raevyx.RIDER_KEY_PITCH_DEG);
+        }
+        if (wyvern.isGoingDown()) {
+            return (float) -Math.toRadians(Raevyx.RIDER_KEY_PITCH_DEG);
+        }
+        return 0.0f;
     }
 
     // ===== RIDING SUPPORT =====
