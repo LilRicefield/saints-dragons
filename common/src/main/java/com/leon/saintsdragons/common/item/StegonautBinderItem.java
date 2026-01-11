@@ -32,6 +32,8 @@ public class StegonautBinderItem extends Item {
     private static final String BOUND_DRAGON_NAME = "BoundDragonName";
     private static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
     private static final String BOUND_OWNER_NAME = "BoundOwnerName";
+    private static final String BOUND_CUSTOM_NAME = "BoundCustomName";
+    private static final String DRAGON_DATA_KEY = "StegonautData";
     private static final String IS_BOUND = "IsBound";
     
     public StegonautBinderItem(Properties properties) {
@@ -120,10 +122,17 @@ public class StegonautBinderItem extends Item {
         // Store drake data
         tag.putUUID(BOUND_DRAGON_UUID, drake.getUUID());
         tag.putString(BOUND_DRAGON_NAME, drake.getName().getString());
+
+        // Store custom name if present
         if (drake.hasCustomName()) {
-            tag.putString("BoundCustomName", net.minecraft.network.chat.Component.Serializer.toJson(drake.getCustomName()));
+            Component customName = drake.getCustomName();
+            if (customName != null) {
+                tag.putString(BOUND_CUSTOM_NAME, Component.Serializer.toJson(customName));
+            } else {
+                tag.remove(BOUND_CUSTOM_NAME);
+            }
         } else {
-            tag.remove("BoundCustomName");
+            tag.remove(BOUND_CUSTOM_NAME);
         }
         tag.putBoolean(IS_BOUND, true);
 
@@ -140,23 +149,11 @@ public class StegonautBinderItem extends Item {
         // Store drake's current state
         CompoundTag drakeData = new CompoundTag();
         drake.addAdditionalSaveData(drakeData);
-        tag.put("DrakeData", drakeData);
+        tag.put(DRAGON_DATA_KEY, drakeData);
         
         // Set the tag on the new stack
         newStack.setTag(tag);
-        
-        // Replace the old stack with the new one in the player's inventory
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            // Find the slot containing the old stack and replace it
-            for (int i = 0; i < serverPlayer.getInventory().getContainerSize(); i++) {
-                if (serverPlayer.getInventory().getItem(i) == stack) {
-                    serverPlayer.getInventory().setItem(i, newStack);
-                    break;
-                }
-            }
-        }
-        
-        
+
         // Remove the drake from the world
         drake.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
         
@@ -179,7 +176,6 @@ public class StegonautBinderItem extends Item {
         }
         
         String drakeName = tag.getString(BOUND_DRAGON_NAME);
-        CompoundTag drakeData = tag.getCompound("DrakeData");
         UUID ownerUUID = tag.hasUUID(BOUND_OWNER_UUID) ? tag.getUUID(BOUND_OWNER_UUID) : null;
         
         if (ownerUUID != null && !player.getUUID().equals(ownerUUID)) {
@@ -191,24 +187,37 @@ public class StegonautBinderItem extends Item {
         }
         
         if (!(player.level() instanceof ServerLevel serverLevel)) {
-            return true;
+            return false;
         }
+
+        UUID originalUUID = tag.getUUID(BOUND_DRAGON_UUID);
 
         Stegonaut newDrake = new Stegonaut(
             com.leon.saintsdragons.common.registry.ModEntities.STEGONAUT.get(),
             serverLevel
         );
 
+        // Restore drake data with error handling
+        if (tag.contains(DRAGON_DATA_KEY)) {
+            try {
+                CompoundTag drakeData = tag.getCompound(DRAGON_DATA_KEY);
+                newDrake.readAdditionalSaveData(drakeData);
+            } catch (Exception e) {
+                player.displayClientMessage(
+                    Component.translatable("saintsdragons.message.binder_data_corrupted"),
+                    true
+                );
+                return false;
+            }
+        }
+
+        // Preserve original UUID to maintain references
+        newDrake.setUUID(originalUUID);
+
         // Set position
         newDrake.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
-        // Restore drake data (this restores the old UUID, which we'll override)
-        newDrake.readAdditionalSaveData(drakeData);
-
-        // IMPORTANT: Generate a new UUID to prevent collisions
-        // The old UUID might still exist in the world if the drake was duplicated
-        newDrake.setUUID(java.util.UUID.randomUUID());
-
+        // Restore owner even if they're offline
         if (ownerUUID != null) {
             newDrake.setTame(true);
             newDrake.setOwnerUUID(ownerUUID);
@@ -216,10 +225,15 @@ public class StegonautBinderItem extends Item {
             newDrake.tame(player);
         }
 
-        if (tag.contains("BoundCustomName")) {
-            net.minecraft.network.chat.Component customName = net.minecraft.network.chat.Component.Serializer.fromJson(tag.getString("BoundCustomName"));
-            if (customName != null) {
-                newDrake.setCustomName(customName);
+        // Restore custom name with error handling
+        if (tag.contains(BOUND_CUSTOM_NAME)) {
+            try {
+                Component customName = Component.Serializer.fromJson(tag.getString(BOUND_CUSTOM_NAME));
+                if (customName != null) {
+                    newDrake.setCustomName(customName);
+                }
+            } catch (Exception e) {
+                // If custom name is corrupted, just skip it
             }
         }
 
@@ -231,8 +245,8 @@ public class StegonautBinderItem extends Item {
         tag.remove(BOUND_DRAGON_NAME);
         tag.remove(BOUND_OWNER_UUID);
         tag.remove(BOUND_OWNER_NAME);
-        tag.remove("BoundCustomName");
-        tag.remove("DrakeData");
+        tag.remove(BOUND_CUSTOM_NAME);
+        tag.remove(DRAGON_DATA_KEY);
         tag.putBoolean(IS_BOUND, false);
 
         // Send success message
