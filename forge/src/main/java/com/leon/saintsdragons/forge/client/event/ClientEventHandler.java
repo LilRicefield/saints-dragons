@@ -50,6 +50,7 @@ public class ClientEventHandler {
     private static float raevyxCameraPitch = 0.0f;
     private static float cindervaneCameraPitch = 0.0f;
     private static float ignivorusCameraPitch = 0.0f;
+    private static float nulljawCameraPitch = 0.0f;
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
@@ -228,8 +229,39 @@ public class ClientEventHandler {
             ignivorusCameraPitch = 0.0f;
         }
 
-        if (player.isPassenger() && player.getVehicle() instanceof Nulljaw && event.getCamera().isDetached()) {
-            event.getCamera().move(-event.getCamera().getMaxZoom(15F), 0, 0);
+        if (player.isPassenger() && player.getVehicle() instanceof Nulljaw nulljaw && event.getCamera().isDetached()) {
+            boolean isSwimming = nulljaw.isInWaterOrBubble();
+            if (isSwimming) {
+                float blendRate = 0.05F;
+                raevyxCameraZoomTarget = 18F;
+                raevyxCameraZoom += (raevyxCameraZoomTarget - raevyxCameraZoom) * blendRate;
+
+                double targetCameraShift = 0.0;
+                float bankAngle = nulljaw.getSwimRollAngleDegrees((float) event.getPartialTick());
+                double velocity = nulljaw.getDeltaMovement().horizontalDistance();
+                double velocityFactor = Math.min(velocity * 2.0, 1.5);
+                targetCameraShift = -(bankAngle / 45.0) * 5.5 * velocityFactor;
+
+                double shiftBlendRate = 0.15;
+                raevyxCameraShift += (targetCameraShift - raevyxCameraShift) * shiftBlendRate;
+
+                double targetVerticalShift = 30.0;
+                double verticalBlendRate = 0.12;
+                verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+
+                event.getCamera().move(-event.getCamera().getMaxZoom(raevyxCameraZoom), 0, 0);
+                event.getCamera().move(0, verticalCameraShift, raevyxCameraShift);
+
+                float nulljawTargetPitch = 15.0f;
+                float pitchBlendRate = 0.15f;
+                nulljawCameraPitch += (nulljawTargetPitch - nulljawCameraPitch) * pitchBlendRate;
+                event.setPitch(Mth.clamp(event.getPitch() + nulljawCameraPitch, -90.0f, 90.0f));
+            } else {
+                event.getCamera().move(-event.getCamera().getMaxZoom(15F), 0, 0);
+                raevyxCameraShift = 0.0;
+                verticalCameraShift = 0.0;
+                nulljawCameraPitch = 0.0f;
+            }
         }
 
         // Screen shake detection and application
