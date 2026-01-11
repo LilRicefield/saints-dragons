@@ -107,6 +107,11 @@ public class NulljawFollowOwnerGoal extends Goal {
         boolean shouldRun = distance > RUN_DISTANCE;
         drake.setAccelerating(shouldRun);
 
+        if (drake.isInWaterOrBubble() || owner.isInWaterOrBubble()) {
+            updateWaterFollow(owner, shouldRun, distance);
+            return;
+        }
+
         double speed = shouldRun ? 1.35D : 0.85D;
         updateGroundPath(owner, speed, distance, shouldRun);
     }
@@ -128,6 +133,47 @@ public class NulljawFollowOwnerGoal extends Goal {
             rememberOwnerPosition(owner);
             pathRecalcCooldown = computeRepathCooldown(distance, running);
         }
+    }
+
+    private void updateWaterFollow(LivingEntity owner, boolean running, double distance) {
+        drake.getNavigation().stop();
+
+        if (distance <= STOP_DISTANCE) {
+            drake.setDeltaMovement(drake.getDeltaMovement().scale(0.85D));
+            return;
+        }
+
+        double dx = owner.getX() - drake.getX();
+        double dy = (owner.getY() + owner.getEyeHeight() * 0.5) - (drake.getY() + drake.getEyeHeight() * 0.5);
+        double dz = owner.getZ() - drake.getZ();
+        double horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+        if (horizontalDist < 1.0E-5D && Math.abs(dy) < 1.0E-5D) {
+            return;
+        }
+
+        float targetYaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
+        drake.setYRot(Mth.wrapDegrees(targetYaw));
+        drake.yBodyRot = drake.getYRot();
+        drake.yHeadRot = drake.getYRot();
+
+        float targetPitch = -((float) (Mth.atan2(dy, horizontalDist) * Mth.RAD_TO_DEG));
+        targetPitch = Mth.clamp(Mth.wrapDegrees(targetPitch), -85.0F, 85.0F);
+        drake.setXRot(targetPitch);
+
+        double speedMultiplier = running ? 0.35D : 0.25D;
+        double speed = drake.getSwimSpeed() * speedMultiplier;
+        if (horizontalDist > 15.0D) {
+            speed *= 1.2D;
+        }
+
+        double yawRad = drake.getYRot() * Mth.DEG_TO_RAD;
+        double pitchRad = drake.getXRot() * Mth.DEG_TO_RAD;
+        double dirX = -Math.sin(yawRad) * Math.cos(pitchRad);
+        double dirY = -Math.sin(pitchRad);
+        double dirZ = Math.cos(yawRad) * Math.cos(pitchRad);
+
+        drake.setDeltaMovement(dirX * speed, dirY * speed, dirZ * speed);
     }
 
     private int computeRepathCooldown(double distance, boolean running) {

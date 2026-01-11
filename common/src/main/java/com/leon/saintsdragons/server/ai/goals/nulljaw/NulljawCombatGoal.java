@@ -80,8 +80,12 @@ public class NulljawCombatGoal extends Goal {
         LivingEntity target = drake.getTarget();
         if (target != null) {
             drake.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            drake.getNavigation().moveTo(target, CHASE_SPEED);
-            rememberTargetPosition(target);
+            if (drake.isInWaterOrBubble()) {
+                updateWaterChase(target, 1.0D);
+            } else {
+                drake.getNavigation().moveTo(target, CHASE_SPEED);
+                rememberTargetPosition(target);
+            }
         }
     }
 
@@ -151,8 +155,12 @@ public class NulljawCombatGoal extends Goal {
         if (gap <= HORN_RANGE) {
             // Stop and attack only if we're close enough OR already attacking
             if (gap <= BITE_RANGE || isPerformingAttack()) {
-                drake.getNavigation().stop();
-                pathRecalcCooldown = 0;
+                if (drake.isInWaterOrBubble()) {
+                    drake.setDeltaMovement(drake.getDeltaMovement().scale(0.85D));
+                } else {
+                    drake.getNavigation().stop();
+                    pathRecalcCooldown = 0;
+                }
             } else {
                 // In horn range but not bite range - keep approaching for better attacks
                 updateChasePath(target);
@@ -252,12 +260,52 @@ public class NulljawCombatGoal extends Goal {
      * Update chase path with optimized recalculation
      */
     private void updateChasePath(LivingEntity target) {
+        if (drake.isInWaterOrBubble()) {
+            updateWaterChase(target, 0.9D);
+            return;
+        }
+
         if (--pathRecalcCooldown <= 0 || targetMovedSignificantly(target)) {
             rememberTargetPosition(target);
             double distance = drake.distanceTo(target);
             pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
             drake.getNavigation().moveTo(target, CHASE_SPEED);
         }
+    }
+
+    private void updateWaterChase(LivingEntity target, double multiplier) {
+        drake.getNavigation().stop();
+
+        double dx = target.getX() - drake.getX();
+        double dy = (target.getY() + target.getEyeHeight() * 0.5) - (drake.getY() + drake.getEyeHeight() * 0.5);
+        double dz = target.getZ() - drake.getZ();
+        double horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+        if (horizontalDist < 1.0E-5D && Math.abs(dy) < 1.0E-5D) {
+            return;
+        }
+
+        float targetYaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
+        drake.setYRot(Mth.wrapDegrees(targetYaw));
+        drake.yBodyRot = drake.getYRot();
+        drake.yHeadRot = drake.getYRot();
+
+        float targetPitch = -((float) (Mth.atan2(dy, horizontalDist) * Mth.RAD_TO_DEG));
+        targetPitch = Mth.clamp(Mth.wrapDegrees(targetPitch), -85.0F, 85.0F);
+        drake.setXRot(targetPitch);
+
+        double speed = drake.getSwimSpeed() * multiplier;
+        if (horizontalDist > 15.0D) {
+            speed *= 1.3D;
+        }
+
+        double yawRad = drake.getYRot() * Mth.DEG_TO_RAD;
+        double pitchRad = drake.getXRot() * Mth.DEG_TO_RAD;
+        double dirX = -Math.sin(yawRad) * Math.cos(pitchRad);
+        double dirY = -Math.sin(pitchRad);
+        double dirZ = Math.cos(yawRad) * Math.cos(pitchRad);
+
+        drake.setDeltaMovement(dirX * speed, dirY * speed, dirZ * speed);
     }
 
     private void rememberTargetPosition(LivingEntity target) {

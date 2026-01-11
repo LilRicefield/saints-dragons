@@ -50,6 +50,7 @@ public class FabricClientEventHandler {
     private static float raevyxCameraPitch = 0.0f;
     private static float cindervaneCameraPitch = 0.0f;
     private static float ignivorusCameraPitch = 0.0f;
+    private static float nulljawCameraPitch = 0.0f;
 
     /**
      * Initialize the client event handler.
@@ -265,10 +266,45 @@ public class FabricClientEventHandler {
         }
 
         // Nulljaw camera zoom
-        if (player.isPassenger() && player.getVehicle() instanceof Nulljaw && camera.isDetached()) {
+        if (player.isPassenger() && player.getVehicle() instanceof Nulljaw nulljaw && camera.isDetached()) {
             CameraAccessor cameraAccessor = (CameraAccessor) camera;
-            double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(15F);
-            cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+            boolean isSwimming = nulljaw.isInWaterOrBubble();
+            if (isSwimming) {
+                float blendRate = 0.05F;
+                raevyxCameraZoomTarget = 18F;
+                raevyxCameraZoom += (raevyxCameraZoomTarget - raevyxCameraZoom) * blendRate;
+
+                double targetCameraShift = 0.0;
+                float bankAngle = nulljaw.getSwimRollAngleDegrees(partialTicks);
+                double velocity = nulljaw.getDeltaMovement().horizontalDistance();
+                double velocityFactor = Math.min(velocity * 2.0, 1.5);
+                targetCameraShift = -(bankAngle / 45.0) * 5.5 * velocityFactor;
+
+                double shiftBlendRate = 0.15;
+                raevyxCameraShift += (targetCameraShift - raevyxCameraShift) * shiftBlendRate;
+
+                double targetVerticalShift = 50.0;
+                double verticalBlendRate = 0.12;
+                verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+
+                double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(raevyxCameraZoom);
+                cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+                cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, raevyxCameraShift);
+
+                float nulljawTargetPitch = 6.0f;
+                float pitchBlendRate = 0.15f;
+                nulljawCameraPitch += (nulljawTargetPitch - nulljawCameraPitch) * pitchBlendRate;
+                float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
+                float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
+                float clampedPitch = Mth.clamp(currentPitch + nulljawCameraPitch, -90.0f, 90.0f);
+                cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
+            } else {
+                double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(15F);
+                cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+                raevyxCameraShift = 0.0;
+                verticalCameraShift = 0.0;
+                nulljawCameraPitch = 0.0f;
+            }
         }
 
         // Screen shake detection and application

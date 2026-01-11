@@ -1,36 +1,15 @@
 package com.leon.saintsdragons.server.entity.interfaces;
 
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.phys.Vec3;
-
 /**
  * Capability interface for dragons that are adapted to aquatic traversal.
  */
-public interface AquaticDragon {
+public interface SemiAquaticDragon {
     /**
      * @return desired swim speed in blocks per tick.
      */
     default double getSwimSpeed() {
         return 1.2D;
     }
-
-    /**
-     * @return navigation instance optimized for water pathfinding.
-     */
-    PathNavigation getAquaticNavigation();
-
-    /**
-     * Called when the dragon transitions into water.
-     */
-    default void onEnterWater() {
-    }
-
-    /**
-     * Called when the dragon leaves water.
-     */
-    default void onExitWater() {
-    }
-
     /**
      * @return true when the entity should actively seek a water source.
      */
@@ -42,13 +21,6 @@ public interface AquaticDragon {
      * @return true when the entity should move back onto land or to the surface.
      */
     default boolean shouldLeaveWater() {
-        return false;
-    }
-
-    /**
-     * @return true if the entity should halt locomotion (e.g., basking or sitting states).
-     */
-    default boolean shouldStopMoving() {
         return false;
     }
 

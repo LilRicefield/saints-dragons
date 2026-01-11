@@ -101,9 +101,10 @@ public record NulljawRiderController(Nulljaw drake) {
      */
     public float getRiddenSpeed(Player player) {
         if (drake.isInWater()) {
-            // Enhanced speed in water
-            double swimSpeed = drake.getConfiguredSwimSpeed();
-            double speed = drake.isAccelerating() ? swimSpeed * WATER_SPEED_MULT : swimSpeed;
+            // getSwimSpeed() already returns ridden speed when mounted
+            double baseSpeed = drake.getSwimSpeed();
+            // Apply acceleration boost
+            double speed = drake.isAccelerating() ? baseSpeed * 1.3D : baseSpeed;
             return (float) speed;
         } else {
             // Ground movement - HARDCODED (not configurable)
