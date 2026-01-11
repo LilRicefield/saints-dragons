@@ -30,69 +30,71 @@ import java.util.UUID;
  * While carrying a bound ignivorus binder, the player can release the ignivorus.
  */
 public class IgnivorusBinderItem extends Item {
-    
+
     // NBT keys for storing bound dragon data
     private static final String BOUND_DRAGON_UUID = "BoundDragonUUID";
     private static final String BOUND_DRAGON_NAME = "BoundDragonName";
     private static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
     private static final String BOUND_OWNER_NAME = "BoundOwnerName";
+    private static final String BOUND_CUSTOM_NAME = "BoundCustomName";
+    private static final String DRAGON_DATA_KEY = "IgnivorusData";
     private static final String IS_BOUND = "IsBound";
-    
+
     public IgnivorusBinderItem(Properties properties) {
         super(properties);
     }
-    
+
     @Override
     public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
         if (target instanceof Ignivorus ignivorus) {
             // Check if player owns the ignivorus
             if (!ignivorus.isTame() || !ignivorus.isOwnedBy(player)) {
                 player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.not_dragon_owner"), 
+                    Component.translatable("saintsdragons.message.not_dragon_owner"),
                     true);
                 return InteractionResult.FAIL;
             }
-            
+
             // Check if ignivorus can be captured (not flying, not dying, etc.)
             if (!ignivorus.canBeBound()) {
                 player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.dragon_cannot_be_captured"), 
+                    Component.translatable("saintsdragons.message.dragon_cannot_be_captured"),
                     true);
                 return InteractionResult.FAIL;
             }
-            
+
             // Check if binder is already occupied
             if (isBound(stack)) {
                 player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.binder_already_occupied"), 
+                    Component.translatable("saintsdragons.message.binder_already_occupied"),
                     true);
                 return InteractionResult.FAIL;
             }
-            
+
             // Capture the ignivorus into the binder
             ItemStack newStack = captureIgnivorus(stack, ignivorus, player);
-            
+
             // Replace the item in the player's hand
             if (hand == InteractionHand.MAIN_HAND) {
                 player.getInventory().setItem(player.getInventory().selected, newStack);
             } else {
                 player.getInventory().setItem(40, newStack); // Off-hand slot
             }
-            
+
             return InteractionResult.SUCCESS;
         }
-        
+
         return InteractionResult.PASS;
     }
-    
+
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        
+
         if (isBound(stack)) {
             return InteractionResultHolder.pass(stack);
         }
-        
+
         return super.use(level, player, hand);
     }
 
@@ -100,7 +102,7 @@ public class IgnivorusBinderItem extends Item {
     public @NotNull InteractionResult useOn(@NotNull UseOnContext context) {
         Player player = context.getPlayer();
         ItemStack stack = context.getItemInHand();
-        
+
         if (player != null && isBound(stack)) {
             return releaseIgnivorus(stack, player, context.getClickedPos())
                 ? InteractionResult.SUCCESS
@@ -109,7 +111,7 @@ public class IgnivorusBinderItem extends Item {
 
         return super.useOn(context);
     }
-    
+
     /**
      * Capture an ignivorus into this binder (Pokeball style)
      */
@@ -117,19 +119,21 @@ public class IgnivorusBinderItem extends Item {
         // Create a new item stack with the modified data
         ItemStack newStack = stack.copy();
         CompoundTag tag = newStack.getOrCreateTag();
-        
-        // Store ignivorus data
+
+        // Store ignivorus UUID (preserved on release)
         tag.putUUID(BOUND_DRAGON_UUID, ignivorus.getUUID());
         tag.putString(BOUND_DRAGON_NAME, ignivorus.getName().getString());
+
+        // Store custom name if present
         if (ignivorus.hasCustomName()) {
             Component customName = ignivorus.getCustomName();
             if (customName != null) {
-                tag.putString("BoundCustomName", net.minecraft.network.chat.Component.Serializer.toJson(customName));
+                tag.putString(BOUND_CUSTOM_NAME, Component.Serializer.toJson(customName));
             } else {
-                tag.remove("BoundCustomName");
+                tag.remove(BOUND_CUSTOM_NAME);
             }
         } else {
-            tag.remove("BoundCustomName");
+            tag.remove(BOUND_CUSTOM_NAME);
         }
         tag.putBoolean(IS_BOUND, true);
 
@@ -146,34 +150,23 @@ public class IgnivorusBinderItem extends Item {
         // Store ignivorus's current state
         CompoundTag ignivorusData = new CompoundTag();
         ignivorus.addAdditionalSaveData(ignivorusData);
-        tag.put("ignivorusData", ignivorusData);
-        
+        tag.put(DRAGON_DATA_KEY, ignivorusData);
+
         // Set the tag on the new stack
         newStack.setTag(tag);
-        
-        // Replace the old stack with the new one in the player's inventory
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            // Find the slot containing the old stack and replace it
-            for (int i = 0; i < serverPlayer.getInventory().getContainerSize(); i++) {
-                if (serverPlayer.getInventory().getItem(i) == stack) {
-                    serverPlayer.getInventory().setItem(i, newStack);
-                    break;
-                }
-            }
-        }
-        
+
         // Remove the ignivorus from the world
         ignivorus.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
-        
+
         // Send success message
         player.displayClientMessage(
             Component.translatable("saintsdragons.message.ignivorus_captured", ignivorus.getName().getString()),
             true
         );
-        
+
         return newStack;
     }
-    
+
     /**
      * Release the bound ignivorus from this binder
      */
@@ -193,39 +186,53 @@ public class IgnivorusBinderItem extends Item {
         }
 
         if (!(player.level() instanceof ServerLevel serverLevel)) {
-            return true;
+            return false;
         }
 
         String ignivorusName = tag.getString(BOUND_DRAGON_NAME);
+        UUID originalUUID = tag.getUUID(BOUND_DRAGON_UUID);
 
         Ignivorus newIgnivorus = new Ignivorus(
             ModEntities.IGNIVORUS.get(),
             serverLevel
         );
 
-        if (tag.contains("ignivorusData")) {
-            CompoundTag ignivorusData = tag.getCompound("ignivorusData");
-            newIgnivorus.readAdditionalSaveData(ignivorusData);
+        // Restore dragon data with error handling
+        if (tag.contains(DRAGON_DATA_KEY)) {
+            try {
+                CompoundTag ignivorusData = tag.getCompound(DRAGON_DATA_KEY);
+                newIgnivorus.readAdditionalSaveData(ignivorusData);
+            } catch (Exception e) {
+                player.displayClientMessage(
+                    Component.translatable("saintsdragons.message.binder_data_corrupted"),
+                    true
+                );
+                return false;
+            }
         }
 
-        // IMPORTANT: Generate a new UUID to prevent collisions
-        newIgnivorus.setUUID(java.util.UUID.randomUUID());
+        // Preserve original UUID to maintain references
+        newIgnivorus.setUUID(originalUUID);
 
         newIgnivorus.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
+        // Restore owner even if they're offline
         if (ownerUUID != null) {
-            Player owner = serverLevel.getPlayerByUUID(ownerUUID);
-            if (owner != null) {
-                newIgnivorus.tame(owner);
-            }
+            newIgnivorus.setTame(true);
+            newIgnivorus.setOwnerUUID(ownerUUID);
         } else {
             newIgnivorus.tame(player);
         }
 
-        if (tag.contains("BoundCustomName")) {
-            net.minecraft.network.chat.Component customName = net.minecraft.network.chat.Component.Serializer.fromJson(tag.getString("BoundCustomName"));
-            if (customName != null) {
-                newIgnivorus.setCustomName(customName);
+        // Restore custom name with error handling
+        if (tag.contains(BOUND_CUSTOM_NAME)) {
+            try {
+                Component customName = Component.Serializer.fromJson(tag.getString(BOUND_CUSTOM_NAME));
+                if (customName != null) {
+                    newIgnivorus.setCustomName(customName);
+                }
+            } catch (Exception e) {
+                // If custom name is corrupted, just skip it
             }
         }
 
@@ -235,8 +242,8 @@ public class IgnivorusBinderItem extends Item {
         tag.remove(BOUND_DRAGON_NAME);
         tag.remove(BOUND_OWNER_UUID);
         tag.remove(BOUND_OWNER_NAME);
-        tag.remove("BoundCustomName");
-        tag.remove("ignivorusData");
+        tag.remove(BOUND_CUSTOM_NAME);
+        tag.remove(DRAGON_DATA_KEY);
         tag.putBoolean(IS_BOUND, false);
 
         player.displayClientMessage(
@@ -245,7 +252,7 @@ public class IgnivorusBinderItem extends Item {
         );
         return true;
     }
-    
+
     /**
      * Check if this binder has an ignivorus bound to it
      */
@@ -253,7 +260,7 @@ public class IgnivorusBinderItem extends Item {
         CompoundTag tag = stack.getTag();
         return tag != null && tag.getBoolean(IS_BOUND);
     }
-    
+
     /**
      * Get the UUID of the bound ignivorus
      */
@@ -265,7 +272,7 @@ public class IgnivorusBinderItem extends Item {
         }
         return null;
     }
-    
+
     /**
      * Get the name of the bound ignivorus
      */
@@ -277,7 +284,7 @@ public class IgnivorusBinderItem extends Item {
         }
         return null;
     }
-    
+
     @Override
     @Environment(EnvType.CLIENT)
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {

@@ -21,4 +21,14 @@ public final class FabricPartClientHooks {
         }
         ((ClientLevelAccessor) clientLevel).saintsdragons$addEntity(part.getId(), part);
     }
+
+    public static void removeClientPart(Level level, Entity part) {
+        if (!(level instanceof ClientLevel clientLevel)) {
+            return;
+        }
+        if (clientLevel.getEntity(part.getId()) == null) {
+            return;
+        }
+        ((ClientLevelAccessor) clientLevel).saintsdragons$removeEntity(part.getId(), Entity.RemovalReason.DISCARDED);
+    }
 }

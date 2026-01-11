@@ -34,6 +34,13 @@ public abstract class IgnivorusMultipartMixin implements IgnivorusPartProvider {
         }
     }
 
+    @Inject(method = "remove", at = @At("HEAD"))
+    private void onRemove(net.minecraft.world.entity.Entity.RemovalReason reason, CallbackInfo ci) {
+        if (this.saintsdragons$fabricPartManager != null) {
+            this.saintsdragons$fabricPartManager.removeAllParts();
+        }
+    }
+
     /**
      * Expose the parts array for collision/damage detection
      */

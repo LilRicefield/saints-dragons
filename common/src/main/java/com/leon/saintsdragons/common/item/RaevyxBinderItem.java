@@ -30,37 +30,39 @@ import java.util.UUID;
  * While carrying a bound lightning wyvern binder, the player can release the wyvern.
  */
 public class RaevyxBinderItem extends Item {
-    
+
     // NBT keys for storing bound wyvern data
     private static final String BOUND_DRAGON_UUID = "BoundDragonUUID";
     private static final String BOUND_DRAGON_NAME = "BoundDragonName";
     private static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
     private static final String BOUND_OWNER_NAME = "BoundOwnerName";
+    private static final String BOUND_CUSTOM_NAME = "BoundCustomName";
+    private static final String DRAGON_DATA_KEY = "RaevyxData";
     private static final String IS_BOUND = "IsBound";
-    
+
     public RaevyxBinderItem(Properties properties) {
         super(properties);
     }
-    
+
     @Override
     public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
         if (target instanceof Raevyx wyvern) {
             // Check if player owns the wyvern
             if (!wyvern.isTame() || !wyvern.isOwnedBy(player)) {
                 player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.not_dragon_owner"), 
+                    Component.translatable("saintsdragons.message.not_dragon_owner"),
                     true);
                 return InteractionResult.FAIL;
             }
-            
+
             // Check if wyvern can be captured (not playing dead, not sleeping, etc.)
             if (!wyvern.canBeBound()) {
                 player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.dragon_cannot_be_captured"), 
+                    Component.translatable("saintsdragons.message.dragon_cannot_be_captured"),
                     true);
                 return InteractionResult.FAIL;
             }
-            
+
             // Check if binder is already occupied
             if (isBound(stack)) {
                 player.displayClientMessage(
@@ -68,27 +70,27 @@ public class RaevyxBinderItem extends Item {
                     true);
                 return InteractionResult.FAIL;
             }
-            
+
             // Capture the wyvern into the binder
             ItemStack newStack = captureDragon(stack, wyvern, player);
-            
+
             // Replace the item in the player's hand
             if (hand == InteractionHand.MAIN_HAND) {
                 player.getInventory().setItem(player.getInventory().selected, newStack);
             } else {
                 player.getInventory().setItem(40, newStack); // Off-hand slot
             }
-            
+
             return InteractionResult.SUCCESS;
         }
-        
+
         return InteractionResult.PASS;
     }
-    
+
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        
+
         if (isBound(stack)) {
             return InteractionResultHolder.pass(stack);
         }
@@ -99,7 +101,7 @@ public class RaevyxBinderItem extends Item {
     public @NotNull InteractionResult useOn(@NotNull UseOnContext context) {
         Player player = context.getPlayer();
         ItemStack stack = context.getItemInHand();
-        
+
         if (player != null && isBound(stack)) {
             return releaseDragon(stack, player, context.getClickedPos())
                 ? InteractionResult.SUCCESS
@@ -107,7 +109,7 @@ public class RaevyxBinderItem extends Item {
         }
         return super.useOn(context);
     }
-    
+
     /**
      * Capture a wyvern into this binder (Pokeball style)
      */
@@ -115,19 +117,21 @@ public class RaevyxBinderItem extends Item {
         // Create a new item stack with the modified data
         ItemStack newStack = stack.copy();
         CompoundTag tag = newStack.getOrCreateTag();
-        
-        // Store wyvern data
+
+        // Store wyvern UUID (preserved on release)
         tag.putUUID(BOUND_DRAGON_UUID, dragon.getUUID());
         tag.putString(BOUND_DRAGON_NAME, dragon.getName().getString());
+
+        // Store custom name if present
         if (dragon.hasCustomName()) {
             Component customName = dragon.getCustomName();
             if (customName != null) {
-                tag.putString("BoundCustomName", net.minecraft.network.chat.Component.Serializer.toJson(customName));
+                tag.putString(BOUND_CUSTOM_NAME, Component.Serializer.toJson(customName));
             } else {
-                tag.remove("BoundCustomName");
+                tag.remove(BOUND_CUSTOM_NAME);
             }
         } else {
-            tag.remove("BoundCustomName");
+            tag.remove(BOUND_CUSTOM_NAME);
         }
         tag.putBoolean(IS_BOUND, true);
 
@@ -144,34 +148,23 @@ public class RaevyxBinderItem extends Item {
         // Store wyvern's current state
         CompoundTag dragonData = new CompoundTag();
         dragon.addAdditionalSaveData(dragonData);
-        tag.put("DragonData", dragonData);
-        
+        tag.put(DRAGON_DATA_KEY, dragonData);
+
         // Set the tag on the new stack
         newStack.setTag(tag);
-        
-        // Replace the old stack with the new one in the player's inventory
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            // Find the slot containing the old stack and replace it
-            for (int i = 0; i < serverPlayer.getInventory().getContainerSize(); i++) {
-                if (serverPlayer.getInventory().getItem(i) == stack) {
-                    serverPlayer.getInventory().setItem(i, newStack);
-                    break;
-                }
-            }
-        }
-        
+
         // Remove the wyvern from the world
         dragon.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
-        
+
         // Send success message
         player.displayClientMessage(
             Component.translatable("saintsdragons.message.raevyx_captured", dragon.getName().getString()),
             true
         );
-        
+
         return newStack;
     }
-    
+
     /**
      * Release the bound wyvern from this binder
      */
@@ -191,40 +184,54 @@ public class RaevyxBinderItem extends Item {
         }
 
         if (!(player.level() instanceof ServerLevel serverLevel)) {
-            return true;
+            return false;
         }
 
         String dragonName = tag.getString(BOUND_DRAGON_NAME);
+        UUID originalUUID = tag.getUUID(BOUND_DRAGON_UUID);
 
         Raevyx newDragon = new Raevyx(
             ModEntities.RAEVYX.get(),
             serverLevel
         );
 
-        if (tag.contains("DragonData")) {
-            CompoundTag dragonData = tag.getCompound("DragonData");
-            newDragon.readAdditionalSaveData(dragonData);
+        // Restore dragon data with error handling
+        if (tag.contains(DRAGON_DATA_KEY)) {
+            try {
+                CompoundTag dragonData = tag.getCompound(DRAGON_DATA_KEY);
+                newDragon.readAdditionalSaveData(dragonData);
+            } catch (Exception e) {
+                player.displayClientMessage(
+                    Component.translatable("saintsdragons.message.binder_data_corrupted"),
+                    true
+                );
+                return false;
+            }
         }
 
-        // IMPORTANT: Generate a new UUID to prevent collisions
-        newDragon.setUUID(java.util.UUID.randomUUID());
+        // Preserve original UUID to maintain references
+        newDragon.setUUID(originalUUID);
 
         // Ensure newly released dragons default to follow command so they don't stay in previous wander state
         newDragon.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
+        // Restore owner even if they're offline
         if (ownerUUID != null) {
-            Player owner = serverLevel.getPlayerByUUID(ownerUUID);
-            if (owner != null) {
-                newDragon.tame(owner);
-            }
+            newDragon.setTame(true);
+            newDragon.setOwnerUUID(ownerUUID);
         } else {
             newDragon.tame(player);
         }
 
-        if (tag.contains("BoundCustomName")) {
-            net.minecraft.network.chat.Component customName = net.minecraft.network.chat.Component.Serializer.fromJson(tag.getString("BoundCustomName"));
-            if (customName != null) {
-                newDragon.setCustomName(customName);
+        // Restore custom name with error handling
+        if (tag.contains(BOUND_CUSTOM_NAME)) {
+            try {
+                Component customName = Component.Serializer.fromJson(tag.getString(BOUND_CUSTOM_NAME));
+                if (customName != null) {
+                    newDragon.setCustomName(customName);
+                }
+            } catch (Exception e) {
+                // If custom name is corrupted, just skip it
             }
         }
 
@@ -234,8 +241,8 @@ public class RaevyxBinderItem extends Item {
         tag.remove(BOUND_DRAGON_NAME);
         tag.remove(BOUND_OWNER_UUID);
         tag.remove(BOUND_OWNER_NAME);
-        tag.remove("BoundCustomName");
-        tag.remove("DragonData");
+        tag.remove(BOUND_CUSTOM_NAME);
+        tag.remove(DRAGON_DATA_KEY);
         tag.putBoolean(IS_BOUND, false);
 
         player.displayClientMessage(
@@ -244,7 +251,7 @@ public class RaevyxBinderItem extends Item {
         );
         return true;
     }
-    
+
     /**
      * Check if this binder has a wyvern bound to it
      */
@@ -252,7 +259,7 @@ public class RaevyxBinderItem extends Item {
         CompoundTag tag = stack.getTag();
         return tag != null && tag.getBoolean(IS_BOUND);
     }
-    
+
     /**
      * Get the UUID of the bound wyvern
      */
@@ -264,7 +271,7 @@ public class RaevyxBinderItem extends Item {
         }
         return null;
     }
-    
+
     /**
      * Get the name of the bound wyvern
      */
@@ -276,7 +283,7 @@ public class RaevyxBinderItem extends Item {
         }
         return null;
     }
-    
+
     @Override
     @Environment(EnvType.CLIENT)
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {

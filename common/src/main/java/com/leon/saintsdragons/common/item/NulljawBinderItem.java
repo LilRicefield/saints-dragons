@@ -36,7 +36,7 @@ public class NulljawBinderItem extends Item {
     private static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
     private static final String BOUND_OWNER_NAME = "BoundOwnerName";
     private static final String BOUND_CUSTOM_NAME = "BoundCustomName";
-    private static final String DRAGON_DATA_KEY = "RiftDrakeData";
+    private static final String DRAGON_DATA_KEY = "NulljawData";
     private static final String IS_BOUND = "IsBound";
 
     public NulljawBinderItem(Properties properties) {
@@ -138,15 +138,6 @@ public class NulljawBinderItem extends Item {
 
         copied.setTag(tag);
 
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            for (int i = 0; i < serverPlayer.getInventory().getContainerSize(); i++) {
-                if (serverPlayer.getInventory().getItem(i) == stack) {
-                    serverPlayer.getInventory().setItem(i, copied);
-                    break;
-                }
-            }
-        }
-
         drake.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
 
         player.displayClientMessage(
@@ -171,39 +162,50 @@ public class NulljawBinderItem extends Item {
         }
 
         if (!(player.level() instanceof ServerLevel serverLevel)) {
-            return true;
+            return false;
         }
 
         String drakeName = tag.getString(BOUND_DRAGON_NAME);
+        UUID originalUUID = tag.getUUID(BOUND_DRAGON_UUID);
 
         Nulljaw newDrake = new Nulljaw(ModEntities.NULLJAW.get(), serverLevel);
 
+        // Restore dragon data with error handling
         if (tag.contains(DRAGON_DATA_KEY)) {
-            CompoundTag drakeData = tag.getCompound(DRAGON_DATA_KEY);
-            newDrake.readAdditionalSaveData(drakeData);
+            try {
+                CompoundTag drakeData = tag.getCompound(DRAGON_DATA_KEY);
+                newDrake.readAdditionalSaveData(drakeData);
+            } catch (Exception e) {
+                player.displayClientMessage(
+                    Component.translatable("saintsdragons.message.binder_data_corrupted"),
+                    true
+                );
+                return false;
+            }
         }
 
-        // IMPORTANT: Generate a new UUID to prevent collisions
-        newDrake.setUUID(java.util.UUID.randomUUID());
+        // Preserve original UUID to maintain references
+        newDrake.setUUID(originalUUID);
 
         newDrake.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
 
+        // Restore owner even if they're offline
         if (ownerUUID != null) {
-            Player owner = serverLevel.getPlayerByUUID(ownerUUID);
-            if (owner != null) {
-                newDrake.tame(owner);
-            } else {
-                newDrake.setTame(true);
-                newDrake.setOwnerUUID(ownerUUID);
-            }
+            newDrake.setTame(true);
+            newDrake.setOwnerUUID(ownerUUID);
         } else {
             newDrake.tame(player);
         }
 
+        // Restore custom name with error handling
         if (tag.contains(BOUND_CUSTOM_NAME)) {
-            Component customName = Component.Serializer.fromJson(tag.getString(BOUND_CUSTOM_NAME));
-            if (customName != null) {
-                newDrake.setCustomName(customName);
+            try {
+                Component customName = Component.Serializer.fromJson(tag.getString(BOUND_CUSTOM_NAME));
+                if (customName != null) {
+                    newDrake.setCustomName(customName);
+                }
+            } catch (Exception e) {
+                // If custom name is corrupted, just skip it
             }
         }
 

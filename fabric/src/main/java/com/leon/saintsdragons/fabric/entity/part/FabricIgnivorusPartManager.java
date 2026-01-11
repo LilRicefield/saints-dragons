@@ -103,13 +103,6 @@ public class FabricIgnivorusPartManager {
     }
 
     public void updatePartPositions() {
-        if (dragon.isRemoved()) {
-            for (FabricDragonPart part : parts.values()) {
-                part.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
-            }
-            return;
-        }
-
         boolean isClient = dragon.level().isClientSide;
         Vec3 dragonPos = dragon.position();
         float yawRad = (float) Math.toRadians(dragon.getYRot());
@@ -176,5 +169,21 @@ public class FabricIgnivorusPartManager {
 
     public FabricDragonPart[] getParts() {
         return partsArray;
+    }
+
+    /**
+     * Removes all parts when the dragon is being removed.
+     * This is called from the mixin's remove() injection to ensure proper cleanup.
+     */
+    public void removeAllParts() {
+        for (FabricDragonPart part : parts.values()) {
+            // Remove the part entity itself
+            part.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+
+            // Clean up client-side tracking
+            if (dragon.level().isClientSide && FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+                FabricPartClientHooks.removeClientPart(dragon.level(), part);
+            }
+        }
     }
 }

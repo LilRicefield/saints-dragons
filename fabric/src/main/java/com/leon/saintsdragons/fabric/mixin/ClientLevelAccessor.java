@@ -12,4 +12,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface ClientLevelAccessor {
     @Invoker("addEntity")
     void saintsdragons$addEntity(int entityId, Entity entity);
+
+    @Invoker("removeEntity")
+    void saintsdragons$removeEntity(int entityId, Entity.RemovalReason reason);
 }
