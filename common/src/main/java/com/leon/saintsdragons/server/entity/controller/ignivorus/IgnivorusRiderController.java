@@ -291,8 +291,23 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         DragonAbility<?> ability = dragon.getActiveAbility();
         boolean lockPitch = dragon.isBreathingFire()
                 || (ability instanceof IgnivorusFireBreathAbility && ability.isUsing());
-        float pitchDegrees = lockPitch ? 0.0f : player.getXRot();
-        return (float) Math.toRadians(pitchDegrees);
+        if (lockPitch) {
+            return 0.0f;
+        }
+        if (dragon.isRiderPitchKeyMode()) {
+            return getKeyPitchRadians();
+        }
+        return (float) Math.toRadians(player.getXRot());
+    }
+
+    private float getKeyPitchRadians() {
+        if (dragon.isGoingUp()) {
+            return (float) -Math.toRadians(Ignivorus.RIDER_KEY_PITCH_DEG);
+        }
+        if (dragon.isGoingDown()) {
+            return (float) Math.toRadians(Ignivorus.RIDER_KEY_PITCH_DEG);
+        }
+        return 0.0f;
     }
 
     public double getPassengersRidingOffset() {

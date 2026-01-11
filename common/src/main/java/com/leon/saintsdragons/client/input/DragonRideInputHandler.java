@@ -73,6 +73,12 @@ public final class DragonRideInputHandler {
             InputConstants.KEY_X,
             KEY_CATEGORY
     );
+    public static final KeyMapping DRAGON_TOGGLE_PITCH_MODE = new KeyMapping(
+            "key.saintsdragons.toggle_pitch_mode",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_Y,
+            KEY_CATEGORY
+    );
 
     private static final KeyMapping[] ALL_KEYS = {
             DRAGON_ASCEND,
@@ -81,7 +87,8 @@ public final class DragonRideInputHandler {
             DRAGON_TERTIARY_ABILITY,
             DRAGON_PRIMARY_ABILITY,
             DRAGON_SECONDARY_ABILITY,
-            DRAGON_TOGGLE_MELEE
+            DRAGON_TOGGLE_MELEE,
+            DRAGON_TOGGLE_PITCH_MODE
     };
 
     private static boolean wasAscendPressed = false;
@@ -91,6 +98,7 @@ public final class DragonRideInputHandler {
     private static boolean wasSecondaryAbilityDown = false;
     private static boolean wasAttackDown = false;
     private static boolean wasToggleMeleeDown = false;
+    private static boolean wasTogglePitchModeDown = false;
 
     private static float lastForward = 0f;
     private static float lastStrafe = 0f;
@@ -157,6 +165,7 @@ public final class DragonRideInputHandler {
         boolean primaryDown = DRAGON_PRIMARY_ABILITY.isDown();
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
+        boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
         boolean attackDown = mc.options.keyAttack.isDown();
 
         float forward = player.zza;
@@ -206,6 +215,13 @@ public final class DragonRideInputHandler {
                         true
                 );
             }
+        }
+        if (togglePitchModeDown && !wasTogglePitchModeDown
+                && (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
+                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane
+                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus
+                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw)) {
+            sendInput(false, false, DragonRiderAction.TOGGLE_PITCH_MODE, null, forward, strafe, yaw);
         }
 
         // Double-tap dodge detection (only for Raevyx)
@@ -280,6 +296,7 @@ public final class DragonRideInputHandler {
         wasSecondaryAbilityDown = secondaryDown;
         wasAttackDown = attackDown;
         wasToggleMeleeDown = toggleMeleeDown;
+        wasTogglePitchModeDown = togglePitchModeDown;
     }
 
     private static void handleAbilityBinding(RiderAbilityBinding binding,
@@ -316,6 +333,7 @@ public final class DragonRideInputHandler {
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
         boolean attackDown = mc.options.keyAttack.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
+        boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
 
         handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
         handleLockedAbilityRelease(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown);
@@ -329,6 +347,7 @@ public final class DragonRideInputHandler {
         wasSecondaryAbilityDown = secondaryDown;
         wasAttackDown = attackDown;
         wasToggleMeleeDown = toggleMeleeDown;
+        wasTogglePitchModeDown = togglePitchModeDown;
     }
 
     private static void handleLockedAbilityRelease(RiderAbilityBinding binding,
@@ -372,6 +391,7 @@ public final class DragonRideInputHandler {
         wasSecondaryAbilityDown = false;
         wasAttackDown = false;
         wasToggleMeleeDown = false;
+        wasTogglePitchModeDown = false;
         lastForward = 0f;
         lastStrafe = 0f;
         lastYaw = 0f;

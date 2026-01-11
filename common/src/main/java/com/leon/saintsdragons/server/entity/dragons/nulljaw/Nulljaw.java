@@ -103,6 +103,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_SWIM_PITCH_RAD = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT); // Actual pitch angle for visuals
+    private static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
 
@@ -130,6 +131,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     // ===== HARDCODED GROUND SPEEDS =====
     public static final double RIDER_WALK_SPEED = 0.22D;
     public static final double RIDER_RUN_SPEED = 0.42D;
+    public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private final PathNavigation groundNavigation;
     private final MoveControl landMoveControl;
     private final RiftDrakeLookController landLookControl;
@@ -342,6 +344,11 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                     toggleMeleeMode();
                 }
             }
+            case TOGGLE_PITCH_MODE -> {
+                if (!locked) {
+                    setRiderPitchKeyMode(!isRiderPitchKeyMode());
+                }
+            }
             default -> { }
         }
     }
@@ -364,6 +371,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         this.entityData.define(DATA_SWIM_TURN, 0);
         this.entityData.define(DATA_SWIM_PITCH, 0);
         this.entityData.define(DATA_SWIM_PITCH_RAD, 0.0F);
+        this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_PHASE_TWO, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_SLEEPING, false);
@@ -1183,6 +1191,36 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             swimRollAngle = 0f;
         }
 
+        // === RIDER SWIM PITCH (server authoritative for sync) ===
+        if (!level().isClientSide && this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            boolean useKeyPitch = isRiderPitchKeyMode();
+            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+            boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+
+            prevSwimPitchRad = swimPitchRad;
+            float targetPitchRad = 0f;
+            if (useKeyPitch) {
+                float rawKeyPitchRad = 0f;
+                if (isGoingUp()) {
+                    rawKeyPitchRad = (float) Math.toRadians(RIDER_KEY_PITCH_DEG);
+                } else if (isGoingDown()) {
+                    rawKeyPitchRad = (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
+                }
+                smoothedPlayerSwimPitchRad = smoothedPlayerSwimPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
+                targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+            } else if (hasMovementInput) {
+                float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
+                smoothedPlayerSwimPitchRad = smoothedPlayerSwimPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
+                targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+            } else {
+                smoothedPlayerSwimPitchRad = 0f;
+            }
+
+            swimPitchRad = Mth.lerp(0.35f, swimPitchRad, targetPitchRad);
+            this.entityData.set(DATA_SWIM_PITCH_RAD, swimPitchRad);
+        }
+
         // === AI SWIM PITCH (velocity-based for non-ridden) ===
         // Only update AI pitch when NOT being ridden (ridden uses camera-based pitch)
         if (!this.isVehicle()) {
@@ -1284,6 +1322,14 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         return Mth.lerp(partialTick, prevSwimPitchRad, swimPitchRad);
     }
 
+    public boolean isRiderPitchKeyMode() {
+        return this.entityData.get(DATA_PITCH_KEY_MODE);
+    }
+
+    public void setRiderPitchKeyMode(boolean enabled) {
+        this.entityData.set(DATA_PITCH_KEY_MODE, enabled);
+    }
+
     public boolean isPhaseTwoActive() {
         return this.entityData.get(DATA_PHASE_TWO);
     }
@@ -1370,12 +1416,23 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         double forwardInput = input.z;
         double strafeInput = input.x;
         boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
+        boolean hasRiderInput = Math.abs(player.zza) > 0.01f || Math.abs(player.xxa) > 0.01f;
+        boolean useKeyPitch = isRiderPitchKeyMode();
 
         // === VISUAL PITCH CALCULATION ===
         // Update swim pitch for visual feedback (like flying dragons)
         float targetPitchRad = 0f;
-        if (hasInput) {
-            // Player is swimming (WASD pressed) → use camera pitch for visuals
+        if (useKeyPitch) {
+            float rawKeyPitchRad = 0f;
+            if (isGoingUp()) {
+                rawKeyPitchRad = (float) Math.toRadians(RIDER_KEY_PITCH_DEG);
+            } else if (isGoingDown()) {
+                rawKeyPitchRad = (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
+            }
+            smoothedPlayerSwimPitchRad = smoothedPlayerSwimPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
+            targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+        } else if (hasRiderInput) {
+            // Player is swimming (WASD pressed)  use camera pitch for visuals
             // Negate because Minecraft xRot is positive=down
             float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
 
@@ -1384,7 +1441,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
             targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
         } else {
-            // Not swimming (no WASD) → level out
+            // Not swimming (no WASD)  level out
             smoothedPlayerSwimPitchRad = 0f;
             targetPitchRad = 0f;
         }
@@ -1398,7 +1455,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
         // Calculate 3D direction using player camera pitch (like flying dragons)
         float yawRad = (float) Math.toRadians(this.getYRot());
-        float pitchRad = (float) Math.toRadians(player.getXRot()); // Player camera pitch
+        float pitchRad = useKeyPitch ? getKeyPitchRadians() : (float) Math.toRadians(player.getXRot());
         double forwardXZ = Math.cos(pitchRad);
         double forwardX = -Math.sin(yawRad) * forwardXZ;
         double forwardY = -Math.sin(pitchRad);
@@ -1449,6 +1506,16 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
         this.setDeltaMovement(blended);
         this.move(MoverType.SELF, this.getDeltaMovement());
+    }
+
+    private float getKeyPitchRadians() {
+        if (isGoingUp()) {
+            return (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
+        }
+        if (isGoingDown()) {
+            return (float) Math.toRadians(RIDER_KEY_PITCH_DEG);
+        }
+        return 0.0f;
     }
 
     // Required methods for RideableDragon interface
@@ -2208,6 +2275,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
         tag.putBoolean("PhaseTwo", isPhaseTwoActive());
+        tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
 
         // Sleep state is ephemeral - not persisted (sleep goal re-evaluates on load)
         tag.putInt("SleepCancelTicks", sleepCancelTicks);
@@ -2236,6 +2304,9 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
         if (tag.contains("PhaseTwo")) {
             setPhaseTwoActive(tag.getBoolean("PhaseTwo"), false);
+        }
+        if (tag.contains("RiderPitchKeyMode")) {
+            setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));
         }
 
         // Apply config attributes when loading from NBT (Forge fix)
