@@ -73,11 +73,28 @@ public final class DragonDestructionManager {
                                              int fireSeconds,
                                              int meltTicksRequired,
                                              boolean canMeltBlocks) {
+        applyFireBreathImpact(level, dragon, impactPoint, radius, damage, fireSeconds, meltTicksRequired, canMeltBlocks, true);
+    }
+
+    /**
+     * Applies fire breath impact with optional block ignition.
+     */
+    public static void applyFireBreathImpact(ServerLevel level,
+                                             DragonEntity dragon,
+                                             Vec3 impactPoint,
+                                             double radius,
+                                             float damage,
+                                             int fireSeconds,
+                                             int meltTicksRequired,
+                                             boolean canMeltBlocks,
+                                             boolean igniteBlocks) {
         if (level == null || dragon == null || impactPoint == null) {
             return;
         }
         damageEntities(level, dragon, impactPoint, radius, damage, fireSeconds);
-        igniteBlocks(level, impactPoint, radius);
+        if (igniteBlocks) {
+            igniteBlocks(level, impactPoint, radius);
+        }
         accelerateCooking(level, impactPoint, radius,
                 FIRE_BREATH_FURNACE_BOOST_TICKS,
                 FIRE_BREATH_SMOKER_BOOST_TICKS,
@@ -86,9 +103,19 @@ public final class DragonDestructionManager {
 
         if (canMeltBlocks && meltTicksRequired > 0) {
             // Use smaller radius for block destruction to reduce lag
-            double destructionRadius = radius * 0.4;  // 40% of fire radius
+            double destructionRadius = radius * 0.6;  // 60% of fire radius
             meltBlocks(level, impactPoint, destructionRadius, meltTicksRequired);
         }
+    }
+
+    /**
+     * Ignites a single block position from flame impacts (tight, localized fire).
+     */
+    public static void applyFlameImpact(ServerLevel level, Vec3 impactPoint, double radius) {
+        if (level == null || impactPoint == null) {
+            return;
+        }
+        igniteBlocks(level, impactPoint, radius);
     }
 
     private static void damageEntities(ServerLevel level,
@@ -116,7 +143,7 @@ public final class DragonDestructionManager {
         int r = (int) Math.ceil(radius);
         RandomSource random = level.random;
         for (BlockPos pos : BlockPos.betweenClosed(center.offset(-r, -r, -r), center.offset(r, r, r))) {
-            if (random.nextFloat() > 0.35F) {
+            if (random.nextFloat() > 0.6F) {
                 continue;
             }
             double dx = pos.getX() + 0.5D - impactPoint.x;
@@ -135,7 +162,7 @@ public final class DragonDestructionManager {
                 if (fire.canSurvive(level, pos)) {
                     level.setBlock(pos, fire, 11);
                 }
-            } else if (random.nextFloat() < 0.15F) {
+            } else if (random.nextFloat() < 0.35F) {
                 BlockPos above = pos.above();
                 if (level.isEmptyBlock(above) && Blocks.FIRE.defaultBlockState().canSurvive(level, above)) {
                     level.setBlock(above, Blocks.FIRE.defaultBlockState(), 11);

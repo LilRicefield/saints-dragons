@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.client.renderer.ignivorus;
 
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
-import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusFireConeLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusMouthSmokeLayer;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -43,7 +42,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     public IgnivorusRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new IgnivorusModel());
         this.addRenderLayer(new IgnivorusMouthSmokeLayer());
-        this.addRenderLayer(new IgnivorusFireConeLayer());
         this.addRenderLayer(new IgnivorusGlowLayer(this));
     }
 

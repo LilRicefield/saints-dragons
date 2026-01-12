@@ -3,6 +3,7 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.registry.DragonType;
+import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
@@ -79,7 +80,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public final DragonAllyManager allyManager;
 
     // Sleep behavior manager
-    public final com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior sleepBehavior;
+    public final DragonSleepBehavior sleepBehavior;
 
     // Sit progress fields
     public float sitProgress = 0f;
@@ -118,7 +119,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
         this.allyManager = new DragonAllyManager(this);
-        this.sleepBehavior = new com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior(this);
+        this.sleepBehavior = new DragonSleepBehavior(this);
         // Set custom look control (lookControl field is protected in Mob)
         this.lookControl = new com.leon.saintsdragons.server.entity.controller.DragonLookControl<>(this);
     }
@@ -595,9 +596,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Get this dragon's sleep preferences (day/night, weather, etc.)
      * Override in each dragon to define their sleep behavior
      */
-    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
         // Default: flexible sleeper (any time)
-        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.FLEXIBLE();
+        return DragonSleepBehavior.DragonSleepPreferences.FLEXIBLE();
     }
 
     /**

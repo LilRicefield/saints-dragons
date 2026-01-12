@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.behavior;
+package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;

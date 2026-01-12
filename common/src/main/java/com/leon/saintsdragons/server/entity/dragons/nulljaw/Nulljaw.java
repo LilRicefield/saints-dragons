@@ -4,12 +4,9 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.*;
-import com.leon.saintsdragons.server.ai.goals.base.DirectSwimToTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
-import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.*;
@@ -1254,18 +1251,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         return swimming;
     }
 
-    public int getSwimTurnDirection() {
-        return Mth.clamp(this.entityData.get(DATA_SWIM_TURN), -1, 1);
-    }
-
-    public boolean isSwimmingDown() {
-        return this.isSwimming() && this.entityData.get(DATA_SWIM_PITCH) > 0;
-    }
-
-    public boolean isSwimmingUp() {
-        return this.isSwimming() && this.entityData.get(DATA_SWIM_PITCH) < 0;
-    }
-
     public boolean isSwimmingMoving() {
         if (!isSwimming()) {
             return false;
@@ -2219,9 +2204,9 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
         // Nulljaw are nocturnal sleepers (sleep at night, active during day)
-        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
+        return DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override
