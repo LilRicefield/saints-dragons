@@ -21,6 +21,8 @@ public record MessageDragonBonePositions(
             "headController",
             "neck3Controller",
             "hip",
+            "fireBoneOrigin",
+            "mouth_origin",
             "leftwing",
             "rightwing",
             "leftwingjoint",

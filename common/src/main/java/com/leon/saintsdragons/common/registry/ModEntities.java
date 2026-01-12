@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
@@ -96,6 +97,15 @@ public final class ModEntities {
                     .fireImmune()
                     .noSummon()
                     .build("ignivorus_magma_pillar"));
+
+    public static final Supplier<EntityType<IgnivorusFlameEntity>> IGNIVORUS_FLAME =
+            REGISTER.register("ignivorus_flame", () -> EntityType.Builder.<IgnivorusFlameEntity>of(IgnivorusFlameEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("ignivorus_flame"));
 
     public static final Supplier<EntityType<VisualFallingBlockEntity>> VISUAL_FALLING_BLOCK =
             REGISTER.register("visual_falling_block", () -> EntityType.Builder.<VisualFallingBlockEntity>of(VisualFallingBlockEntity::new, MobCategory.MISC)

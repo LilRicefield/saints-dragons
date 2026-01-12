@@ -1,6 +1,8 @@
 {
   "replace": false,
   "entries": [
-    "saintsdragons:raevyx_egg_pillager_outpost"
+    "saintsdragons:raevyx_egg_pillager_outpost",
+    "saintsdragons:raevyx_egg_shipwreck_treasure",
+    "saintsdragons:raevyx_egg_ancient_city"
   ]
 }

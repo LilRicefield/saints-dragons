@@ -1,26 +1,29 @@
-package com.leon.saintsdragons.server.ai.goals.raevyx;
+package com.leon.saintsdragons.server.ai.goals.base;
 
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
-import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 
 import java.util.EnumSet;
 import java.util.List;
 
 /**
- * Makes adult Raevyx attack entities that hurt nearby babies.
+ * Makes adult dragons attack entities that hurt nearby babies of the same species.
  * Protective parent behavior - mama dragon doesn't let you hurt her babies!
+ *
+ * @param <T> The dragon type (e.g., Raevyx, Ignivorus, etc.)
  */
-public class RaevyxProtectBabiesGoal extends TargetGoal {
-    private final Raevyx dragon;
+public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal {
+    private final T dragon;
+    private final Class<T> dragonClass;
     private LivingEntity attacker;
     private int timestamp;
 
-    public RaevyxProtectBabiesGoal(Raevyx dragon) {
+    public DragonProtectBabiesGoal(T dragon, Class<T> dragonClass) {
         super(dragon, false);
         this.dragon = dragon;
+        this.dragonClass = dragonClass;
         this.setFlags(EnumSet.of(Goal.Flag.TARGET));
     }
 
@@ -37,18 +40,18 @@ public class RaevyxProtectBabiesGoal extends TargetGoal {
         }
 
         // Look for nearby babies that have been hurt recently
-        List<Raevyx> nearbyBabies = this.dragon.level().getEntitiesOfClass(
-                Raevyx.class,
+        List<T> nearbyBabies = this.dragon.level().getEntitiesOfClass(
+                dragonClass,
                 this.dragon.getBoundingBox().inflate(16.0D),
                 baby -> baby != null && baby.isBaby() && baby.isAlive()
         );
 
         // Check if any baby has a recent attacker
-        for (Raevyx baby : nearbyBabies) {
+        for (T baby : nearbyBabies) {
             LivingEntity babyAttacker = baby.getLastHurtByMob();
             if (babyAttacker != null && babyAttacker.isAlive()) {
-                // Don't attack other Raevyx or the owner
-                if (babyAttacker instanceof Raevyx) {
+                // Don't attack other dragons of the same species or the owner
+                if (dragonClass.isInstance(babyAttacker)) {
                     continue;
                 }
                 if (this.dragon.isTame() && babyAttacker == this.dragon.getOwner()) {

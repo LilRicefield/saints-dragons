@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 
+import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautPassiveBuffAbility;
@@ -669,9 +670,9 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     }
     
     @Override
-    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
         // Stegonaut are nocturnal sleepers (sleep at night, active during day)
-        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
+        return DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override

@@ -7,7 +7,9 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
@@ -39,6 +41,12 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private static final double IMPACT_RADIUS = 1.25D;
     private static final float DEFAULT_DAMAGE_PER_SECOND = 80.0F;  // Config value = damage per second
     private static final int FIRE_DURATION_SECONDS = 3;
+
+    // Flame spawn offset tuning (relative to fireBone position)
+    // Adjust these to fine-tune where flames appear relative to the mouth
+    private static final double FLAME_SPAWN_OFFSET_FORWARD = 0.0;  // Blocks forward (+ = forward, - = backward)
+    private static final double FLAME_SPAWN_OFFSET_UP = 0.0;       // Blocks up (+ = up, - = down)
+    private static final double FLAME_SPAWN_OFFSET_RIGHT = 0.0;    // Blocks right (+ = right, - = left)
 
     // Block destruction settings
     private static final int ABILITY_ACTIVE_BEFORE_MELTING = 80;  // Ability must be active for 4 seconds before melting starts
@@ -200,19 +208,20 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
         dragon.syncFireBreathPath(origin, impact);
 
+        // Spawn flame projectile stream
+        if (dragon.level() instanceof ServerLevel serverLevel) {
+            spawnFlameProjectiles(serverLevel, dragon, origin, aim);
+        }
+
         // Only apply destruction when stream has extended (progress > 10)
         // This prevents instant block burning at full range
         if (currentProgress > 10 && dragon.level() instanceof ServerLevel serverLevel) {
             double sizeScale = Math.max(0.8D, dragon.getBbWidth());
-            float damagePerTick = computeDamage(dragon, sizeScale);
             double baseRadius = IMPACT_RADIUS * sizeScale;
 
             // Calculate current impact point based on progress (0-40 → 0.0-1.0)
             double progressRatio = Math.min(1.0, currentProgress / 40.0);
             Vec3 currentImpact = origin.add(impact.subtract(origin).scale(progressRatio));
-
-            // Damage entities along the ENTIRE cone path (flamethrower style)
-            damageAlongCone(serverLevel, dragon, origin, currentImpact, baseRadius, damagePerTick);
 
             // Apply block effects only at the impact point to avoid excessive destruction
             boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING;
@@ -221,10 +230,11 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                 dragon,
                 currentImpact,
                 baseRadius,
-                0.0f,  // Zero damage here - we handle entity damage in damageAlongCone
+                0.0f,  // Zero damage - flame entities handle damage
                 FIRE_DURATION_SECONDS,
                 BLOCK_MELT_TICKS,
-                canMeltBlocks
+                canMeltBlocks,
+                false
             );
         }
     }
@@ -254,53 +264,72 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     }
 
     /**
-     * Damages entities along the entire cone path (flamethrower-style).
-     * Samples points along the path from origin to currentImpact and damages entities
-     * within an expanding cone radius. Uses a HashSet to prevent double-hitting entities.
+     * Spawns flame projectiles in a continuous stream to create flamethrower effect.
      */
-    private void damageAlongCone(ServerLevel level, Ignivorus dragon, Vec3 origin, Vec3 currentImpact,
-                                 double baseRadius, float damagePerTick) {
-        Vec3 direction = currentImpact.subtract(origin);
-        double distance = direction.length();
-        if (distance < 1.0E-6) {
-            return;
-        }
+    private void spawnFlameProjectiles(ServerLevel level, Ignivorus dragon, Vec3 origin, Vec3 direction) {
+        RandomSource random = dragon.getRandom();
+        double sizeScale = Math.max(0.8D, dragon.getBbWidth());
+        float damagePerProjectile = computeDamage(dragon, sizeScale) * 4.0F;
 
-        Vec3 step = direction.normalize();
-        // Sample every 1.5 blocks along the path for performance
-        int sampleCount = Math.max(1, (int) (distance / 1.5));
+        // Spawn 6-9 projectiles per tick for a denser, more forceful stream
+        int count = 6 + random.nextInt(4);
 
-        // Track entities we've already damaged this tick to avoid double-hitting
-        java.util.Set<LivingEntity> hitEntities = new java.util.HashSet<>();
-
-        for (int i = 0; i <= sampleCount; i++) {
-            double ratio = sampleCount > 0 ? (double) i / sampleCount : 1.0;
-            Vec3 samplePoint = origin.add(step.scale(distance * ratio));
-
-            // Cone expands as it travels: start at 40% of base radius, expand to 100%
-            double coneRadius = baseRadius * (0.4 + 0.6 * ratio);
-
-            // Find entities within this sample sphere
-            net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(
-                samplePoint.x - coneRadius, samplePoint.y - coneRadius, samplePoint.z - coneRadius,
-                samplePoint.x + coneRadius, samplePoint.y + coneRadius, samplePoint.z + coneRadius
+        for (int i = 0; i < count; i++) {
+            // Increased spread for wider cone effect
+            double spreadAmount = 0.28 + random.nextDouble() * 0.22;
+            Vec3 spread = new Vec3(
+                    (random.nextDouble() - 0.5) * spreadAmount,
+                    (random.nextDouble() - 0.5) * spreadAmount,
+                    (random.nextDouble() - 0.5) * spreadAmount
             );
 
-            for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
-                // Skip if already hit this tick, or if it's the dragon itself, or a passenger
-                if (hitEntities.contains(entity) || entity == dragon || dragon.getPassengers().contains(entity)) {
-                    continue;
-                }
+            // Faster velocity for a more forceful flamethrower
+            Vec3 velocity = direction.normalize().scale(4.6 + random.nextDouble() * 1.8).add(spread);
 
-                // Check if entity is actually within the cone radius
-                if (entity.position().distanceTo(samplePoint) <= coneRadius) {
-                    // Apply damage and fire
-                    entity.hurt(level.damageSources().dragonBreath(), damagePerTick);
-                    entity.setSecondsOnFire(FIRE_DURATION_SECONDS);
-                    hitEntities.add(entity);
-                }
-            }
+            // Start small, will grow to 2x size as it travels
+            float scale = 1.5F + random.nextFloat() * 0.5F;
+            int projectileLifetime = 36 + random.nextInt(18);
+
+            // Bias spawns forward so more flames appear near the end of the stream
+            double forwardBias = 0.6 + random.nextDouble() * 0.8; // 0.6 - 1.4 blocks ahead
+            Vec3 spawnPos = origin.add(direction.normalize().scale(forwardBias));
+            // Apply spawn offset in dragon's local coordinate space
+            spawnPos = applyLocalOffset(spawnPos, direction, FLAME_SPAWN_OFFSET_FORWARD,
+                                        FLAME_SPAWN_OFFSET_UP, FLAME_SPAWN_OFFSET_RIGHT);
+
+            IgnivorusFlameEntity flame = new IgnivorusFlameEntity(
+                    level, spawnPos, velocity, dragon, damagePerProjectile, scale, projectileLifetime
+            );
+
+            level.addFreshEntity(flame);
         }
+    }
+
+    /**
+     * Applies local offset (forward/up/right) to a world position based on look direction.
+     * Transforms the offset from dragon's local space to world space.
+     */
+    private Vec3 applyLocalOffset(Vec3 origin, Vec3 lookDirection, double forward, double up, double right) {
+        // If no offset, return origin directly
+        if (forward == 0.0 && up == 0.0 && right == 0.0) {
+            return origin;
+        }
+
+        // Normalize look direction
+        Vec3 forwardVec = lookDirection.normalize();
+
+        // Calculate right vector (perpendicular to forward, in horizontal plane)
+        Vec3 rightVec = new Vec3(-forwardVec.z, 0, forwardVec.x).normalize();
+
+        // Calculate up vector (perpendicular to both forward and right)
+        Vec3 upVec = rightVec.cross(forwardVec).normalize();
+
+        // Apply offsets in local space
+        Vec3 offset = forwardVec.scale(forward)
+                .add(upVec.scale(up))
+                .add(rightVec.scale(right));
+
+        return origin.add(offset);
     }
 
     /**

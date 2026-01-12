@@ -1,22 +1,26 @@
-package com.leon.saintsdragons.server.ai.goals.raevyx.baby;
+package com.leon.saintsdragons.server.ai.goals.base;
 
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import java.util.EnumSet;
-import java.util.List;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 
+import java.util.EnumSet;
+import java.util.List;
+
 /**
- * Simple follow-parent behaviour for untamed baby Raevyx.
+ * Generic follow-parent behavior for untamed baby dragons.
  * Mirrors vanilla {@link net.minecraft.world.entity.ai.goal.FollowParentGoal}
- * but only activates for wild hatchlings so tamed babies can prioritise their owner.
+ * but only activates for wild hatchlings so tamed babies can prioritize their owner.
  *
  * Babies maintain a comfortable distance (5-7 blocks) and wander around naturally
  * instead of constantly pushing into the parent.
+ *
+ * @param <T> The dragon type (e.g., Raevyx, Ignivorus, etc.)
  */
-public class RaevyxFollowParentGoal extends Goal {
-    private final Raevyx baby;
+public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
+    private final T baby;
+    private final Class<T> dragonClass;
     private final double speedModifier;
-    private Raevyx parent;
+    private T parent;
     private int timeToRecalcPath;
 
     // Comfortable following distance - babies stay 5-7 blocks away
@@ -26,8 +30,9 @@ public class RaevyxFollowParentGoal extends Goal {
     // Wandering behavior - don't constantly path to parent
     private int wanderCooldown = 0;
 
-    public RaevyxFollowParentGoal(Raevyx baby, double speedModifier) {
+    public DragonFollowParentGoal(T baby, Class<T> dragonClass, double speedModifier) {
         this.baby = baby;
+        this.dragonClass = dragonClass;
         this.speedModifier = speedModifier;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     }
@@ -38,15 +43,15 @@ public class RaevyxFollowParentGoal extends Goal {
             return false;
         }
 
-        List<Raevyx> nearby = baby.level().getEntitiesOfClass(
-                Raevyx.class,
+        List<T> nearby = baby.level().getEntitiesOfClass(
+                dragonClass,
                 baby.getBoundingBox().inflate(12.0D, 6.0D, 12.0D),
                 adult -> adult != null && !adult.isBaby() && adult.isAlive()
         );
 
         double closestDistance = Double.MAX_VALUE;
-        Raevyx closestAdult = null;
-        for (Raevyx adult : nearby) {
+        T closestAdult = null;
+        for (T adult : nearby) {
             double dist = baby.distanceToSqr(adult);
             if (dist < closestDistance) {
                 closestDistance = dist;

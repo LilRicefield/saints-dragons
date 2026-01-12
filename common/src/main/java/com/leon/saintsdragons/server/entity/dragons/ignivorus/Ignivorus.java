@@ -10,6 +10,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
@@ -255,7 +256,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final double RIDER_PHASE2_RUN_SPEED = 0.32D;
 
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
-    private static final float MAX_FIRE_PITCH_DEG = 45.0F;
+    private static final float MAX_FIRE_PITCH_DEG = 55.0F;  // Matches neck pitch limit
     private Vec3 fireAimDir;
 
     // Sleep system state (one-shot transitions: down -> fall_asleep -> wake_up -> up)
@@ -608,6 +609,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
         Vec3 input = riderController.getRiddenInput(player, deltaIn);
+        if (!level().isClientSide && isFlying()) {
+            float fwd = (float) Mth.clamp(input.z, -1.0, 1.0);
+            float str = (float) Mth.clamp(input.x, -1.0, 1.0);
+            this.setLastRiderForward(Math.abs(fwd) > 0.02f ? fwd : 0f);
+            this.setLastRiderStrafe(Math.abs(str) > 0.02f ? str : 0f);
+        }
         return super.getRiddenInput(player, input);
     }
 
@@ -1718,9 +1725,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    public com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
         // Ignivorus are nocturnal sleepers (sleep at night)
-        return com.leon.saintsdragons.server.entity.behavior.DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
+        return DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override
@@ -2544,9 +2551,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public Vec3 getFireBreathStartAnchor(float partialTicks) {
-        Vec3 clientBone = getClientLocatorPosition("fireBoneOrigin");
+        // Try fireBone first
+        Vec3 clientBone = getBonePositionForHitbox("fireBoneOrigin");
         if (clientBone != null) {
             return clientBone;
+        }
+        // Try mouth_origin as backup (might be synced)
+        Vec3 mouthOrigin = getBonePositionForHitbox("mouth_origin");
+        if (mouthOrigin != null) {
+            return mouthOrigin;
         }
         return computeFireBoneFallback(partialTicks);
     }
@@ -2557,7 +2570,21 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         double z = Mth.lerp(partialTicks, this.zo, this.getZ());
 
         float yawDeg = Mth.lerp(partialTicks, this.yHeadRotO, this.yHeadRot);
-        float pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
+
+        // When flying and ridden, use rider's pitch (dragon's xRot is locked at 0)
+        float pitchDeg;
+        if (isVehicle() && isFlying()) {
+            Entity rider = getControllingPassenger();
+            if (rider != null) {
+                pitchDeg = rider.getXRot();
+                // Clamp pitch to match neck limits (±20 degrees)
+                pitchDeg = Mth.clamp(pitchDeg, -20.0F, 20.0F);
+            } else {
+                pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
+            }
+        } else {
+            pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
+        }
 
         double yaw = Math.toRadians(yawDeg);
         double pitch = Math.toRadians(pitchDeg);
