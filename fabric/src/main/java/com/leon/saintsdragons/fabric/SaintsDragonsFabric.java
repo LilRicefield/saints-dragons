@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.fabric.entity.part.FabricPartEntities;
+import com.leon.saintsdragons.fabric.loot.FabricLootTableModifier;
 import com.leon.saintsdragons.fabric.resource.FabricDragonAttributeReloadListener;
 import com.leon.saintsdragons.fabric.world.FabricDragonSpawns;
 import com.leon.saintsdragons.fabric.server.FabricServerEvents;
@@ -26,6 +27,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
         FabricPartEntities.register();
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonAttributeReloadListener());
         FabricServerEvents.init();
+        FabricLootTableModifier.register();
 
         CommonModEvents.registerEntityAttributes((type, builder) ->
                 FabricDefaultAttributeRegistry.register(type, builder.build()));

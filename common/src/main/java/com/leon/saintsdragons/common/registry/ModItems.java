@@ -13,6 +13,7 @@ import com.leon.saintsdragons.platform.Services;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 
 import java.util.function.Supplier;
@@ -61,6 +62,12 @@ public class ModItems {
                             0x0A0A0A, 0x5A5A5A,
                             new Item.Properties()
                     ));
+
+    // Block Items
+    public static final Supplier<Item> RAEVYX_EGG =
+            REGISTER.register("raevyx_egg",
+                    () -> new BlockItem(ModBlocks.RAEVYX_EGG.get(),
+                            new Item.Properties()));
 
     public static final Supplier<Item> DRAGON_ALLY_BOOK =
             REGISTER.register("dragon_ally_book",

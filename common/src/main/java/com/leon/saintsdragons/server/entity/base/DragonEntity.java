@@ -96,7 +96,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private boolean isRespawning = false;
 
     // Flag to prevent respawn logic from triggering on newly spawned babies (from spawn eggs/breeding)
-    protected int skipRespawnTicks = 0;
+    public int skipRespawnTicks = 0;
 
     // AstemirLib-style smooth rotation deviations (mirrored on both sides)
     // Smooths the DELTA (how much rotation changed) not the absolute rotation

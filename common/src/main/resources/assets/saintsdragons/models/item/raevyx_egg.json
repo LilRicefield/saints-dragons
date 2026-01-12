@@ -1,0 +1,6 @@
+{
+	"parent": "minecraft:item/generated",
+	"textures": {
+		"layer0": "saintsdragons:item/raevyx_egg_item"
+	}
+}

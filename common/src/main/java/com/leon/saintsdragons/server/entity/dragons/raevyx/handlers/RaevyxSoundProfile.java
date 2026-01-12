@@ -16,6 +16,15 @@ import java.util.Map;
 public final class RaevyxSoundProfile implements DragonSoundProfile {
 
     public static final RaevyxSoundProfile INSTANCE = new RaevyxSoundProfile();
+    private static final float BABY_PITCH_MULTIPLIER = 1.6f;
+    private static final Map<String, Boolean> BABY_ALLOWED_KEYS = Map.ofEntries(
+            Map.entry("raevyx_grumble1", true),
+            Map.entry("raevyx_grumble2", true),
+            Map.entry("raevyx_grumble3", true),
+            Map.entry("raevyx_eat", true),
+            Map.entry("raevyx_hurt", true),
+            Map.entry("raevyx_die", true)
+    );
 
     private static final Map<String, Integer> VOCAL_WINDOWS = Map.ofEntries(
             Map.entry("grumble1", 120),
@@ -29,9 +38,7 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             Map.entry("roar_ground", 69),
             Map.entry("roar_air", 69),
             Map.entry("raevyx_hurt", 20),
-            Map.entry("raevyx_die", 62),
-            Map.entry("baby_raevyx_hurt", 15),
-            Map.entry("baby_raevyx_die", 40)
+            Map.entry("raevyx_die", 62)
     );
 
     private static final Map<String, String> EFFECT_TO_VOCAL_KEY = Map.ofEntries(
@@ -43,9 +50,7 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             Map.entry("raevyx_purr", "purr"),
             Map.entry("raevyx_roar", "roar"),
             Map.entry("raevyx_hurt", "raevyx_hurt"),
-            Map.entry("raevyx_die", "raevyx_die"),
-            Map.entry("baby_raevyx_hurt", "baby_raevyx_hurt"),
-            Map.entry("baby_raevyx_die", "baby_raevyx_die")
+            Map.entry("raevyx_die", "raevyx_die")
     );
 
     private RaevyxSoundProfile() {}
@@ -53,6 +58,9 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
         // Handler already blocks server-side, we're only called on client
+        if (dragon.isBaby() && !BABY_ALLOWED_KEYS.containsKey(key)) {
+            return true;
+        }
 
         if (key.startsWith("raevyx_flap")) {
             playWingFlap(handler, dragon, locator);
@@ -62,8 +70,11 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         if (vocalKey != null) {
             // Roar sound is handled by RaevyxRoarAbility with precise timing, skip keyframe
             // Hurt/die sounds are handled by entity hurt/death methods, skip keyframe
-            if ("roar".equals(vocalKey) || "raevyx_hurt".equals(vocalKey) || "raevyx_die".equals(vocalKey) ||
-                "baby_raevyx_hurt".equals(vocalKey) || "baby_raevyx_die".equals(vocalKey)) {
+            if ("roar".equals(vocalKey) || "raevyx_hurt".equals(vocalKey) || "raevyx_die".equals(vocalKey)) {
+                if (dragon.isBaby() && ("raevyx_hurt".equals(vocalKey) || "raevyx_die".equals(vocalKey))) {
+                    playVocalEntry(handler, dragon, vocalKey, locator);
+                    return true;
+                }
                 return true; // Block the keyframe, entity plays the sound
             }
             playVocalEntry(handler, dragon, vocalKey, locator);
@@ -150,6 +161,9 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
     @Override
     public boolean handleSoundByName(DragonSoundHandler handler, DragonEntity dragon, String key) {
         // Handler already blocks server-side, we're only called on client
+        if (dragon.isBaby()) {
+            return true;
+        }
         if (key.startsWith("raevyx_flap")) {
             playWingFlap(handler, dragon, null);
             return true;
@@ -203,7 +217,8 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         Vec3 at = handler.resolveLocatorWorldPos(
                 locator != null && !locator.isEmpty() ? locator : "mouth_origin"
         );
-        playClientSound(dragon, at, ModSounds.RAEVYX_EAT.get(), 1.0f, 1.0f);
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.RAEVYX_EAT.get(), 1.0f, pitch);
     }
 
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
@@ -221,6 +236,9 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         float pitch = entry.basePitch();
         if (entry.pitchVariance() != 0f) {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+        }
+        if (dragon.isBaby()) {
+            pitch *= BABY_PITCH_MULTIPLIER;
         }
 
         playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
