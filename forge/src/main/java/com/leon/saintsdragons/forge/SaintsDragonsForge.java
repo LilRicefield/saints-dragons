@@ -3,6 +3,7 @@ package com.leon.saintsdragons.forge;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
+import com.leon.saintsdragons.forge.loot.ModLootModifiers;
 import com.leon.saintsdragons.forge.world.AddDragonsBiomeModifier;
 import com.mojang.serialization.Codec;
 import net.minecraft.world.entity.EntityType;
@@ -38,6 +39,7 @@ public final class SaintsDragonsForge {
         var modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         BIOME_MODIFIERS.register(modEventBus);
+        ModLootModifiers.register(modEventBus);
 
         modEventBus.addListener(this::onEntityAttributeCreation);
         modEventBus.addListener(this::onBuildCreativeTabs);

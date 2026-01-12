@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.handler;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -23,7 +24,7 @@ public class DragonSoundHandler {
     private static final int MIN_OVERLAP_GUARD_TICKS = 5;
     private static final Set<String> DEFAULT_NON_OVERLAPPING_KEYS = Set.of(
             "hurt", "stegonaut_hurt", "cindervane_hurt", "primitive_drake_hurt", "die",
-            "raevyx_hurt", "raevyx_die", "baby_raevyx_hurt", "baby_raevyx_die",
+            "raevyx_hurt", "raevyx_die",
             "nulljaw_hurt", "nulljaw_die"
     );
     private static final Map<String, Integer> GENERIC_VOCAL_WINDOWS = Map.of(
@@ -49,7 +50,7 @@ public class DragonSoundHandler {
      * Call this from animation controller sound handlers (legacy support)
      */
     public void handleAnimationSound(DragonEntity entity, Object keyframeData, software.bernie.geckolib.core.animation.AnimationController<?> controller) {
-        if (dragon.isDying()) return;
+        if (dragon.isDying() && !(dragon instanceof Raevyx raevyx && raevyx.isBaby())) return;
         // IMPORTANT: GeckoLib fires animation sound events on BOTH client and server!
         // We ONLY want to handle on client side for local playback
         if (!dragon.level().isClientSide) return; // Block server-side completely

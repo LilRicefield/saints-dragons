@@ -1,0 +1,7 @@
+{
+	"variants": {
+		"hatch=0": { "model": "saintsdragons:block/raevyx_egg_stage0" },
+		"hatch=1": { "model": "saintsdragons:block/raevyx_egg_stage1" },
+		"hatch=2": { "model": "saintsdragons:block/raevyx_egg_stage2" }
+	}
+}

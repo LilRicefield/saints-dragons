@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 
 /**
@@ -74,6 +75,9 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             if (hurtEntry != null && hurtEntry.soundSupplier() != null) {
                 net.minecraft.sounds.SoundEvent sound = hurtEntry.soundSupplier().get();
                 float volume = hurtEntry.volume();
+                if (dragon instanceof Raevyx && dragon.isBaby()) {
+                    return;
+                }
                 float pitch = hurtEntry.basePitch() + (dragon.getRandom().nextFloat() - 0.5f) * hurtEntry.pitchVariance() * 2f;
 
                 // Play sound directly (bypasses playVocal which only triggers animations)

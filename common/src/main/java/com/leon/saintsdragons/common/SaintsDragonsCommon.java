@@ -35,6 +35,8 @@ public final class SaintsDragonsCommon {
         DragonAnimTickets.bootstrap();
 
         ModEntities.register();
+        ModBlocks.register();
+        ModBlockEntities.register();
         ModItems.register();
         ModSounds.register();
         ModParticles.register();

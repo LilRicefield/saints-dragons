@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 
 /**
@@ -65,6 +66,9 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
             if (deathEntry != null && deathEntry.soundSupplier() != null) {
                 net.minecraft.sounds.SoundEvent sound = deathEntry.soundSupplier().get();
                 float volume = deathEntry.volume();
+                if (dragon instanceof Raevyx && dragon.isBaby()) {
+                    return;
+                }
                 float pitch = deathEntry.basePitch() + (dragon.getRandom().nextFloat() - 0.5f) * deathEntry.pitchVariance() * 2f;
 
                 // Play sound directly (bypasses vocal system's isDeadOrDying check)

@@ -48,6 +48,10 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         boolean legacyTaming = config.extraBoolean("legacy_taming", false);
 
+        if (wyvern.isBaby()) {
+            return handleBabyTaming(player, itemstack, config);
+        }
+
         // Allow players to abort a taming attempt by crouching with empty hands (only in normal mode)
         if (!legacyTaming && wyvern.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
             if (!client) {
@@ -145,6 +149,59 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 }
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 6);
                 sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_failed");
+            }
+        }
+
+        return InteractionResult.sidedSuccess(client);
+    }
+
+    private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
+        boolean client = wyvern.level().isClientSide;
+        boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+        if (!itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
+            return InteractionResult.PASS;
+        }
+
+        // Check feeding cooldown to prevent spam-feeding
+        if (wyvern.canFeed()) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.raevyx.still_eating", wyvern.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        if (!client) {
+            if (!player.getAbilities().instabuild) {
+                itemstack.shrink(1);
+            }
+
+            // Trigger eat animation
+            wyvern.triggerAnim("action", "eat");
+
+            // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
+            wyvern.setFeedingCooldown(61);
+
+            if (hearty) {
+                wyvern.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+            }
+
+            double tameChance = hearty
+                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
+                : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
+            int tameRoll = (int) Math.round(tameChance);
+            boolean success = wyvern.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
+
+            if (success) {
+                wyvern.tame(player);
+                wyvern.setOrderedToSit(true);
+                wyvern.setCommandManual(1);
+                wyvern.level().broadcastEntityEvent(wyvern, (byte) 7);
+                triggerTamingAdvancement(player);
+            } else {
+                wyvern.level().broadcastEntityEvent(wyvern, (byte) 6);
             }
         }
 

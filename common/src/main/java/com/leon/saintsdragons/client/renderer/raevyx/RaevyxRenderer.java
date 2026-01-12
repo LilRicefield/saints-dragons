@@ -66,7 +66,13 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
 
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 2.0f * scale;
+
+        // Baby dragons have smaller shadows
+        if (entity.isBaby()) {
+            this.shadowRadius = 1.25f;
+        } else {
+            this.shadowRadius = 2.0f;
+        }
 
         // Enable matrix tracking for the feet bones we care about
         this.lastBakedModel = model;

@@ -1,5 +1,9 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
+import com.leon.saintsdragons.common.block.RaevyxEggBlock;
+import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
+import com.leon.saintsdragons.common.registry.ModBlocks;
+import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
@@ -10,6 +14,11 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import java.util.EnumSet;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -112,36 +121,50 @@ public class RaevyxBreedGoal extends Goal {
 
     private void breed() {
         ServerLevel serverlevel = (ServerLevel)this.level;
-        Raevyx baby = (Raevyx) this.dragon.getBreedOffspring(serverlevel, this.partner);
 
-        if (baby == null) {
-            return;
-        }
+        // Determine which dragon is female (the one that will lay the egg)
+        Raevyx female = this.dragon.isFemale() ? this.dragon : this.partner;
+        Raevyx male = this.dragon.isFemale() ? this.partner : this.dragon;
 
         // Reset love state
         this.dragon.resetLove();
         this.partner.resetLove();
 
-        // Set baby position between parents
-        baby.setBaby(true);
-        baby.moveTo(
-            (this.dragon.getX() + this.partner.getX()) / 2.0D,
-            this.dragon.getY(),
-            (this.dragon.getZ() + this.partner.getZ()) / 2.0D,
-            0.0F, 0.0F
-        );
+        // Find ground position at female's location
+        BlockPos eggPos = this.findEggLayingPosition(female);
+        if (eggPos == null) {
+            return; // No valid position found
+        }
 
-        // Add baby to world
-        serverlevel.addFreshEntity(baby);
+        // Generate baby gender randomly (for when egg hatches)
+        DragonGender babyGender = this.dragon.getRandom().nextBoolean() ? DragonGender.MALE : DragonGender.FEMALE;
+
+        // Place egg block
+        BlockState eggState = ModBlocks.RAEVYX_EGG.get().defaultBlockState();
+        serverlevel.setBlock(eggPos, eggState, 3);
+
+        // Set block entity data
+        BlockEntity blockEntity = serverlevel.getBlockEntity(eggPos);
+        if (blockEntity instanceof RaevyxEggBlockEntity eggEntity) {
+            // Store owner UUID if female is tamed
+            if (female.isTame() && female.getOwnerUUID() != null) {
+                eggEntity.setOwnerUUID(female.getOwnerUUID());
+            }
+            // Store baby gender
+            eggEntity.setBabyGender(babyGender);
+        }
+
+        // Play egg laying sound
+        serverlevel.playSound(null, eggPos, SoundEvents.TURTLE_LAY_EGG, SoundSource.BLOCKS, 0.8F, 1.0F);
 
         // Spawn experience and trigger advancements
-        this.level.broadcastEntityEvent(this.dragon, (byte)18);
+        this.level.broadcastEntityEvent(female, (byte)18);
         if (this.level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
             this.level.addFreshEntity(new ExperienceOrb(
                 this.level,
-                this.dragon.getX(),
-                this.dragon.getY(),
-                this.dragon.getZ(),
+                female.getX(),
+                female.getY(),
+                female.getZ(),
                 this.dragon.getRandom().nextInt(7) + 1
             ));
         }
@@ -154,7 +177,63 @@ public class RaevyxBreedGoal extends Goal {
 
         if (serverplayer != null) {
             serverplayer.awardStat(Stats.ANIMALS_BRED);
-            CriteriaTriggers.BRED_ANIMALS.trigger(serverplayer, this.dragon, this.partner, baby);
+            // Note: Can't trigger BRED_ANIMALS advancement without baby entity, but breeding still counted
         }
+    }
+
+    /**
+     * Find a suitable ground position for egg laying at the female's location
+     */
+    @Nullable
+    private BlockPos findEggLayingPosition(Raevyx female) {
+        BlockPos startPos = female.blockPosition();
+
+        // Try the current position first
+        BlockPos groundPos = this.findGroundBelow(startPos, 5);
+        if (groundPos != null && this.isValidEggPosition(groundPos)) {
+            return groundPos;
+        }
+
+        // Try nearby positions in a small radius
+        for (int xOffset = -1; xOffset <= 1; xOffset++) {
+            for (int zOffset = -1; zOffset <= 1; zOffset++) {
+                if (xOffset == 0 && zOffset == 0) continue;
+
+                BlockPos offsetPos = startPos.offset(xOffset, 0, zOffset);
+                groundPos = this.findGroundBelow(offsetPos, 5);
+                if (groundPos != null && this.isValidEggPosition(groundPos)) {
+                    return groundPos;
+                }
+            }
+        }
+
+        return null; // No valid position found
+    }
+
+    /**
+     * Find ground block below the given position
+     */
+    @Nullable
+    private BlockPos findGroundBelow(BlockPos pos, int maxDepth) {
+        for (int i = 0; i <= maxDepth; i++) {
+            BlockPos checkPos = pos.below(i);
+            BlockState groundState = this.level.getBlockState(checkPos);
+            BlockState aboveState = this.level.getBlockState(checkPos.above());
+
+            // Found solid ground with air above
+            if (!groundState.isAir() && groundState.isSolidRender(this.level, checkPos) &&
+                aboveState.isAir()) {
+                return checkPos.above();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Check if this is a valid position for an egg
+     */
+    private boolean isValidEggPosition(BlockPos pos) {
+        BlockState state = this.level.getBlockState(pos);
+        return state.isAir() && !this.level.getBlockState(pos.below()).isAir();
     }
 }

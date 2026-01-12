@@ -562,6 +562,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
+    public void remove(RemovalReason reason) {
+        super.remove(reason);
+        // Hook for Fabric mixin to clean up multipart entities
+    }
+
+    @Override
     public boolean hurt(@Nonnull DamageSource damageSource, float amount) {
         // During dying sequence, ignore all damage (entity is already dead, playing death animation)
         if (isDying()) {
