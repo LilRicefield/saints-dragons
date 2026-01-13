@@ -291,7 +291,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             .add("chuff", "action", "animation.raevyx.chuff", ModSounds.RAEVYX_CHUFF, 0.9f, 0.9f, 0.2f, false, false, false)
             .add("content", "action", "animation.raevyx.content", ModSounds.RAEVYX_CONTENT, 0.8f, 1.0f, 0.1f, true, false, true)
             .add("excited", "action", "", ModSounds.RAEVYX_EXCITED, 1.0f, 1.0f, 0.3f, false, false, false)  // Sound-only, no animation
-            .add("growl_warning", "action", "", ModSounds.RAEVYX_GROWL_WARNING, 1.2f, 0.8f, 0.4f, false, false, false)  // Sound-only, no animation
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", "action", "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
@@ -4556,10 +4555,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             // Play growl when entering combat from idle, but throttle and avoid while being ridden
             if (target != null && previousTarget == null && aggroGrowlCooldown <= 0) {
                 // Suppress frequent growls when mounted; lengthen cooldown if mounted
-                if (!this.isVehicle() && !isStayOrSitMuted()) {
-                    // Uses GeckoLib animation keyframe system - sound is handled by animation
-                    getSoundHandler().playVocal("growl_warning");
-                }
+                // Intentionally no warning growl; maintain cooldown to prevent rapid retargeting
                 // Set cooldown (mounted has longer to avoid flicker from rider clearing target)
                 this.aggroGrowlCooldown = this.isVehicle() ? 120 : 80;
             }

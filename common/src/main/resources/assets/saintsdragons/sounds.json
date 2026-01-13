@@ -281,16 +281,6 @@
       }
     ]
   },
-  "raevyx_growl_warning": {
-    "subtitle": "Raevyx growls menacingly",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_growl_warning",
-        "volume": 1.1,
-        "pitch": 1.0
-      }
-    ]
-  },
   "raevyx_hurt": {
     "subtitle": "Raevyx hurt",
     "sounds": [

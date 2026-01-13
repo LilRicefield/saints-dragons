@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 public class DragonGroundWanderGoal<T extends RideableDragonBase> extends DragonBaseGoal<T> {
     private final double speed;
     private final int interval;
+    private boolean forceTrigger = false;
 
     public DragonGroundWanderGoal(T dragon, double speed, int interval) {
         super(dragon);
@@ -35,6 +36,10 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
         // Check command compatibility - only wander in Wander(2) mode or when untamed
         if (!checkCommandCompatible(2)) {
             return false;
+        }
+
+        if (forceTrigger) {
+            return true;
         }
 
         // Random interval check
@@ -64,6 +69,7 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
 
     @Override
     public void start() {
+        forceTrigger = false;
         Vec3 wanderPos = getWanderPosition();
         if (wanderPos != null) {
             dragon.setGroundMoveStateFromAI(1); // Walking
@@ -83,6 +89,10 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
         if (dragon.getNavigation().isInProgress()) {
             dragon.setGroundMoveStateFromAI(1);
         }
+    }
+
+    public void forceTrigger() {
+        this.forceTrigger = true;
     }
 
     /**
