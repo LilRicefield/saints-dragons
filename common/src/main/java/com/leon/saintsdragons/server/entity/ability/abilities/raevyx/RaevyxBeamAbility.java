@@ -27,7 +27,11 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 80) // 4 seconds for AI
     };
     private static final double MAX_BEAM_RANGE = 64;
-    private static final float DEFAULT_BEAM_DAMAGE = 35.0f;
+    private static final float DEFAULT_BEAM_DAMAGE = 20.0f; // Reduced from 35.0f for balance
+
+    // Beam energy system constants
+    private static final float ENERGY_COST_PER_TICK = 0.012f; // Depletes in ~83 ticks (4.15 seconds) when ridden
+    private static final float MIN_ENERGY_TO_START = 0.01f; // Can start beam with any remaining energy
 
     private boolean hasBeamFired = false; // Track if beam has been fired this activation
     private boolean beamStartPlayed = false;
@@ -43,11 +47,18 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (section == null) return;
 
         if (section.sectionType == AbilitySectionType.STARTUP) {
+            Raevyx wyvern = getUser();
+
+            // Check if beam can be used (has energy AND not locked from depletion)
+            if (!wyvern.canUseBeam()) {
+                interrupt();
+                return;
+            }
+
             // Reset state and kick off the beam start animation
             hasBeamFired = false;
             beamLoopActive = false;
             beamStartPlayed = true;
-            Raevyx wyvern = getUser();
             wyvern.setBeamGlowActive(true);
             wyvern.setBeaming(false);
             wyvern.triggerAnim("action", "lightning_beam_start");
@@ -104,6 +115,17 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
         Raevyx wyvern = getUser();
         if (wyvern.level().isClientSide) return; // server-side authority only
+
+        // Consume beam energy each tick
+        wyvern.consumeBeamEnergy(ENERGY_COST_PER_TICK);
+
+        // Interrupt if out of energy
+        if (!wyvern.hasBeamEnergy()) {
+            // Set depletion lock - must fully recharge before using again
+            wyvern.setBeamDepleted(true);
+            interrupt();
+            return;
+        }
 
         // Check if target is still valid - interrupt beam if not
 

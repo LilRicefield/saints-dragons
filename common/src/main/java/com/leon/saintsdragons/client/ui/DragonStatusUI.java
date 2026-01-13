@@ -21,6 +21,7 @@ public class DragonStatusUI {
     private final DragonSpeedIndicator speedIndicator;
     private final MeleeModeNotification meleeModeNotification;
     private final FireballChargeIndicator fireballChargeIndicator;
+    private final RaevyxBeamMeterIndicator raevyxBeamMeterIndicator;
     private int cachedScreenWidth = -1;
     private int cachedScreenHeight = -1;
 
@@ -39,6 +40,7 @@ public class DragonStatusUI {
         this.speedIndicator = new DragonSpeedIndicator(0, 0);
         this.meleeModeNotification = new MeleeModeNotification();
         this.fireballChargeIndicator = new FireballChargeIndicator();
+        this.raevyxBeamMeterIndicator = new RaevyxBeamMeterIndicator();
 
         elements.add(healthBar);
         elements.add(speedIndicator);
@@ -261,6 +263,13 @@ public class DragonStatusUI {
      */
     public FireballChargeIndicator getFireballChargeIndicator() {
         return fireballChargeIndicator;
+    }
+
+    /**
+     * Get the Raevyx beam meter indicator instance
+     */
+    public RaevyxBeamMeterIndicator getRaevyxBeamMeterIndicator() {
+        return raevyxBeamMeterIndicator;
     }
 
     /**

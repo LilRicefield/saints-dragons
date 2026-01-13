@@ -449,8 +449,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
         this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
         this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
-        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFollowOwnerGoal(this));
-        this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundWanderGoal(this, 1.0, 120));
+        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forIgnivorus()));
+        this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 120));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));

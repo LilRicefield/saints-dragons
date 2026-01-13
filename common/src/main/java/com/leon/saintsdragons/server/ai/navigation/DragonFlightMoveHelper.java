@@ -91,7 +91,7 @@ public class DragonFlightMoveHelper extends MoveControl {
         }
 
         // Handle different flight modes
-        if (dragon.isHovering() || dragon.isLanding()) {
+        if (dragon.isHovering()) {
             handleHoveringMovement();
         } else {
             handleGlidingMovement();

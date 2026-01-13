@@ -32,6 +32,7 @@ public class RaevyxFlightGoal extends Goal {
     private long lastLandingTime = 0;
     private static final int LANDING_FORCE_DROP_TICKS = 80;
     private static final int LANDING_EMERGENCY_GROUNDING_TICKS = 100; // 5 seconds - force ground if stuck
+    private static final double LANDING_STATE_ALTITUDE = 1.5D;
     // Flight decision cooldown
     private int flightDecisionCooldown = 0;
     
@@ -282,8 +283,13 @@ public class RaevyxFlightGoal extends Goal {
                 wyvern.getMoveControl().setWantedPosition(landingPosition.x, landingPosition.y, landingPosition.z, 1.6);
                 if (!wyvern.isLanding()
                         && altitude >= -0.25D
-                        && altitude <= Raevyx.LANDING_BLEND_ALTITUDE) {
-                    wyvern.setLanding(true);
+                        && altitude <= LANDING_STATE_ALTITUDE) {
+                    double dx = wyvern.getX() - landingPosition.x;
+                    double dz = wyvern.getZ() - landingPosition.z;
+                    double horizontalDistSq = dx * dx + dz * dz;
+                    if (horizontalDistSq <= 4.0D) {
+                        wyvern.setLanding(true);
+                    }
                 }
             }
             return;

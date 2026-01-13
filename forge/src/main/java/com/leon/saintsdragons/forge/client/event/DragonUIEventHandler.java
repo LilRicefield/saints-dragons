@@ -3,7 +3,9 @@ package com.leon.saintsdragons.forge.client.event;
 import com.leon.saintsdragons.client.DragonStatusUIManager;
 import com.leon.saintsdragons.client.ui.DragonStatusUI;
 import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
+import com.leon.saintsdragons.client.ui.RaevyxBeamMeterIndicator;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
@@ -43,6 +45,14 @@ public class DragonUIEventHandler {
             chargeIndicator.setChargeLevel(ignivorus.getFireballChargeLevel());
             chargeIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
         }
+
+        // Render beam meter when riding Raevyx
+        if (ui.getCurrentDragon() instanceof Raevyx raevyx) {
+            RaevyxBeamMeterIndicator beamMeter = ui.getRaevyxBeamMeterIndicator();
+            beamMeter.setBeamEnergy(raevyx.getBeamEnergy());
+            beamMeter.setBeaming(raevyx.isBeaming());
+            beamMeter.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
+        }
     }
     
     @SubscribeEvent
@@ -59,6 +69,9 @@ public class DragonUIEventHandler {
 
             // Tick fireball charge indicator for smooth animation
             ui.getFireballChargeIndicator().tick();
+
+            // Tick beam meter for smooth animation
+            ui.getRaevyxBeamMeterIndicator().tick();
         }
     }
 }
