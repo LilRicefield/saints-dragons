@@ -132,7 +132,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private final PathNavigation groundNavigation;
     private final MoveControl landMoveControl;
     private final RiftDrakeLookController landLookControl;
-    private NulljawGroundWanderGoal groundWanderGoal;
+    private DragonGroundWanderGoal<Nulljaw> groundWanderGoal;
     private boolean swimming;
     private int swimTicks;
     private int ticksInWater;
@@ -435,7 +435,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         this.goalSelector.addGoal(6, new NulljawFindWaterGoal(this));
         this.goalSelector.addGoal(7, new NulljawFollowOwnerGoal(this));
         this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
-        this.groundWanderGoal = new NulljawGroundWanderGoal(this, 1.0D, 100);
+        this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100);
         this.goalSelector.addGoal(11, groundWanderGoal);
         this.goalSelector.addGoal(11, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));

@@ -44,7 +44,7 @@ import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 
 /**
- * Base class for all wyvern entities in the Lightning Dragon mod.
+ * Base class for all wyvern entities in the mod.
  * Provides common GeckoLib integration, ability management, and basic wyvern functionality.
  */
 public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
