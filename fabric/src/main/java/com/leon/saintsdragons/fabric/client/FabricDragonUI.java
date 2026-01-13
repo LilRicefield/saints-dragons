@@ -3,7 +3,9 @@ package com.leon.saintsdragons.fabric.client;
 import com.leon.saintsdragons.client.DragonStatusUIManager;
 import com.leon.saintsdragons.client.ui.DragonStatusUI;
 import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
+import com.leon.saintsdragons.client.ui.RaevyxBeamMeterIndicator;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -48,6 +50,7 @@ public final class FabricDragonUI {
             DragonStatusUI ui = manager.getDragonStatusUI();
             ui.getMeleeModeNotification().tick();
             ui.getFireballChargeIndicator().tick();
+            ui.getRaevyxBeamMeterIndicator().tick();
         });
 
         HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -72,6 +75,14 @@ public final class FabricDragonUI {
                 FireballChargeIndicator chargeIndicator = ui.getFireballChargeIndicator();
                 chargeIndicator.setChargeLevel(ignivorus.getFireballChargeLevel());
                 chargeIndicator.render(graphics, width, height, tickDelta);
+            }
+
+            // Render beam meter when riding Raevyx
+            if (ui.getCurrentDragon() instanceof Raevyx raevyx) {
+                RaevyxBeamMeterIndicator beamMeter = ui.getRaevyxBeamMeterIndicator();
+                beamMeter.setBeamEnergy(raevyx.getBeamEnergy());
+                beamMeter.setBeaming(raevyx.isBeaming());
+                beamMeter.render(graphics, width, height, tickDelta);
             }
         });
     }

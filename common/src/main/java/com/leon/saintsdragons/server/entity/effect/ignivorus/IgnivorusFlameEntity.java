@@ -42,6 +42,7 @@ public class IgnivorusFlameEntity extends Entity {
     private int age;
     private int maxAge;
     private Vec3 spawnPos;
+    private boolean hasHitEntity = false; // Track if this flame already hit something
 
     public IgnivorusFlameEntity(EntityType<? extends IgnivorusFlameEntity> type, Level level) {
         super(type, level);
@@ -106,7 +107,13 @@ public class IgnivorusFlameEntity extends Entity {
                 return;
             }
 
-            // Ignite blocks when the flame hits solid terrain
+            // Check for entity hits first (bullet-style collision)
+            if (!hasHitEntity && checkEntityCollision()) {
+                this.discard(); // Disappear after hitting an entity (like a bullet)
+                return;
+            }
+
+            // Then check for block hits
             Vec3 start = position();
             Vec3 end = start.add(getDeltaMovement());
             HitResult hit = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
@@ -121,9 +128,6 @@ public class IgnivorusFlameEntity extends Entity {
                 this.discard();
                 return;
             }
-
-            // Damage entities in path
-            damageNearbyEntities();
         }
 
         // Move forward
@@ -134,29 +138,62 @@ public class IgnivorusFlameEntity extends Entity {
         setDeltaMovement(motion.scale(0.995));
     }
 
-    private void damageNearbyEntities() {
-        float radius = 0.5F * getScale();
-        AABB box = getBoundingBox().inflate(radius);
-        List<LivingEntity> entities = level().getEntitiesOfClass(LivingEntity.class, box);
+    /**
+     * Bullet-style collision detection - checks for entity hits along movement path.
+     * Returns true if an entity was hit (flame should be destroyed).
+     */
+    private boolean checkEntityCollision() {
+        // Raycast along the movement path to detect hits at close range
+        Vec3 start = position();
+        Vec3 motion = getDeltaMovement();
+        Vec3 end = start.add(motion);
+
+        float radius = 1.5F * getScale(); // Wider detection for reliable hits
+        AABB searchBox = new AABB(start, end).inflate(radius);
+        List<LivingEntity> potentialTargets = level().getEntitiesOfClass(LivingEntity.class, searchBox);
 
         Entity owner = getOwner();
+        LivingEntity closestTarget = null;
+        double closestDistance = Double.MAX_VALUE;
 
-        for (LivingEntity target : entities) {
+        // Find the closest valid target along the ray
+        for (LivingEntity target : potentialTargets) {
             // Skip owner and owner's passengers
             if (target.getUUID().equals(ownerUUID)) continue;
             if (owner != null && owner.getPassengers().contains(target)) continue;
 
-            // Check distance
-            if (target.distanceToSqr(this) <= radius * radius) {
-                DamageSource damageSource = level().damageSources().inFire();
-                if (owner != null) {
-                    damageSource = level().damageSources().mobAttack((LivingEntity) owner);
-                }
-
-                target.hurt(damageSource, damage);
-                target.setSecondsOnFire(3);
+            // Check if target is within hit radius
+            double distance = target.distanceToSqr(this);
+            if (distance <= radius * radius && distance < closestDistance) {
+                closestTarget = target;
+                closestDistance = distance;
             }
         }
+
+        // If we found a target, deal damage and return true
+        if (closestTarget != null) {
+            hasHitEntity = true;
+
+            // Always use mobAttack damage source - this bypasses Fire Resistance
+            DamageSource damageSource;
+            if (owner instanceof LivingEntity livingOwner) {
+                damageSource = level().damageSources().mobAttack(livingOwner);
+            } else {
+                damageSource = level().damageSources().generic();
+            }
+
+            // Deal impact damage (works through Fire Resistance)
+            closestTarget.hurt(damageSource, damage);
+
+            // Only set on fire if target doesn't have Fire Resistance
+            if (!closestTarget.fireImmune()) {
+                closestTarget.setSecondsOnFire(3);
+            }
+
+            return true; // Signal that we hit something
+        }
+
+        return false; // No hit
     }
 
     private Entity getOwner() {
@@ -175,6 +212,7 @@ public class IgnivorusFlameEntity extends Entity {
         this.age = tag.getInt("Age");
         this.maxAge = tag.getInt("MaxAge");
         this.damage = tag.getFloat("Damage");
+        this.hasHitEntity = tag.getBoolean("HasHitEntity");
         if (tag.contains("SpawnX")) {
             this.spawnPos = new Vec3(tag.getDouble("SpawnX"), tag.getDouble("SpawnY"), tag.getDouble("SpawnZ"));
         }
@@ -188,6 +226,7 @@ public class IgnivorusFlameEntity extends Entity {
         tag.putInt("Age", this.age);
         tag.putInt("MaxAge", this.maxAge);
         tag.putFloat("Damage", this.damage);
+        tag.putBoolean("HasHitEntity", this.hasHitEntity);
         if (this.spawnPos != null) {
             tag.putDouble("SpawnX", this.spawnPos.x);
             tag.putDouble("SpawnY", this.spawnPos.y);

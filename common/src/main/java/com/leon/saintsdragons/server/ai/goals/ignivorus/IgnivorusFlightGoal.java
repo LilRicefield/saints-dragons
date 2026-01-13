@@ -31,6 +31,7 @@ public class IgnivorusFlightGoal extends Goal {
     private long lastLandingTime = 0;
     private static final int LANDING_FORCE_DROP_TICKS = 80;
     private static final int LANDING_EMERGENCY_GROUNDING_TICKS = 100; // 5 seconds - force ground if stuck
+    private static final double LANDING_STATE_ALTITUDE = 1.5D;
 
     // Flight decision cooldown
     private int flightDecisionCooldown = 0;
@@ -245,8 +246,13 @@ public class IgnivorusFlightGoal extends Goal {
                 dragon.getMoveControl().setWantedPosition(landingPosition.x, landingPosition.y, landingPosition.z, 1.6);
                 if (!dragon.isLanding()
                         && altitude >= -0.25D
-                        && altitude <= Ignivorus.LANDING_BLEND_ALTITUDE) {
-                    dragon.setLanding(true);
+                        && altitude <= LANDING_STATE_ALTITUDE) {
+                    double dx = dragon.getX() - landingPosition.x;
+                    double dz = dragon.getZ() - landingPosition.z;
+                    double horizontalDistSq = dx * dx + dz * dz;
+                    if (horizontalDistSq <= 4.0D) {
+                        dragon.setLanding(true);
+                    }
                 }
             }
             return;

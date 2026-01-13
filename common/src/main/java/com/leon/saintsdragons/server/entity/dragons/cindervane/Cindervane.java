@@ -489,8 +489,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(3, new CindervaneFlightGoal(this));
         this.goalSelector.addGoal(5, new CindervaneCombatGoal(this));
-        this.goalSelector.addGoal(6, new CindervaneFollowOwnerGoal(this));
-        this.goalSelector.addGoal(7, new CindervaneGroundWanderGoal(this, 0.6D, 160));
+        this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forCindervane()));
+        this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 0.6D, 160));
 
         this.targetSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal(this));

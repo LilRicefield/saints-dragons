@@ -32,7 +32,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             Map.entry("grumble3", 60),
             Map.entry("content", 100),
             Map.entry("purr", 110),
-            Map.entry("snort", 24),
             Map.entry("chuff", 28),
             Map.entry("roar", 69),
             Map.entry("roar_ground", 69),

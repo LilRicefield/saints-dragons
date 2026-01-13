@@ -32,6 +32,7 @@ public class CindervaneFlightGoal extends Goal {
     private long lastLandingTime = 0;
     private static final int LANDING_FORCE_DROP_TICKS = 80;
     private static final int LANDING_EMERGENCY_GROUNDING_TICKS = 100; // 5 seconds - force ground if stuck
+    private static final double LANDING_STATE_ALTITUDE = 1.5D;
     // Flight decision cooldown (slower than lightning amphithere)
     private int flightDecisionCooldown = 0;
     
@@ -291,8 +292,13 @@ public class CindervaneFlightGoal extends Goal {
                 amphithere.getMoveControl().setWantedPosition(landingPosition.x, landingPosition.y, landingPosition.z, 1.6);
                 if (!amphithere.isLanding()
                         && altitude >= -0.25D
-                        && altitude <= Cindervane.LANDING_BLEND_ALTITUDE) {
-                    amphithere.setLanding(true);
+                        && altitude <= LANDING_STATE_ALTITUDE) {
+                    double dx = amphithere.getX() - landingPosition.x;
+                    double dz = amphithere.getZ() - landingPosition.z;
+                    double horizontalDistSq = dx * dx + dz * dz;
+                    if (horizontalDistSq <= 4.0D) {
+                        amphithere.setLanding(true);
+                    }
                 }
             }
             return;

@@ -91,16 +91,6 @@
       }
     ]
   },
-  "raevyx_snort": {
-    "subtitle": "Raevyx snorts",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_snort",
-        "volume": 0.9,
-        "pitch": 1.0
-      }
-    ]
-  },
   "raevyx_chuff": {
     "subtitle": "Raevyx chuffs",
     "sounds": [

@@ -305,6 +305,18 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return this.entityData.get(getGroundMoveStateAccessor());
     }
 
+    /**
+     * Set ground move state from AI goals (0=idle, 1=walking, 2=running).
+     * This bypasses velocity-based detection and directly sets the animation state.
+     */
+    public void setGroundMoveStateFromAI(int state) {
+        int clampedState = Mth.clamp(state, 0, 2);
+        if (this.entityData.get(getGroundMoveStateAccessor()) != clampedState) {
+            this.entityData.set(getGroundMoveStateAccessor(), clampedState);
+            this.syncAnimState(clampedState, getFlightMode());
+        }
+    }
+
     @Override
     public int getSyncedFlightMode() {
         return this.entityData.get(getFlightModeAccessor());
@@ -317,6 +329,33 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             return state;
         }
         return this.entityData.get(getGroundMoveStateAccessor());
+    }
+
+    // ===== SIT TRANSITION INTERFACE =====
+
+    /**
+     * Check if dragon is currently in a sit transition animation (sitting down or standing up).
+     * Override this in dragons that have sit animations with specific transition timing.
+     * Goals should avoid starting while transitions are active.
+     */
+    public boolean isInSitTransition() {
+        return false; // Default: no transitions
+    }
+
+    /**
+     * Check if dragon is currently playing the sit-down animation.
+     * Override this in dragons that have sit-down animations.
+     */
+    public boolean isSittingDownAnimation() {
+        return false; // Default: no sit-down animation
+    }
+
+    /**
+     * Check if dragon is currently playing the stand-up animation.
+     * Override this in dragons that have stand-up animations.
+     */
+    public boolean isStandingUpAnimation() {
+        return false; // Default: no stand-up animation
     }
 
     // ===== RIDER CONTROL IMPLEMENTATION =====

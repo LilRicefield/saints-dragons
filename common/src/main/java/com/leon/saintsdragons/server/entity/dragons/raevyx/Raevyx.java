@@ -9,8 +9,6 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
-import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFollowOwnerGoal;
-import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
@@ -248,6 +246,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
+    /** Entity data accessor for beam energy (0.0 to 1.0) */
+    public static final EntityDataAccessor<Float> DATA_BEAM_ENERGY =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
+    /** Entity data accessor for beam depleted lockout (true = must fully recharge before use) */
+    public static final EntityDataAccessor<Boolean> DATA_BEAM_DEPLETED =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
     // ===== OTHER CONSTANTS =====
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
 
@@ -282,7 +288,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             .add("grumble2", "action", "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble3", "action", "animation.raevyx.grumble3", ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("purr", "action", "animation.raevyx.purr", ModSounds.RAEVYX_PURR, 0.8f, 1.05f, 0.05f, true, false, true)
-            .add("snort", "action", "animation.raevyx.snort", ModSounds.RAEVYX_SNORT, 0.9f, 0.9f, 0.2f, false, false, false)
             .add("chuff", "action", "animation.raevyx.chuff", ModSounds.RAEVYX_CHUFF, 0.9f, 0.9f, 0.2f, false, false, false)
             .add("content", "action", "animation.raevyx.content", ModSounds.RAEVYX_CONTENT, 0.8f, 1.0f, 0.1f, true, false, true)
             .add("excited", "action", "", ModSounds.RAEVYX_EXCITED, 1.0f, 1.0f, 0.3f, false, false, false)  // Sound-only, no animation
@@ -297,8 +302,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private boolean manualSitCommand = false;
     private boolean commandChangeManual = false;
     private int riderLandingBlendTicks = 0;
-    private static final int DISMOUNT_RECALL_WINDOW = 60;
-    private int dismountRecallTicks = 0;
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
@@ -325,14 +328,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public void setCommandAuto(int command) {
         this.commandChangeManual = false;
         this.setCommand(command);
-    }
-    
-    public boolean shouldForceOwnerFollow() {
-        return dismountRecallTicks > 0;
-    }
-
-    public void clearForcedOwnerFollow() {
-        this.dismountRecallTicks = 0;
     }
 
     // ===== AMBIENT SOUND SYSTEM =====
@@ -695,6 +690,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
+        this.entityData.define(DATA_BEAM_ENERGY, 1.0f); // Start with full energy
+        this.entityData.define(DATA_BEAM_DEPLETED, false); // Start unlocked
     }
 
     @Override
@@ -1019,6 +1016,50 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     public void setBeamGlowActive(boolean active) {
         this.entityData.set(DATA_BEAM_GLOW, active);
+    }
+
+    // Beam energy management (0.0 = empty, 1.0 = full)
+    public float getBeamEnergy() {
+        return this.entityData.get(DATA_BEAM_ENERGY);
+    }
+
+    public void setBeamEnergy(float energy) {
+        float clampedEnergy = Math.max(0.0f, Math.min(1.0f, energy));
+        this.entityData.set(DATA_BEAM_ENERGY, clampedEnergy);
+
+        // Unlock beam ONLY when fully recharged (depletion lock is set by ability when beam runs out)
+        if (clampedEnergy >= 0.999f && isBeamDepleted()) {
+            setBeamDepleted(false);
+        }
+    }
+
+    public void consumeBeamEnergy(float amount) {
+        setBeamEnergy(getBeamEnergy() - amount);
+    }
+
+    public void regenerateBeamEnergy(float amount) {
+        setBeamEnergy(getBeamEnergy() + amount);
+    }
+
+    public boolean hasBeamEnergy() {
+        return getBeamEnergy() > 0.01f;
+    }
+
+    public boolean isBeamEnergyFull() {
+        return getBeamEnergy() >= 0.999f;
+    }
+
+    public boolean isBeamDepleted() {
+        return this.entityData.get(DATA_BEAM_DEPLETED);
+    }
+
+    public void setBeamDepleted(boolean depleted) {
+        this.entityData.set(DATA_BEAM_DEPLETED, depleted);
+    }
+
+    public boolean canUseBeam() {
+        // Can use beam if: has energy AND not locked out from depletion
+        return hasBeamEnergy() && !isBeamDepleted();
     }
 
     public boolean isRiderPitchKeyMode() {
@@ -1887,7 +1928,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         tickSittingState();
         tickRiderTakeoff();
         tickHurtSoundCooldown();
-        tickDismountRecall();
         spawnBabiesIfNeeded(); // Has internal check, only spawns once
 
         // Update timeFlying counter (like Cindervane)
@@ -1944,6 +1984,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         tickSleepTransition();
         tickSleepCooldowns();
         handleAmbientSounds();
+        tickBeamEnergy(); // Regenerate beam energy when not beaming
         if (isFlying() || isTakeoff()) {
             tickFlightPhysics(); // Apply takeoff/landing forces
         }
@@ -2251,6 +2292,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (hurtSoundCooldown > 0) hurtSoundCooldown--;
     }
 
+    private void tickBeamEnergy() {
+        // Regenerate beam energy when not beaming
+        if (!isBeaming() && getBeamEnergy() < 1.0f) {
+            // Regeneration rate: 0.0025 per tick = full recharge in 400 ticks (20 seconds)
+            // Slower regeneration encourages strategic beam usage
+            regenerateBeamEnergy(0.0025f);
+        }
+    }
+
     private void tickSound() {
         // Drive pending sound scheduling (both sides)
         this.getSoundHandler().tick();
@@ -2271,28 +2321,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             clearAllStatesWhenMounted();
         }
         wasVehicleLastTick = this.isVehicle();
-    }
-
-    private void tickDismountRecall() {
-        if (this.isVehicle()) {
-            clearForcedOwnerFollow();
-            return;
-        }
-        if (dismountRecallTicks > 0) {
-            dismountRecallTicks--;
-        }
-    }
-
-    private void triggerForcedOwnerFollow() {
-        if (this.level().isClientSide) {
-            return;
-        }
-        this.setOrderedToSit(false);
-        this.setCommandAuto(0);
-        this.setHovering(false);
-        this.setLanding(false);
-        this.getNavigation().stop();
-        this.dismountRecallTicks = DISMOUNT_RECALL_WINDOW;
     }
     
     /**
@@ -2316,10 +2344,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
             }
-            
+
             // Suppress sleep for a longer period to prevent immediate re-entry
             suppressSleep(300); // ~15 seconds
-            clearForcedOwnerFollow();
         }
     }
     
@@ -2751,7 +2778,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         boolean moveGoalActive = this.goalSelector.getRunningGoals().anyMatch(wrapped -> {
             Goal goal = wrapped.getGoal();
-            return goal instanceof RaevyxFollowOwnerGoal || goal instanceof RaevyxGroundCombatGoal || goal instanceof RaevyxAirCombatGoal;
+            return goal instanceof com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal || goal instanceof RaevyxGroundCombatGoal || goal instanceof RaevyxAirCombatGoal;
         });
         if (moveGoalActive) {
             return;
@@ -3149,11 +3176,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             if (random.nextFloat() < 0.3f) vocalKey = "chuff";
         } else if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering() && (isWalking() || isRunning())) {
             // Ground movement sounds - different based on speed
-            if (isRunning()) {
-                vocalKey = "snort"; // Heavy breathing when running
-            } else {
-                vocalKey = "chuff"; // Gentle snorts when walking
-            }
+            vocalKey = "chuff";
         } else {
             // Regular idle grumbling
             float grumbleChance = random.nextFloat();
@@ -3577,8 +3600,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
         }
 
-        this.goalSelector.addGoal(8, new RaevyxFollowOwnerGoal(this));   // Lower priority than combat
-        this.goalSelector.addGoal(9, new RaevyxGroundWanderGoal(this, 1.0, 60)); // Lower priority than combat
+        this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forRaevyx()));
+        this.goalSelector.addGoal(9, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 60));
         this.goalSelector.addGoal(10, new RaevyxTemptGoal(this, 1.2,
                 net.minecraft.world.item.crafting.Ingredient.of(net.minecraft.world.item.Items.SALMON,
                                                                net.minecraft.world.item.Items.COD,
@@ -4059,6 +4082,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         tag.putBoolean("ManualSitCommand", this.manualSitCommand);
         tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
+        tag.putFloat("BeamEnergy", getBeamEnergy());
+        tag.putBoolean("BeamDepleted", isBeamDepleted());
         tamingController.save(tag);
     }
 
@@ -4100,6 +4125,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
+        }
+        if (tag.contains("BeamEnergy")) {
+            setBeamEnergy(tag.getFloat("BeamEnergy"));
+        } else {
+            setBeamEnergy(1.0f); // Default to full energy for older saves
+        }
+        if (tag.contains("BeamDepleted")) {
+            setBeamDepleted(tag.getBoolean("BeamDepleted"));
+        } else {
+            setBeamDepleted(false); // Default to unlocked for older saves
         }
         tamingController.load(tag);
 
@@ -4499,18 +4534,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return riderController.getRiddenSpeed(rider);
     }
 
-    @Override
-    public void removePassenger(@Nonnull Entity passenger) {
-        boolean shouldRecallOwner = !this.level().isClientSide
-                && passenger == getControllingPassenger()
-                && passenger == getOwner()
-                && !this.onGround();
-        // Base implementation handles clearing control lock
-        super.removePassenger(passenger);
-        if (shouldRecallOwner) {
-            triggerForcedOwnerFollow();
-        }
-    }
     // Cooldown for aggro growl to prevent spam while ridden or under repeated retargeting
     private int aggroGrowlCooldown = 0;
 
