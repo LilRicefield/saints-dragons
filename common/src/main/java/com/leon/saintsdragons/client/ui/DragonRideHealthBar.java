@@ -2,6 +2,9 @@ package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
@@ -16,6 +19,12 @@ public class DragonRideHealthBar {
     // Raevyx textures (128x32 horizontal)
     private static final ResourceLocation RAEVYX_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/raevyx/raevyx_base.png");
     private static final ResourceLocation RAEVYX_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/raevyx/raevyx_overlay.png");
+    private static final ResourceLocation IGNIVORUS_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/ignivorus/ignivorus_base.png");
+    private static final ResourceLocation IGNIVORUS_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/ignivorus/ignivorus_overlay.png");
+    private static final ResourceLocation CINDERVANE_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/cindervane/cindervane_base.png");
+    private static final ResourceLocation CINDERVANE_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/cindervane/cindervane_overlay.png");
+    private static final ResourceLocation NULLJAW_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/nulljaw/nulljaw_base.png");
+    private static final ResourceLocation NULLJAW_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/nulljaw/nulljaw_overlay.png");
 
     // Bar dimensions
     private static final int BAR_WIDTH = 182;
@@ -60,6 +69,9 @@ public class DragonRideHealthBar {
         // Position: centered horizontally, above hotbar (same Y as beam meter)
         int x = (screenWidth - BAR_WIDTH) / 2;
         int y = screenHeight - 57; // Above hotbar
+        if (dragon instanceof Cindervane || dragon instanceof Nulljaw) {
+            y += 6;
+        }
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -67,6 +79,12 @@ public class DragonRideHealthBar {
         // Render dragon-specific health bar
         if (dragon instanceof Raevyx) {
             renderTexturedHealthBar(guiGraphics, x, y, RAEVYX_BASE, RAEVYX_OVERLAY);
+        } else if (dragon instanceof Ignivorus) {
+            renderTexturedHealthBar(guiGraphics, x, y, IGNIVORUS_BASE, IGNIVORUS_OVERLAY);
+        } else if (dragon instanceof Cindervane) {
+            renderTexturedHealthBar(guiGraphics, x, y, CINDERVANE_BASE, CINDERVANE_OVERLAY);
+        } else if (dragon instanceof Nulljaw) {
+            renderTexturedHealthBar(guiGraphics, x, y, NULLJAW_BASE, NULLJAW_OVERLAY);
         } else {
             // Fallback colored bar for other dragons
             renderFallbackHealthBar(guiGraphics, x, y);
