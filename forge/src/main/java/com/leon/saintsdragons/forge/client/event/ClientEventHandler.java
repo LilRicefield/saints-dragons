@@ -24,7 +24,7 @@ public class ClientEventHandler {
     private static final double[] randomTremorOffsets = new double[3];
 
     // Raevyx takeoff camera zoom transition
-    private static float raevyxCameraZoom = 10F; // Base zoom
+    private static float raevyxCameraZoom = 18F; // Base zoom
     private static float raevyxCameraZoomTarget = 10F;
 
     // Raevyx camera shift smoothing (banking response)
@@ -63,8 +63,8 @@ public class ClientEventHandler {
             // Determine target zoom based on flight state
             boolean isFlying = raevyx.isFlying();
 
-            // Flying: zoom to 18F, grounded: 10F base
-            raevyxCameraZoomTarget = isFlying ? 18F : 10F;
+            // Flying: zoom to 18F, grounded: 18F base
+            raevyxCameraZoomTarget = isFlying ? 13F : 15F;
 
             // Smooth transition (slower blend rate for more gradual zoom)
             float blendRate = 0.05F; // Reduced from 0.15F for slower, smoother transitions
@@ -106,8 +106,8 @@ public class ClientEventHandler {
             event.setPitch(Mth.clamp(event.getPitch() + raevyxCameraPitch, -90.0f, 90.0f));
         } else {
             // Reset zoom and shift when not riding Raevyx
-            raevyxCameraZoom = 10F;
-            raevyxCameraZoomTarget = 10F;
+            raevyxCameraZoom = 15F;
+            raevyxCameraZoomTarget = 15F;
             raevyxCameraShift = 0.0;
             verticalCameraShift = 0.0;
             raevyxCameraPitch = 0.0f;
