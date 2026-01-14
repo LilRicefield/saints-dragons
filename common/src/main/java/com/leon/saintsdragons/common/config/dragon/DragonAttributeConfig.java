@@ -82,18 +82,25 @@ public record DragonAttributeConfig(double maxHealth, double armor, double movem
             }
         }
         Map<String, Double> extra = new HashMap<>(base.extraDoubles);
+        Map<String, Boolean> booleans = new HashMap<>(base.extraBooleans);
         if (json.has("extra")) {
             JsonObject extraJson = GsonHelper.getAsJsonObject(json, "extra");
             for (Map.Entry<String, JsonElement> entry : extraJson.entrySet()) {
-                extra.put(entry.getKey(), GsonHelper.convertToDouble(entry.getValue(), entry.getKey()));
+                JsonElement value = entry.getValue();
+                if (value.isJsonPrimitive()) {
+                    var primitive = value.getAsJsonPrimitive();
+                    if (primitive.isBoolean()) {
+                        booleans.put(entry.getKey(), primitive.getAsBoolean());
+                    } else if (primitive.isNumber()) {
+                        extra.put(entry.getKey(), primitive.getAsDouble());
+                    }
+                }
             }
         }
-
-        Map<String, Boolean> booleans = new HashMap<>(base.extraBooleans);
         if (json.has("extra_booleans")) {
             JsonObject booleansJson = GsonHelper.getAsJsonObject(json, "extra_booleans");
             for (Map.Entry<String, JsonElement> entry : booleansJson.entrySet()) {
-                booleans.put(entry.getKey(), GsonHelper.convertToBoolean(entry.getValue(), entry.getKey()));
+                booleans.putIfAbsent(entry.getKey(), GsonHelper.convertToBoolean(entry.getValue(), entry.getKey()));
             }
         }
 

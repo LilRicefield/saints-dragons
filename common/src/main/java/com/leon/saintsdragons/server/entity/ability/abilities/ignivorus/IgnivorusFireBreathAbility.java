@@ -33,9 +33,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     // Animation timing: 75ms startup matches fire_breath_starts animation duration
     private static final int STARTUP_TICKS = 9;
-    private static final int RIDER_ACTIVE_TICKS = 400;  // ~20 seconds for riders
+    private static final int RIDER_ACTIVE_TICKS = 160;  // ~8 seconds for riders
     private static final int AI_ACTIVE_TICKS = 80;      // 4 seconds for AI
     private static final int COOLDOWN_TICKS = 40;
+    private static final float DEFAULT_FIRE_BREATH_DRAIN_PER_TICK = 1.0f / RIDER_ACTIVE_TICKS;
 
     private static final double MAX_RANGE = 64.0D;  // Must match layer's MAX_VISUAL_DISTANCE!
     private static final double IMPACT_RADIUS = 1.25D;
@@ -92,6 +93,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         }
 
         if (section.sectionType == STARTUP) {
+            if (!dragon.canUseFireBreath()) {
+                interrupt();
+                return;
+            }
             // Play startup animation but don't show fire cone yet
             breathStartPlayed = true;
             breathLoopActive = false;
@@ -185,6 +190,20 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
         // Increment total active time - this determines when blocks start breaking
         totalActiveTicks++;
+        if (!dragon.level().isClientSide) {
+            float drain = (float) DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                    .extraDouble("fire_breath_drain_per_tick", DEFAULT_FIRE_BREATH_DRAIN_PER_TICK);
+            drain = Math.max(0.0f, drain);
+            if (drain > 0.0f) {
+                dragon.setFireBreathEnergy(Math.max(0.0f, dragon.getFireBreathEnergy() - drain));
+            }
+            if (!dragon.hasFireBreathEnergy()) {
+                dragon.setFireBreathDepleted(true);
+                interrupt();
+                return;
+            }
+        }
 
         // Increment stream progress for extending animation (0-40, like Ice & Fire)
         int currentProgress = dragon.getFireBreathProgress();
@@ -238,6 +257,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             );
         }
     }
+
 
     /**
      * Computes damage per tick from the config value (which represents damage per second).
