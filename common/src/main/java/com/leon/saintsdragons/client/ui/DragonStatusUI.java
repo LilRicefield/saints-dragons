@@ -22,11 +22,16 @@ public class DragonStatusUI {
     private final MeleeModeNotification meleeModeNotification;
     private final FireballChargeIndicator fireballChargeIndicator;
     private final RaevyxBeamMeterIndicator raevyxBeamMeterIndicator;
+    private final IgnivorusFireBreathMeterIndicator ignivorusFireBreathMeterIndicator;
+    private final DragonRideHealthBar rideHealthBar;
     private int cachedScreenWidth = -1;
     private int cachedScreenHeight = -1;
 
     private boolean visible = false;
     private DragonEntity currentDragon = null;
+
+    // Ride UI mode: false = show dragon health, true = show player stats
+    private boolean showPlayerStats = false;
 
     private boolean animationActive = false;
     private boolean animatingIn = false;
@@ -41,6 +46,8 @@ public class DragonStatusUI {
         this.meleeModeNotification = new MeleeModeNotification();
         this.fireballChargeIndicator = new FireballChargeIndicator();
         this.raevyxBeamMeterIndicator = new RaevyxBeamMeterIndicator();
+        this.ignivorusFireBreathMeterIndicator = new IgnivorusFireBreathMeterIndicator();
+        this.rideHealthBar = new DragonRideHealthBar();
 
         elements.add(healthBar);
         elements.add(speedIndicator);
@@ -104,6 +111,9 @@ public class DragonStatusUI {
         if (dragon != null) {
             healthBar.setDragon(dragon);
             speedIndicator.setDragon(dragon);
+            rideHealthBar.setDragon(dragon);
+            // When mounting a dragon, default to showing dragon health bar
+            showPlayerStats = false;
         }
 
         updateElementPositions();
@@ -216,10 +226,17 @@ public class DragonStatusUI {
     }
 
     /**
-     * Toggle UI visibility
+     * Toggle UI visibility or player stats mode when riding
      */
     public void toggleVisibility() {
-        setVisible(!visible);
+        // Check if player is riding a dragon
+        if (minecraft.player != null && currentDragon != null && minecraft.player.getVehicle() == currentDragon) {
+            // Toggle between dragon health bar and player stats
+            showPlayerStats = !showPlayerStats;
+        } else {
+            // Not riding, toggle old UI visibility
+            setVisible(!visible);
+        }
     }
 
     /**
@@ -272,11 +289,36 @@ public class DragonStatusUI {
         return raevyxBeamMeterIndicator;
     }
 
+    public IgnivorusFireBreathMeterIndicator getIgnivorusFireBreathMeterIndicator() {
+        return ignivorusFireBreathMeterIndicator;
+    }
+
     /**
      * Get the current dragon (for UI elements that need to check dragon type)
      */
     public DragonEntity getCurrentDragon() {
         return currentDragon;
+    }
+
+    /**
+     * Get the ride health bar instance
+     */
+    public DragonRideHealthBar getRideHealthBar() {
+        return rideHealthBar;
+    }
+
+    /**
+     * Check if player stats should be shown instead of dragon health bar
+     */
+    public boolean shouldShowPlayerStats() {
+        return showPlayerStats;
+    }
+
+    /**
+     * Check if player is currently riding a dragon
+     */
+    public boolean isRidingDragon() {
+        return minecraft.player != null && currentDragon != null && minecraft.player.getVehicle() == currentDragon;
     }
 
     /**

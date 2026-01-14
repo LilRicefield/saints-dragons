@@ -2296,7 +2296,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (!isBeaming() && getBeamEnergy() < 1.0f) {
             // Regeneration rate: 0.0025 per tick = full recharge in 400 ticks (20 seconds)
             // Slower regeneration encourages strategic beam usage
-            regenerateBeamEnergy(0.0025f);
+            float regen = (float) com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.getInstance()
+                    .getConfig(com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.RAEVYX_ID)
+                    .extraDouble("beam_regen_per_tick", 0.0025D);
+            regen = Math.max(0.0f, regen);
+            if (regen > 0.0f) {
+                regenerateBeamEnergy(regen);
+            }
         }
     }
 

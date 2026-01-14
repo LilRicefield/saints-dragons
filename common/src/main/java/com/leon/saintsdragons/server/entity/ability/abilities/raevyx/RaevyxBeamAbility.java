@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -30,7 +31,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private static final float DEFAULT_BEAM_DAMAGE = 20.0f; // Reduced from 35.0f for balance
 
     // Beam energy system constants
-    private static final float ENERGY_COST_PER_TICK = 0.012f; // Depletes in ~83 ticks (4.15 seconds) when ridden
+    private static final float ENERGY_COST_PER_TICK = 0.014f; // Depletes in ~71 ticks (3.55 seconds) when ridden
     private static final float MIN_ENERGY_TO_START = 0.01f; // Can start beam with any remaining energy
 
     private boolean hasBeamFired = false; // Track if beam has been fired this activation
@@ -117,7 +118,13 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (wyvern.level().isClientSide) return; // server-side authority only
 
         // Consume beam energy each tick
-        wyvern.consumeBeamEnergy(ENERGY_COST_PER_TICK);
+        float energyDrain = (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
+                .extraDouble("beam_drain_per_tick", ENERGY_COST_PER_TICK);
+        energyDrain = Math.max(0.0f, energyDrain);
+        if (energyDrain > 0.0f) {
+            wyvern.consumeBeamEnergy(energyDrain);
+        }
 
         // Interrupt if out of energy
         if (!wyvern.hasBeamEnergy()) {

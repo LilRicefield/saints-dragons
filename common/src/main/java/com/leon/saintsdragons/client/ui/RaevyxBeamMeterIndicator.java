@@ -14,15 +14,18 @@ public class RaevyxBeamMeterIndicator {
     private static final ResourceLocation BEAM_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/raevyx/raevyx_beam_overlay.png");
     private static final ResourceLocation BEAM_FLASH_RED = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/raevyx/raevyx_beam_overlay_flashes_red.png");
     private static final ResourceLocation BEAM_FLASH_WHITE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/raevyx/raevyx_beam_overlay_flashes_white.png");
+    private static final ResourceLocation BEAM_ICON = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/raevyx/red_lightning.png");
 
     // Texture dimensions (matching Ignivorus bar)
-    private static final int BAR_WIDTH = 128;
-    private static final int BAR_HEIGHT = 32;
+    private static final int BAR_WIDTH = 182;
+    private static final int BAR_HEIGHT = 30;
+    private static final int ICON_SIZE = 16;
+    private static final int ICON_GAP = 1;
 
     // Animation constants
-    private static final float FILL_FALL_SPEED = 0.04f;  // Depletion speed
+    private static final float FILL_FALL_SPEED = 0.05f;  // Depletion speed
     private static final float FILL_RISE_SPEED = 0.02f;  // Regeneration speed (slower)
-    private static final float FADE_SPEED = 0.08f;
+
 
     private float beamEnergy = 1.0f; // 0.0 to 1.0 (full to empty)
     private float previousAnimatedFill = 1.0f;
@@ -91,26 +94,10 @@ public class RaevyxBeamMeterIndicator {
             animatedFill = Math.max(targetFill, animatedFill - FILL_FALL_SPEED);
         }
 
-        // Auto-hide when full and not beaming
-        if (beamEnergy >= 0.999f && !isBeaming) {
-            if (hideTimer < HIDE_DELAY_TICKS) {
-                hideTimer++;
-            } else {
-                isFadingOut = true;
-            }
-        } else {
-            hideTimer = 0;
-        }
-
-        // Animate fade out
-        if (isFadingOut) {
-            fadeAlpha = Math.max(0f, fadeAlpha - FADE_SPEED);
-            if (fadeAlpha <= 0f) {
-                isFadingOut = false;
-            }
-        } else if (isBeaming || beamEnergy < 0.999f) {
-            fadeAlpha = Math.min(1.0f, fadeAlpha + FADE_SPEED);
-        }
+        // Keep visible at all times
+        isFadingOut = false;
+        hideTimer = 0;
+        fadeAlpha = 1.0f;
 
         // White flash pulsates when actively beaming
         if (isBeaming) {
@@ -153,9 +140,15 @@ public class RaevyxBeamMeterIndicator {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
-        // Position: centered horizontally, above hotbar (same as fireball charge)
+        // Position: centered horizontally, below the ride health bar
         int x = (screenWidth - BAR_WIDTH) / 2;
-        int y = screenHeight - 86;
+        int y = screenHeight - 45;
+
+        // Icon to the left of the bar
+        int iconX = x - ICON_SIZE - ICON_GAP;
+        int iconY = y + (BAR_HEIGHT - ICON_SIZE) / 2;
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, smoothAlpha);
+        guiGraphics.blit(BEAM_ICON, iconX, iconY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
 
         // White flash overlay when actively beaming (render first, underneath everything)
         if (smoothWhiteFlash > 0.01f) {
@@ -192,7 +185,7 @@ public class RaevyxBeamMeterIndicator {
      * Check if the indicator should be rendered
      */
     public boolean shouldRender() {
-        return isBeaming || animatedFill < 0.999f || fadeAlpha > 0.01f;
+        return true;
     }
 
     /**

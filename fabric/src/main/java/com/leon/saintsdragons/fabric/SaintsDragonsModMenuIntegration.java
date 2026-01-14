@@ -72,6 +72,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxDefaults.abilityDamage("horn_gore", 15.0D));
         raevyxBuffer.tamingChanceBase = raevyxCurrent.extraDouble("taming_chance_base", 5.0);
         raevyxBuffer.tamingChanceHearty = raevyxCurrent.extraDouble("taming_chance_hearty", 3.0);
+        raevyxBuffer.beamDrainPerTick = raevyxCurrent.extraDouble("beam_drain_per_tick",
+                raevyxDefaults.extraDouble("beam_drain_per_tick", 0.014D));
+        raevyxBuffer.beamRegenPerTick = raevyxCurrent.extraDouble("beam_regen_per_tick",
+                raevyxDefaults.extraDouble("beam_regen_per_tick", 0.0025D));
         raevyxBuffer.legacyTaming = raevyxCurrent.extraBoolean("legacy_taming", false);
 
         DragonAttributeConfig nulljawCurrent = loader.getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
@@ -113,6 +117,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.extraDouble("ultimate_penalty_health", 50.0D));
         ignivorusBuffer.tamingChanceBase = ignivorusCurrent.extraDouble("taming_chance_base", 7.0);
         ignivorusBuffer.tamingChanceHearty = ignivorusCurrent.extraDouble("taming_chance_hearty", 4.0);
+        ignivorusBuffer.fireBreathDrainPerTick = ignivorusCurrent.extraDouble("fire_breath_drain_per_tick",
+                ignivorusDefaults.extraDouble("fire_breath_drain_per_tick", 0.00625D));
+        ignivorusBuffer.fireBreathRegenPerTick = ignivorusCurrent.extraDouble("fire_breath_regen_per_tick",
+                ignivorusDefaults.extraDouble("fire_breath_regen_per_tick", 0.0025D));
         ignivorusBuffer.legacyTaming = ignivorusCurrent.extraBoolean("legacy_taming", false);
 
         ConfigBuilder builder = ConfigBuilder.create()
@@ -342,6 +350,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setTooltip(Component.translatable("config.saintsdragons.attributes.legacy_taming.tooltip"))
                 .setSaveConsumer(value -> buffer.legacyTaming = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.beam_drain_per_tick"), buffer.beamDrainPerTick)
+                .setDefaultValue(defaults.extraDouble("beam_drain_per_tick", 0.014D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.beamDrainPerTick = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.beam_regen_per_tick"), buffer.beamRegenPerTick)
+                .setDefaultValue(defaults.extraDouble("beam_regen_per_tick", 0.0025D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.beamRegenPerTick = value)
+                .build());
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.raevyx"), rawEntries)
@@ -509,6 +529,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setTooltip(Component.translatable("config.saintsdragons.attributes.legacy_taming.tooltip"))
                 .setSaveConsumer(value -> buffer.legacyTaming = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_drain_per_tick"), buffer.fireBreathDrainPerTick)
+                .setDefaultValue(defaults.extraDouble("fire_breath_drain_per_tick", 0.00625D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.fireBreathDrainPerTick = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_regen_per_tick"), buffer.fireBreathRegenPerTick)
+                .setDefaultValue(defaults.extraDouble("fire_breath_regen_per_tick", 0.0025D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.fireBreathRegenPerTick = value)
+                .build());
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.ignivorus"), rawEntries)
@@ -552,7 +584,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxAbilities,
                 Map.of(
                         "taming_chance_base", raevyxBuffer.tamingChanceBase,
-                        "taming_chance_hearty", raevyxBuffer.tamingChanceHearty
+                        "taming_chance_hearty", raevyxBuffer.tamingChanceHearty,
+                        "beam_drain_per_tick", raevyxBuffer.beamDrainPerTick,
+                        "beam_regen_per_tick", raevyxBuffer.beamRegenPerTick
                 ),
                 Map.of(
                         "legacy_taming", raevyxBuffer.legacyTaming
@@ -600,7 +634,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         "attack_damage", ignivorusBuffer.baseDamage,
                         "ultimate_penalty_health", ignivorusBuffer.ultimatePenalty,
                         "taming_chance_base", ignivorusBuffer.tamingChanceBase,
-                        "taming_chance_hearty", ignivorusBuffer.tamingChanceHearty
+                        "taming_chance_hearty", ignivorusBuffer.tamingChanceHearty,
+                        "fire_breath_drain_per_tick", ignivorusBuffer.fireBreathDrainPerTick,
+                        "fire_breath_regen_per_tick", ignivorusBuffer.fireBreathRegenPerTick
                 ),
                 Map.of(
                         "legacy_taming", ignivorusBuffer.legacyTaming
@@ -628,6 +664,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double hornDamage;
         double tamingChanceBase;
         double tamingChanceHearty;
+        double beamDrainPerTick;
+        double beamRegenPerTick;
         boolean legacyTaming;
     }
 
@@ -658,6 +696,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double ultimatePenalty;
         double tamingChanceBase;
         double tamingChanceHearty;
+        double fireBreathDrainPerTick;
+        double fireBreathRegenPerTick;
         boolean legacyTaming;
     }
 }

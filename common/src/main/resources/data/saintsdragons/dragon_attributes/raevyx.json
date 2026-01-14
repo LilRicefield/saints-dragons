@@ -18,6 +18,8 @@
   },
   "extra": {
     "taming_chance_base": 5.0,
-    "taming_chance_hearty": 3.0
+    "taming_chance_hearty": 3.0,
+    "beam_drain_per_tick": 0.014,
+    "beam_regen_per_tick": 0.0025
   }
 }

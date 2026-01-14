@@ -27,6 +27,8 @@
   },
   "extra": {
     "ultimate_penalty_health": 50.0,
+    "fire_breath_drain_per_tick": 0.00625,
+    "fire_breath_regen_per_tick": 0.0025,
     "taming_chance_base": 7.0,
     "taming_chance_hearty": 4.0
   }

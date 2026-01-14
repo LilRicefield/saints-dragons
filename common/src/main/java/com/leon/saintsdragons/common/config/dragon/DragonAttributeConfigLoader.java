@@ -27,7 +27,10 @@ import java.nio.file.Path;
  * Datapack-driven loader that exposes dragon attribute overrides via JSON.
  */
 public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadListener {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
+            .disableHtmlEscaping()
+            .create();
     public static final ResourceLocation CINDERVANE_ID = SaintsDragonsCommon.rl("cindervane");
     public static final ResourceLocation RAEVYX_ID = SaintsDragonsCommon.rl("raevyx");
     public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
@@ -84,7 +87,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ),
                 Map.of(
                         "taming_chance_base", 5.0D,
-                        "taming_chance_hearty", 3.0D
+                        "taming_chance_hearty", 3.0D,
+                        "beam_drain_per_tick", 0.014D,
+                        "beam_regen_per_tick", 0.0025D
                 ),
                 Map.of(
                         "legacy_taming", false
@@ -132,6 +137,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ),
                 Map.of(
                         "ultimate_penalty_health", 50.0D,
+                        "fire_breath_drain_per_tick", 0.00625D,
+                        "fire_breath_regen_per_tick", 0.0025D,
                         "taming_chance_base", 7.0D,
                         "taming_chance_hearty", 4.0D
                 ),
@@ -198,13 +205,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
         for (Map.Entry<ResourceLocation, DragonAttributeConfig> entry : merged.entrySet()) {
             Path path = configPath(entry.getKey());
-            JsonObject source = rawJson.getOrDefault(entry.getKey(), serializeConfig(entry.getKey(), entry.getValue()));
+            // Always serialize the merged config to ensure all default keys are present
+            JsonObject source = serializeConfig(entry.getKey(), entry.getValue());
             ensureLegacyTamingFlag(entry.getKey(), source);
 
             if (Files.exists(path)) {
                 // Backfill important changes when migrating older configs
                 backfillIgnivorusFireBreathDamage(path, entry.getKey(), entry.getValue());
                 backfillLegacyTaming(path, entry.getKey());
+                backfillExtraBooleans(path, entry.getKey());
+                backfillBeamEnergyTuning(path, entry.getKey(), entry.getValue());
                 continue;
             }
             if (!source.has("hints")) {
@@ -271,22 +281,15 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             });
             json.add("abilities", abilitiesJson);
         }
-        if (!config.extraDoubles().isEmpty()) {
-            JsonObject extraJson = new JsonObject();
-            config.extraDoubles().forEach(extraJson::addProperty);
-            json.add("extra", extraJson);
+        JsonObject extraJson = new JsonObject();
+        config.extraDoubles().forEach(extraJson::addProperty);
+        config.extraBooleans().forEach(extraJson::addProperty);
+        // Ensure legacy_taming is present for the three special dragons
+        if (requiresLegacyTamingFlag(id) && !extraJson.has("legacy_taming")) {
+            extraJson.addProperty("legacy_taming", false);
         }
-
-        // Always write extra_booleans section for dragons that have legacy_taming
-        if (!config.extraBooleans().isEmpty() ||
-            requiresLegacyTamingFlag(id)) {
-            JsonObject booleansJson = new JsonObject();
-            config.extraBooleans().forEach(booleansJson::addProperty);
-            // Ensure legacy_taming is present for the three special dragons
-            if (requiresLegacyTamingFlag(id) && !booleansJson.has("legacy_taming")) {
-                booleansJson.addProperty("legacy_taming", false);
-            }
-            json.add("extra_booleans", booleansJson);
+        if (!extraJson.entrySet().isEmpty()) {
+            json.add("extra", extraJson);
         }
 
         // Friendly hints for players editing the Forge JSON files
@@ -312,16 +315,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             return;
         }
         boolean changed = false;
-        JsonObject booleansJson;
-        if (json.has("extra_booleans")) {
-            booleansJson = GsonHelper.getAsJsonObject(json, "extra_booleans");
+        JsonObject extraJson;
+        if (json.has("extra")) {
+            extraJson = GsonHelper.getAsJsonObject(json, "extra");
         } else {
-            booleansJson = new JsonObject();
-            json.add("extra_booleans", booleansJson);
+            extraJson = new JsonObject();
+            json.add("extra", extraJson);
             changed = true;
         }
-        if (!booleansJson.has("legacy_taming")) {
-            booleansJson.addProperty("legacy_taming", false);
+        if (!extraJson.has("legacy_taming")) {
+            extraJson.addProperty("legacy_taming", false);
             changed = true;
         }
         if (changed && !json.has("hints")) {
@@ -339,14 +342,36 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         try (Reader reader = Files.newBufferedReader(path)) {
             JsonElement element = JsonParser.parseReader(reader);
             JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
-            boolean needsUpdate = !json.has("extra_booleans")
-                    || !GsonHelper.getAsJsonObject(json, "extra_booleans").has("legacy_taming");
+            boolean needsUpdate = !json.has("extra")
+                    || !GsonHelper.getAsJsonObject(json, "extra").has("legacy_taming");
             if (needsUpdate) {
                 ensureLegacyTamingFlag(id, json);
                 writeConfigFile(path, json);
             }
         } catch (Exception e) {
             SaintsDragonsCommon.LOGGER.warn("Failed to backfill legacy_taming flag for {} at {}", id, path, e);
+        }
+    }
+
+    private void backfillExtraBooleans(Path path, ResourceLocation id) {
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            if (!json.has("extra_booleans")) {
+                return;
+            }
+            JsonObject extraJson = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            JsonObject booleansJson = GsonHelper.getAsJsonObject(json, "extra_booleans");
+            for (Map.Entry<String, JsonElement> entry : booleansJson.entrySet()) {
+                if (!extraJson.has(entry.getKey())) {
+                    extraJson.add(entry.getKey(), entry.getValue());
+                }
+            }
+            json.remove("extra_booleans");
+            json.add("extra", extraJson);
+            writeConfigFile(path, json);
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill extra booleans at {}", path, e);
         }
     }
 
@@ -381,6 +406,53 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             }
         } catch (Exception e) {
             SaintsDragonsCommon.LOGGER.warn("Failed to backfill ignivorus fire_breath damage at {}", path, e);
+        }
+    }
+
+    private void backfillBeamEnergyTuning(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
+        boolean isRaevyx = id.equals(RAEVYX_ID);
+        boolean isIgnivorus = id.equals(IGNIVORUS_ID);
+        if (!isRaevyx && !isIgnivorus) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            JsonObject extra = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            boolean updated = false;
+
+            if (isRaevyx) {
+                if (!extra.has("beam_drain_per_tick")) {
+                    extra.addProperty("beam_drain_per_tick",
+                            mergedConfig.extraDouble("beam_drain_per_tick", 0.014D));
+                    updated = true;
+                }
+                if (!extra.has("beam_regen_per_tick")) {
+                    extra.addProperty("beam_regen_per_tick",
+                            mergedConfig.extraDouble("beam_regen_per_tick", 0.0025D));
+                    updated = true;
+                }
+            }
+
+            if (isIgnivorus) {
+                if (!extra.has("fire_breath_drain_per_tick")) {
+                    extra.addProperty("fire_breath_drain_per_tick",
+                            mergedConfig.extraDouble("fire_breath_drain_per_tick", 0.00625D));
+                    updated = true;
+                }
+                if (!extra.has("fire_breath_regen_per_tick")) {
+                    extra.addProperty("fire_breath_regen_per_tick",
+                            mergedConfig.extraDouble("fire_breath_regen_per_tick", 0.0025D));
+                    updated = true;
+                }
+            }
+
+            if (updated) {
+                json.add("extra", extra);
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill beam/fire energy tuning at {}", path, e);
         }
     }
 

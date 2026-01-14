@@ -6,7 +6,8 @@
   "client": [
     "CameraMixin",
     "EntityRendererMixin",
-    "EntityRenderDispatcherMixin"
+    "EntityRenderDispatcherMixin",
+    "GuiMixin"
   ],
   "mixins": [
   ],

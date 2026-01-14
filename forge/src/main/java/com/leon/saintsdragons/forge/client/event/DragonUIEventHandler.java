@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -17,7 +18,49 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = "saintsdragons", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class DragonUIEventHandler {
-    
+
+    /**
+     * Hide vanilla HUD elements when riding a dragon (unless player stats mode is active)
+     */
+    @SubscribeEvent
+    public static void onRenderGuiOverlayPre(RenderGuiOverlayEvent.Pre event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            return;
+        }
+
+        DragonStatusUIManager manager = DragonStatusUIManager.getInstance();
+        DragonStatusUI ui = manager.getDragonStatusUI();
+
+        // Only hide vanilla HUD when riding and NOT in player stats mode
+        if (ui.isRidingDragon() && !ui.shouldShowPlayerStats()) {
+            // Hide player health
+            if (event.getOverlay() == VanillaGuiOverlay.PLAYER_HEALTH.type()) {
+                event.setCanceled(true);
+            }
+            // Hide armor bar
+            else if (event.getOverlay() == VanillaGuiOverlay.ARMOR_LEVEL.type()) {
+                event.setCanceled(true);
+            }
+            // Hide experience bar
+            else if (event.getOverlay() == VanillaGuiOverlay.EXPERIENCE_BAR.type()) {
+                event.setCanceled(true);
+            }
+            // Hide mount health bar
+            else if (event.getOverlay() == VanillaGuiOverlay.MOUNT_HEALTH.type()) {
+                event.setCanceled(true);
+            }
+            // Hide food level
+            else if (event.getOverlay() == VanillaGuiOverlay.FOOD_LEVEL.type()) {
+                event.setCanceled(true);
+            }
+            // Hide air level (breath bubbles)
+            else if (event.getOverlay() == VanillaGuiOverlay.AIR_LEVEL.type()) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onRenderGuiOverlay(RenderGuiOverlayEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -44,14 +87,26 @@ public class DragonUIEventHandler {
             FireballChargeIndicator chargeIndicator = ui.getFireballChargeIndicator();
             chargeIndicator.setChargeLevel(ignivorus.getFireballChargeLevel());
             chargeIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
+
+            if (ui.isRidingDragon() && !ui.shouldShowPlayerStats()) {
+                var fireBreathMeter = ui.getIgnivorusFireBreathMeterIndicator();
+                fireBreathMeter.setBreathEnergy(ignivorus.getFireBreathEnergy());
+                fireBreathMeter.setBreathing(ignivorus.isBreathingFire());
+                fireBreathMeter.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
+            }
         }
 
-        // Render beam meter when riding Raevyx
-        if (ui.getCurrentDragon() instanceof Raevyx raevyx) {
+        // Render beam meter when riding Raevyx and dragon UI is active
+        if (ui.isRidingDragon() && !ui.shouldShowPlayerStats() && ui.getCurrentDragon() instanceof Raevyx raevyx) {
             RaevyxBeamMeterIndicator beamMeter = ui.getRaevyxBeamMeterIndicator();
             beamMeter.setBeamEnergy(raevyx.getBeamEnergy());
             beamMeter.setBeaming(raevyx.isBeaming());
             beamMeter.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
+        }
+
+        // Render dragon ride health bar when riding and NOT in player stats mode
+        if (ui.isRidingDragon() && !ui.shouldShowPlayerStats()) {
+            ui.getRideHealthBar().render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
         }
     }
     
@@ -72,6 +127,7 @@ public class DragonUIEventHandler {
 
             // Tick beam meter for smooth animation
             ui.getRaevyxBeamMeterIndicator().tick();
+            ui.getIgnivorusFireBreathMeterIndicator().tick();
         }
     }
 }

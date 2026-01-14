@@ -51,6 +51,7 @@ public final class FabricDragonUI {
             ui.getMeleeModeNotification().tick();
             ui.getFireballChargeIndicator().tick();
             ui.getRaevyxBeamMeterIndicator().tick();
+            ui.getIgnivorusFireBreathMeterIndicator().tick();
         });
 
         HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -75,14 +76,26 @@ public final class FabricDragonUI {
                 FireballChargeIndicator chargeIndicator = ui.getFireballChargeIndicator();
                 chargeIndicator.setChargeLevel(ignivorus.getFireballChargeLevel());
                 chargeIndicator.render(graphics, width, height, tickDelta);
+
+                if (ui.isRidingDragon() && !ui.shouldShowPlayerStats()) {
+                    var fireBreathMeter = ui.getIgnivorusFireBreathMeterIndicator();
+                    fireBreathMeter.setBreathEnergy(ignivorus.getFireBreathEnergy());
+                    fireBreathMeter.setBreathing(ignivorus.isBreathingFire());
+                    fireBreathMeter.render(graphics, width, height, tickDelta);
+                }
             }
 
             // Render beam meter when riding Raevyx
-            if (ui.getCurrentDragon() instanceof Raevyx raevyx) {
+            if (ui.isRidingDragon() && !ui.shouldShowPlayerStats() && ui.getCurrentDragon() instanceof Raevyx raevyx) {
                 RaevyxBeamMeterIndicator beamMeter = ui.getRaevyxBeamMeterIndicator();
                 beamMeter.setBeamEnergy(raevyx.getBeamEnergy());
                 beamMeter.setBeaming(raevyx.isBeaming());
                 beamMeter.render(graphics, width, height, tickDelta);
+            }
+
+            // Render dragon ride health bar when riding and NOT in player stats mode
+            if (ui.isRidingDragon() && !ui.shouldShowPlayerStats()) {
+                ui.getRideHealthBar().render(graphics, width, height, tickDelta);
             }
         });
     }
