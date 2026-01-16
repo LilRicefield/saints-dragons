@@ -17,6 +17,10 @@ public class FabricLootTableModifier {
             new ResourceLocation("minecraft", "chests/shipwreck_treasure");
     private static final ResourceLocation ANCIENT_CITY_CHEST =
             new ResourceLocation("minecraft", "chests/ancient_city");
+    private static final ResourceLocation BASTION_TREASURE_CHEST =
+            new ResourceLocation("minecraft", "chests/bastion_treasure");
+    private static final ResourceLocation NETHER_BRIDGE_CHEST =
+            new ResourceLocation("minecraft", "chests/nether_bridge");
 
     public static void register() {
         LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
@@ -48,6 +52,39 @@ public class FabricLootTableModifier {
                         .setRolls(ConstantValue.exactly(1))
                         .when(LootItemRandomChanceCondition.randomChance(0.15f))
                         .add(LootItem.lootTableItem(ModItems.RAEVYX_EGG.get())
+                                .apply(SetItemCountFunction.setCount(ConstantValue.exactly(1))));
+
+                tableBuilder.pool(poolBuilder.build());
+            }
+
+            // Add Ignivorus Egg to Bastion Treasure chests (15% chance)
+            if (BASTION_TREASURE_CHEST.equals(id)) {
+                LootPool.Builder poolBuilder = LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1))
+                        .when(LootItemRandomChanceCondition.randomChance(0.15f))
+                        .add(LootItem.lootTableItem(ModItems.IGNIVORUS_EGG.get())
+                                .apply(SetItemCountFunction.setCount(ConstantValue.exactly(1))));
+
+                tableBuilder.pool(poolBuilder.build());
+            }
+
+            // Add Ignivorus Egg to Nether Fortress chests (15% chance)
+            if (NETHER_BRIDGE_CHEST.equals(id)) {
+                LootPool.Builder poolBuilder = LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1))
+                        .when(LootItemRandomChanceCondition.randomChance(0.15f))
+                        .add(LootItem.lootTableItem(ModItems.IGNIVORUS_EGG.get())
+                                .apply(SetItemCountFunction.setCount(ConstantValue.exactly(1))));
+
+                tableBuilder.pool(poolBuilder.build());
+            }
+
+            // Add Ignivorus Egg to Ancient City chests (10% chance)
+            if (ANCIENT_CITY_CHEST.equals(id)) {
+                LootPool.Builder poolBuilder = LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1))
+                        .when(LootItemRandomChanceCondition.randomChance(0.10f))
+                        .add(LootItem.lootTableItem(ModItems.IGNIVORUS_EGG.get())
                                 .apply(SetItemCountFunction.setCount(ConstantValue.exactly(1))));
 
                 tableBuilder.pool(poolBuilder.build());

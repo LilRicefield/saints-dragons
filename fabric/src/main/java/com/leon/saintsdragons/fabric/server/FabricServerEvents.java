@@ -1,11 +1,14 @@
 package com.leon.saintsdragons.fabric.server;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 
 /**
@@ -25,6 +28,24 @@ public final class FabricServerEvents {
                 server.execute(() -> handlePlayerDisconnect(handler.player)));
 
         ServerLifecycleEvents.SERVER_STOPPING.register(FabricServerEvents::handleServerStopping);
+
+        AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            if (world.isClientSide) {
+                return InteractionResult.PASS;
+            }
+            if (!(entity instanceof DragonEntity dragon) || !dragon.isBaby()) {
+                return InteractionResult.PASS;
+            }
+            if (!(player instanceof ServerPlayer serverPlayer)) {
+                return InteractionResult.PASS;
+            }
+            var advancement = serverPlayer.server.getAdvancements()
+                .getAdvancement(SaintsDragonsCommon.rl("why"));
+            if (advancement != null) {
+                serverPlayer.getAdvancements().award(advancement, "hit_baby");
+            }
+            return InteractionResult.PASS;
+        });
     }
 
     private static void handleServerStopping(MinecraftServer server) {

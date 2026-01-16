@@ -30,19 +30,27 @@ public abstract class IgnivorusMultipartMixin implements IForgeEntity {
     @Inject(method = "tick", at = @At("RETURN"))
     private void onTick(CallbackInfo ci) {
         if (this.saintsdragons$forgePartManager != null) {
+            if (((Ignivorus) (Object) this).isBaby()) {
+                return;
+            }
             this.saintsdragons$forgePartManager.updatePartPositions();
         }
     }
 
     @Override
     public boolean isMultipartEntity() {
-        boolean result = this.saintsdragons$forgePartManager != null;
-        return result;
+        if (((Ignivorus) (Object) this).isBaby()) {
+            return false;
+        }
+        return this.saintsdragons$forgePartManager != null;
     }
 
     @Override
     public PartEntity<?>[] getParts() {
         if (this.saintsdragons$forgePartManager == null) {
+            return null;
+        }
+        if (((Ignivorus) (Object) this).isBaby()) {
             return null;
         }
         return this.saintsdragons$forgePartManager.getParts();

@@ -49,6 +49,9 @@ public class IgnivorusAirCombatGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (dragon.isBaby()) {
+            return false;
+        }
         LivingEntity target = dragon.getTarget();
 
         if (!dragon.isTargetValid(target)) {
@@ -89,6 +92,9 @@ public class IgnivorusAirCombatGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (dragon.isBaby()) {
+            return false;
+        }
         LivingEntity target = dragon.getTarget();
 
         if (!dragon.isTargetValid(target)) {

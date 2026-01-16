@@ -30,6 +30,10 @@ public abstract class IgnivorusMultipartMixin implements IgnivorusPartProvider {
     @Inject(method = "tick", at = @At("RETURN"))
     private void onTick(CallbackInfo ci) {
         if (this.saintsdragons$fabricPartManager != null) {
+            if (((Ignivorus) (Object) this).isBaby()) {
+                this.saintsdragons$fabricPartManager.removeAllParts();
+                return;
+            }
             this.saintsdragons$fabricPartManager.updatePartPositions();
         }
     }
@@ -47,6 +51,9 @@ public abstract class IgnivorusMultipartMixin implements IgnivorusPartProvider {
     @Override
     public FabricDragonPart[] saintsdragons$getParts() {
         if (this.saintsdragons$fabricPartManager == null) {
+            return new FabricDragonPart[0];
+        }
+        if (((Ignivorus) (Object) this).isBaby()) {
             return new FabricDragonPart[0];
         }
         return this.saintsdragons$fabricPartManager.getParts();

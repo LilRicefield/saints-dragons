@@ -2,8 +2,8 @@
 	"credit": "Made with Blockbench - Leon",
 	"texture_size": [32, 32],
 	"textures": {
-		"0": "saintsdragons:block/raevyx_egg_slightly_cracked",
-		"particle": "saintsdragons:block/raevyx_egg_slightly_cracked"
+		"0": "saintsdragons:block/raevyx/raevyx_egg",
+		"particle": "saintsdragons:block/raevyx/raevyx_egg"
 	},
 	"elements": [
 		{

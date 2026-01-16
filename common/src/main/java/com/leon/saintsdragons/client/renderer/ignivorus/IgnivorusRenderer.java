@@ -69,7 +69,7 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
 
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 5.0f * scale;
+        this.shadowRadius = entity.isBaby() ? 1.5F : 5.0f;
 
         this.lastBakedModel = model;
         enableTrackingForBones(model);
@@ -111,6 +111,16 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
         if (this.lastBakedModel == null) {
+            return;
+        }
+
+        if (entity.isBaby()) {
+            this.lastBakedModel.getBone(PASSENGER_BONE).ifPresent(b -> {
+                net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+                if (world != null) {
+                    entity.setClientLocatorPosition("passengerLocator", world);
+                }
+            });
             return;
         }
 

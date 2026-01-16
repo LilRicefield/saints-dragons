@@ -69,6 +69,11 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.RAEVYX_EGG.get(),
                             new Item.Properties()));
 
+    public static final Supplier<Item> IGNIVORUS_EGG =
+            REGISTER.register("ignivorus_egg",
+                    () -> new BlockItem(ModBlocks.IGNIVORUS_EGG.get(),
+                            new Item.Properties()));
+
     public static final Supplier<Item> DRAGON_ALLY_BOOK =
             REGISTER.register("dragon_ally_book",
                     () -> new DragonAllyBookItem(

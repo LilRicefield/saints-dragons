@@ -203,9 +203,12 @@ public class FabricClientEventHandler {
             // Determine target zoom based on flight state
             boolean isFlying = ignivorus.isFlying();
             boolean isPhase2 = ignivorus.isPhase2Active();
+            boolean isBaby = ignivorus.isBaby();
 
             // Phase 2 only affects grounded camera zoom
-            if (isFlying) {
+            if (isBaby) {
+                ignivorusCameraZoomTarget = 9F;
+            } else if (isFlying) {
                 ignivorusCameraZoomTarget = 30F;
             } else if (isPhase2) {
                 ignivorusCameraZoomTarget = 25F; // Phase 2 grounded = zoom out more
