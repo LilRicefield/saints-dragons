@@ -44,6 +44,9 @@ public class IgnivorusFlightGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (dragon.isBaby()) {
+            return false;
+        }
         // Don't interfere with landing sequence
         if (dragon.isLanding()) {
             return false;
@@ -116,6 +119,9 @@ public class IgnivorusFlightGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (dragon.isBaby()) {
+            return false;
+        }
         if (landingApproach) {
             if (dragon.onGround()) {
                 finishLanding();

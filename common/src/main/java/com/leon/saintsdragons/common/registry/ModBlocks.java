@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.block.RaevyxEggBlock;
+import com.leon.saintsdragons.common.block.IgnivorusEggBlock;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,6 +23,15 @@ public class ModBlocks {
             REGISTER.register("raevyx_egg",
                     () -> new RaevyxEggBlock(BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_BLACK)
+                            .strength(0.5F)
+                            .sound(SoundType.METAL)
+                            .noOcclusion()
+                            .randomTicks()));
+
+    public static final Supplier<Block> IGNIVORUS_EGG =
+            REGISTER.register("ignivorus_egg",
+                    () -> new IgnivorusEggBlock(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_RED)
                             .strength(0.5F)
                             .sound(SoundType.METAL)
                             .noOcclusion()

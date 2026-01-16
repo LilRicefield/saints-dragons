@@ -8,16 +8,19 @@ import com.leon.saintsdragons.common.particle.raevyx.*;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
@@ -48,6 +51,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -109,6 +114,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     /** Time to live for aggression tracking (in ticks) */
     public static final int AGGRO_TTL_TICKS = 200; // ~10s
+    public static final double BREED_PARTNER_RANGE = 8.0D;
+    public static final double BREED_DISTANCE_SQR = 600.0D;
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -3602,7 +3609,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // Adults can breed, babies cannot
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(7, new RaevyxBreedGoal(this, 1.0D));
+            this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Raevyx.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         }
 
         this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forRaevyx()));
@@ -4449,6 +4456,25 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     public boolean canBreed() {
         return !this.isBaby() && this.getHealth() >= this.getMaxHealth() && this.isInLove();
+    }
+
+    @Override
+    public BlockState getEggBlockState() {
+        return ModBlocks.RAEVYX_EGG.get().defaultBlockState();
+    }
+
+    @Override
+    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
+        if (!(blockEntity instanceof RaevyxEggBlockEntity eggEntity)) {
+            return;
+        }
+
+        if (this.isTame() && this.getOwnerUUID() != null) {
+            eggEntity.setOwnerUUID(this.getOwnerUUID());
+        }
+
+        DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
+        eggEntity.setBabyGender(babyGender);
     }
 
     @Override

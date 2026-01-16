@@ -8,6 +8,7 @@
   "item.saintsdragons.hearty_dragon_meal": "Hearty Dragon Meal",
   "item.saintsdragons.raevyx_spawn_egg": "Raevyx Spawn Egg",
   "block.saintsdragons.raevyx_egg": "§4Raevyx Egg§r",
+  "block.saintsdragons.ignivorus_egg": "§4§lIgnivorus Egg§r§r",
   "item.saintsdragons.stegonaut_spawn_egg": "Stegonaut Spawn Egg",
   "item.saintsdragons.cindervane_spawn_egg": "Cindervane Spawn Egg",
   "item.saintsdragons.nulljaw_spawn_egg": "Nulljaw Spawn Egg",
@@ -119,6 +120,15 @@
 
   "advancement.saintsdragons.tame_ignivorus.title": "Destruction Commence",
   "advancement.saintsdragons.tame_ignivorus.description": "Earn the trust of an Ignivorus, the living calamity",
+
+  "entity.saintsdragons.ignivorus.baby_fed": "%s is growing stronger!",
+  "entity.saintsdragons.ignivorus.baby_grown": "%s has grown into an adult!",
+  "entity.saintsdragons.ignivorus.breeding_too_young": "%s is too young to breed",
+  "entity.saintsdragons.ignivorus.breeding_cooling_down": "%s is not ready to breed yet",
+  "entity.saintsdragons.ignivorus.breeding_already_ready": "%s is already ready to breed",
+  "entity.saintsdragons.ignivorus.breeding_ready": "%s is ready to breed!",
+  "advancement.saintsdragons.why.title": "Why?",
+  "advancement.saintsdragons.why.description": "Did you just hit a baby?",
   
   "key.categories.saintsdragons": "Saint's Dragons",
   "key.saintsdragons.ascend": "Ascend",

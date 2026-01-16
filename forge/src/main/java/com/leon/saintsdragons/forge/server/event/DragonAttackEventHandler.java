@@ -22,6 +22,7 @@ public class DragonAttackEventHandler {
 
         var player = event.getEntity();
         if (!(player.getVehicle() instanceof DragonEntity dragon)) return;
+        if (dragon.isBaby()) return;
         // Block rider-initiated attack while controls are locked (e.g., Summon Storm windup)
         if (dragon.areRiderControlsLocked()) return;
         if (!dragon.isTame() || !dragon.isOwnedBy(player)) return;

@@ -17,16 +17,20 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         super(SaintsDragonsCommon.rl("ignivorus"));
     }
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/ignivorus.geo.json");
+    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_ignivorus.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/ignivorus.animation.json");
+    private static final ResourceLocation BABY_ANIM = SaintsDragonsCommon.rl("animations/entity/baby_ignivorus.animation.json");
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_female.png");
+    private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/baby_ignivorus.png");
+    private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/baby_ignivorus_female.png");
     private static final ResourceLocation TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant.png");
     private static final ResourceLocation FEMALE_TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant_female.png");
 
 
     @Override
     public ResourceLocation getModelResource(Ignivorus entity) {
-        return MODEL;
+        return entity != null && entity.isBaby() ? BABY_MODEL : MODEL;
     }
 
     @Override
@@ -38,6 +42,9 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         int variant = entity.getTextureVariant();
         boolean isFemale = entity.isFemale();
 
+        if (entity.isBaby()) {
+            return isFemale ? BABY_FEMALE_TEXTURE : BABY_TEXTURE;
+        }
         if (variant == 1) {
             return isFemale ? FEMALE_TEXTURE_SECOND_VARIANT : TEXTURE_SECOND_VARIANT;
         } else {
@@ -47,7 +54,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
 
     @Override
     public ResourceLocation getAnimationResource(Ignivorus entity) {
-        return ANIM;
+        return entity != null && entity.isBaby() ? BABY_ANIM : ANIM;
     }
 
     @Override

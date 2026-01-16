@@ -1,0 +1,15 @@
+{
+  "type": "saintsdragons:add_item",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:chests/nether_bridge"
+    },
+    {
+      "condition": "minecraft:random_chance",
+      "chance": 0.15
+    }
+  ],
+  "item": "saintsdragons:ignivorus_egg",
+  "count": 1
+}
