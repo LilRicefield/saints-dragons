@@ -5,7 +5,10 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import net.minecraft.core.particles.ParticleTypes;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireSlashEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -45,10 +48,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final double EXPLOSION_RADIUS = 32.0D;
     private static final float EXPLOSION_DAMAGE = 200.0F;
     private static final int EXPLOSION_FIRE_SECONDS = 8;
-    private static final int EXPLOSION_PARTICLE_POINTS = 64;
     private static final int LOOP_DAMAGE_INTERVAL = 5;
     private static final int LOOP_DAMAGE_WARMUP = 20;
     private static final int PHASE2_DAMAGE_DELAY = 10;
+    private static final int NOVA_SPAWN_DELAY = 13;
     private static final float PENALTY_HEALTH = 50.0F;
     private static final Component PENALTY_MESSAGE =
             Component.translatable("saintsdragons.message.ignivorus.ultimate_penalty");
@@ -69,6 +72,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean penaltyApplied;
     private boolean isPhase2GroundMode; // Instant attack mode for Phase 2 ground
     private boolean phase2DamageApplied; // Track if Phase 2 damage has been applied
+    private boolean novaSpawned; // Track if nova entity has been spawned
 
     public IgnivorusUltimateAbility(DragonAbilityType<Ignivorus, IgnivorusUltimateAbility> type,
                                     Ignivorus user) {
@@ -124,6 +128,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
                 // Initialize damage tracking flag
                 phase2DamageApplied = false;
+                novaSpawned = false;
 
                 applyPenaltyHealth(dragon);
             } else {
@@ -148,6 +153,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 endAnimPlayed = false;
                 lastLoopDamageTick = -LOOP_DAMAGE_INTERVAL;
                 penaltyApplied = false;
+                novaSpawned = false;
 
                 // Play ONLY the first animation (start) - use _air variant if airborne
                 if (isAirborne) {
@@ -172,6 +178,12 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
         // Handle Phase 2 ground mode damage with delay, then end early
         if (isPhase2GroundMode) {
+            // Spawn nova entity after delay (1 second)
+            if (!novaSpawned && ticks >= NOVA_SPAWN_DELAY) {
+                spawnNovaEntity();
+                novaSpawned = true;
+            }
+
             if (!phase2DamageApplied && ticks >= PHASE2_DAMAGE_DELAY) {
                 triggerRingExplosion(true);
                 phase2DamageApplied = true;
@@ -204,7 +216,15 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         if (loopAnimPlayed && ticks >= START_END_TICK && ticks < LOOP_END_TICK) {
             int loopTick = ticks - START_END_TICK;
             if (loopTick >= LOOP_DAMAGE_WARMUP && loopTick - lastLoopDamageTick >= LOOP_DAMAGE_INTERVAL) {
-                triggerRingExplosion(loopTick == LOOP_DAMAGE_WARMUP);
+                boolean isOpeningPulse = loopTick == LOOP_DAMAGE_WARMUP;
+
+                // Spawn nova entity at the opening pulse (when damage first triggers)
+                if (isOpeningPulse && !novaSpawned) {
+                    spawnNovaEntity();
+                    novaSpawned = true;
+                }
+
+                triggerRingExplosion(isOpeningPulse);
                 lastLoopDamageTick = loopTick;
             }
         }
@@ -279,6 +299,97 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         getUser().setUltimateCameraZoomActive(false);
     }
 
+    private void spawnNovaEntity() {
+        Ignivorus dragon = getUser();
+        if (dragon.level().isClientSide) {
+            return;
+        }
+
+        ServerLevel server = (ServerLevel) dragon.level();
+        Vec3 center = dragon.position();
+
+        IgnivorusNovaEntity nova = new IgnivorusNovaEntity(
+                server,
+                center.add(0, 1.0, 0),
+                dragon,
+                resolveExplosionDamage()
+        );
+        server.addFreshEntity(nova);
+
+        IgnivorusNovaRingEntity ring = new IgnivorusNovaRingEntity(
+                server,
+                center.add(0, 0.1, 0)
+        );
+        server.addFreshEntity(ring);
+
+        // Spawn flame burst with randomized directions.
+        int flameCount = 64;
+        double flameSpeed = 1.2;
+        float flameScale = 2.0F;
+        int flameLifetime = 40;
+        float flameDamage = 30.0F;
+
+        var random = dragon.getRandom();
+        Vec3 spawnPos = center.add(0, 4.0, 0);
+
+        for (int i = 0; i < flameCount; i++) {
+            // Random unit vector biased slightly upward for a dramatic burst.
+            double angle = random.nextDouble() * Math.PI * 2.0;
+            double horizontal = Math.sqrt(random.nextDouble());
+            double vx = Math.cos(angle) * horizontal;
+            double vz = Math.sin(angle) * horizontal;
+            double vy = 0.35 + random.nextDouble() * 0.35;
+
+            Vec3 velocity = new Vec3(vx, vy, vz).normalize().scale(flameSpeed * (0.8 + random.nextDouble() * 0.6));
+
+            IgnivorusFlameEntity flame = new IgnivorusFlameEntity(
+                    server,
+                    spawnPos,
+                    velocity,
+                    dragon,
+                    flameDamage,
+                    flameScale,
+                    flameLifetime
+            );
+            server.addFreshEntity(flame);
+        }
+
+        // Spawn fire slashes near the ground in a deterministic hemispherical burst.
+        int slashCount = 40;
+        double slashSpeed = 1.2;
+        float slashScale = 1.6F;
+        int slashLifetime = 30;
+
+        Vec3[] slashSpawnPositions = new Vec3[] {
+                center.add(0, 1.0, 0),
+                center.add(0, 6.0, 0),
+                center.add(0, 12.0, 0)
+        };
+
+        for (Vec3 slashSpawnPos : slashSpawnPositions) {
+            for (int i = 0; i < slashCount; i++) {
+                double t = (i + 0.5) / (double) slashCount;
+                double y = t; // Hemisphere above ground [0,1]
+                double horizontal = Math.sqrt(1.0 - y * y);
+                double angle = (Math.PI * 2.0) * i / (double) slashCount;
+                double vx = Math.cos(angle) * horizontal;
+                double vz = Math.sin(angle) * horizontal;
+                double vy = 0.05 + y * 0.35;
+
+                Vec3 velocity = new Vec3(vx, vy, vz).normalize().scale(slashSpeed);
+
+                IgnivorusFireSlashEntity slash = new IgnivorusFireSlashEntity(
+                        server,
+                        slashSpawnPos,
+                        velocity,
+                        slashScale,
+                        slashLifetime
+                );
+                server.addFreshEntity(slash);
+            }
+        }
+    }
+
     private void triggerRingExplosion(boolean openingPulse) {
         Ignivorus dragon = getUser();
         Vec3 center = dragon.position();
@@ -290,37 +401,11 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
         ServerLevel server = (ServerLevel) dragon.level();
 
-        // Spawn central explosion particles for dramatic effect
         if (openingPulse) {
-            // Big initial burst at dragon's position
-            server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.x, center.y + 1.0D, center.z, 3, 1.0D, 0.5D, 1.0D, 0.0D);
-            server.sendParticles(ParticleTypes.FLAME, center.x, center.y + 1.0D, center.z, 100, 2.0D, 1.0D, 2.0D, 0.2D);
-            server.sendParticles(ParticleTypes.LAVA, center.x, center.y + 0.5D, center.z, 50, 1.5D, 0.5D, 1.5D, 0.1D);
+            // Vanilla particles removed; custom entities handle visuals.
         }
 
-        spawnRingParticles(server, center);
         applyRingDamage(server, center);
-    }
-
-    private void spawnRingParticles(ServerLevel level, Vec3 center) {
-        for (int i = 0; i < EXPLOSION_PARTICLE_POINTS; i++) {
-            double angle = (Math.PI * 2.0D * i) / EXPLOSION_PARTICLE_POINTS;
-            double x = center.x + Math.cos(angle) * EXPLOSION_RADIUS;
-            double z = center.z + Math.sin(angle) * EXPLOSION_RADIUS;
-
-            // Spawn particles at ground level and slightly above for better visibility
-            double y = center.y + 0.1D; // Just above ground
-
-            // Main flame particles - more count, more spread
-            level.sendParticles(ParticleTypes.FLAME, x, y, z, 20, 0.8D, 0.6D, 0.8D, 0.05D);
-            level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 0.5D, z, 8, 0.6D, 0.4D, 0.6D, 0.02D);
-
-            // Add extra fire particles shooting upward for dramatic effect
-            level.sendParticles(ParticleTypes.FLAME, x, y, z, 10, 0.3D, 1.0D, 0.3D, 0.1D);
-
-            // Add some lava particles for extra pizzazz
-            level.sendParticles(ParticleTypes.LAVA, x, y, z, 3, 0.5D, 0.2D, 0.5D, 0.0D);
-        }
     }
 
     private void applyRingDamage(ServerLevel level, Vec3 center) {
