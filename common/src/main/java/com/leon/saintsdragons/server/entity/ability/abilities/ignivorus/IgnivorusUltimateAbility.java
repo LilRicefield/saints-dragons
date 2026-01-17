@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireSlashEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaOutlineEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -308,13 +309,21 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         ServerLevel server = (ServerLevel) dragon.level();
         Vec3 center = dragon.position();
 
+        Vec3 novaPos = center.add(0, 1.0, 0);
+
         IgnivorusNovaEntity nova = new IgnivorusNovaEntity(
                 server,
-                center.add(0, 1.0, 0),
+                novaPos,
                 dragon,
                 resolveExplosionDamage()
         );
         server.addFreshEntity(nova);
+
+        IgnivorusNovaOutlineEntity outline = new IgnivorusNovaOutlineEntity(
+                server,
+                novaPos
+        );
+        server.addFreshEntity(outline);
 
         IgnivorusNovaRingEntity ring = new IgnivorusNovaRingEntity(
                 server,
