@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntit
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaOutlineEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
@@ -127,6 +128,15 @@ public final class ModEntities {
                     .fireImmune()
                     .noSummon()
                     .build("ignivorus_nova"));
+
+    public static final Supplier<EntityType<IgnivorusNovaOutlineEntity>> IGNIVORUS_NOVA_OUTLINE =
+            REGISTER.register("ignivorus_nova_outline", () -> EntityType.Builder.<IgnivorusNovaOutlineEntity>of(IgnivorusNovaOutlineEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    .fireImmune()
+                    .noSummon()
+                    .build("ignivorus_nova_outline"));
 
     public static final Supplier<EntityType<IgnivorusNovaRingEntity>> IGNIVORUS_NOVA_RING =
             REGISTER.register("ignivorus_nova_ring", () -> EntityType.Builder.<IgnivorusNovaRingEntity>of(IgnivorusNovaRingEntity::new, MobCategory.MISC)
