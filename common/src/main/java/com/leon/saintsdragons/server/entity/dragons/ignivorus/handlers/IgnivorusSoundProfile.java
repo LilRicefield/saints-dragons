@@ -17,19 +17,22 @@ import java.util.Map;
 public final class IgnivorusSoundProfile implements DragonSoundProfile {
 
     public static final IgnivorusSoundProfile INSTANCE = new IgnivorusSoundProfile();
+    private static final float BABY_PITCH_MULTIPLIER = 1.6f;
 
     private static final Map<String, Integer> VOCAL_WINDOWS = Map.ofEntries(
             Map.entry("roar", 64),
             Map.entry("grumble1", 80),
             Map.entry("grumble2", 85),
-            Map.entry("grumble3", 90)
+            Map.entry("grumble3", 90),
+            Map.entry("ignivorus_hurt", 20)
     );
 
     private static final Map<String, String> EFFECT_TO_VOCAL_KEY = Map.ofEntries(
             Map.entry("ignivorus_roar", "roar"),
             Map.entry("ignivorus_grumble1", "grumble1"),
             Map.entry("ignivorus_grumble2", "grumble2"),
-            Map.entry("ignivorus_grumble3", "grumble3")
+            Map.entry("ignivorus_grumble3", "grumble3"),
+            Map.entry("ignivorus_hurt", "ignivorus_hurt")
     );
 
     private static final Map<String, DragonEntity.VocalEntry> FALLBACK_VOCALS =
@@ -42,6 +45,8 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                             ModSounds.IGNIVORUS_GRUMBLE_2, 1.15f, 1.0f, 0.05f, false, false, false)
                     .add("grumble3", "action", "animation.ignivorus.grumble3",
                             ModSounds.IGNIVORUS_GRUMBLE_3, 1.2f, 0.9f, 0.05f, false, false, false)
+                    .add("ignivorus_hurt", "hurt", "animation.ignivorus.hurt",
+                            ModSounds.IGNIVORUS_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
                     .build();
 
     private IgnivorusSoundProfile() {}
@@ -251,6 +256,9 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         float pitch = entry.basePitch();
         if (entry.pitchVariance() != 0f) {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+        }
+        if (dragon.isBaby()) {
+            pitch *= BABY_PITCH_MULTIPLIER;
         }
 
         playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);

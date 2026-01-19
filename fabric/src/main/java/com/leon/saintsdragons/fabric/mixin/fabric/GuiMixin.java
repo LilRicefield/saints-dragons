@@ -1,7 +1,8 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
-import com.leon.saintsdragons.client.DragonStatusUIManager;
-import com.leon.saintsdragons.client.ui.DragonStatusUI;
+import com.leon.saintsdragons.client.ui.DragonUIRegistry;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,24 +11,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Mixin to hide vanilla HUD elements when riding a dragon.
- *
- * Note: Many granular render methods (renderArmor, renderFood, renderAir, etc.)
- * don't exist in Minecraft 1.20.1's Gui class - HUD rendering was restructured.
- * We inject into the main render method instead.
+ * Mixin to hide vanilla HUD elements when riding a dragon (only if dragon UI is visible).
  */
 @Mixin(Gui.class)
 public class GuiMixin {
 
     private static boolean shouldHideVanillaHud() {
-        DragonStatusUIManager manager = DragonStatusUIManager.getInstance();
-        DragonStatusUI ui = manager.getDragonStatusUI();
-        return ui.isRidingDragon() && !ui.shouldShowPlayerStats();
+        Minecraft mc = Minecraft.getInstance();
+        // Only hide vanilla HUD if riding a dragon AND dragon UI is visible (F4 toggle)
+        // When dragon UI is hidden, show vanilla HUD instead
+        return mc.player != null
+            && mc.player.getVehicle() instanceof DragonEntity
+            && DragonUIRegistry.isUIVisible();
     }
 
     /**
-     * Inject into the main render method to hide ALL HUD elements at once
-     * when riding a dragon and not in player stats mode.
+     * Hide vanilla player health when riding a dragon
      */
     @Inject(method = "renderPlayerHealth", at = @At("HEAD"), cancellable = true)
     private void onRenderPlayerHealth(GuiGraphics guiGraphics, CallbackInfo ci) {
@@ -36,6 +35,9 @@ public class GuiMixin {
         }
     }
 
+    /**
+     * Hide experience bar when riding a dragon
+     */
     @Inject(method = "renderExperienceBar", at = @At("HEAD"), cancellable = true)
     private void onRenderExperienceBar(GuiGraphics guiGraphics, int x, CallbackInfo ci) {
         if (shouldHideVanillaHud()) {
@@ -43,6 +45,9 @@ public class GuiMixin {
         }
     }
 
+    /**
+     * Hide vehicle health bar when riding a dragon
+     */
     @Inject(method = "renderVehicleHealth", at = @At("HEAD"), cancellable = true)
     private void onRenderVehicleHealth(GuiGraphics guiGraphics, CallbackInfo ci) {
         if (shouldHideVanillaHud()) {
@@ -50,6 +55,9 @@ public class GuiMixin {
         }
     }
 
+    /**
+     * Hide jump meter when riding a dragon
+     */
     @Inject(method = "renderJumpMeter", at = @At("HEAD"), cancellable = true)
     private void onRenderJumpMeter(net.minecraft.world.entity.PlayerRideableJumping mount, GuiGraphics guiGraphics, int x, CallbackInfo ci) {
         if (shouldHideVanillaHud()) {

@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.client.network;
 
-import com.leon.saintsdragons.client.DragonStatusUIManager;
+import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.DragonAllyScreen;
 import com.leon.saintsdragons.common.network.MessageDragonAllyDelta;
 import com.leon.saintsdragons.common.network.MessageDragonAllyList;
@@ -37,9 +37,7 @@ public final class ClientPacketHandlers {
         if (minecraft.player == null) {
             return;
         }
-        DragonStatusUIManager.getInstance()
-                .getDragonStatusUI()
-                .getMeleeModeNotification()
+        DragonUIRegistry.getMeleeModeNotification()
                 .showNotification(message.mode());
     }
 }

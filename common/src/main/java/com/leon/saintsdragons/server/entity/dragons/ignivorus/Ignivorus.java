@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModBlocks;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlockEntity;
@@ -71,7 +72,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.AgeableMob;
-import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
@@ -3893,6 +3893,21 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
         screenShakeAmount = Math.max(screenShakeAmount, clamped);
         this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+    }
+
+    @Override
+    protected void dropAllDeathLoot(@NotNull DamageSource source) {
+        // Don't drop loot until death animation completes
+        if (deathTime < getDeathAnimationDurationTicks()) {
+            return;
+        }
+
+        super.dropAllDeathLoot(source);
+
+        // Female dragons have 12% chance to drop one egg on death
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextFloat() < 0.12f) {
+            this.spawnAtLocation(ModItems.IGNIVORUS_EGG.get());
+        }
     }
 
     @Override

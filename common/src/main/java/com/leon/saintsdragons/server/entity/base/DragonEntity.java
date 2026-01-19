@@ -470,7 +470,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     @Override
     protected void dropAllDeathLoot(@NotNull DamageSource source) {
-        if (deathTime > 0 && deathTime < getDeathAnimationDurationTicks()) {
+        if (deathTime < getDeathAnimationDurationTicks()) {
             // Still playing death animation - don't drop yet
             return;
         }

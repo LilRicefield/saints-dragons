@@ -232,37 +232,34 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private void damageAlongBeam(Raevyx wyvern, net.minecraft.world.phys.Vec3 start, net.minecraft.world.phys.Vec3 end) {
         if (!(wyvern.level() instanceof net.minecraft.server.level.ServerLevel server)) return;
 
-        final double STEP = 1.0;         // sample spacing
         final double BASE_RADIUS = 1.2;  // base affect radius around beam core
         final float configuredBaseDamage = (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
                 .abilityDamage("lightning_beam", DEFAULT_BEAM_DAMAGE);
-        
+
         // Apply water conductivity bonuses
         var conductivity = wyvern.getConductivityState();
         final double RADIUS = BASE_RADIUS * conductivity.rangeMultiplier();
         final float DAMAGE = configuredBaseDamage * conductivity.damageMultiplier() * wyvern.getDamageMultiplier();
 
-        var delta = end.subtract(start);
-        double len = delta.length();
-        if (len < 0.0001) return;
-        var dir = delta.scale(1.0 / len);
+        // Create a bounding box that encompasses the entire beam path, inflated by radius
+        var beamAABB = new net.minecraft.world.phys.AABB(start, end).inflate(RADIUS);
 
-        java.util.HashSet<net.minecraft.world.entity.LivingEntity> hitThisBeam = new java.util.HashSet<>();
+        // Get all potential targets in the beam's area
+        var potentialTargets = server.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, beamAABB,
+                e -> e != wyvern && wyvern.isTargetValid(e) && e.attackable() && !isAllied(wyvern, e));
 
-        for (double d = 0; d <= len; d += STEP) {
-            var p = start.add(dir.scale(d));
-            var aabb = new net.minecraft.world.phys.AABB(p, p).inflate(RADIUS);
-            var list = server.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, aabb,
-                    e -> e != wyvern && wyvern.isTargetValid(e) && e.attackable() && !isAllied(wyvern, e));
-            for (var le : list) {
-                if (hitThisBeam.add(le)) {
-                    le.hurt(resolveBeamDamageSource(wyvern, le), DAMAGE);
-                    // Stronger knockback for single hit
-                    var away = le.position().subtract(p).normalize();
-                    le.push(away.x * 0.15, 0.08, away.z * 0.15);
-                    // no-op beyond damage and push
-                }
+        for (var target : potentialTargets) {
+            // Check if the beam actually intersects the entity's bounding box (inflated by radius)
+            var targetAABB = target.getBoundingBox().inflate(RADIUS);
+            var hit = targetAABB.clip(start, end);
+
+            if (hit.isPresent()) {
+                var hitPos = hit.get();
+                target.hurt(resolveBeamDamageSource(wyvern, target), DAMAGE);
+                // Knockback away from hit position
+                var away = target.position().subtract(hitPos).normalize();
+                target.push(away.x * 0.15, 0.08, away.z * 0.15);
             }
         }
     }
