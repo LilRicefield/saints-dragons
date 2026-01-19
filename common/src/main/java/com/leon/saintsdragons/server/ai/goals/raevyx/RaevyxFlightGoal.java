@@ -50,6 +50,11 @@ public class RaevyxFlightGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        // Babies cannot fly
+        if (wyvern.isBaby()) {
+            return false;
+        }
+
         // Don't interfere with landing sequence
         if (wyvern.isLanding()) {
             return false;

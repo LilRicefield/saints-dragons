@@ -68,13 +68,8 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
             // Roar sound is handled by RaevyxRoarAbility with precise timing, skip keyframe
-            // Hurt/die sounds are handled by entity hurt/death methods, skip keyframe
-            if ("roar".equals(vocalKey) || "raevyx_hurt".equals(vocalKey) || "raevyx_die".equals(vocalKey)) {
-                if (dragon.isBaby() && ("raevyx_hurt".equals(vocalKey) || "raevyx_die".equals(vocalKey))) {
-                    playVocalEntry(handler, dragon, vocalKey, locator);
-                    return true;
-                }
-                return true; // Block the keyframe, entity plays the sound
+            if ("roar".equals(vocalKey)) {
+                return true; // Block the keyframe, ability plays the sound
             }
             playVocalEntry(handler, dragon, vocalKey, locator);
             return true;

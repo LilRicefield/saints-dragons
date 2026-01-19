@@ -1,12 +1,10 @@
 package com.leon.saintsdragons.server.entity.ability;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 
 /**
  * Generic hurt ability for all dragons.
- * Plays hurt animation and optionally fires a manual vocal when the animation lacks keyframed audio.
+ * Plays hurt animation. Sound is handled by animation keyframes via dragon sound profiles.
  */
 public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
 
@@ -19,7 +17,6 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     private final String controllerId;
     private final String animationTrigger;
-    private final String manualVocalKey;
 
     public HurtAbility(DragonAbilityType<T, ? extends DragonAbility<T>> type,
                        T user) {
@@ -28,7 +25,6 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
         String abilityId = type.getName();
         this.controllerId = resolveControllerId(abilityId);
         this.animationTrigger = resolveAnimationTrigger(abilityId);
-        this.manualVocalKey = resolveManualVocalKey(abilityId);
     }
 
     private static String resolveAnimationTrigger(String abilityId) {
@@ -39,14 +35,6 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             case "nulljaw_hurt" -> "nulljaw_hurt";
             case "ignivorus_hurt" -> "ignivorus_hurt";
             default -> "hurt";
-        };
-    }
-
-    private static String resolveManualVocalKey(String abilityId) {
-        return switch (abilityId) {
-            case "stegonaut_hurt" -> "hurt";
-            case "hurt", "cindervane_hurt", "raevyx_hurt", "ignivorus_hurt" -> abilityId; // Manual audio fallback when animation lacks audio
-            default -> null;                      // Other dragons rely on keyframed audio
         };
     }
 
@@ -64,25 +52,9 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             return;
         }
 
+        // Trigger animation, sound is handled by animation keyframes
         if (animationTrigger != null) {
             getUser().triggerAnim(controllerId, animationTrigger);
-        }
-
-        // Play hurt sound directly (playVocal() doesn't work - same issue as death sounds)
-        if (!getLevel().isClientSide && manualVocalKey != null) {
-            T dragon = getUser();
-            DragonEntity.VocalEntry hurtEntry = dragon.getVocalEntries().get(manualVocalKey);
-            if (hurtEntry != null && hurtEntry.soundSupplier() != null) {
-                net.minecraft.sounds.SoundEvent sound = hurtEntry.soundSupplier().get();
-                float volume = hurtEntry.volume();
-                if (dragon instanceof Raevyx && dragon.isBaby()) {
-                    return;
-                }
-                float pitch = hurtEntry.basePitch() + (dragon.getRandom().nextFloat() - 0.5f) * hurtEntry.pitchVariance() * 2f;
-
-                // Play sound directly (bypasses playVocal which only triggers animations)
-                dragon.playSound(sound, volume, pitch);
-            }
         }
     }
 

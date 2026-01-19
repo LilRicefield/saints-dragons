@@ -139,8 +139,8 @@
   "key.saintsdragons.ability_tertiary": "Channel Ability",
   "key.saintsdragons.toggle_melee": "Toggle Melee Mode",
   "key.saintsdragons.toggle_pitch_mode": "Toggle Pitch Mode",
-  "key.saintsdragons.toggle_dragon_ui": "Toggle UI",
-  
+  "key.saintsdragons.toggle_dragon_ui": "Toggle Dragon UI",
+
   "saintsdragons.ui.control.title": "Dragon Controls",
   "saintsdragons.ui.control.attack": "Primary Attack",
   "saintsdragons.ui.control.ascend": "Ascend",

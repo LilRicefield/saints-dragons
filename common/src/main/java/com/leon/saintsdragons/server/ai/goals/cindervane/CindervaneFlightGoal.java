@@ -50,6 +50,11 @@ public class CindervaneFlightGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        // Babies cannot fly
+        if (amphithere.isBaby()) {
+            return false;
+        }
+
         // Don't interfere with landing sequence
         if (amphithere.isLanding()) {
             return false;

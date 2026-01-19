@@ -50,10 +50,6 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         // Check if this is a vocal key that should use the vocal entry system
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
-            // Hurt sound is handled by server broadcast
-            if ("cindervane_hurt".equals(key)) {
-                return true;
-            }
             playVocalEntry(handler, dragon, vocalKey, locator);
             return true;
         }

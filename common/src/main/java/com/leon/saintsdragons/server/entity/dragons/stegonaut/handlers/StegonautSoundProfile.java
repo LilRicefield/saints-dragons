@@ -51,9 +51,6 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
         // Handler already blocks server-side, we're only called on client
-        if ("stegonaut_hurt".equals(key)) {
-            return true; // Server broadcasts hurt vocal instantly
-        }
 
         // Check if this is a vocal key that should use the vocal entry system
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);

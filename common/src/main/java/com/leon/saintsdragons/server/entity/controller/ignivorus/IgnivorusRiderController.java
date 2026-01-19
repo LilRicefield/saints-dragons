@@ -41,6 +41,17 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     private static final double TERMINAL_VELOCITY = 1.5D;
     private static final double VERTICAL_DRAG = 0.92D;
 
+    // ===== DIVE BOOST CURVE =====
+    private static final float DIVE_START_ANGLE = 25.0f;
+    private static final float DIVE_MAX_ANGLE = 90.0f;
+    private static final double DIVE_MIN_SPEED_MULT = 1.0;
+    private static final double DIVE_MAX_SPEED_MULT = 2.0;
+    private static final double DIVE_MIN_ACCEL = 0.35;
+    private static final double DIVE_MAX_ACCEL = 0.40;
+    private static final double DIVE_MIN_DRAG = 0.08;
+    private static final double DIVE_MAX_DRAG = 0.03;
+    private static final float DIVE_CURVE_POWER = 2.0f;
+
     @Nullable
     public Player getRidingPlayer() {
         if (dragon.getControllingPassenger() instanceof Player player) {
@@ -179,32 +190,27 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             Vec3 currentVelocity = dragon.getDeltaMovement();
 
             // === DIVE SPEED BOOST ===
-            // Progressive speed boost when diving steeply (like real birds)
+            // Smooth progressive speed boost when diving (like real birds)
             // NOTE: Minecraft xRot is POSITIVE when looking down (90° = straight down)
             float pitchRad = getEffectivePitchRadians(player);
             float pitchDegrees = (float) Math.toDegrees(pitchRad);
-            double diveMultiplier = 1.0;
-            double diveAcceleration = ACCELERATION; // Default 0.15
-            double diveDrag = DRAG_WITH_INPUT; // Default 0.08
 
-            if (pitchDegrees >= 40.0f) {
-                // Steep dive (60° to 90°): 1.3x to 1.5x speed
-                float t = (pitchDegrees - 60.0f) / 30.0f; // 0 at 60°, 1 at 90°
-                t = Mth.clamp(t, 0.0f, 1.0f);
-                diveMultiplier = 1.3 + (t * 0.2);
-                // Moderately faster acceleration and reduced drag
-                diveAcceleration = 0.20;
-                diveDrag = 0.05;
-            } else if (pitchDegrees >= 30.0f) {
-                // Medium dive (45° to 60°): 1.15x to 1.3x speed
-                float t = (pitchDegrees - 45.0f) / 15.0f; // 0 at 45°, 1 at 60°
-                t = Mth.clamp(t, 0.0f, 1.0f);
-                diveMultiplier = 1.15 + (t * 0.15);
-                // Slightly faster acceleration and slightly less drag
-                diveAcceleration = 0.18;
-                diveDrag = 0.06;
+            // Calculate smooth dive intensity from 0.0 (shallow) to 1.0 (straight down)
+            float diveIntensity = 0.0f;
+            if (pitchDegrees >= DIVE_START_ANGLE) {
+                // Normalize pitch to 0..1 range between start and max angle
+                float normalizedPitch = (pitchDegrees - DIVE_START_ANGLE) / (DIVE_MAX_ANGLE - DIVE_START_ANGLE);
+                normalizedPitch = Mth.clamp(normalizedPitch, 0.0f, 1.0f);
+
+                // Apply curve: quadratic (2.0) makes it ramp up faster as you dive steeper
+                // linear (1.0) = constant rate, cubic (3.0) = very aggressive late ramp
+                diveIntensity = (float) Math.pow(normalizedPitch, DIVE_CURVE_POWER);
             }
-            // Below 45°: no dive boost (diveMultiplier = 1.0)
+
+            // Smoothly interpolate all dive parameters based on intensity
+            double diveMultiplier = Mth.lerp(diveIntensity, DIVE_MIN_SPEED_MULT, DIVE_MAX_SPEED_MULT);
+            double diveAcceleration = Mth.lerp(diveIntensity, DIVE_MIN_ACCEL, DIVE_MAX_ACCEL);
+            double diveDrag = Mth.lerp(diveIntensity, DIVE_MIN_DRAG, DIVE_MAX_DRAG);
 
             targetSpeed *= diveMultiplier;
 

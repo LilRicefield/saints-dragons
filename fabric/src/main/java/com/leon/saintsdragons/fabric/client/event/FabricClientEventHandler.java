@@ -52,6 +52,12 @@ public class FabricClientEventHandler {
     private static float ignivorusCameraPitch = 0.0f;
     private static float nulljawCameraPitch = 0.0f;
 
+    // Raevyx beam camera state
+    private static boolean wasBeaming = false;
+    private static net.minecraft.client.CameraType previousPerspective = null;
+    private static float beamCameraForward = 0.0f;
+    private static float beamCameraUp = 0.0f;
+
     /**
      * Initialize the client event handler.
      * Call this from your client mod initializer.
@@ -78,56 +84,93 @@ public class FabricClientEventHandler {
         if (player == null) return;
 
         // Dragon riding camera adjustments - Raevyx
-        if (player.isPassenger() && player.getVehicle() instanceof Raevyx raevyx && camera.isDetached()) {
-            // Determine target zoom based on flight state
-            boolean isFlying = raevyx.isFlying();
+        if (player.isPassenger() && player.getVehicle() instanceof Raevyx raevyx) {
+            boolean isBeaming = raevyx.isBeaming();
+            Minecraft mc = Minecraft.getInstance();
 
-            // Flying: zoom to 18F, grounded: 18F base
-            raevyxCameraZoomTarget = isFlying ? 13F : 15F;
-
-            // Smooth transition (slower blend rate for more gradual zoom)
-            float blendRate = 0.05F;
-            raevyxCameraZoom += (raevyxCameraZoomTarget - raevyxCameraZoom) * blendRate;
-
-            // Calculate camera shift based on banking (only when flying)
-            double targetCameraShift = 0.0;
-            if (isFlying) {
-                // Get interpolated bank angle (-90 to +90 degrees)
-                float bankAngle = raevyx.getBankAngleDegrees(partialTicks);
-
-                // Calculate lateral shift magnitude based on bank angle and velocity
-                double velocity = raevyx.getDeltaMovement().horizontalDistance();
-                double velocityFactor = Math.min(velocity * 2.0, 1.5); // Cap at 1.5x
-
-                // Convert bank angle to shift
-                // Scale: at 45° bank with full velocity, shift ~5.5 blocks (more aggressive than Cindervane)
-                targetCameraShift = -(bankAngle / 45.0) * 5.5 * velocityFactor;
+            // Force first person when beaming starts
+            if (isBeaming && !wasBeaming) {
+                previousPerspective = mc.options.getCameraType();
+                mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                wasBeaming = true;
+            }
+            // Restore previous perspective when beaming ends
+            else if (!isBeaming && wasBeaming) {
+                if (previousPerspective != null) {
+                    mc.options.setCameraType(previousPerspective);
+                    previousPerspective = null;
+                }
+                wasBeaming = false;
+                beamCameraForward = 0.0f;
+                beamCameraUp = 0.0f;
             }
 
-            // Smooth the camera shift for gradual, natural movement
-            double shiftBlendRate = 0.15;
-            raevyxCameraShift += (targetCameraShift - raevyxCameraShift) * shiftBlendRate;
+            // Special beam camera (first person, moved forward to snout)
+            if (isBeaming) {
+                // Smoothly move camera forward and up to snout position
+                float targetForward = 7.5f; // ~7.5 blocks forward to near the snout
+                float targetUp = -2.0f; // ~-2 blocks for better view angle
+                float blendRate = 0.2f;
+                beamCameraForward += (targetForward - beamCameraForward) * blendRate;
+                beamCameraUp += (targetUp - beamCameraUp) * blendRate;
 
-            // Calculate vertical camera shift based on ascending/descending
-            double targetVerticalShift = isFlying ? 50.0 : 0.0;
-            // Smooth vertical shift
-            double verticalBlendRate = 0.12; // Slightly slower than lateral for smoother feel
-            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+                // Move camera forward and up using accessor
+                CameraAccessor cameraAccessor = (CameraAccessor) camera;
+                cameraAccessor.saintsdragons$invokeMove(beamCameraForward, 0, 0);
+                cameraAccessor.saintsdragons$invokeMove(0, -beamCameraUp, 0); // Negative Y = up in camera space
+            }
+            // Normal third person camera
+            else if (camera.isDetached()) {
+                // Determine target zoom based on flight state
+                boolean isFlying = raevyx.isFlying();
 
-            // Apply the smoothed zoom and lateral shift using the mixin accessor
-            CameraAccessor cameraAccessor = (CameraAccessor) camera;
-            double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(raevyxCameraZoom);
-            cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
-            // Apply lateral and vertical shifts
-            cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, raevyxCameraShift);
-            // Slight downward tilt for better forward visibility
-            float raevyxTargetPitch = isFlying ? 6.0f : 0.0f;
-            float raevyxPitchBlendRate = 0.15f;
-            raevyxCameraPitch += (raevyxTargetPitch - raevyxCameraPitch) * raevyxPitchBlendRate;
-            float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
-            float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
-            float clampedPitch = Mth.clamp(currentPitch + raevyxCameraPitch, -90.0f, 90.0f);
-            cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
+                // Flying: zoom to 18F, grounded: 18F base
+                raevyxCameraZoomTarget = isFlying ? 13F : 15F;
+
+                // Smooth transition (slower blend rate for more gradual zoom)
+                float blendRate = 0.05F;
+                raevyxCameraZoom += (raevyxCameraZoomTarget - raevyxCameraZoom) * blendRate;
+
+                // Calculate camera shift based on banking (only when flying)
+                double targetCameraShift = 0.0;
+                if (isFlying) {
+                    // Get interpolated bank angle (-90 to +90 degrees)
+                    float bankAngle = raevyx.getBankAngleDegrees(partialTicks);
+
+                    // Calculate lateral shift magnitude based on bank angle and velocity
+                    double velocity = raevyx.getDeltaMovement().horizontalDistance();
+                    double velocityFactor = Math.min(velocity * 2.0, 1.5); // Cap at 1.5x
+
+                    // Convert bank angle to shift
+                    // Scale: at 45° bank with full velocity, shift ~5.5 blocks (more aggressive than Cindervane)
+                    targetCameraShift = -(bankAngle / 45.0) * 5.5 * velocityFactor;
+                }
+
+                // Smooth the camera shift for gradual, natural movement
+                double shiftBlendRate = 0.15;
+                raevyxCameraShift += (targetCameraShift - raevyxCameraShift) * shiftBlendRate;
+
+                // Calculate vertical camera shift based on ascending/descending
+                double targetVerticalShift = isFlying ? 50.0 : 0.0;
+                // Smooth vertical shift
+                double verticalBlendRate = 0.12; // Slightly slower than lateral for smoother feel
+                verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+
+                // Apply the smoothed zoom and lateral shift using the mixin accessor
+                CameraAccessor cameraAccessor = (CameraAccessor) camera;
+                double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(raevyxCameraZoom);
+                cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+                // Apply lateral and vertical shifts
+                cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, raevyxCameraShift);
+                // Slight downward tilt for better forward visibility
+                float raevyxTargetPitch = isFlying ? 6.0f : 0.0f;
+                float raevyxPitchBlendRate = 0.15f;
+                raevyxCameraPitch += (raevyxTargetPitch - raevyxCameraPitch) * raevyxPitchBlendRate;
+                float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
+                float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
+                float clampedPitch = Mth.clamp(currentPitch + raevyxCameraPitch, -90.0f, 90.0f);
+                cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
+            }
         } else {
             // Reset zoom and shift when not riding Raevyx
             raevyxCameraZoom = 15F;
@@ -135,6 +178,10 @@ public class FabricClientEventHandler {
             raevyxCameraShift = 0.0;
             verticalCameraShift = 0.0;
             raevyxCameraPitch = 0.0f;
+            wasBeaming = false;
+            previousPerspective = null;
+            beamCameraForward = 0.0f;
+            beamCameraUp = 0.0f;
         }
 
         // Dragon riding camera adjustments - Cindervane

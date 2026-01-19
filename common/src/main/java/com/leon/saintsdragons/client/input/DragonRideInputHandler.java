@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.client.input;
 
-import com.leon.saintsdragons.client.DragonStatusUIManager;
+import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -205,9 +205,7 @@ public final class DragonRideInputHandler {
                 sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
 
                 int newMode = (dragon.getMeleeMode() + 1) % 2;
-                DragonStatusUIManager.getInstance()
-                        .getDragonStatusUI()
-                        .getMeleeModeNotification()
+                DragonUIRegistry.getMeleeModeNotification()
                         .showNotification(newMode);
             } else {
                 player.displayClientMessage(

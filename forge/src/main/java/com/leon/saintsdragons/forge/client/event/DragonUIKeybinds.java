@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.forge.client.event;
 
-import com.leon.saintsdragons.client.DragonStatusUIManager;
+import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -18,15 +18,15 @@ public class DragonUIKeybinds {
     public static final KeyMapping TOGGLE_DRAGON_UI = new KeyMapping(
         "key.saintsdragons.toggle_dragon_ui",
         InputConstants.Type.KEYSYM,
-        GLFW.GLFW_KEY_F4, // F4 key
+        GLFW.GLFW_KEY_F4,
         "key.categories.saintsdragons"
     );
-    
+
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(TOGGLE_DRAGON_UI);
     }
-    
+
     /**
      * Handle keybind events
      */
@@ -35,12 +35,9 @@ public class DragonUIKeybinds {
         if (minecraft.player == null || minecraft.screen != null) {
             return;
         }
-        
+
         if (TOGGLE_DRAGON_UI.consumeClick()) {
-            DragonStatusUIManager manager = DragonStatusUIManager.getInstance();
-            if (manager != null) {
-                manager.getDragonStatusUI().toggleVisibility();
-            }
+            DragonUIRegistry.toggleUIVisibility();
         }
     }
 }
