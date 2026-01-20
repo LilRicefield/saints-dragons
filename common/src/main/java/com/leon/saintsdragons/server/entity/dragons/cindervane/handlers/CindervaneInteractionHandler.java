@@ -42,6 +42,13 @@ public class CindervaneInteractionHandler {
      * Handle interactions with untamed amphitheres (taming)
      */
     private InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
+
+        if (dragon.isBaby()) {
+            return handleBabyTaming(player, heldItem, config);
+        }
+
         if (!dragon.isFood(heldItem)) {
             return InteractionResult.PASS;
         }
@@ -70,8 +77,6 @@ public class CindervaneInteractionHandler {
 
             boolean hearty = heldItem.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
 
-            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                    .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0)
                 : config.extraDoubles().getOrDefault("taming_chance_base", 4.0);
@@ -111,8 +116,12 @@ public class CindervaneInteractionHandler {
 
         // Owner-only interactions
         if (isOwner) {
-            // Handle feeding for healing
-            if (dragon.isFood(heldItem) && dragon.getHealth() < dragon.getMaxHealth()) {
+            if (player.isCrouching() && dragon.isFood(heldItem)) {
+                return handleBreeding(player, heldItem);
+            }
+
+            // Handle feeding for healing or growth
+            if (dragon.isFood(heldItem)) {
                 return handleFeeding(player, heldItem);
             }
 
@@ -204,6 +213,48 @@ public class CindervaneInteractionHandler {
         return InteractionResult.PASS;
     }
 
+    private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
+        boolean client = dragon.level().isClientSide;
+
+        if (!dragon.canFeed()) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.cindervane.still_eating", dragon.getName()),
+                        true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        if (dragon.isBaby()) {
+            sendStatusMessage(player, "entity.saintsdragons.cindervane.breeding_too_young");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (dragon.getAge() != 0) {
+            sendStatusMessage(player, "entity.saintsdragons.cindervane.breeding_cooling_down");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (dragon.isInLove()) {
+            sendStatusMessage(player, "entity.saintsdragons.cindervane.breeding_already_ready");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (!client) {
+            if (!player.getAbilities().instabuild) {
+                itemstack.shrink(1);
+            }
+
+            dragon.triggerAnim("actions", "eat");
+            dragon.setFeedingCooldown(61);
+            dragon.setInLove(player);
+            sendStatusMessage(player, "entity.saintsdragons.cindervane.breeding_ready");
+        }
+
+        return InteractionResult.sidedSuccess(client);
+    }
+
     /**
      * Handle feeding the dragon for healing
      */
@@ -231,27 +282,46 @@ public class CindervaneInteractionHandler {
             dragon.setFeedingCooldown(44);
 
             boolean hearty = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            float healAmount = hearty ? 15.0F : 5.0F;
-            float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
-            boolean fullyHealed = newHealth >= dragon.getMaxHealth();
+            if (dragon.isBaby()) {
+                int growthTicks = hearty ? 4800 : 2400;
+                int currentAge = dragon.getAge();
+                int newAge = Math.min(0, currentAge + growthTicks);
+                dragon.setAge(newAge);
 
-            dragon.heal(healAmount);
-            if (hearty) {
-                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
-            }
-            dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
 
-            // Send appropriate message
-            if (fullyHealed) {
-                player.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.cindervane.fed", dragon.getName()),
-                    true
-                );
+                if (player instanceof ServerPlayer serverPlayer) {
+                    String messageKey = (newAge == 0)
+                            ? "entity.saintsdragons.cindervane.baby_grown"
+                            : "entity.saintsdragons.cindervane.baby_fed";
+                    serverPlayer.displayClientMessage(
+                            Component.translatable(messageKey, dragon.getName()),
+                            true
+                    );
+                }
             } else {
-                player.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.cindervane.fed_partial", dragon.getName()),
-                    true
-                );
+                float healAmount = hearty ? 15.0F : 5.0F;
+                float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
+                boolean fullyHealed = newHealth >= dragon.getMaxHealth();
+
+                dragon.heal(healAmount);
+                if (hearty) {
+                    dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+                }
+                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+
+                // Send appropriate message
+                if (fullyHealed) {
+                    player.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.cindervane.fed", dragon.getName()),
+                        true
+                    );
+                } else {
+                    player.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.cindervane.fed_partial", dragon.getName()),
+                        true
+                    );
+                }
             }
             return InteractionResult.CONSUME;
         }
@@ -301,6 +371,63 @@ public class CindervaneInteractionHandler {
         }
 
         return InteractionResult.SUCCESS;
+    }
+
+    private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
+        boolean client = dragon.level().isClientSide;
+        boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+        if (!dragon.isFood(itemstack) && !itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
+            return InteractionResult.PASS;
+        }
+
+        if (!dragon.canFeed()) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.cindervane.still_eating", dragon.getName()),
+                    true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        if (!client) {
+            if (!player.getAbilities().instabuild) {
+                itemstack.shrink(1);
+            }
+
+            dragon.triggerAnim("actions", "eat");
+            dragon.setFeedingCooldown(44);
+
+            if (hearty) {
+                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+            }
+
+            double tameChance = hearty
+                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0)
+                : config.extraDoubles().getOrDefault("taming_chance_base", 4.0);
+            int tameRoll = (int) Math.round(tameChance);
+
+            if (dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0) {
+                dragon.tame(player);
+                dragon.getNavigation().stop();
+                dragon.setOrderedToSit(true);
+                dragon.setCommand(1);
+                dragon.setTarget(null);
+                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+
+                triggerTamingAdvancement(player);
+            } else {
+                dragon.level().broadcastEntityEvent(dragon, (byte) 6);
+            }
+        }
+
+        return InteractionResult.sidedSuccess(client);
+    }
+
+    private void sendStatusMessage(Player player, String key) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.displayClientMessage(Component.translatable(key, dragon.getName()), true);
+        }
     }
 
     private boolean isInteractionItem(ItemStack itemstack) {

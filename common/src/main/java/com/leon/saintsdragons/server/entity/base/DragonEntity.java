@@ -31,6 +31,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -90,6 +91,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     // Death sequence management
     private boolean dying = false;
+    @Nullable
+    private LivingEntity lastDamager;
+    private int lastDamagerTimestamp;
     private DamageSource killDataCause;
     private int killDataRecentlyHit;
     private Player killDataAttackingPlayer;
@@ -409,9 +413,33 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
         boolean result = super.hurt(source, amount);
         if (result) {
+            LivingEntity attacker = null;
+            if (source.getEntity() instanceof LivingEntity living) {
+                attacker = living;
+            } else if (source.getDirectEntity() instanceof LivingEntity living) {
+                attacker = living;
+            } else if (source.getDirectEntity() instanceof Projectile projectile
+                    && projectile.getOwner() instanceof LivingEntity living) {
+                attacker = living;
+            }
+
+            if (attacker != null) {
+                this.setLastHurtByMob(attacker);
+                this.lastDamager = attacker;
+                this.lastDamagerTimestamp = this.tickCount;
+            }
             onSuccessfulDamage(source, amount);
         }
         return result;
+    }
+
+    @Nullable
+    public LivingEntity getLastDamager() {
+        return lastDamager;
+    }
+
+    public int getLastDamagerTimestamp() {
+        return lastDamagerTimestamp;
     }
 
     /**

@@ -18,25 +18,34 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
     }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/nulljaw.geo.json");
+    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_nulljaw.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/nulljaw.animation.json");
+    private static final ResourceLocation BABY_ANIM = SaintsDragonsCommon.rl("animations/entity/baby_nulljaw.animation.json");
     private static final ResourceLocation MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/nulljaw/nulljaw.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/nulljaw/nulljaw_female.png");
+    private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/nulljaw/baby_nulljaw.png");
+    private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/nulljaw/baby_nulljaw_female.png");
 
 
     @Override
     public ResourceLocation getModelResource(Nulljaw entity) {
-        return MODEL;
+        return entity != null && entity.isBaby() ? BABY_MODEL : MODEL;
     }
 
     @Override
     public ResourceLocation getTextureResource(Nulljaw entity) {
-        // TODO: Add baby texture variant
+        if (entity == null) {
+            return MALE_TEXTURE;
+        }
+        if (entity.isBaby()) {
+            return entity.isFemale() ? BABY_FEMALE_TEXTURE : BABY_TEXTURE;
+        }
         return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
     }
 
     @Override
     public ResourceLocation getAnimationResource(Nulljaw entity) {
-        return ANIM;
+        return entity != null && entity.isBaby() ? BABY_ANIM : ANIM;
     }
 
     @Override

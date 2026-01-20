@@ -1667,6 +1667,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (this.isBaby()) {
+            super.setTarget(null);
+            return;
+        }
+        super.setTarget(target);
+    }
+
+    @Override
     protected float getRiddenSpeed(@Nonnull Player rider) {
         return riderController.getRiddenSpeed(rider);
     }

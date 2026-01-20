@@ -425,7 +425,16 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         for (LivingEntity entity : level.getEntitiesOfClass(
                 LivingEntity.class,
                 getUser().getBoundingBox().inflate(EXPLOSION_RADIUS),
-                target -> target != getUser() && target.isAlive() && target.attackable() && !getUser().isAlly(target))) {
+                target -> {
+                    // Don't damage self
+                    if (target == getUser()) return false;
+
+                    // Don't damage baby Ignivorus dragons (protect the young!)
+                    if (target instanceof Ignivorus baby && baby.isBaby()) return false;
+
+                    // Only damage alive, attackable entities that aren't allies
+                    return target.isAlive() && target.attackable() && !getUser().isAlly(target);
+                })) {
 
             if (entity.position().distanceToSqr(center) > radiusSqr) {
                 continue;

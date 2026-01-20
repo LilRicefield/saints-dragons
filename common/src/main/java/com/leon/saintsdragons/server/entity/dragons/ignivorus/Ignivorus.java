@@ -14,6 +14,8 @@ import com.leon.saintsdragons.common.block.IgnivorusEggBlockEntity;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
+import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
@@ -465,19 +467,25 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal((com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable)this));
-        this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
-        this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
-        this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
-        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forIgnivorus()));
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(this, 1.0D, Ignivorus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
+            this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
+            this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
+            this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
         }
-        this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 120));
-        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forIgnivorus()));
+        this.goalSelector.addGoal(5, new DragonFollowParentGoal<>(this, Ignivorus.class, 1.1D));
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(this, 1.0D, Ignivorus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
+        }
+        this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 120));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 
-        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+        if (!this.isBaby()) {
+            this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
+            this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
+            this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Ignivorus.class));
+            this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
+        }
 
     }
 
@@ -3826,6 +3834,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
+        if (this.isBaby()) {
+            super.setTarget(null);
+            return;
+        }
         if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
             return;
         }

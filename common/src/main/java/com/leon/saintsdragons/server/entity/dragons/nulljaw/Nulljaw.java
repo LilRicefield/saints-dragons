@@ -3,13 +3,21 @@ package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
+import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.*;
+import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.*;
+import com.leon.saintsdragons.common.block.NulljawEggBlockEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -45,6 +53,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.damagesource.DamageSource;
@@ -176,6 +186,8 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private static final int BUCK_INTERVAL_MIN = 60;
     private static final int BUCK_INTERVAL_MAX = 110;
     private static final int BUCK_WARNING_WINDOW = 15; // Ticks before buck where Nulljaw "winds up"
+    private static final double BREED_PARTNER_RANGE = 30.0D;
+    private static final double BREED_DISTANCE_SQR = 400.0D;
     private boolean wildRideActive = false;
     private int wildRideTicks = 0;
     private int nextBuckAttemptTick = 0;
@@ -356,7 +368,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.28D) // Hardcoded AI pathfinding speed
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.5D)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.ARMOR, 8.0D)
                 .add(Attributes.ATTACK_DAMAGE, 10.0D);
     }
@@ -429,7 +441,9 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(1, new BreathAirGoal(this));
-        this.goalSelector.addGoal(2, new NulljawCombatGoal(this));
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(2, new NulljawCombatGoal(this));
+        }
         this.goalSelector.addGoal(3, new DirectSwimToTargetGoal(this, 8.0F, 0.30D, true));
         this.goalSelector.addGoal(5, new NulljawLeaveWaterGoal(this));
         this.goalSelector.addGoal(6, new NulljawFindWaterGoal(this));
@@ -437,11 +451,22 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
         this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100);
         this.goalSelector.addGoal(11, groundWanderGoal);
+        this.goalSelector.addGoal(11, new DragonFollowParentGoal<>(this, Nulljaw.class, 1.1D));
         this.goalSelector.addGoal(11, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(12, new DragonBreedGoal<>(
+                    this, 1.0D, Nulljaw.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
+            ));
+        }
+
+        if (!this.isBaby()) {
+            this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
+            this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
+            this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Nulljaw.class));
+            this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
+        }
     }
 
     @Override
@@ -711,7 +736,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         }
     }
 
-    private void applyConfiguredAttributes() {
+    public void applyConfiguredAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
         setAttributeBase(Attributes.ARMOR, config.armor());
@@ -1000,13 +1025,78 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     }
 
     @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (this.isBaby()) {
+            super.setTarget(null);
+            return;
+        }
+        super.setTarget(target);
+    }
+
+    @Override
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
         return riderController.getDismountLocationForPassenger(passenger);
     }
 
     @Override
     public net.minecraft.world.entity.AgeableMob getBreedOffspring(@Nonnull net.minecraft.server.level.ServerLevel level, @Nonnull net.minecraft.world.entity.AgeableMob other) {
-        return null;
+        Nulljaw baby = ModEntities.NULLJAW.get().create(level);
+        if (baby != null) {
+            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+            java.util.UUID ownerId = this.getOwnerUUID();
+            if (ownerId != null) {
+                baby.setOwnerUUID(ownerId);
+                baby.setTame(true);
+            }
+
+            baby.skipRespawnTicks = 5;
+            baby.setAge(-24000);
+            baby.setBaby(true);
+            baby.applyConfiguredAttributes();
+            baby.setHealth(baby.getMaxHealth());
+            baby.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
+        }
+        return baby;
+    }
+
+    @Override
+    public boolean canMate(@Nonnull net.minecraft.world.entity.animal.Animal otherAnimal) {
+        if (!this.canBreed()) {
+            return false;
+        }
+
+        if (otherAnimal instanceof Nulljaw otherDragon) {
+            if (this.isFemale() == otherDragon.isFemale()) {
+                return false;
+            }
+            return otherDragon.canBreed();
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean canBreed() {
+        return this.isTame() && !this.isBaby() && this.getHealth() >= this.getMaxHealth() && this.isInLove();
+    }
+
+    @Override
+    public BlockState getEggBlockState() {
+        return ModBlocks.NULLJAW_EGG.get().defaultBlockState();
+    }
+
+    @Override
+    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
+        if (!(blockEntity instanceof NulljawEggBlockEntity eggEntity)) {
+            return;
+        }
+
+        if (this.isTame() && this.getOwnerUUID() != null) {
+            eggEntity.setOwnerUUID(this.getOwnerUUID());
+        }
+
+        DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
+        eggEntity.setBabyGender(babyGender);
     }
 
     @Override

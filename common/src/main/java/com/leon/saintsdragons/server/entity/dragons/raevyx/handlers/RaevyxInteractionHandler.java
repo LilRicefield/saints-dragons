@@ -159,7 +159,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         boolean client = wyvern.level().isClientSide;
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        if (!itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
+        if (!wyvern.isFood(itemstack) && !itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
             return InteractionResult.PASS;
         }
 
