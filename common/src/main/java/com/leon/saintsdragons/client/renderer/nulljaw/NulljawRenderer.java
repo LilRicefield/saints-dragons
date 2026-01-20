@@ -47,7 +47,7 @@ public class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
         // Scale the drake - females are slightly smaller (85% scale)
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 2.5f * scale;
+        this.shadowRadius = entity.isBaby() ? 1.5F : 2.5f;
 
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }

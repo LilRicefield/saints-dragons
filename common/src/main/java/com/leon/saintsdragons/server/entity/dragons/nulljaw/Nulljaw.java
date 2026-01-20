@@ -102,6 +102,11 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
     private static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
 
+    // ===== BABY STATS =====
+    private static final double BABY_MAX_HEALTH = 80.0D;
+    private static final double BABY_ARMOR = 0.0D;
+    private static final float BABY_HITBOX_SCALE = 0.5F;
+
     private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
@@ -290,6 +295,15 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     @Override
     public boolean canTakeoff() {
         return false; // Nulljaw is a ground/aquatic dragon, cannot fly
+    }
+
+    @Override
+    public @NotNull net.minecraft.world.entity.EntityDimensions getDimensions(@NotNull net.minecraft.world.entity.Pose pose) {
+        net.minecraft.world.entity.EntityDimensions baseDimensions = super.getDimensions(pose);
+        if (isBaby()) {
+            return baseDimensions.scale(BABY_HITBOX_SCALE);
+        }
+        return baseDimensions;
     }
 
     @Override
@@ -738,12 +752,15 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
-        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        setAttributeBase(Attributes.ARMOR, config.armor());
+
+        // Apply baby-specific stats or adult stats
+        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
+        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : config.armor());
         // MOVEMENT_SPEED is hardcoded in createAttributes() - no config needed
 
-        if (this.getHealth() > config.maxHealth()) {
-            this.setHealth((float) config.maxHealth());
+        double maxHealth = isBaby() ? BABY_MAX_HEALTH : config.maxHealth();
+        if (this.getHealth() > maxHealth) {
+            this.setHealth((float) maxHealth);
         }
     }
 
@@ -1073,6 +1090,13 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         }
 
         return false;
+    }
+
+    @Override
+    public void ageBoundaryReached() {
+        super.ageBoundaryReached();
+        applyConfiguredAttributes();
+        refreshDimensions();
     }
 
     @Override

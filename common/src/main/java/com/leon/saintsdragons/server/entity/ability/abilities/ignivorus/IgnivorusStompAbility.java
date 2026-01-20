@@ -43,12 +43,12 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
     // Strong upward launch force from stomp
     private static final double UPWARD_FORCE = 0.75;
 
-    // Animation timing: 1.25 seconds = 25 ticks total
+    // Animation timing: 1.46 seconds = 29 ticks total
     // Damage lands at 1.0 seconds (20 ticks)
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 20),   // Windup (1.0s - damage lands here)
             new AbilitySectionDuration(ACTIVE, 2),     // Hit window (0.1s)
-            new AbilitySectionDuration(RECOVERY, 3)    // Recovery (0.15s)
+            new AbilitySectionDuration(RECOVERY, 7)    // Recovery (0.35s)
     };
 
     private boolean appliedHit;
@@ -76,8 +76,8 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
         if (section.sectionType == STARTUP) {
             Ignivorus dragon = getUser();
 
-            // Lock controls for the full animation duration (1.25 seconds = 25 ticks)
-            dragon.lockRiderControls(25);
+            // Lock controls for the full animation duration (1.46 seconds = 29 ticks)
+            dragon.lockRiderControls(29);
 
             // Alternate between left and right stomp
             boolean useRight = dragon.shouldUseRightWingSwipe();
