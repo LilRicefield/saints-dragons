@@ -134,6 +134,12 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
 
         this.dragon.resetLove();
         this.partner.resetLove();
+        if (this.dragon.getAge() == 0) {
+            this.dragon.setAge(6000);
+        }
+        if (this.partner.getAge() == 0) {
+            this.partner.setAge(6000);
+        }
 
         BlockPos eggPos = findEggLayingPosition(female);
         if (eggPos == null) {

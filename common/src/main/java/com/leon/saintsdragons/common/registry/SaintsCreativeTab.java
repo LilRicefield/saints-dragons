@@ -31,6 +31,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAEVYX_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_EGG.get());
                                 output.accept(ModItems.CINDERVANE_EGG.get());
+                                output.accept(ModItems.NULLJAW_EGG.get());
                                 output.accept(ModItems.CINDERVANE_SPAWN_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_SPAWN_EGG.get());
                                 output.accept(ModItems.RAEVYX_SPAWN_EGG.get());

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.block.RaevyxEggBlock;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlock;
 import com.leon.saintsdragons.common.block.CindervaneEggBlock;
+import com.leon.saintsdragons.common.block.NulljawEggBlock;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -42,6 +43,15 @@ public class ModBlocks {
             REGISTER.register("cindervane_egg",
                     () -> new CindervaneEggBlock(BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_ORANGE)
+                            .strength(0.5F)
+                            .sound(SoundType.METAL)
+                            .noOcclusion()
+                            .randomTicks()));
+
+    public static final Supplier<Block> NULLJAW_EGG =
+            REGISTER.register("nulljaw_egg",
+                    () -> new NulljawEggBlock(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_BLACK)
                             .strength(0.5F)
                             .sound(SoundType.METAL)
                             .noOcclusion()

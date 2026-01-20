@@ -32,6 +32,10 @@ public record NulljawInteractionHandler(Nulljaw drake) {
                 .getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         boolean legacyTaming = config.extraBoolean("legacy_taming", false);
 
+        if (drake.isBaby()) {
+            return handleBabyTaming(player, heldItem, config);
+        }
+
         if (drake.isFood(heldItem)) {
             if (legacyTaming) {
                 // Legacy taming: simple food-based taming with RNG
@@ -110,7 +114,11 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             return InteractionResult.PASS;
         }
 
-        if (drake.isFood(heldItem) && drake.getHealth() < drake.getMaxHealth()) {
+        if (player.isCrouching() && drake.isFood(heldItem)) {
+            return handleBreeding(player, heldItem);
+        }
+
+        if (drake.isFood(heldItem)) {
             return handleFeeding(player, heldItem, false);
         }
 
@@ -123,6 +131,48 @@ public record NulljawInteractionHandler(Nulljaw drake) {
         }
 
         return InteractionResult.PASS;
+    }
+
+    private InteractionResult handleBreeding(Player player, ItemStack food) {
+        boolean client = drake.level().isClientSide;
+
+        if (!drake.canFeed()) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.nulljaw.still_eating", drake.getName()),
+                        true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        if (drake.isBaby()) {
+            sendStatusMessage(player, "entity.saintsdragons.nulljaw.breeding_too_young");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (drake.getAge() != 0) {
+            sendStatusMessage(player, "entity.saintsdragons.nulljaw.breeding_cooling_down");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (drake.isInLove()) {
+            sendStatusMessage(player, "entity.saintsdragons.nulljaw.breeding_already_ready");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (!client) {
+            if (!player.getAbilities().instabuild) {
+                food.shrink(1);
+            }
+
+            drake.triggerAnim("action", "eat");
+            drake.setFeedingCooldown(61);
+            drake.setInLove(player);
+            sendStatusMessage(player, "entity.saintsdragons.nulljaw.breeding_ready");
+        }
+
+        return InteractionResult.sidedSuccess(client);
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack food, boolean untamed) {
@@ -145,35 +195,102 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             drake.setFeedingCooldown(50);
 
             boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            float healAmount;
-            if (heartyMeal) {
-                healAmount = 35.0F;
+            if (drake.isBaby()) {
+                int growthTicks = heartyMeal ? 4800 : 2400;
+                int currentAge = drake.getAge();
+                int newAge = Math.min(0, currentAge + growthTicks);
+                drake.setAge(newAge);
+
+                drake.level().broadcastEntityEvent(drake, (byte) 7);
+
+                if (player instanceof ServerPlayer serverPlayer) {
+                    String messageKey = (newAge == 0)
+                            ? "entity.saintsdragons.nulljaw.baby_grown"
+                            : "entity.saintsdragons.nulljaw.baby_fed";
+                    serverPlayer.displayClientMessage(
+                            Component.translatable(messageKey, drake.getName()),
+                            true
+                    );
+                }
             } else {
-                healAmount = untamed ? 5.0F : 10.0F;
+                float healAmount;
+                if (heartyMeal) {
+                    healAmount = 35.0F;
+                } else {
+                    healAmount = untamed ? 5.0F : 10.0F;
+                }
+
+                float newHealth = Math.min(drake.getHealth() + healAmount, drake.getMaxHealth());
+                drake.setHealth(newHealth);
+
+                if (heartyMeal) {
+                    drake.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+                }
+
+                drake.level().broadcastEntityEvent(drake, (byte) 7);
+
+                if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                    boolean fullyHealed = newHealth >= drake.getMaxHealth();
+                    serverPlayer.displayClientMessage(
+                            Component.translatable(
+                                    fullyHealed ? "entity.saintsdragons.nulljaw.fed" : "entity.saintsdragons.nulljaw.fed_partial",
+                                    drake.getName()
+                            ),
+                            true
+                    );
+                }
+            }
+        }
+
+        return InteractionResult.sidedSuccess(drake.level().isClientSide);
+    }
+
+    private InteractionResult handleBabyTaming(Player player, ItemStack food, DragonAttributeConfig config) {
+        boolean client = drake.level().isClientSide;
+        boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+        if (!drake.isFood(food) && !food.is(net.minecraft.world.item.Items.SALMON) && !heartyMeal) {
+            return InteractionResult.PASS;
+        }
+
+        if (!drake.canFeed()) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.nulljaw.still_eating", drake.getName()),
+                        true
+                );
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        if (!client) {
+            if (!player.getAbilities().instabuild) {
+                food.shrink(1);
             }
 
-            float newHealth = Math.min(drake.getHealth() + healAmount, drake.getMaxHealth());
-            drake.setHealth(newHealth);
+            drake.triggerAnim("action", "eat");
+            drake.setFeedingCooldown(50);
 
             if (heartyMeal) {
                 drake.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
 
-            drake.level().broadcastEntityEvent(drake, (byte) 7);
+            double tameChance = heartyMeal
+                    ? config.extraDoubles().getOrDefault("taming_chance", 6.0) / 2.0
+                    : config.extraDoubles().getOrDefault("taming_chance", 6.0);
+            int tameRoll = (int) Math.round(tameChance);
+            boolean success = drake.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
 
-            if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                boolean fullyHealed = newHealth >= drake.getMaxHealth();
-                serverPlayer.displayClientMessage(
-                        Component.translatable(
-                                fullyHealed ? "entity.saintsdragons.nulljaw.fed" : "entity.saintsdragons.nulljaw.fed_partial",
-                                drake.getName()
-                        ),
-                        true
-                );
+            if (success) {
+                drake.tame(player);
+                drake.setOrderedToSit(true);
+                drake.level().broadcastEntityEvent(drake, (byte) 7);
+                drake.awardTamingAdvancement(player);
+            } else {
+                drake.level().broadcastEntityEvent(drake, (byte) 6);
             }
         }
 
-        return InteractionResult.sidedSuccess(drake.level().isClientSide);
+        return InteractionResult.sidedSuccess(client);
     }
 
     private InteractionResult handleMounting(Player player) {
@@ -233,6 +350,12 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             case 2 -> drake.setOrderedToSit(false); // Wander
             default -> {
             }
+        }
+    }
+
+    private void sendStatusMessage(Player player, String key) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.displayClientMessage(Component.translatable(key, drake.getName()), true);
         }
     }
 

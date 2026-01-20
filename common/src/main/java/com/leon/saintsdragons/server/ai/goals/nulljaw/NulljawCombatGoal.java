@@ -40,6 +40,9 @@ public class NulljawCombatGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (drake.isBaby()) {
+            return false;
+        }
         LivingEntity target = drake.getTarget();
         if (!drake.isTargetValid(target)) {
             return false;
@@ -52,6 +55,9 @@ public class NulljawCombatGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (drake.isBaby()) {
+            return false;
+        }
         LivingEntity target = drake.getTarget();
         if (!drake.isTargetValid(target)) {
             return false;

@@ -248,7 +248,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         boolean client = dragon.level().isClientSide;
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        if (!itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
+        if (!dragon.isFood(itemstack) && !itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
             return InteractionResult.PASS;
         }
 

@@ -10,10 +10,10 @@ import java.util.EnumSet;
 import java.util.List;
 
 /**
- * Makes adult dragons protect and stay with nearby babies of the same species.
+ * Makes adult dragons protect nearby babies of the same species.
+ * - Prevents flight when babies are nearby (adults stay grounded)
  * - Attacks entities that hurt babies
- * - Stays grounded and near babies (doesn't fly away)
- * - Follows babies to stay within protective range
+ * - Does NOT follow babies around (babies follow adults instead)
  *
  * @param <T> The dragon type (e.g., Raevyx, Ignivorus, etc.)
  */
@@ -23,12 +23,12 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
     private LivingEntity attacker;
     private int timestamp;
 
-    // Stay-with-babies behavior
+    // Track which baby is being protected (for threat detection)
     private T targetBaby;
-    private int pathRecalcTime;
-    private static final double MIN_DISTANCE_SQ = 25.0D; // 5 blocks - comfortable distance
     private static final double MAX_DISTANCE_SQ = 256.0D; // 16 blocks - max protective range
-    private static final double SPEED_MODIFIER = 1.0D;
+
+    // Track if any babies are nearby (for flight prevention)
+    private boolean babiesNearby = false;
 
     public DragonProtectBabiesGoal(T dragon, Class<T> dragonClass) {
         super(dragon, false);
@@ -44,8 +44,8 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
             return false;
         }
 
-        // Don't interfere if sitting
-        if (this.dragon.isOrderedToSit()) {
+        // Don't interfere if sitting or being ridden
+        if (this.dragon.isOrderedToSit() || this.dragon.isVehicle()) {
             return false;
         }
 
@@ -57,12 +57,21 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
         );
 
         if (nearbyBabies.isEmpty()) {
+            this.babiesNearby = false;
             return false;
         }
 
-        // Priority 1: Check if any baby has a recent attacker
+        // Babies are nearby - activate to prevent flight
+        this.babiesNearby = true;
+
+        // Also check for threats
         for (T baby : nearbyBabies) {
-            LivingEntity babyAttacker = baby.getLastHurtByMob();
+            LivingEntity babyAttacker = baby.getLastDamager();
+            int attackerTimestamp = baby.getLastDamagerTimestamp();
+            if (babyAttacker == null) {
+                babyAttacker = baby.getLastHurtByMob();
+                attackerTimestamp = baby.getLastHurtByMobTimestamp();
+            }
             if (babyAttacker != null && babyAttacker.isAlive()) {
                 // Don't attack other dragons of the same species or the owner
                 if (dragonClass.isInstance(babyAttacker)) {
@@ -74,62 +83,50 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
 
                 // Found a valid threat!
                 this.attacker = babyAttacker;
-                this.timestamp = baby.getLastHurtByMobTimestamp();
+                this.timestamp = attackerTimestamp;
                 this.targetBaby = baby;
                 return true;
             }
         }
 
-        // Priority 2: No threats, but stay near babies anyway
-        // Find the closest baby to stay with
-        double closestDist = Double.MAX_VALUE;
-        T closestBaby = null;
-        for (T baby : nearbyBabies) {
-            double dist = this.dragon.distanceToSqr(baby);
-            if (dist < closestDist) {
-                closestDist = dist;
-                closestBaby = baby;
-            }
-        }
-
-        // Only activate if baby is beyond minimum distance (not already close)
-        if (closestBaby != null && closestDist > MIN_DISTANCE_SQ) {
-            this.targetBaby = closestBaby;
-            this.attacker = null; // No threat, just staying nearby
-            return true;
-        }
-
-        return false;
+        // No threats, but babies are nearby - still activate for flight prevention
+        this.attacker = null;
+        this.targetBaby = nearbyBabies.get(0); // Track any baby for distance checks
+        return true;
     }
 
     @Override
     public boolean canContinueToUse() {
-        // Stop if ordered to sit
-        if (this.dragon.isOrderedToSit()) {
+        // Stop if ordered to sit or being ridden
+        if (this.dragon.isOrderedToSit() || this.dragon.isVehicle()) {
             return false;
         }
 
-        // Stop if target baby is gone
-        if (this.targetBaby == null || !this.targetBaby.isAlive() || !this.targetBaby.isBaby()) {
+        // Check if any babies are still nearby
+        List<T> nearbyBabies = this.dragon.level().getEntitiesOfClass(
+                dragonClass,
+                this.dragon.getBoundingBox().inflate(16.0D),
+                baby -> baby != null && baby.isBaby() && baby.isAlive()
+        );
+
+        if (nearbyBabies.isEmpty()) {
+            this.babiesNearby = false;
             return false;
         }
 
-        double distToBaby = this.dragon.distanceToSqr(this.targetBaby);
+        this.babiesNearby = true;
 
-        // Stop if baby is too far away
-        if (distToBaby > MAX_DISTANCE_SQ) {
-            return false;
-        }
-
-        // If there's an attacker, check if it's still valid
+        // If there's a threat, check if it's still valid
         if (this.attacker != null) {
             if (!this.attacker.isAlive() || this.dragon.distanceToSqr(this.attacker) > MAX_DISTANCE_SQ) {
-                this.attacker = null; // Threat gone, but continue staying with baby
+                // Threat gone, clear it but continue for flight prevention
+                this.attacker = null;
+                this.dragon.setTarget(null);
             }
         }
 
-        // Stop only if baby is very close and there's no threat
-        return distToBaby >= MIN_DISTANCE_SQ || this.attacker != null;
+        // Continue as long as babies are nearby (for flight prevention)
+        return true;
     }
 
     @Override
@@ -138,42 +135,20 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
         if (this.attacker != null) {
             this.dragon.setTarget(this.attacker);
         }
-        this.pathRecalcTime = 0;
-
-        // Prevent flight when protecting babies
-        preventFlight();
 
         super.start();
     }
 
     @Override
     public void tick() {
-        if (this.targetBaby == null) {
-            return;
-        }
-
-        // Keep preventing flight while protecting
+        // Prevent flight when babies are nearby
         preventFlight();
 
-        // If there's an attacker, prioritize combat (handled by TargetGoal)
-        if (this.attacker != null && this.attacker.isAlive()) {
-            return;
-        }
+        // Continuously check for new threats
+        checkForThreats();
 
-        // Otherwise, stay near the baby
-        if (--this.pathRecalcTime <= 0) {
-            this.pathRecalcTime = this.adjustedTickDelay(10);
-
-            double distToBaby = this.dragon.distanceToSqr(this.targetBaby);
-
-            // Only path towards baby if beyond minimum distance
-            if (distToBaby > MIN_DISTANCE_SQ) {
-                this.dragon.getNavigation().moveTo(this.targetBaby, SPEED_MODIFIER);
-            } else {
-                // Close enough, stop moving
-                this.dragon.getNavigation().stop();
-            }
-        }
+        // Combat is handled by the TargetGoal system (setTarget in checkForThreats)
+        // No pathfinding toward babies - they follow the adult instead
     }
 
     @Override
@@ -184,7 +159,54 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
     }
 
     /**
-     * Prevents the dragon from flying while protecting babies.
+     * Continuously checks for threats to nearby babies.
+     * This is called every tick to detect new attacks, not just when the goal first activates.
+     */
+    private void checkForThreats() {
+        // Look for nearby babies
+        List<T> nearbyBabies = this.dragon.level().getEntitiesOfClass(
+                dragonClass,
+                this.dragon.getBoundingBox().inflate(16.0D),
+                baby -> baby != null && baby.isBaby() && baby.isAlive()
+        );
+
+        if (nearbyBabies.isEmpty()) {
+            return;
+        }
+
+        // Check if any baby has been recently attacked
+        for (T baby : nearbyBabies) {
+            LivingEntity babyAttacker = baby.getLastDamager();
+            int attackerTimestamp = baby.getLastDamagerTimestamp();
+            if (babyAttacker == null) {
+                babyAttacker = baby.getLastHurtByMob();
+                attackerTimestamp = baby.getLastHurtByMobTimestamp();
+            }
+
+            // Check if this is a new/recent attack
+            if (babyAttacker != null && babyAttacker.isAlive()) {
+                // Don't attack other dragons of the same species or the owner
+                if (dragonClass.isInstance(babyAttacker)) {
+                    continue;
+                }
+                if (this.dragon.isTame() && babyAttacker == this.dragon.getOwner()) {
+                    continue;
+                }
+
+                // Found a threat! Update target if it's new or more recent
+                if (this.attacker != babyAttacker || attackerTimestamp > this.timestamp) {
+                    this.attacker = babyAttacker;
+                    this.timestamp = attackerTimestamp;
+                    this.targetBaby = baby;
+                    this.dragon.setTarget(babyAttacker);
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * Prevents the dragon from flying while babies are nearby.
      * Flying dragons should stay grounded with their young.
      */
     private void preventFlight() {
