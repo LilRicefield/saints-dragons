@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -119,6 +120,9 @@ public class IgnivorusNovaEntity extends Entity {
             if (target.getUUID().equals(ownerUUID)) continue;
             if (owner != null && owner.getPassengers().contains(target)) continue;
             if (damagedEntities.contains(target.getUUID())) continue;
+
+            // Don't damage baby Ignivorus dragons (protect the young!)
+            if (target instanceof Ignivorus baby && baby.isBaby()) continue;
 
             double distanceSqr = target.position().distanceToSqr(position());
             double radiusSqr = currentRadius * currentRadius;

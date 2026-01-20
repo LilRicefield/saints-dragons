@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -173,6 +174,9 @@ public class IgnivorusFlameEntity extends Entity {
             // Skip owner and owner's passengers
             if (ownerUUID != null && target.getUUID().equals(ownerUUID)) continue;
             if (owner != null && owner.getPassengers().contains(target)) continue;
+
+            // Don't damage baby Ignivorus dragons (protect the young!)
+            if (target instanceof Ignivorus baby && baby.isBaby()) continue;
 
             // Check if target is within hit radius
             double distance = target.distanceToSqr(this);
