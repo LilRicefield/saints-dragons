@@ -1,0 +1,13 @@
+{
+	"variants": {
+		"eggs=1,hatch=0": { "model": "saintsdragons:block/cindervane/cindervane_egg_1_stage0" },
+		"eggs=1,hatch=1": { "model": "saintsdragons:block/cindervane/cindervane_egg_1_stage1" },
+		"eggs=1,hatch=2": { "model": "saintsdragons:block/cindervane/cindervane_egg_1_stage2" },
+		"eggs=2,hatch=0": { "model": "saintsdragons:block/cindervane/cindervane_egg_2_stage0" },
+		"eggs=2,hatch=1": { "model": "saintsdragons:block/cindervane/cindervane_egg_2_stage1" },
+		"eggs=2,hatch=2": { "model": "saintsdragons:block/cindervane/cindervane_egg_2_stage2" },
+		"eggs=3,hatch=0": { "model": "saintsdragons:block/cindervane/cindervane_egg_3_stage0" },
+		"eggs=3,hatch=1": { "model": "saintsdragons:block/cindervane/cindervane_egg_3_stage1" },
+		"eggs=3,hatch=2": { "model": "saintsdragons:block/cindervane/cindervane_egg_3_stage2" }
+	}
+}

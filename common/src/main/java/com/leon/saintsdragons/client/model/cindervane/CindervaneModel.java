@@ -18,9 +18,12 @@ public CindervaneModel() {
 }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/cindervane.geo.json");
+    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_cindervane.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/cindervane.animation.json");
+    private static final ResourceLocation BABY_ANIM = SaintsDragonsCommon.rl("animations/entity/baby_cindervane.animation.json");
     private static final ResourceLocation MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_female.png");
+    private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/baby_cindervane_female.png");
 
 
 
@@ -51,18 +54,20 @@ public CindervaneModel() {
 
     @Override
     public ResourceLocation getModelResource(Cindervane entity) {
-        return MODEL;
+        return entity.isBaby() ? BABY_MODEL : MODEL;
     }
 
     @Override
     public ResourceLocation getTextureResource(Cindervane entity) {
-        // TODO: Add baby texture variant
+        if (entity.isBaby()) {
+            return BABY_FEMALE_TEXTURE;
+        }
         return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
     }
 
     @Override
     public ResourceLocation getAnimationResource(Cindervane entity) {
-        return ANIM;
+        return entity.isBaby() ? BABY_ANIM : ANIM;
     }
     private void applyBodyRotationDeviation(Cindervane entity, float partialTick) {
         var rootOpt = getBone("body");

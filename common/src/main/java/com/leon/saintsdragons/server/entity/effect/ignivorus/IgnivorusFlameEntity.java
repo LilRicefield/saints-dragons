@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.nbt.CompoundTag;
@@ -38,11 +39,13 @@ public class IgnivorusFlameEntity extends Entity {
             SynchedEntityData.defineId(IgnivorusFlameEntity.class, EntityDataSerializers.INT);
 
     private UUID ownerUUID;
+    private LivingEntity owner;
     private float damage;
     private int age;
     private int maxAge;
     private Vec3 spawnPos;
     private boolean hasHitEntity = false; // Track if this flame already hit something
+    private double igniteBlockChance = 1.0D;
 
     public IgnivorusFlameEntity(EntityType<? extends IgnivorusFlameEntity> type, Level level) {
         super(type, level);
@@ -56,10 +59,17 @@ public class IgnivorusFlameEntity extends Entity {
         setDeltaMovement(velocity);
         this.spawnPos = position;
         this.ownerUUID = owner != null ? owner.getUUID() : null;
+        this.owner = owner instanceof LivingEntity livingOwner ? livingOwner : null;
         this.damage = damage;
         this.maxAge = lifetime;
         setScale(scale);
         setLifetime(lifetime);
+        var config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        this.igniteBlockChance = config.extraDouble("fire_breath_ignite_block_chance", 1.0D);
+        if (this.igniteBlockChance < 0.0D) {
+            this.igniteBlockChance = 0.0D;
+        }
     }
 
     @Override
@@ -123,7 +133,9 @@ public class IgnivorusFlameEntity extends Entity {
                 if (level() instanceof ServerLevel serverLevel) {
                     double travelDistance = spawnPos.distanceTo(impactPoint);
                     double impactRadius = Mth.clamp(1.2 + travelDistance * 0.16, 1.2, 3.2);
-                    DragonDestructionManager.applyFlameImpact(serverLevel, impactPoint, impactRadius);
+                    if (igniteBlockChance > 0.0D && level().random.nextDouble() <= igniteBlockChance) {
+                        DragonDestructionManager.applyFlameImpact(serverLevel, impactPoint, impactRadius);
+                    }
                 }
                 this.discard();
                 return;
@@ -152,14 +164,14 @@ public class IgnivorusFlameEntity extends Entity {
         AABB searchBox = new AABB(start, end).inflate(radius);
         List<LivingEntity> potentialTargets = level().getEntitiesOfClass(LivingEntity.class, searchBox);
 
-        Entity owner = getOwner();
+        LivingEntity owner = getOwner();
         LivingEntity closestTarget = null;
         double closestDistance = Double.MAX_VALUE;
 
         // Find the closest valid target along the ray
         for (LivingEntity target : potentialTargets) {
             // Skip owner and owner's passengers
-            if (target.getUUID().equals(ownerUUID)) continue;
+            if (ownerUUID != null && target.getUUID().equals(ownerUUID)) continue;
             if (owner != null && owner.getPassengers().contains(target)) continue;
 
             // Check if target is within hit radius
@@ -175,12 +187,9 @@ public class IgnivorusFlameEntity extends Entity {
             hasHitEntity = true;
 
             // Always use mobAttack damage source - this bypasses Fire Resistance
-            DamageSource damageSource;
-            if (owner instanceof LivingEntity livingOwner) {
-                damageSource = level().damageSources().mobAttack(livingOwner);
-            } else {
-                damageSource = level().damageSources().generic();
-            }
+            DamageSource damageSource = owner != null
+                    ? level().damageSources().mobAttack(owner)
+                    : level().damageSources().generic();
 
             // Deal impact damage (works through Fire Resistance)
             closestTarget.hurt(damageSource, damage);
@@ -196,15 +205,14 @@ public class IgnivorusFlameEntity extends Entity {
         return false; // No hit
     }
 
-    private Entity getOwner() {
-        if (ownerUUID != null && level() != null) {
-            for (Entity entity : level().getEntities(null, AABB.ofSize(position(), 100, 100, 100))) {
-                if (entity.getUUID().equals(ownerUUID)) {
-                    return entity;
-                }
+    private LivingEntity getOwner() {
+        if (owner == null && ownerUUID != null && level() instanceof ServerLevel serverLevel) {
+            Entity entity = serverLevel.getEntity(ownerUUID);
+            if (entity instanceof LivingEntity livingEntity) {
+                owner = livingEntity;
             }
         }
-        return null;
+        return owner;
     }
 
     @Override
@@ -213,6 +221,7 @@ public class IgnivorusFlameEntity extends Entity {
         this.maxAge = tag.getInt("MaxAge");
         this.damage = tag.getFloat("Damage");
         this.hasHitEntity = tag.getBoolean("HasHitEntity");
+        this.igniteBlockChance = tag.contains("IgniteBlockChance") ? tag.getDouble("IgniteBlockChance") : 1.0D;
         if (tag.contains("SpawnX")) {
             this.spawnPos = new Vec3(tag.getDouble("SpawnX"), tag.getDouble("SpawnY"), tag.getDouble("SpawnZ"));
         }
@@ -227,6 +236,7 @@ public class IgnivorusFlameEntity extends Entity {
         tag.putInt("MaxAge", this.maxAge);
         tag.putFloat("Damage", this.damage);
         tag.putBoolean("HasHitEntity", this.hasHitEntity);
+        tag.putDouble("IgniteBlockChance", this.igniteBlockChance);
         if (this.spawnPos != null) {
             tag.putDouble("SpawnX", this.spawnPos.x);
             tag.putDouble("SpawnY", this.spawnPos.y);

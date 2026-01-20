@@ -1818,7 +1818,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
                 LivingEntity.class,
                 combinedBox,
-                entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlliedTo(entity)
+                entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlly(entity)
             );
 
             // Damage and knockback each entity
@@ -3483,7 +3483,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             // Check if this is the parent (not a baby we're spawning)
             if (!(spawnData instanceof RaevyxFamilyData)) {
                 // 60% chance to spawn with babies
-                if (this.random.nextFloat() < 0.6F) {
+                if (this.random.nextFloat() < 0.05F) {
                     // Mark this as a family spawn (false = don't spawn baby via vanilla logic)
                     spawnData = new RaevyxFamilyData(false);
                     
@@ -3529,40 +3529,52 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
         
         shouldSpawnBabies = false;
-        
-        for (int i = 0; i < babiesToSpawn; i++) {
-            Raevyx baby = ModEntities.RAEVYX.get().create(level());
-            if (baby != null) {
-                // Set baby properties BEFORE adding to world to ensure they persist
-                baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
 
-                // Set skip flag BEFORE setAge to prevent respawn logic
-                baby.skipRespawnTicks = 5;
-                baby.setBaby(true);
-                baby.setAge(-24000); // Standard baby age
-                baby.applyConfiguredAttributes();
-                baby.setHealth(baby.getMaxHealth());
-
-                // Position baby VERY close to parent (parent is now positioned!)
-                double angle = (Math.PI * 2.0 * i) / babiesToSpawn;
-                double distance = 1.0 + this.random.nextDouble() * 0.5; // 1-1.5 blocks away (very close)
-                double offsetX = Math.cos(angle) * distance;
-                double offsetZ = Math.sin(angle) * distance;
-
-                baby.moveTo(
-                        this.getX() + offsetX,
-                        this.getY(),
-                        this.getZ() + offsetZ,
-                        this.random.nextFloat() * 360.0F,
-                        0.0F
-                );
-
-                // Add to world
-                level().addFreshEntity(baby);
-            }
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            babiesToSpawn = 0;
+            return;
         }
-        
+
+        int spawnCount = babiesToSpawn;
         babiesToSpawn = 0;
+
+        serverLevel.getServer().execute(() -> {
+            if (this.isRemoved()) {
+                return;
+            }
+
+            for (int i = 0; i < spawnCount; i++) {
+                Raevyx baby = ModEntities.RAEVYX.get().create(serverLevel);
+                if (baby != null) {
+                    // Set baby properties BEFORE adding to world to ensure they persist
+                    baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+
+                    // Set skip flag BEFORE setAge to prevent respawn logic
+                    baby.skipRespawnTicks = 5;
+                    baby.setBaby(true);
+                    baby.setAge(-24000); // Standard baby age
+                    baby.applyConfiguredAttributes();
+                    baby.setHealth(baby.getMaxHealth());
+
+                    // Position baby VERY close to parent (parent is now positioned!)
+                    double angle = (Math.PI * 2.0 * i) / spawnCount;
+                    double distance = 1.0 + this.random.nextDouble() * 0.5; // 1-1.5 blocks away (very close)
+                    double offsetX = Math.cos(angle) * distance;
+                    double offsetZ = Math.sin(angle) * distance;
+
+                    baby.moveTo(
+                            this.getX() + offsetX,
+                            this.getY(),
+                            this.getZ() + offsetZ,
+                            this.random.nextFloat() * 360.0F,
+                            0.0F
+                    );
+
+                    // Add to world
+                    serverLevel.addFreshEntity(baby);
+                }
+            }
+        });
     }
 
     /**
@@ -4097,6 +4109,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tag.putFloat("BeamEnergy", getBeamEnergy());
         tag.putBoolean("BeamDepleted", isBeamDepleted());
+        if (shouldSpawnBabies) {
+            tag.putBoolean("FamilySpawnPending", true);
+            tag.putInt("FamilySpawnCount", babiesToSpawn);
+        }
         tamingController.save(tag);
     }
 
@@ -4148,6 +4164,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             setBeamDepleted(tag.getBoolean("BeamDepleted"));
         } else {
             setBeamDepleted(false); // Default to unlocked for older saves
+        }
+        if (tag.contains("FamilySpawnPending")) {
+            this.shouldSpawnBabies = tag.getBoolean("FamilySpawnPending");
+            this.babiesToSpawn = tag.getInt("FamilySpawnCount");
         }
         tamingController.load(tag);
 

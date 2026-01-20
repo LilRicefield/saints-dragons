@@ -160,7 +160,7 @@ public class CindervaneBinderItem extends Item {
 
         // Send success message
         player.displayClientMessage(
-            Component.translatable("saintsdragons.message.amphithere_captured", amphithere.getName().getString()),
+            Component.translatable("saintsdragons.message.cindervane_captured", amphithere.getName().getString()),
             true
         );
 

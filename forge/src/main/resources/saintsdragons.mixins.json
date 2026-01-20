@@ -8,6 +8,7 @@
     "ServerGamePacketListenerMixin"
   ],
   "client": [
+    "client.EntityRendererMixin"
   ],
   "server": [
   ],

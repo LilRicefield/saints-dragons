@@ -139,6 +139,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "ultimate_penalty_health", 50.0D,
                         "fire_breath_drain_per_tick", 0.00625D,
                         "fire_breath_regen_per_tick", 0.0025D,
+                        "fire_breath_flame_spawn_multiplier", 1.0D,
+                        "fire_breath_flame_speed_multiplier", 1.0D,
+                        "fire_breath_flame_lifetime_multiplier", 1.0D,
+                        "fire_breath_ignite_block_chance", 1.0D,
                         "taming_chance_base", 7.0D,
                         "taming_chance_hearty", 4.0D
                 ),
@@ -445,6 +449,26 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                             mergedConfig.extraDouble("fire_breath_regen_per_tick", 0.0025D));
                     updated = true;
                 }
+                if (!extra.has("fire_breath_flame_spawn_multiplier")) {
+                    extra.addProperty("fire_breath_flame_spawn_multiplier",
+                            mergedConfig.extraDouble("fire_breath_flame_spawn_multiplier", 1.0D));
+                    updated = true;
+                }
+                if (!extra.has("fire_breath_flame_speed_multiplier")) {
+                    extra.addProperty("fire_breath_flame_speed_multiplier",
+                            mergedConfig.extraDouble("fire_breath_flame_speed_multiplier", 1.0D));
+                    updated = true;
+                }
+                if (!extra.has("fire_breath_flame_lifetime_multiplier")) {
+                    extra.addProperty("fire_breath_flame_lifetime_multiplier",
+                            mergedConfig.extraDouble("fire_breath_flame_lifetime_multiplier", 1.0D));
+                    updated = true;
+                }
+                if (!extra.has("fire_breath_ignite_block_chance")) {
+                    extra.addProperty("fire_breath_ignite_block_chance",
+                            mergedConfig.extraDouble("fire_breath_ignite_block_chance", 1.0D));
+                    updated = true;
+                }
             }
 
             if (updated) {
@@ -472,6 +496,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             hints.addProperty("swim_speed", "Min 0.1, Max 5.0");
         } else if (id.equals(IGNIVORUS_ID)) {
             hints.addProperty("ultimate_penalty_health", "Typical 1-500");
+            hints.addProperty("fire_breath_flame_spawn_multiplier", "0 = disable flame entities, 1 = default");
+            hints.addProperty("fire_breath_flame_speed_multiplier", "Scales flame projectile speed (1 = default)");
+            hints.addProperty("fire_breath_flame_lifetime_multiplier", "Scales flame lifetime ticks (1 = default)");
+            hints.addProperty("fire_breath_ignite_block_chance", "0 = never ignite, 1 = always ignite");
         }
         return hints;
     }

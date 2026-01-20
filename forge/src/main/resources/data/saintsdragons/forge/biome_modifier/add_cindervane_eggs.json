@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#saintsdragons:has_cindervane",
+  "features": "saintsdragons:cindervane_egg_patch",
+  "step": "vegetal_decoration"
+}

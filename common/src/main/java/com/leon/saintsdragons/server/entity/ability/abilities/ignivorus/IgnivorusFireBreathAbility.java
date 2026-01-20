@@ -52,6 +52,11 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     // Block destruction settings
     private static final int ABILITY_ACTIVE_BEFORE_MELTING = 80;  // Ability must be active for 4 seconds before melting starts
     private static final int BLOCK_MELT_TICKS = 40;  // Each block takes 2 seconds of continuous exposure to melt
+    private static final int FLAME_SPAWN_MIN = 3;
+    private static final int FLAME_SPAWN_MAX = 5;
+    private static final double DEFAULT_FLAME_SPAWN_MULTIPLIER = 1.0D;
+    private static final double DEFAULT_FLAME_SPEED_MULTIPLIER = 1.0D;
+    private static final double DEFAULT_FLAME_LIFETIME_MULTIPLIER = 1.0D;
 
     private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[]{
         new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
@@ -290,9 +295,21 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         RandomSource random = dragon.getRandom();
         double sizeScale = Math.max(0.8D, dragon.getBbWidth());
         float damagePerProjectile = computeDamage(dragon, sizeScale) * 4.0F;
+        var config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        double spawnMultiplier = config.extraDouble("fire_breath_flame_spawn_multiplier",
+                DEFAULT_FLAME_SPAWN_MULTIPLIER);
+        double speedMultiplier = config.extraDouble("fire_breath_flame_speed_multiplier",
+                DEFAULT_FLAME_SPEED_MULTIPLIER);
+        double lifetimeMultiplier = config.extraDouble("fire_breath_flame_lifetime_multiplier",
+                DEFAULT_FLAME_LIFETIME_MULTIPLIER);
+        if (spawnMultiplier <= 0.0D) {
+            return;
+        }
 
-        // Spawn 6-9 projectiles per tick for a denser, more forceful stream
-        int count = 6 + random.nextInt(4);
+        int minCount = Math.max(1, (int) Math.round(FLAME_SPAWN_MIN * spawnMultiplier));
+        int maxCount = Math.max(minCount, (int) Math.round(FLAME_SPAWN_MAX * spawnMultiplier));
+        int count = minCount + random.nextInt(maxCount - minCount + 1);
 
         for (int i = 0; i < count; i++) {
             // Increased spread for wider cone effect
@@ -304,11 +321,14 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             );
 
             // Faster velocity for a more forceful flamethrower
-            Vec3 velocity = direction.normalize().scale(4.6 + random.nextDouble() * 1.8).add(spread);
+            double baseSpeed = 4.6 + random.nextDouble() * 1.8;
+            double speed = Math.max(0.1D, baseSpeed * speedMultiplier);
+            Vec3 velocity = direction.normalize().scale(speed).add(spread);
 
             // Start small, will grow to 2x size as it travels
             float scale = 1.5F + random.nextFloat() * 0.5F;
-            int projectileLifetime = 36 + random.nextInt(18);
+            int baseLifetime = 24 + random.nextInt(12);
+            int projectileLifetime = Math.max(1, (int) Math.round(baseLifetime * lifetimeMultiplier));
 
             // Bias spawns forward so more flames appear near the end of the stream
             double forwardBias = 0.6 + random.nextDouble() * 0.8; // 0.6 - 1.4 blocks ahead

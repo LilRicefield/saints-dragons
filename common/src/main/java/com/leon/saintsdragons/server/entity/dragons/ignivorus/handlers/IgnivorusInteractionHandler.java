@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -166,6 +167,10 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
     private InteractionResult handleTamedInteraction(Player player, ItemStack itemstack, InteractionHand hand) {
         boolean isOwner = player.equals(dragon.getOwner());
 
+        if (isInteractionItem(itemstack)) {
+            return InteractionResult.PASS;
+        }
+
         // Handle owner commands and mounting
         if (isOwner) {
             // Breeding - Shift+Right-click with food
@@ -173,11 +178,11 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 return handleBreeding(player, itemstack);
             }
             // Command cycling - Shift+Right-click cycles through commands
-            if (player.isCrouching() && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND) {
+            if (player.isCrouching() && !dragon.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
                 return handleCommandCycling(player);
             }
-            // Mounting - Right-click without shift
-            else if (!player.isCrouching() && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND) {
+            // Mounting - Right-click without shift (allow any non-food item)
+            else if (!player.isCrouching() && !dragon.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
                 return handleMounting(player);
             }
         }
@@ -410,7 +415,26 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
      * Handle command cycling (Follow/Sit/Wander).
      */
     private InteractionResult handleCommandCycling(Player player) {
-        // Get current command and cycle to next
+        boolean isTransitioning = dragon.isInSitTransition();
+        if (isTransitioning) {
+            // Dragon is in the middle of sitting down or standing up - ignore command spam
+            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                // Determine which transition is happening
+                boolean sittingDown = dragon.isSittingDownAnimation();
+                boolean standingUp = dragon.isStandingUpAnimation();
+                String messageKey = sittingDown
+                        ? "entity.saintsdragons.ignivorus.sitting_down"
+                        : standingUp
+                        ? "entity.saintsdragons.ignivorus.standing_up"
+                        : "entity.saintsdragons.ignivorus.transitioning";
+
+                serverPlayer.displayClientMessage(
+                        Component.translatable(messageKey, dragon.getName()),
+                        true
+                );
+            }
+            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        }
         int currentCommand = dragon.getCommand();
         int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
 
@@ -489,5 +513,10 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 serverPlayer.getAdvancements().award(advancement, "tame_ignivorus");
             }
         }
+    }
+
+    private boolean isInteractionItem(ItemStack itemstack) {
+        return itemstack.is(ModItems.IGNIVORUS_BINDER.get())
+                || itemstack.is(ModItems.DRAGON_ALLY_BOOK.get());
     }
 }

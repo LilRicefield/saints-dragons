@@ -52,7 +52,13 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
 
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 2.0f * scale;
+
+        // Baby dragons have smaller shadows
+        if (entity.isBaby()) {
+            this.shadowRadius = 0.8f;
+        } else {
+            this.shadowRadius = 2.0f * scale;
+        }
 
         // Store the model for later use in render()
         this.lastBakedModel = model;

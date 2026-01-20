@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -105,15 +106,19 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             return InteractionResult.PASS;
         }
 
+        if (isInteractionItem(heldItem)) {
+            return InteractionResult.PASS;
+        }
+
         if (drake.isFood(heldItem) && drake.getHealth() < drake.getMaxHealth()) {
             return handleFeeding(player, heldItem, false);
         }
 
-        if (drake.canOwnerCommand(player) && heldItem.isEmpty() && hand == InteractionHand.MAIN_HAND) {
+        if (drake.canOwnerCommand(player) && !drake.isFood(heldItem) && hand == InteractionHand.MAIN_HAND) {
             return handleCommandCycling(player);
         }
 
-        if (hand == InteractionHand.MAIN_HAND && heldItem.isEmpty() && !player.isCrouching()) {
+        if (hand == InteractionHand.MAIN_HAND && !drake.isFood(heldItem) && !player.isCrouching()) {
             return handleMounting(player);
         }
 
@@ -229,5 +234,10 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             default -> {
             }
         }
+    }
+
+    private boolean isInteractionItem(ItemStack itemstack) {
+        return itemstack.is(ModItems.NULLJAW_BINDER.get())
+                || itemstack.is(ModItems.DRAGON_ALLY_BOOK.get());
     }
 }
