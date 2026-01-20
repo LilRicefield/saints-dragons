@@ -45,20 +45,8 @@ public final class CommonModEvents {
     }
 
     public static void registerCreativeTabEntries(CreativeTabRegistrar registrar) {
-        registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.RAEVYX_SPAWN_EGG);
-        registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.STEGONAUT_SPAWN_EGG);
-        registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.CINDERVANE_SPAWN_EGG);
-        registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.NULLJAW_SPAWN_EGG);
-        registrar.accept(CreativeModeTabs.SPAWN_EGGS, ModItems.IGNIVORUS_SPAWN_EGG);
-
-        registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.DRAGON_ALLY_BOOK);
-        registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.STEGONAUT_BINDER);
-        registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.RAEVYX_BINDER);
-        registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.CINDERVANE_BINDER);
-        registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.NULLJAW_BINDER);
-        registrar.accept(CreativeModeTabs.TOOLS_AND_UTILITIES, ModItems.IGNIVORUS_BINDER);
-        registrar.accept(CreativeModeTabs.FOOD_AND_DRINKS, ModItems.HEARTY_DRAGON_MEAL);
-        registrar.accept(CreativeModeTabs.NATURAL_BLOCKS, ModItems.IGNIVORUS_EGG);
+        // All items are registered in SaintsCreativeTab only
+        // No vanilla tab registrations to keep everything in the Saints Dragons tab
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegistrar registrar) {

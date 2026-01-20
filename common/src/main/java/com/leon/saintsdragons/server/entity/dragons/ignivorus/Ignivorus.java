@@ -3479,6 +3479,22 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return 38;
     }
 
+    // ===== SIT TRANSITIONS =====
+    @Override
+    public boolean isInSitTransition() {
+        return isSittingDown || isStandingUp;
+    }
+
+    @Override
+    public boolean isSittingDownAnimation() {
+        return isSittingDown;
+    }
+
+    @Override
+    public boolean isStandingUpAnimation() {
+        return isStandingUp;
+    }
+
     public float getBankAngleDegrees(float partialTick) {
         return Mth.lerp(partialTick, prevBankAngle, bankAngle);
     }

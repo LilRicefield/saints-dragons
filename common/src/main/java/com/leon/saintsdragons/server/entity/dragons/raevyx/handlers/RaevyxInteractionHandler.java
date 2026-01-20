@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -214,6 +215,10 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
     private InteractionResult handleTamedInteraction(Player player, ItemStack itemstack, InteractionHand hand) {
         boolean isOwner = player.equals(wyvern.getOwner());
 
+        if (isInteractionItem(itemstack)) {
+            return InteractionResult.PASS;
+        }
+
         // Handle feeding for healing
         if (wyvern.isFood(itemstack)) {
             if (player.isCrouching() && isOwner) {
@@ -226,7 +231,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
         if (isOwner) {
             boolean isSleeping = wyvern.isSleeping() || wyvern.isSleepTransitioning();
             // Command cycling - Shift+Right-click cycles through commands
-            if (canOwnerCommand(player) && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND) {
+            if (canOwnerCommand(player) && !wyvern.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
                 if (isSleeping) {
                     if (!wyvern.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                         serverPlayer.displayClientMessage(
@@ -238,8 +243,8 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 }
                 return handleCommandCycling(player);
             }
-            // Mounting - Right-click without shift
-            else if (!player.isCrouching() && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND && canOwnerMount(player)) {
+            // Mounting - Right-click without shift (allow any non-food item)
+            else if (!player.isCrouching() && !wyvern.isFood(itemstack) && hand == InteractionHand.MAIN_HAND && canOwnerMount(player)) {
                 return handleMounting(player);
             }
         }
@@ -520,5 +525,10 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
      */
     private boolean canOwnerMount(Player player) {
         return wyvern.canOwnerMount(player);
+    }
+
+    private boolean isInteractionItem(ItemStack itemstack) {
+        return itemstack.is(ModItems.RAEVYX_BINDER.get())
+                || itemstack.is(ModItems.DRAGON_ALLY_BOOK.get());
     }
 }

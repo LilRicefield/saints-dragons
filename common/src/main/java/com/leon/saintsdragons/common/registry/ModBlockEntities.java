@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlockEntity;
+import com.leon.saintsdragons.common.block.CindervaneEggBlockEntity;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,6 +30,12 @@ public final class ModBlockEntities {
             REGISTER.register("ignivorus_egg", () -> BlockEntityType.Builder.of(
                     IgnivorusEggBlockEntity::new,
                     ModBlocks.IGNIVORUS_EGG.get()
+            ).build(null));
+
+    public static final Supplier<BlockEntityType<CindervaneEggBlockEntity>> CINDERVANE_EGG =
+            REGISTER.register("cindervane_egg", () -> BlockEntityType.Builder.of(
+                    CindervaneEggBlockEntity::new,
+                    ModBlocks.CINDERVANE_EGG.get()
             ).build(null));
 
     public static void register() {

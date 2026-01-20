@@ -13,6 +13,7 @@ import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
@@ -76,6 +77,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -105,6 +107,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private int ambientSoundTimer;
     private int nextAmbientSoundDelay;
+
+    /**
+     * Family group spawning: When a wild Cindervane spawns naturally, it has an 80% chance
+     * to spawn with 2-3 baby hatchlings, creating a family group.
+     */
+    private boolean shouldSpawnBabies = false;
+    private int babiesToSpawn = 0;
 
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
             new VocalEntryBuilder()
@@ -290,6 +299,16 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                                                  @Nullable SpawnGroupData spawnData, @Nullable CompoundTag dataTag) {
         SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
 
+        if (spawnType == MobSpawnType.CHUNK_GENERATION || spawnType == MobSpawnType.NATURAL) {
+            if (!(data instanceof CindervaneFamilyData)) {
+                if (this.random.nextFloat() < 0.2F) {
+                    data = new CindervaneFamilyData(false);
+                    this.shouldSpawnBabies = true;
+                    this.babiesToSpawn = 2 + this.random.nextInt(2); // 2 or 3 babies
+                }
+            }
+        }
+
         if (!this.isTame()) {
             this.setOwnerUUID(null);
             this.setCommand(2);
@@ -301,15 +320,24 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         return data;
     }
 
-    private void applyConfiguredAttributes() {
+    public void applyConfiguredAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
-        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
-        setAttributeBase(Attributes.ARMOR, config.armor());
+
+        if (this.isBaby()) {
+            // Baby Cindervanes have reduced stats
+            setAttributeBase(Attributes.MAX_HEALTH, 40.0);
+            setAttributeBase(Attributes.ARMOR, 0.0);
+            setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed() * 0.7); // Slower flight as baby
+        } else {
+            // Adult attributes from config
+            setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
+            setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
+            setAttributeBase(Attributes.ARMOR, config.armor());
+        }
         // MOVEMENT_SPEED is hardcoded in createAttributes() - no config needed
 
-        if (this.getHealth() > config.maxHealth()) {
-            this.setHealth((float) config.maxHealth());
+        if (this.getHealth() > this.getMaxHealth()) {
+            this.setHealth(this.getMaxHealth());
         }
     }
 
@@ -330,6 +358,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed()) // Slower for glider behavior
                 .add(Attributes.ARMOR, config.armor());
+    }
+
+    @Override
+    public void ageBoundaryReached() {
+        super.ageBoundaryReached();
+        // Refresh attributes when baby grows into adult
+        applyConfiguredAttributes();
+        this.refreshDimensions();
     }
 
     public static boolean canSpawnHere(EntityType<? extends Cindervane> type,
@@ -487,14 +523,30 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal((com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable) this));
         this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(3, new CindervaneFlightGoal(this));
-        this.goalSelector.addGoal(5, new CindervaneCombatGoal(this));
+
+        // Babies don't have flight or combat abilities
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(3, new CindervaneFlightGoal(this));
+            this.goalSelector.addGoal(5, new CindervaneCombatGoal(this));
+        }
+
+        // Baby-specific: follow nearby adult dragons (wild babies only)
+        this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal<>(this, Cindervane.class, 1.15D));
+
         this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forCindervane()));
         this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 0.6D, 160));
 
+        // Adults can breed, babies cannot
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(
+                this, 1.0D, Cindervane.class, 20.0D, 9.0D
+            ));
+        }
+
         this.targetSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal<>(this, Cindervane.class)); // Protect and stay with babies
+        this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
         // Look goals that skip when being ridden (so rider has full control)
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
             @Override
@@ -603,6 +655,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         tickRiderTakeoff();
         tickMountedState();
         updateSittingProgress();
+        spawnBabiesIfNeeded();
         if (isFlying() && tickCount % 2 == 0) {
             tickWaterSlicing();
         }
@@ -700,6 +753,65 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         wasVehicleLastTick = mounted;
+    }
+
+    private void spawnBabiesIfNeeded() {
+        if (!shouldSpawnBabies || babiesToSpawn <= 0) {
+            return;
+        }
+
+        shouldSpawnBabies = false;
+
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            babiesToSpawn = 0;
+            return;
+        }
+
+        int spawnCount = babiesToSpawn;
+        babiesToSpawn = 0;
+
+        serverLevel.getServer().execute(() -> {
+            if (this.isRemoved()) {
+                return;
+            }
+
+            for (int i = 0; i < spawnCount; i++) {
+                Cindervane baby = ModEntities.CINDERVANE.get().create(serverLevel);
+                if (baby != null) {
+                    baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+
+                    baby.skipRespawnTicks = 5;
+                    baby.setBaby(true);
+                    baby.setAge(-24000);
+                    baby.applyConfiguredAttributes();
+                    baby.setHealth(baby.getMaxHealth());
+
+                    double angle = (Math.PI * 2.0 * i) / spawnCount;
+                    double distance = 1.0 + this.random.nextDouble() * 0.5;
+                    double offsetX = Math.cos(angle) * distance;
+                    double offsetZ = Math.sin(angle) * distance;
+
+                    baby.moveTo(
+                            this.getX() + offsetX,
+                            this.getY(),
+                            this.getZ() + offsetZ,
+                            this.random.nextFloat() * 360.0F,
+                            0.0F
+                    );
+
+                    serverLevel.addFreshEntity(baby);
+                }
+            }
+        });
+    }
+
+    /**
+     * Custom SpawnGroupData to track family spawning and prevent recursive baby spawning.
+     */
+    private static class CindervaneFamilyData extends AgeableMob.AgeableMobGroupData {
+        public CindervaneFamilyData(boolean shouldSpawnBaby) {
+            super(shouldSpawnBaby);
+        }
     }
 
     private void updateSittingProgress() {
@@ -2194,6 +2306,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         // Persist feeding cooldown (synced via entity data but saved for redundancy)
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
+
+        if (shouldSpawnBabies) {
+            tag.putBoolean("FamilySpawnPending", true);
+            tag.putInt("FamilySpawnCount", babiesToSpawn);
+        }
     }
 
     @Override
@@ -2205,6 +2322,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.timeFlying = tag.getInt("TimeFlying");
         if (tag.contains("RiderPitchKeyMode")) {
             setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));
+        }
+
+        if (tag.contains("FamilySpawnPending")) {
+            this.shouldSpawnBabies = tag.getBoolean("FamilySpawnPending");
+            this.babiesToSpawn = tag.getInt("FamilySpawnCount");
         }
 
         // Reset all tick counters to prevent state inconsistencies
@@ -2776,5 +2898,29 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public boolean canSleepNow() {
         return !isBreathingFire() && !isVehicle() && getActiveAbility() == null;
+    }
+
+    // ===== EGG BREEDING SYSTEM =====
+
+    @Override
+    public BlockState getEggBlockState() {
+        return com.leon.saintsdragons.common.registry.ModBlocks.CINDERVANE_EGG.get().defaultBlockState();
+    }
+
+    @Override
+    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
+        if (!(blockEntity instanceof com.leon.saintsdragons.common.block.CindervaneEggBlockEntity eggEntity)) {
+            return;
+        }
+
+        if (this.isTame() && this.getOwnerUUID() != null) {
+            eggEntity.setOwnerUUID(this.getOwnerUUID());
+        }
+
+        DragonGender babyGender =
+            this.getRandom().nextBoolean() ?
+            DragonGender.FEMALE :
+            DragonGender.MALE;
+        eggEntity.setBabyGender(babyGender);
     }
 }

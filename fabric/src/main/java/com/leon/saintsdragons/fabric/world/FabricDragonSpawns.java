@@ -6,8 +6,11 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 /**
  * Mirrors the Forge biome modifier using Fabric's BiomeModifications API.
@@ -23,6 +26,8 @@ public final class FabricDragonSpawns {
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw"));
     private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_IGNIVORUS =
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_ignivorus"));
+    private static final ResourceKey<PlacedFeature> CINDERVANE_EGG_PATCH =
+            ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("cindervane_egg_patch"));
 
     private FabricDragonSpawns() {
     }
@@ -73,6 +78,8 @@ public final class FabricDragonSpawns {
                     SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.get());
         }
 
+        registerCindervaneEggs();
+
         if (SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get() > 0) {
             registerSpawn(HAS_NULLJAW,
                     MobCategory.CREATURE,
@@ -102,6 +109,16 @@ public final class FabricDragonSpawns {
                     SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.get(),
                     SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.get());
         }
+    }
+
+    private static void registerCindervaneEggs() {
+        BiomeModifications.addFeature(
+                BiomeSelectors.tag(HAS_CINDERVANE),
+                GenerationStep.Decoration.VEGETAL_DECORATION,
+                CINDERVANE_EGG_PATCH
+        );
+
+        registerAdditionalFeatures(SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES, CINDERVANE_EGG_PATCH);
     }
 
     private static void registerSpawn(TagKey<net.minecraft.world.level.biome.Biome> biomeTag,
@@ -163,6 +180,34 @@ public final class FabricDragonSpawns {
                             weight,
                             minGroupSize,
                             maxGroupSize
+                    );
+                } catch (Exception e) {
+                    SaintsDragonsCommon.LOGGER.warn("Invalid biome ID in config: {}", biomeIdStr);
+                }
+            }
+        } catch (Exception e) {
+            // Config not loaded or error, skip
+        }
+    }
+
+    private static void registerAdditionalFeatures(com.leon.saintsdragons.platform.ConfigHelper.ListValue configList,
+                                                   ResourceKey<PlacedFeature> featureKey) {
+        try {
+            java.util.List<String> biomes = configList.get();
+            if (biomes.isEmpty()) {
+                return;
+            }
+
+            for (String biomeIdStr : biomes) {
+                try {
+                    net.minecraft.resources.ResourceLocation biomeId = new net.minecraft.resources.ResourceLocation(biomeIdStr);
+                    net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome> biomeKey =
+                            net.minecraft.resources.ResourceKey.create(Registries.BIOME, biomeId);
+
+                    BiomeModifications.addFeature(
+                            BiomeSelectors.includeByKey(biomeKey),
+                            GenerationStep.Decoration.VEGETAL_DECORATION,
+                            featureKey
                     );
                 } catch (Exception e) {
                     SaintsDragonsCommon.LOGGER.warn("Invalid biome ID in config: {}", biomeIdStr);

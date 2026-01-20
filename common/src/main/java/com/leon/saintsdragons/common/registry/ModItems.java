@@ -74,6 +74,11 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.IGNIVORUS_EGG.get(),
                             new Item.Properties()));
 
+    public static final Supplier<Item> CINDERVANE_EGG =
+            REGISTER.register("cindervane_egg",
+                    () -> new BlockItem(ModBlocks.CINDERVANE_EGG.get(),
+                            new Item.Properties()));
+
     public static final Supplier<Item> DRAGON_ALLY_BOOK =
             REGISTER.register("dragon_ally_book",
                     () -> new DragonAllyBookItem(

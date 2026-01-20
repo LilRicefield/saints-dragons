@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -104,6 +105,10 @@ public class CindervaneInteractionHandler {
     private InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
         boolean isOwner = dragon.isOwnedBy(player);
 
+        if (isInteractionItem(heldItem)) {
+            return InteractionResult.PASS;
+        }
+
         // Owner-only interactions
         if (isOwner) {
             // Handle feeding for healing
@@ -112,13 +117,13 @@ public class CindervaneInteractionHandler {
             }
 
             // Handle owner commands - Shift+Right-click cycles through commands
-            if (dragon.canOwnerCommand(player) && heldItem.isEmpty() && hand == InteractionHand.MAIN_HAND) {
+            if (dragon.canOwnerCommand(player) && !dragon.isFood(heldItem) && hand == InteractionHand.MAIN_HAND) {
                 return handleCommandCycling(player);
             }
         }
 
         // Handle mounting - both owner and non-owners can mount
-        if (hand == InteractionHand.MAIN_HAND && heldItem.isEmpty() && !player.isCrouching()) {
+        if (hand == InteractionHand.MAIN_HAND && !dragon.isFood(heldItem) && !player.isCrouching()) {
             return handleMounting(player, isOwner);
         }
 
@@ -296,6 +301,11 @@ public class CindervaneInteractionHandler {
         }
 
         return InteractionResult.SUCCESS;
+    }
+
+    private boolean isInteractionItem(ItemStack itemstack) {
+        return itemstack.is(ModItems.CINDERVANE_BINDER.get())
+                || itemstack.is(ModItems.DRAGON_ALLY_BOOK.get());
     }
     
     /**

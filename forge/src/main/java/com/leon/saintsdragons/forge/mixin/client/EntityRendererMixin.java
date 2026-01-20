@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.fabric.mixin.fabric;
+package com.leon.saintsdragons.forge.mixin.client;
 
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -15,12 +15,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(GameRenderer.class)
 public class EntityRendererMixin {
-    
-    // Smooth FOV transition state
+
     @Unique
     private static double saint_sDragons$currentFOVMultiplier = 1.0;
     @Unique
-    private static final double FOV_TRANSITION_SPEED = 0.05; // How fast FOV changes (0.01 = very slow, 0.1 = fast)
+    private static final double FOV_TRANSITION_SPEED = 0.05;
 
     @Inject(method = "getFov(Lnet/minecraft/client/Camera;FZ)D", at = @At("RETURN"), cancellable = true)
     private void modifyFOV(Camera camera, float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Double> cir) {
@@ -32,45 +31,40 @@ public class EntityRendererMixin {
             boolean isFlying = false;
             double currentSpeed = 0;
             double maxSpeed = 0;
-            
+
             if (mc.player.getVehicle() instanceof Raevyx raevyx) {
                 isAccelerating = raevyx.isAccelerating();
                 isFlying = raevyx.isFlying();
-                
+
                 if (isAccelerating) {
                     if (isFlying) {
-                        // Flying sprint - use flying speed attributes
                         currentSpeed = raevyx.getDeltaMovement().horizontalDistance();
-                        maxSpeed = raevyx.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 50.0; // SPRINT_MAX_MULT
+                        maxSpeed = raevyx.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 50.0;
                     } else {
-                        // Ground sprint - use movement speed attributes
                         currentSpeed = raevyx.getDeltaMovement().horizontalDistance();
-                        maxSpeed = raevyx.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7; // Ground sprint multiplier
+                        maxSpeed = raevyx.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.7;
                     }
                 }
-            } else if (mc.player.getVehicle() instanceof Cindervane amphithereDragon) {
-                isAccelerating = amphithereDragon.isAccelerating();
-                isFlying = amphithereDragon.isFlying();
-                
+            } else if (mc.player.getVehicle() instanceof Cindervane cindervane) {
+                isAccelerating = cindervane.isAccelerating();
+                isFlying = cindervane.isFlying();
+
                 if (isAccelerating) {
                     if (isFlying) {
-                        // Flying sprint - use flying speed attributes
-                        currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
-                        maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.0; // SPRINT_MAX_MULT
+                        currentSpeed = cindervane.getDeltaMovement().horizontalDistance();
+                        maxSpeed = cindervane.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.0;
                     } else {
-                        // Ground sprint - use movement speed attributes
-                        currentSpeed = amphithereDragon.getDeltaMovement().horizontalDistance();
-                        maxSpeed = amphithereDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.6; // Ground sprint multiplier
+                        currentSpeed = cindervane.getDeltaMovement().horizontalDistance();
+                        maxSpeed = cindervane.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 0.6;
                     }
                 }
             } else if (mc.player.getVehicle() instanceof Nulljaw nulljaw) {
                 isAccelerating = nulljaw.isAccelerating();
-                isFlying = false; // Rift Drake doesn't fly
+                isFlying = false;
 
                 if (isAccelerating) {
-                    // Ground sprint - use movement speed attributes
                     currentSpeed = nulljaw.getDeltaMovement().horizontalDistance();
-                    maxSpeed = nulljaw.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 1.0; // Ground sprint multiplier
+                    maxSpeed = nulljaw.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 1.0;
                 }
             } else if (mc.player.getVehicle() instanceof Ignivorus ignivorus) {
                 isAccelerating = ignivorus.isAccelerating();
@@ -79,10 +73,10 @@ public class EntityRendererMixin {
                 if (isAccelerating) {
                     if (isFlying) {
                         currentSpeed = ignivorus.getDeltaMovement().horizontalDistance();
-                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 20.5; // Rider sprint multiplier
+                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FLYING_SPEED) * 30.5;
                     } else {
                         currentSpeed = ignivorus.getDeltaMovement().horizontalDistance();
-                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 2.2; // Ground sprint multiplier
+                        maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 2.2;
                     }
                 }
             } else {
@@ -97,32 +91,25 @@ public class EntityRendererMixin {
                     targetFOVMultiplier = Math.max(targetFOVMultiplier, cinematicMultiplier);
                 }
             }
-            
+
             if (isAccelerating && maxSpeed > 0) {
                 double speedRatio = Math.min(1.0, currentSpeed / maxSpeed);
-                
-                // Different FOV multipliers for flying vs ground sprinting
                 if (isFlying) {
-                    // Flying sprint - dramatic but cinematic FOV effect
-                    targetFOVMultiplier = 1.0 + (speedRatio); // Up to 100% wider FOV at max speed
+                    targetFOVMultiplier = 1.0 + (speedRatio);
                 } else {
-                    // Ground sprint - more subtle FOV effect (ground running is already fast enough!)
-                    targetFOVMultiplier = 1.0 + (0.15 * speedRatio); // Up to 15% wider FOV at max speed
+                    targetFOVMultiplier = 1.0 + (0.15 * speedRatio);
                 }
             }
-            
-            // Smooth interpolation between current and target FOV multiplier
+
             double diff = targetFOVMultiplier - saint_sDragons$currentFOVMultiplier;
-            if (Math.abs(diff) > 0.001) { // Only interpolate if there's a meaningful difference
+            if (Math.abs(diff) > 0.001) {
                 saint_sDragons$currentFOVMultiplier += diff * FOV_TRANSITION_SPEED;
             } else {
-                saint_sDragons$currentFOVMultiplier = targetFOVMultiplier; // Snap to target if very close
+                saint_sDragons$currentFOVMultiplier = targetFOVMultiplier;
             }
-            
-            // Apply the smoothly interpolated FOV multiplier
+
             double baseFOV = cir.getReturnValue();
             double newFOV = baseFOV * saint_sDragons$currentFOVMultiplier;
-            
             cir.setReturnValue(newFOV);
         } else {
             saint_sDragons$currentFOVMultiplier = 1.0;
