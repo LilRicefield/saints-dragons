@@ -4292,16 +4292,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         HurtController.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(HurtController);
 
-        // Babies don't fly, so skip banking/pitching controllers
-        if (!this.isBaby()) {
-            AnimationController<Raevyx> bankingController =
-                    new AnimationController<>(this, "banking", 8, animationHandler::bankingPredicate);
-            // Banking controller: NO sound keyframes (purely visual animation)
-
-            // Add controllers in order
-            controllers.add(bankingController);
-        }
-
         controllers.add(movementController);
         controllers.add(actionController);
     }

@@ -2078,9 +2078,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         movement.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(movement);
 
-        AnimationController<Cindervane> banking = new AnimationController<>(this, "banking", 10, animationHandler::bankingPredicate);
-        controllers.add(banking);
-
         AnimationController<Cindervane> actions = new AnimationController<>(this, "actions", 5, animationHandler::actionPredicate);
         animationHandler.setupActionController(actions);
         actions.setSoundKeyframeHandler(this::onAnimationSound);
