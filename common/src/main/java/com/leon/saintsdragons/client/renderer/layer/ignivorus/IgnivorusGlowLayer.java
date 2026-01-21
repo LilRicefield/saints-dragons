@@ -24,7 +24,7 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
     private static final ResourceLocation FEMALE_GLOW_TEXTURE =
             SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_glow_female.png");
     private static final ResourceLocation GLOW_TEXTURE_SECOND_VARIANT =
-            SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant_glow.png");
+            SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus_glow.png");
 
     public IgnivorusGlowLayer(GeoRenderer<Ignivorus> renderer) {
         super(renderer);

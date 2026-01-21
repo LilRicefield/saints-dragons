@@ -24,8 +24,8 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_female.png");
     private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/baby_ignivorus.png");
     private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/baby_ignivorus_female.png");
-    private static final ResourceLocation TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant.png");
-    private static final ResourceLocation FEMALE_TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_second_variant_female.png");
+    private static final ResourceLocation TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus.png");
+    private static final ResourceLocation FEMALE_TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus_female.png");
 
 
     @Override

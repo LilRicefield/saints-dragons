@@ -109,8 +109,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private int nextAmbientSoundDelay;
 
     /**
-     * Family group spawning: When a wild Cindervane spawns naturally, it has an 80% chance
-     * to spawn with 2-3 baby hatchlings, creating a family group.
+     * Family group spawning: When a wild Cindervane spawns naturally, it has a 5% chance
+     * to spawn with 1 baby hatchling, creating a family group.
      */
     private boolean shouldSpawnBabies = false;
     private int babiesToSpawn = 0;
@@ -301,10 +301,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         if (spawnType == MobSpawnType.CHUNK_GENERATION || spawnType == MobSpawnType.NATURAL) {
             if (!(data instanceof CindervaneFamilyData)) {
-                if (this.random.nextFloat() < 0.2F) {
+                if (this.random.nextFloat() < 0.05F) {
                     data = new CindervaneFamilyData(false);
                     this.shouldSpawnBabies = true;
-                    this.babiesToSpawn = 2 + this.random.nextInt(2); // 2 or 3 babies
+                    this.babiesToSpawn = 1; // 1 baby
                 }
             }
         }

@@ -498,6 +498,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
         applyConfiguredAttributes();
         this.setHealth(this.getMaxHealth());
+
+        // Randomly assign variant (50/50 chance between default and crimson)
+        int variant = this.getRandom().nextBoolean() ? 0 : 1;
+        this.setTextureVariant(variant);
+
         return data;
     }
 
@@ -3530,7 +3535,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Action controller for triggerable animations (sit transitions, fire breath, etc.)
         AnimationController<Ignivorus> actionController =
-            new AnimationController<>(this, "action", 6, state -> {
+            new AnimationController<>(this, "action", 3, state -> {
                 // CRITICAL: Stop action controller during taming stun to prevent animation bleeding
                 if (isTamingStunned()) {
                     return software.bernie.geckolib.core.object.PlayState.STOP;
@@ -3539,7 +3544,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             });
 
         AnimationController<Ignivorus> hurtController =
-            new AnimationController<>(this, "hurt", 5, state -> software.bernie.geckolib.core.object.PlayState.STOP);
+            new AnimationController<>(this, "hurt", 3, state -> software.bernie.geckolib.core.object.PlayState.STOP);
         hurtController.triggerableAnim("ignivorus_hurt",
             software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
         hurtController.setSoundKeyframeHandler(this::onAnimationSound);

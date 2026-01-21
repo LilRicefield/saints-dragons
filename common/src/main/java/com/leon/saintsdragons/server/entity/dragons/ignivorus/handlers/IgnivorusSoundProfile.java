@@ -18,6 +18,11 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
 
     public static final IgnivorusSoundProfile INSTANCE = new IgnivorusSoundProfile();
     private static final float BABY_PITCH_MULTIPLIER = 1.6f;
+    private static final Map<String, Boolean> BABY_ALLOWED_KEYS = Map.ofEntries(
+            Map.entry("ignivorus_eat", true),
+            Map.entry("ignivorus_hurt", true),
+            Map.entry("ignivorus_die", true)
+    );
 
     private static final Map<String, Integer> VOCAL_WINDOWS = Map.ofEntries(
             Map.entry("roar", 64),
@@ -53,6 +58,11 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
 
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
+        // Handler already blocks server-side, we're only called on client
+        if (dragon.isBaby() && !BABY_ALLOWED_KEYS.containsKey(key)) {
+            return true;
+        }
+
         // Check if this is a vocal key that should use the vocal entry system
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
@@ -75,7 +85,7 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 yield true;
             }
             case "ignivorus_eat" -> {
-                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.IGNIVORUS_EAT.get(), 1.2f, 0.95f, 0.1f);
+                playEatSound(handler, dragon, "mouth_origin");
                 yield true;
             }
             case "ignivorus_body_slam" -> {
@@ -262,6 +272,20 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         }
 
         playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+    }
+
+    /**
+     * Play eat sound with baby pitch adjustment.
+     */
+    private void playEatSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER * 0.95f : 0.95f;
+        if (dragon.getRandom().nextFloat() < 0.5f) {
+            pitch += dragon.getRandom().nextFloat() * 0.1f;
+        }
+        playClientSound(dragon, at, ModSounds.IGNIVORUS_EAT.get(), 1.2f, pitch);
     }
 
     /**

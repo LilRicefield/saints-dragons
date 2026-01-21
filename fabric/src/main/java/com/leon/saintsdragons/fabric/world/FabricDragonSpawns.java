@@ -26,8 +26,12 @@ public final class FabricDragonSpawns {
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw"));
     private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_IGNIVORUS =
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_ignivorus"));
+    private static final TagKey<net.minecraft.world.level.biome.Biome> HAS_NULLJAW_EGGS =
+            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw_eggs"));
     private static final ResourceKey<PlacedFeature> CINDERVANE_EGG_PATCH =
             ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("cindervane_egg_patch"));
+    private static final ResourceKey<PlacedFeature> NULLJAW_EGG_PATCH =
+            ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("nulljaw_egg_patch"));
 
     private FabricDragonSpawns() {
     }
@@ -79,6 +83,7 @@ public final class FabricDragonSpawns {
         }
 
         registerCindervaneEggs();
+        registerNulljawEggs();
 
         if (SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get() > 0) {
             registerSpawn(HAS_NULLJAW,
@@ -119,6 +124,14 @@ public final class FabricDragonSpawns {
         );
 
         registerAdditionalFeatures(SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES, CINDERVANE_EGG_PATCH);
+    }
+
+    private static void registerNulljawEggs() {
+        BiomeModifications.addFeature(
+                BiomeSelectors.tag(HAS_NULLJAW_EGGS),
+                GenerationStep.Decoration.VEGETAL_DECORATION,
+                NULLJAW_EGG_PATCH
+        );
     }
 
     private static void registerSpawn(TagKey<net.minecraft.world.level.biome.Biome> biomeTag,
