@@ -17,6 +17,7 @@ public class StegonautAnimationHandler {
     // Animation constants
     private static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.idle");
     private static final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.walk");
+    private static final RawAnimation RUN_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.run");
     private static final RawAnimation SWIM_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.swim");
     private static final RawAnimation SLEEP_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sleep");
     private static final RawAnimation SIT_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sit");
@@ -103,9 +104,12 @@ public class StegonautAnimationHandler {
         }
 
         // Use the improved movement state detection
-        // Stegonaut only walks (no running - it's a slow, heavy drake)
         int groundState = drake.getEffectiveGroundState();
-        if (groundState >= 1 || drake.isWalking()) {
+        if (groundState == 2 || drake.isRunning()) {
+            // Running state
+            state.setAndContinue(RUN_ANIM);
+        } else if (groundState == 1 || drake.isWalking()) {
+            // Walking state
             state.setAndContinue(WALK_ANIM);
         } else {
             state.setAndContinue(IDLE_ANIM);

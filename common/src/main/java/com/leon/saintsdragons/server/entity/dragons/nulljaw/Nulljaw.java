@@ -462,6 +462,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         this.goalSelector.addGoal(5, new NulljawLeaveWaterGoal(this));
         this.goalSelector.addGoal(6, new NulljawFindWaterGoal(this));
         this.goalSelector.addGoal(7, new NulljawFollowOwnerGoal(this));
+        this.goalSelector.addGoal(8, new DirectSwimToTargetGoal(this, 8.0F, 0.25D, false));
         this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
         this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100);
         this.goalSelector.addGoal(11, groundWanderGoal);
@@ -627,7 +628,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         if (!level().isClientSide) {
             handleAmbientSounds();
             tickRiderControlLock();
-            boolean inWater = this.isInWater();
+            boolean inWater = this.isInWaterOrBubble();
             if (inWater) {
                 this.setAirSupply(this.getMaxAirSupply());
                 swimTicks = Math.min(swimTicks + 1, 200);

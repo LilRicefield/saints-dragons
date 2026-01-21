@@ -3493,7 +3493,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "cindervane_eat"
+					"effect": "cindervane_hurt"
 				}
 			}
 		},

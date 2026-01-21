@@ -119,6 +119,7 @@ public class NulljawModel extends DefaultedEntityGeoModel<Nulljaw> {
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.35f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.40f);
         applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.45f);
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.46f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {

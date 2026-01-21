@@ -4094,7 +4094,7 @@
 				}
 			}
 		},
-		"animation.nulljaw.swim": {
+		"animation.nulljaw.swim_move": {
 			"loop": true,
 			"bones": {
 				"heightController": {

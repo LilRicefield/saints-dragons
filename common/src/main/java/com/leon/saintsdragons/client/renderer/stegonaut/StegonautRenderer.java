@@ -50,7 +50,7 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
 
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-        this.shadowRadius = 1.5f * scale;
+        this.shadowRadius = 2.25f * scale;
 
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);

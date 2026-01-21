@@ -163,7 +163,7 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         }
 
         boolean isSwimming = drake.isSwimming();
-        boolean isInWater = drake.isInWater();
+        boolean isInWater = drake.isInWaterOrBubble();
         boolean isNavigating = drake.getNavigation().isInProgress() && drake.getNavigation().getPath() != null;
         double horizontalSpeedSq = drake.getDeltaMovement().horizontalDistanceSqr();
         double totalSpeedSq = drake.getDeltaMovement().lengthSqr();
