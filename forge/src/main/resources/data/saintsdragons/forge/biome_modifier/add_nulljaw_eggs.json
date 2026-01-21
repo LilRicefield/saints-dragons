@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#saintsdragons:has_nulljaw_eggs",
+  "features": "saintsdragons:nulljaw_egg_patch",
+  "step": "vegetal_decoration"
+}

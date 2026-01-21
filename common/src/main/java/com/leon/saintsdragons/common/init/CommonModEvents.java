@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.command.DragonAllyCommand;
 import com.leon.saintsdragons.server.command.DragonSetGenderCommand;
+import com.leon.saintsdragons.server.command.DragonSetVariantCommand;
 import com.leon.saintsdragons.server.command.DragonTameCommand;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -86,6 +87,7 @@ public final class CommonModEvents {
         DragonAllyCommand.register(dispatcher);
         DragonTameCommand.register(dispatcher);
         DragonSetGenderCommand.register(dispatcher);
+        DragonSetVariantCommand.register(dispatcher);
     }
 
     @FunctionalInterface
