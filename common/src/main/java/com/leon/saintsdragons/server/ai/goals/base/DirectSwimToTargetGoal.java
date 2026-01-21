@@ -9,6 +9,7 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * Direct swimming control that bypasses pathfinding entirely.
@@ -19,6 +20,8 @@ public class DirectSwimToTargetGoal extends Goal {
 
     private static final double FOLLOW_START_DISTANCE_SQR = 20.0D * 20.0D;
     private static final double FOLLOW_STOP_DISTANCE_SQR = 16.0D * 16.0D;
+    private static final double BABY_FOLLOW_START_DISTANCE_SQR = 8.0D * 8.0D;
+    private static final double BABY_FOLLOW_STOP_DISTANCE_SQR = 6.0D * 6.0D;
 
     private final Mob mob;
     private final float turnSpeed;
@@ -51,7 +54,10 @@ public class DirectSwimToTargetGoal extends Goal {
         }
 
         if (!aggressive) {
-            return mob.distanceToSqr(target) > FOLLOW_START_DISTANCE_SQR;
+            double startDistance = isBabyParentTarget(target)
+                    ? BABY_FOLLOW_START_DISTANCE_SQR
+                    : FOLLOW_START_DISTANCE_SQR;
+            return mob.distanceToSqr(target) > startDistance;
         }
 
         return target.isAlive();
@@ -69,7 +75,10 @@ public class DirectSwimToTargetGoal extends Goal {
         }
 
         if (!aggressive) {
-            return mob.distanceToSqr(target) > FOLLOW_STOP_DISTANCE_SQR;
+            double stopDistance = isBabyParentTarget(target)
+                    ? BABY_FOLLOW_STOP_DISTANCE_SQR
+                    : FOLLOW_STOP_DISTANCE_SQR;
+            return mob.distanceToSqr(target) > stopDistance;
         }
 
         return true;
@@ -158,6 +167,11 @@ public class DirectSwimToTargetGoal extends Goal {
             return null;
         }
 
+        LivingEntity parent = resolveParentForBaby();
+        if (parent != null) {
+            return parent;
+        }
+
         if (mob instanceof TamableAnimal tamable) {
             if (!tamable.isTame() || tamable.isOrderedToSit()) {
                 return null;
@@ -168,5 +182,43 @@ public class DirectSwimToTargetGoal extends Goal {
             }
         }
         return null;
+    }
+
+    private boolean isBabyParentTarget(LivingEntity target) {
+        if (!mob.isBaby() || target == null) {
+            return false;
+        }
+        if (!(target instanceof Mob targetMob)) {
+            return false;
+        }
+        return target.getClass() == mob.getClass() && !targetMob.isBaby();
+    }
+
+    private LivingEntity resolveParentForBaby() {
+        if (!mob.isBaby()) {
+            return null;
+        }
+
+        if (mob instanceof TamableAnimal tamable && (tamable.isTame() || tamable.getOwner() != null)) {
+            return null;
+        }
+
+        List<? extends Mob> nearby = mob.level().getEntitiesOfClass(
+                mob.getClass(),
+                mob.getBoundingBox().inflate(12.0D, 6.0D, 12.0D),
+                candidate -> candidate != mob && candidate.isAlive() && !candidate.isBaby()
+        );
+
+        Mob closest = null;
+        double closestDistance = Double.MAX_VALUE;
+        for (Mob candidate : nearby) {
+            double dist = mob.distanceToSqr(candidate);
+            if (dist < closestDistance) {
+                closestDistance = dist;
+                closest = candidate;
+            }
+        }
+
+        return closest;
     }
 }

@@ -46,13 +46,12 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
- * Primitive Drake - A simple ground drake that wanders around and flees from threats.
- * No complex abilities, just basic AI and cute behavior.
+ * Stegonaut - A sturdy pack animal that wanders around and follows its owner.
  * Features:
  * - Sleep behavior: Sleeps at night, awake during day.
- * - Flee behavior: Runs away from tagged predators when threatened
+ * - Pack animal: Doesn't flee from threats, making it reliable for travel
  * - Protective aura: Grants resistance and absorption to nearby players and allies
- * - NOT rideable: Too small and simple to be a mount
+ * - NOT rideable: Designed as a pack animal, not a mount
  */
 public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     
@@ -153,7 +152,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this)); // CRITICAL: Must float in water to not drown!
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this)); // Escape water
-        this.goalSelector.addGoal(3, new StegonautFleeFromPredatorsGoal(this, 0.6D, 12.0D)); // Flee from tagged predators
+        // Removed flee goal - pack animal doesn't run from threats
         this.goalSelector.addGoal(4, new StegonautFollowOwnerGoal(this));
         this.goalSelector.addGoal(5, new StegonautGroundWanderGoal(this, 0.35D, 120));
         this.goalSelector.addGoal(6, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
@@ -170,7 +169,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 100.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.40D)
+                .add(Attributes.MOVEMENT_SPEED, 0.50D) // Increased for pack animal duties
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.ARMOR, 15.0D)
                 .add(Attributes.FOLLOW_RANGE, 16.0D);
@@ -240,7 +239,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
 
     @Override
     public int getDeathAnimationDurationTicks() {
-        return 65; // - matches death animation length
+        return 50; // 2.50 seconds
     }
 
     @Override
@@ -1005,13 +1004,18 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         int moveState = 0; // Default to idle
 
         if (!isSleeping() && !isOrderedToSit()) {
-            // Simple logic: If navigation is active OR entity is moving, play walk animation
             boolean hasActivePath = this.getNavigation().isInProgress();
-            boolean isActuallyMoving = this.getDeltaMovement().horizontalDistanceSqr() > 0.001;
+            double horizontalSpeed = this.getDeltaMovement().horizontalDistanceSqr();
+            boolean isActuallyMoving = horizontalSpeed > 0.001;
 
             if (hasActivePath || isActuallyMoving) {
-                moveState = 1; // Walking
-                walkAnimationHoldTicks = 8; // Hold walk animation for 8 ticks after stopping
+                // Determine walk vs run based on speed (run threshold: ~0.08 blocks/tick squared)
+                if (horizontalSpeed > 0.0064) {
+                    moveState = 2; // Running
+                } else {
+                    moveState = 1; // Walking
+                }
+                walkAnimationHoldTicks = 8; // Hold animation for 8 ticks after stopping
             } else if (walkAnimationHoldTicks > 0) {
                 // Keep playing walk animation while decelerating
                 moveState = 1;

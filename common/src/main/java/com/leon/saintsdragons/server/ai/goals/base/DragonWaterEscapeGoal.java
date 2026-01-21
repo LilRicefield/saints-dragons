@@ -55,6 +55,21 @@ public class DragonWaterEscapeGoal extends Goal {
             return false;
         }
 
+        // CRITICAL: Babies can't fly! Treat them as ground dragons
+        if (canFly && mob.isBaby()) {
+            // Use navigation like ground dragons instead of flight
+            if (recheckCooldown > 0) {
+                recheckCooldown--;
+                return escapeTarget != null && mob.isInWater();
+            }
+            escapeTarget = findNearestShore();
+            recheckCooldown = 40;
+            if (escapeTarget != null) {
+                mob.getNavigation().moveTo(escapeTarget.x, escapeTarget.y, escapeTarget.z, 1.5);
+            }
+            return escapeTarget != null;
+        }
+
         // Don't interfere with riding
         if (mob.isVehicle()) {
             return false;
@@ -93,13 +108,13 @@ public class DragonWaterEscapeGoal extends Goal {
 
     @Override
     public void start() {
-        if (canFly && flyingDragon != null) {
-            // Flying dragons: force takeoff
+        if (canFly && flyingDragon != null && !mob.isBaby()) {
+            // Flying dragons: force takeoff (but NOT babies - they can't fly!)
             flyingDragon.setFlying(true);
             flyingDragon.setTakeoff(true);
             flyingDragon.setLanding(false);
         } else {
-            // Ground dragons: use navigation
+            // Ground dragons AND baby flying dragons: use navigation
             if (escapeTarget != null) {
                 mob.getNavigation().moveTo(escapeTarget.x, escapeTarget.y, escapeTarget.z, 1.5); // Panic speed
             }
@@ -112,8 +127,8 @@ public class DragonWaterEscapeGoal extends Goal {
             return;
         }
 
-        if (canFly && flyingDragon != null) {
-            // Flying dragons: fly directly to shore
+        if (canFly && flyingDragon != null && !mob.isBaby()) {
+            // Flying dragons: fly directly to shore (but NOT babies!)
             mob.getMoveControl().setWantedPosition(
                 escapeTarget.x,
                 escapeTarget.y,
@@ -121,7 +136,7 @@ public class DragonWaterEscapeGoal extends Goal {
                 flyingDragon.getFlightSpeed() * 1.5 // Panic speed!
             );
         } else {
-            // Ground dragons: keep navigating
+            // Ground dragons AND baby flying dragons: keep navigating
             if (mob.getNavigation().isDone()) {
                 mob.getNavigation().moveTo(escapeTarget.x, escapeTarget.y, escapeTarget.z, 1.5);
             }
@@ -132,7 +147,8 @@ public class DragonWaterEscapeGoal extends Goal {
     public void stop() {
         escapeTarget = null;
         recheckCooldown = 0;
-        if (!canFly) {
+        // Stop navigation for ground dragons AND babies
+        if (!canFly || mob.isBaby()) {
             mob.getNavigation().stop();
         }
     }

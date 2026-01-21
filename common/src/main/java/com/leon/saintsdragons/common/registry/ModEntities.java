@@ -42,7 +42,7 @@ public final class ModEntities {
 
     public static final Supplier<EntityType<Stegonaut>> STEGONAUT =
             REGISTER.register("stegonaut", () -> EntityType.Builder.of(Stegonaut::new, MobCategory.CREATURE)
-                    .sized(1.5F, 1.0F)
+                    .sized(2.75F, 2.0F)
                     .clientTrackingRange(32)
                     .updateInterval(1)
                     .build("stegonaut"));
