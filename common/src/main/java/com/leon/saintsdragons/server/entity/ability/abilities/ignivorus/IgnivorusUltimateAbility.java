@@ -5,9 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireSlashEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaOutlineEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -319,12 +317,6 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         );
         server.addFreshEntity(nova);
 
-        IgnivorusNovaOutlineEntity outline = new IgnivorusNovaOutlineEntity(
-                server,
-                novaPos
-        );
-        server.addFreshEntity(outline);
-
         IgnivorusNovaRingEntity ring = new IgnivorusNovaRingEntity(
                 server,
                 center.add(0, 0.1, 0)
@@ -332,10 +324,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         server.addFreshEntity(ring);
 
         // Spawn flame burst with randomized directions.
-        int flameCount = 64;
+        int flameCount = 32;
         double flameSpeed = 1.2;
         float flameScale = 2.0F;
-        int flameLifetime = 40;
+        int flameLifetime = 30;
         float flameDamage = 30.0F;
 
         var random = dragon.getRandom();
@@ -363,40 +355,6 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             server.addFreshEntity(flame);
         }
 
-        // Spawn fire slashes near the ground in a deterministic hemispherical burst.
-        int slashCount = 40;
-        double slashSpeed = 1.2;
-        float slashScale = 1.6F;
-        int slashLifetime = 30;
-
-        Vec3[] slashSpawnPositions = new Vec3[] {
-                center.add(0, 1.0, 0),
-                center.add(0, 6.0, 0),
-                center.add(0, 12.0, 0)
-        };
-
-        for (Vec3 slashSpawnPos : slashSpawnPositions) {
-            for (int i = 0; i < slashCount; i++) {
-                double t = (i + 0.5) / (double) slashCount;
-                double y = t; // Hemisphere above ground [0,1]
-                double horizontal = Math.sqrt(1.0 - y * y);
-                double angle = (Math.PI * 2.0) * i / (double) slashCount;
-                double vx = Math.cos(angle) * horizontal;
-                double vz = Math.sin(angle) * horizontal;
-                double vy = 0.05 + y * 0.35;
-
-                Vec3 velocity = new Vec3(vx, vy, vz).normalize().scale(slashSpeed);
-
-                IgnivorusFireSlashEntity slash = new IgnivorusFireSlashEntity(
-                        server,
-                        slashSpawnPos,
-                        velocity,
-                        slashScale,
-                        slashLifetime
-                );
-                server.addFreshEntity(slash);
-            }
-        }
     }
 
     private void triggerRingExplosion(boolean openingPulse) {

@@ -258,7 +258,6 @@ public class IgnivorusFlameEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        // Render from unlimited distance
-        return true;
+        return distance < 65536.0;
     }
 }
