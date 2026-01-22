@@ -27,6 +27,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAEVYX_BINDER.get());
                                 output.accept(ModItems.NULLJAW_BINDER.get());
                                 output.accept(ModItems.STEGONAUT_BINDER.get());
+                                output.accept(ModItems.DRAGON_ALLY_BOOK.get());
                                 output.accept(ModItems.HEARTY_DRAGON_MEAL.get());
                                 output.accept(ModItems.RAEVYX_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_EGG.get());
