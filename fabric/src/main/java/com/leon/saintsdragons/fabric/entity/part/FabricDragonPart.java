@@ -163,6 +163,11 @@ public class FabricDragonPart extends Entity {
 
     @Override
     public boolean canBeCollidedWith() {
-        return true;
+        return false;
+    }
+
+    @Override
+    public boolean isPushable() {
+        return false;
     }
 }
