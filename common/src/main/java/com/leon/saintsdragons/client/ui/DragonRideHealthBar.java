@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,6 +26,8 @@ public class DragonRideHealthBar {
     private static final ResourceLocation CINDERVANE_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/cindervane/cindervane_overlay.png");
     private static final ResourceLocation NULLJAW_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/nulljaw/nulljaw_base.png");
     private static final ResourceLocation NULLJAW_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/nulljaw/nulljaw_overlay.png");
+    private static final ResourceLocation STEGONAUT_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/stegonaut/stegonaut_base.png");
+    private static final ResourceLocation STEGONAUT_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/stegonaut/stegonaut_overlay.png");
 
     // Bar dimensions
     private static final int BAR_WIDTH = 182;
@@ -85,6 +88,8 @@ public class DragonRideHealthBar {
             renderTexturedHealthBar(guiGraphics, x, y, CINDERVANE_BASE, CINDERVANE_OVERLAY);
         } else if (dragon instanceof Nulljaw) {
             renderTexturedHealthBar(guiGraphics, x, y, NULLJAW_BASE, NULLJAW_OVERLAY);
+        } else if (dragon instanceof Stegonaut) {
+            renderTexturedHealthBar(guiGraphics, x, y, STEGONAUT_BASE, STEGONAUT_OVERLAY);
         } else {
             // Fallback colored bar for other dragons
             renderFallbackHealthBar(guiGraphics, x, y);

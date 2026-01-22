@@ -54,7 +54,7 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class Stegonaut extends RideableDragonBase implements SoundHandledDragon {
-    
+
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
@@ -145,7 +145,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     // ===== RIDING SPEED CONSTANTS =====
     public static final double RIDER_WALK_SPEED = 0.1D;
     public static final double RIDER_RUN_SPEED = 0.25D;
-    
+
     // Binding state for Drake Binder
     private boolean boundToBinder = false;
 
@@ -157,7 +157,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
     // Server-side hold timer to prevent flickering when stopping
     private int walkAnimationHoldTicks = 0;
-    
+
     public Stegonaut(EntityType<? extends Stegonaut> entityType, Level level) {
         super(entityType, level);
         // Initialize animation state
@@ -174,7 +174,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             this.setHealth(this.getMaxHealth());
         }
     }
-    
+
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -194,7 +194,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_RUNNING, false);
     }
-    
+
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this)); // CRITICAL: Must float in water to not drown!
@@ -209,7 +209,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         // Adults can breed, babies cannot (keep higher priority than follow/wander)
         if (!this.isBaby()) {
             this.goalSelector.addGoal(3, new DragonBreedGoal<>(
-                this, 1.0D, Stegonaut.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
+                    this, 1.0D, Stegonaut.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
             ));
         }
 
@@ -235,12 +235,12 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
                 .add(Attributes.ARMOR, 15.0D)
                 .add(Attributes.FOLLOW_RANGE, 16.0D);
     }
-    
+
     @Override
     protected boolean isDragonFlying() {
         return false;
     }
-    
+
     /**
      * Check if the wyvern is in a muted state (sitting/staying)
      * Used by sound system to prevent ambient sounds
@@ -248,17 +248,17 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public boolean isStayOrSitMuted() {
         return this.isOrderedToSit() || this.isInSittingPose();
     }
-    
+
     /**
      * Primitive Drakes are rideable, but ground-only.
      */
-    
+
     @Override
     public boolean canOwnerCommand(Player player) {
         // Primitive Drakes respond to commands from their owner without requiring crouching
         return player != null && player.equals(this.getOwner());
     }
-    
+
     public boolean isTameable() {
         return true; // Can be tamed like other dragons
     }
@@ -272,31 +272,31 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public boolean hasSecondaryMelee() {
         return false;
     }
-    
+
     @Override
     public boolean isFood(@Nonnull net.minecraft.world.item.ItemStack stack) {
         // Simple food - maybe raw meat or fish?
-        return stack.is(net.minecraft.world.item.Items.BEEF) || 
-               stack.is(net.minecraft.world.item.Items.PORKCHOP) ||
-               stack.is(net.minecraft.world.item.Items.CHICKEN) ||
-               stack.is(net.minecraft.world.item.Items.MUTTON) ||
-               stack.is(net.minecraft.world.item.Items.COD) ||
-               stack.is(net.minecraft.world.item.Items.SALMON) ||
-               stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+        return stack.is(net.minecraft.world.item.Items.BEEF) ||
+                stack.is(net.minecraft.world.item.Items.PORKCHOP) ||
+                stack.is(net.minecraft.world.item.Items.CHICKEN) ||
+                stack.is(net.minecraft.world.item.Items.MUTTON) ||
+                stack.is(net.minecraft.world.item.Items.COD) ||
+                stack.is(net.minecraft.world.item.Items.SALMON) ||
+                stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
     }
-    
+
     @Override
     public Vec3 getHeadPosition() {
         // Use eye position - more reliable than bone positions
         return this.getEyePosition();
     }
-    
+
     @Override
     public Vec3 getMouthPosition() {
         // Simple mouth position - just the head area
         return this.position().add(0, this.getBbHeight() * 0.8, 0);
     }
-    
+
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         // Simple drake has no abilities - just runs away!
@@ -344,19 +344,19 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         AnimationController<Stegonaut> movementController = new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(movementController);
-        
+
         // Add action controller for grumble animations
         AnimationController<Stegonaut> actionController = new AnimationController<>(this, "action", 1, animationController::actionPredicate);
         animationController.setupActionController(actionController);
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(actionController);
     }
-    
+
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return this.dragonCache;
     }
-    
+
     @Override
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob other) {
         Stegonaut baby = ModEntities.STEGONAUT.get().create(level);
@@ -483,9 +483,9 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         // Optional: enforce a sturdy block underneath
         return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
     }
-    
+
     // ===== INTERACTION HANDLING =====
-    
+
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         if (!this.isTame()) {
@@ -494,17 +494,17 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             return handleTamedInteraction(player, hand);
         }
     }
-    
+
     /**
      * Handle interactions with untamed drakes (100% success taming)
      */
     private InteractionResult handleUntamedInteraction(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
-        
+
         if (!this.isFood(itemstack)) {
             return InteractionResult.PASS;
         }
-        
+
         // Taming logic must be server-only to avoid client-only visual state changes
         if (!this.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
@@ -520,26 +520,26 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             this.setCommand(1); // Set command to Sit (1) to match the sitting state
 
             this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
-            
+
             // Send taming success message
             player.displayClientMessage(
-                Component.translatable("entity.saintsdragons.stegonaut.tamed", this.getName()),
-                true
+                    Component.translatable("entity.saintsdragons.stegonaut.tamed", this.getName()),
+                    true
             );
-            
+
             // Trigger advancement for taming Primitive Drake
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                 var advancement = serverPlayer.server.getAdvancements()
-                    .getAdvancement(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_stegonaut"));
+                        .getAdvancement(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_stegonaut"));
                 if (advancement != null) {
                     serverPlayer.getAdvancements().award(advancement, "tame_stegonaut");
                 }
             }
         }
-        
+
         return InteractionResult.sidedSuccess(this.level().isClientSide);
     }
-    
+
     /**
      * Handle interactions with tamed drakes (feeding, commands)
      */
@@ -556,7 +556,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         if (itemstack.is(com.leon.saintsdragons.common.registry.ModItems.DRAGON_ALLY_BOOK.get())) {
             return InteractionResult.PASS;
         }
-        
+
         if (player.equals(this.getOwner()) && player.isShiftKeyDown() && this.isFood(itemstack)) {
             return handleBreeding(player, itemstack);
         }
@@ -565,7 +565,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         if (this.isFood(itemstack)) {
             return handleFeeding(player, itemstack);
         }
-        
+
         // Handle owner commands
         if (player.equals(this.getOwner())) {
             // Command cycling - Shift+Right-click cycles through commands
@@ -577,7 +577,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
                 return handleMounting(player);
             }
         }
-        
+
         // Fall back to base implementation for other interactions
         return super.mobInteract(player, hand);
     }
@@ -643,7 +643,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
         return InteractionResult.sidedSuccess(client);
     }
-    
+
     /**
      * Handle feeding tamed drakes for healing
      */
@@ -669,11 +669,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
                 if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                     String messageKey = (newAge == 0)
-                        ? "entity.saintsdragons.stegonaut.baby_grown"
-                        : "entity.saintsdragons.stegonaut.baby_fed";
+                            ? "entity.saintsdragons.stegonaut.baby_grown"
+                            : "entity.saintsdragons.stegonaut.baby_fed";
                     serverPlayer.displayClientMessage(
-                        Component.translatable(messageKey, this.getName()),
-                        true
+                            Component.translatable(messageKey, this.getName()),
+                            true
                     );
                 }
             } else {
@@ -689,19 +689,19 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
                 // Send appropriate feedback message
                 String messageKey = (newHealth >= this.getMaxHealth())
-                    ? "entity.saintsdragons.stegonaut.fed"
-                    : "entity.saintsdragons.stegonaut.fed_partial";
+                        ? "entity.saintsdragons.stegonaut.fed"
+                        : "entity.saintsdragons.stegonaut.fed_partial";
 
                 player.displayClientMessage(
-                    Component.translatable(messageKey, this.getName()),
-                    true
+                        Component.translatable(messageKey, this.getName()),
+                        true
                 );
             }
         }
 
         return InteractionResult.sidedSuccess(this.level().isClientSide);
     }
-    
+
     /**
      * Handle command cycling (Follow/Sit/Wander)
      */
@@ -717,11 +717,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         // Send feedback message to player (action bar), server-side only to avoid duplicates
         if (!this.level().isClientSide) {
             player.displayClientMessage(
-                Component.translatable(
-                    "entity.saintsdragons.all.command_" + nextCommand,
-                    this.getName()
-                ),
-                true
+                    Component.translatable(
+                            "entity.saintsdragons.all.command_" + nextCommand,
+                            this.getName()
+                    ),
+                    true
             );
         }
 
@@ -733,7 +733,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             serverPlayer.displayClientMessage(Component.translatable(key, this.getName()), true);
         }
     }
-    
+
     /**
      * Apply the command state to the drake
      */
@@ -756,11 +756,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public void refreshCommandState() {
         applyCommandState(this.getCommand());
     }
-    
+
     // ===== SOUND SYSTEM =====
-    
+
     private int grumbleCooldown = 0;
-    
+
     /**
      * Get the sound handler for this drake
      */
@@ -844,7 +844,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         ambientSoundTimer = 0;
         nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
     }
-    
+
     @Override
     public void aiStep() {
         super.aiStep();
@@ -853,13 +853,13 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     }
 
     // ===== SLEEP SYSTEM IMPLEMENTATION =====
-    
+
     @Override
     public boolean isSleeping() {
         // Use synced data for client-side animation detection
         return level().isClientSide ? this.entityData.get(DATA_SLEEPING) : sleeping;
     }
-    
+
     @Override
     public boolean isSleepTransitioning() {
         if (level().isClientSide) {
@@ -878,7 +878,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public boolean isSleepingEntering() {
         return level().isClientSide ? this.entityData.get(DATA_SLEEPING_ENTERING) : sleepingEntering;
     }
-    
+
     /**
      * Check if drake is exiting sleep (wake_up transition)
      */
@@ -886,13 +886,13 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         return level().isClientSide ? this.entityData.get(DATA_SLEEPING_EXITING) : sleepingExiting;
     }
 
-    
+
     @Override
     public boolean isSleepSuppressed() {
         // Don't sleep while in combat, in water, or while being ridden
         return getTarget() != null || isInWaterOrBubble() || isVehicle();
     }
-    
+
     @Override
     public void startSleepEnter() {
         if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) return;
@@ -930,7 +930,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         sleepTransitionTicks = getSleepWakeUpDuration();
         animationController.triggerWakeUpAnimation();
     }
-    
+
     @Override
     public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
         // Stegonaut are nocturnal sleepers (sleep at night, active during day)
@@ -993,7 +993,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public void setGroundMoveStateFromAI(int state) {
         super.setGroundMoveStateFromAI(state);
     }
-    
+
     @Override
     public void tick() {
         super.tick();
@@ -1016,7 +1016,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             passiveBuffAbility.tick();
         } else {
             // Clean up resistance buffs when dead
-        passiveBuffAbility.cleanup();
+            passiveBuffAbility.cleanup();
         }
 
         // Handle grumble cooldown (now deprecated - replaced by handleAmbientSounds)
@@ -1177,7 +1177,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     }
 
     // ===== SOUND KEYFRAME HANDLING =====
-    
+
     /**
      * Handle sound keyframes from animations (for grumble sounds)
      */
@@ -1185,9 +1185,9 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         // Delegate all keyframed sounds to the sound handler
         this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
     }
-    
+
     // ===== CLIENT LOCATOR CACHE METHODS =====
-    
+
     /**
      * Client-only: stash per-frame sampled locator world positions
      */
@@ -1196,17 +1196,17 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             this.clientLocatorCache.put(name, pos);
         }
     }
-    
+
     /**
      * Client-only: retrieve cached locator world position
      */
     public Vec3 getClientLocatorPosition(String name) {
         return this.clientLocatorCache.get(name);
     }
-    
-    
+
+
     // ===== MOVEMENT STATE METHODS =====
-    
+
     /**
      * Check if the drake is currently walking
      */
@@ -1218,7 +1218,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         int s = this.entityData.get(DATA_GROUND_MOVE_STATE);
         return s == 1; // walking state
     }
-    
+
     /**
      * Check if the drake is currently running
      */
@@ -1230,7 +1230,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public void setRunning(boolean running) {
         this.entityData.set(DATA_RUNNING, running);
     }
-    
+
     /**
      * Get the effective ground movement state (with client-side prediction)
      */
@@ -1261,7 +1261,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         }
         return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
-    
+
     @Override
     public void tickAnimationStates() {
         if (this.isVehicle() && this.isOrderedToSit() && this.sitProgress <= 0.01f) {
@@ -1313,9 +1313,9 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         setRunning(moveState == 2 && !this.isInLove());
 
     }
-    
+
     // ===== SAVE/LOAD DATA =====
-    
+
     @Override
     public void addAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
@@ -1335,7 +1335,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         tag.putFloat("SitProgress", sitProgress);
         saveRideableData(tag);
     }
-    
+
     @Override
     public void readAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
@@ -1508,23 +1508,23 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public boolean isHovering() {
         return false;
     }
-    
+
     // ===== DRAKE BINDER FUNCTIONALITY =====
-    
+
     /**
      * Check if this drake is bound to a Drake Binder
      */
     public boolean isBoundToBinder() {
         return boundToBinder;
     }
-    
+
     /**
      * Set the binding state for Drake Binder
      */
     public void setBoundToBinder(boolean bound) {
         this.boundToBinder = bound;
     }
-    
+
     /**
      * Check if this drake can be bound (not sleeping, not dying, etc.)
      */
