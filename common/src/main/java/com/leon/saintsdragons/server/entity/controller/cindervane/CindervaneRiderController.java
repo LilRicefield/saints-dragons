@@ -19,16 +19,6 @@ public record CindervaneRiderController(Cindervane dragon) {
     // ===== SEAT TUNING CONSTANTS =====
     // Baseline vertical offset relative to dragon height
     private static final double SEAT_BASE_FACTOR = 0.05D; // 0.0..1.0 of bbHeight
-    // Additional vertical lift to avoid clipping
-    private static final double SEAT_LIFT = 0.70D;
-
-    // SEAT 0 (DRIVER - OWNER ONLY) - Front seat position
-    private static final double SEAT_0_FORWARD = 8.0D;  // Toward head
-    private static final double SEAT_0_SIDE = 0.00D;
-
-    // SEAT 1 (PASSENGER) - Back seat position
-    private static final double SEAT_1_FORWARD = 4.0D;  // Behind driver
-    private static final double SEAT_1_SIDE = 0.00D;
 
     // ===== SIMPLIFIED ARCADE FLIGHT PHYSICS =====
     // Speed multipliers relative to base FLYING_SPEED attribute
@@ -359,25 +349,10 @@ public record CindervaneRiderController(Cindervane dragon) {
 
             moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
         } else {
-            // Fallback to vanilla positioning if bone data not available
-            double offsetY = getPassengersRidingOffset() + SEAT_LIFT;
-            double forward;
-            double side;
-
-            if (seatIndex == 0) {
-                // Seat 0 - Driver (front)
-                forward = SEAT_0_FORWARD;
-                side = SEAT_0_SIDE;
-            } else {
-                // Seat 1+ - Passenger (back)
-                forward = SEAT_1_FORWARD;
-                side = SEAT_1_SIDE;
-            }
-
-            double rad = Math.toRadians(dragon.yBodyRot);
-            double dx = -Math.sin(rad) * forward + Math.cos(rad) * side;
-            double dz =  Math.cos(rad) * forward + Math.sin(rad) * side;
-            moveFunction.accept(passenger, dragon.getX() + dx, dragon.getY() + offsetY, dragon.getZ() + dz);
+            double x = dragon.getX();
+            double y = dragon.getY() + getPassengersRidingOffset() + passenger.getMyRidingOffset();
+            double z = dragon.getZ();
+            moveFunction.accept(passenger, x, y, z);
         }
     }
     

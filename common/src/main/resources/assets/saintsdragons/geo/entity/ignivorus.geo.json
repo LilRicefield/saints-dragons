@@ -397,11 +397,6 @@
 					]
 				},
 				{
-					"name": "passengerBone",
-					"parent": "neck2Controller",
-					"pivot": [-0.06603, 94.45, -153.05]
-				},
-				{
 					"name": "neck3",
 					"parent": "neck2Controller",
 					"pivot": [-0.06603, 76.45, -154.05]
@@ -428,6 +423,11 @@
 						{"origin": [-15.41603, 58.975, -232.25], "size": [30.7, 30.95, 47.4], "uv": [0, 1269]},
 						{"origin": [-0.06603, 85.975, -232.25], "size": [0, 30.95, 47.4], "uv": [634, 1302]}
 					]
+				},
+				{
+					"name": "passengerBone",
+					"parent": "neck4Controller",
+					"pivot": [-0.06603, 94.45, -211.05]
 				},
 				{
 					"name": "head",

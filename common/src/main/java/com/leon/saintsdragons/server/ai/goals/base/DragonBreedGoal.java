@@ -79,7 +79,13 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
 
         this.dragon.getLookControl().setLookAt(this.partner, 10.0F, (float) this.dragon.getMaxHeadXRot());
         if (!this.dragon.isFlying()) {
-            this.dragon.getNavigation().moveTo(this.partner, this.speedModifier);
+            double speed = this.speedModifier;
+            if (this.dragon instanceof com.leon.saintsdragons.server.entity.base.RideableDragonBase rideable) {
+                speed = Math.min(speed, 0.35D);
+                rideable.setGroundMoveStateFromAI(1);
+                rideable.setRunning(false);
+            }
+            this.dragon.getNavigation().moveTo(this.partner, speed);
         }
 
         ++this.loveTime;

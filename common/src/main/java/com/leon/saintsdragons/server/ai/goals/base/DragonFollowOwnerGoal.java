@@ -31,6 +31,10 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     @Override
     protected boolean canUseAdditional() {
+        if (dragon.isInLove()) {
+            return false;
+        }
+
         // Don't follow while fighting
         if (isInCombat()) {
             return false;
@@ -58,6 +62,10 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     @Override
     protected boolean canContinueAdditional() {
+        if (dragon.isInLove()) {
+            return false;
+        }
+
         // Stop following while fighting
         if (isInCombat()) {
             return false;

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -86,6 +87,14 @@ public class EntityRendererMixin {
                         maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 2.2; // Ground sprint multiplier
                     }
                 }
+            } else if (mc.player.getVehicle() instanceof Stegonaut stegonaut) {
+                isAccelerating = stegonaut.isAccelerating();
+                isFlying = false;
+
+                if (isAccelerating) {
+                    currentSpeed = stegonaut.getDeltaMovement().horizontalDistance();
+                    maxSpeed = Stegonaut.RIDER_RUN_SPEED;
+                }
             } else {
                 // Not riding a dragon - reset FOV
                 saint_sDragons$currentFOVMultiplier = 1.0;
@@ -110,6 +119,11 @@ public class EntityRendererMixin {
                 } else {
                     // Ground sprint - more subtle FOV effect (ground running is already fast enough!)
                     targetFOVMultiplier = 1.0 + (0.15 * speedRatio); // Up to 15% wider FOV at max speed
+
+                    if (mc.player.getVehicle() instanceof Stegonaut) {
+                        // Stegonaut: slight FOV zoom-in while sprinting
+                        targetFOVMultiplier = 1.0 - (0.05 * speedRatio);
+                    }
                 }
             }
             

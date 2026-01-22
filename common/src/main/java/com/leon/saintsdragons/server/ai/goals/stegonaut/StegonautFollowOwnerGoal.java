@@ -37,6 +37,11 @@ public class StegonautFollowOwnerGoal extends Goal {
             return false;
         }
 
+        // Don't follow while ready to breed
+        if (drake.isInLove()) {
+            return false;
+        }
+
         // Never follow while playing dead
         if (false) {
             return false;
@@ -60,13 +65,21 @@ public class StegonautFollowOwnerGoal extends Goal {
 
         // Only follow if owner is far enough away
         double ownerDist = drake.distanceToSqr(owner);
-        return ownerDist > START_FOLLOW_DIST * START_FOLLOW_DIST;
+        boolean shouldFollow = ownerDist > START_FOLLOW_DIST * START_FOLLOW_DIST;
+        if (shouldFollow && drake.tickCount % 40 == 0) {
+            System.out.println("[StegonautFollowOwner] canUse follow owner dist=" + String.format("%.2f", Math.sqrt(ownerDist)));
+        }
+        return shouldFollow;
     }
 
     @Override
     public boolean canContinueToUse() {
         LivingEntity owner = drake.getOwner();
         if (owner == null || !owner.isAlive() || drake.isOrderedToSit()) {
+            return false;
+        }
+
+        if (drake.isInLove()) {
             return false;
         }
 

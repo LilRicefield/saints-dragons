@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -57,6 +58,10 @@ public class ClientEventHandler {
     private static float cindervaneCameraPitch = 0.0f;
     private static float ignivorusCameraPitch = 0.0f;
     private static float nulljawCameraPitch = 0.0f;
+
+    // Stegonaut camera zoom transition
+    private static float stegonautCameraZoom = 12F; // Base zoom
+    private static float stegonautCameraZoomTarget = 12F;
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
@@ -311,6 +316,16 @@ public class ClientEventHandler {
                 verticalCameraShift = 0.0;
                 nulljawCameraPitch = 0.0f;
             }
+        }
+
+        if (player.isPassenger() && player.getVehicle() instanceof Stegonaut stegonaut && event.getCamera().isDetached()) {
+            stegonautCameraZoomTarget = 12F;
+            float blendRate = 0.05F;
+            stegonautCameraZoom += (stegonautCameraZoomTarget - stegonautCameraZoom) * blendRate;
+            event.getCamera().move(-event.getCamera().getMaxZoom(stegonautCameraZoom), 0, 0);
+        } else if (!(player.getVehicle() instanceof Stegonaut)) {
+            stegonautCameraZoom = 12F;
+            stegonautCameraZoomTarget = 12F;
         }
 
         // Screen shake detection and application

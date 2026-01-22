@@ -40,6 +40,10 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
             return false;
         }
 
+        if (drake.isInLove()) {
+            return false;
+        }
+
         // Hook up to command system - only wander when command is 2 (Wander) or when untamed
         if (drake.isTame()) {
             int command = drake.getCommand();
@@ -49,13 +53,21 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
         }
         // Untamed drakes can always wander (they don't follow commands)
 
-        return super.canUse();
+        boolean canUse = super.canUse();
+        if (canUse && drake.tickCount % 40 == 0) {
+            System.out.println("[StegonautWander] canUse wandering");
+        }
+        return canUse;
     }
 
     @Override
     public boolean canContinueToUse() {
         // Stop if combat starts
         if (drake.getTarget() != null && drake.getTarget().isAlive()) {
+            return false;
+        }
+
+        if (drake.isInLove()) {
             return false;
         }
 

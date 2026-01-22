@@ -17,24 +17,33 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     }
 
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/stegonaut.geo.json");
+    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_stegonaut.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/stegonaut.animation.json");
+    private static final ResourceLocation BABY_ANIM = SaintsDragonsCommon.rl("animations/entity/baby_stegonaut.animation.json");
     private static final ResourceLocation MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/stegonaut/stegonaut.png");
     private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/stegonaut/stegonaut_female.png");
+    private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/stegonaut/baby_stegonaut.png");
+    private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/stegonaut/baby_stegonaut_female.png");
 
     @Override
     public ResourceLocation getModelResource(Stegonaut entity) {
-        return MODEL;
+        return entity != null && entity.isBaby() ? BABY_MODEL : MODEL;
     }
 
     @Override
     public ResourceLocation getTextureResource(Stegonaut entity) {
-        // TODO: Add baby texture variant
+        if (entity == null) {
+            return MALE_TEXTURE;
+        }
+        if (entity.isBaby()) {
+            return entity.isFemale() ? BABY_FEMALE_TEXTURE : BABY_TEXTURE;
+        }
         return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
     }
 
     @Override
     public ResourceLocation getAnimationResource(Stegonaut entity) {
-        return ANIM;
+        return entity != null && entity.isBaby() ? BABY_ANIM : ANIM;
     }
 
     @Override

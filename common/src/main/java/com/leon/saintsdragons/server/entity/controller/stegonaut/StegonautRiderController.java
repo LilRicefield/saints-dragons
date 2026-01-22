@@ -1,6 +1,6 @@
-package com.leon.saintsdragons.server.entity.controller.nulljaw;
+package com.leon.saintsdragons.server.entity.controller.stegonaut;
 
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -8,7 +8,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.phys.AABB;
@@ -16,18 +15,11 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Handles all riding mechanics for the Rift Drake
- * Ground-based drake with aquatic capabilities
+ * Simple ground riding controller for Stegonaut.
+ * Handles basic walking/running input without abilities.
  */
-public record NulljawRiderController(Nulljaw drake) {
-    // ===== SEAT TUNING CONSTANTS =====
-    // Baseline vertical offset relative to drake height (FALLBACK ONLY - bone positioning is preferred)
-    private static final double SEAT_BASE_FACTOR = 0.45D; // 0.0..1.0 of bbHeight
-
-    // ===== GROUND MOVEMENT TUNING =====
-    private static final double WATER_SPEED_MULT = 1.2D;  // Enhanced speed in water
-
-    // ===== RIDING UTILITIES =====
+public record StegonautRiderController(Stegonaut drake) {
+    private static final double SEAT_BASE_FACTOR = 0.0D;
 
     @Nullable
     public Player getRidingPlayer() {
@@ -36,124 +28,63 @@ public record NulljawRiderController(Nulljaw drake) {
         }
         return null;
     }
-    
-    // ===== RIDER INPUT PROCESSING =====
 
-    /**
-     * Processes rider input and converts to movement vector
-     */
     public Vec3 getRiddenInput(Player player, @SuppressWarnings("unused") Vec3 deltaIn) {
         float f = player.zza < 0.0F ? 0.5F : 1.0F;
-
-        if (drake.isInWater()) {
-            // Aquatic movement - enhanced responsiveness in water
-            return new Vec3(player.xxa * 0.6F, 0.0F, player.zza * 1.0F * f);
-        } else {
-            // Ground movement - standard responsiveness
-            return new Vec3(player.xxa * 0.5F, 0.0D, player.zza * 0.9F * f);
-        }
+        return new Vec3(player.xxa * 0.5F, 0.0D, player.zza * 0.9F * f);
     }
 
-    /**
-     * Main rider tick method - handles rotation and movement state
-     */
     public void tickRidden(Player player, @SuppressWarnings("unused") Vec3 travelVector) {
-        // Prevent accidental rider fall damage while mounted
         player.fallDistance = 0.0F;
         drake.fallDistance = 0.0F;
-        
-        // Clear target when being ridden to prevent AI interference
         drake.setTarget(null);
 
-        // Always sync yaw with player's look direction (like Ignivorus)
-        // This ensures spectators see smooth head tracking even when drake is standing still
         float currentYaw = drake.getYRot();
         float targetYaw = player.getYRot();
         float rawDiff = Mth.wrapDegrees(targetYaw - currentYaw);
         float blend = 0.28f;
         float newYaw = currentYaw + (rawDiff * blend);
 
-        // Set rotation - syncs immediately to all clients
         drake.setYRot(newYaw);
         drake.yBodyRot = newYaw;
         drake.yHeadRot = newYaw;
         drake.setXRot(0.0F);
     }
 
-    /**
-     * Handle rider movement - NOT USED for ground-based dragons
-     * Ground movement is handled directly in travel() method using super.travel()
-     */
-    public void handleRiderMovement(Player player, Vec3 motion) {
-        // This method should not be called for ground-based dragons
-        // Ground movement is handled directly in the travel() method
-        throw new UnsupportedOperationException("handleRiderMovement should not be called for ground-based dragons");
-    }
-
-    /**
-     * Get the speed for ridden movement
-     */
     public float getRiddenSpeed(Player player) {
-        if (drake.isInWater()) {
-            // getSwimSpeed() already returns ridden speed when mounted
-            double baseSpeed = drake.getSwimSpeed();
-            // Apply acceleration boost
-            double speed = drake.isAccelerating() ? baseSpeed * 1.3D : baseSpeed;
-            return (float) speed;
-        } else {
-            // Ground movement - HARDCODED (not configurable)
-            double speed = drake.isAccelerating() ? Nulljaw.RIDER_RUN_SPEED : Nulljaw.RIDER_WALK_SPEED;
-            return (float) speed;
-        }
+        return (float) (drake.isAccelerating() ? Stegonaut.RIDER_RUN_SPEED : Stegonaut.RIDER_WALK_SPEED);
     }
 
-    /**
-     * Get the riding offset for passengers (FALLBACK ONLY)
-     */
     public double getPassengersRidingOffset() {
-        return drake.getBbHeight() * SEAT_BASE_FACTOR;
+        return (drake.getBbHeight() * SEAT_BASE_FACTOR);
     }
 
-    /**
-     * Position a rider on the drake using bone-based positioning
-     */
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
-        if (passenger == null) return;
+        if (passenger == null) {
+            return;
+        }
 
-        // Get the bone position from the renderer's cache (updated each render frame)
         Vec3 passengerLoc = drake.getClientLocatorPosition("passengerLocator");
 
         if (passengerLoc != null) {
-            // The cached position is in world-space but may be from the previous frame
-            // We need to convert to drake-local space to handle both movement AND rotation
-
-            // Get drake's old position and rotation (from when bone was sampled)
             Vec3 drakeOldPos = new Vec3(drake.xo, drake.yo, drake.zo);
             float oldYaw = drake.yRotO;
-
-            // Calculate offset in world space
             Vec3 worldOffset = passengerLoc.subtract(drakeOldPos);
 
-            // Convert world offset to drake-local space (relative to old rotation)
-            double oldYawRad = Math.toRadians(-oldYaw); // Negative because Minecraft yaw is inverted
+            double oldYawRad = Math.toRadians(-oldYaw);
             double cosOld = Math.cos(oldYawRad);
             double sinOld = Math.sin(oldYawRad);
-
-            // Rotate world offset back to local space
             double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
             double localY = worldOffset.y;
             double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
 
-            // Now rotate local offset to current rotation
             float currentYaw = drake.getYRot();
             double currentYawRad = Math.toRadians(-currentYaw);
             double cosCurrent = Math.cos(currentYawRad);
             double sinCurrent = Math.sin(currentYawRad);
-
             double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
             double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
 
-            // Apply to current drake position
             Vec3 drakeCurrentPos = drake.position();
             Vec3 passengerCurrentPos = drakeCurrentPos.add(currentWorldX, localY, currentWorldZ);
 
@@ -166,12 +97,7 @@ public record NulljawRiderController(Nulljaw drake) {
         }
     }
 
-    /**
-     * Get dismount location for a passenger - finds safe ground position
-     * Based on vanilla AbstractHorse dismount logic
-     */
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        // Try right side first (based on passenger's main hand)
         Vec3 vec3 = getCollisionHorizontalEscapeVector(
             drake.getBbWidth(),
             passenger.getBbWidth(),
@@ -182,7 +108,6 @@ public record NulljawRiderController(Nulljaw drake) {
             return rightSide;
         }
 
-        // Try left side if right side failed
         Vec3 vec32 = getCollisionHorizontalEscapeVector(
             drake.getBbWidth(),
             passenger.getBbWidth(),
@@ -192,10 +117,6 @@ public record NulljawRiderController(Nulljaw drake) {
         return leftSide != null ? leftSide : drake.position();
     }
 
-    /**
-     * Calculate horizontal escape vector for dismounting
-     * Reimplementation of Entity.getCollisionHorizontalEscapeVector (which is protected)
-     */
     private static Vec3 getCollisionHorizontalEscapeVector(double entityWidth, double passengerWidth, float yaw) {
         double d0 = (entityWidth + passengerWidth + 1.0E-5F) / 2.0D;
         float f = -Mth.sin(yaw * ((float)Math.PI / 180F));
@@ -204,10 +125,6 @@ public record NulljawRiderController(Nulljaw drake) {
         return new Vec3((double)f * d0 / (double)f2, 0.0D, (double)f1 * d0 / (double)f2);
     }
 
-    /**
-     * Finds a safe dismount location in the given direction by scanning upward for valid ground
-     * Based on vanilla AbstractHorse.getDismountLocationInDirection
-     */
     @Nullable
     private Vec3 getDismountLocationInDirection(Vec3 offset, LivingEntity passenger) {
         double targetX = drake.getX() + offset.x;
@@ -215,12 +132,10 @@ public record NulljawRiderController(Nulljaw drake) {
         double targetZ = drake.getZ() + offset.z;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
-        // Try all possible poses (standing, crouching, etc.)
         for (Pose pose : passenger.getDismountPoses()) {
             pos.set(targetX, minY, targetZ);
             double maxY = drake.getBoundingBox().maxY + 0.75D;
 
-            // Scan upward to find valid ground
             while (true) {
                 double floorHeight = drake.level().getBlockFloorHeight(pos);
                 if ((double)pos.getY() + floorHeight > maxY) {
@@ -246,9 +161,6 @@ public record NulljawRiderController(Nulljaw drake) {
         return null;
     }
 
-    /**
-     * Get the controlling passenger (rider)
-     */
     @Nullable
     public Player getControllingPassenger() {
         Player rider = getRidingPlayer();

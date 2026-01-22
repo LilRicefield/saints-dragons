@@ -434,6 +434,9 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
         if (dragon.isOrderedToSit()) {
             dragon.setOrderedToSit(false);
         }
+        if (dragon.getCommand() == 1) {
+            dragon.setCommandManual(0);
+        }
 
         // Start riding
         if (player.startRiding(dragon)) {

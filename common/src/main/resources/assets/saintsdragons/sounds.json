@@ -411,6 +411,26 @@
       }
     ]
   },
+  "stegonaut_walk": {
+    "subtitle": "Stegonaut walks",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_walk",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_run": {
+    "subtitle": "Stegonaut walks",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_run",
+        "volume": 0.8,
+        "pitch": 1.0
+      }
+    ]
+  },
   "nulljaw_grumble1": {
     "subtitle": "Nulljaw grumbles",
     "sounds": [

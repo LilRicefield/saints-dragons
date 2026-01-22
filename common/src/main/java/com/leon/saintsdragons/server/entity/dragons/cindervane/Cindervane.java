@@ -101,6 +101,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final double FIRE_BODY_IMPRINT_RADIUS = 9.0D;
     private static final double FIRE_BODY_IMPRINT_DEPTH_FACTOR = 0.6D;
     private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
+    private static final double BREED_PARTNER_RANGE = 20.0D;
+    private static final double BREED_DISTANCE_SQR = 2500.0D;
 
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 420;
@@ -539,7 +541,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // Adults can breed, babies cannot
         if (!this.isBaby()) {
             this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(
-                this, 1.0D, Cindervane.class, 20.0D, 9.0D
+                this, 1.0D, Cindervane.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
             ));
         }
 

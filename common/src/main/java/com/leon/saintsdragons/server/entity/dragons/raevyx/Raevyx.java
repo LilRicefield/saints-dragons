@@ -116,7 +116,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     /** Time to live for aggression tracking (in ticks) */
     public static final int AGGRO_TTL_TICKS = 200; // ~10s
     public static final double BREED_PARTNER_RANGE = 8.0D;
-    public static final double BREED_DISTANCE_SQR = 600.0D;
+    public static final double BREED_DISTANCE_SQR = 2500.0D;
 
     // ===== ENTITY DATA ACCESSORS =====
 
