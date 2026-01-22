@@ -192,7 +192,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private static final int BUCK_INTERVAL_MAX = 110;
     private static final int BUCK_WARNING_WINDOW = 15; // Ticks before buck where Nulljaw "winds up"
     private static final double BREED_PARTNER_RANGE = 30.0D;
-    private static final double BREED_DISTANCE_SQR = 400.0D;
+    private static final double BREED_DISTANCE_SQR = 2500.0D;
     private boolean wildRideActive = false;
     private int wildRideTicks = 0;
     private int nextBuckAttemptTick = 0;

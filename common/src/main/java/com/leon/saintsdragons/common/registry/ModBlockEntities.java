@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlockEntity;
 import com.leon.saintsdragons.common.block.CindervaneEggBlockEntity;
 import com.leon.saintsdragons.common.block.NulljawEggBlockEntity;
+import com.leon.saintsdragons.common.block.StegonautEggBlockEntity;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -43,6 +44,12 @@ public final class ModBlockEntities {
             REGISTER.register("nulljaw_egg", () -> BlockEntityType.Builder.of(
                     NulljawEggBlockEntity::new,
                     ModBlocks.NULLJAW_EGG.get()
+            ).build(null));
+
+    public static final Supplier<BlockEntityType<StegonautEggBlockEntity>> STEGONAUT_EGG =
+            REGISTER.register("stegonaut_egg", () -> BlockEntityType.Builder.of(
+                    StegonautEggBlockEntity::new,
+                    ModBlocks.STEGONAUT_EGG.get()
             ).build(null));
 
     public static void register() {

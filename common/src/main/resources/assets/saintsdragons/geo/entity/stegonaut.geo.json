@@ -44,6 +44,11 @@
 					]
 				},
 				{
+					"name": "passengerBone",
+					"parent": "neck1Controller",
+					"pivot": [0, 33, -27]
+				},
+				{
 					"name": "neck2",
 					"parent": "neck1Controller",
 					"pivot": [0, 24, -35]

@@ -217,8 +217,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final double WATER_EFFECT_INTENSITY = 0.6D;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     private static final int RIDER_LANDING_BLEND_DURATION = 5;
-    public static final double BREED_PARTNER_RANGE = 10.0D;
-    public static final double BREED_DISTANCE_SQR = 900.0D;
+    public static final double BREED_PARTNER_RANGE = 20.0D;
+    public static final double BREED_DISTANCE_SQR = 2500.0D;
 
     // Vocal entries (placeholder - sounds to be added later)
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =

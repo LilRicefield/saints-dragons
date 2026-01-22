@@ -15,6 +15,12 @@ import java.util.Map;
 public final class StegonautSoundProfile implements DragonSoundProfile {
 
     public static final StegonautSoundProfile INSTANCE = new StegonautSoundProfile();
+    private static final float BABY_PITCH_MULTIPLIER = 1.6f;
+    private static final Map<String, Boolean> BABY_ALLOWED_KEYS = Map.ofEntries(
+            Map.entry("stegonaut_eat", true),
+            Map.entry("stegonaut_hurt", true),
+            Map.entry("stegonaut_die", true)
+    );
 
     private static final Map<String, Integer> VOCAL_WINDOWS = Map.ofEntries(
             Map.entry("grumble1", 40),
@@ -51,6 +57,9 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
         // Handler already blocks server-side, we're only called on client
+        if (dragon.isBaby() && !BABY_ALLOWED_KEYS.containsKey(key)) {
+            return true; // Block grumbles for babies
+        }
 
         // Check if this is a vocal key that should use the vocal entry system
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
@@ -60,12 +69,21 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
         }
 
         // Handle non-vocal animation sounds
-        if ("stegonaut_eat".equals(key)) {
-            playSimpleSound(handler, dragon, "mouth_origin", ModSounds.STEGONAUT_EAT.get(), 1.0f, 1.0f, 0.0f);
-            return true;
-        }
-
-        return false;
+        return switch (key) {
+            case "stegonaut_eat" -> {
+                playEatSound(handler, dragon, "mouth_origin");
+                yield true;
+            }
+            case "stegonaut_walk" -> {
+                playWalkSound(handler, dragon, "mouth_origin");
+                yield true;
+            }
+            case "stegonaut_run" -> {
+                playRunSound(handler, dragon, "mouth_origin");
+                yield true;
+            }
+            default -> false;
+        };
     }
 
     @Override
@@ -113,8 +131,41 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
         if (entry.pitchVariance() != 0f) {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
         }
+        if (dragon.isBaby()) {
+            pitch *= BABY_PITCH_MULTIPLIER;
+        }
 
         playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+    }
+
+    /**
+     * Play eat sound with baby pitch adjustment.
+     */
+    private void playEatSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.STEGONAUT_EAT.get(), 1.0f, pitch);
+    }
+
+    /**
+     * Play walk sound with baby pitch adjustment.
+     */
+    private void playWalkSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.STEGONAUT_WALK.get(), 1.0f, pitch);
+    }
+
+    private void playRunSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.STEGONAUT_RUN.get(), 1.0f, pitch);
     }
 
     /**

@@ -84,6 +84,11 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.NULLJAW_EGG.get(),
                             new Item.Properties()));
 
+    public static final Supplier<Item> STEGONAUT_EGG =
+            REGISTER.register("stegonaut_egg",
+                    () -> new BlockItem(ModBlocks.STEGONAUT_EGG.get(),
+                            new Item.Properties()));
+
     public static final Supplier<Item> DRAGON_ALLY_BOOK =
             REGISTER.register("dragon_ally_book",
                     () -> new DragonAllyBookItem(

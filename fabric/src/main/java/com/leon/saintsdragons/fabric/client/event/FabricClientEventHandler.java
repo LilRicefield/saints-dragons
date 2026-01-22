@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Camera;
@@ -51,6 +52,10 @@ public class FabricClientEventHandler {
     private static float cindervaneCameraPitch = 0.0f;
     private static float ignivorusCameraPitch = 0.0f;
     private static float nulljawCameraPitch = 0.0f;
+
+    // Stegonaut camera zoom transition
+    private static float stegonautCameraZoom = 12F; // Base zoom
+    private static float stegonautCameraZoomTarget = 12F;
 
     // Raevyx beam camera state
     private static boolean wasBeaming = false;
@@ -355,6 +360,18 @@ public class FabricClientEventHandler {
                 verticalCameraShift = 0.0;
                 nulljawCameraPitch = 0.0f;
             }
+        }
+
+        if (player.isPassenger() && player.getVehicle() instanceof Stegonaut stegonaut && camera.isDetached()) {
+            stegonautCameraZoomTarget = 12F;
+            float blendRate = 0.05F;
+            stegonautCameraZoom += (stegonautCameraZoomTarget - stegonautCameraZoom) * blendRate;
+            CameraAccessor cameraAccessor = (CameraAccessor) camera;
+            double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(stegonautCameraZoom);
+            cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+        } else if (!(player.getVehicle() instanceof Stegonaut)) {
+            stegonautCameraZoom = 12F;
+            stegonautCameraZoomTarget = 12F;
         }
 
         // Screen shake detection and application

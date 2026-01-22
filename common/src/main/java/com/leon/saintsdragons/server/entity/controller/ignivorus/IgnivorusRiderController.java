@@ -18,8 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public record IgnivorusRiderController(Ignivorus dragon) {
 
-    // ===== SEAT TUNING CONSTANTS =====
-    private static final double SEAT_BASE_FACTOR = 0.50D;
+    private static final double SEAT_BASE_FACTOR = 0.50D; // for fallback if no bone was found
 
     // ===== GROUND MOVEMENT SPEED MULTIPLIERS =====
 

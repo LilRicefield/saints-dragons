@@ -21,6 +21,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> STEGONAUT_HURT = registerSound("stegonaut_hurt");
     public static final Supplier<SoundEvent> STEGONAUT_DIE = registerSound("stegonaut_die");
     public static final Supplier<SoundEvent> STEGONAUT_EAT = registerSound("stegonaut_eat");
+    public static final Supplier<SoundEvent> STEGONAUT_WALK = registerSound("stegonaut_walk");
+    public static final Supplier<SoundEvent> STEGONAUT_RUN = registerSound("stegonaut_run");
 
     // Raevyx
     public static final Supplier<SoundEvent> RAEVYX_PURR = registerSound("raevyx_purr");
@@ -133,8 +135,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_LEVEL3_CHARGE = registerSound("ignivorus_level3_charge");
     public static final Supplier<SoundEvent> IGNIVORUS_LEVEL3_SHOOTS = registerSound("ignivorus_level3_shoots");
 
-    private ModSounds() {
-    }
 
     private static Supplier<SoundEvent> registerSound(String name) {
         return REGISTER.register(name, () -> SoundEvent.createVariableRangeEvent(SaintsDragonsCommon.rl(name)));

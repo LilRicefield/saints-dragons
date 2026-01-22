@@ -302,6 +302,9 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             if (drake.isOrderedToSit()) {
                 drake.setOrderedToSit(false);
             }
+            if (drake.getCommand() == 1) {
+                drake.setCommand(0);
+            }
             drake.setTarget(null);
             drake.getNavigation().stop();
             player.startRiding(drake);

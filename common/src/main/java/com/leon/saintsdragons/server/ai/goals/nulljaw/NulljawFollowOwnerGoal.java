@@ -33,6 +33,10 @@ public class NulljawFollowOwnerGoal extends Goal {
             return false;
         }
 
+        if (drake.isInLove()) {
+            return false;
+        }
+
         LivingEntity owner = drake.getOwner();
         if (owner == null || !owner.isAlive() || owner.level() != drake.level()) {
             return false;
@@ -49,6 +53,10 @@ public class NulljawFollowOwnerGoal extends Goal {
     @Override
     public boolean canContinueToUse() {
         if (!drake.isTame() || drake.isOrderedToSit() || drake.isVehicle()) {
+            return false;
+        }
+
+        if (drake.isInLove()) {
             return false;
         }
 

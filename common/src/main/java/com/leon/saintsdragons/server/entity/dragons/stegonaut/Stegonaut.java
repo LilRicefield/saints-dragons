@@ -1,12 +1,17 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
+import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautPassiveBuffAbility;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautSoundProfile;
+import com.leon.saintsdragons.server.entity.controller.stegonaut.StegonautRiderController;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
@@ -30,14 +35,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
+import com.leon.saintsdragons.common.block.StegonautEggBlockEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -45,19 +53,12 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-/**
- * Stegonaut - A sturdy pack animal that wanders around and follows its owner.
- * Features:
- * - Sleep behavior: Sleeps at night, awake during day.
- * - Pack animal: Doesn't flee from threats, making it reliable for travel
- * - Protective aura: Grants resistance and absorption to nearby players and allies
- * - NOT rideable: Designed as a pack animal, not a mount
- */
-public class Stegonaut extends DragonEntity implements SoundHandledDragon {
+public class Stegonaut extends RideableDragonBase implements SoundHandledDragon {
     
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
+    private final StegonautRiderController riderController = new StegonautRiderController(this);
     // Passive aura that applies resistance and absorption to allies
     private final StegonautPassiveBuffAbility passiveBuffAbility =
             new StegonautPassiveBuffAbility(this);
@@ -70,6 +71,15 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     private int nextAmbientSoundDelay;
     private static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
     private static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
+
+    // ===== BREEDING CONSTANTS =====
+    private static final double BREED_PARTNER_RANGE = 20.0D;
+    private static final double BREED_DISTANCE_SQR = 2500.0D;
+
+    // ===== BABY ATTRIBUTES =====
+    private static final double BABY_MAX_HEALTH = 50.0D;
+    private static final double BABY_ARMOR = 5.0D;
+    private static final float BABY_HITBOX_SCALE = 0.65F;
 
     // ===== VOCAL ENTRIES =====
     // IMPORTANT: Keys MUST match animation trigger names registered in StegonautAnimationHandler
@@ -97,6 +107,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     private boolean sleepingEntering = false; // True during fall_asleep transition
     private boolean sleepingExiting = false; // True during wake_up transition
     private int sleepTransitionTicks = 0; // Countdown timer for transition animations
+    private boolean suppressSitAnimation = false;
     private boolean sleepFallAsleepTriggered = false;
     private boolean sleepSitUpTriggered = false;
 
@@ -115,6 +126,25 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     // Synced ground movement state for reliable animation
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> DATA_RIDER_FORWARD =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> DATA_RIDER_STRAFE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_ACCELERATING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_GOING_UP =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_GOING_DOWN =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_RUNNING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    // ===== RIDING SPEED CONSTANTS =====
+    public static final double RIDER_WALK_SPEED = 0.1D;
+    public static final double RIDER_RUN_SPEED = 0.25D;
     
     // Binding state for Drake Binder
     private boolean boundToBinder = false;
@@ -137,6 +167,12 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         RandomSource rng = this.getRandom();
         this.ambientSoundTimer = rng.nextInt(80); // small random offset
         this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+
+        // Apply baby/adult attributes
+        if (!level.isClientSide) {
+            applyConfiguredAttributes();
+            this.setHealth(this.getMaxHealth());
+        }
     }
     
     @Override
@@ -145,18 +181,43 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0); // 0=idle, 1=walking, 2=running
+    }
+
+    @Override
+    protected void defineRideableDragonData() {
+        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
+        this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
+        this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
+        this.entityData.define(DATA_ACCELERATING, false);
+        this.entityData.define(DATA_FLIGHT_MODE, -1);
+        this.entityData.define(DATA_GOING_UP, false);
+        this.entityData.define(DATA_GOING_DOWN, false);
+        this.entityData.define(DATA_RUNNING, false);
     }
     
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this)); // CRITICAL: Must float in water to not drown!
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this)); // Escape water
+
+        // Baby-specific goals
+        if (this.isBaby()) {
+            this.goalSelector.addGoal(2, new DragonFollowParentGoal<>(this, Stegonaut.class, 1.1D));
+        }
+
         // Removed flee goal - pack animal doesn't run from threats
+        // Adults can breed, babies cannot (keep higher priority than follow/wander)
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(3, new DragonBreedGoal<>(
+                this, 1.0D, Stegonaut.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
+            ));
+        }
+
         this.goalSelector.addGoal(4, new StegonautFollowOwnerGoal(this));
         this.goalSelector.addGoal(5, new StegonautGroundWanderGoal(this, 0.35D, 120));
-        this.goalSelector.addGoal(6, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(7, new StegonautRandomLookAroundGoal(this));
+
+        this.goalSelector.addGoal(7, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(8, new StegonautRandomLookAroundGoal(this));
     }
 
     @Override
@@ -175,8 +236,8 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
                 .add(Attributes.FOLLOW_RANGE, 16.0D);
     }
     
-    // Ground drake, no flying!
-    public boolean isFlying() {
+    @Override
+    protected boolean isDragonFlying() {
         return false;
     }
     
@@ -189,7 +250,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     }
     
     /**
-     * Primitive Drakes are NOT rideable - they're too small and simple
+     * Primitive Drakes are rideable, but ground-only.
      */
     
     @Override
@@ -200,6 +261,16 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     
     public boolean isTameable() {
         return true; // Can be tamed like other dragons
+    }
+
+    @Override
+    public boolean canTakeoff() {
+        return false;
+    }
+
+    @Override
+    public boolean hasSecondaryMelee() {
+        return false;
     }
     
     @Override
@@ -239,7 +310,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
 
     @Override
     public int getDeathAnimationDurationTicks() {
-        return 50; // 2.50 seconds
+        return 41;
     }
 
     @Override
@@ -288,15 +359,108 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     
     @Override
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob other) {
-        // Simple breeding - just spawn a new Primitive Drake
         Stegonaut baby = ModEntities.STEGONAUT.get().create(level);
         if (baby != null) {
+            // Set gender randomly
+            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+
+            // Inherit owner from parent
+            java.util.UUID ownerId = this.getOwnerUUID();
+            if (ownerId != null) {
+                baby.setOwnerUUID(ownerId);
+                baby.setTame(true);
+            }
+
+            // Set baby attributes
+            baby.setAge(-24000); // Baby age
+            baby.setBaby(true);
+            baby.applyConfiguredAttributes();
+            baby.setHealth(baby.getMaxHealth());
+
             // Position the baby near the parent to prevent Y=0 spawning
             net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
             double spawnY = safePos != null ? safePos.getY() : this.getY();
             baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
         }
         return baby;
+    }
+
+    // ===== BABY ATTRIBUTE SYSTEM =====
+
+    public void applyConfiguredAttributes() {
+        // Apply baby-specific stats or adult stats
+        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : 100.0D);
+        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : 15.0D);
+
+        // Clamp health if it exceeds new max
+        double maxHealth = isBaby() ? BABY_MAX_HEALTH : 100.0D;
+        if (this.getHealth() > maxHealth) {
+            this.setHealth((float) maxHealth);
+        }
+    }
+
+    private void setAttributeBase(net.minecraft.world.entity.ai.attributes.Attribute attribute, double value) {
+        net.minecraft.world.entity.ai.attributes.AttributeInstance instance = this.getAttribute(attribute);
+        if (instance != null) {
+            instance.setBaseValue(value);
+        }
+    }
+
+    @Override
+    public void ageBoundaryReached() {
+        super.ageBoundaryReached();
+        applyConfiguredAttributes();
+        refreshDimensions();
+    }
+
+    @Override
+    public @NotNull net.minecraft.world.entity.EntityDimensions getDimensions(@NotNull net.minecraft.world.entity.Pose pose) {
+        net.minecraft.world.entity.EntityDimensions baseDimensions = super.getDimensions(pose);
+        if (isBaby()) {
+            return baseDimensions.scale(BABY_HITBOX_SCALE);
+        }
+        return baseDimensions;
+    }
+
+    @Override
+    public boolean canBreed() {
+        return this.isTame() && !this.isBaby() && this.getHealth() >= this.getMaxHealth() && this.isInLove();
+    }
+
+    @Override
+    public boolean canMate(@Nonnull Animal otherAnimal) {
+        if (!this.canBreed()) {
+            return false;
+        }
+
+        if (otherAnimal instanceof Stegonaut otherDragon) {
+            if (this.isFemale() == otherDragon.isFemale()) {
+                return false;
+            }
+            return otherDragon.canBreed();
+        }
+
+        return false;
+    }
+
+    @Override
+    public net.minecraft.world.level.block.state.BlockState getEggBlockState() {
+        return ModBlocks.STEGONAUT_EGG.get().defaultBlockState();
+    }
+
+    @Override
+    public void configureEggBlockEntity(net.minecraft.world.level.block.entity.BlockEntity blockEntity,
+                                        @Nullable DragonEntity partner) {
+        if (!(blockEntity instanceof StegonautEggBlockEntity eggEntity)) {
+            return;
+        }
+
+        if (this.isTame() && this.getOwnerUUID() != null) {
+            eggEntity.setOwnerUUID(this.getOwnerUUID());
+        }
+
+        DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
+        eggEntity.setBabyGender(babyGender);
     }
 
     public static boolean canSpawnHere(EntityType<? extends Stegonaut> type,
@@ -324,14 +488,6 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
-        // Prevent any mounting attempts - Primitive Drakes are NOT rideable
-        if (hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty()) {
-            // If player is trying to mount (shift+right-click), deny it
-            if (player.isShiftKeyDown()) {
-                return InteractionResult.PASS; // Don't allow mounting
-            }
-        }
-        
         if (!this.isTame()) {
             return handleUntamedInteraction(player, hand);
         } else {
@@ -389,7 +545,22 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
      */
     private InteractionResult handleTamedInteraction(Player player, InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
+
+        if (itemstack.getItem() instanceof com.leon.saintsdragons.common.item.StegonautBinderItem) {
+            InteractionResult result = itemstack.interactLivingEntity(player, this, hand);
+            if (result != InteractionResult.PASS) {
+                return result;
+            }
+        }
+
+        if (itemstack.is(com.leon.saintsdragons.common.registry.ModItems.DRAGON_ALLY_BOOK.get())) {
+            return InteractionResult.PASS;
+        }
         
+        if (player.equals(this.getOwner()) && player.isShiftKeyDown() && this.isFood(itemstack)) {
+            return handleBreeding(player, itemstack);
+        }
+
         // Handle feeding for healing
         if (this.isFood(itemstack)) {
             return handleFeeding(player, itemstack);
@@ -398,13 +569,79 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         // Handle owner commands
         if (player.equals(this.getOwner())) {
             // Command cycling - Shift+Right-click cycles through commands
-            if (this.canOwnerCommand(player) && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND) {
+            if (player.isShiftKeyDown() && this.canOwnerCommand(player) && !this.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
                 return handleCommandCycling(player);
+            }
+
+            if (!player.isShiftKeyDown() && !this.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
+                return handleMounting(player);
             }
         }
         
         // Fall back to base implementation for other interactions
         return super.mobInteract(player, hand);
+    }
+
+    private InteractionResult handleMounting(Player player) {
+        if (this.isVehicle()) {
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
+
+        if (!this.level().isClientSide) {
+            prepareForMounting();
+            player.startRiding(this);
+        }
+
+        return InteractionResult.sidedSuccess(this.level().isClientSide);
+    }
+
+    private void prepareForMounting() {
+        if (this.level().isClientSide) {
+            return;
+        }
+
+        suppressSitAnimation = true;
+        this.setOrderedToSit(false);
+        suppressSitAnimation = false;
+        if (this.getCommand() == 1) {
+            this.setCommand(0);
+        }
+        forceSitProgress(0f);
+        this.setTarget(null);
+        if (this.getNavigation().getPath() != null) {
+            this.getNavigation().stop();
+        }
+    }
+
+    private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
+        boolean client = this.level().isClientSide;
+
+        if (this.isBaby()) {
+            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_too_young");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (this.getAge() != 0) {
+            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_cooling_down");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (this.isInLove()) {
+            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_already_ready");
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (!client) {
+            if (!player.getAbilities().instabuild) {
+                itemstack.shrink(1);
+            }
+
+            this.triggerAnim("action", "eat");
+            this.setInLove(player);
+            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_ready");
+        }
+
+        return InteractionResult.sidedSuccess(client);
     }
     
     /**
@@ -420,27 +657,48 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
             this.triggerAnim("action", "eat");
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            // Heal the drake when fed (hearty meal heals more)
-            float healAmount = hearty ? 18.0f : 8.0f; // Hearty meal: +7 hearts vs +4 hearts
-            float oldHealth = this.getHealth();
-            float newHealth = Math.min(oldHealth + healAmount, this.getMaxHealth());
-            this.setHealth(newHealth);
-            
-            // Play eating sound and particles
-            this.level().broadcastEntityEvent(this, (byte) 6); // Eating sound
-            this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
-            
-            // Send appropriate feedback message
-            String messageKey = (newHealth >= this.getMaxHealth()) 
-                ? "entity.saintsdragons.stegonaut.fed"
-                : "entity.saintsdragons.stegonaut.fed_partial";
-                
-            player.displayClientMessage(
-                Component.translatable(messageKey, this.getName()),
-                true
-            );
+
+            if (this.isBaby()) {
+                // Baby growth logic
+                int growthTicks = hearty ? 4800 : 2400; // Hearty meal: 4 minutes vs 2 minutes
+                int currentAge = this.getAge();
+                int newAge = Math.min(0, currentAge + growthTicks);
+                this.setAge(newAge);
+
+                this.level().broadcastEntityEvent(this, (byte) 7); // Hearts
+
+                if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                    String messageKey = (newAge == 0)
+                        ? "entity.saintsdragons.stegonaut.baby_grown"
+                        : "entity.saintsdragons.stegonaut.baby_fed";
+                    serverPlayer.displayClientMessage(
+                        Component.translatable(messageKey, this.getName()),
+                        true
+                    );
+                }
+            } else {
+                // Adult healing logic
+                float healAmount = hearty ? 18.0f : 8.0f; // Hearty meal: +7 hearts vs +4 hearts
+                float oldHealth = this.getHealth();
+                float newHealth = Math.min(oldHealth + healAmount, this.getMaxHealth());
+                this.setHealth(newHealth);
+
+                // Play eating sound and particles
+                this.level().broadcastEntityEvent(this, (byte) 6); // Eating sound
+                this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
+
+                // Send appropriate feedback message
+                String messageKey = (newHealth >= this.getMaxHealth())
+                    ? "entity.saintsdragons.stegonaut.fed"
+                    : "entity.saintsdragons.stegonaut.fed_partial";
+
+                player.displayClientMessage(
+                    Component.translatable(messageKey, this.getName()),
+                    true
+                );
+            }
         }
-        
+
         return InteractionResult.sidedSuccess(this.level().isClientSide);
     }
     
@@ -468,6 +726,12 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         }
 
         return InteractionResult.SUCCESS;
+    }
+
+    private void sendStatusMessage(Player player, String key) {
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            serverPlayer.displayClientMessage(Component.translatable(key, this.getName()), true);
+        }
     }
     
     /**
@@ -509,7 +773,7 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
      * Play random grumble sounds for personality
      */
     public void playRandomGrumble() {
-        if (level().isClientSide || isDying()) return;
+        if (level().isClientSide || isDying() || isBaby()) return;
 
         float grumbleChance = getRandom().nextFloat();
         String vocalKey;
@@ -532,8 +796,8 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     private void playCustomAmbientSound() {
         RandomSource random = getRandom();
 
-        // Don't make ambient sounds if we're in combat or dying
-        if (isDying() || getTarget() != null) {
+        // Don't make ambient sounds if we're in combat, dying, or a baby
+        if (isDying() || getTarget() != null || isBaby()) {
             return;
         }
 
@@ -584,9 +848,8 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!this.level().isClientSide) {
-            tickAnimationStates();
-        }
+        tickRiderControlLock();
+        tickAnimationStates();
     }
 
     // ===== SLEEP SYSTEM IMPLEMENTATION =====
@@ -706,6 +969,12 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         if (wasSitting == sitting) {
             return;
         }
+        if (suppressSitAnimation) {
+            if (!sitting) {
+                forceSitProgress(0f);
+            }
+            return;
+        }
         // During sleep transitions, dedicated logic drives the sit clips
         if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) {
             return;
@@ -720,13 +989,9 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
     }
 
     // Allow AI to forcibly clamp ground animation state to idle during sleep transitions
-    private void setGroundMoveStateFromAI(int state) {
-        if (!this.level().isClientSide) {
-            int s = Math.max(0, Math.min(2, state));
-            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
-                this.entityData.set(DATA_GROUND_MOVE_STATE, s);
-            }
-        }
+    @Override
+    public void setGroundMoveStateFromAI(int state) {
+        super.setGroundMoveStateFromAI(state);
     }
     
     @Override
@@ -958,12 +1223,12 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
      * Check if the drake is currently running
      */
     public boolean isRunning() {
-        if (level().isClientSide) {
-            int s = getEffectiveGroundState();
-            return s == 2; // running state
-        }
-        int s = this.entityData.get(DATA_GROUND_MOVE_STATE);
-        return s == 2; // running state
+        return this.entityData.get(DATA_RUNNING);
+    }
+
+    @Override
+    public void setRunning(boolean running) {
+        this.entityData.set(DATA_RUNNING, running);
     }
     
     /**
@@ -997,39 +1262,56 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
         return this.entityData.get(DATA_GROUND_MOVE_STATE);
     }
     
-    /**
-     * Update animation states based on current movement
-     */
-    private void tickAnimationStates() {
+    @Override
+    public void tickAnimationStates() {
+        if (this.isVehicle() && this.isOrderedToSit() && this.sitProgress <= 0.01f) {
+            // Client can get stuck thinking we're sitting after mount; clear it so walk anim can play.
+            if (this.level().isClientSide) {
+                this.setOrderedToSit(false);
+                forceSitProgress(0f);
+            }
+        }
+        if (isSleeping() || isOrderedToSit()) {
+            if (!this.level().isClientSide) {
+                this.entityData.set(DATA_GROUND_MOVE_STATE, 0);
+                this.syncAnimState(0, getFlightMode());
+            }
+            walkAnimationHoldTicks = 0;
+            return;
+        }
+
+        if (getControllingPassenger() != null) {
+            super.tickAnimationStates();
+            setRunning(isAccelerating());
+            return;
+        }
+
         int moveState = 0; // Default to idle
 
-        if (!isSleeping() && !isOrderedToSit()) {
-            boolean hasActivePath = this.getNavigation().isInProgress();
-            double horizontalSpeed = this.getDeltaMovement().horizontalDistanceSqr();
-            boolean isActuallyMoving = horizontalSpeed > 0.001;
+        boolean hasActivePath = this.getNavigation().isInProgress();
+        double horizontalSpeed = this.getDeltaMovement().horizontalDistanceSqr();
+        boolean isActuallyMoving = horizontalSpeed > 0.001;
 
-            if (hasActivePath || isActuallyMoving) {
-                // Determine walk vs run based on speed (run threshold: ~0.08 blocks/tick squared)
-                if (horizontalSpeed > 0.0064) {
-                    moveState = 2; // Running
-                } else {
-                    moveState = 1; // Walking
-                }
-                walkAnimationHoldTicks = 8; // Hold animation for 8 ticks after stopping
-            } else if (walkAnimationHoldTicks > 0) {
-                // Keep playing walk animation while decelerating
-                moveState = 1;
-                walkAnimationHoldTicks--;
+        if (hasActivePath || isActuallyMoving) {
+            // Determine walk vs run based on speed (run threshold: ~0.08 blocks/tick squared)
+            if (horizontalSpeed > 0.0064) {
+                moveState = 2; // Running
+            } else {
+                moveState = 1; // Walking
             }
-        } else {
-            // Force reset hold timer when sleeping/sitting
-            walkAnimationHoldTicks = 0;
+            walkAnimationHoldTicks = 8; // Hold animation for 8 ticks after stopping
+        } else if (walkAnimationHoldTicks > 0) {
+            // Keep playing walk animation while decelerating
+            moveState = 1;
+            walkAnimationHoldTicks--;
         }
 
         // Update state only if changed to reduce network traffic
         if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
             this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
         }
+        setRunning(moveState == 2 && !this.isInLove());
+
     }
     
     // ===== SAVE/LOAD DATA =====
@@ -1051,11 +1333,13 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
 
         // Save sit progress for animation state
         tag.putFloat("SitProgress", sitProgress);
+        saveRideableData(tag);
     }
     
     @Override
     public void readAdditionalSaveData(net.minecraft.nbt.@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        loadRideableData(tag);
 
         int restoredCommand = this.getCommand();
         if (tag.contains("StegonautCommand")) {
@@ -1086,6 +1370,143 @@ public class Stegonaut extends DragonEntity implements SoundHandledDragon {
 
         // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
         // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
+    }
+
+    @Override
+    public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
+        if (areRiderControlsLocked()) {
+            return Vec3.ZERO;
+        }
+
+        Vec3 input = riderController.getRiddenInput(player, deltaIn);
+        if (!level().isClientSide) {
+            float fwd = (float) Math.max(-1.0D, Math.min(1.0D, input.z));
+            float str = (float) Math.max(-1.0D, Math.min(1.0D, input.x));
+            setLastRiderForward(Math.abs(fwd) > 0.02f ? fwd : 0f);
+            setLastRiderStrafe(Math.abs(str) > 0.02f ? str : 0f);
+        }
+        return input;
+    }
+
+    @Override
+    public float getRiddenSpeed(@NotNull Player rider) {
+        return riderController.getRiddenSpeed(rider);
+    }
+
+    @Override
+    public void tickRidden(@NotNull Player player, @NotNull Vec3 travelVec) {
+        super.tickRidden(player, travelVec);
+        riderController.tickRidden(player, travelVec);
+
+        if (!level().isClientSide) {
+            float fwd = (float) net.minecraft.util.Mth.clamp(player.zza, -1.0F, 1.0F);
+            float str = (float) net.minecraft.util.Mth.clamp(player.xxa, -1.0F, 1.0F);
+            setLastRiderForward(Math.abs(fwd) > 0.02f ? fwd : 0f);
+            setLastRiderStrafe(Math.abs(str) > 0.02f ? str : 0f);
+            int moveState = 0;
+            if (Math.abs(fwd) + Math.abs(str) > 0.05f) {
+                moveState = this.isAccelerating() ? 2 : 1;
+            } else {
+                double speedSqr = getDeltaMovement().horizontalDistanceSqr();
+                if (speedSqr > 0.005) {
+                    moveState = 1;
+                }
+            }
+            setGroundMoveStateFromAI(moveState);
+            setRunning(moveState == 2 && !this.isInLove());
+        }
+    }
+
+    @Override
+    public void travel(@NotNull Vec3 motion) {
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            if (areRiderControlsLocked()) {
+                this.setDeltaMovement(Vec3.ZERO);
+                return;
+            }
+            if (this.getNavigation().getPath() != null) {
+                this.getNavigation().stop();
+            }
+
+            setGoingUp(false);
+            setGoingDown(false);
+            this.setSpeed(riderController.getRiddenSpeed(player));
+            super.travel(motion);
+            return;
+        }
+
+        super.travel(motion);
+    }
+
+    @Override
+    protected void positionRider(@Nonnull @NotNull net.minecraft.world.entity.Entity passenger,
+                                 @Nonnull @NotNull net.minecraft.world.entity.Entity.MoveFunction moveFunction) {
+        riderController.positionRider(passenger, moveFunction);
+    }
+
+    @Override
+    public @NotNull Vec3 getDismountLocationForPassenger(@NotNull net.minecraft.world.entity.LivingEntity passenger) {
+        return riderController.getDismountLocationForPassenger(passenger);
+    }
+
+    @Override
+    public @Nullable net.minecraft.world.entity.LivingEntity getControllingPassenger() {
+        return riderController.getControllingPassenger();
+    }
+
+    @Override
+    protected net.minecraft.network.syncher.EntityDataAccessor<Float> getRiderForwardAccessor() {
+        return DATA_RIDER_FORWARD;
+    }
+
+    @Override
+    protected net.minecraft.network.syncher.EntityDataAccessor<Float> getRiderStrafeAccessor() {
+        return DATA_RIDER_STRAFE;
+    }
+
+    @Override
+    protected net.minecraft.network.syncher.EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
+        return DATA_GROUND_MOVE_STATE;
+    }
+
+    @Override
+    protected net.minecraft.network.syncher.EntityDataAccessor<Integer> getFlightModeAccessor() {
+        return DATA_FLIGHT_MODE;
+    }
+
+    @Override
+    protected net.minecraft.network.syncher.EntityDataAccessor<Boolean> getGoingUpAccessor() {
+        return DATA_GOING_UP;
+    }
+
+    @Override
+    protected net.minecraft.network.syncher.EntityDataAccessor<Boolean> getGoingDownAccessor() {
+        return DATA_GOING_DOWN;
+    }
+
+    @Override
+    protected net.minecraft.network.syncher.EntityDataAccessor<Boolean> getAcceleratingAccessor() {
+        return DATA_ACCELERATING;
+    }
+
+    @Override
+    protected int getFlightMode() {
+        return -1;
+    }
+
+    @Override
+    public boolean isTakeoff() {
+        return false;
+    }
+
+    @Override
+    public boolean isLanding() {
+        return false;
+    }
+
+    @Override
+    public boolean isHovering() {
+        return false;
     }
     
     // ===== DRAKE BINDER FUNCTIONALITY =====
