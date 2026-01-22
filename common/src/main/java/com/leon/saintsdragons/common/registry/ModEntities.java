@@ -9,12 +9,10 @@ import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireSlashEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaOutlineEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
@@ -111,15 +109,6 @@ public final class ModEntities {
                     .noSummon()
                     .build("ignivorus_flame"));
 
-    public static final Supplier<EntityType<IgnivorusFireSlashEntity>> IGNIVORUS_FIRE_SLASH =
-            REGISTER.register("ignivorus_fire_slash", () -> EntityType.Builder.<IgnivorusFireSlashEntity>of(IgnivorusFireSlashEntity::new, MobCategory.MISC)
-                    .sized(0.8F, 0.8F)
-                    .clientTrackingRange(128)
-                    .updateInterval(1)
-                    .fireImmune()
-                    .noSummon()
-                    .build("ignivorus_fire_slash"));
-
     public static final Supplier<EntityType<IgnivorusNovaEntity>> IGNIVORUS_NOVA =
             REGISTER.register("ignivorus_nova", () -> EntityType.Builder.<IgnivorusNovaEntity>of(IgnivorusNovaEntity::new, MobCategory.MISC)
                     .sized(1.0F, 1.0F)
@@ -128,15 +117,6 @@ public final class ModEntities {
                     .fireImmune()
                     .noSummon()
                     .build("ignivorus_nova"));
-
-    public static final Supplier<EntityType<IgnivorusNovaOutlineEntity>> IGNIVORUS_NOVA_OUTLINE =
-            REGISTER.register("ignivorus_nova_outline", () -> EntityType.Builder.<IgnivorusNovaOutlineEntity>of(IgnivorusNovaOutlineEntity::new, MobCategory.MISC)
-                    .sized(1.0F, 1.0F)
-                    .clientTrackingRange(128)
-                    .updateInterval(1)
-                    .fireImmune()
-                    .noSummon()
-                    .build("ignivorus_nova_outline"));
 
     public static final Supplier<EntityType<IgnivorusNovaRingEntity>> IGNIVORUS_NOVA_RING =
             REGISTER.register("ignivorus_nova_ring", () -> EntityType.Builder.<IgnivorusNovaRingEntity>of(IgnivorusNovaRingEntity::new, MobCategory.MISC)

@@ -8,8 +8,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -134,25 +132,6 @@ public class StegonautEggBlock extends BaseEntityBlock {
             level.addFreshEntity(baby);
             level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
         }
-    }
-
-    @Override
-    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
-        // Eggs can be trampled and destroyed
-        if (!level.isClientSide && entity instanceof Player player && !player.isShiftKeyDown()) {
-            if (level.random.nextInt(10) == 0) {
-                this.destroyEgg(level, state, pos);
-            }
-        }
-        super.stepOn(level, pos, state, entity);
-    }
-
-    /**
-     * Destroy the egg
-     */
-    private void destroyEgg(Level level, BlockState state, BlockPos pos) {
-        level.playSound(null, pos, SoundEvents.TURTLE_EGG_BREAK, SoundSource.BLOCKS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
-        level.destroyBlock(pos, false);
     }
 
     @Override
