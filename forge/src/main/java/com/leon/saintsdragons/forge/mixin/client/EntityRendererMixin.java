@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -79,6 +80,14 @@ public class EntityRendererMixin {
                         maxSpeed = ignivorus.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED) * 2.2;
                     }
                 }
+            } else if (mc.player.getVehicle() instanceof Stegonaut stegonaut) {
+                isAccelerating = stegonaut.isAccelerating() || stegonaut.isRunning();
+                isFlying = false;
+
+                if (isAccelerating) {
+                    currentSpeed = stegonaut.getDeltaMovement().horizontalDistance();
+                    maxSpeed = Stegonaut.RIDER_RUN_SPEED;
+                }
             } else {
                 saint_sDragons$currentFOVMultiplier = 1.0;
                 return;
@@ -98,6 +107,9 @@ public class EntityRendererMixin {
                     targetFOVMultiplier = 1.0 + (speedRatio);
                 } else {
                     targetFOVMultiplier = 1.0 + (0.15 * speedRatio);
+                    if (mc.player.getVehicle() instanceof Stegonaut) {
+                        targetFOVMultiplier = 1.0 + (0.05 * speedRatio);
+                    }
                 }
             }
 

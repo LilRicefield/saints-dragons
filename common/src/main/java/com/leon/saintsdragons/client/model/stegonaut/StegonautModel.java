@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.model.stegonaut;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -63,7 +64,36 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
             applyBodyRotationDeviation(entity, partialTick);
             applyTailDrag(entity, partialTick);
             applyNeckFollow(entity, modelData, partialTick);
+            applyGroundNeckTurn(entity, partialTick);
         }
+    }
+
+    private void applyNeckBoneRotation(String boneName, float rotationY) {
+        var boneOpt = getBone(boneName);
+        if (boneOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone bone = boneOpt.get();
+        // Add to current rotation (which includes animation) instead of setting from snapshot
+        bone.setRotY(bone.getRotY() + rotationY);
+    }
+
+    private void applyGroundNeckTurn(Stegonaut entity, float partialTick) {
+        // Use yaw velocity to determine turn direction and magnitude
+        double velocity = entity.yawVelocity.get(partialTick);
+
+        // Clamp to prevent excessive rotation
+        velocity = Mth.clamp(velocity, -25.0, 25.0);
+
+        // Convert to radians - head turns IN the direction of the turn (opposite of tail drag)
+        // So we NEGATE the velocity
+        float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
+
+        // Apply with same values as banking lean (4 neck segments)
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.3f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 0.5f);
+        applyNeckBoneRotation("headController", turnRad * 0.35f);
     }
 
     private void applyBodyRotationDeviation(Stegonaut entity, float partialTick) {

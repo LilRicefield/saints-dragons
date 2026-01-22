@@ -54,8 +54,8 @@ public class FabricClientEventHandler {
     private static float nulljawCameraPitch = 0.0f;
 
     // Stegonaut camera zoom transition
-    private static float stegonautCameraZoom = 12F; // Base zoom
-    private static float stegonautCameraZoomTarget = 12F;
+    private static float stegonautCameraZoom = 8F; // Base zoom
+    private static float stegonautCameraZoomTarget = 8F;
 
     // Raevyx beam camera state
     private static boolean wasBeaming = false;
@@ -363,15 +363,15 @@ public class FabricClientEventHandler {
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof Stegonaut stegonaut && camera.isDetached()) {
-            stegonautCameraZoomTarget = 12F;
+            stegonautCameraZoomTarget = 8F;
             float blendRate = 0.05F;
             stegonautCameraZoom += (stegonautCameraZoomTarget - stegonautCameraZoom) * blendRate;
             CameraAccessor cameraAccessor = (CameraAccessor) camera;
             double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(stegonautCameraZoom);
             cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
         } else if (!(player.getVehicle() instanceof Stegonaut)) {
-            stegonautCameraZoom = 12F;
-            stegonautCameraZoomTarget = 12F;
+            stegonautCameraZoom = 8F;
+            stegonautCameraZoomTarget = 8F;
         }
 
         // Screen shake detection and application
