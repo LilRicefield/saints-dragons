@@ -76,16 +76,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, ShakesScreen, SoundHandledDragon {
 
-    // Force-load abilities registry when this class is loaded
-    static {
-        // This triggers the static initializers in NulljawAbilities, registering all abilities
-        try {
-            Class.forName("com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Failed to load Nulljaw abilities!", e);
-        }
-    }
-
     // ===== VOCAL ENTRIES =====
     // IMPORTANT: Keys MUST match animation trigger names registered in NulljawAnimationHandler
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()

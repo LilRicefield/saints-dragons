@@ -379,7 +379,7 @@ public final class DragonDestructionManager {
             }
 
             BlockState state = level.getBlockState(pos);
-            if (state.isAir() || !canMeltBlock(state)) {
+            if (state.isAir() || !canMeltBlock(level, pos, state)) {
                 continue;
             }
 
@@ -427,9 +427,9 @@ public final class DragonDestructionManager {
      * @param state The block state to check
      * @return true if the block can be melted, false otherwise
      */
-    private static boolean canMeltBlock(BlockState state) {
+    private static boolean canMeltBlock(ServerLevel level, BlockPos pos, BlockState state) {
         // Prevent destroying indestructible blocks
-        if (state.getDestroySpeed(null, null) < 0) {
+        if (state.getDestroySpeed(level, pos) < 0) {
             return false;
         }
 

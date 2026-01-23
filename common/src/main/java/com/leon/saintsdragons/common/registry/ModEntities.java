@@ -16,6 +16,7 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
+import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -65,6 +66,13 @@ public final class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("ignivorus"));
+
+    public static final Supplier<EntityType<IvyTheDragonMerchant>> IVY_THE_DRAGON_MERCHANT =
+            REGISTER.register("ivy_oleander", () -> EntityType.Builder.of(IvyTheDragonMerchant::new, MobCategory.MISC)
+                    .sized(0.6F, 1.95F)
+                    .clientTrackingRange(32)
+                    .updateInterval(2)
+                    .build("ivy_oleander"));
 
     public static final Supplier<EntityType<RaevyxLightningChainEntity>> RAEVYX_LIGHTNING_CHAIN =
             REGISTER.register("raevyx_lightning_chain", () -> EntityType.Builder.<RaevyxLightningChainEntity>of(RaevyxLightningChainEntity::new, MobCategory.MISC)

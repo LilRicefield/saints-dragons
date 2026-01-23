@@ -6,6 +6,7 @@
   "item.saintsdragons.nulljaw_binder": "Nulljaw Binder",
   "item.saintsdragons.ignivorus_binder": "Ignivorus Binder",
   "item.saintsdragons.hearty_dragon_meal": "Hearty Dragon Meal",
+  "item.saintsdragons.dragon_merchant_spawn_egg": "Ivy the Merchant Spawn Egg",
   "item.saintsdragons.raevyx_spawn_egg": "Raevyx Spawn Egg",
   "block.saintsdragons.raevyx_egg": "§4Raevyx Egg§r",
   "block.saintsdragons.nulljaw_egg": "Nulljaw Egg",
@@ -24,6 +25,7 @@
   "entity.saintsdragons.cindervane": "Cindervane",
   "entity.saintsdragons.nulljaw": "Nulljaw",
   "entity.saintsdragons.ignivorus": "Ignivorus",
+  "entity.saintsdragons.dragon_merchant": "Ivy Oleander, the Merchant",
   
   "saintsdragons.gui.dragon_ally.title": "Dragon Ally Management",
   "saintsdragons.gui.dragon_ally.username_input": "Enter username...",
