@@ -21,9 +21,25 @@ public interface ConfigHelper {
 
     interface IntValue {
         int get();
+
+        default void set(int value) {
+            // Optional for platforms that support writable configs.
+        }
+
+        default void save() {
+            // Optional for platforms that support writable configs.
+        }
     }
 
     interface ListValue {
         List<String> get();
+
+        default void set(List<String> value) {
+            // Optional for platforms that support writable configs.
+        }
+
+        default void save() {
+            // Optional for platforms that support writable configs.
+        }
     }
 }

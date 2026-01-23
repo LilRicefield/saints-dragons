@@ -1,0 +1,395 @@
+package com.leon.saintsdragons.forge.client;
+
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.AABB;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.server.ServerLifecycleHooks;
+
+import java.util.List;
+
+@OnlyIn(Dist.CLIENT)
+public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
+    private enum Section {
+        CINDERVANE,
+        RAEVYX,
+        NULLJAW,
+        IGNIVORUS
+    }
+
+    private Section section = Section.CINDERVANE;
+
+    public ForgeDragonAttributesScreen(Screen parent) {
+        super(parent, Component.translatable("saintsdragons.config_screen.attributes"));
+    }
+
+    @Override
+    protected void buildEntries(List<ConfigEntry> entries) {
+        switch (section) {
+            case CINDERVANE -> addCindervaneEntries(entries);
+            case RAEVYX -> addRaevyxEntries(entries);
+            case NULLJAW -> addNulljawEntries(entries);
+            case IGNIVORUS -> addIgnivorusEntries(entries);
+        }
+    }
+
+    @Override
+    protected void addHeaderButtons() {
+        int buttonWidth = Math.min(90, (width - 50) / 4);
+        int spacing = 6;
+        int totalWidth = buttonWidth * 4 + spacing * 3;
+        int startX = (width - totalWidth) / 2;
+        int y = 32;
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.cindervane"), button -> {
+            if (section != Section.CINDERVANE) {
+                section = Section.CINDERVANE;
+                rebuildWidgets();
+            }
+        }).bounds(startX, y, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.raevyx"), button -> {
+            if (section != Section.RAEVYX) {
+                section = Section.RAEVYX;
+                rebuildWidgets();
+            }
+        }).bounds(startX + (buttonWidth + spacing), y, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.nulljaw"), button -> {
+            if (section != Section.NULLJAW) {
+                section = Section.NULLJAW;
+                rebuildWidgets();
+            }
+        }).bounds(startX + (buttonWidth + spacing) * 2, y, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.ignivorus"), button -> {
+            if (section != Section.IGNIVORUS) {
+                section = Section.IGNIVORUS;
+                rebuildWidgets();
+            }
+        }).bounds(startX + (buttonWidth + spacing) * 3, y, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
+            resetSection();
+            rebuildWidgets();
+        }).bounds(width / 2 - 150, height - 28, 60, 20).build());
+    }
+
+    @Override
+    protected int getPanelTop() {
+        return 60;
+    }
+
+    @Override
+    protected void onSave() {
+        ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
+        DragonAttributeConfigLoader.getInstance().refreshFromForgeConfig();
+        applyAttributesToLoadedDragons();
+    }
+
+    private void applyAttributesToLoadedDragons() {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) {
+            return;
+        }
+
+        for (var level : server.getAllLevels()) {
+            AABB bounds = new AABB(
+                    level.getWorldBorder().getMinX(),
+                    level.getMinBuildHeight(),
+                    level.getWorldBorder().getMinZ(),
+                    level.getWorldBorder().getMaxX(),
+                    level.getMaxBuildHeight(),
+                    level.getWorldBorder().getMaxZ()
+            );
+
+            for (DragonEntity dragon : level.getEntitiesOfClass(DragonEntity.class, bounds)) {
+                if (dragon instanceof Cindervane cindervane) {
+                    cindervane.applyConfiguredAttributes();
+                } else if (dragon instanceof Raevyx raevyx) {
+                    raevyx.applyConfiguredAttributes();
+                } else if (dragon instanceof Nulljaw nulljaw) {
+                    nulljaw.applyConfiguredAttributes();
+                } else if (dragon instanceof Ignivorus ignivorus) {
+                    ignivorus.applyConfiguredAttributes();
+                }
+            }
+        }
+    }
+
+    private void addCindervaneEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.cindervane")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.max_health"),
+                ForgeDragonAttributesConfig.CINDERVANE_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.CINDERVANE_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.armor"),
+                ForgeDragonAttributesConfig.CINDERVANE_ARMOR::get,
+                ForgeDragonAttributesConfig.CINDERVANE_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.flying_speed"),
+                ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED::get,
+                ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.bite_damage"),
+                ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE::get,
+                ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.volley_damage"),
+                ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE::get,
+                ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.taming_base"),
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE::get,
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.taming_hearty"),
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY::get,
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY::set,
+                null));
+    }
+
+    private void addRaevyxEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.raevyx")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.max_health"),
+                ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.armor"),
+                ForgeDragonAttributesConfig.RAEVYX_ARMOR::get,
+                ForgeDragonAttributesConfig.RAEVYX_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.flying_speed"),
+                ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED::get,
+                ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.bite_damage"),
+                ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE::get,
+                ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.beam_damage"),
+                ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE::get,
+                ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.horn_damage"),
+                ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE::get,
+                ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.beam_drain_per_tick"),
+                ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK::get,
+                ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.beam_regen_per_tick"),
+                ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK::get,
+                ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.taming_base"),
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE::get,
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.taming_hearty"),
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY::get,
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.raevyx.legacy_taming"),
+                () -> ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.get(),
+                ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING::set,
+                null));
+    }
+
+    private void addNulljawEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.nulljaw")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.max_health"),
+                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.armor"),
+                ForgeDragonAttributesConfig.NULLJAW_ARMOR::get,
+                ForgeDragonAttributesConfig.NULLJAW_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.swim_speed"),
+                ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED::get,
+                ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_phase1"),
+                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE::get,
+                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_phase2"),
+                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE::get,
+                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase1"),
+                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE::get,
+                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase2"),
+                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE::get,
+                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.taming_chance"),
+                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE::get,
+                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.legacy_taming"),
+                () -> ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.get(),
+                ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING::set,
+                null));
+    }
+
+    private void addIgnivorusEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.ignivorus")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.max_health"),
+                ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.armor"),
+                ForgeDragonAttributesConfig.IGNIVORUS_ARMOR::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.flying_speed"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FLYING_SPEED::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FLYING_SPEED::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.bite_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.body_slam_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fireball_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FIREBALL_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FIREBALL_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.wing_swipe_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_WING_SWIPE_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_WING_SWIPE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.stomp_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_STOMP_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_STOMP_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_penalty"),
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_drain_per_tick"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_regen_per_tick"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_flame_spawn_multiplier"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_flame_speed_multiplier"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_flame_lifetime_multiplier"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_ignite_block_chance"),
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_base"),
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_hearty"),
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.legacy_taming"),
+                () -> ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.get(),
+                ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING::set,
+                null));
+    }
+
+    private void resetSection() {
+        switch (section) {
+            case CINDERVANE -> {
+                ForgeDragonAttributesConfig.CINDERVANE_MAX_HEALTH.set(ForgeDragonAttributesConfig.CINDERVANE_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_ARMOR.set(ForgeDragonAttributesConfig.CINDERVANE_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED.set(ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.getDefault());
+            }
+            case RAEVYX -> {
+                ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.set(ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_ARMOR.set(ForgeDragonAttributesConfig.RAEVYX_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED.set(ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.set(ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.getDefault());
+            }
+            case NULLJAW -> {
+                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.set(ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_ARMOR.set(ForgeDragonAttributesConfig.NULLJAW_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED.set(ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE.set(ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.set(ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.getDefault());
+            }
+            case IGNIVORUS -> {
+                ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_ARMOR.set(ForgeDragonAttributesConfig.IGNIVORUS_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FLYING_SPEED.set(ForgeDragonAttributesConfig.IGNIVORUS_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FIREBALL_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIREBALL_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_WING_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_WING_SWIPE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_STOMP_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_STOMP_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.getDefault());
+            }
+        }
+
+        ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
+        DragonAttributeConfigLoader.getInstance().refreshFromForgeConfig();
+        applyAttributesToLoadedDragons();
+    }
+}
