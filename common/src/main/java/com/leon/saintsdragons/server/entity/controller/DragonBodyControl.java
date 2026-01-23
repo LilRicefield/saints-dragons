@@ -13,6 +13,7 @@ import net.minecraft.world.entity.ai.control.BodyRotationControl;
  * - Prevents jitter by locking body rotation during movement
  */
 public class DragonBodyControl extends BodyRotationControl {
+    private static final double MOVING_EPSILON_SQ = 1.0E-4;
     private static final int HISTORY_SIZE = 10;
     private final Mob entity;
     private float targetYawHead;
@@ -67,7 +68,7 @@ public class DragonBodyControl extends BodyRotationControl {
         double distSq = dx * dx + dz * dz;
 
         // If moving (velocity detected)
-        if (distSq > 2.5E-7) {
+        if (distSq > MOVING_EPSILON_SQ) {
             // Calculate movement direction
             double moveAngle = Math.toDegrees(Mth.atan2(dz, dx)) - 90.0;
 
@@ -114,7 +115,7 @@ public class DragonBodyControl extends BodyRotationControl {
         double distSq = dx * dx + dz * dz;
 
         // If moving (velocity detected)
-        if (distSq > 2.5E-7) {
+        if (distSq > MOVING_EPSILON_SQ) {
             // Calculate movement direction
             double moveAngle = Math.toDegrees(Mth.atan2(dz, dx)) - 90.0;
 
