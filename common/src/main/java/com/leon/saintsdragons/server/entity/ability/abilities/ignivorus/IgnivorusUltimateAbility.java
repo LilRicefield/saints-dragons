@@ -24,16 +24,16 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Cinematic "ultimate" ability: plays a 3-stage animation sequence (start, loop, end) while
  * locking rider controls. Sound effects are triggered via animation keyframes.
  *
- * Animation timing:
- * - ultimate_start: 1.38s (28 ticks)
+ * Animation timing (grounded):
+ * - ultimate_start: 2.00s (40 ticks)
  * - ultimate: 5.42s (108 ticks)
- * - ultimate_end: 1.38s (28 ticks)
- * Total: ~8.2 seconds
+ * - ultimate_end: 1.25s (25 ticks)
+ * Total: ~8.67 seconds
  */
 public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
-    private static final int ULTIMATE_START_TICKS = 28;      // 1.38s animation.ignivorus.ultimate_start
+    private static final int ULTIMATE_START_TICKS = 40;      // 2.00s animation.ignivorus.ultimate_start
     private static final int ULTIMATE_LOOP_TICKS = 108;      // 5.42s animation.ignivorus.ultimate
-    private static final int ULTIMATE_END_TICKS = 28;        // 1.38s animation.ignivorus.ultimate_end
+    private static final int ULTIMATE_END_TICKS = 25;        // 1.25s animation.ignivorus.ultimate_end
     private static final int TOTAL_SEQUENCE_TICKS = ULTIMATE_START_TICKS + ULTIMATE_LOOP_TICKS + ULTIMATE_END_TICKS;
     private static final int COOLDOWN_TICKS_RIDER = 0; // No cooldown for riders (health penalty is enough)
     private static final int COOLDOWN_TICKS_AI = 6000; // 5 minutes (300 seconds * 20 ticks) for AI
@@ -50,7 +50,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final int LOOP_DAMAGE_INTERVAL = 5;
     private static final int LOOP_DAMAGE_WARMUP = 20;
     private static final int PHASE2_DAMAGE_DELAY = 10;
-    private static final int NOVA_SPAWN_DELAY = 13;
+    private static final int NOVA_SPAWN_DELAY = 35;  // 1.75s (1 second 75 centiseconds)
     private static final float PENALTY_HEALTH = 50.0F;
     private static final Component PENALTY_MESSAGE =
             Component.translatable("saintsdragons.message.ignivorus.ultimate_penalty");
