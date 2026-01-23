@@ -11,13 +11,12 @@ import java.util.Map;
 /**
  * Data-driven attribute bundle for a dragon species.
  */
-public record DragonAttributeConfig(double maxHealth, double armor, double movementSpeed, double flyingSpeed,
+public record DragonAttributeConfig(double maxHealth, double armor, double flyingSpeed,
                                     Map<String, DragonAbilityOverride> abilities, Map<String, Double> extraDoubles,
                                     Map<String, Boolean> extraBooleans) {
     public static final DragonAttributeConfig EMPTY = new DragonAttributeConfig(
             40.0D,
             0.0D,
-            0.3D,
             0.3D,
             Map.of(),
             Map.of(),
@@ -26,14 +25,12 @@ public record DragonAttributeConfig(double maxHealth, double armor, double movem
 
     public DragonAttributeConfig(double maxHealth,
                                  double armor,
-                                 double movementSpeed,
                                  double flyingSpeed,
                                  Map<String, DragonAbilityOverride> abilities,
                                  Map<String, Double> extraDoubles,
                                  Map<String, Boolean> extraBooleans) {
         this.maxHealth = maxHealth;
         this.armor = armor;
-        this.movementSpeed = movementSpeed;
         this.flyingSpeed = flyingSpeed;
         this.abilities = Map.copyOf(abilities);
         this.extraDoubles = Map.copyOf(extraDoubles);
@@ -53,20 +50,11 @@ public record DragonAttributeConfig(double maxHealth, double armor, double movem
         return extraBooleans.getOrDefault(key, fallback);
     }
 
-    public double groundRunSpeed(double fallback) {
-        return extraDoubles.getOrDefault("run_speed", fallback);
-    }
-
-    public double groundWalkSpeed(double fallback) {
-        return extraDoubles.getOrDefault("walk_speed", fallback);
-    }
-
     public static DragonAttributeConfig merge(JsonObject json, @Nullable DragonAttributeConfig fallback) {
         DragonAttributeConfig base = fallback != null ? fallback : EMPTY;
 
         double maxHealth = GsonHelper.getAsDouble(json, "max_health", base.maxHealth);
         double armor = GsonHelper.getAsDouble(json, "armor", base.armor);
-        double movementSpeed = GsonHelper.getAsDouble(json, "movement_speed", base.movementSpeed);
         double flyingSpeed = GsonHelper.getAsDouble(json, "flying_speed", base.flyingSpeed);
 
         Map<String, DragonAbilityOverride> abilityMap = new HashMap<>(base.abilities);
@@ -104,6 +92,6 @@ public record DragonAttributeConfig(double maxHealth, double armor, double movem
             }
         }
 
-        return new DragonAttributeConfig(maxHealth, armor, movementSpeed, flyingSpeed, abilityMap, extra, booleans);
+        return new DragonAttributeConfig(maxHealth, armor, flyingSpeed, abilityMap, extra, booleans);
     }
 }

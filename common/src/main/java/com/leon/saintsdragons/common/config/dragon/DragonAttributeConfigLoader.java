@@ -37,6 +37,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation IGNIVORUS_ID = SaintsDragonsCommon.rl("ignivorus");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
+    private static final boolean IS_FORGE = Services.PLATFORM.isModLoaded("forge");
 
     private final Map<ResourceLocation, DragonAttributeConfig> defaults;
     private final Path configDirectory;
@@ -47,107 +48,223 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         this.configDirectory = Services.PLATFORM.getConfigDirectory()
                 .resolve(SaintsDragonsCommon.MOD_ID)
                 .resolve("dragon_attributes");
-        Map<ResourceLocation, DragonAttributeConfig> base = new HashMap<>();
-        base.put(CINDERVANE_ID, cindervaneDefaults());
-        base.put(RAEVYX_ID, raevyxDefaults());
-        base.put(NULLJAW_ID, nulljawDefaults());
-        base.put(IGNIVORUS_ID, ignivorusDefaults());
-        this.defaults = ImmutableMap.copyOf(base);
-        this.configs = this.defaults;
+        this.defaults = ImmutableMap.copyOf(buildDefaultConfigs());
+        this.configs = IS_FORGE ? ImmutableMap.copyOf(buildDefaultConfigs()) : this.defaults;
     }
 
     private static DragonAttributeConfig cindervaneDefaults() {
+        double maxHealth = 80.0D;
+        double armor = 4.0D;
+        double flyingSpeed = 0.60D;
+        double biteDamage = 12.0D;
+        double magmaVolleyDamage = 20.0D;
+        double tamingChanceBase = 4.0D;
+        double tamingChanceHearty = 2.0D;
+
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                maxHealth = (double) configClass.getField("CINDERVANE_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_MAX_HEALTH").get(null));
+                armor = (double) configClass.getField("CINDERVANE_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_ARMOR").get(null));
+                flyingSpeed = (double) configClass.getField("CINDERVANE_FLYING_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FLYING_SPEED").get(null));
+                biteDamage = (double) configClass.getField("CINDERVANE_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_BITE_DAMAGE").get(null));
+                magmaVolleyDamage = (double) configClass.getField("CINDERVANE_MAGMA_VOLLEY_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_MAGMA_VOLLEY_DAMAGE").get(null));
+                tamingChanceBase = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_BASE").get(null));
+                tamingChanceHearty = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_HEARTY").get(null));
+            } catch (Exception ignored) {
+            }
+        }
+
         return new DragonAttributeConfig(
-                80.0D,
-                4.0D,
-                0.45D,
-                0.60D,
+                maxHealth,
+                armor,
+                flyingSpeed,
                 Map.of(
-                        "bite", DragonAbilityOverride.ofDamage(12.0D),
-                        "magma_volley", DragonAbilityOverride.ofDamage(20.0D)
+                        "bite", DragonAbilityOverride.ofDamage(biteDamage),
+                        "magma_volley", DragonAbilityOverride.ofDamage(magmaVolleyDamage)
                 ),
                 Map.of(
-                        "taming_chance_base", 4.0D,
-                        "taming_chance_hearty", 2.0D
+                        "taming_chance_base", tamingChanceBase,
+                        "taming_chance_hearty", tamingChanceHearty
                 ),
                 Map.of()
         );
     }
 
     private static DragonAttributeConfig raevyxDefaults() {
+        double maxHealth = 180.0D;
+        double armor = 8.0D;
+        double flyingSpeed = 1.0D;
+        double biteDamage = 15.0D;
+        double lightningBeamDamage = 35.0D;
+        double hornGoreDamage = 15.0D;
+        double tamingChanceBase = 5.0D;
+        double tamingChanceHearty = 3.0D;
+        double beamDrainPerTick = 0.014D;
+        double beamRegenPerTick = 0.0025D;
+        boolean legacyTaming = false;
+
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                maxHealth = (double) configClass.getField("RAEVYX_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_MAX_HEALTH").get(null));
+                armor = (double) configClass.getField("RAEVYX_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_ARMOR").get(null));
+                flyingSpeed = (double) configClass.getField("RAEVYX_FLYING_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_FLYING_SPEED").get(null));
+                biteDamage = (double) configClass.getField("RAEVYX_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BITE_DAMAGE").get(null));
+                lightningBeamDamage = (double) configClass.getField("RAEVYX_LIGHTNING_BEAM_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_LIGHTNING_BEAM_DAMAGE").get(null));
+                hornGoreDamage = (double) configClass.getField("RAEVYX_HORN_GORE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_HORN_GORE_DAMAGE").get(null));
+                tamingChanceBase = (double) configClass.getField("RAEVYX_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_BASE").get(null));
+                tamingChanceHearty = (double) configClass.getField("RAEVYX_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_HEARTY").get(null));
+                beamDrainPerTick = (double) configClass.getField("RAEVYX_BEAM_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BEAM_DRAIN_PER_TICK").get(null));
+                beamRegenPerTick = (double) configClass.getField("RAEVYX_BEAM_REGEN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BEAM_REGEN_PER_TICK").get(null));
+                legacyTaming = (boolean) configClass.getField("RAEVYX_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_LEGACY_TAMING").get(null));
+            } catch (Exception ignored) {
+            }
+        }
+
         return new DragonAttributeConfig(
-                180.0D,
-                8.0D,
-                0.25D,
-                1.0D,
+                maxHealth,
+                armor,
+                flyingSpeed,
                 Map.of(
-                        "bite", DragonAbilityOverride.ofDamage(15.0D),
-                        "lightning_beam", DragonAbilityOverride.ofDamage(35.0D),
-                        "horn_gore", DragonAbilityOverride.ofDamage(15.0D)
+                        "bite", DragonAbilityOverride.ofDamage(biteDamage),
+                        "lightning_beam", DragonAbilityOverride.ofDamage(lightningBeamDamage),
+                        "horn_gore", DragonAbilityOverride.ofDamage(hornGoreDamage)
                 ),
                 Map.of(
-                        "taming_chance_base", 5.0D,
-                        "taming_chance_hearty", 3.0D,
-                        "beam_drain_per_tick", 0.014D,
-                        "beam_regen_per_tick", 0.0025D
+                        "taming_chance_base", tamingChanceBase,
+                        "taming_chance_hearty", tamingChanceHearty,
+                        "beam_drain_per_tick", beamDrainPerTick,
+                        "beam_regen_per_tick", beamRegenPerTick
                 ),
                 Map.of(
-                        "legacy_taming", false
+                        "legacy_taming", legacyTaming
                 )
         );
     }
 
     private static DragonAttributeConfig nulljawDefaults() {
+        double maxHealth = 250.0D;
+        double armor = 8.0D;
+        double bitePhase1Damage = 40.0D;
+        double bitePhase2Damage = 50.0D;
+        double hornPhase1Damage = 16.0D;
+        double hornPhase2Damage = 20.8D;
+        double swimSpeed = 1.45D;
+        double tamingChance = 6.0D;
+        boolean legacyTaming = false;
+
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                maxHealth = (double) configClass.getField("NULLJAW_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_MAX_HEALTH").get(null));
+                armor = (double) configClass.getField("NULLJAW_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_ARMOR").get(null));
+                bitePhase1Damage = (double) configClass.getField("NULLJAW_BITE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_BITE_PHASE1_DAMAGE").get(null));
+                bitePhase2Damage = (double) configClass.getField("NULLJAW_BITE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_BITE_PHASE2_DAMAGE").get(null));
+                hornPhase1Damage = (double) configClass.getField("NULLJAW_HORN_GORE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_HORN_GORE_PHASE1_DAMAGE").get(null));
+                hornPhase2Damage = (double) configClass.getField("NULLJAW_HORN_GORE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_HORN_GORE_PHASE2_DAMAGE").get(null));
+                swimSpeed = (double) configClass.getField("NULLJAW_SWIM_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_SWIM_SPEED").get(null));
+                tamingChance = (double) configClass.getField("NULLJAW_TAMING_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_TAMING_CHANCE").get(null));
+                legacyTaming = (boolean) configClass.getField("NULLJAW_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_LEGACY_TAMING").get(null));
+            } catch (Exception ignored) {
+            }
+        }
+
         return new DragonAttributeConfig(
-                250.0D,
-                8.0D,
-                0.28D,
+                maxHealth,
+                armor,
                 0.0D,
                 Map.of(
-                        "bite_phase1", DragonAbilityOverride.ofDamage(40.0D),
-                        "bite_phase2", DragonAbilityOverride.ofDamage(50.0D),
-                        "horn_gore_phase1", DragonAbilityOverride.ofDamage(16.0D),
-                        "horn_gore_phase2", DragonAbilityOverride.ofDamage(20.8D)
+                        "bite_phase1", DragonAbilityOverride.ofDamage(bitePhase1Damage),
+                        "bite_phase2", DragonAbilityOverride.ofDamage(bitePhase2Damage),
+                        "horn_gore_phase1", DragonAbilityOverride.ofDamage(hornPhase1Damage),
+                        "horn_gore_phase2", DragonAbilityOverride.ofDamage(hornPhase2Damage)
                 ),
                 Map.of(
-                        "swim_speed", 1.45D,
-                        "taming_chance", 6.0D
+                        "swim_speed", swimSpeed,
+                        "taming_chance", tamingChance
                 ),
                 Map.of(
-                        "legacy_taming", false
+                        "legacy_taming", legacyTaming
                 )
         );
     }
 
     private static DragonAttributeConfig ignivorusDefaults() {
+        double maxHealth = 300.0D;
+        double armor = 4.0D;
+        double flyingSpeed = 0.40D;
+        double biteDamage = 50.0D;
+        double bodySlamDamage = 40.0D;
+        double fireBreathDamage = 80.0D;
+        double fireballDamage = 70.0D;
+        double wingSwipeDamage = 15.0D;
+        double stompDamage = 18.0D;
+        double ultimateDamage = 200.0D;
+        double ultimatePenaltyHealth = 50.0D;
+        double tamingChanceBase = 7.0D;
+        double tamingChanceHearty = 4.0D;
+        boolean legacyTaming = false;
+        double fireBreathDrainPerTick = 0.00625D;
+        double fireBreathRegenPerTick = 0.0025D;
+        double fireBreathFlameSpawnMultiplier = 1.0D;
+        double fireBreathFlameSpeedMultiplier = 1.0D;
+        double fireBreathFlameLifetimeMultiplier = 1.0D;
+        double fireBreathIgniteBlockChance = 1.0D;
+
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                maxHealth = (double) configClass.getField("IGNIVORUS_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_MAX_HEALTH").get(null));
+                armor = (double) configClass.getField("IGNIVORUS_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ARMOR").get(null));
+                flyingSpeed = (double) configClass.getField("IGNIVORUS_FLYING_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FLYING_SPEED").get(null));
+                biteDamage = (double) configClass.getField("IGNIVORUS_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_BITE_DAMAGE").get(null));
+                bodySlamDamage = (double) configClass.getField("IGNIVORUS_BODY_SLAM_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_BODY_SLAM_DAMAGE").get(null));
+                fireBreathDamage = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_DAMAGE").get(null));
+                fireballDamage = (double) configClass.getField("IGNIVORUS_FIREBALL_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIREBALL_DAMAGE").get(null));
+                wingSwipeDamage = (double) configClass.getField("IGNIVORUS_WING_SWIPE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_WING_SWIPE_DAMAGE").get(null));
+                stompDamage = (double) configClass.getField("IGNIVORUS_STOMP_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_STOMP_DAMAGE").get(null));
+                ultimateDamage = (double) configClass.getField("IGNIVORUS_ULTIMATE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ULTIMATE_DAMAGE").get(null));
+                ultimatePenaltyHealth = (double) configClass.getField("IGNIVORUS_ULTIMATE_PENALTY_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ULTIMATE_PENALTY_HEALTH").get(null));
+                tamingChanceBase = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_BASE").get(null));
+                tamingChanceHearty = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_HEARTY").get(null));
+                legacyTaming = (boolean) configClass.getField("IGNIVORUS_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_LEGACY_TAMING").get(null));
+                fireBreathDrainPerTick = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK").get(null));
+                fireBreathRegenPerTick = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK").get(null));
+                fireBreathFlameSpawnMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER").get(null));
+                fireBreathFlameSpeedMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER").get(null));
+                fireBreathFlameLifetimeMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER").get(null));
+                fireBreathIgniteBlockChance = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE").get(null));
+            } catch (Exception ignored) {
+            }
+        }
+
         return new DragonAttributeConfig(
-                300.0D,
-                4.0D,
-                0.30D,
-                0.40D,
+                maxHealth,
+                armor,
+                flyingSpeed,
                 Map.of(
-                        "bite", DragonAbilityOverride.ofDamage(50.0D),
-                        "body_slam", DragonAbilityOverride.ofDamage(40.0D),
-                        // Default DPS bumped to 80 to match bundled datapack and Forge behavior
-                        "fire_breath", DragonAbilityOverride.ofDamage(80.0D),
-                        "fireball", DragonAbilityOverride.ofDamage(70.0D),
-                        "wing_swipe", DragonAbilityOverride.ofDamage(15.0D),
-                        "stomp", DragonAbilityOverride.ofDamage(18.0D),
-                        "ultimate", DragonAbilityOverride.ofDamage(200.0D)
+                        "bite", DragonAbilityOverride.ofDamage(biteDamage),
+                        "body_slam", DragonAbilityOverride.ofDamage(bodySlamDamage),
+                        "fire_breath", DragonAbilityOverride.ofDamage(fireBreathDamage),
+                        "fireball", DragonAbilityOverride.ofDamage(fireballDamage),
+                        "wing_swipe", DragonAbilityOverride.ofDamage(wingSwipeDamage),
+                        "stomp", DragonAbilityOverride.ofDamage(stompDamage),
+                        "ultimate", DragonAbilityOverride.ofDamage(ultimateDamage)
                 ),
                 Map.of(
-                        "ultimate_penalty_health", 50.0D,
-                        "fire_breath_drain_per_tick", 0.00625D,
-                        "fire_breath_regen_per_tick", 0.0025D,
-                        "fire_breath_flame_spawn_multiplier", 1.0D,
-                        "fire_breath_flame_speed_multiplier", 1.0D,
-                        "fire_breath_flame_lifetime_multiplier", 1.0D,
-                        "fire_breath_ignite_block_chance", 1.0D,
-                        "taming_chance_base", 7.0D,
-                        "taming_chance_hearty", 4.0D
+                        "ultimate_penalty_health", ultimatePenaltyHealth,
+                        "fire_breath_drain_per_tick", fireBreathDrainPerTick,
+                        "fire_breath_regen_per_tick", fireBreathRegenPerTick,
+                        "fire_breath_flame_spawn_multiplier", fireBreathFlameSpawnMultiplier,
+                        "fire_breath_flame_speed_multiplier", fireBreathFlameSpeedMultiplier,
+                        "fire_breath_flame_lifetime_multiplier", fireBreathFlameLifetimeMultiplier,
+                        "fire_breath_ignite_block_chance", fireBreathIgniteBlockChance,
+                        "taming_chance_base", tamingChanceBase,
+                        "taming_chance_hearty", tamingChanceHearty
                 ),
                 Map.of(
-                        "legacy_taming", false
+                        "legacy_taming", legacyTaming
                 )
         );
     }
@@ -162,6 +279,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     public DragonAttributeConfig getConfig(ResourceLocation id) {
+        if (IS_FORGE) {
+            DragonAttributeConfig config = configs.get(id);
+            return config != null ? config : DragonAttributeConfig.EMPTY;
+        }
         DragonAttributeConfig config = configs.get(id);
         if (config != null) {
             return config;
@@ -171,6 +292,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     public DragonAttributeConfig getDefaultConfig(ResourceLocation id) {
+        if (IS_FORGE) {
+            DragonAttributeConfig config = configs.get(id);
+            return config != null ? config : DragonAttributeConfig.EMPTY;
+        }
         return defaults.getOrDefault(id, DragonAttributeConfig.EMPTY);
     }
 
@@ -178,6 +303,12 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     protected void apply(Map<ResourceLocation, JsonElement> jsonMap,
                          @NotNull ResourceManager resourceManager,
                          @NotNull ProfilerFiller profiler) {
+        if (IS_FORGE) {
+            this.configs = ImmutableMap.copyOf(buildDefaultConfigs());
+            SaintsDragonsCommon.LOGGER.info("Loaded {} dragon attribute configuration(s) from Forge config",
+                    this.configs.size());
+            return;
+        }
         Map<ResourceLocation, DragonAttributeConfig> merged = new HashMap<>(defaults);
         Map<ResourceLocation, JsonObject> rawJson = new HashMap<>();
         for (Map.Entry<ResourceLocation, JsonElement> entry : jsonMap.entrySet()) {
@@ -270,7 +401,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         JsonObject json = new JsonObject();
         json.addProperty("max_health", config.maxHealth());
         json.addProperty("armor", config.armor());
-        json.addProperty("movement_speed", config.movementSpeed());
         json.addProperty("flying_speed", config.flyingSpeed());
 
         if (!config.abilities().isEmpty()) {
@@ -308,10 +438,20 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     public void overwriteConfig(ResourceLocation id, DragonAttributeConfig config) {
+        if (IS_FORGE) {
+            return;
+        }
         writeConfigFile(configPath(id), serializeConfig(id, config));
         Map<ResourceLocation, DragonAttributeConfig> updated = new HashMap<>(this.configs);
         updated.put(id, config);
         this.configs = ImmutableMap.copyOf(updated);
+    }
+
+    public void refreshFromForgeConfig() {
+        if (!IS_FORGE) {
+            return;
+        }
+        this.configs = ImmutableMap.copyOf(buildDefaultConfigs());
     }
 
     private static void ensureLegacyTamingFlag(ResourceLocation id, JsonObject json) {
@@ -482,6 +622,15 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
     private static boolean requiresLegacyTamingFlag(ResourceLocation id) {
         return id.equals(NULLJAW_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID);
+    }
+
+    private static Map<ResourceLocation, DragonAttributeConfig> buildDefaultConfigs() {
+        Map<ResourceLocation, DragonAttributeConfig> base = new HashMap<>();
+        base.put(CINDERVANE_ID, cindervaneDefaults());
+        base.put(RAEVYX_ID, raevyxDefaults());
+        base.put(NULLJAW_ID, nulljawDefaults());
+        base.put(IGNIVORUS_ID, ignivorusDefaults());
+        return base;
     }
 
     private static JsonObject defaultHints(ResourceLocation id) {
