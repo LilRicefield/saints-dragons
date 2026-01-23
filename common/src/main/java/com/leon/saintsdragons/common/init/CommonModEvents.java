@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.common.init;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.command.DragonAllyCommand;
 import com.leon.saintsdragons.server.command.DragonSetGenderCommand;
 import com.leon.saintsdragons.server.command.DragonSetVariantCommand;
@@ -11,6 +10,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
@@ -19,7 +19,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.levelgen.Heightmap;
 
@@ -43,6 +42,7 @@ public final class CommonModEvents {
         registrar.accept(ModEntities.CINDERVANE.get(), Cindervane.createAttributes());
         registrar.accept(ModEntities.NULLJAW.get(), Nulljaw.createAttributes());
         registrar.accept(ModEntities.IGNIVORUS.get(), Ignivorus.createAttributes());
+        registrar.accept(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchant.createAttributes());
     }
 
     public static void registerCreativeTabEntries(CreativeTabRegistrar registrar) {

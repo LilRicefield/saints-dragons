@@ -14,6 +14,7 @@ import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRendere
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
 import com.leon.saintsdragons.client.renderer.VisualFallingBlockRenderer;
+import com.leon.saintsdragons.client.renderer.npc.IvyTheDragonMerchantRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -36,6 +37,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.IGNIVORUS_NOVA.get(), IgnivorusNovaRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_NOVA_RING.get(), IgnivorusNovaRingRenderer::new);
         registrar.register(ModEntities.VISUAL_FALLING_BLOCK.get(), VisualFallingBlockRenderer::new);
+        registrar.register(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchantRenderer::new);
     }
 
     @FunctionalInterface
