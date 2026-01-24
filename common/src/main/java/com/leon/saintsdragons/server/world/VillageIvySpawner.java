@@ -9,8 +9,10 @@ import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.level.levelgen.Heightmap;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -20,25 +22,25 @@ import java.util.Set;
  * that don't have her yet.
  */
 public class VillageIvySpawner {
-    // Track which villages already have Ivy (per world session)
-    // Format: "x,z" of village center
-    private static final Set<String> villagesWithIvy = new HashSet<>();
+    // Track which villages already have Ivy (per dimension, per session)
+    private static final Map<net.minecraft.resources.ResourceLocation, Set<Long>> villagesWithIvy = new HashMap<>();
+    private static final Map<net.minecraft.resources.ResourceLocation, Integer> tickCounters = new HashMap<>();
 
-    private static final int CHECK_INTERVAL = 600; // Check every 30 seconds
+    private static final int CHECK_INTERVAL = 200;
     private static final int VILLAGE_RADIUS = 128; // How far from player to search for villages
     private static final int IVY_SEARCH_RADIUS = 48; // How far to search for existing Ivy
-
-    private static int tickCounter = 0;
 
     /**
      * Tick the spawner. Call this from your world tick event.
      */
     public static void tick(ServerLevel level) {
-        tickCounter++;
-        if (tickCounter < CHECK_INTERVAL) {
+        net.minecraft.resources.ResourceLocation dimensionId = level.dimension().location();
+        int counter = tickCounters.getOrDefault(dimensionId, 0) + 1;
+        tickCounters.put(dimensionId, counter);
+        if (counter < CHECK_INTERVAL) {
             return;
         }
-        tickCounter = 0;
+        tickCounters.put(dimensionId, 0);
 
         // Only spawn in overworld
         if (level.dimension() != ServerLevel.OVERWORLD) {
@@ -60,6 +62,8 @@ public class VillageIvySpawner {
         BlockPos playerPos = player.blockPosition();
 
         PoiManager poiManager = level.getPoiManager();
+        net.minecraft.resources.ResourceLocation dimensionId = level.dimension().location();
+        Set<Long> tracked = villagesWithIvy.computeIfAbsent(dimensionId, key -> new HashSet<>());
 
         // Find meeting points (village centers) within reasonable range of player
         poiManager.getInRange(
@@ -69,22 +73,22 @@ public class VillageIvySpawner {
             PoiManager.Occupancy.ANY
         ).forEach(poi -> {
             BlockPos villageCenter = poi.getPos();
-            String villageKey = villageCenter.getX() + "," + villageCenter.getZ();
+            long villageKey = villageCenter.asLong();
 
             // Skip if we already spawned Ivy here this session
-            if (villagesWithIvy.contains(villageKey)) {
+            if (tracked.contains(villageKey)) {
                 return;
             }
 
             // Check if Ivy already exists nearby
             if (hasIvyNearby(level, villageCenter)) {
-                villagesWithIvy.add(villageKey);
+                tracked.add(villageKey);
                 return;
             }
 
             // Spawn Ivy near the village center
             spawnIvy(level, villageCenter);
-            villagesWithIvy.add(villageKey);
+            tracked.add(villageKey);
         });
     }
 
@@ -143,7 +147,7 @@ public class VillageIvySpawner {
 
     private static boolean isSafeSpawnPosition(ServerLevel level, BlockPos pos) {
         // Check ground is solid
-        if (!level.getBlockState(pos.below()).isSolid()) {
+        if (!level.getBlockState(pos.below()).isCollisionShapeFullBlock(level, pos.below())) {
             return false;
         }
 
@@ -152,8 +156,8 @@ public class VillageIvySpawner {
             return false;
         }
 
-        // Check not in water
-        if (level.getFluidState(pos).isSource()) {
+        // Check not in water/lava
+        if (!level.getFluidState(pos).isEmpty()) {
             return false;
         }
 
@@ -166,6 +170,6 @@ public class VillageIvySpawner {
      */
     public static void clearTracking() {
         villagesWithIvy.clear();
-        tickCounter = 0;
+        tickCounters.clear();
     }
 }
