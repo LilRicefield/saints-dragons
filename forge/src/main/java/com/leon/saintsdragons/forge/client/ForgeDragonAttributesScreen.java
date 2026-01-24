@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.AABB;
@@ -20,6 +21,7 @@ import java.util.List;
 public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
     private enum Section {
         CINDERVANE,
+        STEGONAUT,
         RAEVYX,
         NULLJAW,
         IGNIVORUS
@@ -35,6 +37,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
     protected void buildEntries(List<ConfigEntry> entries) {
         switch (section) {
             case CINDERVANE -> addCindervaneEntries(entries);
+            case STEGONAUT -> addStegonautEntries(entries);
             case RAEVYX -> addRaevyxEntries(entries);
             case NULLJAW -> addNulljawEntries(entries);
             case IGNIVORUS -> addIgnivorusEntries(entries);
@@ -43,9 +46,9 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
 
     @Override
     protected void addHeaderButtons() {
-        int buttonWidth = Math.min(90, (width - 50) / 4);
+        int buttonWidth = Math.min(90, (width - 60) / 5);
         int spacing = 6;
-        int totalWidth = buttonWidth * 4 + spacing * 3;
+        int totalWidth = buttonWidth * 5 + spacing * 4;
         int startX = (width - totalWidth) / 2;
         int y = 32;
 
@@ -56,26 +59,33 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startX, y, buttonWidth, 20).build());
 
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.stegonaut"), button -> {
+            if (section != Section.STEGONAUT) {
+                section = Section.STEGONAUT;
+                rebuildWidgets();
+            }
+        }).bounds(startX + (buttonWidth + spacing), y, buttonWidth, 20).build());
+
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.raevyx"), button -> {
             if (section != Section.RAEVYX) {
                 section = Section.RAEVYX;
                 rebuildWidgets();
             }
-        }).bounds(startX + (buttonWidth + spacing), y, buttonWidth, 20).build());
+        }).bounds(startX + (buttonWidth + spacing) * 2, y, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.nulljaw"), button -> {
             if (section != Section.NULLJAW) {
                 section = Section.NULLJAW;
                 rebuildWidgets();
             }
-        }).bounds(startX + (buttonWidth + spacing) * 2, y, buttonWidth, 20).build());
+        }).bounds(startX + (buttonWidth + spacing) * 3, y, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.ignivorus"), button -> {
             if (section != Section.IGNIVORUS) {
                 section = Section.IGNIVORUS;
                 rebuildWidgets();
             }
-        }).bounds(startX + (buttonWidth + spacing) * 3, y, buttonWidth, 20).build());
+        }).bounds(startX + (buttonWidth + spacing) * 4, y, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
@@ -114,6 +124,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             for (DragonEntity dragon : level.getEntitiesOfClass(DragonEntity.class, bounds)) {
                 if (dragon instanceof Cindervane cindervane) {
                     cindervane.applyConfiguredAttributes();
+                } else if (dragon instanceof Stegonaut stegonaut) {
+                    stegonaut.applyConfiguredAttributes();
                 } else if (dragon instanceof Raevyx raevyx) {
                     raevyx.applyConfiguredAttributes();
                 } else if (dragon instanceof Nulljaw nulljaw) {
@@ -154,6 +166,26 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.taming_hearty"),
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY::get,
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY::set,
+                null));
+    }
+
+    private void addStegonautEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.stegonaut")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.max_health"),
+                ForgeDragonAttributesConfig.STEGONAUT_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.STEGONAUT_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.armor"),
+                ForgeDragonAttributesConfig.STEGONAUT_ARMOR::get,
+                ForgeDragonAttributesConfig.STEGONAUT_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"),
+                ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE::get,
+                ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_hearty"),
+                ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY::get,
+                ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY::set,
                 null));
     }
 
@@ -339,6 +371,12 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.getDefault());
+            }
+            case STEGONAUT -> {
+                ForgeDragonAttributesConfig.STEGONAUT_MAX_HEALTH.set(ForgeDragonAttributesConfig.STEGONAUT_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_ARMOR.set(ForgeDragonAttributesConfig.STEGONAUT_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.getDefault());
             }
             case RAEVYX -> {
                 ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.set(ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.getDefault());

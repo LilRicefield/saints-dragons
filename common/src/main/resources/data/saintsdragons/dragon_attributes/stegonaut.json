@@ -1,0 +1,9 @@
+{
+  "max_health": 100.0,
+  "armor": 15.0,
+  "flying_speed": 0.0,
+  "extra": {
+    "taming_chance_base": 1.0,
+    "taming_chance_hearty": 1.0
+  }
+}

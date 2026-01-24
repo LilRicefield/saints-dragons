@@ -178,6 +178,9 @@ public class IgnivorusFlameEntity extends Entity {
             // Don't damage baby Ignivorus dragons (protect the young!)
             if (target instanceof Ignivorus baby && baby.isBaby()) continue;
 
+            // Don't damage allies or tamed pets
+            if (owner instanceof Ignivorus ignivorus && ignivorus.isAlly(target)) continue;
+
             // Check if target is within hit radius
             double distance = target.distanceToSqr(this);
             if (distance <= radius * radius && distance < closestDistance) {

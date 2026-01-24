@@ -124,6 +124,9 @@ public class IgnivorusNovaEntity extends Entity {
             // Don't damage baby Ignivorus dragons (protect the young!)
             if (target instanceof Ignivorus baby && baby.isBaby()) continue;
 
+            // Don't damage allies or tamed pets
+            if (owner instanceof Ignivorus ignivorus && ignivorus.isAlly(target)) continue;
+
             double distanceSqr = target.position().distanceToSqr(position());
             double radiusSqr = currentRadius * currentRadius;
 

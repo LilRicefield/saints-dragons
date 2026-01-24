@@ -34,6 +34,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static final Component TITLE = Component.translatable("config.saintsdragons.title");
     private static final Component SPAWN_CATEGORY = Component.translatable("config.saintsdragons.category.spawning");
     private static final Component ATTRIBUTES_CATEGORY = Component.translatable("config.saintsdragons.category.attributes");
+    private static final Component OTHERS_CATEGORY = Component.translatable("config.saintsdragons.category.others");
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
@@ -91,14 +92,20 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         nulljawBuffer.tamingChance = nulljawCurrent.extraDouble("taming_chance", 6.0);
         nulljawBuffer.legacyTaming = nulljawCurrent.extraBoolean("legacy_taming", false);
 
+        DragonAttributeConfig stegonautCurrent = loader.getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
+        DragonAttributeConfig stegonautDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
+        StegonautAttributeBuffer stegonautBuffer = new StegonautAttributeBuffer();
+        stegonautBuffer.maxHealth = stegonautCurrent.maxHealth();
+        stegonautBuffer.armor = stegonautCurrent.armor();
+        stegonautBuffer.tamingChanceBase = stegonautCurrent.extraDouble("taming_chance_base", 1.0);
+        stegonautBuffer.tamingChanceHearty = stegonautCurrent.extraDouble("taming_chance_hearty", 1.0);
+
         DragonAttributeConfig ignivorusCurrent = loader.getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         DragonAttributeConfig ignivorusDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         IgnivorusAttributeBuffer ignivorusBuffer = new IgnivorusAttributeBuffer();
         ignivorusBuffer.maxHealth = ignivorusCurrent.maxHealth();
         ignivorusBuffer.armor = ignivorusCurrent.armor();
         ignivorusBuffer.flyingSpeed = ignivorusCurrent.flyingSpeed();
-        ignivorusBuffer.baseDamage = ignivorusCurrent.extraDouble("attack_damage",
-                ignivorusDefaults.extraDouble("attack_damage", 15.0D));
         ignivorusBuffer.biteDamage = ignivorusCurrent.abilityDamage("bite",
                 ignivorusDefaults.abilityDamage("bite", 50.0D));
         ignivorusBuffer.bodySlamDamage = ignivorusCurrent.abilityDamage("body_slam",
@@ -137,7 +144,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         builder.setTransparentBackground(true);
         builder.setSavingRunnable(() -> {
             holder.save();
-            persistDragonAttributes(cindervaneBuffer, raevyxBuffer, nulljawBuffer, ignivorusBuffer);
+            persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, nulljawBuffer, ignivorusBuffer);
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
@@ -195,9 +202,21 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
 
         ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
         addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
+        addStegonautAttributes(attributes, entryBuilder, stegonautBuffer, stegonautDefaults);
         addRaevyxAttributes(attributes, entryBuilder, raevyxBuffer, raevyxDefaults);
         addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
         addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
+
+        ConfigCategory others = builder.getOrCreateCategory(OTHERS_CATEGORY);
+        others.addEntry(entryBuilder.startIntSlider(
+                Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
+                config.ivyRestockInterval,
+                20,
+                72000
+        ).setDefaultValue(24000)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval.tooltip"))
+         .setSaveConsumer(value -> config.ivyRestockInterval = value)
+         .build());
 
         return builder.build();
     }
@@ -296,6 +315,43 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.cindervane"), rawEntries)
+                .setExpanded(false)
+                .build());
+    }
+
+    private void addStegonautAttributes(ConfigCategory category,
+                                        ConfigEntryBuilder entryBuilder,
+                                        StegonautAttributeBuffer buffer,
+                                        DragonAttributeConfig defaults) {
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.max_health"), buffer.maxHealth)
+                .setDefaultValue(defaults.maxHealth())
+                .setMin(10.0D)
+                .setMax(1000.0D)
+                .setSaveConsumer(value -> buffer.maxHealth = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.armor"), buffer.armor)
+                .setDefaultValue(defaults.armor())
+                .setMin(0.0D)
+                .setMax(30.0D)
+                .setSaveConsumer(value -> buffer.armor = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"), buffer.tamingChanceBase)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 1.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceBase = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_hearty"), buffer.tamingChanceHearty)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 1.0))
+                .setMin(1.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
+                .build());
+
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.stegonaut"), rawEntries)
                 .setExpanded(false)
                 .build());
     }
@@ -466,12 +522,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(3.0D)
                 .setSaveConsumer(value -> buffer.flyingSpeed = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.base_damage"), buffer.baseDamage)
-                .setDefaultValue(defaults.extraDouble("attack_damage", 15.0D))
-                .setMin(1.0D)
-                .setMax(300.0D)
-                .setSaveConsumer(value -> buffer.baseDamage = value)
-                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.bite_damage"), buffer.biteDamage)
                 .setDefaultValue(defaults.abilityDamage("bite", 50.0D))
                 .setMin(1.0D)
@@ -581,6 +631,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     }
 
     private void persistDragonAttributes(CindervaneAttributeBuffer cindervaneBuffer,
+                                         StegonautAttributeBuffer stegonautBuffer,
                                          RaevyxAttributeBuffer raevyxBuffer,
                                          NulljawAttributeBuffer nulljawBuffer,
                                          IgnivorusAttributeBuffer ignivorusBuffer) {
@@ -592,7 +643,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         DragonAttributeConfig updated = new DragonAttributeConfig(
                 cindervaneBuffer.maxHealth,
                 cindervaneBuffer.armor,
-                0.0D,
                 cindervaneBuffer.flyingSpeed,
                 abilities,
                 Map.of(
@@ -603,6 +653,19 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.CINDERVANE_ID, updated);
 
+        DragonAttributeConfig updatedStegonaut = new DragonAttributeConfig(
+                stegonautBuffer.maxHealth,
+                stegonautBuffer.armor,
+                0.0D,
+                Map.of(),
+                Map.of(
+                        "taming_chance_base", stegonautBuffer.tamingChanceBase,
+                        "taming_chance_hearty", stegonautBuffer.tamingChanceHearty
+                ),
+                Map.of()
+        );
+        loader.overwriteConfig(DragonAttributeConfigLoader.STEGONAUT_ID, updatedStegonaut);
+
         DragonAttributeConfig raevyxCurrent = loader.getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         Map<String, DragonAbilityOverride> raevyxAbilities = new HashMap<>(raevyxCurrent.abilities());
         raevyxAbilities.put("bite", DragonAbilityOverride.ofDamage(raevyxBuffer.biteDamage));
@@ -611,7 +674,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         DragonAttributeConfig updatedRaevyx = new DragonAttributeConfig(
                 raevyxBuffer.maxHealth,
                 raevyxBuffer.armor,
-                0.0D,
                 raevyxBuffer.flyingSpeed,
                 raevyxAbilities,
                 Map.of(
@@ -634,7 +696,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         DragonAttributeConfig updatedNulljaw = new DragonAttributeConfig(
                 nulljawBuffer.maxHealth,
                 nulljawBuffer.armor,
-                0.0D,
                 0.0D,
                 nulljawAbilities,
                 Map.of(
@@ -659,11 +720,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         DragonAttributeConfig updatedIgnivorus = new DragonAttributeConfig(
                 ignivorusBuffer.maxHealth,
                 ignivorusBuffer.armor,
-                0.0D,
                 ignivorusBuffer.flyingSpeed,
                 ignivorusAbilities,
                 Map.of(
-                        "attack_damage", ignivorusBuffer.baseDamage,
                         "ultimate_penalty_health", ignivorusBuffer.ultimatePenalty,
                         "taming_chance_base", ignivorusBuffer.tamingChanceBase,
                         "taming_chance_hearty", ignivorusBuffer.tamingChanceHearty,
@@ -687,6 +746,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double flyingSpeed;
         double biteDamage;
         double volleyDamage;
+        double tamingChanceBase;
+        double tamingChanceHearty;
+    }
+
+    private static final class StegonautAttributeBuffer {
+        double maxHealth;
+        double armor;
         double tamingChanceBase;
         double tamingChanceHearty;
     }
@@ -721,7 +787,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double maxHealth;
         double armor;
         double flyingSpeed;
-        double baseDamage;
         double biteDamage;
         double bodySlamDamage;
         double fireBreathDamage;

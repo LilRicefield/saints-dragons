@@ -6,7 +6,7 @@
   "item.saintsdragons.nulljaw_binder": "Nulljaw Binder",
   "item.saintsdragons.ignivorus_binder": "Ignivorus Binder",
   "item.saintsdragons.hearty_dragon_meal": "Hearty Dragon Meal",
-  "item.saintsdragons.dragon_merchant_spawn_egg": "Ivy the Merchant Spawn Egg",
+  "item.saintsdragons.ivy_the_merchant_spawn_egg": "Ivy the Merchant Spawn Egg",
   "item.saintsdragons.raevyx_spawn_egg": "Raevyx Spawn Egg",
   "block.saintsdragons.raevyx_egg": "§4Raevyx Egg§r",
   "block.saintsdragons.nulljaw_egg": "Nulljaw Egg",
@@ -26,7 +26,9 @@
   "entity.saintsdragons.nulljaw": "Nulljaw",
   "entity.saintsdragons.ignivorus": "Ignivorus",
   "entity.saintsdragons.dragon_merchant": "Ivy Oleander, the Merchant",
-  
+  "entity.saintsdragons.ivy_oleander": "Ivy Oleander",
+  "merchant.saintsdragons.ivy_oleander": "Ivy Oleander",
+
   "saintsdragons.gui.dragon_ally.title": "Dragon Ally Management",
   "saintsdragons.gui.dragon_ally.username_input": "Enter username...",
   "saintsdragons.gui.dragon_ally.add": "Add Ally",
@@ -365,6 +367,7 @@
   "config.saintsdragons.title": "Saints & Dragons Settings",
   "config.saintsdragons.category.spawning": "Spawning",
   "config.saintsdragons.category.attributes": "Dragon Attributes",
+  "config.saintsdragons.category.others": "Others",
   "config.saintsdragons.spawn.raevyx": "Raevyx Spawns",
   "config.saintsdragons.spawn.stegonaut": "Stegonaut Spawns",
   "config.saintsdragons.spawn.cindervane": "Cindervane Spawns",
@@ -382,6 +385,11 @@
   "config.saintsdragons.attributes.cindervane.volley_damage": "Magma Volley Damage",
   "config.saintsdragons.attributes.cindervane.taming_base": "Taming Chance (Base Food)",
   "config.saintsdragons.attributes.cindervane.taming_hearty": "Taming Chance (Hearty Meal)",
+  "config.saintsdragons.attributes.stegonaut": "Stegonaut Attributes",
+  "config.saintsdragons.attributes.stegonaut.max_health": "Max Health",
+  "config.saintsdragons.attributes.stegonaut.armor": "Armor",
+  "config.saintsdragons.attributes.stegonaut.taming_base": "Taming Chance (Salmon)",
+  "config.saintsdragons.attributes.stegonaut.taming_hearty": "Taming Chance (Hearty Meal)",
   "config.saintsdragons.attributes.raevyx": "Raevyx Attributes",
   "config.saintsdragons.attributes.raevyx.max_health": "Max Health",
   "config.saintsdragons.attributes.raevyx.armor": "Armor",
@@ -426,10 +434,14 @@
   "saintsdragons.config_screen.title": "Saints & Dragons Config",
   "saintsdragons.config_screen.attributes": "Dragon Attributes",
   "saintsdragons.config_screen.spawning": "Spawning",
+  "saintsdragons.config_screen.others": "Others",
   "saintsdragons.config_screen.save": "Save",
   "saintsdragons.config_screen.reset": "Reset",
   "saintsdragons.config_screen.prev": "Prev",
   "saintsdragons.config_screen.next": "Next",
-  "saintsdragons.config_screen.page": "Page %d / %d"
+  "saintsdragons.config_screen.page": "Page %d / %d",
+  "saintsdragons.config_screen.others.ivy": "Ivy the Dragon Merchant",
+  "saintsdragons.config_screen.others.ivy.restock_interval": "Restock Interval (ticks)",
+  "saintsdragons.config_screen.others.ivy.restock_interval.tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)"
 }
 

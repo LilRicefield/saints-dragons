@@ -891,7 +891,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
                     LivingEntity.class,
                     combinedBox,
-                    entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlliedTo(entity)
+                    entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlly(entity)
                 );
 
                 // Damage and knockback each entity

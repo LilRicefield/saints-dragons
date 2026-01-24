@@ -103,4 +103,10 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> ignivorusAdditionalBiomes = new ArrayList<>();
+
+    // Others (NPCs, etc.)
+    @ConfigEntry.Category("others")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 20, max = 72000)
+    public int ivyRestockInterval = 24000;
 }
