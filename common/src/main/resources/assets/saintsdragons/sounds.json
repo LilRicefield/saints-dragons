@@ -1,4 +1,24 @@
 {
+  "ivy_trade_start": {
+    "subtitle": "Ivy takes out her backpack",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_trade_start",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_trade_stop": {
+    "subtitle": "Ivy puts away her backpack",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_trade_stop",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_grumble_1": {
     "subtitle": "Raevyx grumbles",
     "sounds": [

@@ -29,28 +29,43 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * - ultimate: 5.42s (108 ticks)
  * - ultimate_end: 1.25s (25 ticks)
  * Total: ~8.67 seconds
+ *
+ * Animation timing (air):
+ * - ultimate_start_air: 1.46s (29 ticks)
+ * - ultimate_air: 5.42s (108 ticks)
+ * - ultimate_end_air: 1.46s (29 ticks)
+ * Total: ~8.34 seconds
  */
 public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
+    // Ground ultimate timings
     private static final int ULTIMATE_START_TICKS = 40;      // 2.00s animation.ignivorus.ultimate_start
-    private static final int ULTIMATE_LOOP_TICKS = 108;      // 5.42s animation.ignivorus.ultimate
+    private static final int ULTIMATE_LOOP_TICKS = 108;      // 5.42s animation.ignivorus.ultimate (same for both)
     private static final int ULTIMATE_END_TICKS = 25;        // 1.25s animation.ignivorus.ultimate_end
-    private static final int TOTAL_SEQUENCE_TICKS = ULTIMATE_START_TICKS + ULTIMATE_LOOP_TICKS + ULTIMATE_END_TICKS;
+
+    // Air ultimate timings
+    private static final int ULTIMATE_START_AIR_TICKS = 29;  // 1.46s animation.ignivorus.ultimate_start_air
+    private static final int ULTIMATE_END_AIR_TICKS = 29;    // 1.46s animation.ignivorus.ultimate_end_air
+
+    private static final int TOTAL_SEQUENCE_TICKS = ULTIMATE_START_TICKS + ULTIMATE_LOOP_TICKS + ULTIMATE_END_TICKS; // Use ground (longer)
     private static final int COOLDOWN_TICKS_RIDER = 0; // No cooldown for riders (health penalty is enough)
     private static final int COOLDOWN_TICKS_AI = 6000; // 5 minutes (300 seconds * 20 ticks) for AI
-
-    // Tick thresholds for animation transitions
-    @SuppressWarnings("unused")
-    private static final int START_END_TICK = ULTIMATE_START_TICKS;
-    @SuppressWarnings("unused")
-    private static final int LOOP_END_TICK = ULTIMATE_START_TICKS + ULTIMATE_LOOP_TICKS;
 
     private static final double EXPLOSION_RADIUS = 32.0D;
     private static final float EXPLOSION_DAMAGE = 200.0F;
     private static final int EXPLOSION_FIRE_SECONDS = 8;
     private static final int LOOP_DAMAGE_INTERVAL = 5;
-    private static final int LOOP_DAMAGE_WARMUP = 20;
+
+    // Ground ultimate effects timing
+    private static final int LOOP_DAMAGE_WARMUP = 30;  // 1.5s into loop (tick 70 total: 40 start + 30)
+    private static final int NOVA_SPAWN_DELAY = 70;  // 3.5s total (2s start + 1.5s into loop)
+
+    // Air ultimate effects timing (0.63s into loop)
+    private static final int LOOP_DAMAGE_WARMUP_AIR = 13;  // 0.63s into loop (tick 42 total: 29 start + 13)
+    private static final int NOVA_SPAWN_DELAY_AIR = 42;  // 2.09s total (1.46s start + 0.63s into loop)
+
+    // Phase 2 ground mode timing
     private static final int PHASE2_DAMAGE_DELAY = 10;
-    private static final int NOVA_SPAWN_DELAY = 35;  // 1.75s (1 second 75 centiseconds)
+    private static final int PHASE2_NOVA_SPAWN_DELAY = 13;  // 0.65s for Phase 2 ground mode
     private static final float PENALTY_HEALTH = 50.0F;
     private static final Component PENALTY_MESSAGE =
             Component.translatable("saintsdragons.message.ignivorus.ultimate_penalty");
@@ -70,6 +85,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private int lastLoopDamageTick;
     private boolean penaltyApplied;
     private boolean isPhase2GroundMode; // Instant attack mode for Phase 2 ground
+    private boolean isAirborneMode; // Track if this execution is airborne (air variants)
     private boolean phase2DamageApplied; // Track if Phase 2 damage has been applied
     private boolean novaSpawned; // Track if nova entity has been spawned
 
@@ -104,6 +120,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         if (section.sectionType == STARTUP) {
             // Check if dragon is airborne (flying or in air)
             boolean isAirborne = dragon.isFlying() || !dragon.onGround();
+            isAirborneMode = isAirborne; // Store for duration of ability
 
             // Check if in Phase 2 ground mode (instant attack)
             isPhase2GroundMode = dragon.isPhase2Active() && !isAirborne;
@@ -132,7 +149,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 applyPenaltyHealth(dragon);
             } else {
                 // Normal ultimate or Phase 2 air ultimate - use multi-stage animation
-                dragon.lockRiderControls(TOTAL_SEQUENCE_TICKS);
+                int totalTicks = isAirborne
+                    ? (ULTIMATE_START_AIR_TICKS + ULTIMATE_LOOP_TICKS + ULTIMATE_END_AIR_TICKS)
+                    : (ULTIMATE_START_TICKS + ULTIMATE_LOOP_TICKS + ULTIMATE_END_TICKS);
+                dragon.lockRiderControls(totalTicks);
                 lockedControls = true;
 
                 if (!isAirborne) {
@@ -177,8 +197,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
         // Handle Phase 2 ground mode damage with delay, then end early
         if (isPhase2GroundMode) {
-            // Spawn nova entity after delay (1 second)
-            if (!novaSpawned && ticks >= NOVA_SPAWN_DELAY) {
+            // Spawn nova entity after delay (0.65 seconds)
+            if (!novaSpawned && ticks >= PHASE2_NOVA_SPAWN_DELAY) {
                 spawnNovaEntity();
                 novaSpawned = true;
             }
@@ -196,14 +216,17 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
         Ignivorus dragon = getUser();
 
-        // Check if dragon is airborne (check once at start to maintain consistency)
-        boolean isAirborne = dragon.isFlying() || !dragon.onGround();
+        // Calculate timing based on air vs ground mode
+        int startEndTick = isAirborneMode ? ULTIMATE_START_AIR_TICKS : ULTIMATE_START_TICKS;
+        int loopEndTick = startEndTick + ULTIMATE_LOOP_TICKS;
+        int novaDelay = isAirborneMode ? NOVA_SPAWN_DELAY_AIR : NOVA_SPAWN_DELAY;
+        int damageWarmup = isAirborneMode ? LOOP_DAMAGE_WARMUP_AIR : LOOP_DAMAGE_WARMUP;
 
         // Manually trigger each animation when the previous one finishes
         // This prevents gaps/flickers between animations
 
-        if (!loopAnimPlayed && ticks >= START_END_TICK) {
-            if (isAirborne) {
+        if (!loopAnimPlayed && ticks >= startEndTick) {
+            if (isAirborneMode) {
                 dragon.triggerAnim("action", "ultimate_air");
             } else {
                 dragon.triggerAnim("action", "ultimate");
@@ -211,25 +234,25 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             loopAnimPlayed = true;
         }
 
-        // Apply continuous ring-of-fire damage only while the "ultimate" animation plays
-        if (loopAnimPlayed && ticks >= START_END_TICK && ticks < LOOP_END_TICK) {
-            int loopTick = ticks - START_END_TICK;
-            if (loopTick >= LOOP_DAMAGE_WARMUP && loopTick - lastLoopDamageTick >= LOOP_DAMAGE_INTERVAL) {
-                boolean isOpeningPulse = loopTick == LOOP_DAMAGE_WARMUP;
+        // Spawn nova entity at the configured delay (from start of ability)
+        if (!novaSpawned && ticks >= novaDelay) {
+            spawnNovaEntity();
+            novaSpawned = true;
+        }
 
-                // Spawn nova entity at the opening pulse (when damage first triggers)
-                if (isOpeningPulse && !novaSpawned) {
-                    spawnNovaEntity();
-                    novaSpawned = true;
-                }
+        // Apply continuous ring-of-fire damage only while the "ultimate" animation plays
+        if (loopAnimPlayed && ticks >= startEndTick && ticks < loopEndTick) {
+            int loopTick = ticks - startEndTick;
+            if (loopTick >= damageWarmup && loopTick - lastLoopDamageTick >= LOOP_DAMAGE_INTERVAL) {
+                boolean isOpeningPulse = loopTick == damageWarmup;
 
                 triggerRingExplosion(isOpeningPulse);
                 lastLoopDamageTick = loopTick;
             }
         }
 
-        if (!endAnimPlayed && ticks >= LOOP_END_TICK) {
-            if (isAirborne) {
+        if (!endAnimPlayed && ticks >= loopEndTick) {
+            if (isAirborneMode) {
                 dragon.triggerAnim("action", "ultimate_end_air");
             } else {
                 dragon.triggerAnim("action", "ultimate_end");

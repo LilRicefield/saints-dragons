@@ -14,6 +14,9 @@ public final class ModSounds {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.SOUND_EVENT, () -> BuiltInRegistries.SOUND_EVENT, SaintsDragonsCommon.MOD_ID);
 
+    public static final Supplier<SoundEvent> IVY_TRADE_START = registerSound("ivy_trade_start");
+    public static final Supplier<SoundEvent> IVY_TRADE_STOP = registerSound("ivy_trade_stop");
+
     // Stegonaut
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_2 = registerSound("stegonaut_grumble2");

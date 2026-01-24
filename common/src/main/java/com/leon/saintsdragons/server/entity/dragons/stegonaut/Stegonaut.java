@@ -38,6 +38,8 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.block.StegonautEggBlockEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
@@ -389,12 +391,15 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     // ===== BABY ATTRIBUTE SYSTEM =====
 
     public void applyConfiguredAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
+
         // Apply baby-specific stats or adult stats
-        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : 100.0D);
-        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : 15.0D);
+        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
+        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : config.armor());
 
         // Clamp health if it exceeds new max
-        double maxHealth = isBaby() ? BABY_MAX_HEALTH : 100.0D;
+        double maxHealth = isBaby() ? BABY_MAX_HEALTH : config.maxHealth();
         if (this.getHealth() > maxHealth) {
             this.setHealth((float) maxHealth);
         }
@@ -515,26 +520,37 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             // Trigger eat animation
             this.triggerAnim("action", "eat");
 
-            // 100% success chance for Primitive Drake!
-            this.tame(player);
-            this.setOrderedToSit(true);
-            this.setCommand(1); // Set command to Sit (1) to match the sitting state
+            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
+            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            double tamingChance = hearty
+                    ? config.extraDoubles().getOrDefault("taming_chance_hearty", 1.0)
+                    : config.extraDoubles().getOrDefault("taming_chance_base", 1.0);
+            int tameRoll = (int) Math.round(tamingChance);
 
-            this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
+            if (this.getRandom().nextInt(Math.max(1, tameRoll)) == 0) {
+                this.tame(player);
+                this.setOrderedToSit(true);
+                this.setCommand(1); // Set command to Sit (1) to match the sitting state
 
-            // Send taming success message
-            player.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.stegonaut.tamed", this.getName()),
-                    true
-            );
+                this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
 
-            // Trigger advancement for taming Primitive Drake
-            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                var advancement = serverPlayer.server.getAdvancements()
-                        .getAdvancement(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_stegonaut"));
-                if (advancement != null) {
-                    serverPlayer.getAdvancements().award(advancement, "tame_stegonaut");
+                // Send taming success message
+                player.displayClientMessage(
+                        Component.translatable("entity.saintsdragons.stegonaut.tamed", this.getName()),
+                        true
+                );
+
+                // Trigger advancement for taming Primitive Drake
+                if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                    var advancement = serverPlayer.server.getAdvancements()
+                            .getAdvancement(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_stegonaut"));
+                    if (advancement != null) {
+                        serverPlayer.getAdvancements().award(advancement, "tame_stegonaut");
+                    }
                 }
+            } else {
+                this.level().broadcastEntityEvent(this, (byte) 6); // Smoke particles
             }
         }
 

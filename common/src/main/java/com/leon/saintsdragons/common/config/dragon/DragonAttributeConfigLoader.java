@@ -35,6 +35,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation RAEVYX_ID = SaintsDragonsCommon.rl("raevyx");
     public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
     public static final ResourceLocation IGNIVORUS_ID = SaintsDragonsCommon.rl("ignivorus");
+    public static final ResourceLocation STEGONAUT_ID = SaintsDragonsCommon.rl("stegonaut");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
     private static final boolean IS_FORGE = Services.PLATFORM.isModLoaded("forge");
@@ -266,6 +267,40 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "legacy_taming", legacyTaming
                 )
+        );
+    }
+
+    private static DragonAttributeConfig stegonautDefaults() {
+        double maxHealth = 100.0D;
+        double armor = 15.0D;
+        double tamingChanceBase = 1.0D;
+        double tamingChanceHearty = 1.0D;
+
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                maxHealth = (double) configClass.getField("STEGONAUT_MAX_HEALTH").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_MAX_HEALTH").get(null));
+                armor = (double) configClass.getField("STEGONAUT_ARMOR").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_ARMOR").get(null));
+                tamingChanceBase = (double) configClass.getField("STEGONAUT_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_TAMING_CHANCE_BASE").get(null));
+                tamingChanceHearty = (double) configClass.getField("STEGONAUT_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_TAMING_CHANCE_HEARTY").get(null));
+            } catch (Exception ignored) {
+            }
+        }
+
+        return new DragonAttributeConfig(
+                maxHealth,
+                armor,
+                0.0D,
+                Map.of(),
+                Map.of(
+                        "taming_chance_base", tamingChanceBase,
+                        "taming_chance_hearty", tamingChanceHearty
+                ),
+                Map.of()
         );
     }
 
@@ -630,6 +665,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         base.put(RAEVYX_ID, raevyxDefaults());
         base.put(NULLJAW_ID, nulljawDefaults());
         base.put(IGNIVORUS_ID, ignivorusDefaults());
+        base.put(STEGONAUT_ID, stegonautDefaults());
         return base;
     }
 

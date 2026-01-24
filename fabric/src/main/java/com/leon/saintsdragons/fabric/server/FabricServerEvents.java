@@ -3,8 +3,10 @@ package com.leon.saintsdragons.fabric.server;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.world.VillageIvySpawner;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,6 +30,13 @@ public final class FabricServerEvents {
                 server.execute(() -> handlePlayerDisconnect(handler.player)));
 
         ServerLifecycleEvents.SERVER_STOPPING.register(FabricServerEvents::handleServerStopping);
+
+        // Tick village Ivy spawner
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            for (var level : server.getAllLevels()) {
+                VillageIvySpawner.tick(level);
+            }
+        });
 
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             if (world.isClientSide) {
@@ -53,6 +62,9 @@ public final class FabricServerEvents {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             handlePlayerDisconnect(player);
         }
+
+        // Clean up village tracking
+        VillageIvySpawner.clearTracking();
     }
 
     private static void handlePlayerJoin(ServerPlayer player) {
