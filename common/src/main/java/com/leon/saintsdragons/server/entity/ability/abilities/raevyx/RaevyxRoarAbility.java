@@ -72,13 +72,10 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
         var section = getCurrentSection();
         if (section == null) return;
 
-        // Play the roar sound after a tiny delay from animation start
+        // Roar sound is now handled by animation keyframe in RaevyxSoundProfile
+        // Just mark the queue as processed
         if (section.sectionType == AbilitySectionType.STARTUP && roarQueued) {
-            if (getTicksInSection() >= ROAR_DELAY_TICKS && !getUser().level().isClientSide) {
-                // Play only the sound (avoid retriggering the animation)
-                var dragon = getUser();
-                float pitch = 0.9f + dragon.getRandom().nextFloat() * 0.15f;
-                dragon.playSound(com.leon.saintsdragons.common.registry.ModSounds.RAEVYX_ROAR.get(), 1.4f, pitch);
+            if (getTicksInSection() >= ROAR_DELAY_TICKS) {
                 roarQueued = false;
             }
         }

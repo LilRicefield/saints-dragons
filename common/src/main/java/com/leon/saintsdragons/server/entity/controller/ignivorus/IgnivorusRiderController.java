@@ -322,7 +322,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
         if (!dragon.hasPassenger(passenger)) return;
 
-        Vec3 passengerLoc = dragon.getClientLocatorPosition("passengerLocator");
+        Vec3 passengerLoc = dragon.level().isClientSide ? dragon.getClientLocatorPosition("passengerLocator") : null;
 
         if (passengerLoc != null) {
             Vec3 dragonOldPos = new Vec3(dragon.xo, dragon.yo, dragon.zo);

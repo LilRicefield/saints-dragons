@@ -64,7 +64,7 @@ public record StegonautRiderController(Stegonaut drake) {
             return;
         }
 
-        Vec3 passengerLoc = drake.getClientLocatorPosition("passengerLocator");
+        Vec3 passengerLoc = drake.level().isClientSide ? drake.getClientLocatorPosition("passengerLocator") : null;
 
         if (passengerLoc != null) {
             Vec3 drakeOldPos = new Vec3(drake.xo, drake.yo, drake.zo);

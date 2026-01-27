@@ -66,7 +66,8 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         // Handle non-vocal animation sounds
         return switch (key) {
             case "cindervane_magma_blast" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_MAGMA_BLAST.get(), 2.0f, 1.0f, 0.0f);
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.CINDERVANE_MAGMA_BLAST.get(), ModSounds.CINDERVANE_MAGMA_BLAST_STEREO.get(), 2.0f, 1.0f, 0.0f);
                 yield true;
             }
             case "cindervane_run" -> {
@@ -74,11 +75,17 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
                 yield true;
             }
             case "cindervane_bite" -> {
-                playSimpleSound(handler, dragon, "mouth_origin", ModSounds.CINDERVANE_BITE.get(), 1.0f, 0.95f, 0.1f);
+                playSimpleSoundStereo(handler, dragon, "mouth_origin",
+                        ModSounds.CINDERVANE_BITE.get(), ModSounds.CINDERVANE_BITE_STEREO.get(), 1.0f, 0.95f, 0.1f);
                 yield true;
             }
             case "cindervane_landed" -> {
                 playSimpleSound(handler, dragon, locator, ModSounds.CINDERVANE_LANDED.get(), 2.0f, 1.0f, 0.0f);
+                yield true;
+            }
+            case "cindervane_takeoff" -> {
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.CINDERVANE_TAKEOFF.get(), ModSounds.CINDERVANE_TAKEOFF_STEREO.get(), 1.2f, 1.0f, 0.0f);
                 yield true;
             }
             case "cindervane_eat" -> {
@@ -141,7 +148,11 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
             pitch *= BABY_PITCH_MULTIPLIER;
         }
 
-        playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+        if ("roar".equals(vocalKey)) {
+            playDualSound(dragon, at, ModSounds.CINDERVANE_ROAR.get(), ModSounds.CINDERVANE_ROAR_STEREO.get(), entry.volume(), pitch);
+        } else {
+            playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+        }
     }
 
     /**
@@ -169,6 +180,18 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         playClientSound(dragon, at, sound, volume, pitch);
     }
 
+    private void playSimpleSoundStereo(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                       net.minecraft.sounds.SoundEvent monoSound, net.minecraft.sounds.SoundEvent stereoSound,
+                                       float volume, float basePitch, float variance) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        float pitch = basePitch;
+        if (variance != 0f) {
+            pitch += dragon.getRandom().nextFloat() * variance;
+        }
+
+        playDualSound(dragon, at, monoSound, stereoSound, volume, pitch);
+    }
+
     /**
      * Play sound on client side using local playback.
      * More efficient than server broadcast for animation keyframe sounds.
@@ -180,5 +203,27 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         double z = position != null ? position.z : dragon.getZ();
 
         dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
+    }
+
+    /**
+     * Play dual sound: stereo only for the rider, mono for everyone else.
+     */
+    private void playDualSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent monoSound,
+                               net.minecraft.sounds.SoundEvent stereoSound, float volume, float pitch) {
+        double x = position != null ? position.x : dragon.getX();
+        double y = position != null ? position.y : dragon.getY();
+        double z = position != null ? position.z : dragon.getZ();
+
+        if (dragon.level().isClientSide) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+                boolean isRiding = mc.player.getVehicle() == dragon;
+                if (isRiding) {
+                    dragon.level().playLocalSound(x, y, z, stereoSound, SoundSource.NEUTRAL, volume, pitch, false);
+                } else {
+                    dragon.level().playLocalSound(x, y, z, monoSound, SoundSource.NEUTRAL, volume, pitch, false);
+                }
+            }
+        }
     }
 }
