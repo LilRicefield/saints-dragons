@@ -309,7 +309,8 @@ public record RaevyxRiderController(Raevyx wyvern) {
         if (!wyvern.hasPassenger(passenger)) return;
 
         // Get the bone position from the renderer's cache (updated each render frame)
-        Vec3 passengerLoc = wyvern.getClientLocatorPosition("passengerLocator");
+        // Optimize: Only check cache on client side to avoid map lookup on server
+        Vec3 passengerLoc = wyvern.level().isClientSide ? wyvern.getClientLocatorPosition("passengerLocator") : null;
 
         if (passengerLoc != null) {
             // The cached position is in world-space but may be from the previous frame

@@ -161,6 +161,16 @@
       }
     ]
   },
+  "cindervane_magma_blast_stereo": {
+    "subtitle": "Cindervane shoots out magma",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/stereo/cindervane_magma_blast",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
   "cindervane_run": {
     "subtitle": "Cindervane runs",
     "sounds": [
@@ -187,6 +197,16 @@
       {
         "name": "saintsdragons:entity/cindervane/cindervane_takeoff",
         "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_takeoff_stereo": {
+    "subtitle": "Cindervane launches upward",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/stereo/cindervane_takeoff",
+        "volume": 0.30,
         "pitch": 1.0
       }
     ]
@@ -241,6 +261,16 @@
       }
     ]
   },
+  "cindervane_roar_stereo": {
+    "subtitle": "Cindervane roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/stereo/cindervane_roar",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
   "cindervane_hurt": {
     "subtitle": "Cindervane screeches in pain",
     "sounds": [
@@ -257,6 +287,16 @@
       {
         "name": "saintsdragons:entity/cindervane/cindervane_bite",
         "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "cindervane_bite_stereo": {
+    "subtitle": "Cindervane bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/stereo/cindervane_bite",
+        "volume": 0.30,
         "pitch": 1.0
       }
     ]
@@ -591,6 +631,36 @@
       }
     ]
   },
+  "nulljaw_tail_swipe": {
+    "subtitle": "Nulljaw swipes its tail",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_tail_swipe",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_phase2_dash": {
+    "subtitle": "Nulljaw dashes and claws",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2_dash",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_phase2_dash_stereo": {
+    "subtitle": "Nulljaw dashes and claws",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_phase2_dash",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "nulljaw_bite": {
     "subtitle": "Nulljaw bites",
     "sounds": [
@@ -637,6 +707,86 @@
       {
         "name": "saintsdragons:entity/nulljaw/nulljaw_eat",
         "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_walk_stereo": {
+    "subtitle": "Nulljaw walks",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_walk",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_run_stereo": {
+    "subtitle": "Nulljaw runs",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_run",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_walk2_stereo": {
+    "subtitle": "Nulljaw walks (Phase 2)",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_walk2",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_run2_stereo": {
+    "subtitle": "Nulljaw runs (Phase 2)",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_run2",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_bite_stereo": {
+    "subtitle": "Nulljaw bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_bite",
+        "volume": 0.10,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_horngore_stereo": {
+    "subtitle": "Nulljaw gores with horn",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_horngore",
+        "volume": 0.10,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_roar2_stereo": {
+    "subtitle": "Nulljaw roars aggressively",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_roar2",
+        "volume": 0.10,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "nulljaw_tail_swipe_stereo": {
+    "subtitle": "Nulljaw swipes its tail",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/stereo/nulljaw_tail_swipe",
+        "volume": 0.50,
         "pitch": 1.0
       }
     ]
@@ -953,6 +1103,16 @@
       }
     ]
   },
+  "ignivorus_takeoff_stereo": {
+    "subtitle": "Ignivorus launches skyward",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/stereo/ignivorus_takeoff",
+        "volume": 0.10,
+        "pitch": 0.95
+      }
+    ]
+  },
   "ignivorus_flap": {
     "subtitle": "Ignivorus beats its wings",
     "sounds": [
@@ -1115,7 +1275,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_landed",
-        "volume": 2.0,
+        "volume": 3.0,
         "pitch": 1.0
       }
     ]
@@ -1136,6 +1296,176 @@
       {
         "name": "saintsdragons:entity/raevyx/raevyx_dash",
         "volume": 0.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_bite_stereo": {
+    "subtitle": "Raevyx bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_bite",
+        "volume": 0.10,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_dash_stereo": {
+    "subtitle": "Raevyx dashes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_dash",
+        "volume": 0.10,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_dodge_stereo": {
+    "subtitle": "Raevyx dodges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_dodge",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_horngore_stereo": {
+    "subtitle": "Raevyx gores with horn",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_horngore",
+        "volume": 0.5,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_takeoff_stereo": {
+    "subtitle": "Raevyx launches into the air",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_takeoff",
+        "volume": 0.20,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_roar_stereo": {
+    "subtitle": "Raevyx roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_roar",
+        "volume": 0.10,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_walk_stereo": {
+    "subtitle": "Raevyx pads forward",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_walk",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_run_stereo": {
+    "subtitle": "Raevyx sprints",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_run",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_lightning_beam_start_stereo": {
+    "subtitle": "Raevyx charges lightning",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_lightning_beam_start",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "raevyx_lightning_beam_stop_stereo": {
+    "subtitle": "Raevyx vents lightning",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/stereo/raevyx_lightning_beam_stop",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_walk_stereo": {
+    "subtitle": "Ignivorus steps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/stereo/ignivorus_walk",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_run_stereo": {
+    "subtitle": "Ignivorus charges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/stereo/ignivorus_run",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_roar_stereo": {
+    "subtitle": "Ignivorus roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/stereo/ignivorus_roar",
+        "volume": 0.25,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_phase2_walk_stereo": {
+    "subtitle": "Ignivorus steps",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/stereo/ignivorus_phase2_walk",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_phase2_run_stereo": {
+    "subtitle": "Ignivorus charges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/stereo/ignivorus_phase2_run",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_phase2_enter_stereo": {
+    "subtitle": "Ignivorus switches stance",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/stereo/ignivorus_phase2_enter",
+        "volume": 0.30,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ignivorus_phase2_exit_stereo": {
+    "subtitle": "Ignivorus reverts stance",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/stereo/ignivorus_phase2_exit",
+        "volume": 0.30,
         "pitch": 1.0
       }
     ]

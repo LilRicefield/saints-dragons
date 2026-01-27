@@ -37,11 +37,8 @@ public class IgnivorusFlameRenderer extends EntityRenderer<IgnivorusFlameEntity>
     @Override
     public void render(@NotNull IgnivorusFlameEntity entity, float entityYaw, float partialTicks,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
-
-        // Calculate animation frame based on age
-        // Moderate animation speed - 3 ticks per frame = ~7 FPS animation
         int age = entity.getAge();
-        int frame = (age / 3) % TOTAL_FRAMES;
+        int frame = (age / 2) % TOTAL_FRAMES;
 
         ResourceLocation texture = TEXTURES[frame];
 
@@ -51,15 +48,7 @@ public class IgnivorusFlameRenderer extends EntityRenderer<IgnivorusFlameEntity>
         float baseScale = entity.getScale();
         float growthMultiplier = 1.0F + ageRatio; // 1.0 at start, 2.0 at end
         float scale = baseScale * growthMultiplier;
-
-        // Fade in at start, fade out at end
         float alpha = 1.0F;
-        if (age < 3) {
-            alpha = age / 3.0F; // Fade in over first 3 ticks
-        } else if (lifetime - age < 5) {
-            alpha = (lifetime - age) / 5.0F; // Fade out over last 5 ticks
-        }
-        alpha = Mth.clamp(alpha, 0.0F, 1.0F);
 
         poseStack.pushPose();
 
@@ -86,7 +75,7 @@ public class IgnivorusFlameRenderer extends EntityRenderer<IgnivorusFlameEntity>
     }
 
     private void renderBillboard(VertexConsumer consumer, Matrix4f matrix4f, Matrix3f matrix3f, int packedLight, float alpha) {
-        float size = 1.0F; // Increased from 0.5F for bigger flames
+        float size = 1.0F;
 
         // Render both front and back faces to ensure visibility
         // Front face (counter-clockwise when viewed from front)

@@ -242,13 +242,6 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         return PlayState.CONTINUE;
     }
 
-    public PlayState swimDirectionPredicate(AnimationState<Nulljaw> state) {
-        // Swim direction controller disabled - directional swim animations removed
-        // This prevents bone rotation issues when transitioning between swimming and ground movement
-        // Main swim animations (swim_idle, swim_cruise) are handled by the movement controller
-        return PlayState.STOP;
-    }
-
     public PlayState actionPredicate(AnimationState<Nulljaw> state) {
         // Action controller handles one-shot combat animations triggered via triggerAnim()
         state.getController().transitionLength(5);
@@ -268,11 +261,17 @@ public record NulljawAnimationHandler(Nulljaw drake) {
                 RawAnimation.begin().thenPlay("animation.nulljaw.die"));
     }
 
-    public void configureMovementBlend(AnimationController<Nulljaw> controller) {
-        controller.transitionLength(MOVEMENT_TRANSITION_TICKS);
+    public PlayState instantActionPredicate(AnimationState<Nulljaw> state) {
+        state.getController().transitionLength(2);
+        return PlayState.STOP;
     }
 
-    public void configureSwimBlend(AnimationController<Nulljaw> controller) {
-        controller.transitionLength(SWIM_TRANSITION_TICKS);
+    public void setupInstantActionController(AnimationController<Nulljaw> controller) {
+        controller.triggerableAnim("tail_swipe_left",
+                RawAnimation.begin().thenPlay("animation.nulljaw.tail_swipe_left"));
+        controller.triggerableAnim("phase2_dash_left",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_dash_left"));
+        controller.triggerableAnim("phase2_dash_right",
+                RawAnimation.begin().thenPlay("animation.nulljaw.phase2_dash_right"));
     }
 }

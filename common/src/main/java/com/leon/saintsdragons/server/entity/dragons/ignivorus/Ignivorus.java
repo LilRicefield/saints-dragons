@@ -2357,10 +2357,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public void setTakeoff(boolean takeoff) {
         boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
-        if (takeoff && !wasTakeoff && !level().isClientSide) {
-            float pitch = 0.9f + this.getRandom().nextFloat() * 0.15f;
-            this.playSound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.4f, pitch);
-        }
+        // Takeoff sound is handled via animation keyframe for stereo/mono routing.
     }
 
     /**
@@ -2381,6 +2378,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         BlockPos maxPos = BlockPos.containing(bb.maxX, bb.maxY, bb.maxZ);
 
         for (BlockPos pos : BlockPos.betweenClosed(minPos, maxPos)) {
+            if (!level().hasChunkAt(pos)) continue;
             var state = level().getBlockState(pos);
 
             // Skip air
@@ -3302,6 +3300,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     Mth.floor(pos.y) - checkDown,
                     Mth.floor(pos.z)
             );
+
+            if (!level().hasChunkAt(checkPos)) continue;
 
             BlockState state = level().getBlockState(checkPos);
             if (!state.getFluidState().isEmpty()) {

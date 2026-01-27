@@ -248,9 +248,9 @@ public final class DragonRideInputHandler {
             wasRightKeyDown = rightDown;
         }
 
-        // Double-tap W detection (Ignivorus = bulldoze toggle, Raevyx = dash forward)
         if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ||
-            dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+            dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx ||
+            dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw) {
             boolean forwardDown = mc.options.keyUp.isDown();
             long currentTime = System.currentTimeMillis();
 

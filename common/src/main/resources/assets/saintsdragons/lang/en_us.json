@@ -364,7 +364,7 @@
   "config.saintsdragons.attributes.nulljaw.legacy_taming" : "Legacy Taming",
   "config.saintsdragons.attributes.raevyx.legacy_taming": "Legacy Taming",
   "config.saintsdragons.attributes.legacy_taming.tooltip" : "Toggle vanilla taming method",
-  "config.saintsdragons.title": "Saints & Dragons Settings",
+  "config.saintsdragons.title": "Saint's Dragons Settings",
   "config.saintsdragons.category.spawning": "Spawning",
   "config.saintsdragons.category.attributes": "Dragon Attributes",
   "config.saintsdragons.category.others": "Others",

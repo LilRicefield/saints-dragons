@@ -66,8 +66,9 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         // Check if this is a vocal key that should use the vocal entry system
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
-            // Roar sound is handled by ability with precise timing
+            // Roar is now handled through playDualSound for entity-following stereo support
             if ("roar".equals(vocalKey)) {
+                playRoarDual(handler, dragon, locator);
                 return true;
             }
             playVocalEntry(handler, dragon, vocalKey, locator);
@@ -97,27 +98,27 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 yield true;
             }
             case "ignivorus_walk" -> {
-                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_WALK.get(), 1.0f, 0.85f);
+                playDualMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_WALK.get(), ModSounds.IGNIVORUS_WALK_STEREO.get(), 1.0f, 0.85f);
                 yield true;
             }
             case "ignivorus_phase2_walk" -> {
-                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_WALK.get(), 1.0f, 0.85f);
+                playDualMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_WALK.get(), ModSounds.IGNIVORUS_PHASE2_WALK_STEREO.get(), 1.0f, 0.85f);
                 yield true;
             }
             case "ignivorus_phase2_enter" -> {
-                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0f, 0.85f);
+                playDualMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_ENTER.get(), ModSounds.IGNIVORUS_PHASE2_ENTER_STEREO.get(), 1.0f, 0.85f);
                 yield true;
             }
             case "ignivorus_phase2_exit" -> {
-                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_EXIT.get(), 1.0f, 0.85f);
+                playDualMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_EXIT.get(), ModSounds.IGNIVORUS_PHASE2_EXIT_STEREO.get(), 1.0f, 0.85f);
                 yield true;
             }
             case "ignivorus_phase2_run" -> {
-                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_RUN.get(), 1.0f, 0.85f);
+                playDualMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_PHASE2_RUN.get(), ModSounds.IGNIVORUS_PHASE2_RUN_STEREO.get(), 1.0f, 0.85f);
                 yield true;
             }
             case "ignivorus_run" -> {
-                playMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_RUN.get(), 1.1f, 0.9f);
+                playDualMovementSound(handler, dragon, "body_locator", ModSounds.IGNIVORUS_RUN.get(), ModSounds.IGNIVORUS_RUN_STEREO.get(), 1.1f, 0.9f);
                 yield true;
             }
             case "ignivorus_ultimate_start" -> {
@@ -149,7 +150,9 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
                 yield true;
             }
             case "ignivorus_takeoff" -> {
-                // Block keyframe sound - takeoff is handled by Ignivorus.setTakeoff()
+                Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "body_locator");
+                float pitch = 0.95f + (dragon.getRandom().nextFloat() - 0.5f) * 0.1f;
+                playDualSound(dragon, at, ModSounds.IGNIVORUS_TAKEOFF.get(), ModSounds.IGNIVORUS_TAKEOFF_STEREO.get(), 1.4f, pitch);
                 yield true;
             }
             case "ignivorus_landed" -> {
@@ -326,6 +329,29 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
     }
 
     /**
+     * Play dual movement sound (stereo for close/riding, mono for distant) with cooldown.
+     */
+    private void playDualMovementSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                       SoundEvent monoSound, SoundEvent stereoSound, float volume, float basePitch) {
+        // Add cooldown to prevent rapid-fire step sounds during animation transitions
+        if (dragon instanceof Ignivorus) {
+            long currentTick = dragon.tickCount;
+            long tickDiff = currentTick - handler.getLastStepTick();
+
+            if (tickDiff < 5) {
+                return; // Blocked by cooldown (minimum 5 ticks = 250ms)
+            }
+            handler.setLastStepTick(currentTick);
+        }
+
+        Vec3 body = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "body_locator");
+        float vol = volume * 1.2f;
+        float pitch = basePitch + (dragon.getRandom().nextFloat() - 0.5f) * 0.05f;
+
+        playDualSound(dragon, body, monoSound, stereoSound, vol, pitch);
+    }
+
+    /**
      * Play sound on client side using local playback.
      * More efficient than server broadcast for animation keyframe sounds.
      */
@@ -336,5 +362,37 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         double z = position != null ? position.z : dragon.getZ();
 
         dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
+    }
+
+    /**
+     * Play dual sound (stereo for close/riding, mono for distant).
+     * Each client decides which version to play based on distance from the dragon.
+     */
+    private void playDualSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent monoSound,
+                               net.minecraft.sounds.SoundEvent stereoSound, float volume, float pitch) {
+        double x = position != null ? position.x : dragon.getX();
+        double y = position != null ? position.y : dragon.getY();
+        double z = position != null ? position.z : dragon.getZ();
+
+        if (dragon.level().isClientSide) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+                boolean isRiding = mc.player.getVehicle() == dragon;
+                if (isRiding) {
+                    dragon.level().playLocalSound(x, y, z, stereoSound, SoundSource.NEUTRAL, volume, pitch, false);
+                } else {
+                    dragon.level().playLocalSound(x, y, z, monoSound, SoundSource.NEUTRAL, volume, pitch, false);
+                }
+            }
+        }
+    }
+
+    /**
+     * Play roar with dual sound support (called from animation keyframe).
+     */
+    private void playRoarDual(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        float pitch = 0.85f + dragon.getRandom().nextFloat() * 0.15f;
+        playDualSound(dragon, at, ModSounds.IGNIVORUS_ROAR.get(), ModSounds.IGNIVORUS_ROAR_STEREO.get(), 2.0f, pitch);
     }
 }

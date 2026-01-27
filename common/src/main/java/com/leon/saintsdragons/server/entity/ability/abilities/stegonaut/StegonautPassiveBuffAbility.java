@@ -42,6 +42,15 @@ public class StegonautPassiveBuffAbility {
             return;
         }
 
+        // OPTIMIZATION: Skip entirely if not tamed (can't buff anyone anyway)
+        if (!drake.isTame()) {
+            if (!buffedEntityIds.isEmpty()) {
+                clearTrackedBuffs(serverLevel);
+            }
+            tickCounter = 0;
+            return;
+        }
+
         if (++tickCounter < UPDATE_INTERVAL) {
             return;
         }

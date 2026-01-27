@@ -90,10 +90,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
 
         if (section.sectionType == STARTUP && soundQueued && getTicksInSection() >= SOUND_DELAY_TICKS) {
-            if (!dragon.level().isClientSide) {
-                float pitch = 0.85f + dragon.getRandom().nextFloat() * 0.2f;
-                dragon.playSound(ModSounds.IGNIVORUS_ROAR.get(), 2.0f, pitch);
-            }
+            // Roar sound is now handled by animation keyframe in IgnivorusSoundProfile
             soundQueued = false;
         }
 

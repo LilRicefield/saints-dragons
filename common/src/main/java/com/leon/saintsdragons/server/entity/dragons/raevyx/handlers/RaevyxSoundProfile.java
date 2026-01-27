@@ -67,20 +67,18 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         }
         String vocalKey = EFFECT_TO_VOCAL_KEY.get(key);
         if (vocalKey != null) {
-            // Roar sound is handled by RaevyxRoarAbility with precise timing, skip keyframe
-            if ("roar".equals(vocalKey)) {
-                return true; // Block the keyframe, ability plays the sound
-            }
             playVocalEntry(handler, dragon, vocalKey, locator);
             return true;
         }
         return switch (key) {
             case "raevyx_bite" -> {
-                playSimpleMouthSound(handler, dragon, locator, ModSounds.RAEVYX_BITE.get(), 1.0f, 0.95f, 0.1f);
+                playSimpleMouthSoundStereo(handler, dragon, locator,
+                    ModSounds.RAEVYX_BITE.get(), ModSounds.RAEVYX_BITE_STEREO.get(), 1.0f, 0.95f, 0.1f);
                 yield true;
             }
             case "raevyx_horngore" -> {
-                playSimpleMouthSound(handler, dragon, locator, ModSounds.RAEVYX_HORNGORE.get(), 1.3f, 0.9f, 0.2f);
+                playSimpleMouthSoundStereo(handler, dragon, locator,
+                    ModSounds.RAEVYX_HORNGORE.get(), ModSounds.RAEVYX_HORNGORE_STEREO.get(), 1.3f, 0.9f, 0.2f);
                 yield true;
             }
             case "raevyx_walk" -> {
@@ -96,11 +94,15 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
                 yield true;
             }
             case "raevyx_takeoff" -> {
-                // Block keyframe sound - takeoff sound is handled by Raevyx.setTakeoff()
+                Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "bodyLocator");
+                float pitch = 0.94f + dragon.getRandom().nextFloat() * 0.12f;
+                playDualSound(dragon, at, ModSounds.RAEVYX_TAKEOFF.get(), ModSounds.RAEVYX_TAKEOFF_STEREO.get(), 1.2f, pitch);
                 yield true;
             }
             case "raevyx_lightning_beam_start" -> {
-                // Block keyframe sound - beam start is handled by RaevyxBeamAbility
+                Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+                float pitch = 0.9f + dragon.getRandom().nextFloat() * 0.2f;
+                playDualSound(dragon, at, ModSounds.RAEVYX_LIGHTNING_BEAM_START.get(), ModSounds.RAEVYX_LIGHTNING_BEAM_START_STEREO.get(), 1.8f, pitch);
                 yield true;
             }
             case "raevyx_lightning_beaming" -> {
@@ -108,7 +110,9 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
                 yield true;
             }
             case "raevyx_lightning_beam_stop" -> {
-                // Block keyframe sound - beam stop is handled by RaevyxBeamAbility
+                Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+                float pitch = 0.95f + dragon.getRandom().nextFloat() * 0.15f;
+                playDualSound(dragon, at, ModSounds.RAEVYX_LIGHTNING_BEAM_STOP.get(), ModSounds.RAEVYX_LIGHTNING_BEAM_STOP_STEREO.get(), 1.6f, pitch);
                 yield true;
             }
             case "raevyx_summon_storm_ground_start" -> {
@@ -191,14 +195,14 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         Vec3 at = handler.resolveLocatorWorldPos(
                 locator != null && !locator.isEmpty() ? locator : "bodyLocator"
         );
-        playClientSound(dragon, at, ModSounds.RAEVYX_WALK.get(), 1.0f, 1.0f);
+        playDualSound(dragon, at, ModSounds.RAEVYX_WALK.get(), ModSounds.RAEVYX_WALK_STEREO.get(), 1.0f, 1.0f);
     }
 
     private void playRunSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 at = handler.resolveLocatorWorldPos(
                 locator != null && !locator.isEmpty() ? locator : "bodyLocator"
         );
-        playClientSound(dragon, at, ModSounds.RAEVYX_RUN.get(), 1.0f, 1.0f);
+        playDualSound(dragon, at, ModSounds.RAEVYX_RUN.get(), ModSounds.RAEVYX_RUN_STEREO.get(), 1.0f, 1.0f);
     }
 
     private void playLandedSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
@@ -235,7 +239,12 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             pitch *= BABY_PITCH_MULTIPLIER;
         }
 
-        playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+        // Roar uses stereo on client, mono on server
+        if ("roar".equals(vocalKey)) {
+            playDualSound(dragon, at, ModSounds.RAEVYX_ROAR.get(), ModSounds.RAEVYX_ROAR_STEREO.get(), entry.volume(), pitch);
+        } else {
+            playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+        }
     }
 
     private void playSimpleMouthSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
@@ -280,11 +289,11 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
     }
     private void playDodgeSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "bodyLocator");
-        playClientSound(dragon, at, ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f);
+        playDualSound(dragon, at, ModSounds.RAEVYX_DODGE.get(), ModSounds.RAEVYX_DODGE_STEREO.get(), 1.6f, 1.0f);
     }
     private void playDashSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
         Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "bodyLocator");
-        playClientSound(dragon, at, ModSounds.RAEVYX_DASH.get(), 1.6f, 1.0f);
+        playDualSound(dragon, at, ModSounds.RAEVYX_DASH.get(), ModSounds.RAEVYX_DASH_STEREO.get(), 1.6f, 1.0f);
     }
 
     /**
@@ -298,5 +307,44 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         double z = position != null ? position.z : dragon.getZ();
 
         dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
+    }
+
+    /**
+     * Play dual sound: stereo (non-positional) for close players, mono (positional) for far players.
+     * Each client decides which version to play based on distance to the dragon.
+     */
+    private void playDualSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent monoSound,
+                               net.minecraft.sounds.SoundEvent stereoSound, float volume, float pitch) {
+        double x = position != null ? position.x : dragon.getX();
+        double y = position != null ? position.y : dragon.getY();
+        double z = position != null ? position.z : dragon.getZ();
+
+        // Client only: stereo only for the rider, mono for everyone else.
+        if (dragon.level().isClientSide) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+                boolean isRiding = mc.player.getVehicle() == dragon;
+                if (isRiding) {
+                    dragon.level().playLocalSound(x, y, z, stereoSound, SoundSource.NEUTRAL, volume, pitch, false);
+                } else {
+                    dragon.level().playLocalSound(x, y, z, monoSound, SoundSource.NEUTRAL, volume, pitch, false);
+                }
+            }
+        }
+    }
+
+    /**
+     * Play mouth sound with stereo/mono split and pitch variance.
+     */
+    private void playSimpleMouthSoundStereo(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                            net.minecraft.sounds.SoundEvent monoSound, net.minecraft.sounds.SoundEvent stereoSound,
+                                            float volume, float basePitch, float variance) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        float pitch = basePitch;
+        if (variance != 0f) {
+            pitch += dragon.getRandom().nextFloat() * variance;
+        }
+
+        playDualSound(dragon, at, monoSound, stereoSound, volume, pitch);
     }
 }

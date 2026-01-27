@@ -317,7 +317,7 @@ public record CindervaneRiderController(Cindervane dragon) {
 
         // Try to use bone-based positioning from renderer cache
         String locatorName = (seatIndex == 0) ? "passengerSeat0" : "passengerSeat1";
-        Vec3 passengerLoc = dragon.getClientLocatorPosition(locatorName);
+        Vec3 passengerLoc = dragon.level().isClientSide ? dragon.getClientLocatorPosition(locatorName) : null;
 
         if (passengerLoc != null) {
             // Bone-based positioning with rotation-aware offset

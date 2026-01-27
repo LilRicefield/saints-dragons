@@ -175,6 +175,17 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private static final int PHASE_TWO_LINGER_TICKS = 20 * 30;
     private int phaseTwoLingerTicks = 0;
 
+    // ===== LEAP FORWARD SYSTEM =====
+    private boolean leaping = false;
+    private int leapTicksLeft = 0;
+    private int leapCooldownTicks = 0;
+    private Vec3 leapVec = Vec3.ZERO;
+    private int leapTicksElapsed = 0;
+    private boolean leapDamageApplied = false;
+    private boolean lastDashWasRight = false;
+    private static final double LEAP_HORIZONTAL_DRAG = 0.92D;
+    private static final double LEAP_VERTICAL_DRAG = 0.98D;
+
     // ===== UNTAMED RIDE / TAMING STATE =====
     private static final int MIN_WILD_TAME_TICKS = 60;
     private static final int MAX_TAMING_PROGRESS = 400;
@@ -362,7 +373,144 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                     setRiderPitchKeyMode(!isRiderPitchKeyMode());
                 }
             }
+            case DOUBLE_TAP_W -> {
+                if (!locked) {
+                    onRiderDash(player);
+                }
+            }
             default -> { }
+        }
+    }
+
+    @Override
+    protected void onRiderDash(Player player) {
+        // Nulljaw's dash uses the leap implementation (animation is a leap, behavior is a dash).
+        onRiderLeap(player);
+    }
+
+    /**
+     * Phase 2 dash - triggered by double-tap W.
+     */
+    protected void onRiderLeap(Player player) {
+        // Check cooldown
+        if (leapCooldownTicks > 0) {
+            return;
+        }
+
+        // Check if already leaping
+        if (leaping) {
+            return;
+        }
+
+        // Dash constants
+        final boolean phaseTwo = isPhaseTwoActive();
+        if (this.isSwimming() || this.isInWaterOrBubble()) {
+            return;
+        }
+        final int LEAP_DURATION = phaseTwo
+                ? (int) Math.round(1.6667 * 20) // Phase 2 dash animation length: 33 ticks
+                : (int) Math.round(2.3333 * 20); // Phase 1 tail swipe length: 47 ticks
+        final int LEAP_COOLDOWN = phaseTwo
+                ? 38
+                : 60; // Phase 1: 3 second cooldown
+        final double LEAP_DISTANCE = 32; // blocks
+        // Get forward vector (direction dragon is facing)
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double forwardX = -Math.sin(yawRad);
+        double forwardZ = Math.cos(yawRad);
+
+        // Account for drag so the integrated distance over the duration is ~LEAP_DISTANCE
+        double dragScale = 1.0D - Math.pow(LEAP_HORIZONTAL_DRAG, LEAP_DURATION);
+        double perTickSpeed = LEAP_DISTANCE * (1.0D - LEAP_HORIZONTAL_DRAG) / dragScale;
+
+        // Create dash vector (forward direction only)
+        Vec3 leapVector = new Vec3(forwardX * perTickSpeed, 0.0D, forwardZ * perTickSpeed);
+
+        // Begin leap
+        leaping = true;
+        leapTicksLeft = LEAP_DURATION;
+        leapCooldownTicks = LEAP_COOLDOWN;
+        leapVec = leapVector;
+        leapTicksElapsed = 0;
+        leapDamageApplied = false;
+        this.setDeltaMovement(leapVector);
+        this.getNavigation().stop();
+        this.hasImpulse = true;
+        if (phaseTwo) {
+            lastDashWasRight = !lastDashWasRight;
+            triggerAnim("instant_action", lastDashWasRight ? "phase2_dash_right" : "phase2_dash_left");
+        } else {
+            triggerAnim("instant_action", "tail_swipe_left");
+        }
+    }
+
+    /**
+     * Handles the leap movement physics - applies velocity and decay.
+     * Called every tick while leaping.
+     */
+    private void handleLeapMovement() {
+        // Apply the leap velocity via delta movement so vanilla travel handles motion.
+        this.setDeltaMovement(leapVec);
+        this.hasImpulse = true;
+
+        // Decay for next tick
+        leapVec = leapVec.multiply(LEAP_HORIZONTAL_DRAG, LEAP_VERTICAL_DRAG, LEAP_HORIZONTAL_DRAG);
+
+        if (--leapTicksLeft <= 0) {
+            leaping = false;
+            leapVec = Vec3.ZERO;
+        }
+    }
+
+    /**
+     * Tick the leap state - handle cooldowns and damage at 1.79 seconds.
+     */
+    private void tickLeapState() {
+        // Tick down cooldown
+        if (leapCooldownTicks > 0) {
+            leapCooldownTicks--;
+        }
+
+        if (!leaping) {
+            leapTicksElapsed = 0;
+            leapDamageApplied = false;
+            return;
+        }
+
+        leapTicksElapsed++;
+
+        if (leapDamageApplied) {
+            return;
+        }
+
+        boolean phaseTwo = isPhaseTwoActive();
+        int damageTick = phaseTwo ? 18 : 32;
+        if (leapTicksElapsed >= damageTick && this.isVehicle()) {
+            leapDamageApplied = true;
+            // Get tail position as damage origin (using mouth position as approximation)
+            Vec3 tailPos = getMouthPosition();
+
+            // Large area for tail swipe
+            net.minecraft.world.phys.AABB damageBox = new net.minecraft.world.phys.AABB(tailPos, tailPos).inflate(8.0D);
+
+            java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
+                LivingEntity.class,
+                damageBox,
+                entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlly(entity)
+            );
+
+            for (LivingEntity target : entities) {
+                // Deal damage
+                float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 1.5F;
+                target.hurt(this.damageSources().mobAttack(this), damage);
+
+                if (!phaseTwo) {
+                    // Apply strong knockback away from dragon
+                    Vec3 knockbackDir = target.position().subtract(this.position()).normalize();
+                    target.push(knockbackDir.x * 2.0, 0.8, knockbackDir.z * 2.0);
+                    target.hurtMarked = true;
+                }
+            }
         }
     }
 
@@ -478,30 +626,28 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Nulljaw> movementController =
                 new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
-        AnimationController<Nulljaw> swimController =
-                new AnimationController<>(this, "swim_direction", 4, animationHandler::swimDirectionPredicate);
         AnimationController<Nulljaw> actions =
                 new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
         AnimationController<Nulljaw> hurtController =
                 new AnimationController<>(this, "hurt", 1, animationHandler::hurtPredicate);
-
-        animationHandler.configureMovementBlend(movementController);
-        animationHandler.configureSwimBlend(swimController);
+        AnimationController<Nulljaw> instantActions =
+                new AnimationController<>(this, "instant_action", 10, animationHandler::instantActionPredicate);
         animationHandler.setupHurtController(hurtController);
 
         // Sound keyframes
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
-        swimController.setSoundKeyframeHandler(this::onAnimationSound);
         actions.setSoundKeyframeHandler(this::onAnimationSound);
         hurtController.setSoundKeyframeHandler(this::onAnimationSound);
+        instantActions.setSoundKeyframeHandler(this::onAnimationSound);
 
         // Setup animation triggers
         animationHandler.setupActionController(actions);
+        animationHandler.setupInstantActionController(instantActions);
 
         controllers.add(movementController);
-        controllers.add(swimController);
         controllers.add(actions);
         controllers.add(hurtController);
+        controllers.add(instantActions);
     }
 
     @Override
@@ -574,7 +720,8 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
      */
     private void handleAmbientSounds() {
         // Suppress ambient sounds while transitioning or resting to prevent animation snapping
-        if (isBaby() || isDying() || isOrderedToSit() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0) {
+        // Also suppress during rider control lock (leap, abilities, etc.)
+        if (isBaby() || isDying() || isOrderedToSit() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0 || areRiderControlsLocked()) {
             return;
         }
 
@@ -616,6 +763,12 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
         // Handle ambient sounds (server-side only)
         if (!level().isClientSide) {
+            // Handle leap movement (must be called every tick for smooth movement)
+            if (leaping) {
+                handleLeapMovement();
+            }
+            // Tick leap cooldowns and damage timing
+            tickLeapState();
             handleAmbientSounds();
             tickRiderControlLock();
             boolean inWater = this.isInWaterOrBubble();
@@ -664,6 +817,12 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
     @Override
     public void travel(@NotNull Vec3 motion) {
+        // During a leap, preserve the stored leap velocity and let vanilla travel apply it without rider overrides
+        if (leaping) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player && !isWildRideActive()) {
             if (areRiderControlsLocked()) {
                 this.setDeltaMovement(Vec3.ZERO);

@@ -98,31 +98,47 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
         // Handle non-vocal animation sounds
         return switch (key) {
             case "nulljaw_walk" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.NULLJAW_WALK.get(), 0.8f, 0.9f, 0.2f);
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.NULLJAW_WALK.get(), ModSounds.NULLJAW_WALK_STEREO.get(), 0.8f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_run" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.NULLJAW_RUN.get(), 0.8f, 0.9f, 0.2f);
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.NULLJAW_RUN.get(), ModSounds.NULLJAW_RUN_STEREO.get(), 0.8f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_walk2" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.NULLJAW_WALK2.get(), 0.8f, 0.9f, 0.2f);
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.NULLJAW_WALK2.get(), ModSounds.NULLJAW_WALK2_STEREO.get(), 0.8f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_run2" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.NULLJAW_RUN2.get(), 0.8f, 0.9f, 0.2f);
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.NULLJAW_RUN2.get(), ModSounds.NULLJAW_RUN2_STEREO.get(), 0.8f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_claw" -> {
                 playSimpleSound(handler, dragon, locator, ModSounds.NULLJAW_CLAW.get(), 1.2f, 0.9f, 0.2f);
                 yield true;
             }
+            case "nulljaw_tail_swipe" -> {
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.NULLJAW_TAIL_SWIPE.get(), ModSounds.NULLJAW_TAIL_SWIPE_STEREO.get(), 1.2f, 0.9f, 0.2f);
+                yield true;
+            }
+            case "nulljaw_phase2_dash" -> {
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.NULLJAW_PHASE2_DASH.get(), ModSounds.NULLJAW_PHASE2_DASH_STEREO.get(), 1.2f, 0.9f, 0.2f);
+                yield true;
+            }
             case "nulljaw_bite" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.NULLJAW_BITE.get(), 1.1f, 0.95f, 0.1f);
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.NULLJAW_BITE.get(), ModSounds.NULLJAW_BITE_STEREO.get(), 1.1f, 0.95f, 0.1f);
                 yield true;
             }
             case "nulljaw_horngore" -> {
-                playSimpleSound(handler, dragon, locator, ModSounds.NULLJAW_HORNGORE.get(), 1.2f, 0.9f, 0.2f);
+                playSimpleSoundStereo(handler, dragon, locator,
+                        ModSounds.NULLJAW_HORNGORE.get(), ModSounds.NULLJAW_HORNGORE_STEREO.get(), 1.2f, 0.9f, 0.2f);
                 yield true;
             }
             case "nulljaw_eat" -> {
@@ -176,7 +192,11 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
             pitch *= BABY_PITCH_MULTIPLIER;
         }
 
-        playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+        if ("roar2".equals(vocalKey)) {
+            playDualSound(dragon, at, ModSounds.NULLJAW_ROAR2.get(), ModSounds.NULLJAW_ROAR2_STEREO.get(), entry.volume(), pitch);
+        } else {
+            playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
+        }
     }
 
     /**
@@ -211,6 +231,18 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
         playClientSound(dragon, at, sound, volume, pitch);
     }
 
+    private void playSimpleSoundStereo(DragonSoundHandler handler, DragonEntity dragon, String locator,
+                                       net.minecraft.sounds.SoundEvent monoSound, net.minecraft.sounds.SoundEvent stereoSound,
+                                       float volume, float basePitch, float variance) {
+        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
+        float pitch = basePitch;
+        if (variance != 0f) {
+            pitch += dragon.getRandom().nextFloat() * variance;
+        }
+
+        playDualSound(dragon, at, monoSound, stereoSound, volume, pitch);
+    }
+
     /**
      * Play sound on client side using local playback.
      * More efficient than server broadcast for animation keyframe sounds.
@@ -222,5 +254,27 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
         double z = position != null ? position.z : dragon.getZ();
 
         dragon.level().playLocalSound(x, y, z, sound, SoundSource.NEUTRAL, volume, pitch, false);
+    }
+
+    /**
+     * Play dual sound: stereo only for the rider, mono for everyone else.
+     */
+    private void playDualSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent monoSound,
+                               net.minecraft.sounds.SoundEvent stereoSound, float volume, float pitch) {
+        double x = position != null ? position.x : dragon.getX();
+        double y = position != null ? position.y : dragon.getY();
+        double z = position != null ? position.z : dragon.getZ();
+
+        if (dragon.level().isClientSide) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+                boolean isRiding = mc.player.getVehicle() == dragon;
+                if (isRiding) {
+                    dragon.level().playLocalSound(x, y, z, stereoSound, SoundSource.NEUTRAL, volume, pitch, false);
+                } else {
+                    dragon.level().playLocalSound(x, y, z, monoSound, SoundSource.NEUTRAL, volume, pitch, false);
+                }
+            }
+        }
     }
 }
