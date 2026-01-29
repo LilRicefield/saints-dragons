@@ -20,6 +20,15 @@
     "taming_chance_base": 5.0,
     "taming_chance_hearty": 3.0,
     "beam_drain_per_tick": 0.014,
-    "beam_regen_per_tick": 0.0025
+    "beam_regen_per_tick": 0.0025,
+    "egg_hatch_chance_normal": 2.0,
+    "egg_hatch_chance_thunder": 1.0,
+    "egg_storm_instant_chance": 100.0,
+    "egg_loot_pillager_outpost": 0.2,
+    "egg_loot_shipwreck_treasure": 0.15,
+    "egg_loot_ancient_city": 0.15,
+    "egg_drop_chance": 0.12,
+    "taming_stun_health": 60.0,
+    "aggressive_wild": false
   }
 }

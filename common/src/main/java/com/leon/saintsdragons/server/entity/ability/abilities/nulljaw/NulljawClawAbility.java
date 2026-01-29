@@ -120,6 +120,7 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
             }
         }
 
+        damage *= dragon.getHungerMeleeDamageMultiplier();
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
         target.hurt(source, damage);
     }

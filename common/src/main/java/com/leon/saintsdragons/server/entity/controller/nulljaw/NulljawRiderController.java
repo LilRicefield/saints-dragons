@@ -103,7 +103,7 @@ public record NulljawRiderController(Nulljaw drake) {
         } else {
             // Ground movement - HARDCODED (not configurable)
             double speed = drake.isAccelerating() ? Nulljaw.RIDER_RUN_SPEED : Nulljaw.RIDER_WALK_SPEED;
-            return (float) speed;
+            return (float) (speed * drake.getHappinessSpeedMultiplier());
         }
     }
 

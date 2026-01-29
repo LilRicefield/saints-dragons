@@ -1,9 +1,10 @@
 package com.leon.saintsdragons.common.item;
 
-import com.leon.saintsdragons.client.ui.DragonAllyScreen;
+import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -29,28 +30,27 @@ public class DragonAllyBookItem extends Item {
     @Override
     public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
         if (target instanceof DragonEntity dragon) {
-            // Check if player owns the wyvern
-            if (!dragon.isTame() || !dragon.isOwnedBy(player)) {
-                player.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable("saintsdragons.message.not_dragon_owner"), 
-                    true);
-                return InteractionResult.FAIL;
-            }
-            
-            // Open ally management GUI on client
             if (player.level().isClientSide) {
-                openAllyScreen(dragon, player);
+                java.util.UUID selectionId = (dragon.isTame() && dragon.isOwnedBy(player)) ? dragon.getUUID() : null;
+                openCodexScreen(selectionId);
             }
-            
             return InteractionResult.SUCCESS;
         }
         
         return super.interactLivingEntity(stack, player, target, hand);
     }
-    
+
+    @Override
+    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+        if (level.isClientSide) {
+            openCodexScreen(null);
+        }
+        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
+    }
+
     @Environment(EnvType.CLIENT)
-    private void openAllyScreen(DragonEntity dragon, Player player) {
-        net.minecraft.client.Minecraft.getInstance().setScreen(new DragonAllyScreen(dragon));
+    private void openCodexScreen(@Nullable java.util.UUID preselectedDragonId) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new DraconicCodexScreen(preselectedDragonId));
     }
     
     @Override

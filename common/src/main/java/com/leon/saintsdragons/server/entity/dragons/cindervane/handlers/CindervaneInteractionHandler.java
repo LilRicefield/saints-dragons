@@ -76,6 +76,7 @@ public class CindervaneInteractionHandler {
             dragon.setFeedingCooldown(44);
 
             boolean hearty = heldItem.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            dragon.applyFeedingHunger(hearty);
 
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0)
@@ -282,6 +283,7 @@ public class CindervaneInteractionHandler {
             dragon.setFeedingCooldown(44);
 
             boolean hearty = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
                 int growthTicks = hearty ? 4800 : 2400;
                 int currentAge = dragon.getAge();
@@ -299,29 +301,30 @@ public class CindervaneInteractionHandler {
                             true
                     );
                 }
+                dragon.applyFeedingHunger(hearty);
             } else {
                 float healAmount = hearty ? 15.0F : 5.0F;
                 float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
                 boolean fullyHealed = newHealth >= dragon.getMaxHealth();
 
                 dragon.heal(healAmount);
+                dragon.applyFeedingHunger(hearty);
                 if (hearty) {
                     dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
                 }
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
 
                 // Send appropriate message
+                String messageKey;
                 if (fullyHealed) {
-                    player.displayClientMessage(
-                        Component.translatable("entity.saintsdragons.cindervane.fed", dragon.getName()),
-                        true
-                    );
+                    messageKey = wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.cindervane.fed";
                 } else {
-                    player.displayClientMessage(
-                        Component.translatable("entity.saintsdragons.cindervane.fed_partial", dragon.getName()),
-                        true
-                    );
+                    messageKey = "entity.saintsdragons.cindervane.fed_partial";
                 }
+                player.displayClientMessage(
+                    Component.translatable(messageKey, dragon.getName()),
+                    true
+                );
             }
             return InteractionResult.CONSUME;
         }
@@ -401,6 +404,7 @@ public class CindervaneInteractionHandler {
             if (hearty) {
                 dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
             }
+            dragon.applyFeedingHunger(hearty);
 
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0)

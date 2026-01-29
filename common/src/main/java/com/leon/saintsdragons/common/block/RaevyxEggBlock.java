@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.common.block;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -39,6 +41,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     // Hatching speeds (lower = faster)
     private static final int NORMAL_HATCH_CHANCE = 2;      // ~7 minutes total (1/2 per random tick)
     private static final int THUNDER_HATCH_CHANCE = 1;     // ~3 minutes total (100% per random tick, 2x faster)
+    private static final int STORM_INSTANT_HATCH_CHANCE = 100; // 1 in 100 when placed during storm
 
     // Egg shape (similar to turtle egg but slightly larger)
     private static final VoxelShape SHAPE = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 10.0D, 13.0D);
@@ -60,9 +63,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
 
     @Override
     public void randomTick(@NotNull BlockState state, ServerLevel level, @NotNull BlockPos pos, RandomSource random) {
-        // Determine hatch speed based on weather
-        boolean isThundering = level.isThundering();
-        int hatchChance = isThundering ? THUNDER_HATCH_CHANCE : NORMAL_HATCH_CHANCE;
+        int hatchChance = resolveHatchChance(level);
 
         if (random.nextInt(hatchChance) == 0) {
             this.incrementHatch(level, pos, state);
@@ -151,7 +152,8 @@ public class RaevyxEggBlock extends BaseEntityBlock {
             // Check if there's a lightning bolt nearby on placement
             if (serverLevel.isThundering() && serverLevel.canSeeSky(pos)) {
                 // Small chance to instantly hatch if placed during a storm near sky
-                if (serverLevel.random.nextInt(100) == 0) {
+                int chance = resolveStormInstantChance();
+                if (serverLevel.random.nextInt(chance) == 0) {
                     this.hatchEgg(serverLevel, pos, state);
                     level.scheduleTick(pos, this, 1);
                 }
@@ -215,5 +217,21 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     @Override
     public RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
+    }
+
+    private int resolveHatchChance(ServerLevel level) {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        double normal = config.extraDouble("egg_hatch_chance_normal", NORMAL_HATCH_CHANCE);
+        double thunder = config.extraDouble("egg_hatch_chance_thunder", THUNDER_HATCH_CHANCE);
+        double selected = level.isThundering() ? thunder : normal;
+        return Math.max(1, (int) Math.round(selected));
+    }
+
+    private int resolveStormInstantChance() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        double chance = config.extraDouble("egg_storm_instant_chance", STORM_INSTANT_HATCH_CHANCE);
+        return Math.max(1, (int) Math.round(chance));
     }
 }

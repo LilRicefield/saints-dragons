@@ -131,7 +131,7 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
     private void applyHit(Ignivorus dragon, LivingEntity target) {
         // Apply damage as a direct melee hit
         DamageSource physicalSource = dragon.level().damageSources().mobAttack(dragon);
-        target.hurt(physicalSource, resolveDamage());
+        target.hurt(physicalSource, resolveDamage() * dragon.getHungerMeleeDamageMultiplier());
 
         // Launch enemies upward instead of away - stomp creates an upward shockwave
         target.push(0, UPWARD_FORCE, 0);

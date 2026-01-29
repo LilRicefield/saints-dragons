@@ -101,6 +101,7 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
     private void applyHit(Ignivorus dragon, LivingEntity target) {
         // Calculate base damage from attack attribute
         float damage = resolveBiteDamage();
+        float hungerMult = dragon.getHungerMeleeDamageMultiplier();
         AttributeInstance attackAttr = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
         if (attackAttr != null) {
             double value = attackAttr.getValue();
@@ -115,7 +116,7 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
         DamageSource physicalSource = dragon.level().damageSources().mobAttack(dragon);
 
         // Approximate armor penetration by boosting the raw hit damage.
-        float armorPenDamage = damage + ARMOR_PENETRATION;
+        float armorPenDamage = (damage + ARMOR_PENETRATION) * hungerMult;
 
         target.hurt(physicalSource, armorPenDamage);
 

@@ -129,7 +129,8 @@ public record CindervaneRiderController(Cindervane dragon) {
             // Ground speed - HARDCODED (not configurable)
             boolean running = dragon.isAccelerating();
             dragon.setRunning(running);
-            return (float) (running ? Cindervane.RIDER_RUN_SPEED : Cindervane.RIDER_WALK_SPEED);
+            float base = (float) (running ? Cindervane.RIDER_RUN_SPEED : Cindervane.RIDER_WALK_SPEED);
+            return base * dragon.getHappinessSpeedMultiplier();
         }
     }
 

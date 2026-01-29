@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.common.block;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -63,7 +65,8 @@ public class StegonautEggBlock extends BaseEntityBlock {
 
     @Override
     public void randomTick(@NotNull BlockState state, ServerLevel level, @NotNull BlockPos pos, RandomSource random) {
-        if (random.nextInt(NORMAL_HATCH_CHANCE) == 0) {
+        int hatchChance = resolveHatchChance();
+        if (random.nextInt(hatchChance) == 0) {
             this.incrementHatch(level, pos, state);
         }
     }
@@ -154,5 +157,12 @@ public class StegonautEggBlock extends BaseEntityBlock {
     @Override
     public RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
+    }
+
+    private int resolveHatchChance() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
+        double chance = config.extraDouble("egg_hatch_chance_normal", NORMAL_HATCH_CHANCE);
+        return Math.max(1, (int) Math.round(chance));
     }
 }

@@ -167,11 +167,13 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         if (dragon.isAccelerating() && isMoving) {
             // L-Ctrl pressed AND moving - trigger run animation and use appropriate run speed
             dragon.setRunning(true);
-            return (float) (isPhase2 ? Ignivorus.RIDER_PHASE2_RUN_SPEED : Ignivorus.RIDER_RUN_SPEED);
+            float base = (float) (isPhase2 ? Ignivorus.RIDER_PHASE2_RUN_SPEED : Ignivorus.RIDER_RUN_SPEED);
+            return base * dragon.getHappinessSpeedMultiplier();
         } else {
             // Normal ground speed - use walk animation and appropriate walk speed
             dragon.setRunning(false);
-            return (float) (isPhase2 ? Ignivorus.RIDER_PHASE2_WALK_SPEED : Ignivorus.RIDER_WALK_SPEED);
+            float base = (float) (isPhase2 ? Ignivorus.RIDER_PHASE2_WALK_SPEED : Ignivorus.RIDER_WALK_SPEED);
+            return base * dragon.getHappinessSpeedMultiplier();
         }
     }
 

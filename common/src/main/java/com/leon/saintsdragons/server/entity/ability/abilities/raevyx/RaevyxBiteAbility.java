@@ -157,7 +157,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     private void bitePrimary(LivingEntity primary) {
         Raevyx wyvern = getUser();
         DamageSource src = wyvern.level().damageSources().mobAttack(wyvern);
-        float mult = wyvern.getDamageMultiplier();
+        float mult = wyvern.getDamageMultiplier() * wyvern.getHungerMeleeDamageMultiplier();
         primary.hurt(src, resolveBiteDamage() * mult);
         wyvern.noteAggroFrom(primary);
     }

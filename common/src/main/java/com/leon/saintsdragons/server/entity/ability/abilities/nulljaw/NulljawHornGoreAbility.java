@@ -125,6 +125,7 @@ public class NulljawHornGoreAbility extends DragonAbility<Nulljaw> {
 
         boolean phaseTwo = dragon.isPhaseTwoActive();
         float configuredDamage = resolveBaseDamage(phaseTwo);
+        configuredDamage *= dragon.getHungerMeleeDamageMultiplier();
         AttributeInstance attackAttr = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
         if (attackAttr != null && DEFAULT_ATTACK_DAMAGE > 0.0f) {
             double value = attackAttr.getValue();

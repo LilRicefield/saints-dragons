@@ -60,6 +60,30 @@ public final class NetworkHandler {
                 MessageDragonAllyRequest::handle
         );
 
+        NETWORK.registerServerbound(
+                MessageDraconicCodexRequest.class,
+                id("draconic_codex_request"),
+                MessageDraconicCodexRequest::encode,
+                MessageDraconicCodexRequest::decode,
+                MessageDraconicCodexRequest::handle
+        );
+
+        NETWORK.registerServerbound(
+                MessageGlobalAllyRequest.class,
+                id("global_ally_request"),
+                MessageGlobalAllyRequest::encode,
+                MessageGlobalAllyRequest::decode,
+                MessageGlobalAllyRequest::handle
+        );
+
+        NETWORK.registerServerbound(
+                MessageGlobalAllyManagement.class,
+                id("global_ally_management"),
+                MessageGlobalAllyManagement::encode,
+                MessageGlobalAllyManagement::decode,
+                MessageGlobalAllyManagement::handle
+        );
+
         NETWORK.registerClientbound(
                 MessageDragonAllyList.class,
                 id("dragon_ally_list"),
@@ -74,6 +98,30 @@ public final class NetworkHandler {
                 MessageDragonAllyDelta::encode,
                 MessageDragonAllyDelta::decode,
                 MessageDragonAllyDelta::handle
+        );
+
+        NETWORK.registerClientbound(
+                MessageDraconicCodexList.class,
+                id("draconic_codex_list"),
+                MessageDraconicCodexList::encode,
+                MessageDraconicCodexList::decode,
+                MessageDraconicCodexList::handle
+        );
+
+        NETWORK.registerClientbound(
+                MessageGlobalAllyList.class,
+                id("global_ally_list"),
+                MessageGlobalAllyList::encode,
+                MessageGlobalAllyList::decode,
+                MessageGlobalAllyList::handle
+        );
+
+        NETWORK.registerClientbound(
+                MessageGlobalAllyDelta.class,
+                id("global_ally_delta"),
+                MessageGlobalAllyDelta::encode,
+                MessageGlobalAllyDelta::decode,
+                MessageGlobalAllyDelta::handle
         );
 
         NETWORK.registerClientbound(

@@ -11,6 +11,8 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlockEntity;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
@@ -49,6 +51,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -485,6 +488,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
             this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Ignivorus.class));
             this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
+            this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+                    target -> shouldAggroOnSight()));
         }
 
     }
@@ -815,7 +820,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public float getTamingThreshold() {
-        return this.getMaxHealth() * TAMING_HEALTH_RATIO;
+        double fallback = this.getMaxHealth() * TAMING_HEALTH_RATIO;
+        double configured = com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.getInstance()
+                .getConfig(com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .extraDouble("taming_stun_health", fallback);
+        double clamped = Math.max(0.0D, Math.min(configured, this.getMaxHealth()));
+        return (float) clamped;
     }
 
     @Override
@@ -3845,6 +3855,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         super.setTarget(target);
     }
 
+    private boolean shouldAggroOnSight() {
+        if (isTame() || isBaby()) {
+            return false;
+        }
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        return config.extraBoolean("aggressive_wild", false);
+    }
+
     // ===== FALL DAMAGE IMMUNITY =====
 
     @Override
@@ -3933,8 +3952,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         super.dropAllDeathLoot(source);
 
-        // Female dragons have 12% chance to drop one egg on death
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextFloat() < 0.12f) {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
+        // Female dragons have a configurable chance to drop one egg on death
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
             this.spawnAtLocation(ModItems.IGNIVORUS_EGG.get());
         }
     }

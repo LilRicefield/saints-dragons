@@ -114,7 +114,7 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
             return;
         }
 
-        float damage = computeDamage(dragon);
+        float damage = computeDamage(dragon) * dragon.getHungerMeleeDamageMultiplier();
         DamageSource source = server.damageSources().mobAttack(dragon);
 
         for (LivingEntity target : targets) {

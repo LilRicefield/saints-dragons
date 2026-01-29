@@ -119,7 +119,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
         Raevyx wyvern = getUser();
         DamageSource src = wyvern.level().damageSources().mobAttack(wyvern);
 
-        float mult = wyvern.getDamageMultiplier();
+        float mult = wyvern.getDamageMultiplier() * wyvern.getHungerMeleeDamageMultiplier();
         boolean isSupercharged = wyvern.isSupercharged();
 
         // Armor penetration: ignore 2 armor points when calculating effective damage

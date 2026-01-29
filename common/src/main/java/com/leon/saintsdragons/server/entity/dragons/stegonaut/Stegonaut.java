@@ -674,6 +674,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             this.triggerAnim("action", "eat");
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean wasHungry = this.isHungry();
 
             if (this.isBaby()) {
                 // Baby growth logic
@@ -693,21 +694,26 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
                             true
                     );
                 }
+                this.applyFeedingHunger(hearty);
             } else {
                 // Adult healing logic
                 float healAmount = hearty ? 18.0f : 8.0f; // Hearty meal: +7 hearts vs +4 hearts
                 float oldHealth = this.getHealth();
                 float newHealth = Math.min(oldHealth + healAmount, this.getMaxHealth());
                 this.setHealth(newHealth);
+                this.applyFeedingHunger(hearty);
 
                 // Play eating sound and particles
                 this.level().broadcastEntityEvent(this, (byte) 6); // Eating sound
                 this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
 
                 // Send appropriate feedback message
-                String messageKey = (newHealth >= this.getMaxHealth())
-                        ? "entity.saintsdragons.stegonaut.fed"
-                        : "entity.saintsdragons.stegonaut.fed_partial";
+                String messageKey;
+                if (newHealth >= this.getMaxHealth()) {
+                    messageKey = wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.stegonaut.fed";
+                } else {
+                    messageKey = "entity.saintsdragons.stegonaut.fed_partial";
+                }
 
                 player.displayClientMessage(
                         Component.translatable(messageKey, this.getName()),

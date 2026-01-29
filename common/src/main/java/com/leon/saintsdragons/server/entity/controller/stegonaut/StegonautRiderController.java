@@ -52,7 +52,8 @@ public record StegonautRiderController(Stegonaut drake) {
     }
 
     public float getRiddenSpeed(Player player) {
-        return (float) (drake.isAccelerating() ? Stegonaut.RIDER_RUN_SPEED : Stegonaut.RIDER_WALK_SPEED);
+        double speed = drake.isAccelerating() ? Stegonaut.RIDER_RUN_SPEED : Stegonaut.RIDER_WALK_SPEED;
+        return (float) (speed * drake.getHappinessSpeedMultiplier());
     }
 
     public double getPassengersRidingOffset() {

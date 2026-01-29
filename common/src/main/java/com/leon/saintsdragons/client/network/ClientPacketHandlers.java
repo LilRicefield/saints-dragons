@@ -2,6 +2,10 @@ package com.leon.saintsdragons.client.network;
 
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.DragonAllyScreen;
+import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
+import com.leon.saintsdragons.common.network.MessageDraconicCodexList;
+import com.leon.saintsdragons.common.network.MessageGlobalAllyDelta;
+import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAllyDelta;
 import com.leon.saintsdragons.common.network.MessageDragonAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
@@ -28,6 +32,46 @@ public final class ClientPacketHandlers {
                 allyScreen.addAlly(message.username());
             } else {
                 allyScreen.removeAlly(message.username());
+            }
+        }
+    }
+
+    public static void handleDraconicCodexList(MessageDraconicCodexList message) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof DraconicCodexScreen codexScreen) {
+            java.util.List<DraconicCodexScreen.DragonEntry> entries = new java.util.ArrayList<>();
+            for (MessageDraconicCodexList.Entry entry : message.entries()) {
+                entries.add(new DraconicCodexScreen.DragonEntry(
+                        entry.entityId(),
+                        entry.displayName(),
+                        entry.currentHealth(),
+                        entry.maxHealth(),
+                        entry.armor(),
+                        entry.hunger(),
+                        entry.happiness(),
+                        entry.variantId(),
+                        entry.genderId(),
+                        entry.genderKnown()
+                ));
+            }
+            codexScreen.updateDragonList(entries);
+        }
+    }
+
+    public static void handleGlobalAllyList(MessageGlobalAllyList message) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof DraconicCodexScreen codexScreen) {
+            codexScreen.updateAllyList(message.allyList());
+        }
+    }
+
+    public static void handleGlobalAllyDelta(MessageGlobalAllyDelta message) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof DraconicCodexScreen codexScreen) {
+            if (message.isAdd()) {
+                codexScreen.addAlly(message.username());
+            } else {
+                codexScreen.removeAlly(message.username());
             }
         }
     }

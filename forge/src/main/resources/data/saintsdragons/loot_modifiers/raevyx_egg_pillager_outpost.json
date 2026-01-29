@@ -4,12 +4,11 @@
     {
       "condition": "forge:loot_table_id",
       "loot_table_id": "minecraft:chests/pillager_outpost"
-    },
-    {
-      "condition": "minecraft:random_chance",
-      "chance": 0.2
     }
   ],
   "item": "saintsdragons:raevyx_egg",
-  "count": 1
+  "count": 1,
+  "chance": 0.2,
+  "dragon_id": "saintsdragons:raevyx",
+  "config_key": "egg_loot_pillager_outpost"
 }

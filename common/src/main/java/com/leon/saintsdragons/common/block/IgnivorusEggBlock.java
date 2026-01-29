@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.common.block;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -10,7 +12,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -30,7 +31,7 @@ import javax.annotation.Nullable;
 
 /**
  * Ignivorus egg block that hatches into a baby Ignivorus over time.
- * Hatches slowly by default (~30 minutes), faster during thunderstorms.
+ * Hatches slowly by default (~30 minutes).
  */
 public class IgnivorusEggBlock extends BaseEntityBlock {
     public static final int MAX_HATCH_LEVEL = 2;
@@ -39,7 +40,6 @@ public class IgnivorusEggBlock extends BaseEntityBlock {
     // Hatching speeds (lower = faster).
     // Raevyx uses 2 (~7 minutes); 9 is ~30 minutes under the same tick conditions.
     private static final int NORMAL_HATCH_CHANCE = 9;
-    private static final int THUNDER_HATCH_CHANCE = 4;
 
     private static final VoxelShape SHAPE = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 13.0D, 13.0D);
 
@@ -60,8 +60,7 @@ public class IgnivorusEggBlock extends BaseEntityBlock {
 
     @Override
     public void randomTick(@NotNull BlockState state, ServerLevel level, @NotNull BlockPos pos, RandomSource random) {
-        boolean isThundering = level.isThundering();
-        int hatchChance = isThundering ? THUNDER_HATCH_CHANCE : NORMAL_HATCH_CHANCE;
+        int hatchChance = resolveHatchChance();
 
         if (random.nextInt(hatchChance) == 0) {
             this.incrementHatch(level, pos, state);
@@ -115,18 +114,6 @@ public class IgnivorusEggBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (level instanceof ServerLevel serverLevel) {
-            if (serverLevel.isThundering() && serverLevel.canSeeSky(pos)) {
-                if (serverLevel.random.nextInt(200) == 0) {
-                    this.hatchEgg(serverLevel, pos, state);
-                    level.scheduleTick(pos, this, 1);
-                }
-            }
-        }
-    }
-
-    @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         level.getEntitiesOfClass(LightningBolt.class,
                 new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
@@ -170,5 +157,12 @@ public class IgnivorusEggBlock extends BaseEntityBlock {
     @Override
     public RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
+    }
+
+    private int resolveHatchChance() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        double chance = config.extraDouble("egg_hatch_chance_normal", NORMAL_HATCH_CHANCE);
+        return Math.max(1, (int) Math.round(chance));
     }
 }

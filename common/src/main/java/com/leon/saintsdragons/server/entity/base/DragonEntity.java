@@ -38,6 +38,9 @@ import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -46,6 +49,8 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animation.AnimatableManager;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
+import java.util.UUID;
 
 /**
  * Base class for all wyvern entities in the mod.
@@ -63,6 +68,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Shared gender flag for all dragons (0=male,1=female)
     private static final EntityDataAccessor<Byte> DATA_GENDER =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Integer> DATA_HAPPINESS =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
 
     // Rotation deviation sync (REQUIRED for smooth animations)
     private static final EntityDataAccessor<Float> DATA_BODY_DEVIATION =
@@ -72,6 +79,24 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private static final EntityDataAccessor<Float> DATA_YAW_VELOCITY =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
 
+    public static final int HUNGER_MAX = 100;
+    private static final int HUNGER_DECAY_INTERVAL_TICKS = 12000;
+    private static final int HUNGER_FEED_AMOUNT = 10;
+    private static final int HUNGER_FEED_AMOUNT_HEARTY = 20;
+    private static final int HUNGER_DAMAGE_INTERVAL_TICKS = 80;
+    private static final float HUNGER_DAMAGE_AMOUNT = 2.0f;
+    public static final int HAPPINESS_MAX = 100;
+    private static final int HAPPINESS_DECAY_INTERVAL_TICKS = 18000;
+    private static final int HAPPINESS_DECAY_AMOUNT = 2;
+    private static final int HAPPINESS_FEED_AMOUNT = 4;
+    private static final int HAPPINESS_FEED_AMOUNT_HEARTY = 8;
+    private static final int HAPPINESS_HIT_PENALTY = 2;
+    private static final int HAPPINESS_ANGRY_THRESHOLD = 60;
+    private static final int HAPPINESS_SLOW_THRESHOLD = 60;
+    private static final int HAPPINESS_SPEED_MIN_THRESHOLD = 30;
+    private static final float HAPPINESS_SPEED_MIN_MULTIPLIER = 0.5f;
+    private static final UUID HAPPINESS_SLOW_GROUND_UUID = UUID.fromString("e4a2e52c-f311-4c35-9cf2-7dd0b6c0c4a8");
+    private static final UUID HAPPINESS_SLOW_FLY_UUID = UUID.fromString("b51a7bd2-8c8a-4ea9-9a6f-7f40e1b7b7af");
 
 
     // Dragon ability system (lightweight base – no global cooldown here)
@@ -122,6 +147,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Store reference to our custom body control for server-side rotation updates
     private BodyControl dragonBodyControl;
 
+    private int hunger = HUNGER_MAX;
+    private int hungerDecayTicks = 0;
+    private int happiness = HAPPINESS_MAX;
+    private int happinessDecayTicks = 0;
+
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
@@ -161,6 +191,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.define(DATA_COMMAND, 0); // 0=Follow, 1=Sit, 2=Wander (default Follow)
         this.entityData.define(DATA_SIT_PROGRESS, 0.0f); // Sit progress for smooth animations
         this.entityData.define(DATA_GENDER, DragonGender.MALE.getId());
+        this.entityData.define(DATA_HAPPINESS, HAPPINESS_MAX);
         this.entityData.define(DATA_BODY_DEVIATION, 0.0f);
         this.entityData.define(DATA_PITCH_DEVIATION, 0.0f);
         this.entityData.define(DATA_YAW_VELOCITY, 0.0f);
@@ -197,6 +228,90 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     public void setFemale(boolean female) {
         setGender(female ? DragonGender.FEMALE : DragonGender.MALE);
+    }
+
+    public int getHunger() {
+        return hunger;
+    }
+
+    public int getMaxHunger() {
+        return HUNGER_MAX;
+    }
+
+    public boolean isHungry() {
+        return hunger < HUNGER_MAX;
+    }
+
+    public int getHappiness() {
+        return level() != null && level().isClientSide ? this.entityData.get(DATA_HAPPINESS) : happiness;
+    }
+
+    public int getMaxHappiness() {
+        return HAPPINESS_MAX;
+    }
+
+    public void setHappiness(int happiness) {
+        int clamped = Mth.clamp(happiness, 0, HAPPINESS_MAX);
+        if (this.happiness == clamped) {
+            return;
+        }
+        this.happiness = clamped;
+        this.entityData.set(DATA_HAPPINESS, clamped);
+        if (!level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
+            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
+            DragonCodexSavedData.get(serverLevel).updateDragonStats(this.getOwnerUUID(), this);
+        }
+    }
+
+    public void setHunger(int hunger) {
+        int clamped = Mth.clamp(hunger, 0, HUNGER_MAX);
+        if (this.hunger == clamped) {
+            return;
+        }
+        this.hunger = clamped;
+        if (!level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
+            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
+            DragonCodexSavedData.get(serverLevel).updateDragonStats(this.getOwnerUUID(), this);
+        }
+    }
+
+    public boolean applyFeedingHunger(boolean heartyMeal) {
+        boolean wasHungry = isHungry();
+        int amount = heartyMeal ? HUNGER_FEED_AMOUNT_HEARTY : HUNGER_FEED_AMOUNT;
+        setHunger(this.hunger + amount);
+        applyFeedingHappiness(heartyMeal);
+        return wasHungry;
+    }
+
+    public void applyFeedingHappiness(boolean heartyMeal) {
+        if (!this.isTame()) {
+            return;
+        }
+        int amount = heartyMeal ? HAPPINESS_FEED_AMOUNT_HEARTY : HAPPINESS_FEED_AMOUNT;
+        setHappiness(this.happiness + amount);
+    }
+
+    public float getHappinessSpeedMultiplier() {
+        int value = getHappiness();
+        if (value > HAPPINESS_SLOW_THRESHOLD) {
+            return 1.0f;
+        }
+        if (value <= HAPPINESS_SPEED_MIN_THRESHOLD) {
+            return HAPPINESS_SPEED_MIN_MULTIPLIER;
+        }
+        float ratio = (value - HAPPINESS_SPEED_MIN_THRESHOLD) / (float) (HAPPINESS_SLOW_THRESHOLD - HAPPINESS_SPEED_MIN_THRESHOLD);
+        return HAPPINESS_SPEED_MIN_MULTIPLIER + ((1.0f - HAPPINESS_SPEED_MIN_MULTIPLIER) * ratio);
+    }
+
+    public float getHungerMeleeDamageMultiplier() {
+        if (hunger > 60) {
+            return 1.0f;
+        }
+        if (hunger <= 30) {
+            return 0.25f;
+        }
+        float ratio = (hunger - 30) / 30.0f; // 30..60 => 0..1
+        return 0.25f + (0.25f * ratio);
     }
 
     public boolean hasGender() {
@@ -431,6 +546,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             }
             onSuccessfulDamage(source, amount);
         }
+        if (result && !level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
+            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
+            DragonCodexSavedData.get(serverLevel).updateDragonStats(this.getOwnerUUID(), this);
+            applyHappinessHitPenalty(serverLevel);
+        }
         return result;
     }
 
@@ -464,7 +584,38 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                 combatManager.forceUseAbility(deathAbility);
             }
         }
+        if (!level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
+            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
+            DragonCodexSavedData.get(serverLevel).removeDragon(this.getOwnerUUID(), this.getUUID());
+        }
         super.die(cause);
+    }
+
+    @Override
+    public void tame(@NotNull Player player) {
+        super.tame(player);
+        if (!level().isClientSide && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            DragonCodexSavedData.get(serverPlayer.serverLevel()).addDragon(serverPlayer, this);
+        }
+    }
+
+    @Override
+    public void setCustomName(@Nullable net.minecraft.network.chat.Component name) {
+        super.setCustomName(name);
+        if (!level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
+            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
+            DragonCodexSavedData.get(serverLevel).updateDragonName(this.getOwnerUUID(), this.getUUID(), this.getName().getString());
+            DragonCodexSavedData.get(serverLevel).updateDragonStats(this.getOwnerUUID(), this);
+        }
+    }
+
+    @Override
+    public void heal(float amount) {
+        super.heal(amount);
+        if (!level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
+            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
+            DragonCodexSavedData.get(serverLevel).updateDragonStats(this.getOwnerUUID(), this);
+        }
     }
 
     /**
@@ -776,6 +927,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // Tick sleep behavior (server-side only)
         if (!level().isClientSide) {
             sleepBehavior.tick();
+            if (this.isTame()) {
+                tickHunger();
+                tickHappiness();
+                updateHappinessSpeedModifiers();
+            } else {
+                clearHappinessSpeedModifiers();
+            }
         }
 
         // Update body rotation to follow head/movement (prevents neck crunching)
@@ -840,6 +998,41 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // Push to SynchedEntityData for all observers
         this.entityData.set(DATA_BODY_DEVIATION, headToBody);
         this.entityData.set(DATA_PITCH_DEVIATION, pitchDelta);
+    }
+
+    private void tickHunger() {
+        if (!this.isTame()) {
+            return;
+        }
+        if (hunger > 0) {
+            hungerDecayTicks++;
+            if (hungerDecayTicks >= HUNGER_DECAY_INTERVAL_TICKS) {
+                hungerDecayTicks = 0;
+                setHunger(hunger - 1);
+            }
+            return;
+        }
+
+        hungerDecayTicks++;
+        if (hungerDecayTicks >= HUNGER_DAMAGE_INTERVAL_TICKS) {
+            hungerDecayTicks = 0;
+            this.hurt(this.damageSources().starve(), HUNGER_DAMAGE_AMOUNT);
+        }
+    }
+
+    private void tickHappiness() {
+        if (!this.isTame()) {
+            return;
+        }
+        int interval = HAPPINESS_DECAY_INTERVAL_TICKS;
+        if (hunger <= 30) {
+            interval = Math.max(1, interval / 2);
+        }
+        happinessDecayTicks++;
+        if (happinessDecayTicks >= interval) {
+            happinessDecayTicks = 0;
+            setHappiness(happiness - HAPPINESS_DECAY_AMOUNT);
+        }
     }
 
     // ===== COMMAND SYSTEM (shared) =====
@@ -1044,6 +1237,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("Command", getCommand());
+        tag.putInt("Hunger", this.hunger);
+        tag.putInt("Happiness", this.happiness);
 
         // Save gender - use direct entityData access to ensure we get the current value
         byte genderId = this.entityData.get(DATA_GENDER);
@@ -1081,7 +1276,88 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             this.genderInitialized = false;
             ensureGenderInitialized();
         }
+        this.hunger = tag.contains("Hunger") ? Mth.clamp(tag.getInt("Hunger"), 0, HUNGER_MAX) : HUNGER_MAX;
+        this.happiness = tag.contains("Happiness") ? Mth.clamp(tag.getInt("Happiness"), 0, HAPPINESS_MAX) : HAPPINESS_MAX;
+        this.entityData.set(DATA_HAPPINESS, this.happiness);
         allyManager.loadFromNBT(tag);
+    }
+
+    private void applyHappinessHitPenalty(net.minecraft.server.level.ServerLevel serverLevel) {
+        setHappiness(this.happiness - HAPPINESS_HIT_PENALTY);
+        if (this.happiness <= HAPPINESS_ANGRY_THRESHOLD) {
+            serverLevel.sendParticles(
+                    net.minecraft.core.particles.ParticleTypes.ANGRY_VILLAGER,
+                    this.getX(),
+                    this.getY() + this.getBbHeight() + 0.3,
+                    this.getZ(),
+                    6,
+                    0.3,
+                    0.2,
+                    0.3,
+                    0.0
+            );
+        }
+    }
+
+    private void updateHappinessSpeedModifiers() {
+        if (level().isClientSide) {
+            return;
+        }
+        if (!this.isTame()) {
+            clearHappinessSpeedModifiers();
+            return;
+        }
+        float mult = getHappinessSpeedMultiplier();
+        AttributeInstance move = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (move != null) {
+            AttributeModifier existing = move.getModifier(HAPPINESS_SLOW_GROUND_UUID);
+            if (mult >= 0.999f) {
+                if (existing != null) {
+                    move.removeModifier(HAPPINESS_SLOW_GROUND_UUID);
+                }
+            } else {
+                if (existing != null) {
+                    move.removeModifier(HAPPINESS_SLOW_GROUND_UUID);
+                }
+                move.addPermanentModifier(new AttributeModifier(
+                        HAPPINESS_SLOW_GROUND_UUID,
+                        "Happiness slow (ground)",
+                        mult - 1.0,
+                        AttributeModifier.Operation.MULTIPLY_TOTAL
+                ));
+            }
+        }
+
+        AttributeInstance fly = this.getAttribute(Attributes.FLYING_SPEED);
+        if (fly != null) {
+            AttributeModifier existing = fly.getModifier(HAPPINESS_SLOW_FLY_UUID);
+            if (mult >= 0.999f) {
+                if (existing != null) {
+                    fly.removeModifier(HAPPINESS_SLOW_FLY_UUID);
+                }
+            } else {
+                if (existing != null) {
+                    fly.removeModifier(HAPPINESS_SLOW_FLY_UUID);
+                }
+                fly.addPermanentModifier(new AttributeModifier(
+                        HAPPINESS_SLOW_FLY_UUID,
+                        "Happiness slow (fly)",
+                        mult - 1.0,
+                        AttributeModifier.Operation.MULTIPLY_TOTAL
+                ));
+            }
+        }
+    }
+
+    private void clearHappinessSpeedModifiers() {
+        AttributeInstance move = this.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (move != null && move.getModifier(HAPPINESS_SLOW_GROUND_UUID) != null) {
+            move.removeModifier(HAPPINESS_SLOW_GROUND_UUID);
+        }
+        AttributeInstance fly = this.getAttribute(Attributes.FLYING_SPEED);
+        if (fly != null && fly.getModifier(HAPPINESS_SLOW_FLY_UUID) != null) {
+            fly.removeModifier(HAPPINESS_SLOW_FLY_UUID);
+        }
     }
 
     /**

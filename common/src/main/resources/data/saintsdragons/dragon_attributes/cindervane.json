@@ -12,6 +12,8 @@
   },
   "extra": {
     "taming_chance_base": 4.0,
-    "taming_chance_hearty": 2.0
+    "taming_chance_hearty": 2.0,
+    "egg_hatch_chance_normal": 2.0,
+    "aggressive_wild": false
   }
 }

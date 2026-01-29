@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.common.block;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -10,7 +12,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -30,7 +31,7 @@ import javax.annotation.Nullable;
 
 /**
  * Nulljaw egg block that hatches into a baby Nulljaw over time.
- * Hatches in ~10 minutes under normal conditions, faster during thunderstorms.
+ * Hatches in ~10 minutes under normal conditions.
  */
 public class NulljawEggBlock extends BaseEntityBlock {
     public static final int MAX_HATCH_LEVEL = 2;
@@ -38,7 +39,6 @@ public class NulljawEggBlock extends BaseEntityBlock {
 
     // Raevyx uses 2 (~7 minutes); 3 is ~10 minutes under the same tick conditions.
     private static final int NORMAL_HATCH_CHANCE = 3;
-    private static final int THUNDER_HATCH_CHANCE = 2;
 
     private static final VoxelShape SHAPE = Block.box(4.0D, 0.0D, 4.0D, 12.0D, 10.0D, 12.0D);
 
@@ -59,8 +59,7 @@ public class NulljawEggBlock extends BaseEntityBlock {
 
     @Override
     public void randomTick(@NotNull BlockState state, ServerLevel level, @NotNull BlockPos pos, RandomSource random) {
-        boolean isThundering = level.isThundering();
-        int hatchChance = isThundering ? THUNDER_HATCH_CHANCE : NORMAL_HATCH_CHANCE;
+        int hatchChance = resolveHatchChance();
 
         if (random.nextInt(hatchChance) == 0) {
             this.incrementHatch(level, pos, state);
@@ -114,18 +113,6 @@ public class NulljawEggBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (level instanceof ServerLevel serverLevel) {
-            if (serverLevel.isThundering() && serverLevel.canSeeSky(pos)) {
-                if (serverLevel.random.nextInt(150) == 0) {
-                    this.hatchEgg(serverLevel, pos, state);
-                    level.scheduleTick(pos, this, 1);
-                }
-            }
-        }
-    }
-
-    @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         level.getEntitiesOfClass(LightningBolt.class,
                 new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
@@ -169,5 +156,12 @@ public class NulljawEggBlock extends BaseEntityBlock {
     @Override
     public RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
+    }
+
+    private int resolveHatchChance() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        double chance = config.extraDouble("egg_hatch_chance_normal", NORMAL_HATCH_CHANCE);
+        return Math.max(1, (int) Math.round(chance));
     }
 }

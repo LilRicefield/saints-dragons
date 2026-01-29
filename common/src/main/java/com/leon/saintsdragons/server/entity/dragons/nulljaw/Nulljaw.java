@@ -45,6 +45,7 @@ import net.minecraft.world.entity.ai.goal.BreathAirGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -619,6 +620,8 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
             this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Nulljaw.class));
             this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
+            this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+                    target -> shouldAggroOnSight()));
         }
     }
 
@@ -1198,6 +1201,15 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             return;
         }
         super.setTarget(target);
+    }
+
+    private boolean shouldAggroOnSight() {
+        if (isTame() || isBaby()) {
+            return false;
+        }
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        return config.extraBoolean("aggressive_wild", false);
     }
 
     @Override

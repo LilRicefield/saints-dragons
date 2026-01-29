@@ -78,6 +78,7 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             float healAmount = heartyMeal ? 35.0F : 5.0F;
             float newHealth = Math.min(drake.getHealth() + healAmount, drake.getMaxHealth());
             drake.setHealth(newHealth);
+            drake.applyFeedingHunger(heartyMeal);
 
             if (heartyMeal) {
                 drake.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
@@ -195,6 +196,7 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             drake.setFeedingCooldown(50);
 
             boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean wasHungry = drake.isHungry();
             if (drake.isBaby()) {
                 int growthTicks = heartyMeal ? 4800 : 2400;
                 int currentAge = drake.getAge();
@@ -212,6 +214,7 @@ public record NulljawInteractionHandler(Nulljaw drake) {
                             true
                     );
                 }
+                drake.applyFeedingHunger(heartyMeal);
             } else {
                 float healAmount;
                 if (heartyMeal) {
@@ -222,6 +225,7 @@ public record NulljawInteractionHandler(Nulljaw drake) {
 
                 float newHealth = Math.min(drake.getHealth() + healAmount, drake.getMaxHealth());
                 drake.setHealth(newHealth);
+                drake.applyFeedingHunger(heartyMeal);
 
                 if (heartyMeal) {
                     drake.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
@@ -231,9 +235,15 @@ public record NulljawInteractionHandler(Nulljaw drake) {
 
                 if (!drake.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                     boolean fullyHealed = newHealth >= drake.getMaxHealth();
+                    String messageKey;
+                    if (fullyHealed) {
+                        messageKey = wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.nulljaw.fed";
+                    } else {
+                        messageKey = "entity.saintsdragons.nulljaw.fed_partial";
+                    }
                     serverPlayer.displayClientMessage(
                             Component.translatable(
-                                    fullyHealed ? "entity.saintsdragons.nulljaw.fed" : "entity.saintsdragons.nulljaw.fed_partial",
+                                    messageKey,
                                     drake.getName()
                             ),
                             true
@@ -273,6 +283,7 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             if (heartyMeal) {
                 drake.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
+            drake.applyFeedingHunger(heartyMeal);
 
             double tameChance = heartyMeal
                     ? config.extraDoubles().getOrDefault("taming_chance", 6.0) / 2.0

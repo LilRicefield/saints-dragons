@@ -11,16 +11,6 @@ import software.bernie.geckolib.animatable.GeoEntity;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Clean, minimal keyframed audio system for human NPCs.
- * Handles animation keyframe sounds with automatic cooldowns and locator support.
- *
- * Usage:
- * 1. Create a HumanSoundProfile for your NPC
- * 2. Add this handler to your entity
- * 3. Call handleAnimationSound() from your animation controller's sound listener
- * 4. Add sound keyframes to your Blockbench animations
- */
 public class HumanSoundHandler {
     private final Mob entity;
     private final HumanSoundProfile profile;
@@ -31,15 +21,6 @@ public class HumanSoundHandler {
         this.profile = profile != null ? profile : HumanSoundProfile.EMPTY;
     }
 
-    /**
-     * Handle keyframe-based sound effects from animations.
-     * Call this from your animation controller's sound event listener.
-     *
-     * Sound keyframe format in Blockbench:
-     * - Simple: "sound_key" (uses profile defaults)
-     * - With params: "sound_key|volume|pitch" (e.g., "greeting|1.2|0.9")
-     * - Full ID: "namespace:sound_id|volume|pitch" (e.g., "minecraft:entity.villager.ambient|1.0|1.0")
-     */
     public void handleAnimationSound(Object keyframeData, software.bernie.geckolib.core.animation.AnimationController<?> controller) {
         // Only handle on client side for local playback
         if (!entity.level().isClientSide) return;
