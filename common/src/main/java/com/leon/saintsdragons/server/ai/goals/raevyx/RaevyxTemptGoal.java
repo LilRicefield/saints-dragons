@@ -141,12 +141,13 @@ public class RaevyxTemptGoal extends Goal {
                 float oldHealth = dragon.getHealth();
                 float newHealth = Math.min(oldHealth + healAmount, dragon.getMaxHealth());
                 dragon.setHealth(newHealth);
+                boolean wasHungry = dragon.applyFeedingHunger(false);
                 
                 // Show healing particles (green hearts)
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
                 
                 // Send appropriate feeding message to nearest player
-                sendFeedingMessage(feedingPlayer, newHealth);
+                sendFeedingMessage(feedingPlayer, newHealth, wasHungry);
             } else {
                 // Untamed wyvern: taming chance (same 1 in 10 chance as right-click taming)
                 if (feedingPlayer != null && dragon.getRandom().nextInt(10) == 0) {
@@ -198,11 +199,14 @@ public class RaevyxTemptGoal extends Goal {
      * Send appropriate feeding message based on healing result.
      * Same logic as LightningDragonInteractionHandler.sendFeedingMessage()
      */
-    private void sendFeedingMessage(Player player, float newHealth) {
+    private void sendFeedingMessage(Player player, float newHealth, boolean wasHungry) {
         if (player instanceof ServerPlayer serverPlayer) {
-            String messageKey = (newHealth >= dragon.getMaxHealth()) 
-                ? "entity.saintsdragons.raevyx.fed"
-                : "entity.saintsdragons.raevyx.fed_partial";
+            String messageKey;
+            if (newHealth >= dragon.getMaxHealth()) {
+                messageKey = wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.raevyx.fed";
+            } else {
+                messageKey = "entity.saintsdragons.raevyx.fed_partial";
+            }
                 
             serverPlayer.displayClientMessage(
                 Component.translatable(messageKey, dragon.getName()),

@@ -113,6 +113,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (hearty) {
                 wyvern.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
+            wyvern.applyFeedingHunger(hearty);
 
             // Legacy taming: heal the dragon instead of entering stun
             if (legacyTaming) {
@@ -188,6 +189,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (hearty) {
                 wyvern.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
+            wyvern.applyFeedingHunger(hearty);
 
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
@@ -332,6 +334,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
             if (heartyMeal) {
                 wyvern.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
+            boolean wasHungry = wyvern.isHungry();
 
             // Babies: speed up growth instead of healing
             if (wyvern.isBaby()) {
@@ -354,6 +357,7 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                         true
                     );
                 }
+                wyvern.applyFeedingHunger(heartyMeal);
             } else {
                 // Adults: heal when fed
                 float healAmount = heartyMeal ? 28.0f : 10.0f; // hearty meal heals more
@@ -366,7 +370,8 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 6); // Eating sound
                 wyvern.level().broadcastEntityEvent(wyvern, (byte) 7); // Hearts particles
 
-                sendFeedingMessage(player, newHealth);
+                wyvern.applyFeedingHunger(heartyMeal);
+                sendFeedingMessage(player, newHealth, wasHungry);
             }
         }
 
@@ -500,11 +505,14 @@ public record RaevyxInteractionHandler(Raevyx wyvern) {
     /**
      * Send appropriate feeding message based on healing result.
      */
-    private void sendFeedingMessage(Player player, float newHealth) {
+    private void sendFeedingMessage(Player player, float newHealth, boolean wasHungry) {
         if (player instanceof ServerPlayer serverPlayer) {
-            String messageKey = (newHealth >= wyvern.getMaxHealth())
-                ? "entity.saintsdragons.raevyx.fed"
-                : "entity.saintsdragons.raevyx.fed_partial";
+            String messageKey;
+            if (newHealth >= wyvern.getMaxHealth()) {
+                messageKey = wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.raevyx.fed";
+            } else {
+                messageKey = "entity.saintsdragons.raevyx.fed_partial";
+            }
                 
             serverPlayer.displayClientMessage(
                 Component.translatable(messageKey, wyvern.getName()),

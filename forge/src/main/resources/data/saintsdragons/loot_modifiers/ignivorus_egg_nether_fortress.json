@@ -4,12 +4,11 @@
     {
       "condition": "forge:loot_table_id",
       "loot_table_id": "minecraft:chests/nether_bridge"
-    },
-    {
-      "condition": "minecraft:random_chance",
-      "chance": 0.15
     }
   ],
   "item": "saintsdragons:ignivorus_egg",
-  "count": 1
+  "count": 1,
+  "chance": 0.15,
+  "dragon_id": "saintsdragons:ignivorus",
+  "config_key": "egg_loot_nether_bridge"
 }

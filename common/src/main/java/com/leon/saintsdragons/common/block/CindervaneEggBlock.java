@@ -1,10 +1,11 @@
 package com.leon.saintsdragons.common.block;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -15,7 +16,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 /**
  * Cindervane egg block that hatches into baby Cindervanes over time.
  * Supports clustering up to 3 eggs in the same block (like turtle eggs).
- * Hatches faster during thunderstorms, instantly when struck by lightning.
+ * Instantly hatches when struck by lightning.
  */
 public class CindervaneEggBlock extends BaseEntityBlock {
     public static final int MAX_HATCH_LEVEL = 2;
@@ -44,7 +44,6 @@ public class CindervaneEggBlock extends BaseEntityBlock {
 
     // Hatching speeds (lower = faster)
     private static final int NORMAL_HATCH_CHANCE = 2;      // ~7 minutes total (1/2 per random tick)
-    private static final int THUNDER_HATCH_CHANCE = 1;     // ~3 minutes total (100% per random tick, 2x faster)
 
     // Egg shapes for different counts (similar to turtle eggs but adjusted)
     private static final VoxelShape ONE_EGG_SHAPE = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 10.0D, 13.0D);
@@ -98,9 +97,7 @@ public class CindervaneEggBlock extends BaseEntityBlock {
 
     @Override
     public void randomTick(@NotNull BlockState state, ServerLevel level, @NotNull BlockPos pos, RandomSource random) {
-        // Determine hatch speed based on weather
-        boolean isThundering = level.isThundering();
-        int hatchChance = isThundering ? THUNDER_HATCH_CHANCE : NORMAL_HATCH_CHANCE;
+        int hatchChance = resolveHatchChance();
 
         if (random.nextInt(hatchChance) == 0) {
             this.incrementHatch(level, pos, state);
@@ -198,20 +195,6 @@ public class CindervaneEggBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (level instanceof ServerLevel serverLevel) {
-            // Check if there's a lightning bolt nearby on placement
-            if (serverLevel.isThundering() && serverLevel.canSeeSky(pos)) {
-                // Small chance to instantly hatch if placed during a storm near sky
-                if (serverLevel.random.nextInt(100) == 0) {
-                    this.hatchEggs(serverLevel, pos, state);
-                    level.scheduleTick(pos, this, 1);
-                }
-            }
-        }
-    }
-
-    @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         // Check for nearby lightning bolts every tick
         level.getEntitiesOfClass(LightningBolt.class,
@@ -275,5 +258,12 @@ public class CindervaneEggBlock extends BaseEntityBlock {
     @Override
     public RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
+    }
+
+    private int resolveHatchChance() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
+        double chance = config.extraDouble("egg_hatch_chance_normal", NORMAL_HATCH_CHANCE);
+        return Math.max(1, (int) Math.round(chance));
     }
 }

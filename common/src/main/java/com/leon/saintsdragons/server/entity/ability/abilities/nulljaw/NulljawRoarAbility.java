@@ -145,7 +145,7 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
 
         // 7th swipe deals double damage
         float damageMultiplier = (swipeNumber == 7) ? 2.0f : 1.0f;
-        float damage = computeClawDamage(dragon) * damageMultiplier;
+        float damage = computeClawDamage(dragon) * damageMultiplier * dragon.getHungerMeleeDamageMultiplier();
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
         Vec3 push = dragon.getLookAngle().scale(0.5);
 

@@ -129,7 +129,8 @@ public record RaevyxRiderController(Raevyx wyvern) {
             boolean isMoving = wyvern.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
             boolean running = wyvern.isAccelerating() && isMoving;
             wyvern.setRunning(running);
-            return (float) (running ? Raevyx.RIDER_RUN_SPEED : Raevyx.RIDER_WALK_SPEED);
+            float base = (float) (running ? Raevyx.RIDER_RUN_SPEED : Raevyx.RIDER_WALK_SPEED);
+            return base * wyvern.getHappinessSpeedMultiplier();
         }
     }
 

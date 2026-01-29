@@ -111,6 +111,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             if (hearty) {
                 dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
+            dragon.applyFeedingHunger(hearty);
 
             // Legacy taming: heal the dragon instead of entering stun
             if (legacyTaming) {
@@ -269,6 +270,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             if (hearty) {
                 dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
+            dragon.applyFeedingHunger(hearty);
 
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 4.0)
@@ -317,6 +319,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             dragon.setFeedingCooldown(23);
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
                 int growthTicks = hearty ? 4800 : 2400;
                 int currentAge = dragon.getAge();
@@ -333,11 +336,13 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                         true
                     );
                 }
+                dragon.applyFeedingHunger(hearty);
             } else {
                 float currentHealth = dragon.getHealth();
                 float healAmount = hearty ? 30.0F : 10.0F;
                 float newHealth = Math.min(currentHealth + healAmount, dragon.getMaxHealth());
                 dragon.setHealth(newHealth);
+                dragon.applyFeedingHunger(hearty);
                 if (hearty) {
                     dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
                 }
@@ -345,9 +350,12 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7); // Hearts
 
                 if (player instanceof ServerPlayer serverPlayer) {
-                    String messageKey = (newHealth >= dragon.getMaxHealth())
-                        ? "entity.saintsdragons.ignivorus.fed"
-                        : "entity.saintsdragons.ignivorus.fed_partial";
+                    String messageKey;
+                    if (newHealth >= dragon.getMaxHealth()) {
+                        messageKey = wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.ignivorus.fed";
+                    } else {
+                        messageKey = "entity.saintsdragons.ignivorus.fed_partial";
+                    }
 
                     serverPlayer.displayClientMessage(
                         Component.translatable(messageKey, dragon.getName()),

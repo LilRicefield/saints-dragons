@@ -1,19 +1,18 @@
 package com.leon.saintsdragons.server.entity.handler;
 
-import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.server.data.GlobalDragonAllySavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,11 +24,8 @@ public class DragonAllyManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(DragonAllyManager.class);
     private final DragonEntity dragon;
     
-    // Map of ally UUIDs to their usernames (for display purposes)
-    private final Map<UUID, String> allies = new ConcurrentHashMap<>();
-    
     // Cache for username-to-UUID resolution to avoid repeated lookups
-    private final Map<String, UUID> usernameCache = new ConcurrentHashMap<>();
+    private static final Map<String, UUID> USERNAME_CACHE = new ConcurrentHashMap<>();
     
     // Maximum number of allies per wyvern
     private static final int MAX_ALLIES = 10;
@@ -42,6 +38,14 @@ public class DragonAllyManager {
      * Add an ally by username. Validates the username exists and matches UUID.
      */
     public AllyResult addAlly(String username) {
+        ServerPlayer owner = getOwnerPlayer();
+        if (owner == null) {
+            return AllyResult.INVALID_USERNAME;
+        }
+        return addAllyForOwner(owner, username);
+    }
+
+    public static AllyResult addAllyForOwner(ServerPlayer owner, String username) {
         if (username == null || username.trim().isEmpty()) {
             return AllyResult.INVALID_USERNAME;
         }
@@ -81,43 +85,40 @@ public class DragonAllyManager {
         }
         
         // Check if trying to add the wyvern owner as an ally (they're already the owner!)
-        if (dragon.getOwner() != null) {
-            String ownerName = dragon.getOwner().getName().getString();
-            if (username.equalsIgnoreCase(ownerName)) {
+        String ownerName = owner.getName().getString();
+        if (username.equalsIgnoreCase(ownerName)) {
                 return AllyResult.IS_OWNER;
-            }
         }
         
         // Check if already an ally
-        if (usernameCache.containsKey(username)) {
-            UUID existingUuid = usernameCache.get(username);
-            if (allies.containsKey(existingUuid)) {
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(owner.serverLevel());
+        UUID cachedUuid = USERNAME_CACHE.get(username.toLowerCase());
+        if (cachedUuid != null && data.isAlly(owner.getUUID(), cachedUuid)) {
                 return AllyResult.ALREADY_ALLY;
-            }
         }
         
         // Check ally limit
-        if (allies.size() >= MAX_ALLIES) {
+        if (data.getAllyCount(owner.getUUID()) >= MAX_ALLIES) {
             return AllyResult.ALLY_LIMIT_REACHED;
         }
         
         // Resolve username to UUID
-        UUID playerUuid = resolveUsernameToUuid(username);
+        UUID playerUuid = resolveUsernameToUuid(owner, username);
         if (playerUuid == null) {
             return AllyResult.PLAYER_NOT_FOUND;
         }
         
         // Validate UUID matches username (extra security)
-        String resolvedUsername = resolveUuidToUsername(playerUuid);
+        String resolvedUsername = resolveUuidToUsername(owner, playerUuid);
         if (resolvedUsername == null || !resolvedUsername.equalsIgnoreCase(username)) {
             return AllyResult.UUID_MISMATCH;
         }
         
         // Add to allies
-        allies.put(playerUuid, resolvedUsername);
-        usernameCache.put(resolvedUsername.toLowerCase(), playerUuid);
-        
-        LOGGER.info("Added ally '{}' ({}) to wyvern {}", resolvedUsername, playerUuid, dragon);
+        data.addAlly(owner.getUUID(), playerUuid, resolvedUsername);
+        USERNAME_CACHE.put(resolvedUsername.toLowerCase(), playerUuid);
+
+        LOGGER.info("Added ally '{}' ({}) for owner {}", resolvedUsername, playerUuid, owner.getGameProfile().getName());
         return AllyResult.SUCCESS;
     }
     
@@ -125,21 +126,35 @@ public class DragonAllyManager {
      * Remove an ally by username
      */
     public AllyResult removeAlly(String username) {
+        ServerPlayer owner = getOwnerPlayer();
+        if (owner == null) {
+            return AllyResult.INVALID_USERNAME;
+        }
+        return removeAllyForOwner(owner, username);
+    }
+
+    public static AllyResult removeAllyForOwner(ServerPlayer owner, String username) {
         if (username == null || username.trim().isEmpty()) {
             return AllyResult.INVALID_USERNAME;
         }
         
         username = username.trim().toLowerCase();
         
-        UUID uuid = usernameCache.get(username);
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(owner.serverLevel());
+        UUID uuid = USERNAME_CACHE.get(username);
+        if (uuid == null) {
+            uuid = resolveAllyUuidByName(data, owner.getUUID(), username);
+        }
         if (uuid == null) {
             return AllyResult.NOT_ALLY;
         }
-        
-        allies.remove(uuid);
-        usernameCache.remove(username);
-        
-        LOGGER.info("Removed ally '{}' ({}) from wyvern {}", username, uuid, dragon);
+
+        if (!data.removeAlly(owner.getUUID(), uuid)) {
+            return AllyResult.NOT_ALLY;
+        }
+        USERNAME_CACHE.remove(username);
+
+        LOGGER.info("Removed ally '{}' ({}) for owner {}", username, uuid, owner.getGameProfile().getName());
         return AllyResult.SUCCESS;
     }
     
@@ -147,13 +162,20 @@ public class DragonAllyManager {
      * Remove an ally by UUID
      */
     public boolean removeAlly(UUID uuid) {
-        String username = allies.remove(uuid);
-        if (username != null) {
-            usernameCache.remove(username.toLowerCase());
-            LOGGER.info("Removed ally '{}' ({}) from wyvern {}", username, uuid, dragon);
-            return true;
+        ServerPlayer owner = getOwnerPlayer();
+        if (owner == null || uuid == null) {
+            return false;
         }
-        return false;
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(owner.serverLevel());
+        boolean removed = data.removeAlly(owner.getUUID(), uuid);
+        if (removed) {
+            String username = resolveUuidToUsername(owner, uuid);
+            if (username != null) {
+                USERNAME_CACHE.remove(username.toLowerCase());
+            }
+            LOGGER.info("Removed ally '{}' ({}) for owner {}", username, uuid, owner.getGameProfile().getName());
+        }
+        return removed;
     }
     
     /**
@@ -161,35 +183,66 @@ public class DragonAllyManager {
      */
     public boolean isAlly(Player player) {
         if (player == null) return false;
-        return allies.containsKey(player.getUUID());
+        UUID ownerId = getOwnerId();
+        net.minecraft.server.level.ServerLevel serverLevel = getServerLevel();
+        if (ownerId == null || serverLevel == null) return false;
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(serverLevel);
+        return data.isAlly(ownerId, player.getUUID());
     }
     
     /**
      * Check if a UUID is an ally
      */
     public boolean isAlly(UUID uuid) {
-        return allies.containsKey(uuid);
+        UUID ownerId = getOwnerId();
+        net.minecraft.server.level.ServerLevel serverLevel = getServerLevel();
+        if (ownerId == null || serverLevel == null) return false;
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(serverLevel);
+        return data.isAlly(ownerId, uuid);
     }
     
     /**
      * Get all ally usernames
      */
     public List<String> getAllyUsernames() {
-        return new ArrayList<>(allies.values());
+        ServerPlayer owner = getOwnerPlayer();
+        if (owner == null) {
+            return new ArrayList<>();
+        }
+        return getAllyUsernamesForOwner(owner);
+    }
+
+    public static List<String> getAllyUsernamesForOwner(ServerPlayer owner) {
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(owner.serverLevel());
+        return new ArrayList<>(data.getAllies(owner.getUUID()).values());
     }
     
     /**
      * Get all ally UUIDs
      */
-    public Set<UUID> getAllyUuids() {
-        return new HashSet<>(allies.keySet());
+    public java.util.Set<UUID> getAllyUuids() {
+        ServerPlayer owner = getOwnerPlayer();
+        if (owner == null) {
+            return java.util.Set.of();
+        }
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(owner.serverLevel());
+        return data.getAllies(owner.getUUID()).keySet();
     }
     
     /**
      * Get current ally count
      */
     public int getAllyCount() {
-        return allies.size();
+        ServerPlayer owner = getOwnerPlayer();
+        if (owner == null) {
+            return 0;
+        }
+        return getAllyCountForOwner(owner);
+    }
+
+    public static int getAllyCountForOwner(ServerPlayer owner) {
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(owner.serverLevel());
+        return data.getAllyCount(owner.getUUID());
     }
     
     /**
@@ -198,26 +251,29 @@ public class DragonAllyManager {
     public int getMaxAllies() {
         return MAX_ALLIES;
     }
+
+    public static int getMaxAlliesStatic() {
+        return MAX_ALLIES;
+    }
     
     /**
      * Clear all allies
      */
     public void clearAllies() {
-        allies.clear();
-        usernameCache.clear();
-        LOGGER.info("Cleared all allies from wyvern {}", dragon);
+        ServerPlayer owner = getOwnerPlayer();
+        if (owner == null) {
+            return;
+        }
+        GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(owner.serverLevel());
+        data.clearAllies(owner.getUUID());
+        LOGGER.info("Cleared all allies for owner {}", owner.getGameProfile().getName());
     }
     
     /**
      * Resolve username to UUID using server player list
      */
-    private UUID resolveUsernameToUuid(String username) {
-        Level level = dragon.level();
-        if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
-            return null;
-        }
-        
-        MinecraftServer server = serverLevel.getServer();
+    private static UUID resolveUsernameToUuid(ServerPlayer owner, String username) {
+        MinecraftServer server = owner.server;
         if (server == null) return null;
         
         // ONLY allow currently online players - no profile cache lookup!
@@ -233,13 +289,8 @@ public class DragonAllyManager {
     /**
      * Resolve UUID to username using server player list
      */
-    private String resolveUuidToUsername(UUID uuid) {
-        Level level = dragon.level();
-        if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
-            return null;
-        }
-        
-        MinecraftServer server = serverLevel.getServer();
+    private static String resolveUuidToUsername(ServerPlayer owner, UUID uuid) {
+        MinecraftServer server = owner.server;
         if (server == null) return null;
         
         // Try to find online player first
@@ -261,42 +312,19 @@ public class DragonAllyManager {
      * Save ally data to NBT
      */
     public void saveToNBT(CompoundTag tag) {
-        ListTag allyList = new ListTag();
-        for (Map.Entry<UUID, String> entry : allies.entrySet()) {
-            CompoundTag allyTag = new CompoundTag();
-            allyTag.putUUID("UUID", entry.getKey());
-            allyTag.putString("Username", entry.getValue());
-            allyList.add(allyTag);
-        }
-        tag.put("Allies", allyList);
     }
     
     /**
      * Load ally data from NBT
      */
     public void loadFromNBT(CompoundTag tag) {
-        allies.clear();
-        usernameCache.clear();
-        
-        if (tag.contains("Allies", Tag.TAG_LIST)) {
-            ListTag allyList = tag.getList("Allies", Tag.TAG_COMPOUND);
-            for (int i = 0; i < allyList.size(); i++) {
-                CompoundTag allyTag = allyList.getCompound(i);
-                if (allyTag.hasUUID("UUID") && allyTag.contains("Username", Tag.TAG_STRING)) {
-                    UUID uuid = allyTag.getUUID("UUID");
-                    String username = allyTag.getString("Username");
-                    allies.put(uuid, username);
-                    usernameCache.put(username.toLowerCase(), uuid);
-                }
-            }
-        }
     }
     
     /**
      * Check if username contains inappropriate content
      * Uses pattern matching to catch common profanity and variations
      */
-    private boolean containsInappropriateContent(String username) {
+    private static boolean containsInappropriateContent(String username) {
         String lowerUsername = username.toLowerCase();
         
         // Common profanity patterns (using regex to catch variations)
@@ -333,6 +361,40 @@ public class DragonAllyManager {
         }
         
         return false;
+    }
+
+    private ServerPlayer getOwnerPlayer() {
+        if (!dragon.isTame()) {
+            return null;
+        }
+        if (dragon.getOwner() instanceof ServerPlayer serverPlayer) {
+            return serverPlayer;
+        }
+        return null;
+    }
+
+    private UUID getOwnerId() {
+        if (!dragon.isTame()) {
+            return null;
+        }
+        return dragon.getOwnerUUID();
+    }
+
+    private net.minecraft.server.level.ServerLevel getServerLevel() {
+        if (dragon.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            return serverLevel;
+        }
+        return null;
+    }
+
+    private static UUID resolveAllyUuidByName(GlobalDragonAllySavedData data, UUID ownerId, String usernameLower) {
+        Map<UUID, String> allies = data.getAllies(ownerId);
+        for (Map.Entry<UUID, String> entry : allies.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(usernameLower)) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
     
     /**

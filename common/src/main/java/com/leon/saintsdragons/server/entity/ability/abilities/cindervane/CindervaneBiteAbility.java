@@ -98,6 +98,7 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
             }
         }
 
+        damage *= dragon.getHungerMeleeDamageMultiplier();
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
         target.hurt(source, damage);
 
