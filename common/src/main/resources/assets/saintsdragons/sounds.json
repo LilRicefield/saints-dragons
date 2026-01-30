@@ -641,6 +641,16 @@
       }
     ]
   },
+  "nulljaw_tail_attack": {
+    "subtitle": "Nulljaw swipes its tail",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_tail_attack",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "nulljaw_phase2_dash": {
     "subtitle": "Nulljaw dashes and claws",
     "sounds": [

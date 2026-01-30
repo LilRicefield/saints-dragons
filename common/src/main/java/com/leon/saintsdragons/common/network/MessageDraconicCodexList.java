@@ -32,7 +32,9 @@ public class MessageDraconicCodexList {
             int variantId = buffer.readInt();
             byte genderId = buffer.readByte();
             boolean genderKnown = buffer.readBoolean();
-            entries.add(new Entry(id, name, currentHealth, maxHealth, armor, hunger, happiness, variantId, genderId, genderKnown));
+            String dragonType = buffer.readUtf(32);
+            boolean isBaby = buffer.readBoolean();
+            entries.add(new Entry(id, name, currentHealth, maxHealth, armor, hunger, happiness, variantId, genderId, genderKnown, dragonType, isBaby));
         }
     }
 
@@ -43,6 +45,7 @@ public class MessageDraconicCodexList {
     public static MessageDraconicCodexList fromDragons(List<DragonEntity> dragons) {
         List<Entry> entries = new ArrayList<>(dragons.size());
         for (DragonEntity dragon : dragons) {
+            String dragonType = getDragonTypeName(dragon);
             entries.add(new Entry(
                     dragon.getUUID(),
                     dragon.getName().getString(),
@@ -53,10 +56,27 @@ public class MessageDraconicCodexList {
                     dragon.getHappiness(),
                     dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus ? ignivorus.getTextureVariant() : 0,
                     dragon.getGender().getId(),
-                    dragon.hasGender()
+                    dragon.hasGender(),
+                    dragonType,
+                    dragon.isBaby()
             ));
         }
         return new MessageDraconicCodexList(entries);
+    }
+
+    private static String getDragonTypeName(DragonEntity dragon) {
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus) {
+            return "ignivorus";
+        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+            return "raevyx";
+        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw) {
+            return "nulljaw";
+        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane) {
+            return "cindervane";
+        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut) {
+            return "stegonaut";
+        }
+        return "ignivorus"; // Default fallback
     }
 
     public static MessageDraconicCodexList fromEntries(List<DragonCodexSavedData.DragonCodexEntry> codexEntries) {
@@ -72,7 +92,9 @@ public class MessageDraconicCodexList {
                     entry.happiness(),
                     entry.variantId(),
                     entry.genderId(),
-                    entry.genderKnown()
+                    entry.genderKnown(),
+                    entry.dragonType(),
+                    entry.isBaby()
             ));
         }
         return new MessageDraconicCodexList(entries);
@@ -91,6 +113,8 @@ public class MessageDraconicCodexList {
             buffer.writeInt(entry.variantId());
             buffer.writeByte(entry.genderId());
             buffer.writeBoolean(entry.genderKnown());
+            buffer.writeUtf(entry.dragonType(), 32);
+            buffer.writeBoolean(entry.isBaby());
         }
     }
 
@@ -102,6 +126,6 @@ public class MessageDraconicCodexList {
         Services.PLATFORM.runOnClient(() -> com.leon.saintsdragons.client.network.ClientPacketHandlers.handleDraconicCodexList(message));
     }
 
-    public record Entry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth, double armor, double hunger, double happiness, int variantId, byte genderId, boolean genderKnown) {
+    public record Entry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth, double armor, double hunger, double happiness, int variantId, byte genderId, boolean genderKnown, String dragonType, boolean isBaby) {
     }
 }

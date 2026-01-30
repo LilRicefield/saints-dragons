@@ -269,6 +269,10 @@ public record NulljawAnimationHandler(Nulljaw drake) {
     public void setupInstantActionController(AnimationController<Nulljaw> controller) {
         controller.triggerableAnim("tail_swipe_left",
                 RawAnimation.begin().thenPlay("animation.nulljaw.tail_swipe_left"));
+        controller.triggerableAnim("tail_attack_left",
+                RawAnimation.begin().thenPlay("animation.nulljaw.tail_attack_left"));
+        controller.triggerableAnim("tail_attack_right",
+                RawAnimation.begin().thenPlay("animation.nulljaw.tail_attack_right"));
         controller.triggerableAnim("phase2_dash_left",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase2_dash_left"));
         controller.triggerableAnim("phase2_dash_right",

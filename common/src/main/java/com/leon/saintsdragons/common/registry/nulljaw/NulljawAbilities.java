@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.nulljaw.NulljawBit
 import com.leon.saintsdragons.server.entity.ability.abilities.nulljaw.NulljawClawAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.nulljaw.NulljawRoarAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.nulljaw.NulljawHornGoreAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.nulljaw.NulljawTailAttackAbility;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
 import com.leon.saintsdragons.server.entity.ability.DieAbility;
 
@@ -24,6 +25,7 @@ public final class NulljawAbilities {
     public static final String NULLJAW_BITE2_ID = "nulljaw_bite2";
     public static final String NULLJAW_CLAW_ID = "nulljaw_claw";
     public static final String NULLJAW_HORN_GORE_ID = "nulljaw_horn_gore";
+    public static final String NULLJAW_TAIL_ATTACK_ID = "nulljaw_tail_attack";
     public static final String NULLJAW_ROAR_ID = "nulljaw_roar";
     public static final String NULLJAW_PHASE_SHIFT_ID = "nulljaw_phase_shift";
     public static final String NULLJAW_HURT_ID = "nulljaw_hurt";
@@ -44,6 +46,10 @@ public final class NulljawAbilities {
     // Horn gore - strong knockback melee (works in both phases)
     public static final DragonAbilityType<Nulljaw, NulljawHornGoreAbility> NULLJAW_HORN_GORE =
             AbilityRegistry.register(new DragonAbilityType<>(NULLJAW_HORN_GORE_ID, NulljawHornGoreAbility::new));
+
+    // Phase 1 tail attack - standing tail swipe
+    public static final DragonAbilityType<Nulljaw, NulljawTailAttackAbility> NULLJAW_TAIL_ATTACK =
+            AbilityRegistry.register(new DragonAbilityType<>(NULLJAW_TAIL_ATTACK_ID, NulljawTailAttackAbility::new));
 
     // Roar - cosmetic ability
     public static final DragonAbilityType<Nulljaw, NulljawRoarAbility> NULLJAW_ROAR =

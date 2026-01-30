@@ -49,6 +49,8 @@ public class DragonCodexSavedData extends SavedData {
                 entry.setVariantId(resolveVariantId(dragon));
                 entry.setGenderId(dragon.getGender().getId());
                 entry.setGenderKnown(dragon.hasGender());
+                entry.setDragonType(resolveDragonType(dragon));
+                entry.setIsBaby(dragon.isBaby());
                 setDirty();
                 return;
             }
@@ -63,7 +65,9 @@ public class DragonCodexSavedData extends SavedData {
                 dragon.getHappiness(),
                 resolveVariantId(dragon),
                 dragon.getGender().getId(),
-                dragon.hasGender()
+                dragon.hasGender(),
+                resolveDragonType(dragon),
+                dragon.isBaby()
         ));
         setDirty();
     }
@@ -119,6 +123,8 @@ public class DragonCodexSavedData extends SavedData {
                 entry.setVariantId(resolveVariantId(dragon));
                 entry.setGenderId(dragon.getGender().getId());
                 entry.setGenderKnown(dragon.hasGender());
+                entry.setDragonType(resolveDragonType(dragon));
+                entry.setIsBaby(dragon.isBaby());
                 setDirty();
                 return;
             }
@@ -155,6 +161,8 @@ public class DragonCodexSavedData extends SavedData {
                 dragonTag.putInt("VariantId", dragonEntry.variantId());
                 dragonTag.putByte("GenderId", dragonEntry.genderId());
                 dragonTag.putBoolean("GenderKnown", dragonEntry.genderKnown());
+                dragonTag.putString("DragonType", dragonEntry.dragonType());
+                dragonTag.putBoolean("IsBaby", dragonEntry.isBaby());
                 dragonList.add(dragonTag);
             }
             playerTag.put("Dragons", dragonList);
@@ -192,7 +200,9 @@ public class DragonCodexSavedData extends SavedData {
                         int variantId = dragonTag.contains("VariantId") ? dragonTag.getInt("VariantId") : 0;
                         byte genderId = dragonTag.contains("GenderId") ? dragonTag.getByte("GenderId") : 0;
                         boolean genderKnown = dragonTag.contains("GenderKnown") && dragonTag.getBoolean("GenderKnown");
-                        entries.add(new DragonCodexEntry(dragonId, name, maxHealth, currentHealth, armor, hunger, happiness, variantId, genderId, genderKnown));
+                        String dragonType = dragonTag.contains("DragonType") ? dragonTag.getString("DragonType") : "ignivorus";
+                        boolean isBaby = dragonTag.contains("IsBaby") && dragonTag.getBoolean("IsBaby");
+                        entries.add(new DragonCodexEntry(dragonId, name, maxHealth, currentHealth, armor, hunger, happiness, variantId, genderId, genderKnown, dragonType, isBaby));
                     }
                 }
                 data.entriesByOwner.put(ownerId, entries);
@@ -212,8 +222,10 @@ public class DragonCodexSavedData extends SavedData {
         private int variantId;
         private byte genderId;
         private boolean genderKnown;
+        private String dragonType;
+        private boolean isBaby;
 
-        public DragonCodexEntry(UUID dragonId, String displayName, double maxHealth, double currentHealth, double armor, double hunger, double happiness, int variantId, byte genderId, boolean genderKnown) {
+        public DragonCodexEntry(UUID dragonId, String displayName, double maxHealth, double currentHealth, double armor, double hunger, double happiness, int variantId, byte genderId, boolean genderKnown, String dragonType, boolean isBaby) {
             this.dragonId = dragonId;
             this.displayName = displayName;
             this.maxHealth = maxHealth;
@@ -224,6 +236,8 @@ public class DragonCodexSavedData extends SavedData {
             this.variantId = variantId;
             this.genderId = genderId;
             this.genderKnown = genderKnown;
+            this.dragonType = dragonType;
+            this.isBaby = isBaby;
         }
 
         public UUID dragonId() {
@@ -301,6 +315,22 @@ public class DragonCodexSavedData extends SavedData {
         public void setGenderKnown(boolean genderKnown) {
             this.genderKnown = genderKnown;
         }
+
+        public String dragonType() {
+            return dragonType;
+        }
+
+        public void setDragonType(String dragonType) {
+            this.dragonType = dragonType;
+        }
+
+        public boolean isBaby() {
+            return isBaby;
+        }
+
+        public void setIsBaby(boolean isBaby) {
+            this.isBaby = isBaby;
+        }
     }
 
     private static int resolveVariantId(DragonEntity dragon) {
@@ -308,5 +338,20 @@ public class DragonCodexSavedData extends SavedData {
             return ignivorus.getTextureVariant();
         }
         return 0;
+    }
+
+    private static String resolveDragonType(DragonEntity dragon) {
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus) {
+            return "ignivorus";
+        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+            return "raevyx";
+        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw) {
+            return "nulljaw";
+        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane) {
+            return "cindervane";
+        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut) {
+            return "stegonaut";
+        }
+        return "ignivorus"; // Default fallback
     }
 }

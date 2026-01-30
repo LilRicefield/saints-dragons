@@ -1722,10 +1722,13 @@
 						}
 					},
 					"position": {
-						"1.5833": {
-							"pre": {
-								"vector": [0, -1, 0]
+						"0.0": {
+							"post": {
+								"vector": [0, 0, 0]
 							},
+							"lerp_mode": "catmullrom"
+						},
+						"1.5833": {
 							"post": {
 								"vector": [0, -1, 0]
 							},

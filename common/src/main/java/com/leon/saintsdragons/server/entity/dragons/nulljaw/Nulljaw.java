@@ -157,6 +157,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private float clientSwimPitchRad = 0f;
     private float prevClientSwimPitchRad = 0f;
     private boolean useLeftClawNext = true; // Toggles between left/right claw attacks
+    private boolean useLeftTailAttackNext = true; // Toggles between left/right tail attacks
     // ===== SCREEN SHAKE SYSTEM =====
     private static final float SHAKE_DECAY_PER_TICK = 0.02F;
     private float prevScreenShakeAmount = 0.0F;
@@ -1612,6 +1613,14 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         useLeftClawNext = !useLeftClawNext;
     }
 
+    public boolean shouldUseLeftTailAttack() {
+        return useLeftTailAttackNext;
+    }
+
+    public void toggleTailAttackSide() {
+        useLeftTailAttackNext = !useLeftTailAttackNext;
+    }
+
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
@@ -1649,7 +1658,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         if (isPhaseTwoActive()) {
             return new RiderAbilityBinding(NulljawAbilities.NULLJAW_CLAW_ID, RiderAbilityBinding.Activation.PRESS);
         }
-        return null; // G key - not used in phase 1
+        return new RiderAbilityBinding(NulljawAbilities.NULLJAW_TAIL_ATTACK_ID, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
