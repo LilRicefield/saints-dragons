@@ -7,7 +7,6 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -21,6 +20,9 @@ import java.util.Objects;
 
 @Environment(EnvType.CLIENT)
 public class DraconicCodexScreen extends Screen {
+    // Flag to disable custom animations during GUI rendering
+    public static final ThreadLocal<Boolean> RENDERING_IN_GUI = ThreadLocal.withInitial(() -> false);
+
     private static final int GUI_WIDTH = 393;
     private static final int GUI_HEIGHT = 214;
     private static final int TAB_HEIGHT = 22;
@@ -43,9 +45,28 @@ public class DraconicCodexScreen extends Screen {
     private static final int NAME_BOX_Y = 32;
     private static final int NAME_BOX_WIDTH = 88;
     private static final int NAME_BOX_HEIGHT = 14;
-    private static final int DRAGON_RENDER_BOX_X = 112;
-    private static final int DRAGON_RENDER_BOX_Y = 56;
-    private static final int DRAGON_RENDER_BOX_SIZE = 87;
+    private static final int DRAGON_RENDER_BOX_X = 113;
+    private static final int DRAGON_RENDER_BOX_Y = 51;
+    private static final int DRAGON_RENDER_BOX_SIZE = 85;
+
+    // Dragon rendering scales
+    private static final int IGNIVORUS_SCALE = 8;
+    private static final int RAEVYX_SCALE = 13;
+    private static final int NULLJAW_SCALE = 15;
+    private static final int CINDERVANE_SCALE = 12;
+    private static final int STEGONAUT_SCALE = 23;
+
+    // Dragon rendering offsets (X, Y)
+    private static final int IGNIVORUS_OFFSET_X = 0;
+    private static final int IGNIVORUS_OFFSET_Y = 0;
+    private static final int RAEVYX_OFFSET_X = 0;
+    private static final int RAEVYX_OFFSET_Y = -5;
+    private static final int NULLJAW_OFFSET_X = 0;
+    private static final int NULLJAW_OFFSET_Y = -10;
+    private static final int CINDERVANE_OFFSET_X = 0;
+    private static final int CINDERVANE_OFFSET_Y = -15;
+    private static final int STEGONAUT_OFFSET_X = 0;
+    private static final int STEGONAUT_OFFSET_Y = -15;
 
     private static final ResourceLocation BOOK_TEXTURE =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/draconic_codex.png");
@@ -73,8 +94,12 @@ public class DraconicCodexScreen extends Screen {
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/happiness_icon.png");
     private static final ResourceLocation VARIANT_ICON =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/variant_icon.png");
-    private static final ResourceLocation IGNIVORUS_PORTRAIT =
-            SaintsDragonsCommon.rl("textures/gui/draconiccodex/ignivorus_portrait.png");
+    private static final ResourceLocation CODEX_EDIT_BOX =
+            SaintsDragonsCommon.rl("textures/gui/draconiccodex/codex_edit_box.png");
+    private static final ResourceLocation ADD_ICON =
+            SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/add_icon.png");
+    private static final ResourceLocation REMOVE_ICON =
+            SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/remove_icon.png");
 
     private int leftPos;
     private int topPos;
@@ -87,9 +112,9 @@ public class DraconicCodexScreen extends Screen {
     private int allyScrollOffset = 0;
     private static final int MAX_VISIBLE_ALLIES = 8;
 
-    private net.minecraft.client.gui.components.EditBox allyInput;
-    private net.minecraft.client.gui.components.Button addAllyButton;
-    private net.minecraft.client.gui.components.Button removeAllyButton;
+    private CustomEditBox allyInput;
+    private net.minecraft.client.gui.components.ImageButton addAllyButton;
+    private net.minecraft.client.gui.components.ImageButton removeAllyButton;
 
     public DraconicCodexScreen() {
         this(null);
@@ -130,8 +155,10 @@ public class DraconicCodexScreen extends Screen {
         drawDragonList(guiGraphics, listLeft, listTop, listRight, listBottom, mouseX, mouseY);
         drawTabs(guiGraphics);
         drawDetailPanel(guiGraphics, getDetailLeft(), getDetailTop(), getDetailRight(), getDetailBottom());
-        drawDragonPortrait(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        // Render dragon last with scissor clipping
+        drawDragonPortrait(guiGraphics, mouseX, mouseY);
     }
 
     private void drawTabs(GuiGraphics guiGraphics) {
@@ -229,8 +256,18 @@ public class DraconicCodexScreen extends Screen {
     }
 
     private void drawAllyPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
-        int contentX = left + 8;
-        int contentY = top + 8;
+        // Draw custom EditBox background
+        if (allyInput != null) {
+            guiGraphics.blit(CODEX_EDIT_BOX,
+                allyInput.getX() - 1,
+                allyInput.getY() - 2,
+                0, 0,
+                120, 16,
+                120, 16);
+        }
+
+        int contentX = left + 81;
+        int contentY = top - 5;
 
         String allyCountText = Component.translatable(
                 "saintsdragons.gui.draconic_codex.ally.count",
@@ -265,7 +302,7 @@ public class DraconicCodexScreen extends Screen {
         int iconY = topPos + HEALTH_ICON_OFFSET_Y;
         guiGraphics.blit(HEALTH_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
         String healthValue = formatStat(selected.currentHealth) + "/" + formatStat(selected.maxHealth);
-        guiGraphics.drawString(this.font, ":" + healthValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
+        guiGraphics.drawString(this.font, healthValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
     }
 
     private void drawArmorStat(GuiGraphics guiGraphics, DragonEntry selected) {
@@ -273,7 +310,7 @@ public class DraconicCodexScreen extends Screen {
         int iconY = topPos + HEALTH_ICON_OFFSET_Y + STAT_ICON_HEIGHT + STAT_ICON_GAP_Y;
         guiGraphics.blit(ARMOR_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
         String armorValue = formatStat(selected.armor);
-        guiGraphics.drawString(this.font, ":" + armorValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
+        guiGraphics.drawString(this.font, armorValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
     }
 
     private void drawHungerStat(GuiGraphics guiGraphics, DragonEntry selected) {
@@ -281,7 +318,7 @@ public class DraconicCodexScreen extends Screen {
         int iconY = topPos + HEALTH_ICON_OFFSET_Y;
         guiGraphics.blit(HUNGER_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
         String hungerValue = formatStat(selected.hunger) + "/100";
-        guiGraphics.drawString(this.font, ":" + hungerValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
+        guiGraphics.drawString(this.font, hungerValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
     }
 
     private void drawHappinessStat(GuiGraphics guiGraphics, DragonEntry selected) {
@@ -289,7 +326,7 @@ public class DraconicCodexScreen extends Screen {
         int iconY = topPos + HEALTH_ICON_OFFSET_Y + STAT_ICON_HEIGHT + STAT_ICON_GAP_Y;
         guiGraphics.blit(HAPPINESS_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
         String happinessValue = formatStat(selected.happiness) + "/100";
-        guiGraphics.drawString(this.font, ":" + happinessValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
+        guiGraphics.drawString(this.font, happinessValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
     }
 
     private void drawVariantStat(GuiGraphics guiGraphics, DragonEntry selected) {
@@ -298,7 +335,7 @@ public class DraconicCodexScreen extends Screen {
         guiGraphics.blit(VARIANT_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
         String key = selected.variantId == 1 ? "saintsdragons.variant.crimson" : "saintsdragons.variant.default";
         String value = Component.translatable(key).getString();
-        guiGraphics.drawString(this.font, ":" + value, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
+        guiGraphics.drawString(this.font, value, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
     }
 
     private void drawGenderStat(GuiGraphics guiGraphics, DragonEntry selected) {
@@ -309,24 +346,99 @@ public class DraconicCodexScreen extends Screen {
                 ? (selected.genderId == 1 ? "saintsdragons.gender.female" : "saintsdragons.gender.male")
                 : "saintsdragons.gui.draconic_codex.physiology.gender_unknown";
         String genderValue = Component.translatable(genderKey).getString();
-        guiGraphics.drawString(this.font, ":" + genderValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
+        guiGraphics.drawString(this.font, genderValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
     }
 
-    private void drawDragonPortrait(GuiGraphics guiGraphics) {
+    private void drawDragonPortrait(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         DragonEntry selected = getSelectedEntry();
         if (selected == null || this.minecraft == null || this.minecraft.level == null) {
             return;
         }
+
+        // Try to find the real dragon first (if in render distance)
         com.leon.saintsdragons.server.entity.base.DragonEntity dragon = findDragonEntity(selected.entityId);
+        // If not found, create a dummy dragon for rendering
         if (dragon == null) {
-            return;
+            dragon = createDummyDragon(selected);
+            if (dragon == null) {
+                return;
+            }
         }
-        if (dragon.getType() != ModEntities.IGNIVORUS.get()) {
-            return;
+
+        int boxX = leftPos + DRAGON_RENDER_BOX_X;
+        int boxY = topPos + DRAGON_RENDER_BOX_Y;
+        int centerX = boxX + DRAGON_RENDER_BOX_SIZE / 2 + getDragonOffsetX(dragon);
+        int centerY = boxY + DRAGON_RENDER_BOX_SIZE + getDragonOffsetY(dragon);
+
+        // Get scale based on dragon type
+        int size = getDragonScale(dragon);
+
+        // Enable scissor to clip dragon rendering to the box
+        guiGraphics.enableScissor(boxX, boxY, boxX + DRAGON_RENDER_BOX_SIZE, boxY + DRAGON_RENDER_BOX_SIZE);
+
+        // Set flag to disable custom animations during GUI rendering
+        RENDERING_IN_GUI.set(true);
+        try {
+            net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
+                guiGraphics,
+                centerX,
+                centerY,
+                size,
+                (float)(centerX - mouseX),
+                (float)(centerY - DRAGON_RENDER_BOX_SIZE - mouseY),
+                dragon
+            );
+        } finally {
+            // Always clear the flag, even if rendering fails
+            RENDERING_IN_GUI.set(false);
         }
-        int x = leftPos + DRAGON_RENDER_BOX_X;
-        int y = topPos + DRAGON_RENDER_BOX_Y;
-        guiGraphics.blit(IGNIVORUS_PORTRAIT, x, y, 0, 0, DRAGON_RENDER_BOX_SIZE, DRAGON_RENDER_BOX_SIZE, DRAGON_RENDER_BOX_SIZE, DRAGON_RENDER_BOX_SIZE);
+
+        guiGraphics.disableScissor();
+    }
+
+    private int getDragonScale(com.leon.saintsdragons.server.entity.base.DragonEntity dragon) {
+        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
+            return IGNIVORUS_SCALE;
+        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
+            return RAEVYX_SCALE;
+        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
+            return NULLJAW_SCALE;
+        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
+            return CINDERVANE_SCALE;
+        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
+            return STEGONAUT_SCALE;
+        }
+        return 30; // Default scale
+    }
+
+    private int getDragonOffsetX(com.leon.saintsdragons.server.entity.base.DragonEntity dragon) {
+        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
+            return IGNIVORUS_OFFSET_X;
+        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
+            return RAEVYX_OFFSET_X;
+        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
+            return NULLJAW_OFFSET_X;
+        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
+            return CINDERVANE_OFFSET_X;
+        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
+            return STEGONAUT_OFFSET_X;
+        }
+        return 0; // Default offset
+    }
+
+    private int getDragonOffsetY(com.leon.saintsdragons.server.entity.base.DragonEntity dragon) {
+        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
+            return IGNIVORUS_OFFSET_Y;
+        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
+            return RAEVYX_OFFSET_Y;
+        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
+            return NULLJAW_OFFSET_Y;
+        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
+            return CINDERVANE_OFFSET_Y;
+        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
+            return STEGONAUT_OFFSET_Y;
+        }
+        return 0; // Default offset
     }
 
     private com.leon.saintsdragons.server.entity.base.DragonEntity findDragonEntity(java.util.UUID dragonId) {
@@ -340,6 +452,48 @@ public class DraconicCodexScreen extends Screen {
             }
         }
         return null;
+    }
+
+    private com.leon.saintsdragons.server.entity.base.DragonEntity createDummyDragon(DragonEntry entry) {
+        if (this.minecraft == null || this.minecraft.level == null) {
+            return null;
+        }
+
+        net.minecraft.world.entity.EntityType<? extends com.leon.saintsdragons.server.entity.base.DragonEntity> entityType = getDragonEntityType(entry.dragonType());
+        if (entityType == null) {
+            return null;
+        }
+
+        com.leon.saintsdragons.server.entity.base.DragonEntity dragon = entityType.create(this.minecraft.level);
+        if (dragon == null) {
+            return null;
+        }
+
+        // Set baby status
+        if (entry.isBaby()) {
+            dragon.setBaby(true);
+        }
+
+        // Set variant for Ignivorus
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
+            ignivorus.setTextureVariant(entry.variantId());
+        }
+
+        // Set gender
+        dragon.setGender(com.leon.saintsdragons.server.entity.base.DragonGender.fromId(entry.genderId()));
+
+        return dragon;
+    }
+
+    private net.minecraft.world.entity.EntityType<? extends com.leon.saintsdragons.server.entity.base.DragonEntity> getDragonEntityType(String dragonType) {
+        return switch (dragonType) {
+            case "ignivorus" -> ModEntities.IGNIVORUS.get();
+            case "raevyx" -> ModEntities.RAEVYX.get();
+            case "nulljaw" -> ModEntities.NULLJAW.get();
+            case "cindervane" -> ModEntities.CINDERVANE.get();
+            case "stegonaut" -> ModEntities.STEGONAUT.get();
+            default -> null;
+        };
     }
 
     private String formatStat(double value) {
@@ -468,7 +622,7 @@ public class DraconicCodexScreen extends Screen {
         return null;
     }
 
-    public record DragonEntry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth, double armor, double hunger, double happiness, int variantId, byte genderId, boolean genderKnown) {
+    public record DragonEntry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth, double armor, double hunger, double happiness, int variantId, byte genderId, boolean genderKnown, String dragonType, boolean isBaby) {
     }
 
     private enum CodexTab {
@@ -539,12 +693,12 @@ public class DraconicCodexScreen extends Screen {
     }
 
     private void initAllyWidgets() {
-        int inputX = getDetailLeft() + 12;
-        int inputY = topPos + 52;
-        int inputWidth = 140;
-        int inputHeight = 20;
+        int inputX = leftPos + 233;
+        int inputY = topPos + 17;
+        int inputWidth = 122;
+        int inputHeight = 12;
 
-        allyInput = new net.minecraft.client.gui.components.EditBox(
+        allyInput = new CustomEditBox(
                 this.font,
                 inputX,
                 inputY,
@@ -553,18 +707,29 @@ public class DraconicCodexScreen extends Screen {
                 Component.translatable("saintsdragons.gui.draconic_codex.ally.input")
         );
         allyInput.setMaxLength(16);
+        allyInput.setBordered(false);
+        allyInput.setTextColor(TEXT_COLOR);
+        allyInput.setTextColorUneditable(TEXT_COLOR);
         this.addRenderableWidget(allyInput);
 
-        addAllyButton = net.minecraft.client.gui.components.Button.builder(
-                Component.translatable("saintsdragons.gui.draconic_codex.ally.add"),
+        int iconButtonX = inputX + inputWidth + 8;
+
+        addAllyButton = new net.minecraft.client.gui.components.ImageButton(
+                iconButtonX - 36, inputY + 18, 14, 14,
+                0, 0, 0,
+                ADD_ICON,
+                14, 14,
                 button -> addAllyFromInput()
-        ).bounds(inputX + inputWidth + 8, inputY, 60, 20).build();
+        );
         this.addRenderableWidget(addAllyButton);
 
-        removeAllyButton = net.minecraft.client.gui.components.Button.builder(
-                Component.translatable("saintsdragons.gui.draconic_codex.ally.remove"),
+        removeAllyButton = new net.minecraft.client.gui.components.ImageButton(
+                iconButtonX - 19, inputY + 18, 14, 14,
+                0, 0, 0,
+                REMOVE_ICON,
+                14, 14,
                 button -> removeAllyFromInput()
-        ).bounds(inputX + inputWidth + 8, inputY + 24, 60, 20).build();
+        );
         this.addRenderableWidget(removeAllyButton);
 
         updateAllyWidgetVisibility();

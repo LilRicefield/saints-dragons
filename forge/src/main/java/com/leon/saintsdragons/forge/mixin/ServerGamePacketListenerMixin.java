@@ -19,10 +19,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Mixin to fix PartEntity attack handling on the server.
- *
  * Problem: Client and server create PartEntities independently, so they have different IDs.
  * When a client attacks a PartEntity, it sends its local entity ID which doesn't exist on the server.
- *
  * Solution: When we receive an unknown entity ID, check if the player's look direction
  * intersects with any PartEntity on the server side, and dispatch the attack to that part.
  */
@@ -45,6 +43,27 @@ public abstract class ServerGamePacketListenerMixin {
         // First check if vanilla can find it (regular entity)
         Entity vanillaEntity = level.getEntity(entityId);
 
+        if (vanillaEntity instanceof ForgeDragonPart directPart) {
+            packet.dispatch(new ServerboundInteractPacket.Handler() {
+                @Override
+                public void onInteraction(InteractionHand hand) {
+                    directPart.interact(player, hand);
+                }
+
+                @Override
+                public void onInteraction(InteractionHand hand, Vec3 pos) {
+                    directPart.interactAt(player, pos, hand);
+                }
+
+                @Override
+                public void onAttack() {
+                    player.attack(directPart);
+                }
+            });
+            ci.cancel();
+            return;
+        }
+
         if (vanillaEntity == null) {
             // Vanilla couldn't find it - the client might be targeting a PartEntity
             // Since client/server have different part IDs, we need to raycast to find the hit part
@@ -55,12 +74,12 @@ public abstract class ServerGamePacketListenerMixin {
                 packet.dispatch(new ServerboundInteractPacket.Handler() {
                     @Override
                     public void onInteraction(InteractionHand hand) {
-                        // Right-click interaction - not used for attacks
+                        hitPart.interact(player, hand);
                     }
 
                     @Override
                     public void onInteraction(InteractionHand hand, Vec3 pos) {
-                        // Right-click at specific position - not used for attacks
+                        hitPart.interactAt(player, pos, hand);
                     }
 
                     @Override

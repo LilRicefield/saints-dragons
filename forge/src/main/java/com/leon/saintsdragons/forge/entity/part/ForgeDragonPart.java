@@ -4,7 +4,9 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.entity.PartEntity;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,6 +92,51 @@ public class ForgeDragonPart extends PartEntity<Entity> {
     @Override
     public boolean isPickable() {
         return true;
+    }
+
+    @Override
+    public boolean startRiding(@NotNull Entity entity, boolean force) {
+        Entity parent = getParent();
+        if (parent != null) {
+            return entity.startRiding(parent, force);
+        }
+        return false;
+    }
+
+    @Override
+    public void addPassenger(@NotNull Entity passenger) {
+        Entity parent = getParent();
+        if (parent != null) {
+            passenger.startRiding(parent, true);
+            return;
+        }
+        super.addPassenger(passenger);
+    }
+
+    @Override
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
+        return false;
+    }
+
+    @Override
+    public net.minecraft.world.InteractionResult interact(@NotNull Player player,
+                                                           @NotNull net.minecraft.world.InteractionHand hand) {
+        Entity parent = this.getParent();
+        if (parent == null) {
+            return net.minecraft.world.InteractionResult.PASS;
+        }
+        return parent.interact(player, hand);
+    }
+
+    @Override
+    public net.minecraft.world.InteractionResult interactAt(@NotNull Player player,
+                                                             @NotNull Vec3 vec,
+                                                             @NotNull net.minecraft.world.InteractionHand hand) {
+        Entity parent = this.getParent();
+        if (parent == null) {
+            return net.minecraft.world.InteractionResult.PASS;
+        }
+        return parent.interactAt(player, vec, hand);
     }
 
     @Override

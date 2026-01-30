@@ -51,6 +51,11 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     public void setCustomAnimations(Stegonaut entity, long instanceId, AnimationState<Stegonaut> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
+        // Skip custom animations when rendering in GUI (like the Draconic Codex)
+        if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
+            return;
+        }
+
         // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) return;

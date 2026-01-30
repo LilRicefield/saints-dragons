@@ -80,13 +80,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
 
     public static final int HUNGER_MAX = 100;
-    private static final int HUNGER_DECAY_INTERVAL_TICKS = 12000;
+    private static final int HUNGER_DECAY_INTERVAL_TICKS = 7200;
+    private static final int HUNGER_DECAY_RIDDEN_TICK_MULT = 2;
     private static final int HUNGER_FEED_AMOUNT = 10;
     private static final int HUNGER_FEED_AMOUNT_HEARTY = 20;
     private static final int HUNGER_DAMAGE_INTERVAL_TICKS = 80;
     private static final float HUNGER_DAMAGE_AMOUNT = 2.0f;
     public static final int HAPPINESS_MAX = 100;
-    private static final int HAPPINESS_DECAY_INTERVAL_TICKS = 18000;
+    private static final int HAPPINESS_DECAY_INTERVAL_TICKS = 9600;
     private static final int HAPPINESS_DECAY_AMOUNT = 2;
     private static final int HAPPINESS_FEED_AMOUNT = 4;
     private static final int HAPPINESS_FEED_AMOUNT_HEARTY = 8;
@@ -1004,8 +1005,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         if (!this.isTame()) {
             return;
         }
+        int decayStep = 1;
+        if (this.isVehicle() && this.getDeltaMovement().horizontalDistanceSqr() > 0.0025) {
+            decayStep = HUNGER_DECAY_RIDDEN_TICK_MULT;
+        }
         if (hunger > 0) {
-            hungerDecayTicks++;
+            hungerDecayTicks += decayStep;
             if (hungerDecayTicks >= HUNGER_DECAY_INTERVAL_TICKS) {
                 hungerDecayTicks = 0;
                 setHunger(hunger - 1);
@@ -1013,7 +1018,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return;
         }
 
-        hungerDecayTicks++;
+        hungerDecayTicks += decayStep;
         if (hungerDecayTicks >= HUNGER_DAMAGE_INTERVAL_TICKS) {
             hungerDecayTicks = 0;
             this.hurt(this.damageSources().starve(), HUNGER_DAMAGE_AMOUNT);
@@ -1026,6 +1031,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         int interval = HAPPINESS_DECAY_INTERVAL_TICKS;
         if (hunger <= 30) {
+            interval = Math.max(1, interval / 4);
+        } else if (hunger <= 60) {
             interval = Math.max(1, interval / 2);
         }
         happinessDecayTicks++;

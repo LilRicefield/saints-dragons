@@ -126,6 +126,11 @@ public final class NulljawSoundProfile implements DragonSoundProfile {
                         ModSounds.NULLJAW_TAIL_SWIPE.get(), ModSounds.NULLJAW_TAIL_SWIPE_STEREO.get(), 1.2f, 0.9f, 0.2f);
                 yield true;
             }
+            case "nulljaw_tail_attack" -> {
+                playSimpleSound(handler, dragon, locator,
+                        ModSounds.NULLJAW_TAIL_ATTACK.get(), 1.2f, 0.9f, 0.2f);
+                yield true;
+            }
             case "nulljaw_phase2_dash" -> {
                 playSimpleSoundStereo(handler, dragon, locator,
                         ModSounds.NULLJAW_PHASE2_DASH.get(), ModSounds.NULLJAW_PHASE2_DASH_STEREO.get(), 1.2f, 0.9f, 0.2f);
