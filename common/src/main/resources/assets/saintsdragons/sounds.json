@@ -19,6 +19,15 @@
       }
     ]
   },
+  "bleeding_bolt": {
+    "subtitle": "Bleeding Bolt",
+    "sounds": [
+      {
+        "name": "saintsdragons:songs/bleeding_bolt",
+        "stream": true
+      }
+    ]
+  },
   "raevyx_grumble_1": {
     "subtitle": "Raevyx grumbles",
     "sounds": [

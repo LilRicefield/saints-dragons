@@ -57,10 +57,11 @@ public class MessageDraconicCodexRequest {
             }
         }
 
-        entries.sort(Comparator.comparing(entry -> entry.displayName().toLowerCase()));
+        List<DragonCodexSavedData.DragonCodexEntry> sortedEntries = new java.util.ArrayList<>(entries);
+        sortedEntries.sort(Comparator.comparing(entry -> entry.displayName().toLowerCase()));
         java.util.Map<String, Integer> nameCounts = new java.util.HashMap<>();
-        java.util.List<MessageDraconicCodexList.Entry> payload = new java.util.ArrayList<>(entries.size());
-        for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
+        java.util.List<MessageDraconicCodexList.Entry> payload = new java.util.ArrayList<>(sortedEntries.size());
+        for (DragonCodexSavedData.DragonCodexEntry entry : sortedEntries) {
             String baseName = entry.displayName();
             String key = baseName.toLowerCase();
             int index = nameCounts.getOrDefault(key, 0);

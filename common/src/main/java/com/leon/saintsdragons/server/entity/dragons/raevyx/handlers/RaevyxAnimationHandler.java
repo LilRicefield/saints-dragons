@@ -362,6 +362,8 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         // Other abilities
         actionController.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.raevyx.eat"));
+        actionController.triggerableAnim("taunt",
+                RawAnimation.begin().thenPlay("animation.raevyx.taunt"));
         actionController.triggerableAnim("summon_storm_ground_start",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_ground_start"));
         actionController.triggerableAnim("summon_storm_ground",

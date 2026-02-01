@@ -11,6 +11,7 @@ import net.minecraft.util.Mth;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+
 @Environment(EnvType.CLIENT)
 public class CustomEditBox extends EditBox {
     private int textColor = 0xFFFFFF;
@@ -21,24 +22,45 @@ public class CustomEditBox extends EditBox {
     private static Method getMaxLengthMethod;
 
     static {
+        displayPosField = findField(EditBox.class, "displayPos", "field_2103", "f_94100_");
+        highlightPosField = findField(EditBox.class, "highlightPos", "field_2101", "f_94102_");
+        fontField = findField(EditBox.class, "font", "field_2105", "f_94092_");
+        renderHighlightMethod = findMethod(EditBox.class, "renderHighlight", "method_1886", "m_264315_",
+                GuiGraphics.class, int.class, int.class, int.class, int.class);
+        getMaxLengthMethod = findMethod(EditBox.class, "getMaxLength", "method_1861", "m_94216_");
+    }
+
+    private static Field findField(Class<?> owner, String... names) {
+        for (String name : names) {
+            try {
+                Field field = owner.getDeclaredField(name);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static Method findMethod(Class<?> owner, String name, String altName, String srgName, Class<?>... params) {
+        Method method = tryMethod(owner, name, params);
+        if (method != null) {
+            return method;
+        }
+        method = tryMethod(owner, altName, params);
+        if (method != null) {
+            return method;
+        }
+        return tryMethod(owner, srgName, params);
+    }
+
+    private static Method tryMethod(Class<?> owner, String name, Class<?>... params) {
         try {
-            // Access private fields using reflection
-            displayPosField = EditBox.class.getDeclaredField("displayPos");
-            displayPosField.setAccessible(true);
-
-            highlightPosField = EditBox.class.getDeclaredField("highlightPos");
-            highlightPosField.setAccessible(true);
-
-            fontField = EditBox.class.getDeclaredField("font");
-            fontField.setAccessible(true);
-
-            renderHighlightMethod = EditBox.class.getDeclaredMethod("renderHighlight", GuiGraphics.class, int.class, int.class, int.class, int.class);
-            renderHighlightMethod.setAccessible(true);
-
-            getMaxLengthMethod = EditBox.class.getDeclaredMethod("getMaxLength");
-            getMaxLengthMethod.setAccessible(true);
-        } catch (Exception e) {
-            e.printStackTrace();
+            Method method = owner.getDeclaredMethod(name, params);
+            method.setAccessible(true);
+            return method;
+        } catch (NoSuchMethodException ignored) {
+            return null;
         }
     }
 
@@ -59,6 +81,11 @@ public class CustomEditBox extends EditBox {
         }
 
         try {
+            if (displayPosField == null || highlightPosField == null || fontField == null
+                    || renderHighlightMethod == null || getMaxLengthMethod == null) {
+                super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+                return;
+            }
             int displayPos = (int) displayPosField.get(this);
             int cursorPos = this.getCursorPosition();
             int highlightPos = (int) highlightPosField.get(this);
@@ -109,7 +136,7 @@ public class CustomEditBox extends EditBox {
                 int selectionStartX = textX + font.width(displayedText.substring(0, highlightPosInDisplayed));
                 renderHighlightMethod.invoke(this, guiGraphics, cursorX, textY - 1, selectionStartX - 1, textY + 1 + 9);
             }
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             // Fallback to default rendering if reflection fails
             super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
         }
