@@ -203,15 +203,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     // ===== SLEEP SYSTEM =====
     // Sleep transition state
-    private int sleepTransitionTicks = 0;
-    private int sleepAmbientCooldownTicks = 0;
-    // Re-entry suppression after aggression/damage to prevent instant resleep
-    private int sleepReentryCooldownTicks = 0;
-    private int sleepCancelTicks = 0;
-    private boolean sleepLocked = false;
-    private boolean sleepFallAsleepTriggered = false;
-    private boolean sleepSitUpTriggered = false;
-    private int sleepCommandSnapshot = -1;
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
@@ -232,19 +223,23 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         return 17; // 0.8333s = ~17 ticks
     }
 
-    public int getSleepSitDownDuration() {
+    @Override
+    protected int getSleepSitDownDuration() {
         return getSitDownAnimationTicks();
     }
 
-    public int getSleepFallAsleepDuration() {
+    @Override
+    protected int getSleepFallAsleepDuration() {
         return 33; // 1.6667s = ~33 ticks
     }
 
-    public int getSleepWakeUpDuration() {
+    @Override
+    protected int getSleepWakeUpDuration() {
         return 33; // 1.6667s = ~33 ticks
     }
 
-    public int getSleepSitUpDuration() {
+    @Override
+    protected int getSleepSitUpDuration() {
         return getSitUpAnimationTicks();
     }
 
@@ -431,12 +426,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
 
     // Sleep system entity data accessors
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
 
     /**
      * Entity data accessor for feeding cooldown ticks
@@ -453,10 +442,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
-        // Define sleep system data
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
 
@@ -688,8 +673,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         // === SERVER-SIDE: EVERY TICK (precise timing needed) ===
         tickFeedingCooldown();
-        tickSleepTransition();
-        tickSleepCooldowns();
 
         // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
         if (tickCount % 5 == 0) {
@@ -887,7 +870,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         // Suppress ambient sounds during transitions to prevent animation snapping
-        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0 || areRiderControlsLocked()) {
+        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || getSleepAmbientCooldownTicks() > 0 || areRiderControlsLocked()) {
             return;
         }
 
@@ -1585,32 +1568,38 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
-    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
-        if (action == null) {
-            return;
+    protected void onRiderTakeoffRequest(Player player) {
+        requestRiderTakeoff();
+    }
+
+    @Override
+    protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            useRidingAbility(abilityName);
         }
-        switch (action) {
-            case TAKEOFF_REQUEST -> requestRiderTakeoff();
-            case ACCELERATE -> setAccelerating(true);
-            case STOP_ACCELERATE -> setAccelerating(false);
-            case ABILITY_USE -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    useRidingAbility(abilityName);
-                }
-            }
-            case ABILITY_STOP -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    forceEndActiveAbility();
-                }
-            }
+    }
+
+    @Override
+    protected void onRiderAbilityStop(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            forceEndActiveAbility();
+        }
+    }
+
+    @Override
+    protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
+                                              String abilityName, boolean locked) {
+        if (locked) {
+            return false;
+        }
+
+        return switch (action) {
             case TOGGLE_PITCH_MODE -> {
-                if (!locked) {
-                    setRiderPitchKeyMode(!isRiderPitchKeyMode());
-                }
+                setRiderPitchKeyMode(!isRiderPitchKeyMode());
+                yield true;
             }
-            default -> {
-            }
-        }
+            default -> false;
+        };
     }
 
     @Override
@@ -2371,9 +2360,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             this.tickCount = 0; // Reset tick counter to ensure proper initialization
         }
 
-        // Clear transient sleep transition flags on load
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
 
         // Apply config attributes when loading from NBT (Forge fix)
         applyConfiguredAttributes();
@@ -2704,74 +2690,96 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     // ===== SLEEP SYSTEM =====
 
-    private void tickSleepTransition() {
-        // Handle sleep enter transition: sit_down → fall_asleep → sleep loop
-        if (isSleepingEntering() && !level().isClientSide) {
-            // Wait until sit_down completes, then trigger fall_asleep once
-            if (!sleepFallAsleepTriggered && sleepTransitionTicks > 0) {
-                sleepTransitionTicks--;
-                if (sleepTransitionTicks == 0) {
-                    // Sit down complete: trigger fall_asleep and start countdown
-                    sleepFallAsleepTriggered = true;
-                    sleepTransitionTicks = getSleepFallAsleepDuration();
-                    animationHandler.triggerFallAsleepAnimation();
-                }
-                return;
-            }
-        }
+    @Override
+    public boolean supportsSleep() {
+        return true;
+    }
 
-        if (sleepTransitionTicks > 0) {
-            sleepTransitionTicks--;
-            if (sleepTransitionTicks == 0) {
-                if (isSleepingEntering()) {
-                    // fall_asleep finished: mark sleeping and trigger loop animation
-                    setSleeping(true);
-                    setSleepingEntering(false);
-                    sleepFallAsleepTriggered = false;
-                    animationHandler.triggerSleepAnimation();
-                } else if (isSleepingExiting()) {
-                    // wake_up finished: now play sit_up, then release
-                    if (!sleepSitUpTriggered) {
-                        // If commanded to sit, stop at sit after wake_up (no stand-up)
-                        if (getCommand() == 1 || isOrderedToSit()) {
-                            setSleeping(false);
-                            sleepSitUpTriggered = false;
-                            setSleepingExiting(false);
-                            sleepTransitionTicks = 0;
-                            sleepAmbientCooldownTicks = 10;
-                            setOrderedToSit(true);
-                            this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), maxSitTicks()));
-                            if (!level().isClientSide) {
-                                releaseSleepLock();
-                            }
-                            return;
-                        }
+    @Override
+    protected boolean useSleepSitDownTimer() {
+        return true;
+    }
 
-                        sleepSitUpTriggered = true;
-                        sleepTransitionTicks = getSleepSitUpDuration();
-                        animationHandler.triggerSitUpAnimation();
-                        // Allow stand-up by clearing sit lock
-                        setOrderedToSit(false);
-                        return;
-                    } else {
-                        // sit_up finished
-                        setSleeping(false);
-                        sleepSitUpTriggered = false;
-                        setSleepingExiting(false);
-                        sleepAmbientCooldownTicks = 10;
-                        if (!level().isClientSide) {
-                            releaseSleepLock();
-                        }
-                    }
-                }
-            }
+    @Override
+    protected boolean requireSeatedBeforeFallAsleep() {
+        return true;
+    }
+
+    @Override
+    protected boolean sleepForceSitDownOnEnter() {
+        return true;
+    }
+
+    @Override
+    protected int getSleepExitSuppressionTicks() {
+        return 20;
+    }
+
+    @Override
+    protected int getSleepWakeUpSuppressionTicks() {
+        return 20;
+    }
+
+    @Override
+    protected void onSleepLockCommand(int snapshot) {
+        if (getCommand() != 1) {
+            setCommand(1);
+            setOrderedToSit(true);
         }
     }
 
-    private void tickSleepCooldowns() {
-        if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
-        if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
-        if (sleepCancelTicks > 0) sleepCancelTicks--;
+    @Override
+    protected void onSleepUnlockCommand(int desired) {
+        if (desired >= 0 && desired != getCommand()) {
+            setCommand(desired);
+            setOrderedToSit(desired == 1);
+        }
+    }
+
+    @Override
+    protected void onSleepFreezeTick() {
+        this.getNavigation().stop();
+        this.setDeltaMovement(0, 0, 0);
+        this.setRunning(false);
+        this.setFlying(false);
+        this.setHovering(false);
+        this.setTakeoff(false);
+        this.setLanding(false);
+        setGroundMoveStateFromAI(0);
+    }
+
+    @Override
+    protected void onSleepSitDownAnimation() {
+        animationHandler.triggerSitDownAnimation();
+        setOrderedToSit(true);
+    }
+
+    @Override
+    protected void onSleepFallAsleepAnimation() {
+        animationHandler.triggerFallAsleepAnimation();
+    }
+
+    @Override
+    protected void onSleepLoopAnimation() {
+        animationHandler.triggerSleepAnimation();
+        setOrderedToSit(true);
+    }
+
+    @Override
+    protected void onSleepWakeUpAnimation() {
+        animationHandler.triggerWakeUpAnimation();
+    }
+
+    @Override
+    protected void onSleepSitUpAnimation() {
+        animationHandler.triggerSitUpAnimation();
+        setOrderedToSit(false);
+    }
+
+    @Override
+    protected void onSleepExitSeated() {
+        setOrderedToSit(true);
+        this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), maxSitTicks()));
     }
 
     private void tickFeedingCooldown() {
@@ -2780,130 +2788,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             cooldownTicks--;
             this.entityData.set(DATA_FEEDING_COOLDOWN, cooldownTicks);
         }
-    }
-
-    // ===== SLEEP STATE ACCESSORS =====
-
-    @Override
-    public boolean isSleeping() {
-        return this.entityData.get(DATA_SLEEPING);
-    }
-
-    public void setSleeping(boolean sleeping) {
-        this.entityData.set(DATA_SLEEPING, sleeping);
-    }
-
-    @Override
-    public boolean isSleepTransitioning() {
-        return isSleepingEntering() || isSleepingExiting();
-    }
-
-    public boolean isSleepingEntering() {
-        return this.entityData.get(DATA_SLEEPING_ENTERING);
-    }
-
-    public void setSleepingEntering(boolean entering) {
-        this.entityData.set(DATA_SLEEPING_ENTERING, entering);
-    }
-
-    public boolean isSleepingExiting() {
-        return this.entityData.get(DATA_SLEEPING_EXITING);
-    }
-
-    public void setSleepingExiting(boolean exiting) {
-        this.entityData.set(DATA_SLEEPING_EXITING, exiting);
-    }
-
-    public boolean isSleepLocked() {
-        return sleepLocked || isSleeping() || isSleepingEntering() || isSleepingExiting();
-    }
-
-    private void enterSleepLock() {
-        int snapshot = getCommand();
-        if (!sleepLocked) {
-            sleepLocked = true;
-            sleepCommandSnapshot = snapshot;
-            // Force sit command during sleep
-            if (getCommand() != 1) {
-                setCommand(1);
-                setOrderedToSit(true);
-            }
-        }
-    }
-
-    private void releaseSleepLock() {
-        if (sleepLocked) {
-            int desired = sleepCommandSnapshot;
-            sleepCommandSnapshot = -1;
-            sleepLocked = false;
-
-            // Restore command state
-            if (desired >= 0 && desired != getCommand()) {
-                setCommand(desired);
-                setOrderedToSit(desired == 1);
-            }
-        }
-    }
-
-    @Override
-    public void startSleepEnter() {
-        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
-        setSleepingEntering(true);
-        sleepFallAsleepTriggered = false;
-
-        // enterSleepLock forces sit command, which triggers sit_down via updateSittingProgress
-        if (!level().isClientSide) {
-            enterSleepLock();
-            if (getSitProgress() < maxSitTicks()) {
-                // Not seated: start sit_down countdown
-                sleepTransitionTicks = getSleepSitDownDuration();
-                animationHandler.triggerSitDownAnimation();
-            } else {
-                // Already seated: skip sit_down, jump straight to fall_asleep
-                sleepFallAsleepTriggered = true;
-                sleepTransitionTicks = getSleepFallAsleepDuration();
-                animationHandler.triggerFallAsleepAnimation();
-            }
-        }
-    }
-
-    @Override
-    public void startSleepExit() {
-        if ((!isSleeping() && !isSleepingEntering()) || isSleepingExiting()) return;
-        setSleepingEntering(false);
-        setSleepingExiting(true);
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        // New system: wake_up → sit (brief) → sit_up
-        sleepTransitionTicks = getSleepWakeUpDuration();
-        // Trigger wake_up animation
-        animationHandler.triggerWakeUpAnimation();
-        if (!level().isClientSide) {
-            suppressSleep(20);
-        }
-    }
-
-    public void wakeUpImmediately() {
-        this.entityData.set(DATA_SLEEPING, false);
-        setSleepingEntering(false);
-        setSleepingExiting(false);
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        sleepTransitionTicks = 0;
-        sleepCancelTicks = 2;
-        if (!level().isClientSide) {
-            suppressSleep(20);
-            releaseSleepLock();
-        }
-    }
-
-    public void suppressSleep(int ticks) {
-        sleepReentryCooldownTicks = Math.max(sleepReentryCooldownTicks, ticks);
-    }
-
-    @Override
-    public boolean isSleepSuppressed() {
-        return sleepReentryCooldownTicks > 0;
     }
 
     @Override

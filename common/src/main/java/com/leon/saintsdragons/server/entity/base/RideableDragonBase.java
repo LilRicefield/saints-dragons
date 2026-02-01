@@ -100,6 +100,12 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             return;
         }
 
+        // Try dragon-specific handler first
+        if (handleCustomRiderAction(player, action, abilityName, locked)) {
+            return; // Dragon handled it
+        }
+
+        // Base actions shared by all rideable dragons
         switch (action) {
             case TAKEOFF_REQUEST -> { if (!locked) onRiderTakeoffRequest(player); }
             case ACCELERATE -> { if (!locked) onRiderAccelerationStart(player); }
@@ -111,6 +117,21 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             case DOUBLE_TAP_D -> { if (!locked) onRiderDodge(player, false); }
             default -> { }
         }
+    }
+
+    /**
+     * Override this to handle dragon-specific rider actions.
+     * Base actions (takeoff, accelerate, melee toggle, dodge) are handled automatically.
+     *
+     * @param player The riding player
+     * @param action The action to handle
+     * @param abilityName The ability name (for ABILITY_USE/STOP actions)
+     * @param locked Whether rider controls are currently locked
+     * @return true if the action was handled, false to let base handler try
+     */
+    protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
+                                              String abilityName, boolean locked) {
+        return false; // Default: no custom actions
     }
 
     /**

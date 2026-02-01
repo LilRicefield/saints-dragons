@@ -32,6 +32,9 @@ public class DragonSleepBehavior {
      * NOTE: Does NOT check environment (ground, water, etc.) because entity may not be settled yet on spawn/reload
      */
     private boolean shouldSleepBasedOnConditions() {
+        if (!dragon.supportsSleep()) {
+            return false;
+        }
         // Don't check canSleepInCurrentEnvironment() here - entity might not be on ground yet during construction!
         // Environment checks happen during tick evaluation after entity has settled
 
@@ -52,6 +55,9 @@ public class DragonSleepBehavior {
 
     public void tick() {
         if (dragon.level().isClientSide) {
+            return;
+        }
+        if (!dragon.supportsSleep()) {
             return;
         }
 
@@ -122,6 +128,7 @@ public class DragonSleepBehavior {
     }
 
     private boolean shouldAttemptSleep() {
+        if (!dragon.supportsSleep()) return false;
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) return false;
         if (sleepActionCooldown > 0) return false;
         if (dragon.isOrderedToSit()) return false;
@@ -138,6 +145,7 @@ public class DragonSleepBehavior {
     }
 
     private boolean shouldWakeUp() {
+        if (!dragon.supportsSleep()) return false;
         if (!dragon.isSleeping()) return false;
         if (!canSleepInCurrentEnvironment()) return true;
 
@@ -173,6 +181,7 @@ public class DragonSleepBehavior {
 
     public boolean tryStartSleeping() {
         if (sleepActionCooldown > 0) return false;
+        if (!dragon.supportsSleep()) return false;
         if (!canSleepInCurrentEnvironment()) return false;
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) return false;
         dragon.startSleepEnter();
@@ -182,6 +191,7 @@ public class DragonSleepBehavior {
 
     public boolean tryWakeUp() {
         if (sleepActionCooldown > 0) return false;
+        if (!dragon.supportsSleep()) return false;
         if (!dragon.isSleeping() && !dragon.isSleepTransitioning()) return false;
         dragon.startSleepExit();
         delaySleep(20, 40);
@@ -190,6 +200,9 @@ public class DragonSleepBehavior {
 
     public void forceWakeUp() {
         sleepActionCooldown = 0;
+        if (!dragon.supportsSleep()) {
+            return;
+        }
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
             dragon.wakeUpImmediately();
         }

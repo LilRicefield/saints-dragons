@@ -6,6 +6,9 @@ import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.component.DragonHappinessComponent;
+import com.leon.saintsdragons.server.entity.component.DragonHungerComponent;
+import com.leon.saintsdragons.server.entity.component.DragonSleepComponent;
 import com.leon.saintsdragons.server.entity.controller.BodyControl;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -38,9 +41,6 @@ import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -50,7 +50,6 @@ import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
-import java.util.UUID;
 
 /**
  * Base class for all wyvern entities in the mod.
@@ -70,6 +69,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_HAPPINESS =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
 
     // Rotation deviation sync (REQUIRED for smooth animations)
     private static final EntityDataAccessor<Float> DATA_BODY_DEVIATION =
@@ -79,25 +84,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private static final EntityDataAccessor<Float> DATA_YAW_VELOCITY =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
 
-    public static final int HUNGER_MAX = 100;
-    private static final int HUNGER_DECAY_INTERVAL_TICKS = 7200;
-    private static final int HUNGER_DECAY_RIDDEN_TICK_MULT = 2;
-    private static final int HUNGER_FEED_AMOUNT = 10;
-    private static final int HUNGER_FEED_AMOUNT_HEARTY = 20;
-    private static final int HUNGER_DAMAGE_INTERVAL_TICKS = 80;
-    private static final float HUNGER_DAMAGE_AMOUNT = 2.0f;
-    public static final int HAPPINESS_MAX = 100;
-    private static final int HAPPINESS_DECAY_INTERVAL_TICKS = 9600;
-    private static final int HAPPINESS_DECAY_AMOUNT = 2;
-    private static final int HAPPINESS_FEED_AMOUNT = 4;
-    private static final int HAPPINESS_FEED_AMOUNT_HEARTY = 8;
-    private static final int HAPPINESS_HIT_PENALTY = 2;
-    private static final int HAPPINESS_ANGRY_THRESHOLD = 60;
-    private static final int HAPPINESS_SLOW_THRESHOLD = 60;
-    private static final int HAPPINESS_SPEED_MIN_THRESHOLD = 30;
-    private static final float HAPPINESS_SPEED_MIN_MULTIPLIER = 0.5f;
-    private static final UUID HAPPINESS_SLOW_GROUND_UUID = UUID.fromString("e4a2e52c-f311-4c35-9cf2-7dd0b6c0c4a8");
-    private static final UUID HAPPINESS_SLOW_FLY_UUID = UUID.fromString("b51a7bd2-8c8a-4ea9-9a6f-7f40e1b7b7af");
+    public static final int HUNGER_MAX = DragonHungerComponent.HUNGER_MAX;
+    public static final int HAPPINESS_MAX = DragonHappinessComponent.HAPPINESS_MAX;
 
 
     // Dragon ability system (lightweight base – no global cooldown here)
@@ -109,8 +97,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Ally manager for handling wyvern allies
     public final DragonAllyManager allyManager;
 
-    // Sleep behavior manager
-    public final DragonSleepBehavior sleepBehavior;
+    // Components for hunger, happiness, and sleep behavior
+    private final DragonHungerComponent hungerComponent;
+    private final DragonHappinessComponent happinessComponent;
+    private final DragonSleepComponent sleepComponent;
 
     // Sit progress fields
     public float sitProgress = 0f;
@@ -148,16 +138,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Store reference to our custom body control for server-side rotation updates
     private BodyControl dragonBodyControl;
 
-    private int hunger = HUNGER_MAX;
-    private int hungerDecayTicks = 0;
-    private int happiness = HAPPINESS_MAX;
-    private int happinessDecayTicks = 0;
-
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
         this.allyManager = new DragonAllyManager(this);
-        this.sleepBehavior = new DragonSleepBehavior(this);
+        this.hungerComponent = new DragonHungerComponent(this);
+        this.happinessComponent = new DragonHappinessComponent(this, DATA_HAPPINESS);
+        this.sleepComponent = new DragonSleepComponent(this, DATA_SLEEPING, DATA_SLEEPING_ENTERING, DATA_SLEEPING_EXITING);
         // Set custom look control (lookControl field is protected in Mob)
         this.lookControl = new com.leon.saintsdragons.server.entity.controller.DragonLookControl<>(this);
     }
@@ -193,6 +180,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.define(DATA_SIT_PROGRESS, 0.0f); // Sit progress for smooth animations
         this.entityData.define(DATA_GENDER, DragonGender.MALE.getId());
         this.entityData.define(DATA_HAPPINESS, HAPPINESS_MAX);
+        this.entityData.define(DATA_SLEEPING, false);
+        this.entityData.define(DATA_SLEEPING_ENTERING, false);
+        this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_BODY_DEVIATION, 0.0f);
         this.entityData.define(DATA_PITCH_DEVIATION, 0.0f);
         this.entityData.define(DATA_YAW_VELOCITY, 0.0f);
@@ -232,87 +222,50 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     public int getHunger() {
-        return hunger;
+        return hungerComponent.getHunger();
     }
 
     public int getMaxHunger() {
-        return HUNGER_MAX;
+        return hungerComponent.getMaxHunger();
     }
 
     public boolean isHungry() {
-        return hunger < HUNGER_MAX;
+        return hungerComponent.isHungry();
     }
 
     public int getHappiness() {
-        return level() != null && level().isClientSide ? this.entityData.get(DATA_HAPPINESS) : happiness;
+        return happinessComponent.getHappiness();
     }
 
     public int getMaxHappiness() {
-        return HAPPINESS_MAX;
+        return happinessComponent.getMaxHappiness();
     }
 
     public void setHappiness(int happiness) {
-        int clamped = Mth.clamp(happiness, 0, HAPPINESS_MAX);
-        if (this.happiness == clamped) {
-            return;
-        }
-        this.happiness = clamped;
-        this.entityData.set(DATA_HAPPINESS, clamped);
-        if (!level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
-            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
-            DragonCodexSavedData.get(serverLevel).updateDragonStats(this.getOwnerUUID(), this);
-        }
+        happinessComponent.setHappiness(happiness);
     }
 
     public void setHunger(int hunger) {
-        int clamped = Mth.clamp(hunger, 0, HUNGER_MAX);
-        if (this.hunger == clamped) {
-            return;
-        }
-        this.hunger = clamped;
-        if (!level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
-            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
-            DragonCodexSavedData.get(serverLevel).updateDragonStats(this.getOwnerUUID(), this);
-        }
+        hungerComponent.setHunger(hunger);
     }
 
     public boolean applyFeedingHunger(boolean heartyMeal) {
-        boolean wasHungry = isHungry();
-        int amount = heartyMeal ? HUNGER_FEED_AMOUNT_HEARTY : HUNGER_FEED_AMOUNT;
-        setHunger(this.hunger + amount);
+        boolean wasHungry = hungerComponent.isHungry();
+        hungerComponent.applyFeeding(heartyMeal);
         applyFeedingHappiness(heartyMeal);
         return wasHungry;
     }
 
     public void applyFeedingHappiness(boolean heartyMeal) {
-        if (!this.isTame()) {
-            return;
-        }
-        int amount = heartyMeal ? HAPPINESS_FEED_AMOUNT_HEARTY : HAPPINESS_FEED_AMOUNT;
-        setHappiness(this.happiness + amount);
+        happinessComponent.applyFeeding(heartyMeal);
     }
 
     public float getHappinessSpeedMultiplier() {
-        int value = getHappiness();
-        if (value > HAPPINESS_SLOW_THRESHOLD) {
-            return 1.0f;
-        }
-        if (value <= HAPPINESS_SPEED_MIN_THRESHOLD) {
-            return HAPPINESS_SPEED_MIN_MULTIPLIER;
-        }
-        float ratio = (value - HAPPINESS_SPEED_MIN_THRESHOLD) / (float) (HAPPINESS_SLOW_THRESHOLD - HAPPINESS_SPEED_MIN_THRESHOLD);
-        return HAPPINESS_SPEED_MIN_MULTIPLIER + ((1.0f - HAPPINESS_SPEED_MIN_MULTIPLIER) * ratio);
+        return happinessComponent.getSpeedMultiplier();
     }
 
     public float getHungerMeleeDamageMultiplier() {
-        if (hunger > 60) {
-            return 1.0f;
-        }
-        if (hunger <= 30) {
-            return 0.25f;
-        }
-        float ratio = (hunger - 30) / 30.0f; // 30..60 => 0..1
-        return 0.25f + (0.25f * ratio);
+        return hungerComponent.getMeleeDamageMultiplier();
     }
 
     public boolean hasGender() {
@@ -749,45 +702,276 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     /**
+     * Whether this dragon supports the sleep system at all.
+     */
+    public boolean supportsSleep() {
+        return false;
+    }
+
+    /**
      * Check if the wyvern is transitioning between sleep states
      */
     public boolean isSleepTransitioning() {
-        return false;
+        return sleepComponent.isSleepTransitioning();
     }
 
     /**
      * Check if the dragon is currently sleeping
      */
     public boolean isSleeping() {
-        return false;
+        return sleepComponent.isSleeping();
+    }
+
+    public boolean isSleepingEntering() {
+        return sleepComponent.isSleepingEntering();
+    }
+
+    public boolean isSleepingExiting() {
+        return sleepComponent.isSleepingExiting();
+    }
+
+    public boolean isSleepLocked() {
+        return sleepComponent.isSleepLocked();
     }
 
     /**
      * Start the sleep enter sequence (sit down -> fall asleep -> sleep)
      */
     public void startSleepEnter() {
-        // Override in dragons that support sleeping
+        sleepComponent.startSleepEnter();
     }
 
     /**
      * Start the sleep exit sequence (wake up -> sit up -> stand)
      */
     public void startSleepExit() {
-        // Override in dragons that support sleeping
+        sleepComponent.startSleepExit();
     }
 
     /**
      * Wake up immediately (e.g., on damage)
      */
     public void wakeUpImmediately() {
-        // Override in dragons that support sleeping
+        sleepComponent.wakeUpImmediately();
+    }
+
+    public void suppressSleep(int ticks) {
+        sleepComponent.suppressSleep(ticks);
     }
 
     /**
      * Check if sleep is temporarily suppressed (combat cooldown, etc.)
      */
     public boolean isSleepSuppressed() {
+        return sleepComponent.isSleepSuppressed();
+    }
+
+    public int getSleepAmbientCooldownTicks() {
+        return sleepComponent.getAmbientCooldownTicks();
+    }
+
+    protected void clearSleepCooldowns() {
+        sleepComponent.clearCooldowns();
+    }
+
+    protected boolean useSleepSitDownTimer() {
         return false;
+    }
+
+    protected boolean requireSeatedBeforeFallAsleep() {
+        return false;
+    }
+
+    protected boolean sleepForceSitDownOnEnter() {
+        return false;
+    }
+
+    protected boolean useSleepSitUpAfterWake() {
+        return true;
+    }
+
+    protected int getSleepSitDownDuration() {
+        return 0;
+    }
+
+    protected int getSleepFallAsleepDuration() {
+        return 0;
+    }
+
+    protected int getSleepWakeUpDuration() {
+        return 0;
+    }
+
+    protected int getSleepSitUpDuration() {
+        return 0;
+    }
+
+    protected int getSleepLoopLeadTicks() {
+        return 0;
+    }
+
+    protected int getSleepExitSuppressionTicks() {
+        return 40;
+    }
+
+    protected int getSleepWakeUpSuppressionTicks() {
+        return 40;
+    }
+
+    protected boolean isAlreadySeatedForSleep() {
+        return this.isOrderedToSit() || this.getSitProgress() >= this.maxSitTicks();
+    }
+
+    protected boolean shouldStaySeatedAfterWake() {
+        return this.getCommand() == 1 || this.isOrderedToSit();
+    }
+
+    protected void onSleepLockCommand(int snapshot) {
+        if (this.getCommand() != 1) {
+            this.setCommand(1);
+            this.setOrderedToSit(true);
+        }
+    }
+
+    protected void onSleepUnlockCommand(int desired) {
+        if (desired >= 0 && desired != this.getCommand()) {
+            this.setCommand(desired);
+            this.setOrderedToSit(desired == 1);
+        }
+    }
+
+    protected void onSleepFreezeTick() {
+    }
+
+    protected void onSleepSitDownAnimation() {
+    }
+
+    protected void onSleepFallAsleepAnimation() {
+    }
+
+    protected void onSleepLoopAnimation() {
+    }
+
+    protected void onSleepWakeUpAnimation() {
+    }
+
+    protected void onSleepSitUpAnimation() {
+    }
+
+    protected void onSleepEntered() {
+        this.setOrderedToSit(true);
+    }
+
+    protected void onSleepExitStarted() {
+        this.setOrderedToSit(true);
+    }
+
+    protected void onSleepExitSeated() {
+        this.setOrderedToSit(true);
+    }
+
+    protected void onSleepWakeUpImmediate() {
+        this.setOrderedToSit(false);
+    }
+
+    public final boolean sleepUseSitDownTimer() {
+        return useSleepSitDownTimer();
+    }
+
+    public final boolean sleepShouldForceSitDownOnEnter() {
+        return sleepForceSitDownOnEnter();
+    }
+
+    public final boolean sleepUseSitUpAfterWake() {
+        return useSleepSitUpAfterWake();
+    }
+
+    public final boolean sleepRequireSeatedBeforeFallAsleep() {
+        return requireSeatedBeforeFallAsleep();
+    }
+
+    public final int sleepGetSitDownDuration() {
+        return getSleepSitDownDuration();
+    }
+
+    public final int sleepGetFallAsleepDuration() {
+        return getSleepFallAsleepDuration();
+    }
+
+    public final int sleepGetWakeUpDuration() {
+        return getSleepWakeUpDuration();
+    }
+
+    public final int sleepGetSitUpDuration() {
+        return getSleepSitUpDuration();
+    }
+
+    public final int sleepGetLoopLeadTicks() {
+        return getSleepLoopLeadTicks();
+    }
+
+    public final int sleepGetExitSuppressionTicks() {
+        return getSleepExitSuppressionTicks();
+    }
+
+    public final int sleepGetWakeUpSuppressionTicks() {
+        return getSleepWakeUpSuppressionTicks();
+    }
+
+    public final boolean sleepIsAlreadySeatedForSleep() {
+        return isAlreadySeatedForSleep();
+    }
+
+    public final boolean sleepShouldStaySeatedAfterWake() {
+        return shouldStaySeatedAfterWake();
+    }
+
+    public final void sleepOnLockCommand(int snapshot) {
+        onSleepLockCommand(snapshot);
+    }
+
+    public final void sleepOnUnlockCommand(int desired) {
+        onSleepUnlockCommand(desired);
+    }
+
+    public final void sleepOnFreezeTick() {
+        onSleepFreezeTick();
+    }
+
+    public final void sleepOnSitDownAnimation() {
+        onSleepSitDownAnimation();
+    }
+
+    public final void sleepOnFallAsleepAnimation() {
+        onSleepFallAsleepAnimation();
+    }
+
+    public final void sleepOnLoopAnimation() {
+        onSleepLoopAnimation();
+    }
+
+    public final void sleepOnWakeUpAnimation() {
+        onSleepWakeUpAnimation();
+    }
+
+    public final void sleepOnSitUpAnimation() {
+        onSleepSitUpAnimation();
+    }
+
+    public final void sleepOnEntered() {
+        onSleepEntered();
+    }
+
+    public final void sleepOnExitStarted() {
+        onSleepExitStarted();
+    }
+
+    public final void sleepOnExitSeated() {
+        onSleepExitSeated();
+    }
+
+    public final void sleepOnWakeUpImmediate() {
+        onSleepWakeUpImmediate();
     }
 
     /**
@@ -927,13 +1111,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
         // Tick sleep behavior (server-side only)
         if (!level().isClientSide) {
-            sleepBehavior.tick();
+            sleepComponent.tick();
             if (this.isTame()) {
-                tickHunger();
-                tickHappiness();
-                updateHappinessSpeedModifiers();
+                hungerComponent.tick();
+                happinessComponent.tick(hungerComponent.getHunger());
+                happinessComponent.updateSpeedModifiers();
             } else {
-                clearHappinessSpeedModifiers();
+                happinessComponent.clearSpeedModifiers();
             }
         }
 
@@ -999,47 +1183,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // Push to SynchedEntityData for all observers
         this.entityData.set(DATA_BODY_DEVIATION, headToBody);
         this.entityData.set(DATA_PITCH_DEVIATION, pitchDelta);
-    }
-
-    private void tickHunger() {
-        if (!this.isTame()) {
-            return;
-        }
-        int decayStep = 1;
-        if (this.isVehicle() && this.getDeltaMovement().horizontalDistanceSqr() > 0.0025) {
-            decayStep = HUNGER_DECAY_RIDDEN_TICK_MULT;
-        }
-        if (hunger > 0) {
-            hungerDecayTicks += decayStep;
-            if (hungerDecayTicks >= HUNGER_DECAY_INTERVAL_TICKS) {
-                hungerDecayTicks = 0;
-                setHunger(hunger - 1);
-            }
-            return;
-        }
-
-        hungerDecayTicks += decayStep;
-        if (hungerDecayTicks >= HUNGER_DAMAGE_INTERVAL_TICKS) {
-            hungerDecayTicks = 0;
-            this.hurt(this.damageSources().starve(), HUNGER_DAMAGE_AMOUNT);
-        }
-    }
-
-    private void tickHappiness() {
-        if (!this.isTame()) {
-            return;
-        }
-        int interval = HAPPINESS_DECAY_INTERVAL_TICKS;
-        if (hunger <= 30) {
-            interval = Math.max(1, interval / 4);
-        } else if (hunger <= 60) {
-            interval = Math.max(1, interval / 2);
-        }
-        happinessDecayTicks++;
-        if (happinessDecayTicks >= interval) {
-            happinessDecayTicks = 0;
-            setHappiness(happiness - HAPPINESS_DECAY_AMOUNT);
-        }
     }
 
     // ===== COMMAND SYSTEM (shared) =====
@@ -1244,8 +1387,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("Command", getCommand());
-        tag.putInt("Hunger", this.hunger);
-        tag.putInt("Happiness", this.happiness);
+        hungerComponent.saveToNBT(tag);
+        happinessComponent.saveToNBT(tag);
+        sleepComponent.saveToNBT(tag);
 
         // Save gender - use direct entityData access to ensure we get the current value
         byte genderId = this.entityData.get(DATA_GENDER);
@@ -1283,88 +1427,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             this.genderInitialized = false;
             ensureGenderInitialized();
         }
-        this.hunger = tag.contains("Hunger") ? Mth.clamp(tag.getInt("Hunger"), 0, HUNGER_MAX) : HUNGER_MAX;
-        this.happiness = tag.contains("Happiness") ? Mth.clamp(tag.getInt("Happiness"), 0, HAPPINESS_MAX) : HAPPINESS_MAX;
-        this.entityData.set(DATA_HAPPINESS, this.happiness);
+        hungerComponent.loadFromNBT(tag);
+        happinessComponent.loadFromNBT(tag);
+        sleepComponent.loadFromNBT(tag);
         allyManager.loadFromNBT(tag);
     }
 
     private void applyHappinessHitPenalty(net.minecraft.server.level.ServerLevel serverLevel) {
-        setHappiness(this.happiness - HAPPINESS_HIT_PENALTY);
-        if (this.happiness <= HAPPINESS_ANGRY_THRESHOLD) {
-            serverLevel.sendParticles(
-                    net.minecraft.core.particles.ParticleTypes.ANGRY_VILLAGER,
-                    this.getX(),
-                    this.getY() + this.getBbHeight() + 0.3,
-                    this.getZ(),
-                    6,
-                    0.3,
-                    0.2,
-                    0.3,
-                    0.0
-            );
-        }
-    }
-
-    private void updateHappinessSpeedModifiers() {
-        if (level().isClientSide) {
-            return;
-        }
-        if (!this.isTame()) {
-            clearHappinessSpeedModifiers();
-            return;
-        }
-        float mult = getHappinessSpeedMultiplier();
-        AttributeInstance move = this.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (move != null) {
-            AttributeModifier existing = move.getModifier(HAPPINESS_SLOW_GROUND_UUID);
-            if (mult >= 0.999f) {
-                if (existing != null) {
-                    move.removeModifier(HAPPINESS_SLOW_GROUND_UUID);
-                }
-            } else {
-                if (existing != null) {
-                    move.removeModifier(HAPPINESS_SLOW_GROUND_UUID);
-                }
-                move.addPermanentModifier(new AttributeModifier(
-                        HAPPINESS_SLOW_GROUND_UUID,
-                        "Happiness slow (ground)",
-                        mult - 1.0,
-                        AttributeModifier.Operation.MULTIPLY_TOTAL
-                ));
-            }
-        }
-
-        AttributeInstance fly = this.getAttribute(Attributes.FLYING_SPEED);
-        if (fly != null) {
-            AttributeModifier existing = fly.getModifier(HAPPINESS_SLOW_FLY_UUID);
-            if (mult >= 0.999f) {
-                if (existing != null) {
-                    fly.removeModifier(HAPPINESS_SLOW_FLY_UUID);
-                }
-            } else {
-                if (existing != null) {
-                    fly.removeModifier(HAPPINESS_SLOW_FLY_UUID);
-                }
-                fly.addPermanentModifier(new AttributeModifier(
-                        HAPPINESS_SLOW_FLY_UUID,
-                        "Happiness slow (fly)",
-                        mult - 1.0,
-                        AttributeModifier.Operation.MULTIPLY_TOTAL
-                ));
-            }
-        }
-    }
-
-    private void clearHappinessSpeedModifiers() {
-        AttributeInstance move = this.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (move != null && move.getModifier(HAPPINESS_SLOW_GROUND_UUID) != null) {
-            move.removeModifier(HAPPINESS_SLOW_GROUND_UUID);
-        }
-        AttributeInstance fly = this.getAttribute(Attributes.FLYING_SPEED);
-        if (fly != null && fly.getModifier(HAPPINESS_SLOW_FLY_UUID) != null) {
-            fly.removeModifier(HAPPINESS_SLOW_FLY_UUID);
-        }
+        happinessComponent.applyHitPenalty(serverLevel);
     }
 
     /**

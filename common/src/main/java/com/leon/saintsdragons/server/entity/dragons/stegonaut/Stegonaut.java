@@ -104,26 +104,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     }
 
     // Sleep system fields
-    private boolean sleeping = false;
-    private boolean sleepTransitioning = false;
-    private boolean sleepingEntering = false; // True during fall_asleep transition
-    private boolean sleepingExiting = false; // True during wake_up transition
-    private int sleepTransitionTicks = 0; // Countdown timer for transition animations
     private boolean suppressSitAnimation = false;
-    private boolean sleepFallAsleepTriggered = false;
-    private boolean sleepSitUpTriggered = false;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
     private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
-
-    // Synced sleep state for client-side animation
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
     // Synced ground movement state for reliable animation
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
@@ -180,9 +165,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
     }
 
     @Override
@@ -878,80 +860,107 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     // ===== SLEEP SYSTEM IMPLEMENTATION =====
 
     @Override
-    public boolean isSleeping() {
-        // Use synced data for client-side animation detection
-        return level().isClientSide ? this.entityData.get(DATA_SLEEPING) : sleeping;
+    public boolean supportsSleep() {
+        return true;
     }
-
-    @Override
-    public boolean isSleepTransitioning() {
-        if (level().isClientSide) {
-            return this.entityData.get(DATA_SLEEPING_ENTERING) || this.entityData.get(DATA_SLEEPING_EXITING);
-        }
-        return sleepTransitioning || sleepingEntering || sleepingExiting;
-    }
-
-    public boolean isSleepLocked() {
-        return isSleeping() || isSleepTransitioning() || isSleepingEntering() || isSleepingExiting();
-    }
-
-    /**
-     * Check if drake is entering sleep (fall_asleep transition)
-     */
-    public boolean isSleepingEntering() {
-        return level().isClientSide ? this.entityData.get(DATA_SLEEPING_ENTERING) : sleepingEntering;
-    }
-
-    /**
-     * Check if drake is exiting sleep (wake_up transition)
-     */
-    public boolean isSleepingExiting() {
-        return level().isClientSide ? this.entityData.get(DATA_SLEEPING_EXITING) : sleepingExiting;
-    }
-
 
     @Override
     public boolean isSleepSuppressed() {
         // Don't sleep while in combat, in water, or while being ridden
-        return getTarget() != null || isInWaterOrBubble() || isVehicle();
+        return super.isSleepSuppressed() || getTarget() != null || isInWaterOrBubble() || isVehicle();
     }
 
     @Override
-    public void startSleepEnter() {
-        if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) return;
-        sleepTransitioning = true;
-        sleepingEntering = true;
-        sleepingExiting = false;
-        sleeping = false; // Not fully asleep yet, still transitioning
-        this.entityData.set(DATA_SLEEPING_ENTERING, true);
-        this.entityData.set(DATA_SLEEPING_EXITING, false);
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        // If already sitting (e.g., owner commanded sit), skip the sit_down clip
-        if (isOrderedToSit() || shouldStaySeatedCommand()) {
-            sleepTransitionTicks = 1;
-        } else {
-            sleepTransitionTicks = getSleepSitDownDuration();
-            animationController.triggerSitDownAnimation();
-            setOrderedToSit(true);
-        }
+    protected boolean useSleepSitDownTimer() {
+        return true;
     }
 
     @Override
-    public void startSleepExit() {
-        if ((!sleeping && !sleepingEntering) || sleepingExiting || sleepTransitioning) return;
-        sleepTransitioning = true;
-        sleepingExiting = true;
-        sleepingEntering = false;
-        sleeping = true; // keep flagged sleeping until wake_up finishes
-        this.entityData.set(DATA_SLEEPING, true);
-        this.entityData.set(DATA_SLEEPING_ENTERING, false);
-        this.entityData.set(DATA_SLEEPING_EXITING, true);
+    protected boolean requireSeatedBeforeFallAsleep() {
+        return true;
+    }
+
+    @Override
+    protected boolean sleepForceSitDownOnEnter() {
+        return true;
+    }
+
+    @Override
+    protected int getSleepExitSuppressionTicks() {
+        return 0;
+    }
+
+    @Override
+    protected int getSleepWakeUpSuppressionTicks() {
+        return 0;
+    }
+
+    @Override
+    protected boolean isAlreadySeatedForSleep() {
+        return isOrderedToSit() || shouldStaySeatedCommand() || getSitProgress() >= maxSitTicks();
+    }
+
+    @Override
+    protected boolean shouldStaySeatedAfterWake() {
+        return shouldStaySeatedCommand();
+    }
+
+    @Override
+    protected void onSleepLockCommand(int snapshot) {
+    }
+
+    @Override
+    protected void onSleepUnlockCommand(int desired) {
+    }
+
+    @Override
+    protected void onSleepFreezeTick() {
+        this.getNavigation().stop();
+        this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
+        this.setOrderedToSit(true);
+        setGroundMoveStateFromAI(0);
+        this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), sitProgress));
+    }
+
+    @Override
+    protected void onSleepSitDownAnimation() {
+        animationController.triggerSitDownAnimation();
         setOrderedToSit(true);
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        sleepTransitionTicks = getSleepWakeUpDuration();
+    }
+
+    @Override
+    protected void onSleepFallAsleepAnimation() {
+        animationController.triggerFallAsleepAnimation();
+    }
+
+    @Override
+    protected void onSleepLoopAnimation() {
+        animationController.triggerSleepAnimation();
+    }
+
+    @Override
+    protected void onSleepWakeUpAnimation() {
         animationController.triggerWakeUpAnimation();
+        setOrderedToSit(true);
+    }
+
+    @Override
+    protected void onSleepSitUpAnimation() {
+        animationController.triggerSitUpAnimation();
+        setOrderedToSit(false);
+    }
+
+    @Override
+    protected void onSleepExitSeated() {
+        setOrderedToSit(true);
+        this.sitProgress = Math.max(this.sitProgress, maxSitTicks());
+        this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
+        setGroundMoveStateFromAI(0);
+    }
+
+    @Override
+    protected void onSleepExitStarted() {
+        setOrderedToSit(true);
     }
 
     @Override
@@ -966,19 +975,23 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     }
 
     // Sleep animation durations (ticks)
-    public int getSleepSitDownDuration() {
+    @Override
+    protected int getSleepSitDownDuration() {
         return 38;
     }
 
-    public int getSleepSitUpDuration() {
+    @Override
+    protected int getSleepSitUpDuration() {
         return 38;
     }
 
-    public int getSleepFallAsleepDuration() {
+    @Override
+    protected int getSleepFallAsleepDuration() {
         return 38;
     }
 
-    public int getSleepWakeUpDuration() {
+    @Override
+    protected int getSleepWakeUpDuration() {
         return 38;
     }
 
@@ -999,7 +1012,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             return;
         }
         // During sleep transitions, dedicated logic drives the sit clips
-        if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) {
+        if (isSleeping() || isSleepTransitioning()) {
             return;
         }
         if (sitting) {
@@ -1047,11 +1060,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             grumbleCooldown--;
         }
 
-        // Handle sleep transitions and trigger animations (server-side only)
-        if (!level().isClientSide) {
-            tickSleepTransitions();
-        }
-
         // Handle sit progress animation
         if (!level().isClientSide) {
             if (this.isOrderedToSit()) {
@@ -1073,127 +1081,9 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         }
     }
 
-    private void freezeDuringSleepChain() {
-        this.getNavigation().stop();
-        this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
-        this.setOrderedToSit(true);
-        setGroundMoveStateFromAI(0);
-        this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), sitProgress));
-    }
-
     private boolean shouldStaySeatedCommand() {
         return this.isTame() && this.getCommand() == 1;
     }
-
-    /**
-     * Handles the sleep animation chain (sit_down -> fall_asleep -> sleep -> wake_up -> sit_up).
-     * Mirrors the Raevyx ticking flow to keep transitions deterministic across reloads.
-     */
-    private void tickSleepTransitions() {
-        if (level().isClientSide) {
-            return;
-        }
-
-        // Hard-freeze movement so no other controller competes with sleep clips
-        if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) {
-            freezeDuringSleepChain();
-        }
-
-        // Entering sleep: wait for sit_down to finish, then play fall_asleep and lock into sleep loop
-        if (sleepingEntering) {
-            if (!sleepFallAsleepTriggered) {
-                if (sleepTransitionTicks > 0) {
-                    sleepTransitionTicks--;
-                    if (sleepTransitionTicks > 0) {
-                        return;
-                    }
-                }
-
-                // If commanded to sit (or already seated), skip sit_down dependency
-                boolean seatedEnough = isOrderedToSit() || shouldStaySeatedCommand() || getSitProgress() >= maxSitTicks();
-                if (seatedEnough) {
-                    sleepFallAsleepTriggered = true;
-                    sleepTransitionTicks = getSleepFallAsleepDuration();
-                    animationController.triggerFallAsleepAnimation();
-                    return;
-                }
-
-                // Clamp to recheck next tick
-                sleepTransitionTicks = 1;
-                return;
-            }
-
-            if (sleepTransitionTicks > 0) {
-                sleepTransitionTicks--;
-                if (sleepTransitionTicks > 0) {
-                    return;
-                }
-            }
-
-            // fall_asleep finished
-            sleeping = true;
-            sleepingEntering = false;
-            sleepTransitioning = false;
-            sleepFallAsleepTriggered = false;
-            this.entityData.set(DATA_SLEEPING_ENTERING, false);
-            this.entityData.set(DATA_SLEEPING, true);
-            animationController.triggerSleepAnimation();
-            return;
-        }
-
-        // Exiting sleep: finish wake_up timer, then sit_up before clearing flags
-        if (sleepingExiting) {
-            if (!sleepSitUpTriggered) {
-                if (sleepTransitionTicks > 0) {
-                    sleepTransitionTicks--;
-                    if (sleepTransitionTicks > 0) {
-                        return;
-                    }
-                }
-
-                // If owner commanded sit, stop at sit pose after wake_up (no stand-up)
-                if (shouldStaySeatedCommand()) {
-                    sleeping = false;
-                    sleepingExiting = false;
-                    sleepTransitioning = false;
-                    sleepSitUpTriggered = false;
-                    this.entityData.set(DATA_SLEEPING_EXITING, false);
-                    this.entityData.set(DATA_SLEEPING, false);
-                    setOrderedToSit(true);
-                    this.sitProgress = Math.max(this.sitProgress, maxSitTicks());
-                    this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
-                    setGroundMoveStateFromAI(0);
-                    return;
-                }
-
-                sleepSitUpTriggered = true;
-                sleepTransitionTicks = getSleepSitUpDuration();
-                animationController.triggerSitUpAnimation();
-                setOrderedToSit(false);
-                return;
-            }
-
-            if (sleepTransitionTicks > 0) {
-                sleepTransitionTicks--;
-                if (sleepTransitionTicks > 0) {
-                    return;
-                }
-            }
-
-            sleeping = false;
-            sleepingExiting = false;
-            sleepTransitioning = false;
-            sleepSitUpTriggered = false;
-            this.entityData.set(DATA_SLEEPING_EXITING, false);
-            this.entityData.set(DATA_SLEEPING, false);
-            // Hard reset sit state so we don't snap back to sit after standing
-            this.sitProgress = 0f;
-            this.entityData.set(DATA_SIT_PROGRESS, 0f);
-            this.setOrderedToSit(false);
-            setGroundMoveStateFromAI(0);
-        }
-    }
-
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
     public boolean isClientAnimationReady() {
         return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;

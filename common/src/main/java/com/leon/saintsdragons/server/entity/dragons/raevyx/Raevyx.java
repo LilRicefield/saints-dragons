@@ -231,18 +231,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public static final EntityDataAccessor<Boolean> DATA_LAST_DASH_RIGHT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
-    /** Entity data accessor for sleeping state */
-    public static final EntityDataAccessor<Boolean> DATA_SLEEPING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
-    /** Entity data accessor for sleep enter transition state */
-    public static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
-    /** Entity data accessor for sleep exit transition state */
-    public static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
     /** Entity data accessor for feeding cooldown ticks */
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
@@ -425,20 +413,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private boolean isSittingDown = false; // True during "down" animation (93 ticks)
     private boolean isStandingUp = false;  // True during "up" animation (23 ticks)
 
-    // Sleep transition state
-    // Sleep transition states now synced via entity data (DATA_SLEEPING_ENTERING, DATA_SLEEPING_EXITING)
-    // Removed public boolean fields in favor of synced entity data
-    private int sleepTransitionTicks = 0;
-    // Tiny ambient resume buffer after exit completes
-    private int sleepAmbientCooldownTicks = 0;
-    // Re-entry suppression after aggression/damage to prevent instant resleep
-    private int sleepReentryCooldownTicks = 0;
-    // Hard-stop flag to kill sleep clips immediately across ticks
-    private int sleepCancelTicks = 0;
-    private boolean sleepFallAsleepTriggered = false;
-    private boolean sleepSitUpTriggered = false;
-    private boolean sleepLocked = false;
-    private int sleepCommandSnapshot = -1;
 
     private int followFailsafeCooldown = 0;
     private int postStandUnlockTicks = 0;
@@ -677,8 +651,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_BEAM_GLOW, false);
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_BEAM_END_SET, false);
         this.entityData.define(DATA_BEAM_END_X, 0f);
         this.entityData.define(DATA_BEAM_END_Y, 0f);
@@ -687,7 +659,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.define(DATA_BEAM_START_X, 0f);
         this.entityData.define(DATA_BEAM_START_Y, 0f);
         this.entityData.define(DATA_BEAM_START_Z, 0f);
-        this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
@@ -858,72 +829,53 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     @Override
-    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
-        if (action == null) {
-            return;
+    protected void onRiderTakeoffRequest(Player player) {
+        requestRiderTakeoff();
+    }
+
+    @Override
+    protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            useRidingAbility(abilityName);
         }
-        switch (action) {
-            case TAKEOFF_REQUEST -> {
-                if (!locked) {
-                    requestRiderTakeoff();
-                }
+    }
+
+    @Override
+    protected void onRiderAbilityStop(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            var active = getActiveAbility();
+            if (active != null) {
+                forceEndActiveAbility();
             }
-            case ACCELERATE -> {
-                if (!locked) {
-                    setAccelerating(true);
-                }
-            }
-            case STOP_ACCELERATE -> setAccelerating(false);
-            case ABILITY_USE -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    useRidingAbility(abilityName);
-                }
-            }
-            case ABILITY_STOP -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    var active = getActiveAbility();
-                    if (active != null) {
-                        forceEndActiveAbility();
-                    }
-                }
-            }
-            case TOGGLE_MELEE -> {
-                if (!locked) {
-                    toggleMeleeMode();
-                }
-            }
-            case TOGGLE_PITCH_MODE -> {
-                if (!locked) {
-                    setRiderPitchKeyMode(!isRiderPitchKeyMode());
-                }
-            }
-            case DOUBLE_TAP_A -> {
-                if (!locked) {
-                    onRiderDodge(player, true);
-                }
-            }
-            case DOUBLE_TAP_D -> {
-                if (!locked) {
-                    onRiderDodge(player, false);
-                }
+        }
+    }
+
+    @Override
+    protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
+                                              String abilityName, boolean locked) {
+        if (locked) {
+            return false; // Don't handle custom actions when locked
+        }
+
+        return switch (action) {
+            case TAUNT -> {
+                triggerAnim("action", "taunt");
+                yield true; // We handled it
             }
             case DOUBLE_TAP_W -> {
-                if (!locked) {
-                    onRiderDash(player);
-                }
+                onRiderDash(player);
+                yield true;
             }
             case DOUBLE_TAP_S -> {
-                if (!locked) {
-                    onRiderBackwardDodge(player);
-                }
+                onRiderBackwardDodge(player);
+                yield true;
             }
-            case TAUNT -> {
-                if (!locked) {
-                    triggerAnim("action", "taunt");
-                }
+            case TOGGLE_PITCH_MODE -> {
+                setRiderPitchKeyMode(!isRiderPitchKeyMode());
+                yield true;
             }
-            default -> { }
-        }
+            default -> false; // Not our action, let base handler try
+        };
     }
 
 
@@ -1986,8 +1938,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         tamingController.tickServer();
-        tickSleepTransition();
-        tickSleepCooldowns();
         handleAmbientSounds();
         tickBeamEnergy(); // Regenerate beam energy when not beaming
         if (isFlying() || isTakeoff()) {
@@ -2869,75 +2819,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
     }
     
-    private void tickSleepTransition() {
-        // Handle sleep enter transition: down -> sit -> fall_asleep -> sleep loop
-        if (isSleepingEntering() && !level().isClientSide) {
-            if (!sleepFallAsleepTriggered) {
-                // Wait until sit_down completes before starting fall_asleep
-                if (getSitProgress() >= maxSitTicks()) {
-                    sleepFallAsleepTriggered = true;
-                    sleepTransitionTicks = getFallAsleepAnimationTicks();
-                    animationHandler.triggerFallAsleepAnimation();
-                } else {
-                    // Hold timer steady while sitting down
-                    sleepTransitionTicks = getFallAsleepAnimationTicks();
-                    return;
-                }
-            }
-        }
-
-        if (sleepTransitionTicks > 0) {
-            sleepTransitionTicks--;
-            if (sleepTransitionTicks == 0) {
-                if (isSleepingEntering()) {
-                    // fall_asleep finished: mark sleeping and trigger loop animation
-                    setSleeping(true);
-                    setSleepingEntering(false);
-                    animationHandler.triggerSleepAnimation();
-                } else if (isSleepingExiting()) {
-                    // wake_up finished: now play sit_up, then release
-                    if (!sleepSitUpTriggered) {
-                        // If owner commanded sit, stop at sit after wake_up (no stand-up)
-                        if (shouldStaySeatedCommand()) {
-                            setSleeping(false);
-                            sleepSitUpTriggered = false;
-                            setSleepingExiting(false);
-                            sleepTransitionTicks = 0;
-                            sleepAmbientCooldownTicks = 10;
-                            setOrderedToSit(true);
-                            this.entityData.set(DATA_SIT_PROGRESS, maxSitTicks());
-                            if (!level().isClientSide) {
-                                releaseSleepLock();
-                            }
-                            return;
-                        }
-
-                        sleepSitUpTriggered = true;
-                        sleepTransitionTicks = getSleepSitUpDuration();
-                        animationHandler.triggerSitUpAnimation();
-                        // Allow stand-up by clearing sit lock
-                        setOrderedToSit(false);
-                    } else {
-                        // sit_up finished
-                        setSleeping(false);
-                        sleepSitUpTriggered = false;
-                        setSleepingExiting(false);
-                        sleepAmbientCooldownTicks = 10;
-                        if (!level().isClientSide) {
-                            releaseSleepLock();
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    private void tickSleepCooldowns() {
-        if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
-        if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
-        if (sleepCancelTicks > 0) sleepCancelTicks--;
-    }
-
     private void tickFeedingCooldown() {
         if (level().isClientSide) {
             return;
@@ -3212,7 +3093,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
      */
     private void handleAmbientSounds() {
         // Suppress ambient sounds during transitions to prevent animation snapping
-        if (isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0 || areRiderControlsLocked()) return;
+        if (isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || getSleepAmbientCooldownTicks() > 0 || areRiderControlsLocked()) return;
         ambientSoundTimer++;
 
         // Time to make some noise?
@@ -3844,10 +3725,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return 53; // 2.625s for both baby and adult (unified, ~2.65s)
     }
 
-    public int getSleepSitUpDuration() {
-        return getSitUpAnimationTicks();
-    }
-
     @Override
     public float maxSitTicks() {
         return 30.0F; // Matches sit_down animation (1.5s = 30 ticks)
@@ -3855,47 +3732,78 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     // ===== SLEEPING =====
     @Override
+    public boolean supportsSleep() {
+        return true;
+    }
+
+    @Override
     public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
         // Raevyx are daylight sleepers (avoid thunderstorms)
         return DragonSleepBehavior.DragonSleepPreferences.DIURNAL();
     }
 
     @Override
-    public boolean isSleeping() {
-        return getBooleanData(DATA_SLEEPING);
-    }
-    public void setSleeping(boolean sleeping) {
-        setBooleanData(DATA_SLEEPING, sleeping);
-    }
-    public boolean isSleepTransitioning() {
-        return isSleepingEntering() || isSleepingExiting();
+    protected boolean useSleepSitDownTimer() {
+        return true;
     }
 
-    public boolean isSleepingEntering() {
-        return getBooleanData(DATA_SLEEPING_ENTERING);
+    @Override
+    protected boolean requireSeatedBeforeFallAsleep() {
+        return true;
     }
 
-    public void setSleepingEntering(boolean entering) {
-        setBooleanData(DATA_SLEEPING_ENTERING, entering);
+    @Override
+    protected boolean sleepForceSitDownOnEnter() {
+        return true;
     }
 
-    public boolean isSleepingExiting() {
-        return getBooleanData(DATA_SLEEPING_EXITING);
+    @Override
+    protected int getSleepSitDownDuration() {
+        return getSitDownAnimationTicks();
     }
 
-    public void setSleepingExiting(boolean exiting) {
-        setBooleanData(DATA_SLEEPING_EXITING, exiting);
-    }
-    public boolean isSleepLocked() {
-        return sleepLocked || isSleeping() || isSleepingEntering() || isSleepingExiting();
+    @Override
+    protected int getSleepFallAsleepDuration() {
+        return getFallAsleepAnimationTicks();
     }
 
-    private void enterSleepLock() {
-        int snapshot = this.getCommand();
-        if (!sleepLocked) {
-            sleepLocked = true;
-            sleepCommandSnapshot = snapshot;
-        }
+    @Override
+    protected int getSleepWakeUpDuration() {
+        return getWakeUpAnimationTicks();
+    }
+
+    @Override
+    protected int getSleepSitUpDuration() {
+        return getSitUpAnimationTicks();
+    }
+
+    @Override
+    protected int getSleepExitSuppressionTicks() {
+        return 20;
+    }
+
+    @Override
+    protected int getSleepWakeUpSuppressionTicks() {
+        return 20;
+    }
+
+    @Override
+    protected boolean isAlreadySeatedForSleep() {
+        return getSitProgress() >= maxSitTicks() || shouldStaySeatedCommand();
+    }
+
+    @Override
+    protected boolean shouldStaySeatedAfterWake() {
+        return shouldStaySeatedCommand();
+    }
+
+    @Override
+    public boolean isSleepSuppressed() {
+        return super.isSleepSuppressed() || isTamingStunned();
+    }
+
+    @Override
+    protected void onSleepLockCommand(int snapshot) {
         if (snapshot == 1) {
             this.setCommandManual(1);
         } else {
@@ -3913,89 +3821,74 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.setHovering(false);
     }
 
-    private void releaseSleepLock() {
-        if (sleepLocked) {
-            int desired = sleepCommandSnapshot;
-            sleepCommandSnapshot = -1;
-            sleepLocked = false;
-            if (desired == 1) {
-                this.setCommandManual(1);
-                this.setOrderedToSit(true);
-            } else {
-                this.setCommandAuto(desired);
-                this.setOrderedToSit(false);
-            }
+    @Override
+    protected void onSleepUnlockCommand(int desired) {
+        if (desired == 1) {
+            this.setCommandManual(1);
+            this.setOrderedToSit(true);
+        } else {
+            this.setCommandAuto(desired);
+            this.setOrderedToSit(false);
         }
         this.getNavigation().stop();
         this.setRunning(false);
         this.setGroundMoveStateFromAI(0);
     }
 
-    public void startSleepEnter() {
-        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
-        setSleepingEntering(true);
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        // New system: sit_down (uses sitProgress) → fall_asleep → sleep loop
-        boolean alreadySitting = isOrderedToSit() || getSitProgress() >= maxSitTicks() || shouldStaySeatedCommand();
-        if (alreadySitting) {
-            sleepTransitionTicks = getFallAsleepAnimationTicks();
-            sleepFallAsleepTriggered = true;
-            animationHandler.triggerFallAsleepAnimation();
-            this.setOrderedToSit(true);
-            if (!level().isClientSide) {
-                enterSleepLock();
-            }
-        } else {
-            sleepTransitionTicks = getFallAsleepAnimationTicks();
-            // Trigger sit_down animation first (handled by sit progress system)
-            animationHandler.triggerSitDownAnimation();
-            if (!level().isClientSide) {
-                enterSleepLock();
-            }
-        }
+    @Override
+    protected void onSleepFreezeTick() {
+        this.getNavigation().stop();
+        this.setTarget(null);
+        this.setRunning(false);
+        this.setGroundMoveStateFromAI(0);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.setFlying(false);
+        this.setLanding(false);
+        this.setTakeoff(false);
+        this.setHovering(false);
     }
 
-    public void startSleepExit() {
-        if ((!isSleeping() && !isSleepingEntering()) || isSleepingExiting()) return;
-        // Keep sleeping flag true through wake_up so the controller stays in sleep pose until the animation plays
-        setSleepingEntering(false);
-        setSleepingExiting(true);
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        // New system: wake_up → sit (brief) → sit_up
-        sleepTransitionTicks = getWakeUpAnimationTicks();
-        // Trigger wake_up animation
+    @Override
+    protected void onSleepSitDownAnimation() {
+        animationHandler.triggerSitDownAnimation();
+    }
+
+    @Override
+    protected void onSleepFallAsleepAnimation() {
+        animationHandler.triggerFallAsleepAnimation();
+    }
+
+    @Override
+    protected void onSleepLoopAnimation() {
+        animationHandler.triggerSleepAnimation();
+    }
+
+    @Override
+    protected void onSleepWakeUpAnimation() {
         animationHandler.triggerWakeUpAnimation();
-        setOrderedToSit(true); // hold sit while wake_up plays
-        if (!level().isClientSide) {
-            suppressSleep(20);
-            // releaseSleepLock is deferred until sit_up completes to avoid early stand-up
-        }
+        setOrderedToSit(true);
     }
 
-    public void wakeUpImmediately() {
-        this.entityData.set(DATA_SLEEPING, false);
-        setSleepingEntering(false);
-        setSleepingExiting(false);
-        sleepTransitionTicks = 0;
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        sleepCancelTicks = 2;
-        // Clear sitting state so dragon can move/fight immediately
+    @Override
+    protected void onSleepSitUpAnimation() {
+        animationHandler.triggerSitUpAnimation();
         setOrderedToSit(false);
-        if (!level().isClientSide) {
-            suppressSleep(20);
-            releaseSleepLock();
-        }
-        this.entityData.set(DATA_SLEEPING, false);
     }
 
-    public void suppressSleep(int ticks) {
-        sleepReentryCooldownTicks = Math.max(sleepReentryCooldownTicks, ticks);
+    @Override
+    protected void onSleepExitSeated() {
+        setOrderedToSit(true);
+        this.entityData.set(DATA_SIT_PROGRESS, maxSitTicks());
     }
-    public boolean isSleepSuppressed() {
-        return sleepReentryCooldownTicks > 0 || isTamingStunned();
+
+    @Override
+    protected void onSleepExitStarted() {
+        setOrderedToSit(true);
+    }
+
+    @Override
+    protected void onSleepWakeUpImmediate() {
+        setOrderedToSit(false);
     }
 
     // ===== INTERACTION =====
@@ -4212,8 +4105,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             this.isSittingDown = false;
             this.isStandingUp = false;
             this.sitTransitionTicks = 0;
-            this.sleepReentryCooldownTicks = 0;
-            this.sleepAmbientCooldownTicks = 0;
+            clearSleepCooldowns();
         }
 
         // Apply config attributes when loading from NBT (Forge fix)
@@ -4264,8 +4156,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.combatManager.clearAllStates();
         
         // Clear any sleep suppression (fresh start)
-        this.sleepReentryCooldownTicks = 0;
-        this.sleepAmbientCooldownTicks = 0;
+        clearSleepCooldowns();
     }
 
     // ===== GECKOLIB =====

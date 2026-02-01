@@ -114,12 +114,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_GOING_UP = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
-            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
-            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
-            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
 
     /** Entity data accessor for feeding cooldown ticks */
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
@@ -166,13 +160,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private boolean isSittingDown = false;
     private boolean isStandingUp = false;
     private int sitTransitionTicks = 0;
-    private int sleepTransitionTicks = 0;
-    private int sleepAmbientCooldownTicks = 0;
-    private int sleepReentryCooldownTicks = 0;
-    private int sleepCancelTicks = 0;
-    private boolean sleepLocked = false;
-    private boolean sleepSitUpTriggered = false;
-    private int sleepCommandSnapshot = -1;
     private boolean wasVehicleLastTick = false;
     private static final int PHASE_TWO_LINGER_TICKS = 20 * 30;
     private int phaseTwoLingerTicks = 0;
@@ -347,41 +334,42 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     }
 
     @Override
-    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
-        if (locked || action == null) {
-            return;
+    protected void onRiderTakeoffRequest(Player player) {
+        handleJumpRequest(); // Nulljaw is ground/aquatic, no flight takeoff
+    }
+
+    @Override
+    protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            useRidingAbility(abilityName);
         }
-        switch (action) {
-            case TAKEOFF_REQUEST -> handleJumpRequest();
-            case ACCELERATE -> setAccelerating(true);
-            case STOP_ACCELERATE -> setAccelerating(false);
-            case ABILITY_USE -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    useRidingAbility(abilityName);
-                }
-            }
-            case ABILITY_STOP -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    forceEndActiveAbility();
-                }
-            }
-            case TOGGLE_MELEE -> {
-                if (!locked) {
-                    toggleMeleeMode();
-                }
-            }
+    }
+
+    @Override
+    protected void onRiderAbilityStop(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            forceEndActiveAbility();
+        }
+    }
+
+    @Override
+    protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
+                                              String abilityName, boolean locked) {
+        if (locked) {
+            return false;
+        }
+
+        return switch (action) {
             case TOGGLE_PITCH_MODE -> {
-                if (!locked) {
-                    setRiderPitchKeyMode(!isRiderPitchKeyMode());
-                }
+                setRiderPitchKeyMode(!isRiderPitchKeyMode());
+                yield true;
             }
             case DOUBLE_TAP_W -> {
-                if (!locked) {
-                    onRiderDash(player);
-                }
+                onRiderDash(player);
+                yield true;
             }
-            default -> { }
-        }
+            default -> false;
+        };
     }
 
     @Override
@@ -537,9 +525,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_PHASE_TWO, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
     
@@ -725,7 +710,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private void handleAmbientSounds() {
         // Suppress ambient sounds while transitioning or resting to prevent animation snapping
         // Also suppress during rider control lock (leap, abilities, etc.)
-        if (isBaby() || isDying() || isOrderedToSit() || isSleeping() || isSleepTransitioning() || isInSitTransition() || sleepAmbientCooldownTicks > 0 || areRiderControlsLocked()) {
+        if (isBaby() || isDying() || isOrderedToSit() || isSleeping() || isSleepTransitioning() || isInSitTransition() || getSleepAmbientCooldownTicks() > 0 || areRiderControlsLocked()) {
             return;
         }
 
@@ -761,8 +746,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         tickMountedState();
         tickScreenShake();
         updateSittingProgress();
-        tickSleepTransition();
-        tickSleepCooldowns();
         tickFeedingCooldown();
 
         // Handle ambient sounds (server-side only)
@@ -2204,78 +2187,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         }
     }
 
-    private void tickSleepTransition() {
-        // Handle sleep enter transition: sit_down → fall_asleep → sleep loop
-        if (isSleepingEntering() && !level().isClientSide) {
-            // Hold timer steady until sit_down fully completes
-            if (getSitProgress() < maxSitTicks()) {
-                sleepTransitionTicks = getFallAsleepAnimationTicks();
-                return;
-            }
-
-            // Sit down complete, now trigger fall_asleep if we haven't started the transition timer yet
-            if (sleepTransitionTicks == getFallAsleepAnimationTicks()) {
-                animationHandler.triggerFallAsleepAnimation();
-            }
-        }
-
-        if (sleepTransitionTicks > 0) {
-            sleepTransitionTicks--;
-
-            // Trigger sleep animation 3 ticks BEFORE fall_asleep finishes for smooth blend
-            if (sleepTransitionTicks == 3 && isSleepingEntering() && !level().isClientSide) {
-                animationHandler.triggerSleepAnimation();
-            }
-
-            if (sleepTransitionTicks == 0) {
-                if (isSleepingEntering()) {
-                    // fall_asleep animation finishing - mark as sleeping (animation already triggered)
-                    setSleeping(true);
-                    setSleepingEntering(false);
-                } else if (isSleepingExiting()) {
-                    // wake_up finished: now play sit_up, then release
-                    if (!sleepSitUpTriggered) {
-                        // If commanded to sit, stop at sit after wake_up (no stand-up)
-                        if (isOrderedToSit() || getCommand() == 1) {
-                            setSleeping(false);
-                            sleepSitUpTriggered = false;
-                            setSleepingExiting(false);
-                            sleepTransitionTicks = 0;
-                            sleepAmbientCooldownTicks = Math.max(sleepAmbientCooldownTicks, 10);
-                            // Ensure sit pose is locked in
-                            this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), maxSitTicks()));
-                            if (!level().isClientSide) {
-                                releaseSleepLock();
-                            }
-                            return;
-                        }
-
-                        sleepSitUpTriggered = true;
-                        sleepTransitionTicks = getSitUpAnimationTicks();
-                        animationHandler.triggerSitUpAnimation();
-                        // Allow stand-up by clearing sit lock
-                        setOrderedToSit(false);
-                        return;
-                    } else {
-                        // sit_up finished
-                        setSleeping(false);
-                        sleepSitUpTriggered = false;
-                        setSleepingExiting(false);
-                        sleepAmbientCooldownTicks = Math.max(sleepAmbientCooldownTicks, 10);
-                        if (!level().isClientSide) {
-                            releaseSleepLock();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void tickSleepCooldowns() {
-        if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
-        if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
-        if (sleepCancelTicks > 0) sleepCancelTicks--;
-    }
 
     private void tickFeedingCooldown() {
         int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
@@ -2364,128 +2275,122 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     // ===== SLEEP SYSTEM =====
 
     @Override
-    public boolean isSleeping() {
-        return this.entityData.get(DATA_SLEEPING);
-    }
-
-    public void setSleeping(boolean sleeping) {
-        this.entityData.set(DATA_SLEEPING, sleeping);
+    public boolean supportsSleep() {
+        return true;
     }
 
     @Override
-    public boolean isSleepTransitioning() {
-        return isSleepingEntering() || isSleepingExiting();
+    protected boolean useSleepSitDownTimer() {
+        return true;
     }
 
-    public boolean isSleepingEntering() {
-        return this.entityData.get(DATA_SLEEPING_ENTERING);
+    @Override
+    protected boolean requireSeatedBeforeFallAsleep() {
+        return true;
     }
 
-    public void setSleepingEntering(boolean entering) {
-        this.entityData.set(DATA_SLEEPING_ENTERING, entering);
+    @Override
+    protected boolean sleepForceSitDownOnEnter() {
+        return true;
     }
 
-    public boolean isSleepingExiting() {
-        return this.entityData.get(DATA_SLEEPING_EXITING);
+    @Override
+    protected int getSleepSitDownDuration() {
+        return getSitDownAnimationTicks();
     }
 
-    public void setSleepingExiting(boolean exiting) {
-        this.entityData.set(DATA_SLEEPING_EXITING, exiting);
+    @Override
+    protected int getSleepFallAsleepDuration() {
+        return getFallAsleepAnimationTicks();
     }
 
-    public boolean isSleepLocked() {
-        return sleepLocked || isSleeping() || isSleepingEntering() || isSleepingExiting();
+    @Override
+    protected int getSleepWakeUpDuration() {
+        return getWakeUpAnimationTicks();
     }
 
-    private void enterSleepLock() {
+    @Override
+    protected int getSleepSitUpDuration() {
+        return getSitUpAnimationTicks();
+    }
+
+    @Override
+    protected int getSleepLoopLeadTicks() {
+        return 3;
+    }
+
+    @Override
+    protected void onSleepLockCommand(int snapshot) {
         if (level().isClientSide) {
             return;
-        }
-        if (!sleepLocked) {
-            sleepLocked = true;
-            sleepCommandSnapshot = this.getCommand();
         }
         this.setOrderedToSit(true);
         this.getNavigation().stop();
         this.setTarget(null);
         this.setDeltaMovement(Vec3.ZERO);
+        this.setRunning(false);
+        setGroundMoveStateFromAI(0);
         if (this.getCommand() != 1) {
             this.setCommand(1);
         }
     }
 
-    private void releaseSleepLock() {
+    @Override
+    protected void onSleepUnlockCommand(int desired) {
         if (level().isClientSide) {
             return;
         }
-        if (sleepLocked) {
-            int desired = sleepCommandSnapshot;
-            sleepCommandSnapshot = -1;
-            sleepLocked = false;
-            if (desired >= 0 && desired != this.getCommand()) {
-                this.setCommand(desired);
-                this.setOrderedToSit(desired == 1);
-            }
+        if (desired >= 0 && desired != this.getCommand()) {
+            this.setCommand(desired);
+            this.setOrderedToSit(desired == 1);
         }
     }
 
     @Override
-    public void startSleepEnter() {
-        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) return;
-        setSleepingEntering(true);
-        // Sleep enter: sit_down (uses sitProgress) → fall_asleep → sleep loop
-        boolean alreadySitting = isOrderedToSit() || getSitProgress() >= maxSitTicks();
-        if (alreadySitting) {
-            // Already sitting - trigger fall_asleep immediately
-            sleepTransitionTicks = getFallAsleepAnimationTicks();
-            animationHandler.triggerFallAsleepAnimation();
-            this.setOrderedToSit(true);
-            if (!level().isClientSide) {
-                enterSleepLock();
-            }
-        } else {
-            // Not sitting - trigger sit_down first
-            sleepTransitionTicks = getFallAsleepAnimationTicks();
-            animationHandler.triggerSitDownAnimation();
-            if (!level().isClientSide) {
-                enterSleepLock();
-            }
-        }
+    protected void onSleepFreezeTick() {
+        this.getNavigation().stop();
+        this.setDeltaMovement(Vec3.ZERO);
+        this.setRunning(false);
+        setGroundMoveStateFromAI(0);
     }
 
     @Override
-    public void startSleepExit() {
-        if ((!isSleeping() && !isSleepingEntering()) || isSleepingExiting()) return;
-        setSleepingEntering(false);
-        setSleepingExiting(true);
-        sleepSitUpTriggered = false;
-        sleepTransitionTicks = getWakeUpAnimationTicks();
+    protected void onSleepSitDownAnimation() {
+        animationHandler.triggerSitDownAnimation();
+    }
+
+    @Override
+    protected void onSleepFallAsleepAnimation() {
+        animationHandler.triggerFallAsleepAnimation();
+    }
+
+    @Override
+    protected void onSleepLoopAnimation() {
+        animationHandler.triggerSleepAnimation();
+    }
+
+    @Override
+    protected void onSleepWakeUpAnimation() {
         animationHandler.triggerWakeUpAnimation();
-        if (!level().isClientSide) {
-            suppressSleep(40);
-        }
-    }
-
-    public void wakeUpImmediately() {sleepAmbientCooldownTicks = Math.max(sleepAmbientCooldownTicks, 10);
-        this.entityData.set(DATA_SLEEPING, false);
-        setSleepingEntering(false);
-        setSleepingExiting(false);
-        sleepSitUpTriggered = false;
-        sleepTransitionTicks = 0;
-        sleepCancelTicks = 2;
-        if (!level().isClientSide) {
-            suppressSleep(40);
-            releaseSleepLock();
-        }
-    }
-
-    public void suppressSleep(int ticks) {
-        sleepReentryCooldownTicks = Math.max(sleepReentryCooldownTicks, ticks);
     }
 
     @Override
-    public boolean isSleepSuppressed() {
-        return sleepReentryCooldownTicks > 0;
+    protected void onSleepSitUpAnimation() {
+        animationHandler.triggerSitUpAnimation();
+        setOrderedToSit(false);
+    }
+
+    @Override
+    protected void onSleepExitSeated() {
+        this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), maxSitTicks()));
+    }
+
+    @Override
+    protected void onSleepExitStarted() {
+    }
+
+    @Override
+    protected void onSleepWakeUpImmediate() {
     }
 
     @Override
@@ -2547,10 +2452,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         tag.putBoolean("PhaseTwo", isPhaseTwoActive());
         tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
 
-        // Sleep state is ephemeral - not persisted (sleep goal re-evaluates on load)
-        tag.putInt("SleepCancelTicks", sleepCancelTicks);
-        tag.putInt("SleepCommandSnapshot", sleepCommandSnapshot);
-
         // Persist feeding cooldown (synced via entity data but saved for redundancy)
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
     }
@@ -2566,9 +2467,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
-
-        sleepCancelTicks = tag.getInt("SleepCancelTicks");
-        sleepCommandSnapshot = tag.contains("SleepCommandSnapshot") ? tag.getInt("SleepCommandSnapshot") : -1;
 
         // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
         // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
