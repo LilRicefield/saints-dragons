@@ -71,10 +71,8 @@ public class DragonSleepBehavior {
             if (dragon.getCommand() == 1) {
                 dragon.setCommand(0);
             }
-            if (dragon.sitProgress > 0f) {
-                dragon.sitProgress = 0f;
-                dragon.prevSitProgress = 0f;
-                dragon.getEntityData().set(DragonEntity.DATA_SIT_PROGRESS, 0f);
+            if (dragon.getSitProgress() > 0f || dragon.getPrevSitProgress() > 0f) {
+                dragon.clearSitProgress();
             }
         }
 

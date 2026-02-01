@@ -86,7 +86,7 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
 
     private void applyGroundNeckTurn(Stegonaut entity, float partialTick) {
         // Use yaw velocity to determine turn direction and magnitude
-        double velocity = entity.yawVelocity.get(partialTick);
+        double velocity = entity.getYawVelocity().get(partialTick);
 
         // Clamp to prevent excessive rotation
         velocity = Mth.clamp(velocity, -25.0, 25.0);
@@ -108,7 +108,7 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         }
         GeoBone root = rootOpt.get();
         var snap = root.getInitialSnapshot();
-        double deviation = entity.bodyRotDeviation.get(partialTick);
+        double deviation = entity.getBodyRotDeviation().get(partialTick);
         float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
 
         root.setRotY(snap.getRotY() - deviationRad);
@@ -116,7 +116,7 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
 
 
     private void applyTailDrag(Stegonaut entity, float partialTick) {
-        double velocity = entity.yawVelocity.get(partialTick);
+        double velocity = entity.getYawVelocity().get(partialTick);
         velocity = Mth.clamp(velocity, -30.0, 30.0);
 
         float targetVelocity = (float) velocity;
@@ -144,7 +144,7 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
 
-        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+        double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
 

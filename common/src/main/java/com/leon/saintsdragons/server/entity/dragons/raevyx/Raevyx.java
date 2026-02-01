@@ -22,8 +22,6 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
@@ -420,6 +418,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
     private final RaevyxTamingHandler tamingController = new RaevyxTamingHandler(this);
     private int tamingAbortCalmTicks = 0;
+
+    @Override
+    protected boolean supportsRiderAction(DragonRiderAction action) {
+        return switch (action) {
+            case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
+                 TAUNT, TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+            default -> super.supportsRiderAction(action);
+        };
+    }
 
     public boolean canFeed() {
         int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
@@ -2019,11 +2026,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         super.aiStep();
 
         if (!this.level().isClientSide) {
-            // Clear sit progress if not sitting
-            if (!this.isOrderedToSit() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
-                this.entityData.set(DATA_SIT_PROGRESS, 0f);
-            }
-
             // Auto-complete landing once we're actually on ground (like Ignivorus)
             // This check is OUTSIDE isFlying() because FollowOwnerGoal sets flying=false before touchdown
             if (isLanding() && onGround()) {
@@ -2577,9 +2579,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private void tickClientSideUpdates() {
         // Update client-side sit progress and lerp beam end from synchronized data
         if (level().isClientSide) {
-            prevSitProgress = sitProgress;
-            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
-
             // Beam end/start lerp
             this.prevClientBeamEnd = this.clientBeamEnd;
             this.clientBeamEnd = getBeamEndPosition();
@@ -2625,6 +2624,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             }
         }
 
+        float sitProgress = getSitProgress();
         if (this.isOrderedToSit()) {
             // Trigger sit down animation when:
             // 1. Starting from standing (sitProgress == 0), OR
@@ -2638,7 +2638,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
             if (sitProgress < maxSitTicks()) {
                 sitProgress++;
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         } else {
             if (!this.level().isClientSide && super.isInSittingPose()) {
@@ -2647,9 +2647,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
             if (this.isVehicle()) {
                 if (sitProgress != 0f) {
-                    sitProgress = 0f;
-                    prevSitProgress = 0f;
-                    this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                    clearSitProgress();
                     // Cancel any ongoing transitions
                     isSittingDown = false;
                     isStandingUp = false;
@@ -2673,7 +2671,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 if (sitProgress < 0f) {
                     sitProgress = 0f;
                 }
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         }
     }
@@ -3878,7 +3876,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     protected void onSleepExitSeated() {
         setOrderedToSit(true);
-        this.entityData.set(DATA_SIT_PROGRESS, maxSitTicks());
+        setSitProgress(maxSitTicks());
     }
 
     @Override
@@ -4099,9 +4097,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             this.setCommandAuto(0);
             this.setOrderedToSit(false);
             this.setInSittingPose(false);
-            this.sitProgress = 0f;
-            this.prevSitProgress = 0f;
-            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            clearSitProgress();
             this.isSittingDown = false;
             this.isStandingUp = false;
             this.sitTransitionTicks = 0;

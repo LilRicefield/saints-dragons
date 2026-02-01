@@ -6,8 +6,12 @@ import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.component.DragonAnimationSyncComponent;
+import com.leon.saintsdragons.server.entity.component.DragonCommandComponent;
+import com.leon.saintsdragons.server.entity.component.DragonGenderComponent;
 import com.leon.saintsdragons.server.entity.component.DragonHappinessComponent;
 import com.leon.saintsdragons.server.entity.component.DragonHungerComponent;
+import com.leon.saintsdragons.server.entity.component.DragonSitComponent;
 import com.leon.saintsdragons.server.entity.component.DragonSleepComponent;
 import com.leon.saintsdragons.server.entity.controller.BodyControl;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
@@ -22,12 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -97,14 +99,28 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     // Ally manager for handling wyvern allies
     public final DragonAllyManager allyManager;
 
-    // Components for hunger, happiness, and sleep behavior
+    // Components for animation sync, commands, gender, hunger, happiness, sitting, and sleep behavior
+    @Nullable
+    private final DragonAnimationSyncComponent animationSyncComponent;
+    @Nullable
+    private final DragonCommandComponent commandComponent;
+    @Nullable
+    private final DragonGenderComponent genderComponent;
+    @Nullable
     private final DragonHungerComponent hungerComponent;
+    @Nullable
     private final DragonHappinessComponent happinessComponent;
+    @Nullable
+    private final DragonSitComponent sitComponent;
+    @Nullable
     private final DragonSleepComponent sleepComponent;
 
-    // Sit progress fields
-    public float sitProgress = 0f;
-    public float prevSitProgress = 0f;
+    private final com.leon.saintsdragons.util.math.SmoothValue fallbackBodyRotDeviation =
+            com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
+    private final com.leon.saintsdragons.util.math.SmoothValue fallbackPitchDeviation =
+            com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
+    private final com.leon.saintsdragons.util.math.SmoothValue fallbackYawVelocity =
+            com.leon.saintsdragons.util.math.SmoothValue.value(0.0);
 
     // Death sequence management
     private boolean dying = false;
@@ -114,26 +130,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private DamageSource killDataCause;
     private int killDataRecentlyHit;
     private Player killDataAttackingPlayer;
-    private boolean genderInitialized = false;
-
     // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
     private boolean isRespawning = false;
 
     // Flag to prevent respawn logic from triggering on newly spawned babies (from spawn eggs/breeding)
     public int skipRespawnTicks = 0;
-
-    // AstemirLib-style smooth rotation deviations (mirrored on both sides)
-    // Smooths the DELTA (how much rotation changed) not the absolute rotation
-    public final com.leon.saintsdragons.util.math.SmoothValue bodyRotDeviation =
-            com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
-    public final com.leon.saintsdragons.util.math.SmoothValue xRotDeviation =
-            com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
-    // Yaw velocity for tail drag (works for both wild and ridden)
-    public final com.leon.saintsdragons.util.math.SmoothValue yawVelocity =
-            com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
-
-    // Client-only visual smoothing caches (avoid renderer singleton state bleed)
-    private float clientTailDragVelocity = 0f;
 
     // Store reference to our custom body control for server-side rotation updates
     private BodyControl dragonBodyControl;
@@ -142,11 +143,50 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         super(entityType, level);
         this.combatManager = new DragonCombatHandler(this);
         this.allyManager = new DragonAllyManager(this);
-        this.hungerComponent = new DragonHungerComponent(this);
-        this.happinessComponent = new DragonHappinessComponent(this, DATA_HAPPINESS);
-        this.sleepComponent = new DragonSleepComponent(this, DATA_SLEEPING, DATA_SLEEPING_ENTERING, DATA_SLEEPING_EXITING);
+        this.commandComponent = createCommandComponent();
+        this.genderComponent = createGenderComponent();
+        this.hungerComponent = createHungerComponent();
+        this.happinessComponent = createHappinessComponent();
+        this.sleepComponent = createSleepComponent();
+        this.animationSyncComponent = createAnimationSyncComponent();
+        this.sitComponent = createSitComponent();
         // Set custom look control (lookControl field is protected in Mob)
         this.lookControl = new com.leon.saintsdragons.server.entity.controller.DragonLookControl<>(this);
+    }
+
+    @Nullable
+    protected DragonCommandComponent createCommandComponent() {
+        return new DragonCommandComponent(this, DATA_COMMAND);
+    }
+
+    @Nullable
+    protected DragonGenderComponent createGenderComponent() {
+        return new DragonGenderComponent(this, DATA_GENDER);
+    }
+
+    @Nullable
+    protected DragonHungerComponent createHungerComponent() {
+        return new DragonHungerComponent(this);
+    }
+
+    @Nullable
+    protected DragonHappinessComponent createHappinessComponent() {
+        return new DragonHappinessComponent(this, DATA_HAPPINESS);
+    }
+
+    @Nullable
+    protected DragonSleepComponent createSleepComponent() {
+        return new DragonSleepComponent(this, DATA_SLEEPING, DATA_SLEEPING_ENTERING, DATA_SLEEPING_EXITING);
+    }
+
+    @Nullable
+    protected DragonAnimationSyncComponent createAnimationSyncComponent() {
+        return new DragonAnimationSyncComponent(this, DATA_BODY_DEVIATION, DATA_PITCH_DEVIATION, DATA_YAW_VELOCITY);
+    }
+
+    @Nullable
+    protected DragonSitComponent createSitComponent() {
+        return new DragonSitComponent(this, DATA_SIT_PROGRESS);
     }
 
     @Override
@@ -192,93 +232,145 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Smooths tail drag velocity per entity on the client, preventing renderer-wide leakage.
      */
     public float smoothTailDragVelocity(float targetDegrees) {
-        this.clientTailDragVelocity = Mth.lerp(0.15f, this.clientTailDragVelocity, targetDegrees);
-        return this.clientTailDragVelocity;
+        if (animationSyncComponent == null) {
+            return targetDegrees;
+        }
+        return animationSyncComponent.smoothTailDragVelocity(targetDegrees);
     }
 
     /**
      * Resets the cached tail drag smoothing value (e.g., when the entity respawns).
      */
     public void resetTailDragVelocity() {
-        this.clientTailDragVelocity = 0f;
+        if (animationSyncComponent != null) {
+            animationSyncComponent.resetTailDragVelocity();
+        }
+    }
+
+    public com.leon.saintsdragons.util.math.SmoothValue getBodyRotDeviation() {
+        if (animationSyncComponent == null) {
+            return fallbackBodyRotDeviation;
+        }
+        return animationSyncComponent.getBodyRotDeviation();
+    }
+
+    public com.leon.saintsdragons.util.math.SmoothValue getPitchDeviation() {
+        if (animationSyncComponent == null) {
+            return fallbackPitchDeviation;
+        }
+        return animationSyncComponent.getPitchDeviation();
+    }
+
+    public com.leon.saintsdragons.util.math.SmoothValue getYawVelocity() {
+        if (animationSyncComponent == null) {
+            return fallbackYawVelocity;
+        }
+        return animationSyncComponent.getYawVelocity();
     }
 
     public DragonGender getGender() {
-        return DragonGender.fromId(this.entityData.get(DATA_GENDER));
+        if (genderComponent == null) {
+            return DragonGender.MALE;
+        }
+        return genderComponent.getGender();
     }
 
     public void setGender(@Nullable DragonGender gender) {
-        DragonGender resolved = gender == null ? DragonGender.MALE : gender;
-        this.entityData.set(DATA_GENDER, resolved.getId());
-        this.genderInitialized = true;
+        if (genderComponent != null) {
+            genderComponent.setGender(gender);
+        }
     }
 
     public boolean isFemale() {
-        return getGender() == DragonGender.FEMALE;
+        return genderComponent != null && genderComponent.isFemale();
     }
 
     public void setFemale(boolean female) {
-        setGender(female ? DragonGender.FEMALE : DragonGender.MALE);
+        if (genderComponent != null) {
+            genderComponent.setFemale(female);
+        }
     }
 
     public int getHunger() {
+        if (hungerComponent == null) {
+            return HUNGER_MAX;
+        }
         return hungerComponent.getHunger();
     }
 
     public int getMaxHunger() {
+        if (hungerComponent == null) {
+            return HUNGER_MAX;
+        }
         return hungerComponent.getMaxHunger();
     }
 
     public boolean isHungry() {
-        return hungerComponent.isHungry();
+        return hungerComponent != null && hungerComponent.isHungry();
     }
 
     public int getHappiness() {
+        if (happinessComponent == null) {
+            return HAPPINESS_MAX;
+        }
         return happinessComponent.getHappiness();
     }
 
     public int getMaxHappiness() {
+        if (happinessComponent == null) {
+            return HAPPINESS_MAX;
+        }
         return happinessComponent.getMaxHappiness();
     }
 
     public void setHappiness(int happiness) {
-        happinessComponent.setHappiness(happiness);
+        if (happinessComponent != null) {
+            happinessComponent.setHappiness(happiness);
+        }
     }
 
     public void setHunger(int hunger) {
-        hungerComponent.setHunger(hunger);
+        if (hungerComponent != null) {
+            hungerComponent.setHunger(hunger);
+        }
     }
 
     public boolean applyFeedingHunger(boolean heartyMeal) {
-        boolean wasHungry = hungerComponent.isHungry();
-        hungerComponent.applyFeeding(heartyMeal);
+        boolean wasHungry = hungerComponent != null && hungerComponent.isHungry();
+        if (hungerComponent != null) {
+            hungerComponent.applyFeeding(heartyMeal);
+        }
         applyFeedingHappiness(heartyMeal);
         return wasHungry;
     }
 
     public void applyFeedingHappiness(boolean heartyMeal) {
-        happinessComponent.applyFeeding(heartyMeal);
+        if (happinessComponent != null) {
+            happinessComponent.applyFeeding(heartyMeal);
+        }
     }
 
     public float getHappinessSpeedMultiplier() {
+        if (happinessComponent == null) {
+            return 1.0f;
+        }
         return happinessComponent.getSpeedMultiplier();
     }
 
     public float getHungerMeleeDamageMultiplier() {
+        if (hungerComponent == null) {
+            return 1.0f;
+        }
         return hungerComponent.getMeleeDamageMultiplier();
     }
 
     public boolean hasGender() {
-        return this.genderInitialized;
+        return genderComponent != null && genderComponent.hasGender();
     }
 
     protected void ensureGenderInitialized() {
-        Level level = level();
-        if (level != null && level.isClientSide) {
-            return;
-        }
-        if (!this.genderInitialized) {
-            setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+        if (genderComponent != null) {
+            genderComponent.ensureInitialized();
         }
     }
 
@@ -712,66 +804,79 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Check if the wyvern is transitioning between sleep states
      */
     public boolean isSleepTransitioning() {
-        return sleepComponent.isSleepTransitioning();
+        return sleepComponent != null && sleepComponent.isSleepTransitioning();
     }
 
     /**
      * Check if the dragon is currently sleeping
      */
     public boolean isSleeping() {
-        return sleepComponent.isSleeping();
+        return sleepComponent != null && sleepComponent.isSleeping();
     }
 
     public boolean isSleepingEntering() {
-        return sleepComponent.isSleepingEntering();
+        return sleepComponent != null && sleepComponent.isSleepingEntering();
     }
 
     public boolean isSleepingExiting() {
-        return sleepComponent.isSleepingExiting();
+        return sleepComponent != null && sleepComponent.isSleepingExiting();
     }
 
     public boolean isSleepLocked() {
-        return sleepComponent.isSleepLocked();
+        return sleepComponent != null && sleepComponent.isSleepLocked();
     }
 
     /**
      * Start the sleep enter sequence (sit down -> fall asleep -> sleep)
      */
     public void startSleepEnter() {
-        sleepComponent.startSleepEnter();
+        if (sleepComponent != null) {
+            sleepComponent.startSleepEnter();
+        }
     }
 
     /**
      * Start the sleep exit sequence (wake up -> sit up -> stand)
      */
     public void startSleepExit() {
-        sleepComponent.startSleepExit();
+        if (sleepComponent != null) {
+            sleepComponent.startSleepExit();
+        }
     }
 
     /**
      * Wake up immediately (e.g., on damage)
      */
     public void wakeUpImmediately() {
-        sleepComponent.wakeUpImmediately();
+        if (sleepComponent != null) {
+            sleepComponent.wakeUpImmediately();
+        }
     }
 
     public void suppressSleep(int ticks) {
-        sleepComponent.suppressSleep(ticks);
+        if (sleepComponent != null) {
+            sleepComponent.suppressSleep(ticks);
+        }
     }
 
     /**
      * Check if sleep is temporarily suppressed (combat cooldown, etc.)
      */
     public boolean isSleepSuppressed() {
-        return sleepComponent.isSleepSuppressed();
+        return sleepComponent != null && sleepComponent.isSleepSuppressed();
     }
 
     public int getSleepAmbientCooldownTicks() {
+        if (sleepComponent == null) {
+            return 0;
+        }
         return sleepComponent.getAmbientCooldownTicks();
     }
 
     protected void clearSleepCooldowns() {
-        sleepComponent.clearCooldowns();
+        if (sleepComponent != null) {
+            sleepComponent.clearCooldowns();
+        }
     }
 
     protected boolean useSleepSitDownTimer() {
@@ -1050,7 +1155,59 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Get the current sit progress
      */
     public float getSitProgress() {
-        return this.entityData.get(DATA_SIT_PROGRESS);
+        if (sitComponent == null) {
+            return 0f;
+        }
+        return sitComponent.getSitProgress();
+    }
+
+    public float getPrevSitProgress() {
+        if (sitComponent == null) {
+            return 0f;
+        }
+        return sitComponent.getPrevSitProgress();
+    }
+
+    protected void setSitProgress(float value) {
+        if (sitComponent != null) {
+            sitComponent.setSitProgress(value);
+        }
+    }
+
+    protected void setPrevSitProgress(float value) {
+        if (sitComponent != null) {
+            sitComponent.setPrevSitProgress(value);
+        }
+    }
+
+    public void clearSitProgress() {
+        if (sitComponent != null) {
+            sitComponent.clearSitProgress();
+        }
+    }
+
+    public void forceSitProgress(float value) {
+        if (sitComponent != null) {
+            sitComponent.forceSitProgress(value);
+        }
+    }
+
+    protected void syncClientSitProgress() {
+        if (sitComponent != null) {
+            sitComponent.syncClientProgress();
+        }
+    }
+
+    protected void saveSitProgress(CompoundTag tag) {
+        if (sitComponent != null) {
+            sitComponent.saveToNBT(tag);
+        }
+    }
+
+    protected void loadSitProgress(CompoundTag tag, boolean orderedToSit) {
+        if (sitComponent != null) {
+            sitComponent.loadFromNBT(tag, orderedToSit);
+        }
     }
 
     /**
@@ -1111,12 +1268,19 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
         // Tick sleep behavior (server-side only)
         if (!level().isClientSide) {
-            sleepComponent.tick();
+            if (sleepComponent != null) {
+                sleepComponent.tick();
+            }
             if (this.isTame()) {
-                hungerComponent.tick();
-                happinessComponent.tick(hungerComponent.getHunger());
-                happinessComponent.updateSpeedModifiers();
-            } else {
+                if (hungerComponent != null) {
+                    hungerComponent.tick();
+                }
+                if (happinessComponent != null) {
+                    int currentHunger = hungerComponent != null ? hungerComponent.getHunger() : HUNGER_MAX;
+                    happinessComponent.tick(currentHunger);
+                    happinessComponent.updateSpeedModifiers();
+                }
+            } else if (happinessComponent != null) {
                 happinessComponent.clearSpeedModifiers();
             }
         }
@@ -1131,58 +1295,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         // Client: Calculate from synced data OR locally if riding
         // Server: Calculate and sync to observers
         if (level().isClientSide) {
-            updateRotationDeviations();
-        } else {
-            updateServerRotationTargets();
+            syncClientSitProgress();
+            if (animationSyncComponent != null) {
+                animationSyncComponent.tickClientRotationDeviations();
+            }
+        } else if (animationSyncComponent != null) {
+            animationSyncComponent.tickServerRotationTargets();
         }
-    }
-
-    /**
-     * Updates smooth rotation deviations on CLIENT side.
-     * For ridden dragons: Uses server-synced values (vanilla doesn't sync mount rotation!)
-     * For wild dragons: Calculates locally from vanilla rotation values.
-     */
-    private void updateRotationDeviations() {
-        // Read server-synced values
-        double headToBody = this.entityData.get(DATA_BODY_DEVIATION);
-        double pitchDelta = this.entityData.get(DATA_PITCH_DEVIATION);
-        double bodyYawDelta = this.entityData.get(DATA_YAW_VELOCITY);
-
-        // Update smooth values
-        bodyRotDeviation.setTo(headToBody);
-        bodyRotDeviation.update(0.25f);
-
-        xRotDeviation.setTo(pitchDelta);
-        xRotDeviation.update(0.25f);
-
-        yawVelocity.setTo(bodyYawDelta);
-        yawVelocity.update(0.25f);
-    }
-
-    /**
-     * Updates smooth rotation targets on SERVER side and syncs to clients.
-     * When ridden: Body deviation = 0 (body = head), but calculates yaw velocity for tail drag
-     * When wild: Calculates all deviations for smooth look and tail drag
-     */
-    private void updateServerRotationTargets() {
-        // Always calculate yaw velocity for tail drag (works for both ridden and wild)
-        float bodyYawDelta = (float) (Mth.wrapDegrees(this.yBodyRot - this.yBodyRotO) * 2.0);
-        this.entityData.set(DATA_YAW_VELOCITY, bodyYawDelta);
-
-        // When ridden, body = head (set by copyRiderLook), so force visual deviations to 0
-        if (this.isVehicle()) {
-            this.entityData.set(DATA_BODY_DEVIATION, 0.0f);
-            this.entityData.set(DATA_PITCH_DEVIATION, 0.0f);
-            return;
-        }
-
-        // Wild dragons: calculate rotation deviations for smooth neck/head look
-        float headToBody = (float) (Mth.wrapDegrees(this.yHeadRot - this.yBodyRot) * 0.25);
-        float pitchDelta = (this.getXRot() - this.xRotO) * 0.5f;
-
-        // Push to SynchedEntityData for all observers
-        this.entityData.set(DATA_BODY_DEVIATION, headToBody);
-        this.entityData.set(DATA_PITCH_DEVIATION, pitchDelta);
     }
 
     // ===== COMMAND SYSTEM (shared) =====
@@ -1191,18 +1310,24 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Current owner command: 0=Follow, 1=Sit, 2=Wander (extend as needed)
      */
     public int getCommand() {
-        return this.entityData.get(DATA_COMMAND);
+        if (commandComponent == null) {
+            return this.entityData.get(DATA_COMMAND);
+        }
+        return commandComponent.getCommand();
     }
 
     /**
      * Sets owner command and applies base behaviors (e.g., sit toggle).
      */
     public void setCommand(int command) {
-        this.entityData.set(DATA_COMMAND, command);
-        // Only sit via command if tamed; untamed dragons ignore owner commands
-        if (this.isTame()) {
-            this.setOrderedToSit(command == 1);
+        if (commandComponent == null) {
+            this.entityData.set(DATA_COMMAND, command);
+            if (this.isTame()) {
+                this.setOrderedToSit(command == 1);
+            }
+            return;
         }
+        commandComponent.setCommand(command);
     }
 
     /**
@@ -1386,16 +1511,21 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putInt("Command", getCommand());
-        hungerComponent.saveToNBT(tag);
-        happinessComponent.saveToNBT(tag);
-        sleepComponent.saveToNBT(tag);
-
-        // Save gender - use direct entityData access to ensure we get the current value
-        byte genderId = this.entityData.get(DATA_GENDER);
-        tag.putByte("Gender", genderId);
-        tag.putBoolean("IsFemale", genderId == DragonGender.FEMALE.getId());
-        tag.putBoolean("GenderInitialized", this.genderInitialized);
+        if (commandComponent != null) {
+            commandComponent.saveToNBT(tag);
+        }
+        if (hungerComponent != null) {
+            hungerComponent.saveToNBT(tag);
+        }
+        if (happinessComponent != null) {
+            happinessComponent.saveToNBT(tag);
+        }
+        if (sleepComponent != null) {
+            sleepComponent.saveToNBT(tag);
+        }
+        if (genderComponent != null) {
+            genderComponent.saveToNBT(tag);
+        }
 
         allyManager.saveToNBT(tag);
     }
@@ -1412,29 +1542,28 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
         super.readAdditionalSaveData(tag);
 
-        if (tag.contains("Command")) {
-            setCommand(tag.getInt("Command"));
+        if (commandComponent != null) {
+            commandComponent.loadFromNBT(tag);
         }
-        if (tag.contains("Gender", Tag.TAG_BYTE)) {
-            byte savedGenderId = tag.getByte("Gender");
-            boolean savedGenderInit = tag.contains("GenderInitialized") ? tag.getBoolean("GenderInitialized") : true;
-            setGender(DragonGender.fromId(savedGenderId));
-            this.genderInitialized = savedGenderInit;
-        } else if (tag.contains("IsFemale")) {
-            setFemale(tag.getBoolean("IsFemale"));
-            this.genderInitialized = tag.contains("GenderInitialized") ? tag.getBoolean("GenderInitialized") : true;
-        } else {
-            this.genderInitialized = false;
-            ensureGenderInitialized();
+        if (genderComponent != null) {
+            genderComponent.loadFromNBT(tag);
         }
-        hungerComponent.loadFromNBT(tag);
-        happinessComponent.loadFromNBT(tag);
-        sleepComponent.loadFromNBT(tag);
+        if (hungerComponent != null) {
+            hungerComponent.loadFromNBT(tag);
+        }
+        if (happinessComponent != null) {
+            happinessComponent.loadFromNBT(tag);
+        }
+        if (sleepComponent != null) {
+            sleepComponent.loadFromNBT(tag);
+        }
         allyManager.loadFromNBT(tag);
     }
 
     private void applyHappinessHitPenalty(net.minecraft.server.level.ServerLevel serverLevel) {
-        happinessComponent.applyHitPenalty(serverLevel);
+        if (happinessComponent != null) {
+            happinessComponent.applyHitPenalty(serverLevel);
+        }
     }
 
     /**
@@ -1503,7 +1632,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
             // CRITICAL: Preserve gender initialization state across respawn
             // Without this, the new entity will have genderInitialized=false and may randomize gender
-            nbt.putBoolean("GenderInitialized", this.genderInitialized);
+            nbt.putBoolean("GenderInitialized", this.genderComponent != null && this.genderComponent.isInitialized());
 
             // Create fresh entity with updated data
             @SuppressWarnings("unchecked")

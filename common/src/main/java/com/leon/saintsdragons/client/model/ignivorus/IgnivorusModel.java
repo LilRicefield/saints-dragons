@@ -98,7 +98,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
 
         GeoBone root = rootOpt.get();
         var snap = root.getInitialSnapshot();
-        double deviation = entity.bodyRotDeviation.get(partialTick);
+        double deviation = entity.getBodyRotDeviation().get(partialTick);
         float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
         root.setRotY(snap.getRotY() - deviationRad);
     }
@@ -146,7 +146,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         if (entity.isFlying()) {
             return;
         }
-        double velocity = entity.yawVelocity.get(partialTick);
+        double velocity = entity.getYawVelocity().get(partialTick);
         velocity = Mth.clamp(velocity, -25.0, 25.0);
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
         applyNeckBoneRotation("neck1Controller", turnRad * 0.4f);
@@ -168,7 +168,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private void applyNeckFollow(Ignivorus entity, EntityModelData modelData, float partialTick) {
 
         // Get body deviation (how much head leads body)
-        double bodyDeviation = entity.bodyRotDeviation.get(partialTick);
+        double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
 
         // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
@@ -208,7 +208,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private void applyTailDrag(Ignivorus entity, float partialTick) {
 
 
-        double velocity = entity.yawVelocity.get(partialTick);
+        double velocity = entity.getYawVelocity().get(partialTick);
         velocity = Mth.clamp(velocity, -30.0, 30.0);
         float targetVelocity = (float) velocity;
         float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity);
