@@ -199,12 +199,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     private static final EntityDataAccessor<Boolean> DATA_CINEMATIC_ZOOM_ACTIVE =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
     private static final double MODEL_SCALE = 1.0D;
     private static final float FIRE_BREATH_ENERGY_REGEN = 0.0025f;
@@ -278,17 +272,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final float MAX_FIRE_PITCH_DEG = 55.0F;  // Matches neck pitch limit
     private Vec3 fireAimDir;
 
-    // Sleep system state (one-shot transitions: down -> fall_asleep -> wake_up -> up)
-    private boolean sleeping = false;
-    private boolean sleepingEntering = false;
-    private boolean sleepingExiting = false;
-    private boolean sleepTransitioning = false;
-    private int sleepTransitionTicks = 0;
-    private boolean sleepFallAsleepTriggered = false;
-    private boolean sleepSitUpTriggered = false;
-    private boolean sleepLocked = false;
-    private int sleepCommandSnapshot = -1;
-    private int sleepSuppressionTicks = 0;
 
     // Fire breath targeting (AI-driven smart aiming)
     private int fireTime = 0; // Tracks how long fire breath has been active for accuracy ramping
@@ -443,9 +426,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
         this.entityData.define(DATA_FIREBALL_CHARGE, 0);
-        this.entityData.define(DATA_SLEEPING, false);
-        this.entityData.define(DATA_SLEEPING_ENTERING, false);
-        this.entityData.define(DATA_SLEEPING_EXITING, false);
     }
 
     @Override
@@ -609,13 +589,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Update sitting progress
         updateSittingProgress();
-        // Server-side sleep transition driver
-        if (!level().isClientSide) {
-            if (sleepSuppressionTicks > 0) {
-                sleepSuppressionTicks--;
-            }
-            tickSleepTransitions();
-        }
     }
 
     @Override
@@ -1576,101 +1549,88 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
-        if (action == null) {
+    protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (abilityName == null || abilityName.isEmpty()) {
             return;
+        }
+        if (isBaby() && isBabyAbilityBlocked(abilityName)) {
+            return;
+        }
+        // Block non-attack abilities while in Phase 2
+        // Wing swipe, stomp, bite (for air), fire breath, and ultimate are allowed in Phase 2
+        if (isPhase2Active() &&
+            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID) &&
+            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID) &&
+            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_BITE_ID) &&
+            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID) &&
+            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID) &&
+            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID)) {
+            return;
+        }
+        useRidingAbility(abilityName);
+    }
+
+    @Override
+    protected void onRiderAbilityStop(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            if (IgnivorusAbilities.IGNIVORUS_FIREBALL_ID.equals(abilityName)) {
+                var active = combatManager.getActiveAbility();
+                if (active != null && active.getAbilityType() == IgnivorusAbilities.IGNIVORUS_FIREBALL) {
+                    ((IgnivorusFireballAbility) active).requestRelease();
+                    return;
+                }
+            }
+            forceEndActiveAbility();
+        }
+    }
+
+    @Override
+    protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
+                                              String abilityName, boolean locked) {
+        if (action == null) {
+            return false;
         }
 
         // Allow DOUBLE_TAP_W to toggle bulldoze on/off even while bulldozing
         // (locked check happens inside onRiderBulldoze)
         if (action == DragonRiderAction.DOUBLE_TAP_W) {
             if (isBaby()) {
-                return;
+                return true;
             }
             if (!locked) {
                 onRiderBulldoze(player);
             }
-            return;
+            return true;
         }
 
         // Allow DOUBLE_TAP_S to toggle Phase 2 on/off
         // (locked check happens inside onRiderPhase2Toggle)
         if (action == DragonRiderAction.DOUBLE_TAP_S) {
             if (isBaby()) {
-                return;
+                return true;
             }
             if (!locked) {
                 onRiderPhase2Toggle(player);
             }
-            return;
+            return true;
         }
 
-        // Always allow movement controls (ACCELERATE/STOP_ACCELERATE)
-        if (action == DragonRiderAction.ACCELERATE) {
-            if (!locked) {
-                setAccelerating(true);
-            }
-            return;
-        }
-        if (action == DragonRiderAction.STOP_ACCELERATE) {
-            setAccelerating(false);
-            return;
-        }
-
-        // Block all other actions while bulldozing or leaping (but allow toggle and movement)
+        // Block all other actions while bulldozing or leaping (but allow movement/accelerate)
         if (bulldozing || leaping) {
-            return;
+            return action != DragonRiderAction.ACCELERATE
+                    && action != DragonRiderAction.STOP_ACCELERATE;
         }
 
-        switch (action) {
-            case TAKEOFF_REQUEST -> {
-                if (!locked) {
-                    requestRiderTakeoff();
-                }
-            }
-            case TOGGLE_MELEE -> {
-                if (!locked) {
-                    onRiderToggleMelee(player);
-                }
-            }
-            case TOGGLE_PITCH_MODE -> {
-                if (!locked) {
-                    setRiderPitchKeyMode(!isRiderPitchKeyMode());
-                }
-            }
-            case ABILITY_USE -> {
-                if (!locked && abilityName != null && !abilityName.isEmpty()) {
-                    if (isBaby() && isBabyAbilityBlocked(abilityName)) {
-                        return;
-                    }
-                    // Block non-attack abilities while in Phase 2
-                    // Wing swipe, stomp, bite (for air), fire breath, and ultimate are allowed in Phase 2
-                    if (isPhase2Active() &&
-                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID) &&
-                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID) &&
-                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_BITE_ID) &&
-                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID) &&
-                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID) &&
-                        !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID)) {
-                        return;
-                    }
-                    useRidingAbility(abilityName);
-                }
-            }
-            case ABILITY_STOP -> {
-                if (abilityName != null && !abilityName.isEmpty()) {
-                    if (IgnivorusAbilities.IGNIVORUS_FIREBALL_ID.equals(abilityName)) {
-                        var active = combatManager.getActiveAbility();
-                        if (active != null && active.getAbilityType() == IgnivorusAbilities.IGNIVORUS_FIREBALL) {
-                            ((IgnivorusFireballAbility) active).requestRelease();
-                            return;
-                        }
-                    }
-                    forceEndActiveAbility();
-                }
-            }
-            default -> { }
+        if (locked) {
+            return false;
         }
+
+        if (action == DragonRiderAction.TOGGLE_PITCH_MODE) {
+            setRiderPitchKeyMode(!isRiderPitchKeyMode());
+            return true;
+        }
+
+        return false;
     }
 
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
@@ -1700,114 +1660,33 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     // ===== SLEEP SYSTEM =====
     @Override
-    public boolean isSleeping() {
-        return level().isClientSide ? this.entityData.get(DATA_SLEEPING) : sleeping;
+    public boolean supportsSleep() {
+        return true;
     }
 
     @Override
-    public boolean isSleepTransitioning() {
-        if (level().isClientSide) {
-            return this.entityData.get(DATA_SLEEPING_ENTERING) || this.entityData.get(DATA_SLEEPING_EXITING);
-        }
-        return sleepTransitioning || sleepingEntering || sleepingExiting;
-    }
-
-    public boolean isSleepingEntering() {
-        return level().isClientSide ? this.entityData.get(DATA_SLEEPING_ENTERING) : sleepingEntering;
-    }
-
-    public boolean isSleepingExiting() {
-        return level().isClientSide ? this.entityData.get(DATA_SLEEPING_EXITING) : sleepingExiting;
-    }
-
-    public boolean isSleepLocked() {
-        return sleeping || sleepingEntering || sleepingExiting || sleepTransitioning || sleepLocked;
+    protected boolean useSleepSitDownTimer() {
+        return true;
     }
 
     @Override
-    public void startSleepEnter() {
-        if (sleeping || sleepingEntering || sleepingExiting || sleepTransitioning) {
-            return;
-        }
-        sleepTransitioning = true;
-        sleepingEntering = true;
-        sleepingExiting = false;
-        sleeping = false;
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        sleepLocked = true;
-        sleepCommandSnapshot = this.getCommand();
-
-        this.entityData.set(DATA_SLEEPING_ENTERING, true);
-        this.entityData.set(DATA_SLEEPING_EXITING, false);
-        this.entityData.set(DATA_SLEEPING, false);
-
-        setGroundMoveStateFromAI(0);
-        setFlying(false);
-        setHovering(false);
-        setTakeoff(false);
-        setLanding(false);
-        // Only issue sit_down if not already fully seated before the chain begins
-        boolean alreadySeated = this.getSitProgress() >= this.maxSitTicks();
-        if (!alreadySeated) {
-            this.setOrderedToSit(false);
-        }
-
-        if (isOrderedToSit() || this.getSitProgress() >= this.maxSitTicks()) {
-            sleepTransitionTicks = 1;
-        } else {
-            sleepTransitionTicks = getSleepSitDownDuration();
-            animationHandler.triggerSitDownAnimation();
-        }
+    protected boolean requireSeatedBeforeFallAsleep() {
+        return true;
     }
 
     @Override
-    public void startSleepExit() {
-        if ((!sleeping && !sleepingEntering) || sleepingExiting) {
-            return;
-        }
-        sleeping = false;
-        sleepingEntering = false;
-        sleepingExiting = true;
-        sleepTransitioning = true;
-        sleepSitUpTriggered = false;
-        sleepTransitionTicks = getSleepWakeUpDuration();
-
-        this.entityData.set(DATA_SLEEPING, false);
-        this.entityData.set(DATA_SLEEPING_ENTERING, false);
-        this.entityData.set(DATA_SLEEPING_EXITING, true);
-
-        setGroundMoveStateFromAI(0);
-        setOrderedToSit(true);
-        animationHandler.triggerWakeUpAnimation();
-        suppressSleep(40);
+    protected boolean sleepForceSitDownOnEnter() {
+        return true;
     }
 
-    public void wakeUpImmediately() {
-        suppressSleep(40);
-        sleepTransitionTicks = 0;
-        sleepTransitioning = false;
-        sleepFallAsleepTriggered = false;
-        sleepSitUpTriggered = false;
-        sleeping = false;
-        sleepingEntering = false;
-        sleepingExiting = false;
-        sleepLocked = false;
-        sleepCommandSnapshot = -1;
-        this.entityData.set(DATA_SLEEPING, false);
-        this.entityData.set(DATA_SLEEPING_ENTERING, false);
-        this.entityData.set(DATA_SLEEPING_EXITING, false);
-        setOrderedToSit(false);
-        setGroundMoveStateFromAI(0);
-    }
-
-    public void suppressSleep(int ticks) {
-        sleepSuppressionTicks = Math.max(sleepSuppressionTicks, ticks);
+    @Override
+    protected boolean useSleepSitUpAfterWake() {
+        return false;
     }
 
     @Override
     public boolean isSleepSuppressed() {
-        return sleepSuppressionTicks > 0 || getTarget() != null || isFlying() || isInWaterOrBubble() || isVehicle() || isTamingStunned();
+        return super.isSleepSuppressed() || getTarget() != null || isFlying() || isInWaterOrBubble() || isVehicle() || isTamingStunned();
     }
 
     @Override
@@ -1826,94 +1705,39 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return !level().isDay() || ownerSleeping;
     }
 
-    public int getSleepSitDownDuration() {
+    @Override
+    protected int getSleepSitDownDuration() {
         return 38; // animation "down" length
     }
 
-    public int getSleepSitUpDuration() {
+    @Override
+    protected int getSleepSitUpDuration() {
         return 38; // animation "up" length
     }
 
-    public int getSleepFallAsleepDuration() {
+    @Override
+    protected int getSleepFallAsleepDuration() {
         return 38; // animation "fall_asleep" length
     }
 
-    public int getSleepWakeUpDuration() {
+    @Override
+    protected int getSleepWakeUpDuration() {
         return 38; // animation "wake_up" length
     }
 
-    private void tickSleepTransitions() {
-        if (!(sleeping || sleepingEntering || sleepingExiting || sleepTransitioning)) {
-            return;
-        }
-
-        freezeDuringSleepChain();
-
-        if (sleepingEntering) {
-            if (!sleepFallAsleepTriggered) {
-                if (sleepTransitionTicks > 0) {
-                    sleepTransitionTicks--;
-                    if (sleepTransitionTicks > 0) {
-                        return;
-                    }
-                }
-                boolean seatedEnough = isOrderedToSit() || getSitProgress() >= maxSitTicks();
-                if (seatedEnough) {
-                    sleepFallAsleepTriggered = true;
-                    sleepTransitionTicks = getSleepFallAsleepDuration();
-                    animationHandler.triggerFallAsleepAnimation();
-                    return;
-                }
-                // Trigger sit_down and wait for it to complete
-                sleepTransitionTicks = getSleepSitDownDuration();
-                animationHandler.triggerSitDownAnimation();
-                setOrderedToSit(true);
-                return;
-            }
-
-            if (sleepTransitionTicks > 0) {
-                sleepTransitionTicks--;
-                if (sleepTransitionTicks > 0) {
-                    return;
-                }
-            }
-
-            sleeping = true;
-            sleepingEntering = false;
-            sleepTransitioning = false;
-            sleepFallAsleepTriggered = false;
-            this.entityData.set(DATA_SLEEPING_ENTERING, false);
-            this.entityData.set(DATA_SLEEPING, true);
-            animationHandler.triggerSleepAnimation();
-            setOrderedToSit(true);
-            setGroundMoveStateFromAI(0);
-            return;
-        }
-
-        if (sleepingExiting) {
-            if (sleepTransitionTicks > 0) {
-                sleepTransitionTicks--;
-                if (sleepTransitionTicks > 0) {
-                    return;
-                }
-            }
-
-            sleepingExiting = false;
-            sleepTransitioning = false;
-            sleepSitUpTriggered = false;
-            this.entityData.set(DATA_SLEEPING_EXITING, false);
-            this.entityData.set(DATA_SLEEPING, false);
-
-            sleepLocked = false;
-            int desired = sleepCommandSnapshot;
-            sleepCommandSnapshot = -1;
-            boolean ownerWantsSit = desired == 1;
-            setOrderedToSit(ownerWantsSit);
-            setGroundMoveStateFromAI(0);
-        }
+    @Override
+    protected void onSleepLockCommand(int snapshot) {
+        // Ignivorus sleep doesn't override command state.
     }
 
-    private void freezeDuringSleepChain() {
+    @Override
+    protected void onSleepUnlockCommand(int desired) {
+        setOrderedToSit(desired == 1);
+        setGroundMoveStateFromAI(0);
+    }
+
+    @Override
+    protected void onSleepFreezeTick() {
         this.getNavigation().stop();
         this.setDeltaMovement(0, 0, 0);
         this.setRunning(false);
@@ -1923,6 +1747,41 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.setTakeoff(false);
         this.setLanding(false);
         this.setOrderedToSit(true);
+    }
+
+    @Override
+    protected void onSleepSitDownAnimation() {
+        animationHandler.triggerSitDownAnimation();
+        setOrderedToSit(true);
+    }
+
+    @Override
+    protected void onSleepFallAsleepAnimation() {
+        animationHandler.triggerFallAsleepAnimation();
+    }
+
+    @Override
+    protected void onSleepLoopAnimation() {
+        animationHandler.triggerSleepAnimation();
+        setOrderedToSit(true);
+        setGroundMoveStateFromAI(0);
+    }
+
+    @Override
+    protected void onSleepWakeUpAnimation() {
+        animationHandler.triggerWakeUpAnimation();
+    }
+
+    @Override
+    protected void onSleepExitStarted() {
+        setGroundMoveStateFromAI(0);
+        setOrderedToSit(true);
+    }
+
+    @Override
+    protected void onSleepWakeUpImmediate() {
+        setOrderedToSit(false);
+        setGroundMoveStateFromAI(0);
     }
 
     private boolean isBabyAbilityBlocked(String abilityName) {
