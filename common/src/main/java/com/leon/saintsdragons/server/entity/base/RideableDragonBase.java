@@ -18,6 +18,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Base implementation for rideable dragons.
@@ -25,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * Usage: Extend this class in your dragon entity to get the standard rideable dragon behavior.
  */
 public abstract class RideableDragonBase extends DragonEntity implements RideableDragon, FlyingAnimal {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RideableDragonBase.class);
+    private final Set<String> warnedMissingActions = new HashSet<>();
 
     /** Entity data accessor for melee mode (0=primary melee, 1=secondary melee) */
     private static final EntityDataAccessor<Integer> DATA_MELEE_MODE =
@@ -105,6 +111,11 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             return; // Dragon handled it
         }
 
+        if (!supportsRiderAction(action)) {
+            warnMissingAction(action.name().toLowerCase());
+            return;
+        }
+
         // Base actions shared by all rideable dragons
         switch (action) {
             case TAKEOFF_REQUEST -> { if (!locked) onRiderTakeoffRequest(player); }
@@ -134,13 +145,33 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return false; // Default: no custom actions
     }
 
+    protected boolean supportsRiderAction(DragonRiderAction action) {
+        return switch (action) {
+            case TAKEOFF_REQUEST, ACCELERATE, STOP_ACCELERATE, TOGGLE_MELEE -> true;
+            case ABILITY_USE, ABILITY_STOP,
+                 DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
+                 TAUNT, TOGGLE_PITCH_MODE -> false;
+            default -> true;
+        };
+    }
+
+    private void warnMissingAction(String action) {
+        if (warnedMissingActions.add(action)) {
+            LOGGER.warn("{} does not support rider action '{}'", this, action);
+        }
+    }
+
     /**
      * Called when rider requests a dodge. Override in subclasses to implement dodge mechanics.
      * @param player The player riding
      * @param isLeft True if dodging left, false if dodging right
      */
     protected void onRiderDodge(Player player, boolean isLeft) {
-        // Default: no dodge (override in dragon classes that support it)
+        if (!supportsRiderAction(DragonRiderAction.DOUBLE_TAP_A)
+                && !supportsRiderAction(DragonRiderAction.DOUBLE_TAP_D)) {
+            warnMissingAction("double_tap_a/d");
+            return;
+        }
     }
 
     /**
@@ -148,7 +179,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
      * @param player The player riding
      */
     protected void onRiderBulldoze(Player player) {
-        // Default: no bulldoze (override in dragon classes that support it)
+        warnMissingAction("bulldoze");
+        return;
     }
 
     /**
@@ -156,7 +188,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
      * @param player The player riding
      */
     protected void onRiderDash(Player player) {
-        // Default: no dash (override in dragon classes that support it)
+        if (!supportsRiderAction(DragonRiderAction.DOUBLE_TAP_W)) {
+            warnMissingAction("double_tap_w");
+            return;
+        }
     }
 
     /**
@@ -164,7 +199,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
      * @param player The player riding
      */
     protected void onRiderBackwardDodge(Player player) {
-        // Default: no backward dodge (override in dragon classes that support it)
+        if (!supportsRiderAction(DragonRiderAction.DOUBLE_TAP_S)) {
+            warnMissingAction("double_tap_s");
+            return;
+        }
     }
 
     protected void onRiderToggleMelee(Player player) {
@@ -199,6 +237,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     protected void onRiderTakeoffRequest(Player player) {
+        if (!supportsRiderAction(DragonRiderAction.TAKEOFF_REQUEST)) {
+            warnMissingAction("takeoff_request");
+            return;
+        }
     }
 
     protected void onRiderAccelerationStart(Player player) {
@@ -210,9 +252,17 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (!supportsRiderAction(DragonRiderAction.ABILITY_USE)) {
+            warnMissingAction("ability_use");
+            return;
+        }
     }
 
     protected void onRiderAbilityStop(Player player, String abilityName) {
+        if (!supportsRiderAction(DragonRiderAction.ABILITY_STOP)) {
+            warnMissingAction("ability_stop");
+            return;
+        }
     }
 
     protected float getRiderLockYawBlend() {
@@ -655,10 +705,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
      * need to restore animation state (e.g., after reconnect).
      */
     public void forceSitProgress(float value) {
-        float clamped = net.minecraft.util.Mth.clamp(value, 0f, maxSitTicks());
-        this.sitProgress = clamped;
-        this.prevSitProgress = clamped;
-        this.entityData.set(DATA_SIT_PROGRESS, clamped);
+        super.forceSitProgress(value);
     }
 
     /**
@@ -678,7 +725,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         tag.putFloat("RiderForward", this.entityData.get(getRiderForwardAccessor()));
         tag.putFloat("RiderStrafe", this.entityData.get(getRiderStrafeAccessor()));
         tag.putBoolean("IsSitting", this.isOrderedToSit());
-        tag.putFloat("SitProgress", this.sitProgress);
+        saveSitProgress(tag);
     }
 
     /**
@@ -710,12 +757,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
         boolean savedSitting = tag.getBoolean("IsSitting");
         this.setOrderedToSit(savedSitting);
-        float savedSitProgress = tag.contains("SitProgress")
-                ? tag.getFloat("SitProgress")
-                : (savedSitting ? this.maxSitTicks() : 0f);
-        this.sitProgress = Mth.clamp(savedSitProgress, 0f, this.maxSitTicks());
-        this.prevSitProgress = this.sitProgress;
-        this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
+        loadSitProgress(tag, savedSitting);
 
         if (!level().isClientSide) {
             this.syncAnimState(this.entityData.get(getGroundMoveStateAccessor()),

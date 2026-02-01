@@ -198,6 +198,15 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private static final double MOUTH_OFFSET_UP = (10.25D / 16.0D) * MODEL_SCALE;
     private static final double MOUTH_OFFSET_FORWARD = (24.0D / 16.0D) * MODEL_SCALE;
 
+    @Override
+    protected boolean supportsRiderAction(DragonRiderAction action) {
+        return switch (action) {
+            case DOUBLE_TAP_W,
+                 TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+            default -> super.supportsRiderAction(action);
+        };
+    }
+
     // Feeding cooldown synced via DATA_FEEDING_COOLDOWN entity data accessor
 
     public boolean canFeed() {
@@ -1866,9 +1875,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         boolean mounted = this.isVehicle();
 
         if (mounted && !wasVehicleLastTick) {
-            this.sitProgress = 0f;
-            this.prevSitProgress = 0f;
-            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            clearSitProgress();
             isSittingDown = false;
             isStandingUp = false;
             sitTransitionTicks = 0;
@@ -1887,9 +1894,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         }
 
         if (!mounted && wasVehicleLastTick) {
-            this.sitProgress = 0f;
-            this.prevSitProgress = 0f;
-            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            clearSitProgress();
             isSittingDown = false;
             isStandingUp = false;
             sitTransitionTicks = 0;
@@ -2118,10 +2123,8 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                 isStandingUp = false;
                 sitTransitionTicks = 0;
             }
-            if (sitProgress != 0f || prevSitProgress != 0f) {
-                sitProgress = 0f;
-                prevSitProgress = 0f;
-                this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            if (getSitProgress() != 0f || getPrevSitProgress() != 0f) {
+                clearSitProgress();
             }
             return;
         }
@@ -2134,6 +2137,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             }
         }
 
+        float sitProgress = getSitProgress();
         if (this.isOrderedToSit()) {
             if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
                 animationHandler.triggerSitDownAnimation();
@@ -2144,14 +2148,12 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
             if (sitProgress < maxSitTicks()) {
                 sitProgress++;
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         } else {
             if (isVehicle()) {
                 if (sitProgress != 0f) {
-                    sitProgress = 0f;
-                    prevSitProgress = 0f;
-                    this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                    clearSitProgress();
                     isSittingDown = false;
                     isStandingUp = false;
                     sitTransitionTicks = 0;
@@ -2169,17 +2171,13 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                 if (sitProgress < 0f) {
                     sitProgress = 0f;
                 }
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         }
     }
 
     private void tickClientSideUpdates() {
-        // Update client-side sit progress from synchronized data
         if (level().isClientSide) {
-            prevSitProgress = sitProgress;
-            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
-
             // Smooth client-side swim pitch to prevent jitter from network updates
             prevClientSwimPitchRad = clientSwimPitchRad;
             float targetPitch = this.entityData.get(DATA_SWIM_PITCH_RAD);
@@ -2382,7 +2380,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
     @Override
     protected void onSleepExitSeated() {
-        this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), maxSitTicks()));
+        setSitProgress(Math.max(getSitProgress(), maxSitTicks()));
     }
 
     @Override

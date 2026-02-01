@@ -201,8 +201,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private boolean isSittingDown = false; // True during "down" animation (45 ticks)
     private boolean isStandingUp = false;  // True during "up" animation (46 ticks)
 
-    // ===== SLEEP SYSTEM =====
-    // Sleep transition state
+    // Controllable sucka
+    @Override
+    protected boolean supportsRiderAction(DragonRiderAction action) {
+        return switch (action) {
+            case TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+            default -> super.supportsRiderAction(action);
+        };
+    }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
@@ -557,8 +563,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         super.aiStep();
 
         if (!this.level().isClientSide) {
-            if (!this.isOrderedToSit() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
-                this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            if (!this.isOrderedToSit() && getSitProgress() != 0f) {
+                clearSitProgress();
             }
             // Only consider SOLID ground, not water (water should not trigger landing)
             boolean onGroundNow = this.onGround() && !this.isInWater();
@@ -651,8 +657,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         // Ensure sit animation is cleared for riders even if packets arrive late
-        if (isVehicle() && this.entityData.get(DATA_SIT_PROGRESS) != 0f) {
-            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+        if (isVehicle() && getSitProgress() != 0f) {
+            clearSitProgress();
         }
 
         if (targetCooldown > 0) {
@@ -705,9 +711,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         boolean mounted = this.isVehicle();
 
         if (mounted && !wasVehicleLastTick) {
-            this.sitProgress = 0f;
-            this.prevSitProgress = 0f;
-            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            clearSitProgress();
             clearStatesWhenMounted();
 
             if (this.isOrderedToSit()) {
@@ -727,9 +731,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (!mounted && wasVehicleLastTick) {
             this.setBreathingFire(false);
             combatManager.forceEndActiveAbility();
-            this.sitProgress = 0f;
-            this.prevSitProgress = 0f;
-            this.entityData.set(DATA_SIT_PROGRESS, 0f);
+            clearSitProgress();
             this.entityData.set(DATA_GROUND_MOVE_STATE, 0);
             this.entityData.set(DATA_FLIGHT_MODE, -1);
             this.entityData.set(DATA_RIDER_FORWARD, 0f);
@@ -813,6 +815,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             }
         }
 
+        float sitProgress = getSitProgress();
         if (this.isOrderedToSit()) {
             // Trigger sit down animation when:
             // 1. Starting from standing (sitProgress == 0), OR
@@ -826,15 +829,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
             if (sitProgress < maxSitTicks()) {
                 sitProgress++;
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         } else {
             // NOT ordered to sit - standing up sequence
             if (isVehicle()) {
                 if (sitProgress != 0f) {
-                    sitProgress = 0f;
-                    prevSitProgress = 0f;
-                    this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                    clearSitProgress();
                 }
             } else if (sitProgress > 0f) {
                 // Trigger sit up animation when:
@@ -851,17 +852,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 float decrementRate = maxSitTicks() / (float) getSitUpAnimationTicks();
                 sitProgress -= decrementRate;
                 if (sitProgress < 0f) sitProgress = 0f;
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         }
     }
 
     private void tickClientSideUpdates() {
-        // Update client-side sit progress from synchronized data
-        if (level().isClientSide) {
-            prevSitProgress = sitProgress;
-            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
-        }
+        // Client-side sit progress is synced centrally.
     }
 
     private void handleAmbientSounds() {
@@ -1740,7 +1737,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             this.setRunning(false);
             this.getNavigation().stop();
             if (!level().isClientSide) {
-                this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
+                setSitProgress(getSitProgress());
             }
         }
         // Don't clear sitProgress when standing - let updateSittingProgress() handle the "up" animation transition
@@ -2386,10 +2383,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (this.getCommand() == 1) {
             this.setCommand(0);
         }
-        this.sitProgress = 0f;
-        this.prevSitProgress = 0f;
-        this.entityData.set(DATA_SIT_PROGRESS, 0f);
-        this.setTarget(null);
+            clearSitProgress();
+            this.setTarget(null);
 
         if (this.getNavigation().getPath() != null) {
             this.getNavigation().stop();
@@ -2779,7 +2774,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     protected void onSleepExitSeated() {
         setOrderedToSit(true);
-        this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), maxSitTicks()));
+        setSitProgress(Math.max(getSitProgress(), maxSitTicks()));
     }
 
     private void tickFeedingCooldown() {

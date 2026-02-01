@@ -475,6 +475,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
+    protected boolean supportsRiderAction(DragonRiderAction action) {
+        return switch (action) {
+            case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
+                 TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+            default -> super.supportsRiderAction(action);
+        };
+    }
+
+    @Override
     public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level,
                                                  @NotNull DifficultyInstance difficulty,
                                                  @NotNull MobSpawnType spawnType,
@@ -508,8 +517,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             if (clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
                 clientAnimInitTicks++;
             }
-            prevSitProgress = sitProgress;
-            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
         }
 
         // Update air/ground time
@@ -3300,6 +3307,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
         }
 
+        float sitProgress = getSitProgress();
         if (this.isOrderedToSit()) {
             // Trigger sit down animation when starting from standing OR interrupting stand-up
             if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
@@ -3312,16 +3320,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             // Increment sitProgress smoothly
             if (sitProgress < maxSitTicks()) {
                 sitProgress++;
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         } else {
             // Not ordered to sit - handle standing up
             if (this.isVehicle()) {
                 // Instantly reset when ridden
                 if (sitProgress != 0f) {
-                    sitProgress = 0f;
-                    prevSitProgress = 0f;
-                    this.entityData.set(DATA_SIT_PROGRESS, 0f);
+                    clearSitProgress();
                     isSittingDown = false;
                     isStandingUp = false;
                     sitTransitionTicks = 0;
@@ -3340,7 +3346,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 if (sitProgress < 0f) {
                     sitProgress = 0f;
                 }
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         }
     }

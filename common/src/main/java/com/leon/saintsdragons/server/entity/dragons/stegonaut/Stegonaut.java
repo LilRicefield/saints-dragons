@@ -919,7 +919,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
         this.setOrderedToSit(true);
         setGroundMoveStateFromAI(0);
-        this.entityData.set(DATA_SIT_PROGRESS, Math.max(this.entityData.get(DATA_SIT_PROGRESS), sitProgress));
+        setSitProgress(getSitProgress());
     }
 
     @Override
@@ -953,8 +953,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     @Override
     protected void onSleepExitSeated() {
         setOrderedToSit(true);
-        this.sitProgress = Math.max(this.sitProgress, maxSitTicks());
-        this.entityData.set(DATA_SIT_PROGRESS, this.sitProgress);
+        setSitProgress(Math.max(getSitProgress(), maxSitTicks()));
         setGroundMoveStateFromAI(0);
     }
 
@@ -1062,23 +1061,19 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
         // Handle sit progress animation
         if (!level().isClientSide) {
+            float sitProgress = getSitProgress();
             if (this.isOrderedToSit()) {
                 if (sitProgress < maxSitTicks()) {
                     sitProgress++;
-                    this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                    setSitProgress(sitProgress);
                 }
             } else if (sitProgress > 0f) {
                 sitProgress--;
                 if (sitProgress < 0f) sitProgress = 0f;
-                this.entityData.set(DATA_SIT_PROGRESS, sitProgress);
+                setSitProgress(sitProgress);
             }
         }
-
-        // Update client-side sit progress from synchronized data
-        if (level().isClientSide) {
-            prevSitProgress = sitProgress;
-            sitProgress = this.entityData.get(DATA_SIT_PROGRESS);
-        }
+        // Client-side sit progress is synced centrally.
     }
 
     private boolean shouldStaySeatedCommand() {
@@ -1177,7 +1172,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
     @Override
     public void tickAnimationStates() {
-        if (this.isVehicle() && this.isOrderedToSit() && this.sitProgress <= 0.01f) {
+        if (this.isVehicle() && this.isOrderedToSit() && getSitProgress() <= 0.01f) {
             // Client can get stuck thinking we're sitting after mount; clear it so walk anim can play.
             if (this.level().isClientSide) {
                 this.setOrderedToSit(false);
@@ -1245,7 +1240,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         tag.putBoolean("BoundToBinder", boundToBinder);
 
         // Save sit progress for animation state
-        tag.putFloat("SitProgress", sitProgress);
+        saveSitProgress(tag);
         saveRideableData(tag);
     }
 
@@ -1273,8 +1268,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
         // Load sit progress for animation state prior to command refresh so poses align immediately
         if (tag.contains("SitProgress")) {
-            sitProgress = tag.getFloat("SitProgress");
-            this.entityData.set(DragonEntity.DATA_SIT_PROGRESS, sitProgress);
+            setSitProgress(tag.getFloat("SitProgress"));
         }
 
         // Align baseline command state before restoring extra behaviors
