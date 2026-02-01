@@ -15,6 +15,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.RecordItem;
 
 import java.util.function.Supplier;
 
@@ -154,6 +156,17 @@ public class ModItems {
                                             .saturationMod(1.2f) // hearty saturation feel
                                             .alwaysEat()         // dragons can eat even when "full"
                                             .build())
+                    ));
+
+    public static final Supplier<Item> BLEEDING_BOLT_MUSIC_DISC =
+            REGISTER.register("bleeding_bolt_music_disc",
+                    () -> new RecordItem(
+                            1,
+                            ModSounds.BLEEDING_BOLT.get(),
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .rarity(Rarity.RARE),
+                            20 * 104
                     ));
 
     private ModItems() {

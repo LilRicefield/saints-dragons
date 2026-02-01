@@ -79,6 +79,12 @@ public final class DragonRideInputHandler {
             InputConstants.KEY_Y,
             KEY_CATEGORY
     );
+    public static final KeyMapping DRAGON_TAUNT = new KeyMapping(
+            "key.saintsdragons.taunt",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_4,
+            KEY_CATEGORY
+    );
 
     private static final KeyMapping[] ALL_KEYS = {
             DRAGON_ASCEND,
@@ -88,7 +94,8 @@ public final class DragonRideInputHandler {
             DRAGON_PRIMARY_ABILITY,
             DRAGON_SECONDARY_ABILITY,
             DRAGON_TOGGLE_MELEE,
-            DRAGON_TOGGLE_PITCH_MODE
+            DRAGON_TOGGLE_PITCH_MODE,
+            DRAGON_TAUNT
     };
 
     private static boolean wasAscendPressed = false;
@@ -99,6 +106,7 @@ public final class DragonRideInputHandler {
     private static boolean wasAttackDown = false;
     private static boolean wasToggleMeleeDown = false;
     private static boolean wasTogglePitchModeDown = false;
+    private static boolean wasTauntDown = false;
 
     private static float lastForward = 0f;
     private static float lastStrafe = 0f;
@@ -166,6 +174,7 @@ public final class DragonRideInputHandler {
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
         boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
+        boolean tauntDown = DRAGON_TAUNT.isDown() && isCtrlDown(mc);
         boolean attackDown = mc.options.keyAttack.isDown();
 
         float forward = player.zza;
@@ -220,6 +229,9 @@ public final class DragonRideInputHandler {
                 || dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus
                 || dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw)) {
             sendInput(false, false, DragonRiderAction.TOGGLE_PITCH_MODE, null, forward, strafe, yaw);
+        }
+        if (tauntDown && !wasTauntDown) {
+            sendInput(false, false, DragonRiderAction.TAUNT, null, forward, strafe, yaw);
         }
 
         // Double-tap dodge detection (only for Raevyx)
@@ -295,6 +307,7 @@ public final class DragonRideInputHandler {
         wasAttackDown = attackDown;
         wasToggleMeleeDown = toggleMeleeDown;
         wasTogglePitchModeDown = togglePitchModeDown;
+        wasTauntDown = tauntDown;
     }
 
     private static void handleAbilityBinding(RiderAbilityBinding binding,
@@ -332,6 +345,7 @@ public final class DragonRideInputHandler {
         boolean attackDown = mc.options.keyAttack.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
         boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
+        boolean tauntDown = DRAGON_TAUNT.isDown() && isCtrlDown(mc);
 
         handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
         handleLockedAbilityRelease(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown);
@@ -346,6 +360,7 @@ public final class DragonRideInputHandler {
         wasAttackDown = attackDown;
         wasToggleMeleeDown = toggleMeleeDown;
         wasTogglePitchModeDown = togglePitchModeDown;
+        wasTauntDown = tauntDown;
     }
 
     private static void handleLockedAbilityRelease(RiderAbilityBinding binding,
@@ -390,6 +405,7 @@ public final class DragonRideInputHandler {
         wasAttackDown = false;
         wasToggleMeleeDown = false;
         wasTogglePitchModeDown = false;
+        wasTauntDown = false;
         lastForward = 0f;
         lastStrafe = 0f;
         lastYaw = 0f;
@@ -403,5 +419,11 @@ public final class DragonRideInputHandler {
         wasForwardKeyDown = false;
         lastBackwardTapTime = 0;
         wasBackwardKeyDown = false;
+    }
+
+    private static boolean isCtrlDown(Minecraft mc) {
+        long window = mc.getWindow().getWindow();
+        return InputConstants.isKeyDown(window, InputConstants.KEY_LCONTROL)
+                || InputConstants.isKeyDown(window, InputConstants.KEY_RCONTROL);
     }
 }

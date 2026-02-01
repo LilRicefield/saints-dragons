@@ -16,6 +16,7 @@ public final class ModSounds {
 
     public static final Supplier<SoundEvent> IVY_TRADE_START = registerSound("ivy_trade_start");
     public static final Supplier<SoundEvent> IVY_TRADE_STOP = registerSound("ivy_trade_stop");
+    public static final Supplier<SoundEvent> BLEEDING_BOLT = registerSound("bleeding_bolt");
 
     // Stegonaut
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");

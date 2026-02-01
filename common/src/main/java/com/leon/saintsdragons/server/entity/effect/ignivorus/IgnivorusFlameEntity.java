@@ -46,6 +46,7 @@ public class IgnivorusFlameEntity extends Entity {
     private int maxAge;
     private Vec3 spawnPos;
     private boolean hasHitEntity = false; // Track if this flame already hit something
+    private boolean hasHitBlock = false; // Track if this flame has impacted the ground
     private double igniteBlockChance = 1.0D;
 
     public IgnivorusFlameEntity(EntityType<? extends IgnivorusFlameEntity> type, Level level) {
@@ -125,21 +126,24 @@ public class IgnivorusFlameEntity extends Entity {
             }
 
             // Then check for block hits
-            Vec3 start = position();
-            Vec3 end = start.add(getDeltaMovement());
-            HitResult hit = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-            if (hit.getType() == HitResult.Type.BLOCK) {
-                BlockHitResult blockHit = (BlockHitResult) hit;
-                Vec3 impactPoint = blockHit.getLocation();
-                if (level() instanceof ServerLevel serverLevel) {
-                    double travelDistance = spawnPos.distanceTo(impactPoint);
-                    double impactRadius = Mth.clamp(1.2 + travelDistance * 0.16, 1.2, 3.2);
-                    if (igniteBlockChance > 0.0D && level().random.nextDouble() <= igniteBlockChance) {
-                        DragonDestructionManager.applyFlameImpact(serverLevel, impactPoint, impactRadius);
+            if (!hasHitBlock) {
+                Vec3 start = position();
+                Vec3 end = start.add(getDeltaMovement());
+                HitResult hit = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+                if (hit.getType() == HitResult.Type.BLOCK) {
+                    BlockHitResult blockHit = (BlockHitResult) hit;
+                    Vec3 impactPoint = blockHit.getLocation();
+                    if (level() instanceof ServerLevel serverLevel) {
+                        double travelDistance = spawnPos.distanceTo(impactPoint);
+                        double impactRadius = Mth.clamp(1.2 + travelDistance * 0.16, 1.2, 3.2);
+                        if (igniteBlockChance > 0.0D && level().random.nextDouble() <= igniteBlockChance) {
+                            DragonDestructionManager.applyFlameImpact(serverLevel, impactPoint, impactRadius);
+                        }
                     }
+                    hasHitBlock = true;
+                    setPos(impactPoint);
+                    setDeltaMovement(Vec3.ZERO);
                 }
-                this.discard();
-                return;
             }
         }
 
@@ -228,6 +232,7 @@ public class IgnivorusFlameEntity extends Entity {
         this.maxAge = tag.getInt("MaxAge");
         this.damage = tag.getFloat("Damage");
         this.hasHitEntity = tag.getBoolean("HasHitEntity");
+        this.hasHitBlock = tag.getBoolean("HasHitBlock");
         this.igniteBlockChance = tag.contains("IgniteBlockChance") ? tag.getDouble("IgniteBlockChance") : 1.0D;
         if (tag.contains("SpawnX")) {
             this.spawnPos = new Vec3(tag.getDouble("SpawnX"), tag.getDouble("SpawnY"), tag.getDouble("SpawnZ"));
@@ -243,6 +248,7 @@ public class IgnivorusFlameEntity extends Entity {
         tag.putInt("MaxAge", this.maxAge);
         tag.putFloat("Damage", this.damage);
         tag.putBoolean("HasHitEntity", this.hasHitEntity);
+        tag.putBoolean("HasHitBlock", this.hasHitBlock);
         tag.putDouble("IgniteBlockChance", this.igniteBlockChance);
         if (this.spawnPos != null) {
             tag.putDouble("SpawnX", this.spawnPos.x);

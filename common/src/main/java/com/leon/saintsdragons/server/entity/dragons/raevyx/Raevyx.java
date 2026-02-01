@@ -917,6 +917,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     onRiderBackwardDodge(player);
                 }
             }
+            case TAUNT -> {
+                if (!locked) {
+                    triggerAnim("action", "taunt");
+                }
+            }
             default -> { }
         }
     }

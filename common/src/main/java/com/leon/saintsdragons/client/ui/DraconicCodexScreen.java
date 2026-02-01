@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexRequest;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
@@ -100,6 +101,8 @@ public class DraconicCodexScreen extends Screen {
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/add_icon.png");
     private static final ResourceLocation REMOVE_ICON =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/remove_icon.png");
+    private static final ResourceLocation IGNIVORUS_EGG_TEXTURE =
+            SaintsDragonsCommon.rl("textures/item/ignivorus_egg_item.png");
 
     private int leftPos;
     private int topPos;
@@ -111,10 +114,13 @@ public class DraconicCodexScreen extends Screen {
     private List<String> allyList = new ArrayList<>();
     private int allyScrollOffset = 0;
     private static final int MAX_VISIBLE_ALLIES = 8;
+    private int ecologyPage = 1;
 
     private CustomEditBox allyInput;
     private net.minecraft.client.gui.components.ImageButton addAllyButton;
     private net.minecraft.client.gui.components.ImageButton removeAllyButton;
+    private net.minecraft.client.gui.components.Button ecologyPrevPageButton;
+    private net.minecraft.client.gui.components.Button ecologyNextPageButton;
 
     public DraconicCodexScreen() {
         this(null);
@@ -139,6 +145,7 @@ public class DraconicCodexScreen extends Screen {
         NetworkHandler.sendToServer(new com.leon.saintsdragons.common.network.MessageGlobalAllyRequest());
 
         initAllyWidgets();
+        initEcologyWidgets();
     }
 
     @Override
@@ -211,8 +218,8 @@ public class DraconicCodexScreen extends Screen {
     }
 
     private void drawDetailPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
-        int contentX = leftPos + 90;
-        int contentY = topPos + 60;
+        int contentX = leftPos + 232;
+        int contentY = topPos - 2;
 
         if (activeTab == CodexTab.ALLY) {
             drawAllyPanel(guiGraphics, left, top, right, bottom);
@@ -250,6 +257,8 @@ public class DraconicCodexScreen extends Screen {
             drawVariantStat(guiGraphics, selected);
             drawArmorStat(guiGraphics, selected);
             drawGenderStat(guiGraphics, selected);
+        } else if (activeTab == CodexTab.ECOLOGY) {
+            drawEcologyPanel(guiGraphics, selected, contentX, contentY);
         } else {
             guiGraphics.drawString(this.font, activeTab.description(), contentX, contentY + 16, TEXT_COLOR, false);
         }
@@ -259,11 +268,11 @@ public class DraconicCodexScreen extends Screen {
         // Draw custom EditBox background
         if (allyInput != null) {
             guiGraphics.blit(CODEX_EDIT_BOX,
-                allyInput.getX() - 1,
-                allyInput.getY() - 2,
-                0, 0,
-                120, 16,
-                120, 16);
+                    allyInput.getX() - 1,
+                    allyInput.getY() - 2,
+                    0, 0,
+                    120, 16,
+                    120, 16);
         }
 
         int contentX = left + 81;
@@ -295,6 +304,106 @@ public class DraconicCodexScreen extends Screen {
                     Component.translatable("saintsdragons.gui.draconic_codex.ally.empty").getString(),
                     contentX, listTop, TEXT_COLOR, false);
         }
+    }
+
+    private void drawEcologyPanel(GuiGraphics guiGraphics, DragonEntry selected, int contentX, int contentY) {
+        // Build the translation key based on dragon type and current page
+        String baseKey = "saintsdragons.gui.draconic_codex.ecology." + selected.dragonType();
+        String pageKey = baseKey + ".page" + ecologyPage;
+
+        // Try to get the paginated version first, fall back to non-paginated
+        Component testComponent = Component.translatable(pageKey);
+        String ecologyText = testComponent.getString();
+
+        // If the paginated key doesn't exist, it will return the key itself
+        if (ecologyText.equals(pageKey)) {
+            // Try the base key without pagination
+            ecologyText = Component.translatable(baseKey).getString();
+        }
+
+        // Calculate available width for text wrapping
+        int maxWidth = 130;
+        int startY = contentY + 16;
+
+        // Split the text into lines that fit within the available width
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        String[] words = ecologyText.split(" ");
+        StringBuilder currentLine = new StringBuilder();
+
+        for (String word : words) {
+            String testLine = currentLine.length() == 0 ? word : currentLine + " " + word;
+            if (this.font.width(testLine) <= maxWidth) {
+                if (currentLine.length() > 0) {
+                    currentLine.append(" ");
+                }
+                currentLine.append(word);
+            } else {
+                if (currentLine.length() > 0) {
+                    lines.add(currentLine.toString());
+                }
+                currentLine = new StringBuilder(word);
+            }
+        }
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
+
+        // Draw each line
+        for (int i = 0; i < lines.size(); i++) {
+            guiGraphics.drawString(this.font, lines.get(i), contentX, startY + (i * 10), TEXT_COLOR, false);
+        }
+
+        // Special rendering for Ignivorus page 4 - render the egg item
+        if (selected.dragonType().equals("ignivorus") && ecologyPage == 4) {
+            drawIgnivorusEggItem(guiGraphics, contentX, startY);
+        }
+
+        // Detect total pages and draw navigation arrows
+        int totalPages = getTotalEcologyPages(selected.dragonType());
+        if (totalPages > 1) {
+            drawEcologyPageNavigation(guiGraphics, contentX, startY, totalPages);
+        }
+    }
+
+    private void drawIgnivorusEggItem(GuiGraphics guiGraphics, int contentX, int startY) {
+        // ADJUST THESE VALUES TO POSITION THE IMAGE
+        int imgX = contentX + 44;  // ← Change X position here
+        int imgY = startY + 100;    // ← Change Y position here
+        int imgSize = 32;          // ← Change size here (16 = normal)
+
+        guiGraphics.blit(IGNIVORUS_EGG_TEXTURE, imgX, imgY, 0, 0, imgSize, imgSize, imgSize, imgSize);
+    }
+
+    private int getTotalEcologyPages(String dragonType) {
+        String baseKey = "saintsdragons.gui.draconic_codex.ecology." + dragonType;
+        int pageCount = 1;
+
+        // Check for up to 10 pages (reasonable max)
+        for (int i = 2; i <= 10; i++) {
+            String pageKey = baseKey + ".page" + i;
+            Component testComponent = Component.translatable(pageKey);
+            String result = testComponent.getString();
+
+            // If it returns the key itself, the translation doesn't exist
+            if (result.equals(pageKey)) {
+                break;
+            }
+            pageCount = i;
+        }
+
+        return pageCount;
+    }
+
+    private void drawEcologyPageNavigation(GuiGraphics guiGraphics, int contentX, int startY, int totalPages) {
+        int navY = startY + 170; // Position below the text
+
+        // Draw page indicator in the center
+        String pageText = ecologyPage + "/" + totalPages;
+        int pageTextWidth = this.font.width(pageText);
+        int centerX = contentX + 62; // Center of the ecology panel
+        guiGraphics.drawString(this.font, pageText, centerX - pageTextWidth / 2, navY, TEXT_COLOR, false);
+
+        // Navigation arrows are now handled by buttons
     }
 
     private void drawHealthStat(GuiGraphics guiGraphics, DragonEntry selected) {
@@ -380,13 +489,13 @@ public class DraconicCodexScreen extends Screen {
         RENDERING_IN_GUI.set(true);
         try {
             net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
-                guiGraphics,
-                centerX,
-                centerY,
-                size,
-                (float)(centerX - mouseX),
-                (float)(centerY - DRAGON_RENDER_BOX_SIZE - mouseY),
-                dragon
+                    guiGraphics,
+                    centerX,
+                    centerY,
+                    size,
+                    (float) (centerX - mouseX),
+                    (float) (centerY - DRAGON_RENDER_BOX_SIZE - mouseY),
+                    dragon
             );
         } finally {
             // Always clear the flag, even if rendering fails
@@ -518,7 +627,14 @@ public class DraconicCodexScreen extends Screen {
                 if (index >= dragonEntries.size()) break;
                 int y = listTop + (i * 12);
                 if (mouseX >= listLeft && mouseX <= listRight && mouseY >= y && mouseY < y + 12) {
-                    selectedDragonId = dragonEntries.get(index).entityId;
+                    DragonEntry clickedEntry = dragonEntries.get(index);
+                    selectedDragonId = clickedEntry.entityId;
+                    ecologyPage = 1; // Reset to page 1 when selecting a new dragon
+                    updateEcologyWidgetVisibility();
+
+                    // Play dragon grumble sound
+                    playDragonGrumble(clickedEntry.dragonType());
+
                     return true;
                 }
             }
@@ -533,16 +649,20 @@ public class DraconicCodexScreen extends Screen {
         if (isWithinTab(mouseX, mouseY, 0)) {
             activeTab = CodexTab.PHYSIOLOGY;
             updateAllyWidgetVisibility();
+            updateEcologyWidgetVisibility();
             return true;
         }
         if (isWithinTab(mouseX, mouseY, 1)) {
             activeTab = CodexTab.ECOLOGY;
+            ecologyPage = 1; // Reset to page 1 when opening ecology tab
             updateAllyWidgetVisibility();
+            updateEcologyWidgetVisibility();
             return true;
         }
         if (isWithinTab(mouseX, mouseY, 2)) {
             activeTab = CodexTab.ALLY;
             updateAllyWidgetVisibility();
+            updateEcologyWidgetVisibility();
             return true;
         }
         return false;
@@ -622,7 +742,9 @@ public class DraconicCodexScreen extends Screen {
         return null;
     }
 
-    public record DragonEntry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth, double armor, double hunger, double happiness, int variantId, byte genderId, boolean genderKnown, String dragonType, boolean isBaby) {
+    public record DragonEntry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth,
+                              double armor, double hunger, double happiness, int variantId, byte genderId,
+                              boolean genderKnown, String dragonType, boolean isBaby) {
     }
 
     private enum CodexTab {
@@ -751,6 +873,62 @@ public class DraconicCodexScreen extends Screen {
         }
     }
 
+    private void initEcologyWidgets() {
+        int contentX = leftPos + 229;
+        int contentY = topPos - 3;
+        int startY = contentY + 16;
+        int navY = startY + 170;
+        int centerX = contentX + 63;
+
+        // Previous page button
+        ecologyPrevPageButton = net.minecraft.client.gui.components.Button.builder(
+                        Component.literal("<"),
+                        button -> {
+                            if (ecologyPage > 1) {
+                                ecologyPage--;
+                                updateEcologyWidgetVisibility();
+                            }
+                        })
+                .bounds(centerX - 20, navY, 10, 10)
+                .build();
+        this.addRenderableWidget(ecologyPrevPageButton);
+
+        // Next page button
+        ecologyNextPageButton = net.minecraft.client.gui.components.Button.builder(
+                        Component.literal(">"),
+                        button -> {
+                            DragonEntry selected = getSelectedEntry();
+                            if (selected != null) {
+                                int totalPages = getTotalEcologyPages(selected.dragonType());
+                                if (ecologyPage < totalPages) {
+                                    ecologyPage++;
+                                    updateEcologyWidgetVisibility();
+                                }
+                            }
+                        })
+                .bounds(centerX + 13, navY, 10, 10)
+                .build();
+        this.addRenderableWidget(ecologyNextPageButton);
+
+        updateEcologyWidgetVisibility();
+    }
+
+    private void updateEcologyWidgetVisibility() {
+        boolean showEcology = activeTab == CodexTab.ECOLOGY;
+        DragonEntry selected = getSelectedEntry();
+
+        if (ecologyPrevPageButton != null) {
+            ecologyPrevPageButton.visible = showEcology && selected != null && ecologyPage > 1;
+            ecologyPrevPageButton.active = ecologyPrevPageButton.visible;
+        }
+
+        if (ecologyNextPageButton != null) {
+            int totalPages = selected != null ? getTotalEcologyPages(selected.dragonType()) : 1;
+            ecologyNextPageButton.visible = showEcology && selected != null && ecologyPage < totalPages;
+            ecologyNextPageButton.active = ecologyNextPageButton.visible;
+        }
+    }
+
     private void addAllyFromInput() {
         if (allyInput == null) {
             return;
@@ -779,5 +957,24 @@ public class DraconicCodexScreen extends Screen {
                 username
         ));
         allyInput.setValue("");
+    }
+
+    private void playDragonGrumble(String dragonType) {
+        if (this.minecraft == null || this.minecraft.player == null) {
+            return;
+        }
+
+        net.minecraft.sounds.SoundEvent grumbleSound = switch (dragonType) {
+            case "raevyx" -> ModSounds.RAEVYX_GRUMBLE_1.get();
+            case "ignivorus" -> ModSounds.IGNIVORUS_GRUMBLE_1.get();
+            case "cindervane" -> ModSounds.CINDERVANE_GRUMBLE_1.get();
+            case "nulljaw" -> ModSounds.NULLJAW_GRUMBLE_1.get();
+            case "stegonaut" -> ModSounds.STEGONAUT_GRUMBLE_1.get();
+            default -> null;
+        };
+
+        if (grumbleSound != null) {
+            this.minecraft.player.playSound(grumbleSound, 0.8f, 1.0f);
+        }
     }
 }
