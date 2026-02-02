@@ -40,7 +40,7 @@ public class CindervaneEggBlock extends BaseEntityBlock {
     public static final int MAX_HATCH_LEVEL = 2;
     public static final int MAX_EGGS = 3;
     public static final IntegerProperty HATCH = BlockStateProperties.HATCH;
-    public static final IntegerProperty EGGS = BlockStateProperties.EGGS;
+    public static final IntegerProperty EGGS = IntegerProperty.create("eggs", 1, MAX_EGGS);
 
     // Hatching speeds (lower = faster)
     private static final int NORMAL_HATCH_CHANCE = 2;      // ~7 minutes total (1/2 per random tick)
