@@ -83,8 +83,8 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             .add("grumble1", "action", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
             .add("grumble2", "action", "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
             .add("grumble3", "action", "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
-            .add("nulljaw_hurt", "hurt", "animation.nulljaw.hurt", ModSounds.NULLJAW_HURT, 1.1f, 0.95f, 0.1f, false, true, true)
-            .add("nulljaw_die", "hurt", "animation.nulljaw.die", ModSounds.NULLJAW_DIE, 1.35f, 0.9f, 0.05f, false, true, true)
+            .add("nulljaw_hurt", "instant", "animation.nulljaw.hurt", ModSounds.NULLJAW_HURT, 1.1f, 0.95f, 0.1f, false, true, true)
+            .add("nulljaw_die", "instant", "animation.nulljaw.die", ModSounds.NULLJAW_DIE, 1.35f, 0.9f, 0.05f, false, true, true)
             .build();
 
     // ===== AMBIENT SOUND SYSTEM =====
@@ -437,9 +437,9 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         this.hasImpulse = true;
         if (phaseTwo) {
             lastDashWasRight = !lastDashWasRight;
-            triggerAnim("instant_action", lastDashWasRight ? "phase2_dash_right" : "phase2_dash_left");
+            triggerAnim("instant", lastDashWasRight ? "phase2_dash_right" : "phase2_dash_left");
         } else {
-            triggerAnim("instant_action", "tail_swipe_left");
+            triggerAnim("instant", "tail_swipe_left");
         }
     }
 
@@ -626,16 +626,12 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                 new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
         AnimationController<Nulljaw> actions =
                 new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
-        AnimationController<Nulljaw> hurtController =
-                new AnimationController<>(this, "hurt", 1, animationHandler::hurtPredicate);
         AnimationController<Nulljaw> instantActions =
-                new AnimationController<>(this, "instant_action", 10, animationHandler::instantActionPredicate);
-        animationHandler.setupHurtController(hurtController);
+                new AnimationController<>(this, "instant", 10, animationHandler::instantActionPredicate);
 
         // Sound keyframes
         movementController.setSoundKeyframeHandler(this::onAnimationSound);
         actions.setSoundKeyframeHandler(this::onAnimationSound);
-        hurtController.setSoundKeyframeHandler(this::onAnimationSound);
         instantActions.setSoundKeyframeHandler(this::onAnimationSound);
 
         // Setup animation triggers
@@ -644,7 +640,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
         controllers.add(movementController);
         controllers.add(actions);
-        controllers.add(hurtController);
         controllers.add(instantActions);
     }
 

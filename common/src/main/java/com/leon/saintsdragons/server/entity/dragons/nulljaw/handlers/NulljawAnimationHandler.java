@@ -249,17 +249,6 @@ public record NulljawAnimationHandler(Nulljaw drake) {
         return PlayState.STOP;
     }
 
-    public PlayState hurtPredicate(AnimationState<Nulljaw> state) {
-        state.getController().transitionLength(1);
-        return PlayState.STOP;
-    }
-
-    public void setupHurtController(AnimationController<Nulljaw> controller) {
-        controller.triggerableAnim("nulljaw_hurt",
-                RawAnimation.begin().thenPlay("animation.nulljaw.hurt"));
-        controller.triggerableAnim("nulljaw_die",
-                RawAnimation.begin().thenPlay("animation.nulljaw.die"));
-    }
 
     public PlayState instantActionPredicate(AnimationState<Nulljaw> state) {
         state.getController().transitionLength(2);
@@ -277,5 +266,9 @@ public record NulljawAnimationHandler(Nulljaw drake) {
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase2_dash_left"));
         controller.triggerableAnim("phase2_dash_right",
                 RawAnimation.begin().thenPlay("animation.nulljaw.phase2_dash_right"));
+        controller.triggerableAnim("nulljaw_hurt",
+                RawAnimation.begin().thenPlay("animation.nulljaw.hurt"));
+        controller.triggerableAnim("nulljaw_die",
+                RawAnimation.begin().thenPlay("animation.nulljaw.die"));
     }
 }

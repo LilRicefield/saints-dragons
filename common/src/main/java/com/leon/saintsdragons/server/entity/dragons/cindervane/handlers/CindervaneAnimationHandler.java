@@ -54,6 +54,10 @@ public class CindervaneAnimationHandler {
             return PlayState.STOP;
         }
 
+        if (dragon.isTakeoff()) {
+            return PlayState.STOP;
+        }
+
         // Handle sleep: continuous animation for sleep loop, stop for transitions
         if (dragon.isSleeping() && !dragon.isSleepTransitioning()) {
             state.getController().transitionLength(6);
@@ -80,10 +84,9 @@ public class CindervaneAnimationHandler {
                 // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
                 int syncedMode = dragon.getSyncedFlightMode();
 
-                // Check for takeoff first (highest priority)
+                // Takeoff is handled by instant controller.
                 if (syncedMode == 3) {
-                    state.setAndContinue(TAKEOFF);
-                    return PlayState.CONTINUE;
+                    return PlayState.STOP;
                 }
                 // Check for landing blend (second highest priority)
                 if (dragon.isRiderLandingBlendActive()) {
@@ -175,11 +178,9 @@ public class CindervaneAnimationHandler {
         if (dragon.isFlying()) {
             int syncedMode = dragon.getSyncedFlightMode();
 
-            // Mode 3: Takeoff (highest priority)
+            // Takeoff is handled by instant controller.
             if (syncedMode == 3) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(TAKEOFF);
-                return PlayState.CONTINUE;
+                return PlayState.STOP;
             }
 
             // GLIDE_DOWN check for AI dragons (calculate pitch from velocity)
@@ -301,9 +302,6 @@ public class CindervaneAnimationHandler {
         // Landed animation (plays after landing with rider)
         controller.triggerableAnim("landed", LANDED);
 
-        controller.triggerableAnim("die",
-                RawAnimation.begin().thenPlay("animation.cindervane.die"));
-
         // Sleep sequence animations
         controller.triggerableAnim("down", SIT_DOWN);
         controller.triggerableAnim("up", SIT_UP);
@@ -311,9 +309,28 @@ public class CindervaneAnimationHandler {
         controller.triggerableAnim("sleep", SLEEP);
         controller.triggerableAnim("wake_up", WAKE_UP);
 
-        // Vocal entries (automatically registers roar, hurt, die animations with sounds)
-        dragon.getVocalEntries().forEach((key, entry) ->
-                controller.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId())));
+        // Vocal entries (only those bound to the actions controller)
+        dragon.getVocalEntries().forEach((key, entry) -> {
+            if (!"actions".equals(entry.controllerId())) {
+                return;
+            }
+            if (entry.animationId() != null && !entry.animationId().isEmpty()) {
+                controller.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId()));
+            }
+        });
+    }
+
+    public PlayState instantActionPredicate(AnimationState<Cindervane> state) {
+        state.getController().transitionLength(1);
+        return PlayState.STOP;
+    }
+
+    public void setupInstantActionController(AnimationController<Cindervane> controller) {
+        controller.triggerableAnim("takeoff", TAKEOFF);
+        controller.triggerableAnim("cindervane_hurt",
+                RawAnimation.begin().thenPlay("animation.cindervane.hurt"));
+        controller.triggerableAnim("die",
+                RawAnimation.begin().thenPlay("animation.cindervane.die"));
     }
 
     // Sleep animation trigger methods

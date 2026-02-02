@@ -285,8 +285,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", "action", "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("raevyx_hurt", "hurt", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
-            .add("raevyx_die", "action", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
+            .add("raevyx_hurt", "instant", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
+            .add("raevyx_die", "instant", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
 
     private boolean manualSitCommand = false;
@@ -1167,6 +1167,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (takeoff && this.isBaby()) takeoff = false;
         boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
+        if (takeoff && !wasTakeoff && !level().isClientSide) {
+            triggerAnim("instant", "takeoff");
+        }
         // Takeoff sound is now handled by animation keyframe in RaevyxSoundProfile
     }
 
@@ -4172,14 +4175,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
         animationHandler.setupActionController(actionController);
 
-        // Dedicated controller for instant hurt reactions (no transition easing)
-        AnimationController<Raevyx> HurtController =
-                new AnimationController<>(this, "hurt", 3, state -> PlayState.STOP);
-        HurtController.triggerableAnim("raevyx_hurt",
-                RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
-
-        HurtController.setSoundKeyframeHandler(this::onAnimationSound);
-        controllers.add(HurtController);
+        AnimationController<Raevyx> instantController =
+                new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
+        animationHandler.setupInstantActionController(instantController);
+        instantController.setSoundKeyframeHandler(this::onAnimationSound);
+        controllers.add(instantController);
 
         controllers.add(movementController);
         controllers.add(actionController);

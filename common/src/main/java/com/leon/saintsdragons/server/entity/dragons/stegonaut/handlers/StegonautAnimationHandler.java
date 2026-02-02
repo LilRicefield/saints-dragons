@@ -152,18 +152,24 @@ public class StegonautAnimationHandler {
         actionController.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.stegonaut.eat"));
 
-        // Register hurt and die animations
-        actionController.triggerableAnim("hurt",
-                RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));
-        actionController.triggerableAnim("die",
-                RawAnimation.begin().thenPlay("animation.stegonaut.die"));
-
         // Rest transition animations (sit ↔ idle, sit ↔ sleep)
         actionController.triggerableAnim("sit_down", SIT_DOWN);
         actionController.triggerableAnim("sit_up", SIT_UP);
         actionController.triggerableAnim("fall_asleep", FALL_ASLEEP);
         actionController.triggerableAnim("sleep", SLEEP_ANIM);
         actionController.triggerableAnim("wake_up", WAKE_UP);
+    }
+
+    public PlayState instantActionPredicate(AnimationState<Stegonaut> state) {
+        state.getController().transitionLength(1);
+        return PlayState.STOP;
+    }
+
+    public void setupInstantActionController(AnimationController<Stegonaut> controller) {
+        controller.triggerableAnim("hurt",
+                RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));
+        controller.triggerableAnim("die",
+                RawAnimation.begin().thenPlay("animation.stegonaut.die"));
     }
     
     /**

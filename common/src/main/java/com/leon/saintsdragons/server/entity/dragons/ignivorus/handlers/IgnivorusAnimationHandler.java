@@ -56,6 +56,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
+        if (dragon.isTakeoff()) {
+            return PlayState.STOP;
+        }
+
         if (dragon.isDying()) {
             return PlayState.STOP;
         }
@@ -392,10 +396,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         // Phase 2 ultimate (instant ground attack)
         actionController.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
 
-        // Death animation
-        actionController.triggerableAnim("die",
-            RawAnimation.begin().thenPlay("animation.ignivorus.die"));
-
         // Landed animation (plays after landing with rider)
         actionController.triggerableAnim("landed", LANDED);
         actionController.triggerableAnim("phase2_landed", PHASE2_LANDED);
@@ -419,5 +419,18 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             RawAnimation.begin().thenPlay("animation.ignivorus.grumble2"));
         actionController.triggerableAnim("ignivorus_grumble3",
             RawAnimation.begin().thenPlay("animation.ignivorus.grumble3"));
+    }
+
+    public PlayState instantActionPredicate(AnimationState<Ignivorus> state) {
+        state.getController().transitionLength(2);
+        return PlayState.STOP;
+    }
+
+    public void setupInstantActionController(AnimationController<Ignivorus> controller) {
+        controller.triggerableAnim("takeoff", TAKEOFF);
+        controller.triggerableAnim("ignivorus_hurt",
+                RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
+        controller.triggerableAnim("die",
+                RawAnimation.begin().thenPlay("animation.ignivorus.die"));
     }
 }
