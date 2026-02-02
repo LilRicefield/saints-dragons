@@ -40,8 +40,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     private static String resolveControllerId(String abilityId) {
         return switch (abilityId) {
-            case "cindervane_hurt", "raevyx_hurt", "ignivorus_hurt" -> "hurt";
-            case "nulljaw_hurt" -> "hurt";
+            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "nulljaw_hurt", "stegonaut_hurt" -> "instant";
             default -> DEFAULT_CONTROLLER;
         };
     }

@@ -136,6 +136,10 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.STOP;
         }
 
+        if (wyvern.isTakeoff()) {
+            return PlayState.STOP;
+        }
+
         if (wyvern.level().isClientSide && !wyvern.isClientAnimationReady()) {
             state.setAndContinue(GROUND_IDLE);
             return PlayState.CONTINUE;
@@ -393,9 +397,18 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
 
         // Landed animation (plays after landing with rider)
         actionController.triggerableAnim("landed", LANDED);
+    }
 
-        // Death animation
-        actionController.triggerableAnim("die",
+    public PlayState instantActionPredicate(AnimationState<Raevyx> state) {
+        state.getController().transitionLength(1);
+        return PlayState.STOP;
+    }
+
+    public void setupInstantActionController(AnimationController<Raevyx> controller) {
+        controller.triggerableAnim("takeoff", TAKEOFF);
+        controller.triggerableAnim("raevyx_hurt",
+                RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
+        controller.triggerableAnim("die",
                 RawAnimation.begin().thenPlay("animation.raevyx.die"));
     }
     
@@ -405,6 +418,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private void registerVocalTriggers(AnimationController<Raevyx> action) {
         // Only register sounds that actually have animations (skip sound-only vocals like excited)
         wyvern.getVocalEntries().forEach((key, entry) -> {
+            if (!"action".equals(entry.controllerId())) {
+                return;
+            }
             if (entry.animationId() != null && !entry.animationId().isEmpty()) {
                 action.triggerableAnim(key, RawAnimation.begin().thenPlay(entry.animationId()));
             }

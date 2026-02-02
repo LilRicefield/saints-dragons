@@ -89,8 +89,8 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             .add("grumble1", "action", "animation.stegonaut.grumble1", ModSounds.STEGONAUT_GRUMBLE_1, 0.6f, 1.1f, 0.2f, false, false, true)
             .add("grumble2", "action", "animation.stegonaut.grumble2", ModSounds.STEGONAUT_GRUMBLE_2, 0.6f, 1.1f, 0.2f, false, false, true)
             .add("grumble3", "action", "animation.stegonaut.grumble3", ModSounds.STEGONAUT_GRUMBLE_3, 0.6f, 1.1f, 0.2f, false, false, true)
-            .add("hurt", "action", "animation.stegonaut.hurt", ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
-            .add("stegonaut_die", "action", "animation.stegonaut.die", ModSounds.STEGONAUT_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
+            .add("hurt", "instant", "animation.stegonaut.hurt", ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
+            .add("stegonaut_die", "instant", "animation.stegonaut.die", ModSounds.STEGONAUT_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
             .build();
 
     @Override
@@ -335,6 +335,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         animationController.setupActionController(actionController);
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(actionController);
+
+        AnimationController<Stegonaut> instantController = new AnimationController<>(this, "instant", 1, animationController::instantActionPredicate);
+        animationController.setupInstantActionController(instantController);
+        instantController.setSoundKeyframeHandler(this::onAnimationSound);
+        controllers.add(instantController);
     }
 
     @Override
