@@ -36,7 +36,7 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             return handleBabyTaming(player, heldItem, config);
         }
 
-        if (drake.isFood(heldItem)) {
+        if (isNulljawFood(heldItem)) {
             if (legacyTaming) {
                 // Legacy taming: simple food-based taming with RNG
                 return handleLegacyTaming(player, heldItem);
@@ -75,6 +75,7 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             drake.setFeedingCooldown(40);
 
             boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean tropicalFish = food.is(net.minecraft.world.item.Items.TROPICAL_FISH);
             float healAmount = heartyMeal ? 35.0F : 5.0F;
             float newHealth = Math.min(drake.getHealth() + healAmount, drake.getMaxHealth());
             drake.setHealth(newHealth);
@@ -89,7 +90,9 @@ public record NulljawInteractionHandler(Nulljaw drake) {
                     .getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
             double tameChance = heartyMeal
                     ? config.extraDoubles().getOrDefault("taming_chance", 6.0) / 2.0  // Hearty meal doubles chance
-                    : config.extraDoubles().getOrDefault("taming_chance", 6.0);
+                    : tropicalFish
+                        ? config.extraDoubles().getOrDefault("taming_chance_tropical", 4.0)
+                        : config.extraDoubles().getOrDefault("taming_chance", 6.0);
             int tameRoll = (int) Math.round(tameChance);
             boolean success = drake.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
 
@@ -115,19 +118,19 @@ public record NulljawInteractionHandler(Nulljaw drake) {
             return InteractionResult.PASS;
         }
 
-        if (player.isCrouching() && drake.isFood(heldItem)) {
+        if (player.isCrouching() && isNulljawFood(heldItem)) {
             return handleBreeding(player, heldItem);
         }
 
-        if (drake.isFood(heldItem)) {
+        if (isNulljawFood(heldItem)) {
             return handleFeeding(player, heldItem, false);
         }
 
-        if (drake.canOwnerCommand(player) && !drake.isFood(heldItem) && hand == InteractionHand.MAIN_HAND) {
+        if (drake.canOwnerCommand(player) && !isNulljawFood(heldItem) && hand == InteractionHand.MAIN_HAND) {
             return handleCommandCycling(player);
         }
 
-        if (hand == InteractionHand.MAIN_HAND && !drake.isFood(heldItem) && !player.isCrouching()) {
+        if (hand == InteractionHand.MAIN_HAND && !isNulljawFood(heldItem) && !player.isCrouching()) {
             return handleMounting(player);
         }
 
@@ -258,7 +261,8 @@ public record NulljawInteractionHandler(Nulljaw drake) {
     private InteractionResult handleBabyTaming(Player player, ItemStack food, DragonAttributeConfig config) {
         boolean client = drake.level().isClientSide;
         boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        if (!drake.isFood(food) && !food.is(net.minecraft.world.item.Items.SALMON) && !heartyMeal) {
+        boolean tropicalFish = food.is(net.minecraft.world.item.Items.TROPICAL_FISH);
+        if (!isNulljawFood(food)) {
             return InteractionResult.PASS;
         }
 
@@ -287,7 +291,9 @@ public record NulljawInteractionHandler(Nulljaw drake) {
 
             double tameChance = heartyMeal
                     ? config.extraDoubles().getOrDefault("taming_chance", 6.0) / 2.0
-                    : config.extraDoubles().getOrDefault("taming_chance", 6.0);
+                    : tropicalFish
+                        ? config.extraDoubles().getOrDefault("taming_chance_tropical", 4.0)
+                        : config.extraDoubles().getOrDefault("taming_chance", 6.0);
             int tameRoll = (int) Math.round(tameChance);
             boolean success = drake.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
 
@@ -376,5 +382,13 @@ public record NulljawInteractionHandler(Nulljaw drake) {
     private boolean isInteractionItem(ItemStack itemstack) {
         return itemstack.is(ModItems.NULLJAW_BINDER.get())
                 || itemstack.is(ModItems.DRAGON_ALLY_BOOK.get());
+    }
+
+    private boolean isNulljawFood(ItemStack itemstack) {
+        return drake.isFood(itemstack)
+                || itemstack.is(net.minecraft.world.item.Items.SALMON)
+                || itemstack.is(net.minecraft.world.item.Items.COD)
+                || itemstack.is(net.minecraft.world.item.Items.TROPICAL_FISH)
+                || itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
     }
 }

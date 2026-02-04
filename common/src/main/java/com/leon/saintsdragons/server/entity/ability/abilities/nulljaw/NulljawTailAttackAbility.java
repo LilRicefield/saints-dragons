@@ -69,7 +69,7 @@ public class NulljawTailAttackAbility extends DragonAbility<Nulljaw> {
             Nulljaw dragon = getUser();
             dragon.lockRiderControls(CONTROL_LOCK_TICKS);
             String animName = useLeftTail ? "tail_attack_left" : "tail_attack_right";
-            dragon.triggerAnim("instant_action", animName);
+            dragon.triggerAnim("instant", animName);
             appliedHit = false;
         }
     }

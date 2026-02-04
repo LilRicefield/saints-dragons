@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.network;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.DragonAllyScreen;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
+import com.leon.saintsdragons.client.ui.codex.CodexDragonEntry;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexList;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyDelta;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
@@ -39,9 +40,9 @@ public final class ClientPacketHandlers {
     public static void handleDraconicCodexList(MessageDraconicCodexList message) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof DraconicCodexScreen codexScreen) {
-            java.util.List<DraconicCodexScreen.DragonEntry> entries = new java.util.ArrayList<>();
+            java.util.List<CodexDragonEntry> entries = new java.util.ArrayList<>();
             for (MessageDraconicCodexList.Entry entry : message.entries()) {
-                entries.add(new DraconicCodexScreen.DragonEntry(
+                entries.add(new CodexDragonEntry(
                         entry.entityId(),
                         entry.displayName(),
                         entry.currentHealth(),

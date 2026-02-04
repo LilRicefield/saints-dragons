@@ -60,7 +60,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             return InteractionResult.sidedSuccess(client);
         }
 
-        if (!dragon.isFood(itemstack)) {
+        if (!isIgnivorusFood(itemstack)) {
             return InteractionResult.PASS;
         }
 
@@ -108,6 +108,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             dragon.setFeedingCooldown(20);
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
             if (hearty) {
                 dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
@@ -115,7 +116,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
 
             // Legacy taming: heal the dragon instead of entering stun
             if (legacyTaming) {
-                float healAmount = hearty ? 30.0f : 10.0f;
+                float healAmount = hearty ? 30.0f : (beef ? 16.0f : 10.0f);
                 float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
                 dragon.setHealth(newHealth);
             } else {
@@ -125,7 +126,9 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
 
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 4.0)
-                : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
+                : beef
+                    ? config.extraDoubles().getOrDefault("taming_chance_beef", 5.0)
+                    : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
             int tameRoll = (int) Math.round(tameChance);
             boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
 
@@ -168,21 +171,21 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
         // Handle owner commands and mounting
         if (isOwner) {
             // Breeding - Shift+Right-click with food
-            if (player.isCrouching() && dragon.isFood(itemstack)) {
+            if (player.isCrouching() && isIgnivorusFood(itemstack)) {
                 return handleBreeding(player, itemstack);
             }
             // Command cycling - Shift+Right-click cycles through commands
-            if (player.isCrouching() && !dragon.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
+            if (player.isCrouching() && !isIgnivorusFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
                 return handleCommandCycling(player);
             }
             // Mounting - Right-click without shift (allow any non-food item)
-            else if (!player.isCrouching() && !dragon.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
+            else if (!player.isCrouching() && !isIgnivorusFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
                 return handleMounting(player);
             }
         }
 
         // Handle feeding for healing
-        if (dragon.isFood(itemstack)) {
+        if (isIgnivorusFood(itemstack)) {
             return handleFeeding(player, itemstack);
         }
 
@@ -242,7 +245,10 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         boolean client = dragon.level().isClientSide;
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        if (!dragon.isFood(itemstack) && !itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
+        boolean cod = itemstack.is(net.minecraft.world.item.Items.COD);
+        boolean salmon = itemstack.is(net.minecraft.world.item.Items.SALMON);
+        boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
+        if (!dragon.isFood(itemstack) && !cod && !salmon && !beef && !hearty) {
             return InteractionResult.PASS;
         }
 
@@ -274,7 +280,9 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
 
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 4.0)
-                : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
+                : beef
+                    ? config.extraDoubles().getOrDefault("taming_chance_beef", 5.0)
+                    : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
             int tameRoll = (int) Math.round(tameChance);
             boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
 
@@ -319,6 +327,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
             dragon.setFeedingCooldown(23);
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
             boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
                 int growthTicks = hearty ? 4800 : 2400;
@@ -339,7 +348,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
                 dragon.applyFeedingHunger(hearty);
             } else {
                 float currentHealth = dragon.getHealth();
-                float healAmount = hearty ? 30.0F : 10.0F;
+                float healAmount = hearty ? 30.0F : (beef ? 16.0F : 10.0F);
                 float newHealth = Math.min(currentHealth + healAmount, dragon.getMaxHealth());
                 dragon.setHealth(newHealth);
                 dragon.applyFeedingHunger(hearty);
@@ -478,5 +487,13 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
     private boolean isInteractionItem(ItemStack itemstack) {
         return itemstack.is(ModItems.IGNIVORUS_BINDER.get())
                 || itemstack.is(ModItems.DRAGON_ALLY_BOOK.get());
+    }
+
+    private boolean isIgnivorusFood(ItemStack itemstack) {
+        return dragon.isFood(itemstack)
+                || itemstack.is(net.minecraft.world.item.Items.SALMON)
+                || itemstack.is(net.minecraft.world.item.Items.COD)
+                || itemstack.is(net.minecraft.world.item.Items.BEEF)
+                || itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
     }
 }
