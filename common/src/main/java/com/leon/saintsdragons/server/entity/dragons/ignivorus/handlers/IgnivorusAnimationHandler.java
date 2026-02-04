@@ -104,17 +104,27 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
         // Check for Phase 2 - third priority for ground movement
         if (!dragon.isFlying() && dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
-            // Check if moving (use synced rider input instead of velocity for proper client-side sync)
-            float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
-            float riderStrafe = dragon.getEntityData().get(Ignivorus.DATA_RIDER_STRAFE);
-            boolean isMoving = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+            if (dragon.isVehicle()) {
+                // Ridden: use synced rider input instead of velocity for proper client-side sync
+                float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
+                float riderStrafe = dragon.getEntityData().get(Ignivorus.DATA_RIDER_STRAFE);
+                boolean isMoving = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
 
-            if (isMoving) {
-                // Check if running (sprinting) - use DATA_ACCELERATING which is properly synced
-                boolean isRunning = dragon.getEntityData().get(Ignivorus.DATA_ACCELERATING);
-                state.setAndContinue(isRunning ? PHASE2_RUN : PHASE2_WALK);
+                if (isMoving) {
+                    // Check if running (sprinting) - use DATA_ACCELERATING which is properly synced
+                    boolean isRunning = dragon.getEntityData().get(Ignivorus.DATA_ACCELERATING);
+                    state.setAndContinue(isRunning ? PHASE2_RUN : PHASE2_WALK);
+                } else {
+                    state.setAndContinue(PHASE2_IDLE);
+                }
             } else {
-                state.setAndContinue(PHASE2_IDLE);
+                // AI: use DATA_GROUND_MOVE_STATE as single source of truth
+                int groundState = dragon.getEntityData().get(Ignivorus.DATA_GROUND_MOVE_STATE);
+                switch (groundState) {
+                    case 2 -> state.setAndContinue(PHASE2_RUN);
+                    case 1 -> state.setAndContinue(PHASE2_WALK);
+                    default -> state.setAndContinue(PHASE2_IDLE);
+                }
             }
             return PlayState.CONTINUE;
         }

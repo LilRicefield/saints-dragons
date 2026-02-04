@@ -293,6 +293,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int phase2CooldownTicks = 0;
     private boolean useRightWingSwipe = true; // Alternates between left and right
     private boolean phase2WasVehicle = false;
+    private int aiPhase2LockTicks = 0;
 
     // Leaping body slam system (Phase 2 replacement for bulldoze)
     private static final double LEAP_HORIZONTAL_SPEED = 2.75D; // Horizontal speed per tick - POWERFUL leap forward!
@@ -926,6 +927,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             // Tick down cooldown
             if (phase2CooldownTicks > 0) {
                 phase2CooldownTicks--;
+            }
+            if (aiPhase2LockTicks > 0) {
+                aiPhase2LockTicks--;
             }
 
             // Disable Phase 2 if player dismounts
@@ -2080,6 +2084,58 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public boolean isPhase2Active() {
         return level().isClientSide ? this.entityData.get(DATA_PHASE2) : phase2Active;
+    }
+
+    public boolean isAiPhase2Locked() {
+        return !level().isClientSide && aiPhase2LockTicks > 0;
+    }
+
+    private void startAiPhase2Lock(int ticks) {
+        if (!level().isClientSide) {
+            aiPhase2LockTicks = Math.max(aiPhase2LockTicks, ticks);
+        }
+    }
+
+    /**
+     * AI-only Phase 2 toggle. Mirrors rider checks but without rider control locking.
+     */
+    public boolean tryTogglePhase2ForAI(boolean enable) {
+        if (level().isClientSide) {
+            return false;
+        }
+        if (isBaby()) {
+            return false;
+        }
+        if (isVehicle() || getControllingPassenger() != null) {
+            return false;
+        }
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return false;
+        }
+        if (bulldozing || leaping) {
+            return false;
+        }
+        if (phase2CooldownTicks > 0) {
+            return false;
+        }
+        if (phase2Active == enable) {
+            return false;
+        }
+        if (getActiveAbility() != null) {
+            return false;
+        }
+
+        phase2Active = enable;
+        this.entityData.set(DATA_PHASE2, enable);
+        if (enable) {
+            startAiPhase2Lock(20);
+            animationHandler.triggerPhase2EnterAnimation();
+        } else {
+            phase2CooldownTicks = 40; // 2 second cooldown
+            startAiPhase2Lock(13);
+            animationHandler.triggerPhase2ExitAnimation();
+        }
+        return true;
     }
 
     public boolean shouldUseRightWingSwipe() {

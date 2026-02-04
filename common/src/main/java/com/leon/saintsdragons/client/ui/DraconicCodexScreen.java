@@ -3,8 +3,16 @@ package com.leon.saintsdragons.client.ui;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexRequest;
 import com.leon.saintsdragons.common.network.NetworkHandler;
-import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.client.ui.codex.CodexAllyPanel;
+import com.leon.saintsdragons.client.ui.codex.CodexDetailPanel;
+import com.leon.saintsdragons.client.ui.codex.CodexDragonEntry;
+import com.leon.saintsdragons.client.ui.codex.CodexDragonListPanel;
+import com.leon.saintsdragons.client.ui.codex.CodexDragonRenderer;
+import com.leon.saintsdragons.client.ui.codex.CodexEcologyPanel;
+import com.leon.saintsdragons.client.ui.codex.CodexLayout;
+import com.leon.saintsdragons.client.ui.codex.CodexTab;
+import com.leon.saintsdragons.client.ui.codex.CodexTabPanel;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,7 +20,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
-
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -23,51 +30,6 @@ import java.util.Objects;
 public class DraconicCodexScreen extends Screen {
     // Flag to disable custom animations during GUI rendering
     public static final ThreadLocal<Boolean> RENDERING_IN_GUI = ThreadLocal.withInitial(() -> false);
-
-    private static final int GUI_WIDTH = 393;
-    private static final int GUI_HEIGHT = 214;
-    private static final int TAB_HEIGHT = 22;
-    private static final int TAB_WIDTH = 26;
-    private static final int TAB_CLOSED_WIDTH = 10;
-    private static final int TAB_CLOSED_HEIGHT = 22;
-    private static final int MAX_VISIBLE_DRAGONS = 10;
-    private static final int LIST_WIDTH = 120;
-    private static final int TEXT_COLOR = 0x5B3A12;
-    private static final int STAT_ICON_WIDTH = 8;
-    private static final int STAT_ICON_HEIGHT = 9;
-    private static final int HEALTH_ICON_OFFSET_X = 96;
-    private static final int HEALTH_ICON_OFFSET_Y = 147;
-    private static final int HUNGER_ICON_OFFSET_X = HEALTH_ICON_OFFSET_X + 67;
-    private static final int HAPPINESS_ICON_OFFSET_X = HUNGER_ICON_OFFSET_X;
-    private static final int VARIANT_ICON_OFFSET_X = HUNGER_ICON_OFFSET_X;
-    private static final int STAT_ICON_GAP_Y = 5;
-    private static final int STAT_TEXT_OFFSET_Y = 1;
-    private static final int NAME_BOX_X = 110;
-    private static final int NAME_BOX_Y = 32;
-    private static final int NAME_BOX_WIDTH = 88;
-    private static final int NAME_BOX_HEIGHT = 14;
-    private static final int DRAGON_RENDER_BOX_X = 113;
-    private static final int DRAGON_RENDER_BOX_Y = 51;
-    private static final int DRAGON_RENDER_BOX_SIZE = 85;
-
-    // Dragon rendering scales
-    private static final int IGNIVORUS_SCALE = 8;
-    private static final int RAEVYX_SCALE = 13;
-    private static final int NULLJAW_SCALE = 15;
-    private static final int CINDERVANE_SCALE = 12;
-    private static final int STEGONAUT_SCALE = 23;
-
-    // Dragon rendering offsets (X, Y)
-    private static final int IGNIVORUS_OFFSET_X = 0;
-    private static final int IGNIVORUS_OFFSET_Y = 0;
-    private static final int RAEVYX_OFFSET_X = 0;
-    private static final int RAEVYX_OFFSET_Y = -5;
-    private static final int NULLJAW_OFFSET_X = 0;
-    private static final int NULLJAW_OFFSET_Y = -10;
-    private static final int CINDERVANE_OFFSET_X = 0;
-    private static final int CINDERVANE_OFFSET_Y = -15;
-    private static final int STEGONAUT_OFFSET_X = 0;
-    private static final int STEGONAUT_OFFSET_Y = -15;
 
     private static final ResourceLocation BOOK_TEXTURE =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/draconic_codex.png");
@@ -104,23 +66,25 @@ public class DraconicCodexScreen extends Screen {
     private static final ResourceLocation IGNIVORUS_EGG_TEXTURE =
             SaintsDragonsCommon.rl("textures/item/ignivorus_egg_item.png");
 
+    private final CodexTabPanel tabPanel = new CodexTabPanel();
+    private final CodexDragonListPanel dragonListPanel = new CodexDragonListPanel();
+    private final CodexDragonRenderer dragonRenderer = new CodexDragonRenderer();
+    private final CodexEcologyPanel ecologyPanel = new CodexEcologyPanel(IGNIVORUS_EGG_TEXTURE);
+    private final CodexAllyPanel allyPanel = new CodexAllyPanel(CODEX_EDIT_BOX, ADD_ICON, REMOVE_ICON);
+    private final CodexDetailPanel detailPanel = new CodexDetailPanel(
+            HEALTH_ICON, ARMOR_ICON, GENDER_ICON, HUNGER_ICON, HAPPINESS_ICON, VARIANT_ICON
+    );
+
     private int leftPos;
     private int topPos;
     private int listScrollOffset = 0;
     private CodexTab activeTab = CodexTab.PHYSIOLOGY;
-    private final List<DragonEntry> dragonEntries = new ArrayList<>();
+    private final List<CodexDragonEntry> dragonEntries = new ArrayList<>();
     private java.util.UUID selectedDragonId;
     private java.util.UUID pendingSelectionId;
     private List<String> allyList = new ArrayList<>();
     private int allyScrollOffset = 0;
-    private static final int MAX_VISIBLE_ALLIES = 8;
     private int ecologyPage = 1;
-
-    private CustomEditBox allyInput;
-    private net.minecraft.client.gui.components.ImageButton addAllyButton;
-    private net.minecraft.client.gui.components.ImageButton removeAllyButton;
-    private net.minecraft.client.gui.components.Button ecologyPrevPageButton;
-    private net.minecraft.client.gui.components.Button ecologyNextPageButton;
 
     public DraconicCodexScreen() {
         this(null);
@@ -134,8 +98,8 @@ public class DraconicCodexScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        int actualWidth = GUI_WIDTH;
-        int actualHeight = GUI_HEIGHT;
+        int actualWidth = CodexLayout.GUI_WIDTH;
+        int actualHeight = CodexLayout.GUI_HEIGHT;
 
         this.leftPos = Math.max(0, (this.width - actualWidth) / 2);
         this.topPos = Math.max(0, (this.height - actualHeight) / 2);
@@ -144,535 +108,111 @@ public class DraconicCodexScreen extends Screen {
         NetworkHandler.sendToServer(new MessageDraconicCodexRequest());
         NetworkHandler.sendToServer(new com.leon.saintsdragons.common.network.MessageGlobalAllyRequest());
 
-        initAllyWidgets();
-        initEcologyWidgets();
+        allyPanel.initWidgets(this::addRenderableWidget, this.font, leftPos, topPos,
+                this::addAllyFromInput, this::removeAllyFromInput);
+        ecologyPanel.initWidgets(this::addRenderableWidget, this.font, leftPos, topPos,
+                () -> ecologyPage,
+                page -> ecologyPage = page,
+                this::getSelectedEntry,
+                this::updateEcologyWidgetVisibility);
+
+        updateAllyWidgetVisibility();
+        updateEcologyWidgetVisibility();
     }
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
 
-        guiGraphics.blit(BOOK_TEXTURE, leftPos, topPos, 0, 0, GUI_WIDTH, GUI_HEIGHT, GUI_WIDTH, GUI_HEIGHT);
+        guiGraphics.blit(BOOK_TEXTURE, leftPos, topPos, 0, 0,
+                CodexLayout.GUI_WIDTH, CodexLayout.GUI_HEIGHT,
+                CodexLayout.GUI_WIDTH, CodexLayout.GUI_HEIGHT);
 
-        int listLeft = getListLeft();
-        int listTop = getListTop();
-        int listRight = listLeft + LIST_WIDTH;
-        int listBottom = getListBottom();
+        int listLeft = CodexLayout.getListLeft(leftPos);
+        int listTop = CodexLayout.getListTop(topPos);
+        int listRight = listLeft + CodexLayout.LIST_WIDTH;
+        int listBottom = CodexLayout.getListBottom(topPos);
 
-        drawDragonList(guiGraphics, listLeft, listTop, listRight, listBottom, mouseX, mouseY);
-        drawTabs(guiGraphics);
-        drawDetailPanel(guiGraphics, getDetailLeft(), getDetailTop(), getDetailRight(), getDetailBottom());
+        dragonListPanel.draw(guiGraphics, this.font, listLeft, listTop, listRight, listBottom,
+                mouseX, mouseY, dragonEntries, listScrollOffset, selectedDragonId);
+        tabPanel.drawTabs(guiGraphics, leftPos, topPos, activeTab,
+                TAB_PHYSIOLOGY, TAB_PHYSIOLOGY_CLOSED,
+                TAB_ECOLOGY, TAB_ECOLOGY_CLOSED,
+                TAB_ALLY, TAB_ALLY_CLOSED);
+        detailPanel.draw(guiGraphics, this.font, activeTab, getSelectedEntry(),
+                leftPos, topPos, mouseX, mouseY, ecologyPage, ecologyPanel, allyPanel,
+                allyList, allyScrollOffset);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         // Render dragon last with scissor clipping
-        drawDragonPortrait(guiGraphics, mouseX, mouseY);
-    }
-
-    private void drawTabs(GuiGraphics guiGraphics) {
-        drawTab(guiGraphics, CodexTab.PHYSIOLOGY, TAB_PHYSIOLOGY, TAB_PHYSIOLOGY_CLOSED, 0);
-        drawTab(guiGraphics, CodexTab.ECOLOGY, TAB_ECOLOGY, TAB_ECOLOGY_CLOSED, 1);
-        drawTab(guiGraphics, CodexTab.ALLY, TAB_ALLY, TAB_ALLY_CLOSED, 2);
-    }
-
-    private void drawTab(GuiGraphics guiGraphics, CodexTab tab, ResourceLocation activeTexture, ResourceLocation inactiveTexture, int index) {
-        boolean isActive = tab == activeTab;
-        int x = getActiveTabX();
-        int y = getTabY(index);
-        if (isActive) {
-            guiGraphics.blit(activeTexture, x, y, 0, 0, TAB_WIDTH, TAB_HEIGHT, TAB_WIDTH, TAB_HEIGHT);
-        } else {
-            guiGraphics.blit(inactiveTexture, x, y, 0, 0, TAB_CLOSED_WIDTH, TAB_CLOSED_HEIGHT, TAB_CLOSED_WIDTH, TAB_CLOSED_HEIGHT);
-        }
-    }
-
-    private void drawDragonList(GuiGraphics guiGraphics, int left, int top, int right, int bottom, int mouseX, int mouseY) {
-        int visibleCount = Math.min(MAX_VISIBLE_DRAGONS, dragonEntries.size() - listScrollOffset);
-        if (visibleCount < 0) {
-            visibleCount = 0;
-        }
-
-        for (int i = 0; i < visibleCount; i++) {
-            int index = i + listScrollOffset;
-            if (index >= dragonEntries.size()) {
-                break;
-            }
-            DragonEntry entry = dragonEntries.get(index);
-            int y = top + (i * 12);
-            boolean isSelected = entry.entityId != null && entry.entityId.equals(selectedDragonId);
-            int nameColor = isSelected ? 0xFF8B0000 : TEXT_COLOR;
-            guiGraphics.drawString(this.font, entry.displayName, left, y, nameColor, false);
-        }
-
-        if (dragonEntries.isEmpty()) {
-            guiGraphics.drawString(this.font, Component.translatable("saintsdragons.gui.draconic_codex.empty").getString(), left, top, TEXT_COLOR, false);
-        }
-
-        if (dragonEntries.size() > MAX_VISIBLE_DRAGONS) {
-            if (listScrollOffset > 0) {
-                guiGraphics.drawString(this.font, "↑", right - 8, top - 12, TEXT_COLOR, false);
-            }
-            if (listScrollOffset + MAX_VISIBLE_DRAGONS < dragonEntries.size()) {
-                guiGraphics.drawString(this.font, "↓", right - 8, bottom + 2, TEXT_COLOR, false);
-            }
-        }
-    }
-
-    private void drawDetailPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
-        int contentX = leftPos + 232;
-        int contentY = topPos - 2;
-
-        if (activeTab == CodexTab.ALLY) {
-            drawAllyPanel(guiGraphics, left, top, right, bottom);
-            return;
-        }
-
-        DragonEntry selected = getSelectedEntry();
-        if (selected == null) {
-            return;
-        }
-
-        int boxX = leftPos + NAME_BOX_X;
-        int boxY = topPos + NAME_BOX_Y;
-        int textWidth = this.font.width(selected.displayName);
-        int textX = boxX + Math.max(0, (NAME_BOX_WIDTH - textWidth) / 2);
-        int textY = boxY + Math.max(0, (NAME_BOX_HEIGHT - this.font.lineHeight) / 2);
-        guiGraphics.drawString(this.font, selected.displayName, textX, textY, TEXT_COLOR, false);
-        if (activeTab == CodexTab.PHYSIOLOGY) {
-            String armorText = Component.translatable(
-                    "saintsdragons.gui.draconic_codex.physiology.armor",
-                    formatStat(selected.armor)
-            ).getString();
-            String genderKey = selected.genderKnown
-                    ? (selected.genderId == 1 ? "saintsdragons.gender.female" : "saintsdragons.gender.male")
-                    : "saintsdragons.gui.draconic_codex.physiology.gender_unknown";
-            String genderValue = Component.translatable(genderKey).getString();
-            String genderText = Component.translatable(
-                    "saintsdragons.gui.draconic_codex.physiology.gender",
-                    genderValue
-            ).getString();
-
-            drawHealthStat(guiGraphics, selected);
-            drawHungerStat(guiGraphics, selected);
-            drawHappinessStat(guiGraphics, selected);
-            drawVariantStat(guiGraphics, selected);
-            drawArmorStat(guiGraphics, selected);
-            drawGenderStat(guiGraphics, selected);
-        } else if (activeTab == CodexTab.ECOLOGY) {
-            drawEcologyPanel(guiGraphics, selected, contentX, contentY);
-        } else {
-            guiGraphics.drawString(this.font, activeTab.description(), contentX, contentY + 16, TEXT_COLOR, false);
-        }
-    }
-
-    private void drawAllyPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
-        // Draw custom EditBox background
-        if (allyInput != null) {
-            guiGraphics.blit(CODEX_EDIT_BOX,
-                    allyInput.getX() - 1,
-                    allyInput.getY() - 2,
-                    0, 0,
-                    120, 16,
-                    120, 16);
-        }
-
-        int contentX = left + 81;
-        int contentY = top - 5;
-
-        String allyCountText = Component.translatable(
-                "saintsdragons.gui.draconic_codex.ally.count",
-                allyList.size(),
-                com.leon.saintsdragons.server.entity.handler.DragonAllyManager.getMaxAlliesStatic()
-        ).getString();
-        guiGraphics.drawString(this.font, allyCountText, contentX, contentY, TEXT_COLOR, false);
-
-        int listTop = contentY + 16;
-        int listBottom = bottom - 16;
-        int visibleCount = Math.min(MAX_VISIBLE_ALLIES, allyList.size() - allyScrollOffset);
-        if (visibleCount < 0) {
-            visibleCount = 0;
-        }
-
-        for (int i = 0; i < visibleCount; i++) {
-            int index = i + allyScrollOffset;
-            if (index >= allyList.size()) break;
-            int y = listTop + (i * 12);
-            guiGraphics.drawString(this.font, allyList.get(index), contentX, y, TEXT_COLOR, false);
-        }
-
-        if (allyList.isEmpty()) {
-            guiGraphics.drawString(this.font,
-                    Component.translatable("saintsdragons.gui.draconic_codex.ally.empty").getString(),
-                    contentX, listTop, TEXT_COLOR, false);
-        }
-    }
-
-    private void drawEcologyPanel(GuiGraphics guiGraphics, DragonEntry selected, int contentX, int contentY) {
-        // Build the translation key based on dragon type and current page
-        String baseKey = "saintsdragons.gui.draconic_codex.ecology." + selected.dragonType();
-        String pageKey = baseKey + ".page" + ecologyPage;
-
-        // Try to get the paginated version first, fall back to non-paginated
-        Component testComponent = Component.translatable(pageKey);
-        String ecologyText = testComponent.getString();
-
-        // If the paginated key doesn't exist, it will return the key itself
-        if (ecologyText.equals(pageKey)) {
-            // Try the base key without pagination
-            ecologyText = Component.translatable(baseKey).getString();
-        }
-
-        // Calculate available width for text wrapping
-        int maxWidth = 130;
-        int startY = contentY + 16;
-
-        // Split the text into lines that fit within the available width
-        java.util.List<String> lines = new java.util.ArrayList<>();
-        String[] words = ecologyText.split(" ");
-        StringBuilder currentLine = new StringBuilder();
-
-        for (String word : words) {
-            String testLine = currentLine.length() == 0 ? word : currentLine + " " + word;
-            if (this.font.width(testLine) <= maxWidth) {
-                if (currentLine.length() > 0) {
-                    currentLine.append(" ");
-                }
-                currentLine.append(word);
-            } else {
-                if (currentLine.length() > 0) {
-                    lines.add(currentLine.toString());
-                }
-                currentLine = new StringBuilder(word);
-            }
-        }
-        if (currentLine.length() > 0) {
-            lines.add(currentLine.toString());
-        }
-
-        // Draw each line
-        for (int i = 0; i < lines.size(); i++) {
-            guiGraphics.drawString(this.font, lines.get(i), contentX, startY + (i * 10), TEXT_COLOR, false);
-        }
-
-        // Special rendering for Ignivorus page 4 - render the egg item
-        if (selected.dragonType().equals("ignivorus") && ecologyPage == 4) {
-            drawIgnivorusEggItem(guiGraphics, contentX, startY);
-        }
-
-        // Detect total pages and draw navigation arrows
-        int totalPages = getTotalEcologyPages(selected.dragonType());
-        if (totalPages > 1) {
-            drawEcologyPageNavigation(guiGraphics, contentX, startY, totalPages);
-        }
-    }
-
-    private void drawIgnivorusEggItem(GuiGraphics guiGraphics, int contentX, int startY) {
-        // ADJUST THESE VALUES TO POSITION THE IMAGE
-        int imgX = contentX + 44;  // ← Change X position here
-        int imgY = startY + 100;    // ← Change Y position here
-        int imgSize = 32;          // ← Change size here (16 = normal)
-
-        guiGraphics.blit(IGNIVORUS_EGG_TEXTURE, imgX, imgY, 0, 0, imgSize, imgSize, imgSize, imgSize);
-    }
-
-    private int getTotalEcologyPages(String dragonType) {
-        String baseKey = "saintsdragons.gui.draconic_codex.ecology." + dragonType;
-        int pageCount = 1;
-
-        // Check for up to 10 pages (reasonable max)
-        for (int i = 2; i <= 10; i++) {
-            String pageKey = baseKey + ".page" + i;
-            Component testComponent = Component.translatable(pageKey);
-            String result = testComponent.getString();
-
-            // If it returns the key itself, the translation doesn't exist
-            if (result.equals(pageKey)) {
-                break;
-            }
-            pageCount = i;
-        }
-
-        return pageCount;
-    }
-
-    private void drawEcologyPageNavigation(GuiGraphics guiGraphics, int contentX, int startY, int totalPages) {
-        int navY = startY + 170; // Position below the text
-
-        // Draw page indicator in the center
-        String pageText = ecologyPage + "/" + totalPages;
-        int pageTextWidth = this.font.width(pageText);
-        int centerX = contentX + 62; // Center of the ecology panel
-        guiGraphics.drawString(this.font, pageText, centerX - pageTextWidth / 2, navY, TEXT_COLOR, false);
-
-        // Navigation arrows are now handled by buttons
-    }
-
-    private void drawHealthStat(GuiGraphics guiGraphics, DragonEntry selected) {
-        int iconX = leftPos + HEALTH_ICON_OFFSET_X;
-        int iconY = topPos + HEALTH_ICON_OFFSET_Y;
-        guiGraphics.blit(HEALTH_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
-        String healthValue = formatStat(selected.currentHealth) + "/" + formatStat(selected.maxHealth);
-        guiGraphics.drawString(this.font, healthValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
-    }
-
-    private void drawArmorStat(GuiGraphics guiGraphics, DragonEntry selected) {
-        int iconX = leftPos + HEALTH_ICON_OFFSET_X;
-        int iconY = topPos + HEALTH_ICON_OFFSET_Y + STAT_ICON_HEIGHT + STAT_ICON_GAP_Y;
-        guiGraphics.blit(ARMOR_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
-        String armorValue = formatStat(selected.armor);
-        guiGraphics.drawString(this.font, armorValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
-    }
-
-    private void drawHungerStat(GuiGraphics guiGraphics, DragonEntry selected) {
-        int iconX = leftPos + HUNGER_ICON_OFFSET_X;
-        int iconY = topPos + HEALTH_ICON_OFFSET_Y;
-        guiGraphics.blit(HUNGER_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
-        String hungerValue = formatStat(selected.hunger) + "/100";
-        guiGraphics.drawString(this.font, hungerValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
-    }
-
-    private void drawHappinessStat(GuiGraphics guiGraphics, DragonEntry selected) {
-        int iconX = leftPos + HAPPINESS_ICON_OFFSET_X;
-        int iconY = topPos + HEALTH_ICON_OFFSET_Y + STAT_ICON_HEIGHT + STAT_ICON_GAP_Y;
-        guiGraphics.blit(HAPPINESS_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
-        String happinessValue = formatStat(selected.happiness) + "/100";
-        guiGraphics.drawString(this.font, happinessValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
-    }
-
-    private void drawVariantStat(GuiGraphics guiGraphics, DragonEntry selected) {
-        int iconX = leftPos + VARIANT_ICON_OFFSET_X;
-        int iconY = topPos + HEALTH_ICON_OFFSET_Y + (STAT_ICON_HEIGHT + STAT_ICON_GAP_Y) * 2;
-        guiGraphics.blit(VARIANT_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
-        String key = selected.variantId == 1 ? "saintsdragons.variant.crimson" : "saintsdragons.variant.default";
-        String value = Component.translatable(key).getString();
-        guiGraphics.drawString(this.font, value, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
-    }
-
-    private void drawGenderStat(GuiGraphics guiGraphics, DragonEntry selected) {
-        int iconX = leftPos + HEALTH_ICON_OFFSET_X;
-        int iconY = topPos + HEALTH_ICON_OFFSET_Y + (STAT_ICON_HEIGHT + STAT_ICON_GAP_Y) * 2;
-        guiGraphics.blit(GENDER_ICON, iconX, iconY, 0, 0, STAT_ICON_WIDTH, STAT_ICON_HEIGHT, STAT_ICON_WIDTH, STAT_ICON_HEIGHT);
-        String genderKey = selected.genderKnown
-                ? (selected.genderId == 1 ? "saintsdragons.gender.female" : "saintsdragons.gender.male")
-                : "saintsdragons.gui.draconic_codex.physiology.gender_unknown";
-        String genderValue = Component.translatable(genderKey).getString();
-        guiGraphics.drawString(this.font, genderValue, iconX + STAT_ICON_WIDTH + 2, iconY + STAT_TEXT_OFFSET_Y, TEXT_COLOR, false);
-    }
-
-    private void drawDragonPortrait(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        DragonEntry selected = getSelectedEntry();
-        if (selected == null || this.minecraft == null || this.minecraft.level == null) {
-            return;
-        }
-
-        // Try to find the real dragon first (if in render distance)
-        com.leon.saintsdragons.server.entity.base.DragonEntity dragon = findDragonEntity(selected.entityId);
-        // If not found, create a dummy dragon for rendering
-        if (dragon == null) {
-            dragon = createDummyDragon(selected);
-            if (dragon == null) {
-                return;
-            }
-        }
-
-        int boxX = leftPos + DRAGON_RENDER_BOX_X;
-        int boxY = topPos + DRAGON_RENDER_BOX_Y;
-        int centerX = boxX + DRAGON_RENDER_BOX_SIZE / 2 + getDragonOffsetX(dragon);
-        int centerY = boxY + DRAGON_RENDER_BOX_SIZE + getDragonOffsetY(dragon);
-
-        // Get scale based on dragon type
-        int size = getDragonScale(dragon);
-
-        // Enable scissor to clip dragon rendering to the box
-        guiGraphics.enableScissor(boxX, boxY, boxX + DRAGON_RENDER_BOX_SIZE, boxY + DRAGON_RENDER_BOX_SIZE);
-
-        // Set flag to disable custom animations during GUI rendering
-        RENDERING_IN_GUI.set(true);
-        try {
-            net.minecraft.client.gui.screens.inventory.InventoryScreen.renderEntityInInventoryFollowsMouse(
-                    guiGraphics,
-                    centerX,
-                    centerY,
-                    size,
-                    (float) (centerX - mouseX),
-                    (float) (centerY - DRAGON_RENDER_BOX_SIZE - mouseY),
-                    dragon
-            );
-        } finally {
-            // Always clear the flag, even if rendering fails
-            RENDERING_IN_GUI.set(false);
-        }
-
-        guiGraphics.disableScissor();
-    }
-
-    private int getDragonScale(com.leon.saintsdragons.server.entity.base.DragonEntity dragon) {
-        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
-            return IGNIVORUS_SCALE;
-        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
-            return RAEVYX_SCALE;
-        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
-            return NULLJAW_SCALE;
-        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
-            return CINDERVANE_SCALE;
-        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
-            return STEGONAUT_SCALE;
-        }
-        return 30; // Default scale
-    }
-
-    private int getDragonOffsetX(com.leon.saintsdragons.server.entity.base.DragonEntity dragon) {
-        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
-            return IGNIVORUS_OFFSET_X;
-        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
-            return RAEVYX_OFFSET_X;
-        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
-            return NULLJAW_OFFSET_X;
-        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
-            return CINDERVANE_OFFSET_X;
-        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
-            return STEGONAUT_OFFSET_X;
-        }
-        return 0; // Default offset
-    }
-
-    private int getDragonOffsetY(com.leon.saintsdragons.server.entity.base.DragonEntity dragon) {
-        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
-            return IGNIVORUS_OFFSET_Y;
-        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
-            return RAEVYX_OFFSET_Y;
-        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
-            return NULLJAW_OFFSET_Y;
-        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
-            return CINDERVANE_OFFSET_Y;
-        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
-            return STEGONAUT_OFFSET_Y;
-        }
-        return 0; // Default offset
-    }
-
-    private com.leon.saintsdragons.server.entity.base.DragonEntity findDragonEntity(java.util.UUID dragonId) {
-        if (this.minecraft == null || this.minecraft.level == null) {
-            return null;
-        }
-        for (net.minecraft.world.entity.Entity entity : this.minecraft.level.entitiesForRendering()) {
-            if (entity instanceof com.leon.saintsdragons.server.entity.base.DragonEntity dragon
-                    && dragon.getUUID().equals(dragonId)) {
-                return dragon;
-            }
-        }
-        return null;
-    }
-
-    private com.leon.saintsdragons.server.entity.base.DragonEntity createDummyDragon(DragonEntry entry) {
-        if (this.minecraft == null || this.minecraft.level == null) {
-            return null;
-        }
-
-        net.minecraft.world.entity.EntityType<? extends com.leon.saintsdragons.server.entity.base.DragonEntity> entityType = getDragonEntityType(entry.dragonType());
-        if (entityType == null) {
-            return null;
-        }
-
-        com.leon.saintsdragons.server.entity.base.DragonEntity dragon = entityType.create(this.minecraft.level);
-        if (dragon == null) {
-            return null;
-        }
-
-        // Set baby status
-        if (entry.isBaby()) {
-            dragon.setBaby(true);
-        }
-
-        // Set variant for Ignivorus
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
-            ignivorus.setTextureVariant(entry.variantId());
-        }
-
-        // Set gender
-        dragon.setGender(com.leon.saintsdragons.server.entity.base.DragonGender.fromId(entry.genderId()));
-
-        return dragon;
-    }
-
-    private net.minecraft.world.entity.EntityType<? extends com.leon.saintsdragons.server.entity.base.DragonEntity> getDragonEntityType(String dragonType) {
-        return switch (dragonType) {
-            case "ignivorus" -> ModEntities.IGNIVORUS.get();
-            case "raevyx" -> ModEntities.RAEVYX.get();
-            case "nulljaw" -> ModEntities.NULLJAW.get();
-            case "cindervane" -> ModEntities.CINDERVANE.get();
-            case "stegonaut" -> ModEntities.STEGONAUT.get();
-            default -> null;
-        };
-    }
-
-    private String formatStat(double value) {
-        if (Math.abs(value - Math.round(value)) < 0.01) {
-            return String.format("%.0f", value);
-        }
-        return String.format("%.1f", value);
+        dragonRenderer.drawDragonPortrait(guiGraphics, this.minecraft, getSelectedEntry(), leftPos, topPos, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
+            if (activeTab == CodexTab.ECOLOGY && handleEcologyLinkClick(mouseX, mouseY)) {
+                return true;
+            }
             if (handleTabClick(mouseX, mouseY)) {
                 return true;
             }
 
-            int listLeft = getListLeft();
-            int listTop = getListTop();
-            int listRight = listLeft + LIST_WIDTH;
-            for (int i = 0; i < Math.min(MAX_VISIBLE_DRAGONS, dragonEntries.size() - listScrollOffset); i++) {
-                int index = i + listScrollOffset;
-                if (index >= dragonEntries.size()) break;
-                int y = listTop + (i * 12);
-                if (mouseX >= listLeft && mouseX <= listRight && mouseY >= y && mouseY < y + 12) {
-                    DragonEntry clickedEntry = dragonEntries.get(index);
-                    selectedDragonId = clickedEntry.entityId;
-                    ecologyPage = 1; // Reset to page 1 when selecting a new dragon
-                    updateEcologyWidgetVisibility();
+            int listLeft = CodexLayout.getListLeft(leftPos);
+            int listTop = CodexLayout.getListTop(topPos);
+            int listRight = listLeft + CodexLayout.LIST_WIDTH;
+            java.util.UUID clickedId = dragonListPanel.handleClick(mouseX, mouseY, listLeft, listTop, listRight,
+                    dragonEntries, listScrollOffset);
+            if (clickedId != null) {
+                CodexDragonEntry clickedEntry = dragonEntries.stream()
+                        .filter(entry -> clickedId.equals(entry.entityId()))
+                        .findFirst()
+                        .orElse(null);
+                selectedDragonId = clickedId;
+                ecologyPage = 1;
+                ecologyPanel.resetLinkScroll();
+                updateEcologyWidgetVisibility();
 
-                    // Play dragon grumble sound
+                if (clickedEntry != null) {
                     playDragonGrumble(clickedEntry.dragonType());
-
-                    return true;
                 }
+                return true;
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    private boolean handleEcologyLinkClick(double mouseX, double mouseY) {
+        return ecologyPanel.handleLinkClick(mouseX, mouseY,
+                page -> ecologyPage = page,
+                this::updateEcologyWidgetVisibility);
+    }
+
     private boolean handleTabClick(double mouseX, double mouseY) {
-        if (mouseY < getTabY(0) || mouseY > getTabY(2) + TAB_HEIGHT) {
+        CodexTab clicked = tabPanel.handleClick(mouseX, mouseY, leftPos, topPos);
+        if (clicked == null) {
             return false;
         }
-        if (isWithinTab(mouseX, mouseY, 0)) {
-            activeTab = CodexTab.PHYSIOLOGY;
-            updateAllyWidgetVisibility();
-            updateEcologyWidgetVisibility();
-            return true;
+        activeTab = clicked;
+        if (activeTab == CodexTab.ECOLOGY) {
+            ecologyPage = 1;
+            ecologyPanel.resetLinkScroll();
         }
-        if (isWithinTab(mouseX, mouseY, 1)) {
-            activeTab = CodexTab.ECOLOGY;
-            ecologyPage = 1; // Reset to page 1 when opening ecology tab
-            updateAllyWidgetVisibility();
-            updateEcologyWidgetVisibility();
-            return true;
-        }
-        if (isWithinTab(mouseX, mouseY, 2)) {
-            activeTab = CodexTab.ALLY;
-            updateAllyWidgetVisibility();
-            updateEcologyWidgetVisibility();
-            return true;
-        }
-        return false;
+        updateAllyWidgetVisibility();
+        updateEcologyWidgetVisibility();
+        return true;
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+        if (activeTab == CodexTab.ECOLOGY) {
+            if (ecologyPanel.handleLinkScroll(mouseX, mouseY, delta)) {
+                return true;
+            }
+        }
         if (activeTab == CodexTab.ALLY) {
-            if (allyList.size() > MAX_VISIBLE_ALLIES) {
-                if (delta < 0 && allyScrollOffset < allyList.size() - MAX_VISIBLE_ALLIES) {
+            if (allyList.size() > CodexLayout.MAX_VISIBLE_ALLIES) {
+                if (delta < 0 && allyScrollOffset < allyList.size() - CodexLayout.MAX_VISIBLE_ALLIES) {
                     allyScrollOffset++;
                 } else if (delta > 0 && allyScrollOffset > 0) {
                     allyScrollOffset--;
@@ -680,8 +220,8 @@ public class DraconicCodexScreen extends Screen {
                 return true;
             }
         }
-        if (dragonEntries.size() > MAX_VISIBLE_DRAGONS) {
-            if (delta < 0 && listScrollOffset < dragonEntries.size() - MAX_VISIBLE_DRAGONS) {
+        if (dragonEntries.size() > CodexLayout.MAX_VISIBLE_DRAGONS) {
+            if (delta < 0 && listScrollOffset < dragonEntries.size() - CodexLayout.MAX_VISIBLE_DRAGONS) {
                 listScrollOffset++;
             } else if (delta > 0 && listScrollOffset > 0) {
                 listScrollOffset--;
@@ -696,267 +236,73 @@ public class DraconicCodexScreen extends Screen {
         return false;
     }
 
-    public void updateDragonList(List<DragonEntry> entries) {
+    public void updateDragonList(List<CodexDragonEntry> entries) {
         dragonEntries.clear();
         dragonEntries.addAll(entries);
-        dragonEntries.sort(Comparator.comparing(entry -> entry.displayName.toLowerCase()));
+        dragonEntries.sort(Comparator.comparing(entry -> entry.displayName().toLowerCase()));
 
         if (pendingSelectionId != null) {
-            for (DragonEntry entry : dragonEntries) {
-                if (Objects.equals(entry.entityId, pendingSelectionId)) {
-                    selectedDragonId = entry.entityId;
+            for (CodexDragonEntry entry : dragonEntries) {
+                if (Objects.equals(entry.entityId(), pendingSelectionId)) {
+                    selectedDragonId = entry.entityId();
                     break;
                 }
             }
             pendingSelectionId = null;
         }
 
-        listScrollOffset = Math.min(listScrollOffset, Math.max(0, dragonEntries.size() - MAX_VISIBLE_DRAGONS));
+        listScrollOffset = Math.min(listScrollOffset, Math.max(0, dragonEntries.size() - CodexLayout.MAX_VISIBLE_DRAGONS));
     }
 
     public void updateAllyList(List<String> newAllyList) {
         this.allyList = new ArrayList<>(newAllyList);
         this.allyList.sort(String.CASE_INSENSITIVE_ORDER);
-        this.allyScrollOffset = Math.min(allyScrollOffset, Math.max(0, allyList.size() - MAX_VISIBLE_ALLIES));
+        this.allyScrollOffset = Math.min(allyScrollOffset, Math.max(0, allyList.size() - CodexLayout.MAX_VISIBLE_ALLIES));
     }
 
     public void addAlly(String username) {
         if (!allyList.contains(username)) {
             allyList.add(username);
             allyList.sort(String.CASE_INSENSITIVE_ORDER);
-            allyScrollOffset = Math.min(allyScrollOffset, Math.max(0, allyList.size() - MAX_VISIBLE_ALLIES));
+            allyScrollOffset = Math.min(allyScrollOffset, Math.max(0, allyList.size() - CodexLayout.MAX_VISIBLE_ALLIES));
         }
     }
 
     public void removeAlly(String username) {
         allyList.removeIf(name -> name.equalsIgnoreCase(username));
-        allyScrollOffset = Math.min(allyScrollOffset, Math.max(0, allyList.size() - MAX_VISIBLE_ALLIES));
+        allyScrollOffset = Math.min(allyScrollOffset, Math.max(0, allyList.size() - CodexLayout.MAX_VISIBLE_ALLIES));
     }
 
-    private DragonEntry getSelectedEntry() {
-        for (DragonEntry entry : dragonEntries) {
-            if (entry.entityId != null && entry.entityId.equals(selectedDragonId)) {
+    private CodexDragonEntry getSelectedEntry() {
+        for (CodexDragonEntry entry : dragonEntries) {
+            if (entry.entityId() != null && entry.entityId().equals(selectedDragonId)) {
                 return entry;
             }
         }
         return null;
     }
 
-    public record DragonEntry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth,
-                              double armor, double hunger, double happiness, int variantId, byte genderId,
-                              boolean genderKnown, String dragonType, boolean isBaby) {
-    }
-
-    private enum CodexTab {
-        PHYSIOLOGY("saintsdragons.gui.draconic_codex.tab.physiology",
-                "saintsdragons.gui.draconic_codex.placeholder.physiology"),
-        ECOLOGY("saintsdragons.gui.draconic_codex.tab.ecology",
-                "saintsdragons.gui.draconic_codex.placeholder.ecology"),
-        ALLY("saintsdragons.gui.draconic_codex.tab.ally",
-                "saintsdragons.gui.draconic_codex.placeholder.ally");
-
-        private final String labelKey;
-        private final String descKey;
-
-        CodexTab(String labelKey, String descKey) {
-            this.labelKey = labelKey;
-            this.descKey = descKey;
-        }
-
-        public Component label() {
-            return Component.translatable(labelKey);
-        }
-
-        public Component description() {
-            return Component.translatable(descKey);
-        }
-    }
-
-    private int getListLeft() {
-        return leftPos + 7;
-    }
-
-    private int getListTop() {
-        return topPos + 47;
-    }
-
-    private int getListBottom() {
-        return topPos + GUI_HEIGHT - 18;
-    }
-
-    private int getDetailLeft() {
-        return leftPos + 150;
-    }
-
-    private int getDetailTop() {
-        return topPos + 44;
-    }
-
-    private int getDetailRight() {
-        return leftPos + GUI_WIDTH - 18;
-    }
-
-    private int getDetailBottom() {
-        return topPos + GUI_HEIGHT - 18;
-    }
-
-    private int getActiveTabX() {
-        return leftPos + 366;
-    }
-
-    private int getTabY(int index) {
-        return topPos + 24 + (TAB_HEIGHT + 2) * index;
-    }
-
-    private boolean isWithinTab(double mouseX, double mouseY, int index) {
-        int y = getTabY(index);
-        int x = getActiveTabX();
-        return mouseX >= x && mouseX <= x + TAB_WIDTH && mouseY >= y && mouseY <= y + TAB_HEIGHT;
-    }
-
-    private void initAllyWidgets() {
-        int inputX = leftPos + 233;
-        int inputY = topPos + 17;
-        int inputWidth = 122;
-        int inputHeight = 12;
-
-        allyInput = new CustomEditBox(
-                this.font,
-                inputX,
-                inputY,
-                inputWidth,
-                inputHeight,
-                Component.translatable("saintsdragons.gui.draconic_codex.ally.input")
-        );
-        allyInput.setMaxLength(16);
-        allyInput.setBordered(false);
-        allyInput.setTextColor(TEXT_COLOR);
-        allyInput.setTextColorUneditable(TEXT_COLOR);
-        this.addRenderableWidget(allyInput);
-
-        int iconButtonX = inputX + inputWidth + 8;
-
-        addAllyButton = new net.minecraft.client.gui.components.ImageButton(
-                iconButtonX - 36, inputY + 18, 14, 14,
-                0, 0, 0,
-                ADD_ICON,
-                14, 14,
-                button -> addAllyFromInput()
-        );
-        this.addRenderableWidget(addAllyButton);
-
-        removeAllyButton = new net.minecraft.client.gui.components.ImageButton(
-                iconButtonX - 19, inputY + 18, 14, 14,
-                0, 0, 0,
-                REMOVE_ICON,
-                14, 14,
-                button -> removeAllyFromInput()
-        );
-        this.addRenderableWidget(removeAllyButton);
-
-        updateAllyWidgetVisibility();
-    }
 
     private void updateAllyWidgetVisibility() {
-        boolean show = activeTab == CodexTab.ALLY;
-        if (allyInput != null) {
-            allyInput.setVisible(show);
-            allyInput.setEditable(show);
-        }
-        if (addAllyButton != null) {
-            addAllyButton.visible = show;
-            addAllyButton.active = show;
-        }
-        if (removeAllyButton != null) {
-            removeAllyButton.visible = show;
-            removeAllyButton.active = show;
-        }
-    }
-
-    private void initEcologyWidgets() {
-        int contentX = leftPos + 229;
-        int contentY = topPos - 3;
-        int startY = contentY + 16;
-        int navY = startY + 170;
-        int centerX = contentX + 63;
-
-        // Previous page button
-        ecologyPrevPageButton = net.minecraft.client.gui.components.Button.builder(
-                        Component.literal("<"),
-                        button -> {
-                            if (ecologyPage > 1) {
-                                ecologyPage--;
-                                updateEcologyWidgetVisibility();
-                            }
-                        })
-                .bounds(centerX - 20, navY, 10, 10)
-                .build();
-        this.addRenderableWidget(ecologyPrevPageButton);
-
-        // Next page button
-        ecologyNextPageButton = net.minecraft.client.gui.components.Button.builder(
-                        Component.literal(">"),
-                        button -> {
-                            DragonEntry selected = getSelectedEntry();
-                            if (selected != null) {
-                                int totalPages = getTotalEcologyPages(selected.dragonType());
-                                if (ecologyPage < totalPages) {
-                                    ecologyPage++;
-                                    updateEcologyWidgetVisibility();
-                                }
-                            }
-                        })
-                .bounds(centerX + 13, navY, 10, 10)
-                .build();
-        this.addRenderableWidget(ecologyNextPageButton);
-
-        updateEcologyWidgetVisibility();
+        allyPanel.updateVisibility(activeTab == CodexTab.ALLY);
     }
 
     private void updateEcologyWidgetVisibility() {
-        boolean showEcology = activeTab == CodexTab.ECOLOGY;
-        DragonEntry selected = getSelectedEntry();
-
-        if (ecologyPrevPageButton != null) {
-            ecologyPrevPageButton.visible = showEcology && selected != null && ecologyPage > 1;
-            ecologyPrevPageButton.active = ecologyPrevPageButton.visible;
-        }
-
-        if (ecologyNextPageButton != null) {
-            int totalPages = selected != null ? getTotalEcologyPages(selected.dragonType()) : 1;
-            ecologyNextPageButton.visible = showEcology && selected != null && ecologyPage < totalPages;
-            ecologyNextPageButton.active = ecologyNextPageButton.visible;
-        }
+        ecologyPanel.updateWidgetVisibility(activeTab == CodexTab.ECOLOGY, getSelectedEntry(), ecologyPage);
     }
 
-    private void addAllyFromInput() {
-        if (allyInput == null) {
-            return;
-        }
-        String username = allyInput.getValue().trim();
-        if (username.isEmpty()) {
-            return;
-        }
+    private void addAllyFromInput(String username) {
         NetworkHandler.sendToServer(new com.leon.saintsdragons.common.network.MessageGlobalAllyManagement(
                 com.leon.saintsdragons.common.network.MessageGlobalAllyManagement.Action.ADD,
                 username
         ));
-        allyInput.setValue("");
     }
 
-    private void removeAllyFromInput() {
-        if (allyInput == null) {
-            return;
-        }
-        String username = allyInput.getValue().trim();
-        if (username.isEmpty()) {
-            return;
-        }
+    private void removeAllyFromInput(String username) {
         NetworkHandler.sendToServer(new com.leon.saintsdragons.common.network.MessageGlobalAllyManagement(
                 com.leon.saintsdragons.common.network.MessageGlobalAllyManagement.Action.REMOVE,
                 username
         ));
-        allyInput.setValue("");
     }
 
     private void playDragonGrumble(String dragonType) {
