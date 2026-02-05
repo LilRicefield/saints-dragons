@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.cindervane;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
@@ -2285,6 +2286,24 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         // Fall back to base implementation for any unhandled interactions
         return super.mobInteract(player, hand);
+    }
+
+    @Override
+    protected void dropAllDeathLoot(@NotNull DamageSource source) {
+        // Don't drop loot until death animation completes
+        if (deathTime < getDeathAnimationDurationTicks()) {
+            return;
+        }
+
+        super.dropAllDeathLoot(source);
+
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
+        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
+        // Female dragons have a configurable chance to drop one egg on death
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
+            this.spawnAtLocation(ModItems.CINDERVANE_EGG.get());
+        }
     }
 
 

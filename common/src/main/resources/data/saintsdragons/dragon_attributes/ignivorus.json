@@ -34,6 +34,7 @@
     "fire_breath_flame_lifetime_multiplier": 1.0,
     "fire_breath_ignite_block_chance": 1.0,
     "taming_chance_base": 7.0,
+    "taming_chance_beef": 5.0,
     "taming_chance_hearty": 4.0,
     "egg_hatch_chance_normal": 9.0,
     "egg_loot_bastion_treasure": 0.15,

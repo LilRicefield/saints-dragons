@@ -15,8 +15,10 @@ import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRe
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class SaintsDragonsFabric implements ModInitializer {
@@ -29,8 +31,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
         FabricServerEvents.init();
         FabricLootTableModifier.register();
 
-        CommonModEvents.registerEntityAttributes((type, builder) ->
-                FabricDefaultAttributeRegistry.register(type, builder.build()));
+        CommonModEvents.registerEntityAttributes(SaintsDragonsFabric::registerDefaultAttributes);
 
         CommonModEvents.registerSpawnPlacements(SpawnPlacements::register);
         FabricDragonSpawns.register();
@@ -41,5 +42,13 @@ public final class SaintsDragonsFabric implements ModInitializer {
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 CommonModEvents.registerCommands(dispatcher));
+    }
+
+    private static <T extends LivingEntity> void registerDefaultAttributes(
+            EntityType<? extends T> type,
+            AttributeSupplier.Builder builder
+    ) {
+        // Avoid IDE contract false-positives on wildcard capture in inline lambdas.
+        FabricDefaultAttributeRegistry.register(type, builder.build());
     }
 }

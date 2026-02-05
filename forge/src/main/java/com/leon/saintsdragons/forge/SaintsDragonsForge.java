@@ -4,12 +4,15 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.forge.loot.ModLootModifiers;
+import com.leon.saintsdragons.forge.mixin.RangedAttributeAccessor;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.forge.world.AddDragonsBiomeModifier;
 import com.mojang.serialization.Codec;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
@@ -37,6 +40,7 @@ import net.minecraftforge.server.ServerLifecycleHooks;
  */
 @Mod(SaintsDragonsCommon.MOD_ID)
 public final class SaintsDragonsForge {
+    private static final double MAX_HEALTH_ATTRIBUTE_CAP = 10000.0D;
 
     private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIERS =
             DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, SaintsDragonsCommon.MOD_ID);
@@ -46,6 +50,8 @@ public final class SaintsDragonsForge {
 
     public SaintsDragonsForge() {
         var modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
+        raiseVanillaMaxHealthCap();
 
         BIOME_MODIFIERS.register(modEventBus);
         ModLootModifiers.register(modEventBus);
@@ -65,6 +71,20 @@ public final class SaintsDragonsForge {
         MinecraftForge.EVENT_BUS.addListener(this::onAddReloadListeners);
 
         SaintsDragonsCommon.init();
+    }
+
+    private static void raiseVanillaMaxHealthCap() {
+        if (!(Attributes.MAX_HEALTH instanceof RangedAttribute ranged)) {
+            return;
+        }
+
+        RangedAttributeAccessor accessor = (RangedAttributeAccessor) ranged;
+        if (accessor.saintsdragons$getMaxValue() >= MAX_HEALTH_ATTRIBUTE_CAP) {
+            return;
+        }
+
+        accessor.saintsdragons$setMaxValue(MAX_HEALTH_ATTRIBUTE_CAP);
+        SaintsDragonsCommon.LOGGER.info("Raised MAX_HEALTH attribute cap to {}", MAX_HEALTH_ATTRIBUTE_CAP);
     }
 
     private void onEntityAttributeCreation(EntityAttributeCreationEvent event) {

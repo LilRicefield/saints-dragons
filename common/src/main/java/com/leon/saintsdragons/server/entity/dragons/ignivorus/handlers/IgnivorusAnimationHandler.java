@@ -438,6 +438,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
     public void setupInstantActionController(AnimationController<Ignivorus> controller) {
         controller.triggerableAnim("takeoff", TAKEOFF);
+        controller.triggerableAnim("phase2_takeoff", PHASE2_TAKEOFF);
         controller.triggerableAnim("ignivorus_hurt",
                 RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
         controller.triggerableAnim("die",

@@ -19,6 +19,8 @@ public record CindervaneRiderController(Cindervane dragon) {
     // ===== SEAT TUNING CONSTANTS =====
     // Baseline vertical offset relative to dragon height
     private static final double SEAT_BASE_FACTOR = 0.05D; // 0.0..1.0 of bbHeight
+    private static final double SEAT0_HEIGHT_ADJUST = 0.00D;
+    private static final double SEAT1_HEIGHT_ADJUST = 0.00D;
 
     // ===== SIMPLIFIED ARCADE FLIGHT PHYSICS =====
     // Speed multipliers relative to base FLYING_SPEED attribute
@@ -315,43 +317,43 @@ public record CindervaneRiderController(Cindervane dragon) {
         int seatIndex = passengers.indexOf(passenger);
 
         if (seatIndex == -1) return; // Passenger not found
-
-        // Try to use bone-based positioning from renderer cache
-        String locatorName = (seatIndex == 0) ? "passengerSeat0" : "passengerSeat1";
-        Vec3 passengerLoc = dragon.level().isClientSide ? dragon.getClientLocatorPosition(locatorName) : null;
+        final String locatorName = seatIndex == 0 ? "passengerSeat0" : "passengerSeat1";
+        final double seatHeightAdjust = seatIndex == 0 ? SEAT0_HEIGHT_ADJUST : SEAT1_HEIGHT_ADJUST;
+        Vec3 passengerLoc = null;
+        if (dragon.level().isClientSide) {
+            passengerLoc = dragon.getClientLocatorPosition(locatorName);
+            if (passengerLoc == null && seatIndex == 0) {
+                // Compatibility fallback for packs/older renders using single-seat locator.
+                passengerLoc = dragon.getClientLocatorPosition("passengerLocator");
+            }
+        }
 
         if (passengerLoc != null) {
-            // Bone-based positioning with rotation-aware offset
-            // Convert to dragon-local space to handle both movement AND rotation
             Vec3 dragonOldPos = new Vec3(dragon.xo, dragon.yo, dragon.zo);
             float oldYaw = dragon.yRotO;
             Vec3 worldOffset = passengerLoc.subtract(dragonOldPos);
 
-            // Convert world offset to dragon-local space using old rotation
             double oldYawRad = Math.toRadians(-oldYaw);
             double cosOld = Math.cos(oldYawRad);
             double sinOld = Math.sin(oldYawRad);
-
             double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
             double localY = worldOffset.y;
             double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
 
-            // Rotate local offset to current rotation
             float currentYaw = dragon.getYRot();
             double currentYawRad = Math.toRadians(-currentYaw);
             double cosCurrent = Math.cos(currentYawRad);
             double sinCurrent = Math.sin(currentYawRad);
-
             double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
             double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
 
             Vec3 dragonCurrentPos = dragon.position();
-            Vec3 passengerCurrentPos = dragonCurrentPos.add(currentWorldX, localY, currentWorldZ);
+            Vec3 passengerCurrentPos = dragonCurrentPos.add(currentWorldX, localY + seatHeightAdjust, currentWorldZ);
 
             moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
         } else {
             double x = dragon.getX();
-            double y = dragon.getY() + getPassengersRidingOffset() + passenger.getMyRidingOffset();
+            double y = dragon.getY() + getPassengersRidingOffset() + seatHeightAdjust + passenger.getMyRidingOffset();
             double z = dragon.getZ();
             moveFunction.accept(passenger, x, y, z);
         }

@@ -66,7 +66,9 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     public boolean tryAbility() {
         Ignivorus dragon = getUser();
         boolean airborne = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
-        return (dragon.isPhase2Active() || airborne) && dragon.getControllingPassenger() != null;
+        boolean hasRider = dragon.getControllingPassenger() != null;
+        boolean aiUse = !dragon.isVehicle() && dragon.getTarget() != null;
+        return (dragon.isPhase2Active() || airborne) && (hasRider || aiUse);
     }
 
     @Override
@@ -217,6 +219,17 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             Vec3 view = player.getViewVector(1.0f);
             if (view.lengthSqr() > 1.0E-6) {
                 return view.normalize();
+            }
+        }
+        if (dragon.getTarget() != null) {
+            // Aim at target's eye position with light leading
+            var target = dragon.getTarget();
+            Vec3 targetPos = target.getEyePosition();
+            Vec3 lead = target.getDeltaMovement().scale(0.6);
+            Vec3 aimPoint = targetPos.add(lead);
+            Vec3 dir = aimPoint.subtract(getMouthPosition(dragon));
+            if (dir.lengthSqr() > 1.0E-6) {
+                return dir.normalize();
             }
         }
         Vec3 look = dragon.getLookAngle();

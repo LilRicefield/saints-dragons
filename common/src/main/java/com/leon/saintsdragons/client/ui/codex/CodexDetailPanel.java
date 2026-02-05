@@ -57,6 +57,8 @@ public class CodexDetailPanel {
             drawVariantStat(guiGraphics, font, selected, leftPos, topPos);
             drawArmorStat(guiGraphics, font, selected, leftPos, topPos);
             drawGenderStat(guiGraphics, font, selected, leftPos, topPos);
+            drawPositionStat(guiGraphics, font, selected, leftPos, topPos);
+            drawBiomeStat(guiGraphics, font, selected, leftPos, topPos);
         } else if (activeTab == CodexTab.ECOLOGY) {
             ecologyPanel.draw(guiGraphics, font, selected, ecologyPage, contentX, contentY, mouseX, mouseY);
         } else {
@@ -139,5 +141,35 @@ public class CodexDetailPanel {
             return String.format("%.0f", value);
         }
         return String.format("%.1f", value);
+    }
+
+    private void drawPositionStat(GuiGraphics guiGraphics, Font font, CodexDragonEntry selected, int leftPos, int topPos) {
+        int textX = leftPos + 231;
+        int textY = topPos + 15;
+        Component line = Component.translatable("saintsdragons.gui.draconic_codex.physiology.position",
+                formatCoordinate(selected.posX()),
+                formatCoordinate(selected.posY()),
+                formatCoordinate(selected.posZ()));
+        drawWrappedLine(guiGraphics, font, line, textX, textY, 120, 3);
+    }
+
+    private void drawBiomeStat(GuiGraphics guiGraphics, Font font, CodexDragonEntry selected, int leftPos, int topPos) {
+        int textX = leftPos + 231;
+        int textY = topPos + 40;
+        Component line = Component.translatable("saintsdragons.gui.draconic_codex.physiology.biome", selected.biomeId());
+        drawWrappedLine(guiGraphics, font, line, textX, textY, 140, 3);
+    }
+
+    private String formatCoordinate(double value) {
+        return String.format("%.1f", value);
+    }
+
+    private void drawWrappedLine(GuiGraphics guiGraphics, Font font, Component text,
+                                 int x, int y, int width, int maxLines) {
+        java.util.List<net.minecraft.util.FormattedCharSequence> lines = font.split(text, width);
+        int count = Math.min(lines.size(), maxLines);
+        for (int i = 0; i < count; i++) {
+            guiGraphics.drawString(font, lines.get(i), x, y + (i * font.lineHeight), CodexLayout.TEXT_COLOR, false);
+        }
     }
 }

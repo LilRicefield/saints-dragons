@@ -2290,7 +2290,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
         if (takeoff && !wasTakeoff && !level().isClientSide) {
-            triggerAnim("instant", "takeoff");
+            triggerAnim("instant", isPhase2Active() ? "phase2_takeoff" : "takeoff");
         }
         // Takeoff sound is handled via animation keyframe for stereo/mono routing.
     }

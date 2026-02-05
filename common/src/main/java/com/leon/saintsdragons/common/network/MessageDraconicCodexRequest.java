@@ -48,8 +48,8 @@ public class MessageDraconicCodexRequest {
         if (!entries.isEmpty()) {
             for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
                 UUID dragonId = entry.dragonId();
-                net.minecraft.world.entity.Entity entity = serverLevel.getEntity(dragonId);
-                if (entity instanceof DragonEntity dragon && dragon.isTame() && dragon.isOwnedBy(player)) {
+                DragonEntity dragon = findDragon(serverLevel, dragonId);
+                if (dragon != null && dragon.isTame() && dragon.isOwnedBy(player)) {
                     data.updateDragonName(player.getUUID(), dragonId, dragon.getName().getString());
                     data.updateDragonStats(player.getUUID(), dragon);
                     entry.setDisplayName(dragon.getName().getString());
@@ -79,10 +79,34 @@ public class MessageDraconicCodexRequest {
                     entry.genderId(),
                     entry.genderKnown(),
                     entry.dragonType(),
-                    entry.isBaby()
+                    entry.isBaby(),
+                    entry.posX(),
+                    entry.posY(),
+                    entry.posZ(),
+                    entry.biomeId()
             ));
         }
         MessageDraconicCodexList response = new MessageDraconicCodexList(payload);
         NetworkHandler.sendToPlayer(player, response);
+    }
+
+    private static DragonEntity findDragon(ServerLevel originLevel, UUID dragonId) {
+        net.minecraft.world.entity.Entity sameLevelEntity = originLevel.getEntity(dragonId);
+        if (sameLevelEntity instanceof DragonEntity dragon) {
+            return dragon;
+        }
+        if (originLevel.getServer() == null) {
+            return null;
+        }
+        for (ServerLevel level : originLevel.getServer().getAllLevels()) {
+            if (level == originLevel) {
+                continue;
+            }
+            net.minecraft.world.entity.Entity entity = level.getEntity(dragonId);
+            if (entity instanceof DragonEntity dragon) {
+                return dragon;
+            }
+        }
+        return null;
     }
 }

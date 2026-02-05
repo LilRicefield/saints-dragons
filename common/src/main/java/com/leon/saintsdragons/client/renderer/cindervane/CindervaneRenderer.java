@@ -88,6 +88,8 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
                 net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_SEAT0_X, PASSENGER_SEAT0_Y, PASSENGER_SEAT0_Z);
                 if (world != null) {
                     entity.setClientLocatorPosition("passengerSeat0", world);
+                    // Alias key so single-seat lookup paths still work in compatibility mode.
+                    entity.setClientLocatorPosition("passengerLocator", world);
                 }
             });
 

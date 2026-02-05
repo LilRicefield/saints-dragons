@@ -34,7 +34,12 @@ public class MessageDraconicCodexList {
             boolean genderKnown = buffer.readBoolean();
             String dragonType = buffer.readUtf(32);
             boolean isBaby = buffer.readBoolean();
-            entries.add(new Entry(id, name, currentHealth, maxHealth, armor, hunger, happiness, variantId, genderId, genderKnown, dragonType, isBaby));
+            double posX = buffer.readDouble();
+            double posY = buffer.readDouble();
+            double posZ = buffer.readDouble();
+            String biomeId = buffer.readUtf(128);
+            entries.add(new Entry(id, name, currentHealth, maxHealth, armor, hunger, happiness,
+                    variantId, genderId, genderKnown, dragonType, isBaby, posX, posY, posZ, biomeId));
         }
     }
 
@@ -58,7 +63,14 @@ public class MessageDraconicCodexList {
                     dragon.getGender().getId(),
                     dragon.hasGender(),
                     dragonType,
-                    dragon.isBaby()
+                    dragon.isBaby(),
+                    dragon.getX(),
+                    dragon.getY(),
+                    dragon.getZ(),
+                    dragon.level().getBiome(dragon.blockPosition())
+                            .unwrapKey()
+                            .map(key -> key.location().toString())
+                            .orElse("minecraft:unknown")
             ));
         }
         return new MessageDraconicCodexList(entries);
@@ -94,7 +106,11 @@ public class MessageDraconicCodexList {
                     entry.genderId(),
                     entry.genderKnown(),
                     entry.dragonType(),
-                    entry.isBaby()
+                    entry.isBaby(),
+                    entry.posX(),
+                    entry.posY(),
+                    entry.posZ(),
+                    entry.biomeId()
             ));
         }
         return new MessageDraconicCodexList(entries);
@@ -115,6 +131,10 @@ public class MessageDraconicCodexList {
             buffer.writeBoolean(entry.genderKnown());
             buffer.writeUtf(entry.dragonType(), 32);
             buffer.writeBoolean(entry.isBaby());
+            buffer.writeDouble(entry.posX());
+            buffer.writeDouble(entry.posY());
+            buffer.writeDouble(entry.posZ());
+            buffer.writeUtf(entry.biomeId(), 128);
         }
     }
 
@@ -126,6 +146,9 @@ public class MessageDraconicCodexList {
         Services.PLATFORM.runOnClient(() -> com.leon.saintsdragons.client.network.ClientPacketHandlers.handleDraconicCodexList(message));
     }
 
-    public record Entry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth, double armor, double hunger, double happiness, int variantId, byte genderId, boolean genderKnown, String dragonType, boolean isBaby) {
+    public record Entry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth,
+                        double armor, double hunger, double happiness, int variantId, byte genderId,
+                        boolean genderKnown, String dragonType, boolean isBaby,
+                        double posX, double posY, double posZ, String biomeId) {
     }
 }

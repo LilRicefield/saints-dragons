@@ -4,10 +4,13 @@ import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 
 public final class DragonHungerComponent {
     public static final int HUNGER_MAX = 100;
+    // 20 ticks = 1 second, so 7200 ticks = 6 minutes per hunger point.
     private static final int HUNGER_DECAY_INTERVAL_TICKS = 7200;
+    // While a player is actively controlling the dragon, hunger decays this many times faster.
     private static final int HUNGER_DECAY_RIDDEN_TICK_MULT = 2;
     private static final int HUNGER_FEED_AMOUNT = 10;
     private static final int HUNGER_FEED_AMOUNT_HEARTY = 20;
@@ -69,24 +72,32 @@ public final class DragonHungerComponent {
         if (!dragon.isTame()) {
             return;
         }
-        int decayStep = 1;
-        if (dragon.isVehicle() && dragon.getDeltaMovement().horizontalDistanceSqr() > 0.0025) {
-            decayStep = HUNGER_DECAY_RIDDEN_TICK_MULT;
-        }
+
+        int decayStep = getDecayStep();
+        hungerDecayTicks += decayStep;
+
         if (hunger > 0) {
-            hungerDecayTicks += decayStep;
-            if (hungerDecayTicks >= HUNGER_DECAY_INTERVAL_TICKS) {
-                hungerDecayTicks = 0;
+            while (hungerDecayTicks >= HUNGER_DECAY_INTERVAL_TICKS && hunger > 0) {
+                hungerDecayTicks -= HUNGER_DECAY_INTERVAL_TICKS;
                 setHunger(hunger - 1);
             }
             return;
         }
 
-        hungerDecayTicks += decayStep;
-        if (hungerDecayTicks >= HUNGER_DAMAGE_INTERVAL_TICKS) {
-            hungerDecayTicks = 0;
+        while (hungerDecayTicks >= HUNGER_DAMAGE_INTERVAL_TICKS) {
+            hungerDecayTicks -= HUNGER_DAMAGE_INTERVAL_TICKS;
             dragon.hurt(dragon.damageSources().starve(), HUNGER_DAMAGE_AMOUNT);
+            if (!dragon.isAlive()) {
+                break;
+            }
         }
+    }
+
+    private int getDecayStep() {
+        if (dragon.getControllingPassenger() instanceof Player) {
+            return HUNGER_DECAY_RIDDEN_TICK_MULT;
+        }
+        return 1;
     }
 
     public void saveToNBT(CompoundTag tag) {

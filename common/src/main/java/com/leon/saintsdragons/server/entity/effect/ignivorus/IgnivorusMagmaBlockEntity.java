@@ -218,6 +218,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         Vec3 impact = position();
         float scale = getVisualScale();
         BlockPos impactPos = BlockPos.containing(impact);
+        boolean aiFireball = owner != null && owner.getControllingPassenger() == null;
 
         // Core explosion particles - scale with fireball size
         server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(10, scale, 60),
@@ -235,7 +236,9 @@ public class IgnivorusMagmaBlockEntity extends Entity {
                     1.2D * scale, 1.0D * scale, 1.2D * scale, 0.1D);
 
             // Destroy blocks for charge level 2+ (radius 6 = ~13 block diameter crater)
-            destroyBlocks(server, impactPos, 6, false);
+            if (!aiFireball) {
+                destroyBlocks(server, impactPos, 6, false);
+            }
         }
 
         // Max charge explosion (charge level 3) - DEVASTATING
@@ -247,7 +250,9 @@ public class IgnivorusMagmaBlockEntity extends Entity {
                     2.0D * scale, 1.0D * scale, 2.0D * scale, 0.2D);
 
             // Massive block destruction radius for max charge (radius 12 = ~25 block diameter crater)
-            destroyBlocks(server, impactPos, 12, true);
+            if (!aiFireball) {
+                destroyBlocks(server, impactPos, 12, true);
+            }
         }
 
         // Sound - louder and lower pitch for bigger explosions
@@ -273,7 +278,9 @@ public class IgnivorusMagmaBlockEntity extends Entity {
             }
         }
 
-        igniteArea(server, impactPos);
+        if (!aiFireball) {
+            igniteArea(server, impactPos);
+        }
         discard();
     }
 

@@ -3,7 +3,7 @@
   "id": "saintsdragons",
   "version": "${version}",
   "name": "Saint's Dragons",
-  "description": "Adds animated, AI-driven dragons or wyverns or whatever the heck you wanna call them flying reptiles to Minecraft.",
+  "description": "Adds animated dragons or wyverns or whatever the heck you wanna call them flying reptiles to Minecraft.",
   "license": "MIT",
   "icon": "assets/saintsdragons/saintsdragons.png",
   "entrypoints": {

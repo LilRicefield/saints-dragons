@@ -163,6 +163,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.taming_chicken"),
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN::get,
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.taming_hearty"),
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY::get,
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY::set,
@@ -170,6 +174,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.egg_hatch_chance_normal"),
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.egg_drop_chance"),
+                ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE::get,
+                ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.cindervane.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.get(),
@@ -319,6 +327,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE::get,
                 ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.taming_tropical"),
+                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE_TROPICAL::get,
+                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE_TROPICAL::set,
+                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.legacy_taming"),
                 () -> ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.get(),
                 ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING::set,
@@ -326,6 +338,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.egg_hatch_chance_normal"),
                 ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.egg_drop_chance"),
+                ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE::get,
+                ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.get(),
@@ -407,6 +423,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_beef"),
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_hearty"),
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY::set,
@@ -454,8 +474,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.getDefault());
             }
             case STEGONAUT -> {
@@ -495,8 +517,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE.set(ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE_TROPICAL.set(ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE_TROPICAL.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.set(ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.getDefault());
             }
             case IGNIVORUS -> {
@@ -518,6 +542,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL.getDefault());

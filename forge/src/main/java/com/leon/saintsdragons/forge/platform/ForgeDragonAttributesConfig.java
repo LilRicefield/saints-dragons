@@ -16,8 +16,10 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_MAGMA_VOLLEY_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_BASE;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_CHICKEN;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_EGG_HATCH_CHANCE_NORMAL;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue CINDERVANE_AGGRESSIVE_WILD;
 
     // Raevyx
@@ -51,8 +53,10 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue NULLJAW_HORN_GORE_PHASE2_DAMAGE;
     public static ForgeConfigSpec.DoubleValue NULLJAW_SWIM_SPEED;
     public static ForgeConfigSpec.DoubleValue NULLJAW_TAMING_CHANCE;
+    public static ForgeConfigSpec.DoubleValue NULLJAW_TAMING_CHANCE_TROPICAL;
     public static ForgeConfigSpec.BooleanValue NULLJAW_LEGACY_TAMING;
     public static ForgeConfigSpec.DoubleValue NULLJAW_EGG_HATCH_CHANCE_NORMAL;
+    public static ForgeConfigSpec.DoubleValue NULLJAW_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue NULLJAW_AGGRESSIVE_WILD;
 
     // Ignivorus
@@ -74,6 +78,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_BASE;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_BEEF;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_STUN_HEALTH;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_LEGACY_TAMING;
@@ -100,7 +105,7 @@ public final class ForgeDragonAttributesConfig {
         // Cindervane Configuration
         builder.comment("Cindervane Dragon Attributes").push("cindervane");
         builder.comment("Core Attributes");
-        CINDERVANE_MAX_HEALTH = builder.defineInRange("max_health", 80.0, 1.0, 1000.0);
+        CINDERVANE_MAX_HEALTH = builder.defineInRange("max_health", 80.0, 1.0, 10000.0);
         CINDERVANE_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 30.0);
         CINDERVANE_FLYING_SPEED = builder.defineInRange("flying_speed", 0.60, 0.0, 2.0);
         builder.comment("Ability Damage");
@@ -108,9 +113,12 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_MAGMA_VOLLEY_DAMAGE = builder.defineInRange("magma_volley_damage", 20.0, 0.0, 100.0);
         builder.comment("Taming Chances (lower = easier)");
         CINDERVANE_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 4.0, 1.0, 20.0);
+        CINDERVANE_TAMING_CHANCE_CHICKEN = builder.defineInRange("taming_chance_chicken", 3.0, 1.0, 20.0);
         CINDERVANE_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 2.0, 1.0, 20.0);
         builder.comment("Eggs (1 in N chance per random tick)");
         CINDERVANE_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 2.0, 1.0, 200.0);
+        builder.comment("Egg drop chance (0-1)");
+        CINDERVANE_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         CINDERVANE_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
         builder.pop();
@@ -118,7 +126,7 @@ public final class ForgeDragonAttributesConfig {
         // Raevyx Configuration
         builder.comment("Raevyx Dragon Attributes").push("raevyx");
         builder.comment("Core Attributes");
-        RAEVYX_MAX_HEALTH = builder.defineInRange("max_health", 180.0, 1.0, 1000.0);
+        RAEVYX_MAX_HEALTH = builder.defineInRange("max_health", 180.0, 1.0, 10000.0);
         RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 30.0);
         RAEVYX_FLYING_SPEED = builder.defineInRange("flying_speed", 1.0, 0.0, 2.0);
         builder.comment("Ability Damage");
@@ -153,7 +161,7 @@ public final class ForgeDragonAttributesConfig {
         // Nulljaw Configuration
         builder.comment("Nulljaw Dragon Attributes").push("nulljaw");
         builder.comment("Core Attributes");
-        NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 250.0, 1.0, 1000.0);
+        NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 250.0, 1.0, 10000.0);
         NULLJAW_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 30.0);
         NULLJAW_SWIM_SPEED = builder.defineInRange("swim_speed", 1.45, 0.1, 5.0);
         builder.comment("Ability Damage");
@@ -163,10 +171,13 @@ public final class ForgeDragonAttributesConfig {
         NULLJAW_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", 20.8, 0.0, 200.0);
         builder.comment("Taming Chance (lower = easier)");
         NULLJAW_TAMING_CHANCE = builder.defineInRange("taming_chance", 6.0, 1.0, 20.0);
+        NULLJAW_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", 4.0, 1.0, 20.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
         NULLJAW_LEGACY_TAMING = builder.define("legacy_taming", false);
         builder.comment("Eggs (1 in N chance per random tick)");
         NULLJAW_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 3.0, 1.0, 200.0);
+        builder.comment("Egg drop chance (0-1)");
+        NULLJAW_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         NULLJAW_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
         builder.pop();
@@ -174,7 +185,7 @@ public final class ForgeDragonAttributesConfig {
         // Ignivorus Configuration
         builder.comment("Ignivorus Dragon Attributes").push("ignivorus");
         builder.comment("Core Attributes");
-        IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 1000.0);
+        IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 10000.0);
         IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 30.0);
         IGNIVORUS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.40, 0.0, 2.0);
         builder.comment("Ability Damage");
@@ -196,6 +207,7 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE = builder.defineInRange("fire_breath_ignite_block_chance", 1.0, 0.0, 1.0);
         builder.comment("Taming Chances (lower = easier)");
         IGNIVORUS_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 7.0, 1.0, 20.0);
+        IGNIVORUS_TAMING_CHANCE_BEEF = builder.defineInRange("taming_chance_beef", 5.0, 1.0, 20.0);
         IGNIVORUS_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 4.0, 1.0, 20.0);
         builder.comment("Taming stun health threshold (HP)");
         IGNIVORUS_TAMING_STUN_HEALTH = builder.defineInRange("taming_stun_health", 100.0, 0.0, 1000.0);
@@ -216,7 +228,7 @@ public final class ForgeDragonAttributesConfig {
         // Stegonaut Configuration
         builder.comment("Stegonaut Dragon Attributes").push("stegonaut");
         builder.comment("Core Attributes");
-        STEGONAUT_MAX_HEALTH = builder.defineInRange("max_health", 100.0, 1.0, 1000.0);
+        STEGONAUT_MAX_HEALTH = builder.defineInRange("max_health", 100.0, 1.0, 10000.0);
         STEGONAUT_ARMOR = builder.defineInRange("armor", 15.0, 0.0, 30.0);
         builder.comment("Taming Chances (lower = easier)");
         STEGONAUT_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 1.0, 1.0, 20.0);
