@@ -82,6 +82,26 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
                 playRunSound(handler, dragon, "mouth_origin");
                 yield true;
             }
+            case "stegonaut_chin_slam" -> {
+                playChinSlamSound(handler, dragon, locator);
+                yield true;
+            }
+            case "stegonaut_bite" -> {
+                playBiteSound(handler, dragon, locator);
+                yield true;
+            }
+            case "stegonaut_ground_eating_shoot" -> {
+                playGroundEatingShootSound(handler, dragon, locator);
+                yield true;
+            }
+            case "stegonaut_ground_eating_cancel" -> {
+                playGroundEatingCancelSound(handler, dragon, locator);
+                yield true;
+            }
+            case "stegonaut_ground_eating" -> {
+                playGroundEatingSound(handler, dragon, locator);
+                yield true;
+            }
             default -> false;
         };
     }
@@ -102,10 +122,6 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
         return VOCAL_WINDOWS.getOrDefault(key, -1);
     }
 
-    /**
-     * Play vocal entry with proper positioning and pitch variation.
-     * Follows Raevyx approach with sleep/sitting state checks.
-     */
     private void playVocalEntry(DragonSoundHandler handler, DragonEntity dragon, String vocalKey, String locator) {
         DragonEntity.VocalEntry entry = dragon.getVocalEntries().get(vocalKey);
         if (entry == null) {
@@ -149,6 +165,21 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
         playClientSound(dragon, at, ModSounds.STEGONAUT_EAT.get(), 1.0f, pitch);
     }
 
+    private void playChinSlamSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.STEGONAUT_CHIN_SLAM.get(), 1.0f, pitch);
+    }
+    private void playBiteSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.STEGONAUT_BITE.get(), 1.0f, pitch);
+    }
+
     /**
      * Play walk sound with baby pitch adjustment.
      */
@@ -168,20 +199,29 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
         playClientSound(dragon, at, ModSounds.STEGONAUT_RUN.get(), 1.0f, pitch);
     }
 
-    /**
-     * Play simple sound with locator support and pitch variance.
-     */
-    private void playSimpleSound(DragonSoundHandler handler, DragonEntity dragon, String locator,
-                                  net.minecraft.sounds.SoundEvent sound, float volume, float basePitch, float variance) {
-        Vec3 at = handler.resolveLocatorWorldPos(locator != null && !locator.isEmpty() ? locator : "mouth_origin");
-        float pitch = basePitch;
-        if (variance != 0f) {
-            pitch += dragon.getRandom().nextFloat() * variance;
-        }
-
-        playClientSound(dragon, at, sound, volume, pitch);
+    private void playGroundEatingSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.STEGONAUT_GROUND_EATING.get(), 1.0f, pitch);
     }
 
+    private void playGroundEatingCancelSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.STEGONAUT_GROUND_EATING_CANCEL.get(), 1.0f, pitch);
+    }
+
+    private void playGroundEatingShootSound(DragonSoundHandler handler, DragonEntity dragon, String locator) {
+        Vec3 at = handler.resolveLocatorWorldPos(
+                locator != null && !locator.isEmpty() ? locator : "mouth_origin"
+        );
+        float pitch = dragon.isBaby() ? BABY_PITCH_MULTIPLIER : 1.0f;
+        playClientSound(dragon, at, ModSounds.STEGONAUT_GROUND_EATING_SHOOT.get(), 1.0f, pitch);
+    }
     /**
      * Play sound on client side using local playback.
      * More efficient than server broadcast for animation keyframe sounds.

@@ -19,11 +19,14 @@ public class NulljawCombatGoal extends Goal {
     private static final double BITE_RANGE = 5.0D;   // Matched to bite ability (5.5) - slightly conservative for AI
     private static final double HORN_RANGE = 5.0D;   // Matched to horn gore ability (7.0) - slightly conservative for AI
     private static final double CLAW_RANGE = 3.5D;   // Claw requires closer range - it's a swipe attack, not a lunge
+    private static final double DASH_MIN_GAP = 9.0D; // Dash only when clearly out of melee range
     private static final int MIN_ATTACK_COOLDOWN_TICKS = 20;
+    private static final int AI_DASH_COOLDOWN_TICKS = 8 * 20; // 8 seconds
     private static final float PHASE_TWO_HEALTH_THRESHOLD = 0.5F;
 
     private final Nulljaw drake;
     private int attackCooldown;
+    private int aiDashCooldown;
     private int pathRecalcCooldown = 0;
     private double lastTargetX;
     private double lastTargetY;
@@ -116,6 +119,9 @@ public class NulljawCombatGoal extends Goal {
         if (attackCooldown > 0) {
             attackCooldown--;
         }
+        if (aiDashCooldown > 0) {
+            aiDashCooldown--;
+        }
 
         LivingEntity target = drake.getTarget();
         if (target == null) {
@@ -133,6 +139,12 @@ public class NulljawCombatGoal extends Goal {
             if (drake.isAbilityActive(NulljawAbilities.NULLJAW_PHASE_SHIFT)) {
                 return;
             }
+        }
+
+        // During phase 2 roar, keep moving toward target so claw swipes can connect.
+        if (drake.isPhaseTwoActive() && drake.isAbilityActive(NulljawAbilities.NULLJAW_ROAR)) {
+            updateChasePath(target);
+            return;
         }
 
         // Handle roar opener - use roar once at the start of combat (phase 2 only)
@@ -156,6 +168,15 @@ public class NulljawCombatGoal extends Goal {
         // Normal combat after roar opener
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = drake.getSensing().hasLineOfSight(target);
+
+        // Phase 2 AI dash: close distance only, with explicit 8 second AI cooldown.
+        if (shouldUseAIDash(gap, hasLineOfSight, target)) {
+            if (drake.tryAIGroundDash(target)) {
+                aiDashCooldown = AI_DASH_COOLDOWN_TICKS;
+                attackCooldown = Math.max(attackCooldown, 12);
+                return;
+            }
+        }
 
         // In melee range - try to attack, but keep chasing if too far for selected ability
         if (gap <= HORN_RANGE) {
@@ -200,13 +221,21 @@ public class NulljawCombatGoal extends Goal {
         double gap = getGapToTarget(target);
         boolean phaseTwo = drake.isPhaseTwoActive();
 
-        // Claw is close-range only (3.5 gap) - swipe attack that needs proximity
+        // Close-quarters rule: always horn gore when target is very close (both phases).
         if (gap <= CLAW_RANGE) {
-            // Phase 2: prefer claw at very close range, alternate with bite2
-            if (phaseTwo && drake.getRandom().nextFloat() < 0.6f) {
-                return NulljawAbilities.NULLJAW_CLAW;
-            }
-            return phaseTwo ? NulljawAbilities.NULLJAW_BITE2 : NulljawAbilities.NULLJAW_BITE;
+            return NulljawAbilities.NULLJAW_HORN_GORE;
+        }
+
+        // Phase 2: randomize claw and bite2 at any melee distance (no claw-specific range gate).
+        if (phaseTwo && gap <= HORN_RANGE) {
+            return drake.getRandom().nextBoolean()
+                    ? NulljawAbilities.NULLJAW_BITE2
+                    : NulljawAbilities.NULLJAW_CLAW;
+        }
+
+        // Tail attack is phase 1 only and works best at near-mid range.
+        if (!phaseTwo && gap > CLAW_RANGE && gap <= HORN_RANGE && drake.getRandom().nextFloat() < 0.35f) {
+            return NulljawAbilities.NULLJAW_TAIL_ATTACK;
         }
 
         // Bite range (5.0 gap) - medium close range
@@ -230,7 +259,18 @@ public class NulljawCombatGoal extends Goal {
             || drake.isAbilityActive(NulljawAbilities.NULLJAW_BITE2)
             || drake.isAbilityActive(NulljawAbilities.NULLJAW_CLAW)
             || drake.isAbilityActive(NulljawAbilities.NULLJAW_HORN_GORE)
+            || drake.isAbilityActive(NulljawAbilities.NULLJAW_TAIL_ATTACK)
             || drake.isAbilityActive(NulljawAbilities.NULLJAW_ROAR);
+    }
+
+    private boolean shouldUseAIDash(double gap, boolean hasLineOfSight, LivingEntity target) {
+        if (!drake.isPhaseTwoActive()) return false;
+        if (aiDashCooldown > 0) return false;
+        if (!hasLineOfSight) return false;
+        if (gap < DASH_MIN_GAP) return false;
+        if (isPerformingAttack()) return false;
+        if (drake.isAbilityActive(NulljawAbilities.NULLJAW_PHASE_SHIFT)) return false;
+        return isWithinAggroRange(target);
     }
 
     private boolean shouldEnterPhaseTwo() {

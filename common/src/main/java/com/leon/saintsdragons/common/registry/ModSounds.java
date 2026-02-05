@@ -27,6 +27,11 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> STEGONAUT_EAT = registerSound("stegonaut_eat");
     public static final Supplier<SoundEvent> STEGONAUT_WALK = registerSound("stegonaut_walk");
     public static final Supplier<SoundEvent> STEGONAUT_RUN = registerSound("stegonaut_run");
+    public static final Supplier<SoundEvent> STEGONAUT_CHIN_SLAM = registerSound("stegonaut_chin_slam");
+    public static final Supplier<SoundEvent> STEGONAUT_BITE = registerSound("stegonaut_bite");
+    public static final Supplier<SoundEvent> STEGONAUT_GROUND_EATING_SHOOT = registerSound("stegonaut_ground_eating_shoot");
+    public static final Supplier<SoundEvent> STEGONAUT_GROUND_EATING_CANCEL = registerSound("stegonaut_ground_eating_cancel");
+    public static final Supplier<SoundEvent> STEGONAUT_GROUND_EATING = registerSound("stegonaut_ground_eating");
 
     // Raevyx
     public static final Supplier<SoundEvent> RAEVYX_PURR = registerSound("raevyx_purr");

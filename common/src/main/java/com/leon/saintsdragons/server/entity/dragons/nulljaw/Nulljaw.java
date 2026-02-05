@@ -392,20 +392,52 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
      * Phase 2 dash - triggered by double-tap W.
      */
     protected void onRiderLeap(Player player) {
+        startGroundDash();
+    }
+
+    /**
+     * AI helper: dash toward target to close distance quickly.
+     */
+    public boolean tryAIGroundDash(LivingEntity target) {
+        if (target == null || !isTargetValid(target)) {
+            return false;
+        }
+        if (this.isSwimming() || this.isInWaterOrBubble()) {
+            return false;
+        }
+        if (this.leaping || this.leapCooldownTicks > 0) {
+            return false;
+        }
+
+        double dx = target.getX() - this.getX();
+        double dz = target.getZ() - this.getZ();
+        if (dx * dx + dz * dz < 1.0E-4D) {
+            return false;
+        }
+
+        float targetYaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
+        this.setYRot(Mth.wrapDegrees(targetYaw));
+        this.yBodyRot = this.getYRot();
+        this.yHeadRot = this.getYRot();
+        this.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        return startGroundDash();
+    }
+
+    private boolean startGroundDash() {
         // Check cooldown
         if (leapCooldownTicks > 0) {
-            return;
+            return false;
         }
 
         // Check if already leaping
         if (leaping) {
-            return;
+            return false;
         }
 
         // Dash constants
         final boolean phaseTwo = isPhaseTwoActive();
         if (this.isSwimming() || this.isInWaterOrBubble()) {
-            return;
+            return false;
         }
         final int LEAP_DURATION = phaseTwo
                 ? (int) Math.round(1.6667 * 20) // Phase 2 dash animation length: 33 ticks
@@ -442,6 +474,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         } else {
             triggerAnim("instant", "tail_swipe_left");
         }
+        return true;
     }
 
     /**
@@ -1839,7 +1872,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                     this.dragon.yBodyRot = bodyYaw;
                     this.dragon.yBodyRotO = bodyYaw;
 
-                    boolean allowRiderPitch = !(this.dragon.isPhaseTwoActive() && this.dragon.areRiderControlsLocked());
+                    boolean allowRiderPitch = !this.dragon.areRiderControlsLocked();
                     if (allowRiderPitch) {
                         float pitch = Mth.clamp(rider.getXRot(), -45.0F, 45.0F);
                         this.dragon.setXRot(pitch);

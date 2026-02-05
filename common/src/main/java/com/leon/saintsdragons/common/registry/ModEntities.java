@@ -15,6 +15,7 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPilla
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
+import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -134,6 +135,14 @@ public final class ModEntities {
                     .fireImmune()
                     .noSummon()
                     .build("ignivorus_nova_ring"));
+
+    public static final Supplier<EntityType<StegonautGroundChunkEntity>> STEGONAUT_GROUND_CHUNK =
+            REGISTER.register("stegonaut_ground_chunk", () -> EntityType.Builder.<StegonautGroundChunkEntity>of(StegonautGroundChunkEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("stegonaut_ground_chunk"));
 
     public static final Supplier<EntityType<VisualFallingBlockEntity>> VISUAL_FALLING_BLOCK =
             REGISTER.register("visual_falling_block", () -> EntityType.Builder.<VisualFallingBlockEntity>of(VisualFallingBlockEntity::new, MobCategory.MISC)

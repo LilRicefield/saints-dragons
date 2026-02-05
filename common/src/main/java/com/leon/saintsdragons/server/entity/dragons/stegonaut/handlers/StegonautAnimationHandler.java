@@ -151,6 +151,18 @@ public class StegonautAnimationHandler {
         // Eat animation - triggered when feeding
         actionController.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.stegonaut.eat"));
+        actionController.triggerableAnim("bite",
+                RawAnimation.begin().thenPlay("animation.stegonaut.bite"));
+        actionController.triggerableAnim("chin_slam",
+                RawAnimation.begin().thenPlay("animation.stegonaut.chin_slam"));
+        actionController.triggerableAnim("ground_eating",
+                RawAnimation.begin().thenPlay("animation.stegonaut.ground_eating"));
+        actionController.triggerableAnim("ground_eating_hold",
+                RawAnimation.begin().thenLoop("animation.stegonaut.ground_eating_hold"));
+        actionController.triggerableAnim("ground_eating_shoot",
+                RawAnimation.begin().thenPlay("animation.stegonaut.ground_eating_shoot"));
+        actionController.triggerableAnim("ground_eating_cancel",
+                RawAnimation.begin().thenPlay("animation.stegonaut.ground_eating_cancel"));
 
         // Rest transition animations (sit ↔ idle, sit ↔ sleep)
         actionController.triggerableAnim("sit_down", SIT_DOWN);
@@ -166,6 +178,8 @@ public class StegonautAnimationHandler {
     }
 
     public void setupInstantActionController(AnimationController<Stegonaut> controller) {
+        controller.triggerableAnim("stegonaut_hurt",
+                RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));
         controller.triggerableAnim("hurt",
                 RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));
         controller.triggerableAnim("die",

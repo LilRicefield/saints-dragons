@@ -541,6 +541,21 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     @Override
+    public boolean isPushable() {
+        return false;
+    }
+
+    @Override
+    public void push(double x, double y, double z) {
+        // Intentionally ignore external push impulses (entity crowding/collision pushes).
+    }
+
+    @Override
+    public void knockback(double strength, double x, double z) {
+        // Dragons are immune to knockback displacement.
+    }
+
+    @Override
     public boolean isInvulnerableTo(@NotNull DamageSource source) {
         // Check elemental immunities first
         DragonType dragonType = getDragonType();

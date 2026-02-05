@@ -34,6 +34,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             case "raevyx_hurt" -> "raevyx_hurt";
             case "nulljaw_hurt" -> "nulljaw_hurt";
             case "ignivorus_hurt" -> "ignivorus_hurt";
+            case "stegonaut_hurt" -> "stegonaut_hurt";
             default -> "hurt";
         };
     }
