@@ -65,7 +65,7 @@ public final class DragonHungerComponent {
             return 0.25f;
         }
         float ratio = (hunger - 30) / 30.0f; // 30..60 => 0..1
-        return 0.25f + (0.25f * ratio);
+        return 0.25f + (0.75f * ratio);
     }
 
     public void tick() {

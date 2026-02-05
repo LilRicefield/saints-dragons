@@ -21,7 +21,7 @@ public class CodexDragonListPanel {
                 break;
             }
             CodexDragonEntry entry = dragonEntries.get(index);
-            int y = top + (i * 12);
+            int y = top + (i * 13);
             boolean isSelected = entry.entityId() != null && entry.entityId().equals(selectedDragonId);
             int nameColor = isSelected ? 0xFF8B0000 : CodexLayout.TEXT_COLOR;
             guiGraphics.drawString(font, entry.displayName(), left, y, nameColor, false);
@@ -35,10 +35,10 @@ public class CodexDragonListPanel {
 
         if (dragonEntries.size() > CodexLayout.MAX_VISIBLE_DRAGONS) {
             if (listScrollOffset > 0) {
-                guiGraphics.drawString(font, "↑", right - 8, top - 12, CodexLayout.TEXT_COLOR, false);
+                guiGraphics.drawString(font, "↑", right - 60, top, CodexLayout.TEXT_COLOR, false);
             }
             if (listScrollOffset + CodexLayout.MAX_VISIBLE_DRAGONS < dragonEntries.size()) {
-                guiGraphics.drawString(font, "↓", right - 8, bottom + 2, CodexLayout.TEXT_COLOR, false);
+                guiGraphics.drawString(font, "↓", right - 60, bottom - 15, CodexLayout.TEXT_COLOR, false);
             }
         }
     }
@@ -51,7 +51,7 @@ public class CodexDragonListPanel {
             if (index >= dragonEntries.size()) {
                 break;
             }
-            int y = top + (i * 12);
+            int y = top + (i * 13);
             if (mouseX >= left && mouseX <= right && mouseY >= y && mouseY < y + 12) {
                 CodexDragonEntry clickedEntry = dragonEntries.get(index);
                 return clickedEntry.entityId();

@@ -149,6 +149,7 @@ public class CindervaneBinderItem extends Item {
 
         // Store amphithere's current state
         CompoundTag amphithereData = new CompoundTag();
+        amphithere.setBoundInBinder(true);
         amphithere.addAdditionalSaveData(amphithereData);
         tag.put(DRAGON_DATA_KEY, amphithereData);
 
@@ -202,6 +203,7 @@ public class CindervaneBinderItem extends Item {
             try {
                 CompoundTag amphithereData = tag.getCompound(DRAGON_DATA_KEY);
                 newAmphithere.readAdditionalSaveData(amphithereData);
+                newAmphithere.setBoundInBinder(false);
             } catch (Exception e) {
                 player.displayClientMessage(
                     Component.translatable("saintsdragons.message.binder_data_corrupted"),

@@ -123,6 +123,14 @@ public class IgnivorusTamingHandler {
             return;
         }
 
+        // Wild babies are not part of combat-stun taming; keep them out of stun loop entirely.
+        if (dragon.isBaby() && !dragon.isTame()) {
+            if (dragon.isTamingStunned() || aiLocked || awaitingFeed) {
+                clearRecovery();
+            }
+            return;
+        }
+
         if (!dragon.isTame() && !dragon.isTamingStunned() && dragon.isBelowTamingThreshold()) {
             enterHoldState();
         }

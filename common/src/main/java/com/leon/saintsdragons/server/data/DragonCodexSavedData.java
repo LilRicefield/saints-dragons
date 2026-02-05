@@ -35,7 +35,13 @@ public class DragonCodexSavedData extends SavedData {
         if (owner == null || dragon == null) {
             return;
         }
-        UUID ownerId = owner.getUUID();
+        addDragon(owner.getUUID(), dragon);
+    }
+
+    public void addDragon(UUID ownerId, DragonEntity dragon) {
+        if (ownerId == null || dragon == null) {
+            return;
+        }
         UUID dragonId = dragon.getUUID();
         List<DragonCodexEntry> entries = entriesByOwner.computeIfAbsent(ownerId, id -> new ArrayList<>());
         for (DragonCodexEntry entry : entries) {
