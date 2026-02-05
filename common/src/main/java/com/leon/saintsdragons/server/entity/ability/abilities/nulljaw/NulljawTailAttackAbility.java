@@ -56,6 +56,7 @@ public class NulljawTailAttackAbility extends DragonAbility<Nulljaw> {
     @Override
     public boolean tryAbility() {
         Nulljaw dragon = getUser();
+        // Phase 1 only, and disallow underwater usage (no G underwater in phase 1).
         return !dragon.isPhaseTwoActive() && !dragon.isSwimming() && !dragon.isInWaterOrBubble();
     }
 

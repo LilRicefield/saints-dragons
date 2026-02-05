@@ -450,6 +450,56 @@
       }
     ]
   },
+  "stegonaut_bite": {
+    "subtitle": "Stegonaut bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_bite",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_chin_slam": {
+    "subtitle": "Stegonaut slams its chin",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_chin_slam",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_ground_eating": {
+    "subtitle": "Stegonaut storing projectile",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_ground_eating",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_ground_eating_cancel": {
+    "subtitle": "Stegonaut stops storing projectile",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_ground_eating_cancel",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "stegonaut_ground_eating_shoot": {
+    "subtitle": "Stegonaut shoots",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_ground_eating_shoot",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "stegonaut_die": {
     "subtitle": "Stegonaut dying",
     "sounds": [

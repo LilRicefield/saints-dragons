@@ -3,9 +3,12 @@ package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautPassiveBuffAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundEatingAbility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -15,12 +18,15 @@ import com.leon.saintsdragons.server.entity.controller.stegonaut.StegonautRiderC
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
+import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -37,6 +43,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -89,7 +96,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             .add("grumble1", "action", "animation.stegonaut.grumble1", ModSounds.STEGONAUT_GRUMBLE_1, 0.6f, 1.1f, 0.2f, false, false, true)
             .add("grumble2", "action", "animation.stegonaut.grumble2", ModSounds.STEGONAUT_GRUMBLE_2, 0.6f, 1.1f, 0.2f, false, false, true)
             .add("grumble3", "action", "animation.stegonaut.grumble3", ModSounds.STEGONAUT_GRUMBLE_3, 0.6f, 1.1f, 0.2f, false, false, true)
-            .add("hurt", "instant", "animation.stegonaut.hurt", ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
+            .add("stegonaut_hurt", "instant", "animation.stegonaut.hurt", ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
             .add("stegonaut_die", "instant", "animation.stegonaut.die", ModSounds.STEGONAUT_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
             .build();
 
@@ -197,11 +204,20 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             ));
         }
 
-        this.goalSelector.addGoal(4, new StegonautFollowOwnerGoal(this));
-        this.goalSelector.addGoal(5, new StegonautGroundWanderGoal(this, 0.35D, 120));
+        this.goalSelector.addGoal(4, new StegonautCombatGoal(this));
+        this.goalSelector.addGoal(5, new StegonautFollowOwnerGoal(this));
+        this.goalSelector.addGoal(6, new StegonautGroundWanderGoal(this, 0.35D, 120));
 
         this.goalSelector.addGoal(7, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new StegonautRandomLookAroundGoal(this));
+
+        // Retaliation/assist targeting only:
+        // - owner hurt by target
+        // - owner hurt target
+        // - stegonaut hurt by target
+        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
+        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
     }
 
     @Override
@@ -244,6 +260,35 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         return player != null && player.equals(this.getOwner());
     }
 
+    @Override
+    protected boolean supportsRiderAction(DragonRiderAction action) {
+        return switch (action) {
+            case ABILITY_USE, ABILITY_STOP -> true;
+            default -> super.supportsRiderAction(action);
+        };
+    }
+
+    @Override
+    protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            useRidingAbility(abilityName);
+        }
+    }
+
+    @Override
+    protected void onRiderAbilityStop(Player player, String abilityName) {
+        if (abilityName != null && !abilityName.isEmpty()) {
+            if (StegonautAbilities.STEGONAUT_GROUND_EATING_ID.equals(abilityName)) {
+                var active = combatManager.getActiveAbility();
+                if (active != null && active.getAbilityType() == StegonautAbilities.STEGONAUT_GROUND_EATING) {
+                    ((StegonautGroundEatingAbility) active).requestRelease();
+                    return;
+                }
+            }
+            forceEndActiveAbility();
+        }
+    }
+
     public boolean isTameable() {
         return true; // Can be tamed like other dragons
     }
@@ -255,7 +300,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
     @Override
     public boolean hasSecondaryMelee() {
-        return false;
+        return true;
     }
 
     @Override
@@ -284,8 +329,45 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        // Simple drake has no abilities - just runs away!
-        return null;
+        return getMeleeMode() == 0
+                ? StegonautAbilities.STEGONAUT_BITE
+                : StegonautAbilities.STEGONAUT_CHIN_SLAM;
+    }
+
+    @Override
+    public RiderAbilityBinding getAttackRiderAbility() {
+        String abilityId = getMeleeMode() == 0
+                ? StegonautAbilities.STEGONAUT_BITE_ID
+                : StegonautAbilities.STEGONAUT_CHIN_SLAM_ID;
+        return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public RiderAbilityBinding getTertiaryRiderAbility() {
+        return new RiderAbilityBinding(StegonautAbilities.STEGONAUT_GROUND_EATING_ID, RiderAbilityBinding.Activation.HOLD);
+    }
+
+    public void useRidingAbility(String abilityName) {
+        if (abilityName == null || abilityName.isEmpty()) {
+            return;
+        }
+        net.minecraft.world.entity.Entity rider = this.getControllingPassenger();
+        if (!(rider instanceof LivingEntity)) {
+            return;
+        }
+        if (this.isTame() && rider instanceof Player player && !this.isOwnedBy(player)) {
+            return;
+        }
+        DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
+        if (type == StegonautAbilities.STEGONAUT_BITE
+                || type == StegonautAbilities.STEGONAUT_CHIN_SLAM
+                || type == StegonautAbilities.STEGONAUT_GROUND_EATING) {
+            combatManager.tryUseAbility(type);
+        }
+    }
+
+    public void forceEndActiveAbility() {
+        combatManager.forceEndActiveAbility();
     }
 
     @Override
@@ -331,7 +413,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         controllers.add(movementController);
 
         // Add action controller for grumble animations
-        AnimationController<Stegonaut> actionController = new AnimationController<>(this, "action", 1, animationController::actionPredicate);
+        AnimationController<Stegonaut> actionController = new AnimationController<>(this, "action", 5, animationController::actionPredicate);
         animationController.setupActionController(actionController);
         actionController.setSoundKeyframeHandler(this::onAnimationSound);
         controllers.add(actionController);
