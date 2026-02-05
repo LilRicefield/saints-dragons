@@ -148,6 +148,7 @@ public class StegonautBinderItem extends Item {
 
         // Store drake's current state
         CompoundTag drakeData = new CompoundTag();
+        drake.setBoundInBinder(true);
         drake.addAdditionalSaveData(drakeData);
         tag.put(DRAGON_DATA_KEY, drakeData);
         
@@ -202,6 +203,7 @@ public class StegonautBinderItem extends Item {
             try {
                 CompoundTag drakeData = tag.getCompound(DRAGON_DATA_KEY);
                 newDrake.readAdditionalSaveData(drakeData);
+                newDrake.setBoundInBinder(false);
             } catch (Exception e) {
                 player.displayClientMessage(
                     Component.translatable("saintsdragons.message.binder_data_corrupted"),

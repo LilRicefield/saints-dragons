@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.block;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.core.BlockPos;
@@ -133,6 +134,9 @@ public class StegonautEggBlock extends BaseEntityBlock {
             baby.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, 0.0F);
 
             level.addFreshEntity(baby);
+            if (baby.isTame() && baby.getOwnerUUID() != null) {
+                DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
+            }
             level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
         }
     }

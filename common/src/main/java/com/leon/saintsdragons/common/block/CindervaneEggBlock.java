@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.block;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
@@ -138,10 +139,9 @@ public class CindervaneEggBlock extends BaseEntityBlock {
 
         // Get block entity data before removing block
         BlockEntity blockEntity = level.getBlockEntity(pos);
-        CindervaneEggBlockEntity eggEntity = null;
-        if (blockEntity instanceof CindervaneEggBlockEntity) {
-            eggEntity = (CindervaneEggBlockEntity) blockEntity;
-        }
+        CindervaneEggBlockEntity eggEntity = blockEntity instanceof CindervaneEggBlockEntity
+                ? (CindervaneEggBlockEntity) blockEntity
+                : null;
 
         level.removeBlock(pos, false);
 
@@ -178,6 +178,9 @@ public class CindervaneEggBlock extends BaseEntityBlock {
                 baby.moveTo(pos.getX() + 0.5D + offsetX, pos.getY(), pos.getZ() + 0.5D + offsetZ, 0.0F, 0.0F);
 
                 level.addFreshEntity(baby);
+                if (baby.isTame() && baby.getOwnerUUID() != null) {
+                    DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
+                }
                 level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
             }
         }

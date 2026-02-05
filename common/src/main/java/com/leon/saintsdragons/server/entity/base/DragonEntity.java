@@ -139,6 +139,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     // Store reference to our custom body control for server-side rotation updates
     private BodyControl dragonBodyControl;
+    // Safety flag for binder storage; when true, survival stats are paused.
+    private boolean boundInBinder = false;
 
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -367,6 +369,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     public boolean hasGender() {
         return genderComponent != null && genderComponent.hasGender();
+    }
+
+    public boolean isBoundInBinder() {
+        return this.boundInBinder;
+    }
+
+    public void setBoundInBinder(boolean boundInBinder) {
+        this.boundInBinder = boundInBinder;
     }
 
     protected void ensureGenderInitialized() {
@@ -1315,7 +1325,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             if (sleepComponent != null) {
                 sleepComponent.tick();
             }
-            if (this.isTame()) {
+            if (this.isTame() && !this.isBoundInBinder()) {
                 if (hungerComponent != null) {
                     hungerComponent.tick();
                 }
@@ -1570,6 +1580,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         if (genderComponent != null) {
             genderComponent.saveToNBT(tag);
         }
+        tag.putBoolean("BoundInBinder", this.boundInBinder);
 
         allyManager.saveToNBT(tag);
     }
@@ -1601,6 +1612,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         if (sleepComponent != null) {
             sleepComponent.loadFromNBT(tag);
         }
+        this.boundInBinder = tag.getBoolean("BoundInBinder");
         allyManager.loadFromNBT(tag);
     }
 
@@ -1662,7 +1674,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             float yaw = this.getYRot();
             float pitch = this.getXRot();
             java.util.UUID oldUUID = this.getUUID();
-            boolean wasTamed = this.isTame();
 
             // Save current state
             CompoundTag nbt = new CompoundTag();
@@ -1695,11 +1706,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                 // CRITICAL: Remove old entity FIRST to free up the UUID
                 this.discard();
 
-                // THEN preserve UUID if tamed (important for ownership)
-                // This must happen AFTER discarding the old entity to avoid UUID collision
-                if (wasTamed) {
-                    newEntity.setUUID(oldUUID);
-                }
+                // Preserve UUID for both tamed and untamed dragons.
+                // This keeps external references stable across baby/adult visual respawn.
+                newEntity.setUUID(oldUUID);
 
                 // Finally, add the new entity to the world
                 world.addFreshEntity(newEntity);

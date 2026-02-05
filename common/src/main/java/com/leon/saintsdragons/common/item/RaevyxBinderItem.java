@@ -147,6 +147,7 @@ public class RaevyxBinderItem extends Item {
 
         // Store wyvern's current state
         CompoundTag dragonData = new CompoundTag();
+        dragon.setBoundInBinder(true);
         dragon.addAdditionalSaveData(dragonData);
         tag.put(DRAGON_DATA_KEY, dragonData);
 
@@ -200,6 +201,7 @@ public class RaevyxBinderItem extends Item {
             try {
                 CompoundTag dragonData = tag.getCompound(DRAGON_DATA_KEY);
                 newDragon.readAdditionalSaveData(dragonData);
+                newDragon.setBoundInBinder(false);
             } catch (Exception e) {
                 player.displayClientMessage(
                     Component.translatable("saintsdragons.message.binder_data_corrupted"),

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.block;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
@@ -97,6 +98,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
      * Spawn baby Raevyx and remove egg block
      */
     private void hatchEgg(ServerLevel level, BlockPos pos, BlockState state) {
+        BlockEntity blockEntity = level.getBlockEntity(pos);
         // Play hatching sound and effects
         level.playSound(null, pos, SoundEvents.TURTLE_EGG_HATCH, SoundSource.BLOCKS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
         level.removeBlock(pos, false);
@@ -105,7 +107,6 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         Raevyx baby = ModEntities.RAEVYX.get().create(level);
         if (baby != null) {
             // Get block entity data if it exists
-            BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity instanceof RaevyxEggBlockEntity eggEntity) {
                 // Inherit parent data
                 if (eggEntity.getOwnerUUID() != null) {
@@ -131,6 +132,9 @@ public class RaevyxEggBlock extends BaseEntityBlock {
             baby.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, 0.0F);
 
             level.addFreshEntity(baby);
+            if (baby.isTame() && baby.getOwnerUUID() != null) {
+                DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
+            }
             level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
         }
     }

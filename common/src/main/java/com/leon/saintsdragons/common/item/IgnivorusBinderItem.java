@@ -149,6 +149,7 @@ public class IgnivorusBinderItem extends Item {
 
         // Store ignivorus's current state
         CompoundTag ignivorusData = new CompoundTag();
+        ignivorus.setBoundInBinder(true);
         ignivorus.addAdditionalSaveData(ignivorusData);
         tag.put(DRAGON_DATA_KEY, ignivorusData);
 
@@ -202,6 +203,7 @@ public class IgnivorusBinderItem extends Item {
             try {
                 CompoundTag ignivorusData = tag.getCompound(DRAGON_DATA_KEY);
                 newIgnivorus.readAdditionalSaveData(ignivorusData);
+                newIgnivorus.setBoundInBinder(false);
             } catch (Exception e) {
                 player.displayClientMessage(
                     Component.translatable("saintsdragons.message.binder_data_corrupted"),
