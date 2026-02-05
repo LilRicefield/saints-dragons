@@ -13,6 +13,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 /**
  * Handles all interactions with Amphithere entities
@@ -78,9 +79,7 @@ public class CindervaneInteractionHandler {
             boolean hearty = heldItem.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             dragon.applyFeedingHunger(hearty);
 
-            double tameChance = hearty
-                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0)
-                : config.extraDoubles().getOrDefault("taming_chance_base", 4.0);
+            double tameChance = resolveTamingChance(heldItem, config);
             int tameRoll = (int) Math.round(tameChance);
 
             if (hearty) {
@@ -406,9 +405,7 @@ public class CindervaneInteractionHandler {
             }
             dragon.applyFeedingHunger(hearty);
 
-            double tameChance = hearty
-                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0)
-                : config.extraDoubles().getOrDefault("taming_chance_base", 4.0);
+            double tameChance = resolveTamingChance(itemstack, config);
             int tameRoll = (int) Math.round(tameChance);
 
             if (dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0) {
@@ -432,6 +429,29 @@ public class CindervaneInteractionHandler {
         if (player instanceof ServerPlayer serverPlayer) {
             serverPlayer.displayClientMessage(Component.translatable(key, dragon.getName()), true);
         }
+    }
+
+    private double resolveTamingChance(ItemStack food, DragonAttributeConfig config) {
+        double baseChance = config.extraDoubles().getOrDefault("taming_chance_base", 4.0);
+        double heartyChance = config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0);
+
+        if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
+            return heartyChance;
+        }
+
+        // Raw chicken is intentionally between hearty and base fish chances.
+        if (food.is(Items.CHICKEN)) {
+            Double chickenChance = config.extraDoubles().get("taming_chance_chicken");
+            if (chickenChance != null) {
+                return chickenChance;
+            }
+            if (baseChance > heartyChance) {
+                return (baseChance + heartyChance) * 0.5;
+            }
+        }
+
+        // Cod + salmon remain base chance.
+        return baseChance;
     }
 
     private boolean isInteractionItem(ItemStack itemstack) {

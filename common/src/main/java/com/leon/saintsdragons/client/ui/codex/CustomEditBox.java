@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.client.ui;
+package com.leon.saintsdragons.client.ui.codex;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

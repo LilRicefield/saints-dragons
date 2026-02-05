@@ -30,6 +30,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -561,6 +562,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
+        // Prevent rider-triggered left click attacks from damaging the dragon itself.
+        // While mounted, left click is used for rider abilities, not vanilla melee.
+        // Keep admin/command kill paths working (e.g. /kill uses bypass-invuln damage types).
+        if (isDamageFromCurrentRider(source) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return false;
+        }
+
         // Apply elemental damage modifiers based on dragon type
         DragonType dragonType = getDragonType();
         if (dragonType != null) {
@@ -598,6 +606,27 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             applyHappinessHitPenalty(serverLevel);
         }
         return result;
+    }
+
+    private boolean isDamageFromCurrentRider(@NotNull DamageSource source) {
+        Entity directAttacker = source.getEntity();
+        if (directAttacker instanceof Player player && player.getVehicle() == this) {
+            return true;
+        }
+        if (directAttacker == this.getControllingPassenger()) {
+            return true;
+        }
+
+        Entity projectileEntity = source.getDirectEntity();
+        if (projectileEntity instanceof Projectile projectile) {
+            Entity projectileOwner = projectile.getOwner();
+            if (projectileOwner instanceof Player player && player.getVehicle() == this) {
+                return true;
+            }
+            return projectileOwner == this.getControllingPassenger();
+        }
+
+        return false;
     }
 
     @Nullable

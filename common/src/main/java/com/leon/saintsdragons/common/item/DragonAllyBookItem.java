@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
+import com.leon.saintsdragons.client.ui.codex.CodexTab;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -32,7 +33,7 @@ public class DragonAllyBookItem extends Item {
         if (target instanceof DragonEntity dragon) {
             if (player.level().isClientSide) {
                 java.util.UUID selectionId = (dragon.isTame() && dragon.isOwnedBy(player)) ? dragon.getUUID() : null;
-                openCodexScreen(selectionId);
+                openCodexScreen(selectionId, CodexTab.PHYSIOLOGY);
             }
             return InteractionResult.SUCCESS;
         }
@@ -43,14 +44,14 @@ public class DragonAllyBookItem extends Item {
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         if (level.isClientSide) {
-            openCodexScreen(null);
+            openCodexScreen(null, CodexTab.PHYSIOLOGY);
         }
         return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
     }
 
     @Environment(EnvType.CLIENT)
-    private void openCodexScreen(@Nullable java.util.UUID preselectedDragonId) {
-        net.minecraft.client.Minecraft.getInstance().setScreen(new DraconicCodexScreen(preselectedDragonId));
+    private void openCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(new DraconicCodexScreen(preselectedDragonId, initialTab));
     }
     
     @Override

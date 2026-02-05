@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.server.ai.goals.base.*;
@@ -2436,6 +2437,24 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     @Override
     public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
         return super.getBoundingBoxForCulling().inflate(8.0, 4.0, 8.0);
+    }
+
+    @Override
+    protected void dropAllDeathLoot(@NotNull DamageSource source) {
+        // Don't drop loot until death animation completes
+        if (deathTime < getDeathAnimationDurationTicks()) {
+            return;
+        }
+
+        super.dropAllDeathLoot(source);
+
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
+        // Female dragons have a configurable chance to drop one egg on death
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
+            this.spawnAtLocation(ModItems.NULLJAW_EGG.get());
+        }
     }
 
     @Override

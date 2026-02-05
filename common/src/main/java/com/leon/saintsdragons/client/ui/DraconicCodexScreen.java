@@ -85,14 +85,18 @@ public class DraconicCodexScreen extends Screen {
     private List<String> allyList = new ArrayList<>();
     private int allyScrollOffset = 0;
     private int ecologyPage = 1;
-
     public DraconicCodexScreen() {
-        this(null);
+        this(null, CodexTab.PHYSIOLOGY);
     }
 
     public DraconicCodexScreen(@Nullable java.util.UUID preselectedDragonId) {
+        this(preselectedDragonId, CodexTab.PHYSIOLOGY);
+    }
+
+    public DraconicCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
         super(Component.translatable("saintsdragons.gui.draconic_codex.title"));
         this.pendingSelectionId = preselectedDragonId;
+        this.activeTab = initialTab;
     }
 
     @Override

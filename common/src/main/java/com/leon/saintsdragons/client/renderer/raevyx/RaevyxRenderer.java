@@ -138,7 +138,11 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         // Sample passenger bone position for rider placement
         this.lastBakedModel.getBone("passengerBone").ifPresent(b -> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
-            if (world != null) entity.setClientLocatorPosition("passengerLocator", world);
+            if (world != null) {
+                entity.setClientLocatorPosition("passengerLocator", world);
+                // Alias key for compatibility with shared rider positioning fallbacks.
+                entity.setClientLocatorPosition("passengerSeat0", world);
+            }
         });
         // Sample beam bone position for accurate beam origin (follows head/neck animations perfectly)
         this.lastBakedModel.getBone("beamBone").ifPresent(b -> {

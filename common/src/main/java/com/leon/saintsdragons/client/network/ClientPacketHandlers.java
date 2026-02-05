@@ -54,7 +54,11 @@ public final class ClientPacketHandlers {
                         entry.genderId(),
                         entry.genderKnown(),
                         entry.dragonType(),
-                        entry.isBaby()
+                        entry.isBaby(),
+                        entry.posX(),
+                        entry.posY(),
+                        entry.posZ(),
+                        entry.biomeId()
                 ));
             }
             codexScreen.updateDragonList(entries);

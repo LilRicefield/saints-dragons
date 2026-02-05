@@ -262,7 +262,7 @@ public class IgnivorusAirCombatGoal extends Goal {
         if (distance <= biteRange) {
             // Close range - bite attack
             dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BITE);
-            attackCooldown = 20;
+            attackCooldown = 30;
         } else if (distance >= fireBreathMinRange && distance <= fireBreathMaxRange && breathCooldown <= 0) {
             // Medium-long range - fire breath
             dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);

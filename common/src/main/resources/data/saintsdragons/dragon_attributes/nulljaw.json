@@ -19,7 +19,9 @@
   "extra": {
     "swim_speed": 1.45,
     "taming_chance": 6.0,
+    "taming_chance_tropical": 4.0,
     "egg_hatch_chance_normal": 3.0,
+    "egg_drop_chance": 0.12,
     "aggressive_wild": false
   }
 }

@@ -41,6 +41,24 @@ public class CodexEcologyPanel {
             new ResourceLocation("minecraft", "cod"),
             new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
+    private static final List<ResourceLocation> NULLJAW_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "nulljaw_egg")
+    );
+    private static final List<ResourceLocation> CINDERVANE_FAVORITE_FOODS = List.of(
+            new ResourceLocation("saintsdragons", "hearty_dragon_meal"),
+            new ResourceLocation("minecraft", "chicken"),
+            new ResourceLocation("minecraft", "cod"),
+            new ResourceLocation("minecraft", "salmon")
+    );
+    private static final List<ResourceLocation> CINDERVANE_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "cindervane_egg")
+    );
+    private static final List<ResourceLocation> STEGONAUT_FAVORITE_FOODS = List.of(
+            new ResourceLocation("minecraft", "cod"),
+            new ResourceLocation("minecraft", "salmon"),
+            new ResourceLocation("saintsdragons", "hearty_dragon_meal")
+    );
+    private static final List<ResourceLocation> STEGONAUT_DROPS = List.of();
     private Button ecologyPrevPageButton;
     private Button ecologyNextPageButton;
     private int linkScrollOffset = 0;
@@ -212,6 +230,25 @@ public class CodexEcologyPanel {
                 if (ecologyPage == 7) {
                     drawFavoriteFoods(guiGraphics, font, contentX, startY, NULLJAW_FAVORITE_FOODS);
                 }
+                if (ecologyPage == 8) {
+                    drawDrops(guiGraphics, font, contentX, startY, NULLJAW_DROPS);
+                }
+            }
+            case "cindervane" -> {
+                if (ecologyPage == 6) {
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, CINDERVANE_FAVORITE_FOODS);
+                }
+                if (ecologyPage == 7) {
+                    drawDrops(guiGraphics, font, contentX, startY, CINDERVANE_DROPS);
+                }
+            }
+            case "stegonaut" -> {
+                if (ecologyPage == 6) {
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, STEGONAUT_FAVORITE_FOODS);
+                }
+                if (ecologyPage == 7) {
+                    drawDrops(guiGraphics, font, contentX, startY, STEGONAUT_DROPS);
+                }
             }
             default -> {
             }
@@ -325,7 +362,28 @@ public class CodexEcologyPanel {
                         new SectionLink("1. Overview", 1, ecologyPage == 1),
                         new SectionLink("2. Egg Information", 4, ecologyPage == 4),
                         new SectionLink("3. Biome", 5, ecologyPage == 5),
-                        new SectionLink("4. Favorite food", 7, ecologyPage == 7)
+                        new SectionLink("4. Favorite food", 7, ecologyPage == 7),
+                        new SectionLink("5. Drops", 8, ecologyPage == 8)
+                );
+                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
+            }
+            case "cindervane" -> {
+                List<SectionLink> sections = List.of(
+                        new SectionLink("1. Overview", 1, ecologyPage >= 1 && ecologyPage <= 2),
+                        new SectionLink("2. Egg Info", 3, ecologyPage == 3),
+                        new SectionLink("3. Biomes", 4, ecologyPage >= 4 && ecologyPage <= 5),
+                        new SectionLink("4. Favorite Food", 6, ecologyPage == 6),
+                        new SectionLink("5. Drops", 7, ecologyPage == 7)
+                );
+                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
+            }
+            case "stegonaut" -> {
+                List<SectionLink> sections = List.of(
+                        new SectionLink("1. Overview", 1, ecologyPage >= 1 && ecologyPage <= 2),
+                        new SectionLink("2. Egg Info", 3, ecologyPage == 3),
+                        new SectionLink("3. Biomes", 4, ecologyPage >= 4 && ecologyPage <= 5),
+                        new SectionLink("4. Favorite Food", 6, ecologyPage == 6),
+                        new SectionLink("5. Drops", 7, ecologyPage == 7)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }

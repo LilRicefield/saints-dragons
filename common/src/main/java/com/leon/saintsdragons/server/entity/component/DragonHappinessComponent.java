@@ -12,8 +12,11 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 
 public final class DragonHappinessComponent {
     public static final int HAPPINESS_MAX = 100;
+    // 20 ticks = 1 second, so 9600 ticks = 8 minutes for one decay cycle.
     private static final int HAPPINESS_DECAY_INTERVAL_TICKS = 9600;
     private static final int HAPPINESS_DECAY_AMOUNT = 2;
+    private static final int HAPPINESS_DECAY_LOW_HUNGER_TICK_MULT = 2;
+    private static final int HAPPINESS_DECAY_CRITICAL_HUNGER_TICK_MULT = 4;
     private static final int HAPPINESS_FEED_AMOUNT = 4;
     private static final int HAPPINESS_FEED_AMOUNT_HEARTY = 8;
     private static final int HAPPINESS_HIT_PENALTY = 2;
@@ -83,17 +86,22 @@ public final class DragonHappinessComponent {
         if (!dragon.isTame()) {
             return;
         }
-        int interval = HAPPINESS_DECAY_INTERVAL_TICKS;
-        if (hunger <= 30) {
-            interval = Math.max(1, interval / 4);
-        } else if (hunger <= 60) {
-            interval = Math.max(1, interval / 2);
-        }
-        happinessDecayTicks++;
-        if (happinessDecayTicks >= interval) {
-            happinessDecayTicks = 0;
+
+        happinessDecayTicks += getDecayStep(hunger);
+        while (happinessDecayTicks >= HAPPINESS_DECAY_INTERVAL_TICKS && happiness > 0) {
+            happinessDecayTicks -= HAPPINESS_DECAY_INTERVAL_TICKS;
             setHappiness(happiness - HAPPINESS_DECAY_AMOUNT);
         }
+    }
+
+    private int getDecayStep(int hunger) {
+        if (hunger <= 30) {
+            return HAPPINESS_DECAY_CRITICAL_HUNGER_TICK_MULT;
+        }
+        if (hunger <= 60) {
+            return HAPPINESS_DECAY_LOW_HUNGER_TICK_MULT;
+        }
+        return 1;
     }
 
     public void applyHitPenalty(net.minecraft.server.level.ServerLevel serverLevel) {

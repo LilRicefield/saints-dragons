@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.client.ui.codex;
 
-import com.leon.saintsdragons.client.ui.CustomEditBox;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ImageButton;
