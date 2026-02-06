@@ -20,7 +20,11 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_EGG_HATCH_CHANCE_NORMAL;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_EGG_DROP_CHANCE;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH;
     public static ForgeConfigSpec.BooleanValue CINDERVANE_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
+    public static ForgeConfigSpec.BooleanValue CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Raevyx
     public static ForgeConfigSpec.DoubleValue RAEVYX_MAX_HEALTH;
@@ -43,6 +47,8 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_LOOT_ANCIENT_CITY;
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue RAEVYX_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
+    public static ForgeConfigSpec.BooleanValue RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Nulljaw
     public static ForgeConfigSpec.DoubleValue NULLJAW_MAX_HEALTH;
@@ -58,6 +64,8 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue NULLJAW_EGG_HATCH_CHANCE_NORMAL;
     public static ForgeConfigSpec.DoubleValue NULLJAW_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue NULLJAW_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
+    public static ForgeConfigSpec.BooleanValue NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Ignivorus
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_MAX_HEALTH;
@@ -88,6 +96,8 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_ANCIENT_CITY;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
+    public static ForgeConfigSpec.BooleanValue IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Stegonaut
     public static ForgeConfigSpec.DoubleValue STEGONAUT_MAX_HEALTH;
@@ -95,6 +105,8 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_HATCH_CHANCE_NORMAL;
+    public static ForgeConfigSpec.BooleanValue STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
+    public static ForgeConfigSpec.BooleanValue STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Others (NPCs, misc)
     public static ForgeConfigSpec.IntValue IVY_RESTOCK_INTERVAL;
@@ -119,8 +131,15 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 2.0, 1.0, 200.0);
         builder.comment("Egg drop chance (0-1)");
         CINDERVANE_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
+        builder.comment("Direct blast damage on Fire Body crash impact");
+        CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE = builder.defineInRange("fire_body_explosion_damage", 200.0, 0.0, 1000.0);
+        builder.comment("Self-damage applied to Cindervane after Fire Body crash impact");
+        CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH = builder.defineInRange("fire_body_self_damage_on_crash", 40.0, 0.0, 1000.0);
         builder.comment("Aggressive wild behavior");
         CINDERVANE_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        builder.comment("Reactive terrain clearing (requires mobGriefing)");
+        CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
+        CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Raevyx Configuration
@@ -156,6 +175,9 @@ public final class ForgeDragonAttributesConfig {
         RAEVYX_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         RAEVYX_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        builder.comment("Reactive terrain clearing (requires mobGriefing)");
+        RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
+        RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Nulljaw Configuration
@@ -180,6 +202,9 @@ public final class ForgeDragonAttributesConfig {
         NULLJAW_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         NULLJAW_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        builder.comment("Reactive terrain clearing (requires mobGriefing)");
+        NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
+        NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Ignivorus Configuration
@@ -223,6 +248,9 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         IGNIVORUS_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        builder.comment("Reactive terrain clearing (requires mobGriefing)");
+        IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
+        IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Stegonaut Configuration
@@ -235,6 +263,9 @@ public final class ForgeDragonAttributesConfig {
         STEGONAUT_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 1.0, 1.0, 20.0);
         builder.comment("Eggs (1 in N chance per random tick)");
         STEGONAUT_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 2.0, 1.0, 200.0);
+        builder.comment("Reactive terrain clearing (requires mobGriefing)");
+        STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
+        STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Others (NPCs and Miscellaneous)

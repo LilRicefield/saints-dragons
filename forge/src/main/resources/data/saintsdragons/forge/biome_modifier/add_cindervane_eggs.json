@@ -1,6 +1,9 @@
 {
-  "type": "forge:add_features",
+  "type": "saintsdragons:add_conditional_features",
   "biomes": "#saintsdragons:has_cindervane",
-  "features": "saintsdragons:cindervane_egg_patch",
-  "step": "vegetal_decoration"
+  "features": [
+    "saintsdragons:cindervane_egg_patch"
+  ],
+  "step": "vegetal_decoration",
+  "config_key": "cindervaneEggBlockWorldgen"
 }

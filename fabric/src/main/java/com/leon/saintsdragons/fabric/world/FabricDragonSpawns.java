@@ -117,6 +117,9 @@ public final class FabricDragonSpawns {
     }
 
     private static void registerCindervaneEggs() {
+        if (!SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.get()) {
+            return;
+        }
         BiomeModifications.addFeature(
                 BiomeSelectors.tag(HAS_CINDERVANE),
                 GenerationStep.Decoration.VEGETAL_DECORATION,
@@ -127,6 +130,9 @@ public final class FabricDragonSpawns {
     }
 
     private static void registerNulljawEggs() {
+        if (!SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN.get()) {
+            return;
+        }
         BiomeModifications.addFeature(
                 BiomeSelectors.tag(HAS_NULLJAW_EGGS),
                 GenerationStep.Decoration.VEGETAL_DECORATION,

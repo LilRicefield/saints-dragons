@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.forge.loot.ModLootModifiers;
 import com.leon.saintsdragons.forge.mixin.RangedAttributeAccessor;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
+import com.leon.saintsdragons.forge.world.AddConditionalFeaturesBiomeModifier;
 import com.leon.saintsdragons.forge.world.AddDragonsBiomeModifier;
 import com.mojang.serialization.Codec;
 import net.minecraft.world.entity.EntityType;
@@ -47,6 +48,8 @@ public final class SaintsDragonsForge {
 
     private static final RegistryObject<Codec<AddDragonsBiomeModifier>> ADD_DRAGONS_CODEC =
             BIOME_MODIFIERS.register("add_dragons", () -> AddDragonsBiomeModifier.CODEC);
+    private static final RegistryObject<Codec<AddConditionalFeaturesBiomeModifier>> ADD_CONDITIONAL_FEATURES_CODEC =
+            BIOME_MODIFIERS.register("add_conditional_features", () -> AddConditionalFeaturesBiomeModifier.CODEC);
 
     public SaintsDragonsForge() {
         var modEventBus = FMLJavaModLoadingContext.get().getModEventBus();

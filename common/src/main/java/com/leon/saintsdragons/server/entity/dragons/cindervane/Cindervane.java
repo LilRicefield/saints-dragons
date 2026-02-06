@@ -21,6 +21,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.Cinderva
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
 import java.util.Map;
+import java.util.HashMap;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -103,6 +104,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final double FIRE_BODY_IMPRINT_RADIUS = 9.0D;
     private static final double FIRE_BODY_IMPRINT_DEPTH_FACTOR = 0.6D;
     private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
+    private static final float FIRE_BODY_SELF_DAMAGE_ON_CRASH = 40.0F;
     private static final double BREED_PARTNER_RANGE = 20.0D;
     private static final double BREED_DISTANCE_SQR = 2500.0D;
 
@@ -1922,21 +1924,38 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, true, Explosion.BlockInteraction.DESTROY);
 
         List<LivingEntity> allies = grantAlliesExplosionImmunity(server, x, y, z);
+        double protectionRadius = FIRE_BODY_EXPLOSION_RADIUS + 4.0D;
+        AABB protectionArea = new AABB(
+                x - protectionRadius, y - protectionRadius, z - protectionRadius,
+                x + protectionRadius, y + protectionRadius, z + protectionRadius
+        );
+        List<LivingEntity> protectedEntities = server.getEntitiesOfClass(
+                LivingEntity.class,
+                protectionArea,
+                entity -> entity.isAlive() && entity != this
+        );
+        Map<Integer, Boolean> previousInvulnerability = new HashMap<>();
+        for (LivingEntity entity : protectedEntities) {
+            previousInvulnerability.put(entity.getId(), entity.isInvulnerable());
+        }
 
-        // Make allies temporarily invulnerable to prevent armor damage
-        for (LivingEntity ally : allies) {
-            ally.setInvulnerable(true);
+        // Prevent vanilla Explosion from applying entity damage.
+        // Custom configured blast damage is applied manually after the explosion resolves.
+        for (LivingEntity entity : protectedEntities) {
+            entity.setInvulnerable(true);
         }
 
         explosion.explode();
         explosion.finalizeExplosion(true);
 
-        // Restore vulnerability
-        for (LivingEntity ally : allies) {
-            ally.setInvulnerable(false);
+        // Restore prior invulnerability state.
+        for (LivingEntity entity : protectedEntities) {
+            Boolean wasInvulnerable = previousInvulnerability.get(entity.getId());
+            entity.setInvulnerable(wasInvulnerable != null && wasInvulnerable);
         }
 
         applyFireBodyBlastDamage(server, x, y, z, immune);
+        applyFireBodyCrashSelfDamage(server);
 
         carveFireBodyImprint(server, BlockPos.containing(x, y, z));
 
@@ -1994,6 +2013,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private void applyFireBodyBlastDamage(ServerLevel server, double x, double y, double z, List<Entity> immune) {
         double radius = FIRE_BODY_EXPLOSION_RADIUS + 2.5D;
         AABB area = new AABB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
+        double configuredDamage = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID)
+                .extraDouble("fire_body_explosion_damage", FIRE_BODY_EXPLOSION_DAMAGE);
+        float blastDamage = (float) Math.max(0.0D, configuredDamage);
 
         Set<Integer> immuneIds = new HashSet<>();
         for (Entity entity : immune) {
@@ -2009,10 +2032,21 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         for (LivingEntity target : targets) {
-            if (target.hurt(server.damageSources().explosion(this, this), FIRE_BODY_EXPLOSION_DAMAGE)) {
+            if (target.hurt(server.damageSources().explosion(this, this), blastDamage)) {
                 target.setSecondsOnFire(8);
             }
         }
+    }
+
+    private void applyFireBodyCrashSelfDamage(ServerLevel server) {
+        double configuredSelfDamage = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID)
+                .extraDouble("fire_body_self_damage_on_crash", FIRE_BODY_SELF_DAMAGE_ON_CRASH);
+        float selfDamage = (float) Math.max(0.0D, configuredSelfDamage);
+        if (selfDamage <= 0.0F) {
+            return;
+        }
+        this.hurt(server.damageSources().explosion(this, this), selfDamage);
     }
 
     private void carveFireBodyImprint(ServerLevel server, BlockPos center) {

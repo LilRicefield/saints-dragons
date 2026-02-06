@@ -157,6 +157,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES::get,
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES::set,
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES::save));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
+                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN::get,
+                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN::set,
+                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN::save));
     }
 
     private void addNulljawEntries(List<ConfigEntry> entries) {
@@ -177,6 +181,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::get,
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::set,
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::save));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
+                SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN::get,
+                SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN::set,
+                SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN::save));
     }
 
     private void addIgnivorusEntries(List<ConfigEntry> entries) {
@@ -226,20 +234,24 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.set(SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.set(SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.set(SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.save();
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.save();
             }
             case NULLJAW -> {
                 SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.set(SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT_DEFAULT);
                 SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.set(SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.set(SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN.set(SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN_DEFAULT);
                 SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.save();
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN.save();
             }
             case IGNIVORUS -> {
                 SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.set(SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT);

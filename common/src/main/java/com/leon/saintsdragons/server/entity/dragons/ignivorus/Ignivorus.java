@@ -2301,6 +2301,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
      */
     private void breakBlocksDuringTakeoff() {
         if (level().isClientSide) return;
+        if (!level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) return;
 
         // Get bounding box
         var bb = this.getBoundingBox();
@@ -3288,9 +3289,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         boolean isBeingRidden = this.isVehicle();
         Vec3 velocity = this.getDeltaMovement();
         double speed = velocity.horizontalDistanceSqr();
+        boolean collisionStuck = this.horizontalCollision || this.isInWall();
+        boolean chasingTarget = this.getTarget() != null && this.getTarget().isAlive();
 
-        // If not being ridden, require movement. If being ridden, always break blocks (rider controls movement)
-        if (!isBeingRidden && speed < 0.01) {
+        // If not being ridden, require movement unless we're actively stuck while pursuing a target.
+        // This preserves anti-grief behavior for idle wild dragons but prevents easy tree/hill cheesing.
+        if (!isBeingRidden && speed < 0.01 && !(collisionStuck && chasingTarget)) {
             return; // Not moving enough to break blocks
         }
 

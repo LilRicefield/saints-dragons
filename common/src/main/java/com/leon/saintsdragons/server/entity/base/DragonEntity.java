@@ -2,6 +2,8 @@
 
 package com.leon.saintsdragons.server.entity.base;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -9,6 +11,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAnimationSyncComponent;
 import com.leon.saintsdragons.server.entity.component.DragonCommandComponent;
 import com.leon.saintsdragons.server.entity.component.DragonGenderComponent;
+import com.leon.saintsdragons.server.entity.component.DragonGroomingComponent;
 import com.leon.saintsdragons.server.entity.component.DragonHappinessComponent;
 import com.leon.saintsdragons.server.entity.component.DragonHungerComponent;
 import com.leon.saintsdragons.server.entity.component.DragonSitComponent;
@@ -25,7 +28,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -44,10 +49,12 @@ import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -112,6 +119,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     @Nullable
     private final DragonHappinessComponent happinessComponent;
     @Nullable
+    private final DragonGroomingComponent groomingComponent;
+    @Nullable
     private final DragonSitComponent sitComponent;
     @Nullable
     private final DragonSleepComponent sleepComponent;
@@ -133,6 +142,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private Player killDataAttackingPlayer;
     // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
     private boolean isRespawning = false;
+    private int nextReactiveTerrainClearTick = 0;
+    private static final String REACTIVE_TERRAIN_CLEAR_ON_DAMAGE_KEY = "reactive_terrain_clearing_on_damage";
+    private static final String REACTIVE_TERRAIN_CLEAR_ON_DAMAGE_TAMED_KEY = "reactive_terrain_clearing_on_damage_tamed";
 
     // Flag to prevent respawn logic from triggering on newly spawned babies (from spawn eggs/breeding)
     public int skipRespawnTicks = 0;
@@ -150,6 +162,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.genderComponent = createGenderComponent();
         this.hungerComponent = createHungerComponent();
         this.happinessComponent = createHappinessComponent();
+        this.groomingComponent = createGroomingComponent();
         this.sleepComponent = createSleepComponent();
         this.animationSyncComponent = createAnimationSyncComponent();
         this.sitComponent = createSitComponent();
@@ -175,6 +188,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     @Nullable
     protected DragonHappinessComponent createHappinessComponent() {
         return new DragonHappinessComponent(this, DATA_HAPPINESS);
+    }
+
+    @Nullable
+    protected DragonGroomingComponent createGroomingComponent() {
+        return new DragonGroomingComponent(this);
     }
 
     @Nullable
@@ -369,6 +387,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     public boolean hasGender() {
         return genderComponent != null && genderComponent.hasGender();
+    }
+
+    public boolean tryBrush(Player player, net.minecraft.world.item.ItemStack brushStack) {
+        return groomingComponent != null && player != null && brushStack != null
+                && groomingComponent.tryBrush(player, brushStack);
     }
 
     public boolean isBoundInBinder() {
@@ -624,6 +647,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                 this.lastDamagerTimestamp = this.tickCount;
             }
             onSuccessfulDamage(source, amount);
+            tryReactiveTerrainClearOnDamage();
         }
         if (result && !level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
             net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
@@ -652,6 +676,136 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
 
         return false;
+    }
+
+    private void tryReactiveTerrainClearOnDamage() {
+        if (this.tickCount < nextReactiveTerrainClearTick) {
+            return;
+        }
+        if (!canReactiveTerrainClear()) {
+            return;
+        }
+        if (!isUpperBodyObstructed()) {
+            return;
+        }
+
+        Vec3 eye = this.getEyePosition();
+        Vec3 look = this.getLookAngle();
+        if (look.lengthSqr() < 1.0E-4) {
+            look = new Vec3(0.0, 0.0, 1.0);
+        }
+        Vec3 headCenter = eye.add(look.normalize().scale(Math.max(0.8D, this.getBbWidth() * 0.35D)));
+        Vec3 bodyCenter = this.position().add(0.0D, this.getBbHeight() * 0.7D, 0.0D);
+
+        int maxBlocks = Math.max(8, (int) Math.ceil(this.getBbWidth() * 2.5D));
+        int broken = 0;
+        broken += clearObstructingBlocksAround(headCenter, Math.max(0.9D, this.getBbWidth() * 0.42D), 0.6D, maxBlocks);
+        if (broken < maxBlocks) {
+            broken += clearObstructingBlocksAround(bodyCenter, Math.max(0.9D, this.getBbWidth() * 0.35D), 0.7D, maxBlocks - broken);
+        }
+        if (broken > 0) {
+            nextReactiveTerrainClearTick = this.tickCount + 10;
+        } else {
+            nextReactiveTerrainClearTick = this.tickCount + 5;
+        }
+    }
+
+    private boolean canReactiveTerrainClear() {
+        if (level().isClientSide || !this.isAlive() || this.isBaby()) {
+            return false;
+        }
+        DragonAttributeConfig config = getReactiveTerrainClearingConfig();
+        if (!config.extraBoolean(REACTIVE_TERRAIN_CLEAR_ON_DAMAGE_KEY, true)) {
+            return false;
+        }
+        if (this.isTame() && !config.extraBoolean(REACTIVE_TERRAIN_CLEAR_ON_DAMAGE_TAMED_KEY, false)) {
+            return false;
+        }
+        return level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
+    }
+
+    private DragonAttributeConfig getReactiveTerrainClearingConfig() {
+        ResourceLocation id = getDragonAttributeConfigId();
+        if (id == null) {
+            return DragonAttributeConfig.EMPTY;
+        }
+        return DragonAttributeConfigLoader.getInstance().getConfig(id);
+    }
+
+    @Nullable
+    private ResourceLocation getDragonAttributeConfigId() {
+        DragonType type = DragonType.fromEntity(this);
+        if (type == null) {
+            return null;
+        }
+        return switch (type) {
+            case FIRE -> DragonAttributeConfigLoader.CINDERVANE_ID;
+            case LIGHTNING -> DragonAttributeConfigLoader.RAEVYX_ID;
+            case PHYSICAL_BRUTE -> DragonAttributeConfigLoader.NULLJAW_ID;
+            case PHYSICAL_SUPPORT -> DragonAttributeConfigLoader.STEGONAUT_ID;
+            case IGNIVORUS -> DragonAttributeConfigLoader.IGNIVORUS_ID;
+        };
+    }
+
+    private boolean isUpperBodyObstructed() {
+        if (this.horizontalCollision || this.verticalCollision || this.isInWall()) {
+            return true;
+        }
+        Vec3 eye = this.getEyePosition();
+        BlockPos eyePos = BlockPos.containing(eye);
+        BlockState state = level().getBlockState(eyePos);
+        if (!state.getCollisionShape(level(), eyePos).isEmpty()) {
+            return true;
+        }
+        Vec3 forward = eye.add(this.getLookAngle().normalize().scale(Math.max(0.6D, this.getBbWidth() * 0.3D)));
+        BlockPos forwardPos = BlockPos.containing(forward);
+        BlockState forwardState = level().getBlockState(forwardPos);
+        return !forwardState.getCollisionShape(level(), forwardPos).isEmpty();
+    }
+
+    private int clearObstructingBlocksAround(Vec3 center, double radius, double halfHeight, int maxBlocks) {
+        int minX = (int) Math.floor(center.x - radius);
+        int maxX = (int) Math.floor(center.x + radius);
+        int minY = (int) Math.floor(center.y - halfHeight);
+        int maxY = (int) Math.floor(center.y + halfHeight);
+        int minZ = (int) Math.floor(center.z - radius);
+        int maxZ = (int) Math.floor(center.z + radius);
+        double radiusSq = radius * radius;
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int broken = 0;
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (broken >= maxBlocks) {
+                        return broken;
+                    }
+                    double dx = (x + 0.5D) - center.x;
+                    double dz = (z + 0.5D) - center.z;
+                    if (dx * dx + dz * dz > radiusSq) {
+                        continue;
+                    }
+                    cursor.set(x, y, z);
+                    if (!level().hasChunkAt(cursor)) {
+                        continue;
+                    }
+
+                    BlockState state = level().getBlockState(cursor);
+                    if (state.isAir() || !state.getFluidState().isEmpty() || state.hasBlockEntity()) {
+                        continue;
+                    }
+                    float hardness = state.getDestroySpeed(level(), cursor);
+                    if (hardness < 0.0F || hardness > 5.0F) {
+                        continue;
+                    }
+
+                    if (level().destroyBlock(cursor, true, this)) {
+                        broken++;
+                    }
+                }
+            }
+        }
+        return broken;
     }
 
     @Nullable
@@ -1396,7 +1550,26 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Base mounting permission; subclasses may override with stricter logic.
      */
     public boolean canOwnerMount(Player player) {
-        return !this.isBaby();
+        if (this.isBaby()) {
+            return false;
+        }
+        if (this.getHappiness() < 30) {
+            if (!this.level().isClientSide && this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                serverLevel.sendParticles(
+                        net.minecraft.core.particles.ParticleTypes.ANGRY_VILLAGER,
+                        this.getX(),
+                        this.getY() + this.getBbHeight() + 0.3,
+                        this.getZ(),
+                        6,
+                        0.3,
+                        0.2,
+                        0.3,
+                        0.0
+                );
+            }
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -1574,6 +1747,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         if (happinessComponent != null) {
             happinessComponent.saveToNBT(tag);
         }
+        if (groomingComponent != null) {
+            groomingComponent.saveToNBT(tag);
+        }
         if (sleepComponent != null) {
             sleepComponent.saveToNBT(tag);
         }
@@ -1608,6 +1784,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         if (happinessComponent != null) {
             happinessComponent.loadFromNBT(tag);
+        }
+        if (groomingComponent != null) {
+            groomingComponent.loadFromNBT(tag);
         }
         if (sleepComponent != null) {
             sleepComponent.loadFromNBT(tag);

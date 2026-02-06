@@ -68,6 +68,10 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
+    public boolean cindervaneEggBlockWorldgen = true;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
     public int nulljawSpawnWeight = 2;
 
@@ -84,6 +88,10 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> nulljawAdditionalBiomes = new ArrayList<>();
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean nulljawEggBlockWorldgen = true;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip

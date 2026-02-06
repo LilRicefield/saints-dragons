@@ -430,7 +430,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     public boolean canFeed() {
         int cooldownTicks = this.entityData.get(DATA_FEEDING_COOLDOWN);
-        return cooldownTicks > 0;
+        return cooldownTicks <= 0;
     }
 
     public void setFeedingCooldown(int ticks) {

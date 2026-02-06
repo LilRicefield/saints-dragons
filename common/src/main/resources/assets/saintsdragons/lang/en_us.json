@@ -1,10 +1,11 @@
 {
-  "item.saintsdragons.dragon_ally_book": "Draconic Codex",
+  "item.saintsdragons.draconic_codex": "Draconic Codex",
   "item.saintsdragons.stegonaut_binder": "Stegonaut Binder",
   "item.saintsdragons.raevyx_binder": "Raevyx Binder",
   "item.saintsdragons.cindervane_binder": "Cindervane Binder",
   "item.saintsdragons.nulljaw_binder": "Nulljaw Binder",
   "item.saintsdragons.ignivorus_binder": "Ignivorus Binder",
+  "item.saintsdragons.dragon_brush": "Dragon Brush",
   "item.saintsdragons.hearty_dragon_meal": "Hearty Dragon Meal",
   "item.saintsdragons.bleeding_bolt_music_disc": "Bleeding Bolt",
   "item.saintsdragons.bleeding_bolt_music_disc.desc": "Bleeding Bolt",
@@ -94,9 +95,9 @@
   "saintsdragons.gui.draconic_codex.ally.add": "Add",
   "saintsdragons.gui.draconic_codex.ally.remove": "Remove",
   
-  "saintsdragons.tooltip.dragon_ally_book.line1": "Right-click to open the Draconic Codex",
-  "saintsdragons.tooltip.dragon_ally_book.line2": "View tamed dragons and manage allies",
-  "saintsdragons.tooltip.dragon_ally_book.line3": "Ally list applies to all your dragons",
+  "saintsdragons.tooltip.draconic_codex.line1": "Right-click to open the Draconic Codex",
+  "saintsdragons.tooltip.draconic_codex.line2": "View tamed dragons and manage allies",
+  "saintsdragons.tooltip.draconic_codex.line3": "Ally list applies to all your dragons",
 
   "saintsdragons.tooltip.stegonaut_binder.description": "§e§lA steadfast core. Strength radiates quietly within.§r§r",
   "saintsdragons.tooltip.stegonaut_binder.empty": "Right-click on a tamed Stegonaut to bind it",
@@ -374,6 +375,8 @@
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMinGroupSize.@Tooltip": "Minimum number of Cindervane that spawn together",
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize": "Cindervane Max Group Size",
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize.@Tooltip": "Maximum number of Cindervane that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneEggBlockWorldgen": "Cindervane Egg Block Worldgen",
+  "text.autoconfig.saintsdragonsspawning.option.cindervaneEggBlockWorldgen.@Tooltip": "Enable or disable Cindervane egg blocks generating in worldgen patches",
   
   "text.autoconfig.saintsdragonsspawning.option.nulljawSpawnWeight": "Nulljaw Spawn Weight",
   "text.autoconfig.saintsdragonsspawning.option.nulljawSpawnWeight.@Tooltip": "How often Nulljaw spawns (0 = disabled, higher = more common)",
@@ -381,6 +384,8 @@
   "text.autoconfig.saintsdragonsspawning.option.nulljawMinGroupSize.@Tooltip": "Minimum number of Nulljaw that spawn together",
   "text.autoconfig.saintsdragonsspawning.option.nulljawMaxGroupSize": "Nulljaw Max Group Size",
   "text.autoconfig.saintsdragonsspawning.option.nulljawMaxGroupSize.@Tooltip": "Maximum number of Nulljaw that spawn together",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawEggBlockWorldgen": "Nulljaw Egg Block Worldgen",
+  "text.autoconfig.saintsdragonsspawning.option.nulljawEggBlockWorldgen.@Tooltip": "Enable or disable Nulljaw egg blocks generating in worldgen patches",
   "text.autoconfig.saintsdragonsspawning.option.nulljawAdditionalBiomes": "Nulljaw Additional Biomes",
   "text.autoconfig.saintsdragonsspawning.option.nulljawAdditionalBiomes.@Tooltip": "Extra biomes where Nulljaw can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
 
@@ -392,6 +397,10 @@
   "text.autoconfig.saintsdragonsspawning.option.ignivorusMaxGroupSize.@Tooltip": "Maximum number of Ignivorus that spawn together",
   "text.autoconfig.saintsdragonsspawning.option.ignivorusAdditionalBiomes": "Ignivorus Additional Biomes",
   "text.autoconfig.saintsdragonsspawning.option.ignivorusAdditionalBiomes.@Tooltip": "Extra biomes where Ignivorus can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
+  "text.autoconfig.saintsdragonsspawning.option.reactiveTerrainClearingOnDamage": "Reactive Terrain Clearing On Damage",
+  "text.autoconfig.saintsdragonsspawning.option.reactiveTerrainClearingOnDamage.@Tooltip": "When hurt and obstructed, dragons break nearby soft blocks around their upper body to avoid getting stuck (requires mobGriefing)",
+  "text.autoconfig.saintsdragonsspawning.option.reactiveTerrainClearingOnDamageTamed": "Reactive Terrain Clearing For Tamed Dragons",
+  "text.autoconfig.saintsdragonsspawning.option.reactiveTerrainClearingOnDamageTamed.@Tooltip": "Allow owned dragons to use reactive terrain clearing too (off by default to prevent accidental base damage)",
 
   "text.autoconfig.saintsdragonsspawning.option.raevyxAdditionalBiomes": "Raevyx Additional Biomes",
   "text.autoconfig.saintsdragonsspawning.option.raevyxAdditionalBiomes.@Tooltip": "Extra biomes where Raevyx can spawn (e.g., minecraft:desert, terralith:volcanic_crater)",
@@ -425,6 +434,8 @@
   "config.saintsdragons.attributes.nulljaw.legacy_taming" : "Legacy Taming",
   "config.saintsdragons.attributes.raevyx.legacy_taming": "Legacy Taming",
   "config.saintsdragons.attributes.legacy_taming.tooltip" : "Toggle vanilla taming method",
+  "config.saintsdragons.attributes.reactive_terrain_clearing_on_damage": "Reactive Terrain Clearing On Damage",
+  "config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed": "Reactive Terrain Clearing For Tamed Dragons",
   "config.saintsdragons.title": "Saint's Dragons Settings",
   "config.saintsdragons.category.spawning": "Spawning",
   "config.saintsdragons.category.attributes": "Dragon Attributes",
@@ -438,6 +449,7 @@
   "config.saintsdragons.spawn.min_group": "Min Group Size",
   "config.saintsdragons.spawn.max_group": "Max Group Size",
   "config.saintsdragons.spawn.additional_biomes": "Additional Biomes",
+  "config.saintsdragons.spawn.egg_block_worldgen": "Egg Block Worldgen",
   "config.saintsdragons.attributes.cindervane": "Cindervane Attributes",
   "config.saintsdragons.attributes.cindervane.max_health": "Max Health",
   "config.saintsdragons.attributes.cindervane.armor": "Armor",
@@ -449,6 +461,8 @@
   "config.saintsdragons.attributes.cindervane.taming_hearty": "Taming Chance (Hearty Meal)",
   "config.saintsdragons.attributes.cindervane.egg_hatch_chance_normal": "Egg Hatch Chance (Normal)",
   "config.saintsdragons.attributes.cindervane.egg_drop_chance": "Egg Drop Chance (Female)",
+  "config.saintsdragons.attributes.cindervane.fire_body_explosion_damage": "Fire Body Crash Explosion Damage",
+  "config.saintsdragons.attributes.cindervane.fire_body_self_damage_on_crash": "Fire Body Crash Self Damage",
   "config.saintsdragons.attributes.cindervane.aggressive_wild": "Agressive wild dragon toggle:",
   "config.saintsdragons.attributes.stegonaut": "Stegonaut Attributes",
   "config.saintsdragons.attributes.stegonaut.max_health": "Max Health",
@@ -529,5 +543,10 @@
   "saintsdragons.config_screen.page": "Page %d / %d",
   "saintsdragons.config_screen.others.ivy": "Ivy the Dragon Merchant",
   "saintsdragons.config_screen.others.ivy.restock_interval": "Restock Interval (ticks)",
-  "saintsdragons.config_screen.others.ivy.restock_interval.tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)"
+  "saintsdragons.config_screen.others.ivy.restock_interval.tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)",
+  "saintsdragons.config_screen.others.dragon_terrain": "Dragon Anti-Stuck",
+  "saintsdragons.config_screen.others.reactive_terrain_clearing_on_damage": "Reactive Terrain Clearing On Damage",
+  "saintsdragons.config_screen.others.reactive_terrain_clearing_on_damage.tooltip": "When hurt and obstructed, dragons clear nearby soft blocks around their upper body (requires mobGriefing)",
+  "saintsdragons.config_screen.others.reactive_terrain_clearing_on_damage_tamed": "Enable For Tamed Dragons",
+  "saintsdragons.config_screen.others.reactive_terrain_clearing_on_damage_tamed.tooltip": "Allow owned dragons to use this anti-stuck clearing too"
 }

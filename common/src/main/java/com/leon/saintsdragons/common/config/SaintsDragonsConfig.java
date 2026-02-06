@@ -25,6 +25,8 @@ public final class SaintsDragonsConfig {
     public static final int IGNIVORUS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int IGNIVORUS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 2;
+    public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
+    public static final boolean NULLJAW_EGG_BLOCK_WORLDGEN_DEFAULT = true;
 
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
@@ -40,11 +42,13 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue CINDERVANE_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue CINDERVANE_MAX_GROUP_SIZE;
     public static ConfigHelper.ListValue CINDERVANE_ADDITIONAL_BIOMES;
+    public static ConfigHelper.BooleanValue CINDERVANE_EGG_BLOCK_WORLDGEN;
 
     public static ConfigHelper.IntValue NULLJAW_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
     public static ConfigHelper.ListValue NULLJAW_ADDITIONAL_BIOMES;
+    public static ConfigHelper.BooleanValue NULLJAW_EGG_BLOCK_WORLDGEN;
 
     public static ConfigHelper.IntValue IGNIVORUS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue IGNIVORUS_MIN_GROUP_SIZE;
@@ -92,6 +96,8 @@ public final class SaintsDragonsConfig {
         CINDERVANE_MAX_GROUP_SIZE = builder.defineInt("cindervaneMaxGroupSize", CINDERVANE_MAX_GROUP_SIZE_DEFAULT, 1, 10);
         builder.comment("Additional biomes where Cindervane can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\")");
         CINDERVANE_ADDITIONAL_BIOMES = builder.defineList("cindervaneAdditionalBiomes", Collections.emptyList());
+        builder.comment("Whether Cindervane egg blocks generate in worldgen feature patches");
+        CINDERVANE_EGG_BLOCK_WORLDGEN = builder.defineBoolean("cindervaneEggBlockWorldgen", CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT);
 
         builder.comment("Nulljaw spawn settings");
         NULLJAW_SPAWN_WEIGHT = builder.defineInt("nulljawSpawnWeight", NULLJAW_SPAWN_WEIGHT_DEFAULT, 0, 100);
@@ -99,6 +105,8 @@ public final class SaintsDragonsConfig {
         NULLJAW_MAX_GROUP_SIZE = builder.defineInt("nulljawMaxGroupSize", NULLJAW_MAX_GROUP_SIZE_DEFAULT, 1, 10);
         builder.comment("Additional biomes where Nulljaw can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\")");
         NULLJAW_ADDITIONAL_BIOMES = builder.defineList("nulljawAdditionalBiomes", Collections.emptyList());
+        builder.comment("Whether Nulljaw egg blocks generate in worldgen feature patches");
+        NULLJAW_EGG_BLOCK_WORLDGEN = builder.defineBoolean("nulljawEggBlockWorldgen", NULLJAW_EGG_BLOCK_WORLDGEN_DEFAULT);
 
         builder.comment("Ignivorus spawn settings");
         IGNIVORUS_SPAWN_WEIGHT = builder.defineInt("ignivorusSpawnWeight", IGNIVORUS_SPAWN_WEIGHT_DEFAULT, 0, 100);

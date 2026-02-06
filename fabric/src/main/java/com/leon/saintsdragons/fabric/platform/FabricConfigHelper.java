@@ -59,6 +59,11 @@ public final class FabricConfigHelper implements ConfigHelper {
             }
 
             @Override
+            public BooleanValue defineBoolean(String key, boolean defaultValue) {
+                return () -> defaultValue;
+            }
+
+            @Override
             public ListValue defineList(String key, java.util.List<String> defaultValue) {
                 return () -> new java.util.ArrayList<>(defaultValue);
             }

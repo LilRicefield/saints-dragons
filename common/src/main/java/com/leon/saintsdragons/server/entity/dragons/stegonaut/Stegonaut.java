@@ -563,6 +563,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        if (itemstack.is(com.leon.saintsdragons.common.registry.ModItems.DRAGON_BRUSH.get())) {
+            boolean brushed = this.tryBrush(player, itemstack);
+            return brushed ? InteractionResult.sidedSuccess(this.level().isClientSide) : InteractionResult.CONSUME;
+        }
         if (!this.isTame()) {
             return handleUntamedInteraction(player, hand);
         } else {
@@ -639,7 +644,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             }
         }
 
-        if (itemstack.is(com.leon.saintsdragons.common.registry.ModItems.DRAGON_ALLY_BOOK.get())) {
+        if (itemstack.is(com.leon.saintsdragons.common.registry.ModItems.DRACONIC_CODEX.get())) {
             return InteractionResult.PASS;
         }
 
@@ -669,7 +674,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     }
 
     private InteractionResult handleMounting(Player player) {
-        if (this.isVehicle()) {
+        if (!this.canOwnerMount(player) || this.isVehicle()) {
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
 
