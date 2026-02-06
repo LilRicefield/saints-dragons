@@ -44,6 +44,12 @@ public final class ForgeConfigHelper implements ConfigHelper {
         }
 
         @Override
+        public BooleanValue defineBoolean(String key, boolean defaultValue) {
+            ForgeConfigSpec.BooleanValue value = builder.define(key, defaultValue);
+            return new ForgeBooleanValue(value);
+        }
+
+        @Override
         public ListValue defineList(String key, List<String> defaultValue) {
             ForgeConfigSpec.ConfigValue<List<? extends String>> value =
                     builder.defineList(key, defaultValue, obj -> obj instanceof String);
@@ -71,6 +77,29 @@ public final class ForgeConfigHelper implements ConfigHelper {
 
         @Override
         public void set(int newValue) {
+            value.set(newValue);
+        }
+
+        @Override
+        public void save() {
+            value.save();
+        }
+    }
+
+    private static final class ForgeBooleanValue implements BooleanValue {
+        private final ForgeConfigSpec.BooleanValue value;
+
+        private ForgeBooleanValue(ForgeConfigSpec.BooleanValue value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean get() {
+            return value.get();
+        }
+
+        @Override
+        public void set(boolean newValue) {
             value.set(newValue);
         }
 

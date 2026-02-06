@@ -4,13 +4,12 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -19,30 +18,16 @@ import net.minecraft.world.item.Items;
  * Handles all interactions with Amphithere entities
  * Adapted from Lightning Dragon interaction handler
  */
-public class CindervaneInteractionHandler {
-    private final Cindervane dragon;
-
+public class CindervaneInteractionHandler extends AbstractDragonInteractionHandler<Cindervane> {
     public CindervaneInteractionHandler(Cindervane dragon) {
-        this.dragon = dragon;
-    }
-
-    /**
-     * Main interaction entry point - called from mobInteract
-     */
-    public InteractionResult handleInteraction(Player player, InteractionHand hand) {
-        ItemStack heldItem = player.getItemInHand(hand);
-
-        if (!dragon.isTame()) {
-            return handleUntamedInteraction(player, hand, heldItem);
-        } else {
-            return handleTamedInteraction(player, hand, heldItem);
-        }
+        super(dragon);
     }
 
     /**
      * Handle interactions with untamed amphitheres (taming)
      */
-    private InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
+    @Override
+    protected InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
 
@@ -107,12 +92,9 @@ public class CindervaneInteractionHandler {
     /**
      * Handle interactions with tamed amphitheres (feeding, commands, mounting)
      */
-    private InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
+    @Override
+    protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
         boolean isOwner = dragon.isOwnedBy(player);
-
-        if (isInteractionItem(heldItem)) {
-            return InteractionResult.PASS;
-        }
 
         // Owner-only interactions
         if (isOwner) {
@@ -425,12 +407,6 @@ public class CindervaneInteractionHandler {
         return InteractionResult.sidedSuccess(client);
     }
 
-    private void sendStatusMessage(Player player, String key) {
-        if (player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.displayClientMessage(Component.translatable(key, dragon.getName()), true);
-        }
-    }
-
     private double resolveTamingChance(ItemStack food, DragonAttributeConfig config) {
         double baseChance = config.extraDoubles().getOrDefault("taming_chance_base", 4.0);
         double heartyChance = config.extraDoubles().getOrDefault("taming_chance_hearty", 2.0);
@@ -454,11 +430,6 @@ public class CindervaneInteractionHandler {
         return baseChance;
     }
 
-    private boolean isInteractionItem(ItemStack itemstack) {
-        return itemstack.is(ModItems.CINDERVANE_BINDER.get())
-                || itemstack.is(ModItems.DRAGON_ALLY_BOOK.get());
-    }
-    
     /**
      * Apply the command state to the dragon.
      */
@@ -486,5 +457,10 @@ public class CindervaneInteractionHandler {
                 serverPlayer.getAdvancements().award(advancement, "tame_cindervane");
             }
         }
+    }
+
+    @Override
+    protected net.minecraft.world.item.Item getBinderItem() {
+        return ModItems.CINDERVANE_BINDER.get();
     }
 }

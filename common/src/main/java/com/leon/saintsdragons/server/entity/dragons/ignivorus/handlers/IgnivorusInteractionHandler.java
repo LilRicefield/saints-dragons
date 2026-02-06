@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,29 +18,16 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Handles all player interactions with Ignivorus dragons.
  */
-public record IgnivorusInteractionHandler(Ignivorus dragon) {
-
-    /**
-     * Main interaction entry point.
-     */
-    public InteractionResult handleInteraction(Player player, InteractionHand hand) {
-        if (dragon.isDying()) {
-            return InteractionResult.PASS;
-        }
-
-        ItemStack itemstack = player.getItemInHand(hand);
-
-        if (!dragon.isTame()) {
-            return handleUntamedInteraction(player, itemstack);
-        } else {
-            return handleTamedInteraction(player, itemstack, hand);
-        }
+public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandler<Ignivorus> {
+    public IgnivorusInteractionHandler(Ignivorus dragon) {
+        super(dragon);
     }
 
     /**
      * Handle interactions with untamed dragons (taming attempts).
      */
-    private InteractionResult handleUntamedInteraction(Player player, ItemStack itemstack) {
+    @Override
+    protected InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack itemstack) {
         boolean client = dragon.level().isClientSide;
 
         // Check if legacy taming is enabled
@@ -161,12 +149,9 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
     /**
      * Handle interactions with tamed dragons (feeding, commands, mounting).
      */
-    private InteractionResult handleTamedInteraction(Player player, ItemStack itemstack, InteractionHand hand) {
+    @Override
+    protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack itemstack) {
         boolean isOwner = player.equals(dragon.getOwner());
-
-        if (isInteractionItem(itemstack)) {
-            return InteractionResult.PASS;
-        }
 
         // Handle owner commands and mounting
         if (isOwner) {
@@ -443,7 +428,7 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
      * Handle mounting the dragon.
      */
     private InteractionResult handleMounting(Player player) {
-        if (dragon.isVehicle()) {
+        if (!dragon.canOwnerMount(player) || dragon.isVehicle()) {
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
@@ -468,12 +453,6 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
         return dragon.getMaxHealth();
     }
 
-    private void sendStatusMessage(Player player, String key) {
-        if (player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.displayClientMessage(Component.translatable(key, dragon.getName()), true);
-        }
-    }
-
     private void triggerTamingAdvancement(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
             var advancement = serverPlayer.server.getAdvancements()
@@ -484,9 +463,9 @@ public record IgnivorusInteractionHandler(Ignivorus dragon) {
         }
     }
 
-    private boolean isInteractionItem(ItemStack itemstack) {
-        return itemstack.is(ModItems.IGNIVORUS_BINDER.get())
-                || itemstack.is(ModItems.DRAGON_ALLY_BOOK.get());
+    @Override
+    protected net.minecraft.world.item.Item getBinderItem() {
+        return ModItems.IGNIVORUS_BINDER.get();
     }
 
     private boolean isIgnivorusFood(ItemStack itemstack) {

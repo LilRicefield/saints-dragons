@@ -8,6 +8,8 @@ import me.shedaniel.autoconfig.ConfigHolder;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -66,6 +68,13 @@ final class FabricClothConfigHelper implements ConfigHelper {
         }
 
         @Override
+        public BooleanValue defineBoolean(String key, boolean defaultValue) {
+            BooleanSupplier supplier = booleanSupplierForKey(key, defaultValue);
+            Consumer<Boolean> setter = booleanSetterForKey(key);
+            return new ClothBooleanValue(supplier, setter);
+        }
+
+        @Override
         public ListValue defineList(String key, List<String> defaultValue) {
             Supplier<List<String>> supplier = listSupplierForKey(key, defaultValue);
             return supplier::get;
@@ -101,6 +110,25 @@ final class FabricClothConfigHelper implements ConfigHelper {
         };
     }
 
+    private static BooleanSupplier booleanSupplierForKey(String key, boolean defaultValue) {
+        return switch (key) {
+            case "cindervaneEggBlockWorldgen" -> () -> holder().getConfig().cindervaneEggBlockWorldgen;
+            case "nulljawEggBlockWorldgen" -> () -> holder().getConfig().nulljawEggBlockWorldgen;
+            default -> {
+                SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
+                yield () -> defaultValue;
+            }
+        };
+    }
+
+    private static Consumer<Boolean> booleanSetterForKey(String key) {
+        return switch (key) {
+            case "cindervaneEggBlockWorldgen" -> value -> holder().getConfig().cindervaneEggBlockWorldgen = value;
+            case "nulljawEggBlockWorldgen" -> value -> holder().getConfig().nulljawEggBlockWorldgen = value;
+            default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
+        };
+    }
+
     private static Supplier<List<String>> listSupplierForKey(String key, List<String> defaultValue) {
         return switch (key) {
             case "raevyxAdditionalBiomes" -> () -> holder().getConfig().raevyxAdditionalBiomes;
@@ -113,6 +141,31 @@ final class FabricClothConfigHelper implements ConfigHelper {
                 yield () -> defaultValue;
             }
         };
+    }
+
+    private static final class ClothBooleanValue implements BooleanValue {
+        private final BooleanSupplier supplier;
+        private final Consumer<Boolean> setter;
+
+        private ClothBooleanValue(BooleanSupplier supplier, Consumer<Boolean> setter) {
+            this.supplier = supplier;
+            this.setter = setter;
+        }
+
+        @Override
+        public boolean get() {
+            return supplier.getAsBoolean();
+        }
+
+        @Override
+        public void set(boolean value) {
+            setter.accept(value);
+        }
+
+        @Override
+        public void save() {
+            holder().save();
+        }
     }
 
     private static final class ClothIntValue implements IntValue {

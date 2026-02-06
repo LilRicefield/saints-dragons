@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.common.item.CindervaneBinderItem;
+import com.leon.saintsdragons.common.item.DragonBrushItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
@@ -99,12 +100,20 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.STEGONAUT_EGG.get(),
                             new Item.Properties()));
 
-    public static final Supplier<Item> DRAGON_ALLY_BOOK =
-            REGISTER.register("dragon_ally_book",
+    public static final Supplier<Item> DRACONIC_CODEX =
+            REGISTER.register("draconic_codex",
                     () -> new DragonAllyBookItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0)
+                    ));
+
+    public static final Supplier<Item> DRAGON_BRUSH =
+            REGISTER.register("dragon_brush",
+                    () -> new DragonBrushItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(256)
                     ));
 
     public static final Supplier<Item> STEGONAUT_BINDER =

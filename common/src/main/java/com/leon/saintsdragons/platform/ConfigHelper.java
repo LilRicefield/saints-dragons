@@ -14,6 +14,8 @@ public interface ConfigHelper {
 
         IntValue defineInt(String key, int defaultValue, int min, int max);
 
+        BooleanValue defineBoolean(String key, boolean defaultValue);
+
         ListValue defineList(String key, List<String> defaultValue);
 
         void build();
@@ -23,6 +25,18 @@ public interface ConfigHelper {
         int get();
 
         default void set(int value) {
+            // Optional for platforms that support writable configs.
+        }
+
+        default void save() {
+            // Optional for platforms that support writable configs.
+        }
+    }
+
+    interface BooleanValue {
+        boolean get();
+
+        default void set(boolean value) {
             // Optional for platforms that support writable configs.
         }
 

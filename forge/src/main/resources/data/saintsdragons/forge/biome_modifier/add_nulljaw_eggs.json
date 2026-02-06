@@ -1,6 +1,9 @@
 {
-  "type": "forge:add_features",
+  "type": "saintsdragons:add_conditional_features",
   "biomes": "#saintsdragons:has_nulljaw_eggs",
-  "features": "saintsdragons:nulljaw_egg_patch",
-  "step": "vegetal_decoration"
+  "features": [
+    "saintsdragons:nulljaw_egg_patch"
+  ],
+  "step": "vegetal_decoration",
+  "config_key": "nulljawEggBlockWorldgen"
 }

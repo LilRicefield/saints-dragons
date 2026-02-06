@@ -233,8 +233,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         dragon.syncFireBreathPath(origin, impact);
 
         // Spawn flame projectile stream
+        int spawnedFlames = 0;
         if (dragon.level() instanceof ServerLevel serverLevel) {
-            spawnFlameProjectiles(serverLevel, dragon, origin, aim);
+            spawnedFlames = spawnFlameProjectiles(serverLevel, dragon, origin, aim);
         }
 
         // Only apply destruction when stream has extended (progress > 10)
@@ -249,12 +250,16 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
             // Apply block effects only at the impact point to avoid excessive destruction
             boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING;
+            // Fallback damage for modpacks where optimization/entity limiter mods intermittently reject
+            // flame entity spawns. If at least one flame was accepted this tick, keep impact damage at 0
+            // to avoid stacking projectile and impact damage.
+            float fallbackImpactDamage = spawnedFlames == 0 ? computeDamage(dragon, sizeScale) : 0.0f;
             DragonDestructionManager.applyFireBreathImpact(
                 serverLevel,
                 dragon,
                 currentImpact,
                 baseRadius,
-                0.0f,  // Zero damage - flame entities handle damage
+                fallbackImpactDamage,
                 FIRE_DURATION_SECONDS,
                 BLOCK_MELT_TICKS,
                 canMeltBlocks,
@@ -291,7 +296,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     /**
      * Spawns flame projectiles in a continuous stream to create flamethrower effect.
      */
-    private void spawnFlameProjectiles(ServerLevel level, Ignivorus dragon, Vec3 origin, Vec3 direction) {
+    private int spawnFlameProjectiles(ServerLevel level, Ignivorus dragon, Vec3 origin, Vec3 direction) {
         RandomSource random = dragon.getRandom();
         double sizeScale = Math.max(0.8D, dragon.getBbWidth());
         float damagePerProjectile = computeDamage(dragon, sizeScale) * 4.0F;
@@ -304,12 +309,13 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         double lifetimeMultiplier = config.extraDouble("fire_breath_flame_lifetime_multiplier",
                 DEFAULT_FLAME_LIFETIME_MULTIPLIER);
         if (spawnMultiplier <= 0.0D) {
-            return;
+            return 0;
         }
 
         int minCount = Math.max(1, (int) Math.round(FLAME_SPAWN_MIN * spawnMultiplier));
         int maxCount = Math.max(minCount, (int) Math.round(FLAME_SPAWN_MAX * spawnMultiplier));
         int count = minCount + random.nextInt(maxCount - minCount + 1);
+        int spawnedCount = 0;
 
         for (int i = 0; i < count; i++) {
             // Increased spread for wider cone effect
@@ -341,8 +347,11 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                     level, spawnPos, velocity, dragon, damagePerProjectile, scale, projectileLifetime
             );
 
-            level.addFreshEntity(flame);
+            if (level.addFreshEntity(flame)) {
+                spawnedCount++;
+            }
         }
+        return spawnedCount;
     }
 
     /**

@@ -64,7 +64,11 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingChanceHearty = 2.0D;
         double eggHatchChanceNormal = 2.0D;
         double eggDropChance = 0.12D;
+        double fireBodyExplosionDamage = 200.0D;
+        double fireBodySelfDamageOnCrash = 40.0D;
         boolean aggressiveWild = false;
+        boolean reactiveTerrainClearingOnDamage = true;
+        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -79,7 +83,11 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingChanceHearty = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_HEARTY").get(null));
                 eggHatchChanceNormal = (double) configClass.getField("CINDERVANE_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggDropChance = (double) configClass.getField("CINDERVANE_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_EGG_DROP_CHANCE").get(null));
+                fireBodyExplosionDamage = (double) configClass.getField("CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE").get(null));
+                fireBodySelfDamageOnCrash = (double) configClass.getField("CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH").get(null));
                 aggressiveWild = (boolean) configClass.getField("CINDERVANE_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_AGGRESSIVE_WILD").get(null));
+                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
+                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -97,10 +105,14 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "taming_chance_chicken", tamingChanceChicken,
                         "taming_chance_hearty", tamingChanceHearty,
                         "egg_hatch_chance_normal", eggHatchChanceNormal,
-                        "egg_drop_chance", eggDropChance
+                        "egg_drop_chance", eggDropChance,
+                        "fire_body_explosion_damage", fireBodyExplosionDamage,
+                        "fire_body_self_damage_on_crash", fireBodySelfDamageOnCrash
                 ),
                 Map.of(
-                        "aggressive_wild", aggressiveWild
+                        "aggressive_wild", aggressiveWild,
+                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
+                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
                 )
         );
     }
@@ -126,6 +138,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double eggDropChance = 0.12D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         boolean aggressiveWild = false;
+        boolean reactiveTerrainClearingOnDamage = true;
+        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -150,6 +164,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 eggDropChance = (double) configClass.getField("RAEVYX_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_DROP_CHANCE").get(null));
                 tamingStunHealth = (double) configClass.getField("RAEVYX_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_STUN_HEALTH").get(null));
                 aggressiveWild = (boolean) configClass.getField("RAEVYX_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_AGGRESSIVE_WILD").get(null));
+                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
+                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -180,7 +196,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 extras,
                 Map.of(
                         "legacy_taming", legacyTaming,
-                        "aggressive_wild", aggressiveWild
+                        "aggressive_wild", aggressiveWild,
+                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
+                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
                 )
         );
     }
@@ -199,6 +217,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double eggHatchChanceNormal = 3.0D;
         double eggDropChance = 0.12D;
         boolean aggressiveWild = false;
+        boolean reactiveTerrainClearingOnDamage = true;
+        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -216,6 +236,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 eggHatchChanceNormal = (double) configClass.getField("NULLJAW_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggDropChance = (double) configClass.getField("NULLJAW_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_EGG_DROP_CHANCE").get(null));
                 aggressiveWild = (boolean) configClass.getField("NULLJAW_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_AGGRESSIVE_WILD").get(null));
+                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
+                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -239,7 +261,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ),
                 Map.of(
                         "legacy_taming", legacyTaming,
-                        "aggressive_wild", aggressiveWild
+                        "aggressive_wild", aggressiveWild,
+                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
+                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
                 )
         );
     }
@@ -273,6 +297,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double eggDropChance = 0.12D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         boolean aggressiveWild = false;
+        boolean reactiveTerrainClearingOnDamage = true;
+        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -305,6 +331,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 eggDropChance = (double) configClass.getField("IGNIVORUS_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_DROP_CHANCE").get(null));
                 tamingStunHealth = (double) configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null));
                 aggressiveWild = (boolean) configClass.getField("IGNIVORUS_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_AGGRESSIVE_WILD").get(null));
+                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
+                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -343,7 +371,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 extras,
                 Map.of(
                         "legacy_taming", legacyTaming,
-                        "aggressive_wild", aggressiveWild
+                        "aggressive_wild", aggressiveWild,
+                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
+                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
                 )
         );
     }
@@ -354,6 +384,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingChanceBase = 1.0D;
         double tamingChanceHearty = 1.0D;
         double eggHatchChanceNormal = 2.0D;
+        boolean reactiveTerrainClearingOnDamage = true;
+        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -368,6 +400,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         .invoke(configClass.getField("STEGONAUT_TAMING_CHANCE_HEARTY").get(null));
                 eggHatchChanceNormal = (double) configClass.getField("STEGONAUT_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_EGG_HATCH_CHANCE_NORMAL").get(null));
+                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
+                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -382,7 +418,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "taming_chance_hearty", tamingChanceHearty,
                         "egg_hatch_chance_normal", eggHatchChanceNormal
                 ),
-                Map.of()
+                Map.of(
+                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
+                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
+                )
         );
     }
 
@@ -468,6 +507,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillExtraBooleans(path, entry.getKey());
                 backfillBeamEnergyTuning(path, entry.getKey(), entry.getValue());
                 backfillTamingStunHealth(path, entry.getKey(), entry.getValue());
+                backfillCindervaneFireBodyExplosionDamage(path, entry.getKey(), entry.getValue());
                 continue;
             }
             if (!source.has("hints")) {
@@ -759,6 +799,34 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         }
     }
 
+    private void backfillCindervaneFireBodyExplosionDamage(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
+        if (!id.equals(CINDERVANE_ID)) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            JsonObject extra = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            boolean updated = false;
+            if (!extra.has("fire_body_explosion_damage")) {
+                extra.addProperty("fire_body_explosion_damage",
+                        mergedConfig.extraDouble("fire_body_explosion_damage", 200.0D));
+                updated = true;
+            }
+            if (!extra.has("fire_body_self_damage_on_crash")) {
+                extra.addProperty("fire_body_self_damage_on_crash",
+                        mergedConfig.extraDouble("fire_body_self_damage_on_crash", 40.0D));
+                updated = true;
+            }
+            if (updated) {
+                json.add("extra", extra);
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill cindervane fire body explosion damage at {}", path, e);
+        }
+    }
+
     private static boolean requiresLegacyTamingFlag(ResourceLocation id) {
         return id.equals(NULLJAW_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID);
     }
@@ -793,10 +861,15 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         hints.addProperty("egg_loot_bastion_treasure", "Chance (0-1) for egg in bastion treasure chests");
         hints.addProperty("egg_loot_nether_bridge", "Chance (0-1) for egg in nether fortress chests");
         hints.addProperty("aggressive_wild", "true = wild dragons aggro on sight, false = only retaliate");
+        hints.addProperty("reactive_terrain_clearing_on_damage", "true = clear soft obstructing blocks when hurt (requires mobGriefing)");
+        hints.addProperty("reactive_terrain_clearing_on_damage_tamed", "true = tamed dragons can also clear on hurt (off = safer bases)");
         hints.addProperty("taming_stun_health", "Health threshold for taming stun (0 = disable stun)");
 
         if (id.equals(NULLJAW_ID)) {
             hints.addProperty("swim_speed", "Min 0.1, Max 5.0");
+        } else if (id.equals(CINDERVANE_ID)) {
+            hints.addProperty("fire_body_explosion_damage", "Direct blast damage on Fire Body crash impact");
+            hints.addProperty("fire_body_self_damage_on_crash", "Self-damage applied to Cindervane after Fire Body crash impact");
         } else if (id.equals(IGNIVORUS_ID)) {
             hints.addProperty("ultimate_penalty_health", "Typical 1-500");
             hints.addProperty("fire_breath_flame_spawn_multiplier", "0 = disable flame entities, 1 = default");
