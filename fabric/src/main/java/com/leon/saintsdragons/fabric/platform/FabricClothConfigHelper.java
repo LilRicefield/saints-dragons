@@ -132,10 +132,15 @@ final class FabricClothConfigHelper implements ConfigHelper {
     private static Supplier<List<String>> listSupplierForKey(String key, List<String> defaultValue) {
         return switch (key) {
             case "raevyxAdditionalBiomes" -> () -> holder().getConfig().raevyxAdditionalBiomes;
+            case "raevyxExcludedBiomes" -> () -> holder().getConfig().raevyxExcludedBiomes;
             case "stegonautAdditionalBiomes" -> () -> holder().getConfig().stegonautAdditionalBiomes;
+            case "stegonautExcludedBiomes" -> () -> holder().getConfig().stegonautExcludedBiomes;
             case "cindervaneAdditionalBiomes" -> () -> holder().getConfig().cindervaneAdditionalBiomes;
+            case "cindervaneExcludedBiomes" -> () -> holder().getConfig().cindervaneExcludedBiomes;
             case "nulljawAdditionalBiomes" -> () -> holder().getConfig().nulljawAdditionalBiomes;
+            case "nulljawExcludedBiomes" -> () -> holder().getConfig().nulljawExcludedBiomes;
             case "ignivorusAdditionalBiomes" -> () -> holder().getConfig().ignivorusAdditionalBiomes;
+            case "ignivorusExcludedBiomes" -> () -> holder().getConfig().ignivorusExcludedBiomes;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config list key '{}'; using default", key);
                 yield () -> defaultValue;

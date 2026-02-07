@@ -9,13 +9,18 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -42,6 +47,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     /** Server-side tick counter for rider control lock duration */
     private int riderControlLockTicks = 0;
+    /** Shared touchdown tracking for ridden landing animations. */
+    private boolean riderWasAirborneForLanding = false;
+    /** Number of consecutive airborne ticks while ridden (used to filter false touch events). */
+    private int riderAirborneTicksForLanding = 0;
 
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -661,6 +670,107 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
      * @return flight mode (-1=ground, 0=glide, 1=forward, 2=hover, 3=takeoff)
      */
     protected abstract int getFlightMode();
+
+    /**
+     * Track whether a ridden dragon has been airborne since the last grounded/reset state.
+     * Dragons can call this once per tick before touchdown checks.
+     */
+    protected void trackRiderAirborneForLanding() {
+        boolean airborneWhileInFlightState = isVehicle()
+                && !onGround()
+                && (isFlying() || isLanding() || isHovering() || isTakeoff());
+
+        if (airborneWhileInFlightState) {
+            riderWasAirborneForLanding = true;
+            riderAirborneTicksForLanding++;
+            return;
+        }
+        if (!isVehicle()) {
+            riderWasAirborneForLanding = false;
+            riderAirborneTicksForLanding = 0;
+        }
+    }
+
+    /**
+     * Consume a ridden air-to-ground touchdown event.
+     * Returns true exactly when the dragon transitions from airborne to grounded while ridden.
+     */
+    protected boolean consumeRiderTouchdownFromAir(double maxUpwardVelocity) {
+        boolean touchdown = onGround()
+                && isVehicle()
+                && riderWasAirborneForLanding
+                && riderAirborneTicksForLanding >= 2
+                && !isTakeoff()
+                && getDeltaMovement().y <= maxUpwardVelocity;
+
+        if (touchdown || onGround() || !isVehicle()) {
+            riderWasAirborneForLanding = false;
+            riderAirborneTicksForLanding = 0;
+        }
+        return touchdown;
+    }
+
+    /**
+     * Shared collision-based altitude probe for ridden landing blend logic.
+     * This is opt-in; only dragons that call it will use it.
+     *
+     * @param maxDropBlocks how far below the dragon's feet to scan
+     * @param blockOnFluids when true, returns POSITIVE_INFINITY if fluid is found in sampled columns
+     * @return altitude from dragon feet to nearest collision top, or POSITIVE_INFINITY if no usable terrain
+     */
+    protected double getAltitudeAboveCollisionTerrain(int maxDropBlocks, boolean blockOnFluids) {
+        BlockPos origin = this.blockPosition();
+        if (!level().hasChunkAt(origin)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        final AABB box = this.getBoundingBox();
+        final int minBuildY = level().getMinBuildHeight();
+        final double[] sampleX = {this.getX(), box.minX + 0.25D, box.maxX - 0.25D};
+        final double[] sampleZ = {this.getZ(), box.minZ + 0.25D, box.maxZ - 0.25D};
+
+        double bestAltitude = Double.POSITIVE_INFINITY;
+        boolean foundGround = false;
+
+        for (double sx : sampleX) {
+            for (double sz : sampleZ) {
+                int x = Mth.floor(sx);
+                int z = Mth.floor(sz);
+                int startY = Mth.floor(box.minY);
+                int stopY = Math.max(minBuildY, startY - Math.max(1, maxDropBlocks));
+
+                for (int y = startY; y >= stopY; y--) {
+                    BlockPos checkPos = new BlockPos(x, y, z);
+                    if (!level().hasChunkAt(checkPos)) {
+                        continue;
+                    }
+
+                    BlockState state = level().getBlockState(checkPos);
+                    if (blockOnFluids && !state.getFluidState().isEmpty()) {
+                        return Double.POSITIVE_INFINITY;
+                    }
+
+                    VoxelShape shape = state.getCollisionShape(level(), checkPos);
+                    if (shape.isEmpty()) {
+                        continue;
+                    }
+
+                    double topY = y + shape.max(Direction.Axis.Y);
+                    double altitude = box.minY - topY;
+                    if (altitude < bestAltitude) {
+                        bestAltitude = altitude;
+                    }
+                    foundGround = true;
+                    break;
+                }
+            }
+        }
+
+        if (!foundGround) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return Math.max(0.0D, bestAltitude);
+    }
 
     /**
      * Check if the dragon is flying. Final bridge delegates to subclass hook to avoid obfuscation mismatches.

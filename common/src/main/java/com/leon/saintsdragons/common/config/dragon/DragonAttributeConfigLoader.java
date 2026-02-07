@@ -290,6 +290,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double fireBreathFlameSpeedMultiplier = 1.0D;
         double fireBreathFlameLifetimeMultiplier = 1.0D;
         double fireBreathIgniteBlockChance = 1.0D;
+        double phase2ToggleOnChance = 0.85D;
+        double phase2ToggleOffChance = 0.05D;
+        double phase2DecisionMinTicks = 60.0D;
+        double phase2DecisionMaxTicks = 120.0D;
         double eggHatchChanceNormal = 9.0D;
         double eggLootBastionTreasure = 0.15D;
         double eggLootNetherBridge = 0.15D;
@@ -324,6 +328,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 fireBreathFlameSpeedMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER").get(null));
                 fireBreathFlameLifetimeMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER").get(null));
                 fireBreathIgniteBlockChance = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE").get(null));
+                phase2ToggleOnChance = (double) configClass.getField("IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE").get(null));
+                phase2ToggleOffChance = (double) configClass.getField("IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE").get(null));
+                phase2DecisionMinTicks = (double) configClass.getField("IGNIVORUS_PHASE2_DECISION_MIN_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_DECISION_MIN_TICKS").get(null));
+                phase2DecisionMaxTicks = (double) configClass.getField("IGNIVORUS_PHASE2_DECISION_MAX_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_DECISION_MAX_TICKS").get(null));
                 eggHatchChanceNormal = (double) configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggLootBastionTreasure = (double) configClass.getField("IGNIVORUS_EGG_LOOT_BASTION_TREASURE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_LOOT_BASTION_TREASURE").get(null));
                 eggLootNetherBridge = (double) configClass.getField("IGNIVORUS_EGG_LOOT_NETHER_BRIDGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_LOOT_NETHER_BRIDGE").get(null));
@@ -345,6 +353,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("fire_breath_flame_speed_multiplier", fireBreathFlameSpeedMultiplier);
         extras.put("fire_breath_flame_lifetime_multiplier", fireBreathFlameLifetimeMultiplier);
         extras.put("fire_breath_ignite_block_chance", fireBreathIgniteBlockChance);
+        extras.put("phase2_toggle_on_chance", phase2ToggleOnChance);
+        extras.put("phase2_toggle_off_chance", phase2ToggleOffChance);
+        extras.put("phase2_decision_min_ticks", phase2DecisionMinTicks);
+        extras.put("phase2_decision_max_ticks", phase2DecisionMaxTicks);
         extras.put("taming_chance_base", tamingChanceBase);
         extras.put("taming_chance_beef", tamingChanceBeef);
         extras.put("taming_chance_hearty", tamingChanceHearty);
@@ -767,6 +779,26 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                             mergedConfig.extraDouble("fire_breath_ignite_block_chance", 1.0D));
                     updated = true;
                 }
+                if (!extra.has("phase2_toggle_on_chance")) {
+                    extra.addProperty("phase2_toggle_on_chance",
+                            mergedConfig.extraDouble("phase2_toggle_on_chance", 0.85D));
+                    updated = true;
+                }
+                if (!extra.has("phase2_toggle_off_chance")) {
+                    extra.addProperty("phase2_toggle_off_chance",
+                            mergedConfig.extraDouble("phase2_toggle_off_chance", 0.05D));
+                    updated = true;
+                }
+                if (!extra.has("phase2_decision_min_ticks")) {
+                    extra.addProperty("phase2_decision_min_ticks",
+                            mergedConfig.extraDouble("phase2_decision_min_ticks", 60.0D));
+                    updated = true;
+                }
+                if (!extra.has("phase2_decision_max_ticks")) {
+                    extra.addProperty("phase2_decision_max_ticks",
+                            mergedConfig.extraDouble("phase2_decision_max_ticks", 120.0D));
+                    updated = true;
+                }
             }
 
             if (updated) {
@@ -871,11 +903,15 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             hints.addProperty("fire_body_explosion_damage", "Direct blast damage on Fire Body crash impact");
             hints.addProperty("fire_body_self_damage_on_crash", "Self-damage applied to Cindervane after Fire Body crash impact");
         } else if (id.equals(IGNIVORUS_ID)) {
-            hints.addProperty("ultimate_penalty_health", "Typical 1-500");
+            hints.addProperty("ultimate_penalty_health", "Typical 1-10000");
             hints.addProperty("fire_breath_flame_spawn_multiplier", "0 = disable flame entities, 1 = default");
             hints.addProperty("fire_breath_flame_speed_multiplier", "Scales flame projectile speed (1 = default)");
             hints.addProperty("fire_breath_flame_lifetime_multiplier", "Scales flame lifetime ticks (1 = default)");
             hints.addProperty("fire_breath_ignite_block_chance", "0 = never ignite, 1 = always ignite");
+            hints.addProperty("phase2_toggle_on_chance", "Chance (0-1) to switch from phase 1 to phase 2 when grounded");
+            hints.addProperty("phase2_toggle_off_chance", "Chance (0-1) to switch from phase 2 back to phase 1 when grounded");
+            hints.addProperty("phase2_decision_min_ticks", "Minimum ticks between phase switch checks (20 ticks = 1 second)");
+            hints.addProperty("phase2_decision_max_ticks", "Maximum ticks between phase switch checks (20 ticks = 1 second)");
         }
         return hints;
     }

@@ -459,6 +459,22 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_on_chance"),
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_off_chance"),
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_min_ticks"),
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MIN_TICKS::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MIN_TICKS::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_max_ticks"),
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_base"),
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE::set,
@@ -599,9 +615,14 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MIN_TICKS.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MIN_TICKS.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_STUN_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_STUN_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE.getDefault());

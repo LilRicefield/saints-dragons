@@ -427,7 +427,7 @@ public record CindervaneRiderController(Cindervane dragon) {
         dragon.setTakeoff(true);
         dragon.setHovering(false);
         dragon.setLanding(false);
-        dragon.setRiderTakeoffTicks(25);
+        dragon.setRiderTakeoffTicks(Cindervane.TAKEOFF_ANIMATION_TICKS);
 
         Vec3 current = dragon.getDeltaMovement();
         double upward = Math.max(current.y, 0.55D); // strong initial shove to clear the ground smoothly

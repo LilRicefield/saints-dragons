@@ -124,6 +124,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
             horizontalForward = new Vec3(0.0D, 0.0D, 1.0D);
         }
         horizontalForward = horizontalForward.normalize();
+        float pillarYaw = (float) Math.toDegrees(Math.atan2(horizontalForward.z, horizontalForward.x)) - 90.0F;
 
         Vec3 right = new Vec3(-horizontalForward.z, 0.0D, horizontalForward.x).normalize();
 
@@ -139,7 +140,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
             Vec3 spawnPos = new Vec3(base.x, ground.getY(), base.z);
 
             IgnivorusMagmaPillarEntity pillar = new IgnivorusMagmaPillarEntity(
-                    server, spawnPos, dragon, waveIndex,
+                    server, spawnPos, dragon, waveIndex, pillarYaw,
                     BASE_DAMAGE + waveIndex * DAMAGE_PER_WAVE,
                     BASE_KNOCKBACK + waveIndex * KNOCKBACK_PER_WAVE,
                     PILLAR_WARMUP_TICKS,

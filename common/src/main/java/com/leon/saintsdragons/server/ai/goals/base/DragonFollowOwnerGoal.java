@@ -399,7 +399,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         public static FollowConfig forIgnivorus() {
             return new FollowConfig(
                     20.0,   // startFollowDist
-                    20.0,   // stopFollowDist
+                    8.0,    // stopFollowDist (must be lower than landingDistance so flight follow can transition into landing)
                     500.0,  // teleportDist
                     25.0,   // runDist
                     20.0,   // flightTriggerDist

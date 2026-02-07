@@ -30,6 +30,7 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
     private static final float PROJECTILE_SCALE = 1.2F;
     private static final double PROJECTILE_RADIUS = 3.2D;
     private static final float PROJECTILE_DAMAGE = 10.0F;
+    private static final double TARGET_LEAD_FACTOR = 0.55D;
 
     private int chargeTicks = 0;
     private boolean holdLoopActive = false;
@@ -123,6 +124,14 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
         releaseTicks = 0;
     }
 
+    public int getChargeTicks() {
+        return chargeTicks;
+    }
+
+    public static int getChargeAnimationTicks() {
+        return CHARGE_ANIM_TICKS;
+    }
+
     private void launchProjectile() {
         Stegonaut dragon = getUser();
         if (!(dragon.level() instanceof ServerLevel server)) {
@@ -152,7 +161,9 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
         }
         if (dragon.getTarget() != null) {
             Vec3 targetPos = dragon.getTarget().getEyePosition();
-            Vec3 dir = targetPos.subtract(dragon.getMouthPosition());
+            Vec3 lead = dragon.getTarget().getDeltaMovement().scale(TARGET_LEAD_FACTOR);
+            Vec3 aimPoint = targetPos.add(lead);
+            Vec3 dir = aimPoint.subtract(dragon.getMouthPosition());
             if (dir.lengthSqr() > 1.0E-6) {
                 return dir.normalize();
             }

@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "saintsdragons:item/nulljaw_binder"
+    "layer0": "saintsdragons:item/nulljaw/nulljaw_binder"
   }
 }

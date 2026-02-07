@@ -485,6 +485,8 @@ public abstract class ForgePagedConfigScreen extends Screen {
         @Override
         protected void addWidgets(ForgePagedConfigScreen screen) {
             editBox = new EditBox(screen.font, inputX, y, inputWidth, 18, label);
+            // Additional biome lists can be long; don't clip at default textbox length.
+            editBox.setMaxLength(2048);
             editBox.setValue(value);
             screen.addRenderableWidget(editBox);
         }

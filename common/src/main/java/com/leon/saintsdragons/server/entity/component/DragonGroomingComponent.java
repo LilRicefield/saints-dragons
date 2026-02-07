@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.component;
 
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -15,6 +16,8 @@ import net.minecraft.world.item.Items;
 
 public final class DragonGroomingComponent {
     private static final int BRUSHES_PER_HAPPINESS = 2;
+    private static final int NORMAL_BRUSH_HAPPINESS = 1;
+    private static final int GOLDEN_BRUSH_HAPPINESS = 3;
     private static final int BRUSH_COOLDOWN_TICKS = 10;
 
     private final DragonEntity dragon;
@@ -30,6 +33,8 @@ public final class DragonGroomingComponent {
             return false;
         }
 
+        boolean canDropRewards = dragon.getHappiness() < dragon.getMaxHappiness();
+
         long now = dragon.level().getGameTime();
         if (now - lastBrushTick < BRUSH_COOLDOWN_TICKS) {
             return false;
@@ -39,11 +44,14 @@ public final class DragonGroomingComponent {
         brushProgress++;
         if (brushProgress >= BRUSHES_PER_HAPPINESS) {
             brushProgress = 0;
-            dragon.setHappiness(dragon.getHappiness() + 1);
+            int happinessGain = brushStack.is(ModItems.GOLDEN_DRAGON_BRUSH.get())
+                    ? GOLDEN_BRUSH_HAPPINESS
+                    : NORMAL_BRUSH_HAPPINESS;
+            dragon.setHappiness(dragon.getHappiness() + happinessGain);
         }
 
         GroomingProfile profile = getProfile(dragon);
-        if (dragon.getRandom().nextFloat() <= profile.dropChance()) {
+        if (canDropRewards && dragon.getRandom().nextFloat() <= profile.dropChance()) {
             int amount = Mth.nextInt(dragon.getRandom(), profile.minDrops(), profile.maxDrops());
             dragon.spawnAtLocation(new ItemStack(profile.dropItem(), amount));
         }
@@ -65,7 +73,7 @@ public final class DragonGroomingComponent {
             return new GroomingProfile(0.35F, Items.BLAZE_POWDER, 1, 2);
         }
         if (dragon instanceof Raevyx) {
-            return new GroomingProfile(0.35F, Items.GLOWSTONE_DUST, 1, 2);
+            return new GroomingProfile(0.35F, ModItems.RAEVYX_SCALE.get(), 1, 2);
         }
         if (dragon instanceof Nulljaw) {
             return new GroomingProfile(0.30F, Items.PRISMARINE_SHARD, 1, 2);

@@ -99,6 +99,8 @@ import javax.annotation.Nonnull;
 public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
     // Note: DATA_FIRE_BREATHING will be defined in defineSynchedData() using a unique ID
     private static final int LANDING_SETTLE_TICKS = 4;
+    // 1.25s * 20 TPS = 25 ticks.
+    public static final int TAKEOFF_ANIMATION_TICKS = 24;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
     private static final float FIRE_BODY_EXPLOSION_RADIUS = 15.0F;
     private static final double FIRE_BODY_IMPRINT_RADIUS = 9.0D;
@@ -997,15 +999,18 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     private void tickRiderLandingBlendTimer() {
+        trackRiderAirborneForLanding();
+
         if (!isVehicle() || !isFlying() || onGround()) {
             // If we were actively landing and now touched ground, trigger landed animation
-            boolean wasLanding = riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
+            boolean wasLanding = isFlying() && riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
+            boolean touchdownFromFlight = consumeRiderTouchdownFromAir(0.15D);
             riderLandingBlendTicks = 0;
             if (!level().isClientSide) {
                 this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
 
-                // Trigger landed animation when rider landing completes
-                if (wasLanding && onGround() && isVehicle()) {
+                // Trigger landed animation when rider landing completes or when a gentle touchdown happens.
+                if ((wasLanding || touchdownFromFlight) && onGround() && isVehicle()) {
                     // Properly clear flight state to prevent T-pose gliding bug
                     setFlying(false);
                     setTakeoff(false);
@@ -1041,32 +1046,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     private double getAltitudeAboveTerrain() {
-        net.minecraft.core.BlockPos pos = this.blockPosition();
-        if (!level().hasChunkAt(pos)) {
-            return Double.POSITIVE_INFINITY;
-        }
-
-        // Use MOTION_BLOCKING_NO_LEAVES to find solid ground below water
-        int groundY = this.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                pos.getX(), pos.getZ());
-
-        // Scan a column from slightly above dragon down to BELOW the heightmap (heightmap returns +1 above actual blocks)
-        int dragonY = (int) Math.floor(this.getY());
-        int scanTopY = dragonY + 3; // Check a bit above dragon (in case partially submerged)
-        int scanBottomY = Math.min(groundY - 1, dragonY - 15);  // Scan below heightmap to catch water
-
-        // Scan downward from above dragon to ground, checking for water at any height
-        for (int y = scanTopY; y >= scanBottomY; y--) {
-            BlockPos checkPos = new BlockPos(pos.getX(), y, pos.getZ());
-            BlockState checkState = level().getBlockState(checkPos);
-
-            if (!checkState.getFluidState().isEmpty()) {
-                // Water/lava detected in column - don't trigger landing
-                return Double.POSITIVE_INFINITY;
-            }
-        }
-
-        return this.getY() - groundY;
+        return getAltitudeAboveCollisionTerrain(24, true);
     }
 
     private void tickPitchingLogic() {
@@ -1453,13 +1433,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         int timeFlying = getTimeFlying();
 
         // Play takeoff at the very start of flight
-        if (timeFlying < 25) return true; // TAKEOFF_ANIM_EARLY_TICKS (1.25s)
+        if (timeFlying < TAKEOFF_ANIMATION_TICKS) return true; // 1.25s
 
         // Continue playing if still within max ticks AND conditions are met
         boolean airborne = !onGround();
         boolean ascending = getDeltaMovement().y > 0.05;
 
-        return (timeFlying < 25) && (airborne || ascending); // TAKEOFF_ANIM_MAX_TICKS (1.25s)
+        return (timeFlying < TAKEOFF_ANIMATION_TICKS) && (airborne || ascending); // 1.25s
     }
 
     private boolean isRiddenByOwner() {
@@ -2875,3 +2855,4 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         eggEntity.setBabyGender(babyGender);
     }
 }
+

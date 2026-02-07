@@ -16,6 +16,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
 
@@ -116,6 +117,20 @@ public class ModItems {
                                     .durability(256)
                     ));
 
+    public static final Supplier<Item> GOLDEN_DRAGON_BRUSH =
+            REGISTER.register("golden_dragon_brush",
+                    () -> new DragonBrushItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(256)
+                    ));
+
+    public static final Supplier<Item> RAEVYX_SCALE =
+            REGISTER.register("raevyx_scale",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> STEGONAUT_BINDER =
             REGISTER.register("stegonaut_binder",
                     () -> new StegonautBinderItem(
@@ -179,6 +194,10 @@ public class ModItems {
                     ));
 
     private ModItems() {
+    }
+
+    public static boolean isDragonBrush(ItemStack stack) {
+        return stack.is(DRAGON_BRUSH.get()) || stack.is(GOLDEN_DRAGON_BRUSH.get());
     }
 
     public static void register() {

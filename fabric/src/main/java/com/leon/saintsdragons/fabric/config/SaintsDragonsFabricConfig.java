@@ -27,6 +27,9 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> raevyxAdditionalBiomes = new ArrayList<>();
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> raevyxExcludedBiomes = new ArrayList<>();
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -46,6 +49,9 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> stegonautAdditionalBiomes = new ArrayList<>();
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> stegonautExcludedBiomes = new ArrayList<>();
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -65,6 +71,9 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> cindervaneAdditionalBiomes = new ArrayList<>();
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> cindervaneExcludedBiomes = new ArrayList<>();
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -88,6 +97,9 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> nulljawAdditionalBiomes = new ArrayList<>();
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> nulljawExcludedBiomes = new ArrayList<>();
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -111,6 +123,9 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> ignivorusAdditionalBiomes = new ArrayList<>();
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> ignivorusExcludedBiomes = new ArrayList<>();
 
     // Others (NPCs, etc.)
     @ConfigEntry.Category("others")

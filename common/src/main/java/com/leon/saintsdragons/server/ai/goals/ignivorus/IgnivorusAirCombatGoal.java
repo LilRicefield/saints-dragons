@@ -68,6 +68,12 @@ public class IgnivorusAirCombatGoal extends Goal {
         if (dragon.isVehicle() || dragon.isOrderedToSit()) {
             return false;
         }
+        if (dragon.isAiSpecialCombatActive()) {
+            return false;
+        }
+        if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
+            return false;
+        }
 
         // Check if target is airborne (flying, riding flying mount, or significantly off ground)
         if (!isTargetAirborne(target)) {
@@ -109,6 +115,12 @@ public class IgnivorusAirCombatGoal extends Goal {
         }
 
         if (dragon.isVehicle() || dragon.isOrderedToSit()) {
+            return false;
+        }
+        if (dragon.isAiSpecialCombatActive()) {
+            return false;
+        }
+        if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
             return false;
         }
 
@@ -177,6 +189,11 @@ public class IgnivorusAirCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
+            dragon.getNavigation().stop();
+            return;
+        }
+
         // Transition from takeoff to flying once airborne
         if (dragon.isTakeoff() && !dragon.onGround()) {
             dragon.setTakeoff(false);
@@ -244,7 +261,9 @@ public class IgnivorusAirCombatGoal extends Goal {
      */
     private boolean isCurrentlyAttacking() {
         return dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BITE)
-            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
+            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
+            || dragon.isLeaping()
+            || dragon.isLeapImpactRecovering();
     }
 
     /**

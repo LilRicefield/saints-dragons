@@ -85,6 +85,10 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_PHASE2_DECISION_MIN_TICKS;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_PHASE2_DECISION_MAX_TICKS;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_BEEF;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_HEARTY;
@@ -118,7 +122,7 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Cindervane Dragon Attributes").push("cindervane");
         builder.comment("Core Attributes");
         CINDERVANE_MAX_HEALTH = builder.defineInRange("max_health", 80.0, 1.0, 10000.0);
-        CINDERVANE_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 30.0);
+        CINDERVANE_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 10000.0);
         CINDERVANE_FLYING_SPEED = builder.defineInRange("flying_speed", 0.60, 0.0, 2.0);
         builder.comment("Ability Damage");
         CINDERVANE_BITE_DAMAGE = builder.defineInRange("bite_damage", 12.0, 0.0, 100.0);
@@ -146,7 +150,7 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Raevyx Dragon Attributes").push("raevyx");
         builder.comment("Core Attributes");
         RAEVYX_MAX_HEALTH = builder.defineInRange("max_health", 180.0, 1.0, 10000.0);
-        RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 30.0);
+        RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 10000.0);
         RAEVYX_FLYING_SPEED = builder.defineInRange("flying_speed", 1.0, 0.0, 2.0);
         builder.comment("Ability Damage");
         RAEVYX_BITE_DAMAGE = builder.defineInRange("bite_damage", 15.0, 0.0, 100.0);
@@ -184,7 +188,7 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Nulljaw Dragon Attributes").push("nulljaw");
         builder.comment("Core Attributes");
         NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 250.0, 1.0, 10000.0);
-        NULLJAW_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 30.0);
+        NULLJAW_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 10000.0);
         NULLJAW_SWIM_SPEED = builder.defineInRange("swim_speed", 1.45, 0.1, 5.0);
         builder.comment("Ability Damage");
         NULLJAW_BITE_PHASE1_DAMAGE = builder.defineInRange("bite_phase1_damage", 40.0, 0.0, 200.0);
@@ -211,7 +215,7 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Ignivorus Dragon Attributes").push("ignivorus");
         builder.comment("Core Attributes");
         IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 10000.0);
-        IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 30.0);
+        IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 10000.0);
         IGNIVORUS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.40, 0.0, 2.0);
         builder.comment("Ability Damage");
         IGNIVORUS_BITE_DAMAGE = builder.defineInRange("bite_damage", 50.0, 0.0, 200.0);
@@ -220,9 +224,9 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_FIREBALL_DAMAGE = builder.defineInRange("fireball_damage", 70.0, 0.0, 200.0);
         IGNIVORUS_WING_SWIPE_DAMAGE = builder.defineInRange("wing_swipe_damage", 15.0, 0.0, 200.0);
         IGNIVORUS_STOMP_DAMAGE = builder.defineInRange("stomp_damage", 18.0, 0.0, 200.0);
-        IGNIVORUS_ULTIMATE_DAMAGE = builder.defineInRange("ultimate_damage", 200.0, 0.0, 500.0);
+        IGNIVORUS_ULTIMATE_DAMAGE = builder.defineInRange("ultimate_damage", 200.0, 0.0, 10000.0);
         builder.comment("Ultimate ability health penalty");
-        IGNIVORUS_ULTIMATE_PENALTY_HEALTH = builder.defineInRange("ultimate_penalty_health", 50.0, 1.0, 500.0);
+        IGNIVORUS_ULTIMATE_PENALTY_HEALTH = builder.defineInRange("ultimate_penalty_health", 50.0, 1.0, 10000.0);
         builder.comment("Fire Breath Tuning");
         IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK = builder.defineInRange("fire_breath_drain_per_tick", 0.00625, 0.0, 1.0);
         IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK = builder.defineInRange("fire_breath_regen_per_tick", 0.0025, 0.0, 1.0);
@@ -230,6 +234,11 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER = builder.defineInRange("fire_breath_flame_speed_multiplier", 1.0, 0.0, 5.0);
         IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER = builder.defineInRange("fire_breath_flame_lifetime_multiplier", 1.0, 0.0, 5.0);
         IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE = builder.defineInRange("fire_breath_ignite_block_chance", 1.0, 0.0, 1.0);
+        builder.comment("AI Phase 2 behavior (grounded-only switching)");
+        IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE = builder.defineInRange("phase2_toggle_on_chance", 0.85, 0.0, 1.0);
+        IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE = builder.defineInRange("phase2_toggle_off_chance", 0.05, 0.0, 1.0);
+        IGNIVORUS_PHASE2_DECISION_MIN_TICKS = builder.defineInRange("phase2_decision_min_ticks", 60.0, 1.0, 1200.0);
+        IGNIVORUS_PHASE2_DECISION_MAX_TICKS = builder.defineInRange("phase2_decision_max_ticks", 120.0, 1.0, 1200.0);
         builder.comment("Taming Chances (lower = easier)");
         IGNIVORUS_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 7.0, 1.0, 20.0);
         IGNIVORUS_TAMING_CHANCE_BEEF = builder.defineInRange("taming_chance_beef", 5.0, 1.0, 20.0);
@@ -257,7 +266,7 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Stegonaut Dragon Attributes").push("stegonaut");
         builder.comment("Core Attributes");
         STEGONAUT_MAX_HEALTH = builder.defineInRange("max_health", 100.0, 1.0, 10000.0);
-        STEGONAUT_ARMOR = builder.defineInRange("armor", 15.0, 0.0, 30.0);
+        STEGONAUT_ARMOR = builder.defineInRange("armor", 15.0, 0.0, 10000.0);
         builder.comment("Taming Chances (lower = easier)");
         STEGONAUT_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 1.0, 1.0, 20.0);
         STEGONAUT_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 1.0, 1.0, 20.0);

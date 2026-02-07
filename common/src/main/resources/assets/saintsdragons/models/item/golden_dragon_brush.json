@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/handheld",
   "textures": {
-    "layer0": "saintsdragons:item/grooming_brush"
+    "layer0": "saintsdragons:item/golden_grooming_brush"
   }
 }
