@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
@@ -41,10 +43,10 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
     // Phase 2 stance switching (AI only)
     private int phase2DecisionCooldown = 0;
-    private static final int PHASE2_DECISION_MIN = 200;
-    private static final int PHASE2_DECISION_MAX = 400;
-    private static final float PHASE2_TOGGLE_ON_CHANCE = 0.20f;
-    private static final float PHASE2_TOGGLE_OFF_CHANCE = 0.25f;
+    private static final int PHASE2_DECISION_MIN = 60;
+    private static final int PHASE2_DECISION_MAX = 120;
+    private static final float PHASE2_TOGGLE_ON_CHANCE = 0.85f;
+    private static final float PHASE2_TOGGLE_OFF_CHANCE = 0.05f;
 
     // Fireball AI (Phase 2 stance)
     private int fireballDecisionCooldown = 0;
@@ -59,6 +61,8 @@ public class IgnivorusGroundCombatGoal extends Goal {
     private static final float FIREBALL_MOVING_L2_CHANCE = 0.08f;
     private static final double FIREBALL_MIN_GAP = 8.0;
     private static final double FIREBALL_MAX_GAP = 48.0;
+    private static final double AI_PHASE2_LEAP_TRIGGER_GAP = 20.0;
+    private static final int AI_PHASE2_LEAP_POST_COOLDOWN = 30;
 
     public IgnivorusGroundCombatGoal(Ignivorus dragon) {
         this.dragon = dragon;
@@ -84,6 +88,12 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         if (dragon.isVehicle() || dragon.isOrderedToSit()) {
+            return false;
+        }
+        if (dragon.isAiSpecialCombatActive()) {
+            return false;
+        }
+        if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
             return false;
         }
 
@@ -118,6 +128,12 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         if (dragon.isVehicle() || dragon.isOrderedToSit()) {
+            return false;
+        }
+        if (dragon.isAiSpecialCombatActive()) {
+            return false;
+        }
+        if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
             return false;
         }
 
@@ -196,6 +212,13 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
+            dragon.getNavigation().stop();
+            pathRecalcCooldown = 0;
+            updateGroundMoveState();
+            return;
+        }
+
         // Keep dragon grounded during combat - prevent flight AI from interfering
         if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff()) {
             dragon.markLandedNow();
@@ -268,6 +291,11 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return;
         }
 
+        if (maybeStartPhase2GapCloseLeap(target, gap)) {
+            updateGroundMoveState();
+            return;
+        }
+
         if (maybeStartFireball(target, gap, hasLineOfSight)) {
             updateGroundMoveState();
             return;
@@ -301,7 +329,9 @@ public class IgnivorusGroundCombatGoal extends Goal {
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_STOMP)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIREBALL)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
-            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
+            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE)
+            || dragon.isLeaping()
+            || dragon.isLeapImpactRecovering();
     }
 
     /**
@@ -459,6 +489,35 @@ public class IgnivorusGroundCombatGoal extends Goal {
         return false;
     }
 
+    private boolean maybeStartPhase2GapCloseLeap(LivingEntity target, double gap) {
+        if (dragon.isTame()) {
+            return false;
+        }
+        if (!dragon.isPhase2Active()) {
+            return false;
+        }
+        if (gap < AI_PHASE2_LEAP_TRIGGER_GAP) {
+            return false;
+        }
+        if (attackCooldown > 0) {
+            return false;
+        }
+        if (isCurrentlyAttacking()) {
+            return false;
+        }
+        if (!dragon.onGround()) {
+            return false;
+        }
+        if (!dragon.getSensing().hasLineOfSight(target)) {
+            return false;
+        }
+        if (dragon.tryStartLeapSlamForAI(target)) {
+            attackCooldown = AI_PHASE2_LEAP_POST_COOLDOWN;
+            return true;
+        }
+        return false;
+    }
+
     private int nextFireballDecisionCooldown() {
         return FIREBALL_DECISION_MIN
             + dragon.getRandom().nextInt(FIREBALL_DECISION_MAX - FIREBALL_DECISION_MIN + 1);
@@ -485,7 +544,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         boolean enable = !dragon.isPhase2Active();
-        float chance = enable ? PHASE2_TOGGLE_ON_CHANCE : PHASE2_TOGGLE_OFF_CHANCE;
+        float chance = enable ? getPhase2ToggleOnChance() : getPhase2ToggleOffChance();
         if (dragon.getRandom().nextFloat() < chance) {
             if (!dragon.tryTogglePhase2ForAI(enable)) {
                 phase2DecisionCooldown = 80;
@@ -493,8 +552,36 @@ public class IgnivorusGroundCombatGoal extends Goal {
             }
         }
 
-        phase2DecisionCooldown = PHASE2_DECISION_MIN
-            + dragon.getRandom().nextInt(PHASE2_DECISION_MAX - PHASE2_DECISION_MIN + 1);
+        int minTicks = getPhase2DecisionMinTicks();
+        int maxTicks = getPhase2DecisionMaxTicks();
+        phase2DecisionCooldown = minTicks
+            + dragon.getRandom().nextInt(maxTicks - minTicks + 1);
+    }
+
+    private float getPhase2ToggleOnChance() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        return Mth.clamp((float) config.extraDouble("phase2_toggle_on_chance", PHASE2_TOGGLE_ON_CHANCE), 0.0F, 1.0F);
+    }
+
+    private float getPhase2ToggleOffChance() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        return Mth.clamp((float) config.extraDouble("phase2_toggle_off_chance", PHASE2_TOGGLE_OFF_CHANCE), 0.0F, 1.0F);
+    }
+
+    private int getPhase2DecisionMinTicks() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        return Math.max(1, Mth.floor(config.extraDouble("phase2_decision_min_ticks", PHASE2_DECISION_MIN)));
+    }
+
+    private int getPhase2DecisionMaxTicks() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        int minTicks = getPhase2DecisionMinTicks();
+        int maxTicks = Math.max(1, Mth.floor(config.extraDouble("phase2_decision_max_ticks", PHASE2_DECISION_MAX)));
+        return Math.max(minTicks, maxTicks);
     }
 
     /**

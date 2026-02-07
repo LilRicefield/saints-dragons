@@ -24,6 +24,7 @@ public class StegonautBiteAbility extends DragonAbility<Stegonaut> {
     private static final double BASE_RANGE = 3.0;
     private static final double RIDDEN_RANGE_BONUS = 1.0;
     private static final double BITE_ANGLE_DEG = 80.0;
+    private static final double POINT_BLANK_HIT_DISTANCE = 1.1;
     private static final double SWEEP_HORIZONTAL = 2.5;
     private static final double SWEEP_VERTICAL = 2.5;
 
@@ -95,10 +96,16 @@ public class StegonautBiteAbility extends DragonAbility<Stegonaut> {
         if (dist > range + 0.35) {
             return false;
         }
+
+        // Guarantee point-blank connections even if the mouth origin is inside/against the target hitbox.
+        if (dist <= POINT_BLANK_HIT_DISTANCE) {
+            return true;
+        }
+
         Vec3 toward = closestPointOnAABB(origin, target.getBoundingBox()).subtract(origin);
         double len = toward.length();
         if (len <= 0.0001) {
-            return false;
+            return true;
         }
         Vec3 dir = toward.scale(1.0 / len);
         double dot = dir.dot(look);

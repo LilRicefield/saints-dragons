@@ -20,6 +20,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
+import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusSpecialCombatGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -83,6 +84,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
@@ -95,6 +97,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
+    public static final int TAKEOFF_ANIMATION_TICKS = 31;
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -294,6 +297,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private boolean useRightWingSwipe = true; // Alternates between left and right
     private boolean phase2WasVehicle = false;
     private int aiPhase2LockTicks = 0;
+    private int phase2InvalidTargetTicks = 0;
+    private boolean aiSpecialCombatActive = false;
 
     // Leaping body slam system (Phase 2 replacement for bulldoze)
     private static final double LEAP_HORIZONTAL_SPEED = 2.75D; // Horizontal speed per tick - POWERFUL leap forward!
@@ -306,12 +311,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final double LEAP_LIFT = 0.8D; // Upward launch on hit
     private static final double LEAP_IMPACT_TRIGGER_HEIGHT = 7.0D; // Trigger impact anim just before landing
     private static final int LEAP_GROUNDED_FAILSAFE_TICKS = 6; // Abort if we never leave the ground
+    private static final int LEAP_COOLDOWN_TICKS = 140; // 7 seconds at 20 TPS
 
     // Leap animation states
     private static final int LEAP_STATE_NONE = 0;
     private static final int LEAP_STATE_TAKEOFF = 1;  // Single leap sequence (jump -> slam in one clip)
 
     private boolean leaping = false;
+    private boolean leapWasVehicle = false;
     private int leapAnimState = LEAP_STATE_NONE;
     private Vec3 leapVelocity = Vec3.ZERO;
     private int leapCooldownTicks = 0;
@@ -379,6 +386,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.navigation = this.groundNav;
         this.moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this); // Start with ground control
         this.usingAirNav = false;
+        // Fire dragon: don't treat fire as a hazard for pathfinding.
+        // This prevents repeated repath spikes when long fire lines are present.
+        this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);
+        this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
 
         this.riderController = new IgnivorusRiderController(this);
         resetAmbientSoundTimer();
@@ -452,17 +463,18 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal((com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable)this));
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
-            this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
-            this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
+            this.goalSelector.addGoal(2, new IgnivorusSpecialCombatGoal(this));
+            this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
+            this.goalSelector.addGoal(4, new IgnivorusAirCombatGoal(this));
+            this.goalSelector.addGoal(4, new IgnivorusGroundCombatGoal(this));
         }
-        this.goalSelector.addGoal(4, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forIgnivorus()));
-        this.goalSelector.addGoal(5, new DragonFollowParentGoal<>(this, Ignivorus.class, 1.1D));
+        this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forIgnivorus()));
+        this.goalSelector.addGoal(6, new DragonFollowParentGoal<>(this, Ignivorus.class, 1.1D));
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(this, 1.0D, Ignivorus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
+            this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(this, 1.0D, Ignivorus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         }
-        this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 120));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 120));
+        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
 
         if (!this.isBaby()) {
             this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
@@ -531,8 +543,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 breakBlocksDuringTakeoff();
             }
 
-            // Clear takeoff flag after animation completes (30 ticks = 1.5s)
-            if (isTakeoff() && timeFlying > 30) {
+            // Clear takeoff flag after animation completes.
+            if (isTakeoff() && timeFlying > TAKEOFF_ANIMATION_TICKS) {
                 setTakeoff(false);
             }
         } else {
@@ -940,8 +952,42 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 clearRiderControlLock(); // Clear any transition lock
             }
 
+            // AI safety: if there is no valid combat target for a sustained period,
+            // fall back to phase 1. Keep rider-driven phase 2 untouched.
+            if (phase2Active && !currentlyVehicle) {
+                if (hasValidPhase2CombatTarget()) {
+                    phase2InvalidTargetTicks = 0;
+                } else {
+                    phase2InvalidTargetTicks++;
+                    if (phase2InvalidTargetTicks >= 40) { // 2s grace to avoid one-tick target flicker
+                        phase2Active = false;
+                        this.entityData.set(DATA_PHASE2, false);
+                        phase2CooldownTicks = 40; // 2 second cooldown
+                        if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
+                            animationHandler.triggerPhase2ExitAnimation();
+                        }
+                    }
+                }
+            } else {
+                phase2InvalidTargetTicks = 0;
+            }
+
             phase2WasVehicle = currentlyVehicle;
         }
+    }
+
+    private boolean hasValidPhase2CombatTarget() {
+        LivingEntity target = this.getTarget();
+        if (target == null || !target.isAlive()) {
+            return false;
+        }
+        if (target.level() != this.level()) {
+            return false;
+        }
+        if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
+            return false;
+        }
+        return true;
     }
 
     private void tickLeapState() {
@@ -965,8 +1011,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 }
             }
 
-            // Cancel leap if player dismounts mid-leap
-            if (leaping && !currentlyVehicle) {
+            // Cancel leap only if it was rider-initiated and rider dismounted mid-leap.
+            if (leaping && leapWasVehicle && !currentlyVehicle) {
                 leaping = false;
                 this.entityData.set(DATA_LEAPING, false);
                 leapAnimState = LEAP_STATE_NONE;
@@ -976,8 +1022,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 wasAirborneBeforeLanding = false;
                 leapImpactTriggered = false;
                 leapGroundedTicks = 0;
-                leapCooldownTicks = 60; // 3 second cooldown
+                // Rider dismount cancel should not trigger AI leap cooldown.
                 leapImpactRecoveryTicks = 0; // Clear recovery timer
+                leapWasVehicle = false;
             }
 
             // Handle leap physics and landing detection
@@ -1033,8 +1080,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             leapVelocity = Vec3.ZERO;
             wasAirborneBeforeLanding = false;
             leapImpactTriggered = false;
-            leapCooldownTicks = 20;
+            if (!leapWasVehicle) {
+                leapCooldownTicks = LEAP_COOLDOWN_TICKS;
+            }
             leapImpactRecoveryTicks = LEAP_IMPACT_RECOVERY_DURATION; // Block ambient sounds + lock controls during impact
+            leapWasVehicle = false;
 
             // Lock controls during impact animation
             lockRiderControls(LEAP_IMPACT_RECOVERY_DURATION);
@@ -1058,7 +1108,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             wasAirborneBeforeLanding = false;
             leapImpactTriggered = false;
             leapGroundedTicks = 0;
-            leapCooldownTicks = 20;
+            if (!leapWasVehicle) {
+                leapCooldownTicks = LEAP_COOLDOWN_TICKS;
+            }
+            leapWasVehicle = false;
         }
     }
 
@@ -1393,6 +1446,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public boolean isLeaping() {
         return level().isClientSide ? this.entityData.get(DATA_LEAPING) : leaping;
+    }
+
+    public boolean isLeapImpactRecovering() {
+        return !level().isClientSide && leapImpactRecoveryTicks > 0;
     }
 
     public int getLeapAnimState() {
@@ -1849,6 +1906,23 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return combatManager.isAbilityActive(abilityType);
     }
 
+    public void requestFireballReleaseForAI() {
+        var active = combatManager.getActiveAbility();
+        if (active != null && active.getAbilityType() == IgnivorusAbilities.IGNIVORUS_FIREBALL) {
+            ((IgnivorusFireballAbility) active).requestRelease();
+        }
+    }
+
+    public boolean isAiSpecialCombatActive() {
+        return !level().isClientSide && aiSpecialCombatActive;
+    }
+
+    public void setAiSpecialCombatActive(boolean active) {
+        if (!level().isClientSide) {
+            this.aiSpecialCombatActive = active;
+        }
+    }
+
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
         if (isBaby()) {
@@ -1995,32 +2069,88 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     protected void onRiderLeapSlam(Player player) {
-        // Check cooldown
-        if (leapCooldownTicks > 0) {
-            return;
+        Vec3 look = this.getLookAngle();
+        Vec3 horizontal = new Vec3(look.x, 0.0D, look.z);
+        if (horizontal.lengthSqr() < 1.0E-6D) {
+            float yawRad = (float) Math.toRadians(this.getYRot());
+            horizontal = new Vec3(-Math.sin(yawRad), 0.0D, Math.cos(yawRad));
+        }
+        startLeapSlam(horizontal);
+    }
+
+    /**
+     * AI entrypoint for leaping body slam to close distance.
+     * Returns true when the leap successfully starts.
+     */
+    public boolean tryStartLeapSlamForAI(@Nullable LivingEntity target) {
+        if (level().isClientSide || target == null) {
+            return false;
+        }
+        if (isBaby() || isTame()) {
+            return false;
+        }
+        if (!isPhase2Active()) {
+            return false;
+        }
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return false;
+        }
+        if (isAiSpecialCombatActive()) {
+            return false;
+        }
+        if (!onGround()) {
+            return false;
+        }
+        if (bulldozing || leaping || leapImpactRecoveryTicks > 0) {
+            return false;
+        }
+        if (areRiderControlsLocked() || getActiveAbility() != null) {
+            return false;
+        }
+        if (!isTargetValid(target)) {
+            return false;
         }
 
-        // Check if already leaping
+        Vec3 toTarget = target.position().subtract(this.position());
+        Vec3 horizontal = new Vec3(toTarget.x, 0.0D, toTarget.z);
+        if (horizontal.lengthSqr() < 1.0E-6D) {
+            return false;
+        }
+
+        // Face target first so leap visuals and hit direction align.
+        float yaw = (float) (Mth.atan2(horizontal.z, horizontal.x) * (180F / Math.PI)) - 90.0F;
+        this.setYRot(yaw);
+        this.yBodyRot = yaw;
+        this.yHeadRot = yaw;
+
+        return startLeapSlam(horizontal);
+    }
+
+    private boolean startLeapSlam(Vec3 horizontalDirection) {
+        // Cooldown is AI-only; player-ridden leap uses rider input flow.
         if (leaping) {
-            return;
+            return false;
+        }
+        if (!this.isVehicle() && leapCooldownTicks > 0) {
+            return false;
         }
 
-        // Get player's look direction (horizontal only)
-        float yawRad = (float) Math.toRadians(this.getYRot());
-        double forwardX = -Math.sin(yawRad);
-        double forwardZ = Math.cos(yawRad);
+        Vec3 dir = new Vec3(horizontalDirection.x, 0.0D, horizontalDirection.z);
+        if (dir.lengthSqr() < 1.0E-6D) {
+            return false;
+        }
+        dir = dir.normalize();
 
-        // Create leap velocity with horizontal and vertical components
         Vec3 leapVec = new Vec3(
-            forwardX * LEAP_HORIZONTAL_SPEED,
-            LEAP_VERTICAL_BOOST,  // Upward boost
-            forwardZ * LEAP_HORIZONTAL_SPEED
+            dir.x * LEAP_HORIZONTAL_SPEED,
+            LEAP_VERTICAL_BOOST,
+            dir.z * LEAP_HORIZONTAL_SPEED
         );
 
-        // Begin leap
         leaping = true;
+        leapWasVehicle = this.isVehicle();
         this.entityData.set(DATA_LEAPING, true);
-        leapAnimState = LEAP_STATE_TAKEOFF; // Start in takeoff state
+        leapAnimState = LEAP_STATE_TAKEOFF;
         this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_TAKEOFF);
         leapVelocity = leapVec;
         wasAirborneBeforeLanding = false;
@@ -2030,15 +2160,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.hasImpulse = true;
         leapGroundedTicks = 0;
 
-        // Break ground at takeoff position
         if (level() instanceof ServerLevel server) {
             breakGroundCircle(server, position(), 8.0D);
         }
-
-        // Don't lock controls - the leap state itself blocks other actions
-        // Control is restored immediately on landing
-
-        // Animation handled automatically by IgnivorusAnimationHandler.handleMovementAnimation()
+        return true;
     }
 
     protected void onRiderPhase2Toggle(Player player) {
@@ -2207,7 +2332,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim("action", "landed");
+            String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
+            triggerAnim("action", landedAnim);
+            // Match rider landing pacing so AI does not instantly chain attacks on touchdown.
+            lockRiderControls(13);
             suppressSleep(60);
         }
         markLandedNow();
@@ -2393,7 +2521,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
 
         // Takeoff check
-        if (timeFlying < 5 || (timeFlying < 30 && (!onGround() || getDeltaMovement().y > 0.05))) {
+        if (shouldPlayTakeoff()) {
             riderHighAltitudeGlide = false;
             return 3;
         }
@@ -2493,6 +2621,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // AI flight: altitude-based
         return altitude > 35.0 ? 0 : 1;
+    }
+
+    private boolean shouldPlayTakeoff() {
+        // Keep takeoff-mode timing in one place, matching Cindervane's flow.
+        if (timeFlying < TAKEOFF_ANIMATION_TICKS) {
+            return true;
+        }
+
+        boolean airborne = !onGround();
+        boolean ascending = getDeltaMovement().y > 0.05;
+        return (timeFlying < TAKEOFF_ANIMATION_TICKS) && (airborne || ascending);
     }
 
     private boolean isNearWaterSurface() {
@@ -3161,15 +3300,18 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
 
     private void tickRiderLandingBlendTimer() {
+        trackRiderAirborneForLanding();
+
         if (!isVehicle() || !isFlying() || onGround()) {
             // If we were actively landing and now touched ground, trigger landed animation
-            boolean wasLanding = riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
+            boolean wasLanding = isFlying() && riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
+            boolean touchdownFromFlight = consumeRiderTouchdownFromAir(0.15D);
             riderLandingBlendTicks = 0;
             if (!level().isClientSide) {
                 this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
 
-                // Trigger landed animation when rider landing completes
-                if (wasLanding && onGround() && isVehicle()) {
+                // Trigger landed animation when rider landing completes or when a gentle touchdown happens.
+                if ((wasLanding || touchdownFromFlight) && onGround() && isVehicle()) {
                     // Properly clear flight state to prevent T-pose gliding bug
                     setFlying(false);
                     setTakeoff(false);
@@ -3202,23 +3344,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     private double getAltitudeAboveTerrain() {
-        BlockPos pos = this.blockPosition();
-        if (!level().hasChunkAt(pos)) {
-            return Double.POSITIVE_INFINITY;
-        }
-
-        int groundY = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ());
-        int dragonY = Mth.floor(this.getY());
-        int scanBottom = Math.min(groundY, dragonY - 12);
-
-        for (int y = dragonY; y >= scanBottom; y--) {
-            BlockPos check = new BlockPos(pos.getX(), y, pos.getZ());
-            if (!this.level().getFluidState(check).isEmpty()) {
-                return Double.POSITIVE_INFINITY;
-            }
-        }
-
-        return this.getY() - groundY;
+        return getAltitudeAboveCollisionTerrain(24, true);
     }
 
     private void tickWaterDisturbance() {
@@ -3715,6 +3841,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (tag.contains("Leaping")) {
             leaping = tag.getBoolean("Leaping");
             this.entityData.set(DATA_LEAPING, leaping);
+            leapWasVehicle = leaping && this.isVehicle();
         }
         if (tag.contains("LeapAnimState")) {
             leapAnimState = tag.getInt("LeapAnimState");
@@ -3893,3 +4020,4 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return 180; // Allow full pitch range for head tracking
     }
 }
+

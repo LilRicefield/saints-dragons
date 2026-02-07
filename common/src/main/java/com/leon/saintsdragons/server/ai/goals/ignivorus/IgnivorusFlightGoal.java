@@ -51,6 +51,9 @@ public class IgnivorusFlightGoal extends Goal {
         if (dragon.isLanding()) {
             return false;
         }
+        if (dragon.isAiSpecialCombatActive()) {
+            return false;
+        }
 
         // Don't interfere with important behaviors
         if (dragon.isVehicle() || dragon.isPassenger() || dragon.isOrderedToSit()) {
@@ -128,6 +131,9 @@ public class IgnivorusFlightGoal extends Goal {
                 return false;
             }
             return true;
+        }
+        if (dragon.isAiSpecialCombatActive()) {
+            return false;
         }
 
         // Let landing system take over

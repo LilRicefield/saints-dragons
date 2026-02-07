@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.levelgen.GenerationStep;
@@ -39,6 +40,7 @@ public final class FabricDragonSpawns {
     public static void register() {
         if (SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get() > 0) {
             registerSpawn(HAS_RAEVYX,
+                    SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES,
                     MobCategory.CREATURE,
                     ModEntities.RAEVYX.get(),
                     SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get(),
@@ -54,6 +56,7 @@ public final class FabricDragonSpawns {
 
         if (SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get() > 0) {
             registerSpawn(HAS_STEGONAUT,
+                    SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES,
                     MobCategory.CREATURE,
                     ModEntities.STEGONAUT.get(),
                     SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get(),
@@ -69,6 +72,7 @@ public final class FabricDragonSpawns {
 
         if (SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.get() > 0) {
             registerSpawn(HAS_CINDERVANE,
+                    SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES,
                     MobCategory.CREATURE,
                     ModEntities.CINDERVANE.get(),
                     SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.get(),
@@ -87,6 +91,7 @@ public final class FabricDragonSpawns {
 
         if (SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get() > 0) {
             registerSpawn(HAS_NULLJAW,
+                    SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES,
                     MobCategory.CREATURE,
                     ModEntities.NULLJAW.get(),
                     SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
@@ -102,6 +107,7 @@ public final class FabricDragonSpawns {
 
         if (SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.get() > 0) {
             registerSpawn(HAS_IGNIVORUS,
+                    SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES,
                     MobCategory.CREATURE,
                     ModEntities.IGNIVORUS.get(),
                     SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.get(),
@@ -141,6 +147,7 @@ public final class FabricDragonSpawns {
     }
 
     private static void registerSpawn(TagKey<net.minecraft.world.level.biome.Biome> biomeTag,
+                                      com.leon.saintsdragons.platform.ConfigHelper.ListValue excludedBiomes,
                                       MobCategory category,
                                       net.minecraft.world.entity.EntityType<?> entityType,
                                       int weight,
@@ -154,7 +161,8 @@ public final class FabricDragonSpawns {
         }
 
         BiomeModifications.addSpawn(
-                BiomeSelectors.tag(biomeTag),
+                context -> context.hasTag(biomeTag)
+                        && !isBiomeExcluded(context.getBiomeKey().location(), excludedBiomes),
                 category,
                 entityType,
                 weight,
@@ -188,7 +196,11 @@ public final class FabricDragonSpawns {
             // Parse biome IDs and register spawns
             for (String biomeIdStr : biomes) {
                 try {
-                    net.minecraft.resources.ResourceLocation biomeId = new net.minecraft.resources.ResourceLocation(biomeIdStr);
+                    ResourceLocation biomeId = normalizeBiomeId(biomeIdStr);
+                    if (biomeId == null) {
+                        SaintsDragonsCommon.LOGGER.warn("Invalid biome ID in config: {}", biomeIdStr);
+                        continue;
+                    }
                     net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome> biomeKey =
                             net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BIOME, biomeId);
 
@@ -219,7 +231,11 @@ public final class FabricDragonSpawns {
 
             for (String biomeIdStr : biomes) {
                 try {
-                    net.minecraft.resources.ResourceLocation biomeId = new net.minecraft.resources.ResourceLocation(biomeIdStr);
+                    ResourceLocation biomeId = normalizeBiomeId(biomeIdStr);
+                    if (biomeId == null) {
+                        SaintsDragonsCommon.LOGGER.warn("Invalid biome ID in config: {}", biomeIdStr);
+                        continue;
+                    }
                     net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome> biomeKey =
                             net.minecraft.resources.ResourceKey.create(Registries.BIOME, biomeId);
 
@@ -235,5 +251,32 @@ public final class FabricDragonSpawns {
         } catch (Exception e) {
             // Config not loaded or error, skip
         }
+    }
+
+    private static boolean isBiomeExcluded(ResourceLocation biomeId,
+                                           com.leon.saintsdragons.platform.ConfigHelper.ListValue excludedBiomes) {
+        try {
+            return excludedBiomes.get().stream()
+                    .map(FabricDragonSpawns::normalizeBiomeId)
+                    .anyMatch(biomeId::equals);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Accept both fully-qualified IDs (e.g. "minecraft:plains")
+     * and path-only IDs (e.g. "plains"), defaulting to minecraft namespace.
+     */
+    private static ResourceLocation normalizeBiomeId(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        String candidate = trimmed.contains(":") ? trimmed : "minecraft:" + trimmed;
+        return ResourceLocation.tryParse(candidate);
     }
 }

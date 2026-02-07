@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -43,7 +44,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
         }
 
         try {
-            if (biome.is(HAS_RAEVYX) || isInConfigBiomes(biome, SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES)) {
+            if (shouldSpawnInBiome(biome, HAS_RAEVYX, SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES, SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.RAEVYX.get(),
@@ -52,7 +53,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_STEGONAUT) || isInConfigBiomes(biome, SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES)) {
+            if (shouldSpawnInBiome(biome, HAS_STEGONAUT, SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES, SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.STEGONAUT.get(),
@@ -61,7 +62,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_CINDERVANE) || isInConfigBiomes(biome, SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES)) {
+            if (shouldSpawnInBiome(biome, HAS_CINDERVANE, SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES, SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.CINDERVANE.get(),
@@ -70,7 +71,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_NULLJAW) || isInConfigBiomes(biome, SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES)) {
+            if (shouldSpawnInBiome(biome, HAS_NULLJAW, SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES, SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.NULLJAW.get(),
@@ -79,7 +80,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get());
             }
 
-            if (biome.is(HAS_IGNIVORUS) || isInConfigBiomes(biome, SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES)) {
+            if (shouldSpawnInBiome(biome, HAS_IGNIVORUS, SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES, SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES)) {
                 addSpawn(builder,
                         MobCategory.CREATURE,
                         ModEntities.IGNIVORUS.get(),
@@ -97,19 +98,43 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
      */
     private static boolean isInConfigBiomes(Holder<Biome> biome, com.leon.saintsdragons.platform.ConfigHelper.ListValue configList) {
         try {
-            net.minecraft.resources.ResourceLocation biomeId = biome.unwrapKey()
+            ResourceLocation biomeId = biome.unwrapKey()
                     .map(net.minecraft.resources.ResourceKey::location)
                     .orElse(null);
             if (biomeId == null) {
                 return false;
             }
-
-            String biomeIdStr = biomeId.toString();
             return configList.get().stream()
-                    .anyMatch(s -> s.equals(biomeIdStr));
+                    .map(AddDragonsBiomeModifier::normalizeBiomeId)
+                    .anyMatch(biomeId::equals);
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private static boolean shouldSpawnInBiome(Holder<Biome> biome,
+                                              TagKey<Biome> defaultTag,
+                                              com.leon.saintsdragons.platform.ConfigHelper.ListValue additionalBiomes,
+                                              com.leon.saintsdragons.platform.ConfigHelper.ListValue excludedBiomes) {
+        boolean explicitlyIncluded = isInConfigBiomes(biome, additionalBiomes);
+        boolean defaultAllowed = biome.is(defaultTag) && !isInConfigBiomes(biome, excludedBiomes);
+        return explicitlyIncluded || defaultAllowed;
+    }
+
+    /**
+     * Accept both fully-qualified IDs (e.g. "minecraft:plains")
+     * and path-only IDs (e.g. "plains"), defaulting to minecraft namespace.
+     */
+    private static ResourceLocation normalizeBiomeId(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        String candidate = trimmed.contains(":") ? trimmed : "minecraft:" + trimmed;
+        return ResourceLocation.tryParse(candidate);
     }
 
     private static void addSpawn(ModifiableBiomeInfo.BiomeInfo.Builder builder,

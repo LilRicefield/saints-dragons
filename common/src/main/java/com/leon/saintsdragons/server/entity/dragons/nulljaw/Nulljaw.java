@@ -1333,10 +1333,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                                        MobSpawnType spawnType,
                                        BlockPos pos,
                                        RandomSource random) {
-        if (!Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random)) {
-            return false;
-        }
-
         // Allow amphibious spawning: valid on solid ground OR in water
         boolean fluidHere = !level.getFluidState(pos).isEmpty();
 

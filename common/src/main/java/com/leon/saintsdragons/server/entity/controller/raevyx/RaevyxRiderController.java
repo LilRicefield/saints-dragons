@@ -428,7 +428,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
         wyvern.setHovering(false);
         wyvern.setLanding(false);
         // Keep takeoff active for a brief window so server flight logic applies upward force
-        wyvern.setRiderTakeoffTicks(30);
+        wyvern.setRiderTakeoffTicks(Raevyx.TAKEOFF_ANIMATION_TICKS);
 
         // Give an initial upward push so the wyvern actually leaves the ground before rider input changes
         Vec3 current = wyvern.getDeltaMovement();

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.network.chat.Component;
@@ -124,6 +125,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 dragon.tame(player);
                 dragon.setOrderedToSit(true);
                 dragon.setCommandManual(1); // Set command to Sit (1) to match the sitting state
+                dragon.combatManager.clearAbilityCooldown(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
                 if (!legacyTaming) {
                     dragon.resetTamingFailures();
@@ -275,6 +277,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 dragon.tame(player);
                 dragon.setOrderedToSit(true);
                 dragon.setCommandManual(1);
+                dragon.combatManager.clearAbilityCooldown(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
                 triggerTamingAdvancement(player);
             } else {

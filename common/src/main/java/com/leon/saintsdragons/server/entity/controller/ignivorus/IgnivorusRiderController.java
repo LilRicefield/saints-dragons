@@ -95,7 +95,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         // When flying, xRot stays at 0 - visual pitch comes from the model's applyFlightPitch()
 
         // Landing logic for riders
-        if (flying && !dragon.isTakeoff()) {
+        if (flying && !isTakeoffWindowActive()) {
             double distanceToGround = getDistanceToGround();
             boolean nearGround = distanceToGround >= 0 && distanceToGround <= LANDING_HEIGHT_TRIGGER;
             boolean atWaterSurface = isNearWaterSurface();
@@ -127,21 +127,52 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         var level = dragon.level();
         if (level == null) return -1;
 
-        net.minecraft.core.BlockPos dragonPos = dragon.blockPosition();
-        int startY = dragonPos.getY();
+        final net.minecraft.world.phys.AABB box = dragon.getBoundingBox();
+        final int minBuildY = level.getMinBuildHeight();
+        final double[] sampleX = {dragon.getX(), box.minX + 0.25D, box.maxX - 0.25D};
+        final double[] sampleZ = {dragon.getZ(), box.minZ + 0.25D, box.maxZ - 0.25D};
 
-        for (int checkY = startY; checkY > startY - MAX_GROUND_CHECK_DISTANCE && checkY >= level.getMinBuildHeight(); checkY--) {
-            net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos(dragonPos.getX(), checkY, dragonPos.getZ());
-            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(checkPos);
+        double bestDistance = Double.POSITIVE_INFINITY;
+        boolean foundGround = false;
 
-            // Check if it's a solid block (not air, not water, not lava)
-            if (!state.isAir() && state.getFluidState().isEmpty() && state.isSolidRender(level, checkPos)) {
-                // Found solid ground, return distance
-                return dragon.getY() - (checkY + 1); // +1 because we want distance to top of block
+        for (double sx : sampleX) {
+            for (double sz : sampleZ) {
+                int x = net.minecraft.util.Mth.floor(sx);
+                int z = net.minecraft.util.Mth.floor(sz);
+                int startY = net.minecraft.util.Mth.floor(box.minY);
+                int stopY = Math.max(minBuildY, startY - MAX_GROUND_CHECK_DISTANCE);
+
+                for (int y = startY; y >= stopY; y--) {
+                    net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos(x, y, z);
+                    if (!level.hasChunkAt(checkPos)) {
+                        continue;
+                    }
+
+                    net.minecraft.world.level.block.state.BlockState state = level.getBlockState(checkPos);
+                    if (!state.getFluidState().isEmpty()) {
+                        return -1;
+                    }
+
+                    net.minecraft.world.phys.shapes.VoxelShape shape = state.getCollisionShape(level, checkPos);
+                    if (shape.isEmpty()) {
+                        continue;
+                    }
+
+                    double topY = y + shape.max(net.minecraft.core.Direction.Axis.Y);
+                    double distance = box.minY - topY;
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                    }
+                    foundGround = true;
+                    break;
+                }
             }
         }
 
-        return -1; // No ground found
+        if (!foundGround) {
+            return -1;
+        }
+        return Math.max(0.0D, bestDistance);
     }
 
     /**
@@ -270,7 +301,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
             if (!isDiving) {
                 // Vertical control - takeoff provides optional boost but doesn't block descent
-                if (dragon.isTakeoff() && dragon.isGoingUp()) {
+                if (isTakeoffWindowActive() && dragon.isGoingUp()) {
                     // Apply modest boost during takeoff if Space is held
                     double boost = ASCEND_THRUST * 0.65;
                     verticalVel = Math.max(verticalVel + boost, 0.20);
@@ -390,5 +421,9 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         double upward = Math.max(current.y, 0.25D); // slightly stronger initial shove but still controlled
         dragon.setDeltaMovement(current.x, upward, current.z);
         dragon.hasImpulse = true;
+    }
+
+    private boolean isTakeoffWindowActive() {
+        return dragon.isTakeoff() || dragon.timeFlying < Ignivorus.TAKEOFF_ANIMATION_TICKS;
     }
 }

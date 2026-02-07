@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautPassiveBuffAbility;
@@ -191,18 +192,14 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         this.goalSelector.addGoal(0, new FloatGoal(this)); // CRITICAL: Must float in water to not drown!
         this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal(this)); // Escape water
 
-        // Baby-specific goals
-        if (this.isBaby()) {
-            this.goalSelector.addGoal(2, new DragonFollowParentGoal<>(this, Stegonaut.class, 1.1D));
-        }
+        // Register unconditionally; goal self-gates to wild babies in canUse().
+        this.goalSelector.addGoal(2, new DragonFollowParentGoal<>(this, Stegonaut.class, 0.70D));
 
         // Removed flee goal - pack animal doesn't run from threats
-        // Adults can breed, babies cannot (keep higher priority than follow/wander)
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(3, new DragonBreedGoal<>(
-                    this, 1.0D, Stegonaut.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
-            ));
-        }
+        // Register unconditionally; breed goal self-gates via canBreed().
+        this.goalSelector.addGoal(3, new DragonBreedGoal<>(
+                this, 1.0D, Stegonaut.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
+        ));
 
         this.goalSelector.addGoal(4, new StegonautCombatGoal(this));
         this.goalSelector.addGoal(5, new StegonautFollowOwnerGoal(this));
@@ -215,9 +212,10 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         // - owner hurt by target
         // - owner hurt target
         // - stegonaut hurt by target
-        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(1, new DragonProtectBabiesGoal<>(this, Stegonaut.class));
+        this.targetSelector.addGoal(2, new DragonOwnerHurtByTargetGoal(this));
+        this.targetSelector.addGoal(3, new DragonOwnerHurtTargetGoal(this));
+        this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
     }
 
     @Override
@@ -234,7 +232,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
                 .add(Attributes.MOVEMENT_SPEED, 0.50D) // Increased for pack animal duties
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.ARMOR, 15.0D)
-                .add(Attributes.FOLLOW_RANGE, 16.0D);
+                .add(Attributes.FOLLOW_RANGE, 64.0D);
     }
 
     @Override
@@ -564,7 +562,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
-        if (itemstack.is(com.leon.saintsdragons.common.registry.ModItems.DRAGON_BRUSH.get())) {
+        if (com.leon.saintsdragons.common.registry.ModItems.isDragonBrush(itemstack)) {
             boolean brushed = this.tryBrush(player, itemstack);
             return brushed ? InteractionResult.sidedSuccess(this.level().isClientSide) : InteractionResult.CONSUME;
         }

@@ -136,6 +136,16 @@ public class DragonCombatHandler {
         return abilityCooldowns.getOrDefault(abilityType, 0);
     }
 
+    /**
+     * Clear cooldown tracking for a specific ability type.
+     */
+    public void clearAbilityCooldown(DragonAbilityType<?, ?> abilityType) {
+        if (abilityType == null) {
+            return;
+        }
+        abilityCooldowns.remove(abilityType);
+    }
+
     public void tryUseAbility(DragonAbilityType<?, ?> abilityType) {
         if (abilityType == null || dragon.level().isClientSide) {
             return;

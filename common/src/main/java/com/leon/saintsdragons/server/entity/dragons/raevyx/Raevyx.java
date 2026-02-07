@@ -112,6 +112,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     /** Scale factor for the wyvern model */
     public static final float MODEL_SCALE = 1.0f;
+    public static final int TAKEOFF_ANIMATION_TICKS = 35;
 
     /** Time to live for aggression tracking (in ticks) */
     public static final int AGGRO_TTL_TICKS = 200; // ~10s
@@ -1293,8 +1294,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             inHighAltitudeGlide = false; // Reset when not flying
             return -1; // Ground state
         }
-        // Treat the first few ticks of flight as takeoff even if the explicit flag cleared early
-        if (isTakeoff() || this.timeFlying < 35) return 3;  // Takeoff
+        // Treat the first few ticks of flight as dedicated takeoff phase.
+        if (shouldPlayTakeoff()) return 3;  // Takeoff
         if (isHovering()) return 2; // Hover
         if (isLanding()) return 2;  // Landing (treat as hover)
 
@@ -1387,6 +1388,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         return 1; // Forward flight (flapping)
+    }
+
+    private boolean shouldPlayTakeoff() {
+        if (timeFlying < TAKEOFF_ANIMATION_TICKS) {
+            return true;
+        }
+
+        boolean airborne = !onGround();
+        boolean ascending = getDeltaMovement().y > 0.05;
+        return (timeFlying < TAKEOFF_ANIMATION_TICKS) && (airborne || ascending);
     }
 
     @Override
@@ -2046,8 +2057,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     breakBlocksDuringTakeoff();
                 }
 
-                // Clear takeoff flag after animation completes (35 ticks)
-                if (isTakeoff() && timeFlying > 35) {
+                // Clear takeoff flag after animation completes.
+                if (isTakeoff() && timeFlying > TAKEOFF_ANIMATION_TICKS) {
                     setTakeoff(false);
                 }
 
@@ -2117,9 +2128,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private void tickFlightPhysics() {
         if (level().isClientSide) return;
 
-        // Apply takeoff upward force during initial flight (first 40 ticks = 2s animation)
+        // Apply takeoff upward force during the initial takeoff animation window.
         // This gives the dragon height during takeoff animation
-        if (isTakeoff() && isFlying() && timeFlying < 35) {
+        if (isTakeoff() && isFlying() && timeFlying < TAKEOFF_ANIMATION_TICKS) {
             Vec3 motion = getDeltaMovement();
             double upwardForce = 0.11D;
             setDeltaMovement(motion.add(0, upwardForce, 0));
@@ -2858,15 +2869,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
     
     private void tickRiderLandingBlendTimer() {
+        trackRiderAirborneForLanding();
+
         if (!isVehicle() || !isFlying() || onGround()) {
             // If we were actively landing and now touched ground, trigger landed animation
-            boolean wasLanding = riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
+            boolean wasLanding = isFlying() && riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
+            boolean touchdownFromAir = consumeRiderTouchdownFromAir(0.15D);
             riderLandingBlendTicks = 0;
             if (!level().isClientSide) {
                 this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
 
-                // Trigger landed animation when rider landing completes
-                if (wasLanding && onGround() && isVehicle()) {
+                // Trigger landed animation when rider landing completes or when a gentle touchdown happens.
+                if ((wasLanding || touchdownFromAir) && onGround() && isVehicle()) {
                     // Properly clear flight state to prevent T-pose gliding bug
                     setFlying(false);
                     setTakeoff(false);
@@ -2898,36 +2912,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private double getAltitudeAboveTerrain() {
-        net.minecraft.core.BlockPos pos = this.blockPosition();
-        if (!level().hasChunkAt(pos)) {
-            return Double.POSITIVE_INFINITY;
-        }
-
-        // Use MOTION_BLOCKING (includes water surface) to find the actual surface
-        int surfaceY = this.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
-                pos.getX(), pos.getZ());
-
-        // Use MOTION_BLOCKING_NO_LEAVES to find solid ground below water
-        int groundY = this.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                pos.getX(), pos.getZ());
-
-        // Scan a column from slightly above dragon down to BELOW the heightmap (heightmap returns +1 above actual blocks)
-        int dragonY = (int) Math.floor(this.getY());
-        int scanTopY = dragonY + 3; // Check a bit above dragon (in case partially submerged)
-        int scanBottomY = Math.min(groundY - 1, dragonY - 15);  // Scan below heightmap to catch water
-
-        // Scan downward from above dragon to ground, checking for water at any height
-        for (int y = scanTopY; y >= scanBottomY; y--) {
-            net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos(pos.getX(), y, pos.getZ());
-            net.minecraft.world.level.block.state.BlockState checkState = level().getBlockState(checkPos);
-
-            if (!checkState.getFluidState().isEmpty()) {
-                // Water/lava detected in column - don't trigger landing
-                return Double.POSITIVE_INFINITY;
-            }
-        }
-
-        return this.getY() - groundY;
+        return getAltitudeAboveCollisionTerrain(24, true);
     }
     
     private void tickPitchingLogic() {
@@ -4564,3 +4549,4 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
     }
 }
+

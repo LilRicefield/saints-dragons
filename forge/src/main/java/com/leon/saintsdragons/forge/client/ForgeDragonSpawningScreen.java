@@ -117,6 +117,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES::get,
                 SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES::set,
                 SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.excluded_biomes"),
+                SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES::get,
+                SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES::set,
+                SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES::save));
     }
 
     private void addStegonautEntries(List<ConfigEntry> entries) {
@@ -137,6 +141,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES::get,
                 SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES::set,
                 SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.excluded_biomes"),
+                SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES::get,
+                SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES::set,
+                SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES::save));
     }
 
     private void addCindervaneEntries(List<ConfigEntry> entries) {
@@ -157,6 +165,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES::get,
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES::set,
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.excluded_biomes"),
+                SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES::get,
+                SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES::set,
+                SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES::save));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
                 SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN::get,
                 SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN::set,
@@ -181,6 +193,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::get,
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::set,
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.excluded_biomes"),
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES::get,
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES::set,
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES::save));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
                 SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN::get,
                 SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN::set,
@@ -205,6 +221,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES::get,
                 SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES::set,
                 SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.excluded_biomes"),
+                SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES::get,
+                SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES::set,
+                SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES::save));
     }
 
     private void resetSection() {
@@ -214,31 +234,37 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.set(SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.set(SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES.set(java.util.Collections.emptyList());
                 SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.save();
                 SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES.save();
             }
             case STEGONAUT -> {
                 SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.set(SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT_DEFAULT);
                 SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.set(SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.set(SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES.set(java.util.Collections.emptyList());
                 SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.save();
                 SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES.save();
             }
             case CINDERVANE -> {
                 SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.set(SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.set(SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.set(SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES.set(java.util.Collections.emptyList());
                 SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.set(SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.save();
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES.save();
                 SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.save();
             }
             case NULLJAW -> {
@@ -246,11 +272,13 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.set(SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.set(SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES.set(java.util.Collections.emptyList());
                 SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN.set(SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN_DEFAULT);
                 SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.save();
                 SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES.save();
                 SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN.save();
             }
             case IGNIVORUS -> {
@@ -258,10 +286,12 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.set(SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.set(SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES.set(java.util.Collections.emptyList());
                 SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.save();
                 SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES.save();
             }
         }
     }

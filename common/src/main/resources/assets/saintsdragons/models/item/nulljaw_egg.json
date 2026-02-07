@@ -1,6 +1,6 @@
 {
 	"parent": "minecraft:item/generated",
 	"textures": {
-		"layer0": "saintsdragons:item/nulljaw_egg_item"
+		"layer0": "saintsdragons:item/nulljaw/nulljaw_egg_item"
 	}
 }

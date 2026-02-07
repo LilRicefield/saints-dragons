@@ -166,6 +166,14 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.extraDouble("fire_breath_flame_lifetime_multiplier", 1.0D));
         ignivorusBuffer.fireBreathIgniteBlockChance = ignivorusCurrent.extraDouble("fire_breath_ignite_block_chance",
                 ignivorusDefaults.extraDouble("fire_breath_ignite_block_chance", 1.0D));
+        ignivorusBuffer.phase2ToggleOnChance = ignivorusCurrent.extraDouble("phase2_toggle_on_chance",
+                ignivorusDefaults.extraDouble("phase2_toggle_on_chance", 0.85D));
+        ignivorusBuffer.phase2ToggleOffChance = ignivorusCurrent.extraDouble("phase2_toggle_off_chance",
+                ignivorusDefaults.extraDouble("phase2_toggle_off_chance", 0.05D));
+        ignivorusBuffer.phase2DecisionMinTicks = ignivorusCurrent.extraDouble("phase2_decision_min_ticks",
+                ignivorusDefaults.extraDouble("phase2_decision_min_ticks", 60.0D));
+        ignivorusBuffer.phase2DecisionMaxTicks = ignivorusCurrent.extraDouble("phase2_decision_max_ticks",
+                ignivorusDefaults.extraDouble("phase2_decision_max_ticks", 120.0D));
         ignivorusBuffer.legacyTaming = ignivorusCurrent.extraBoolean("legacy_taming", false);
         ignivorusBuffer.eggHatchChanceNormal = ignivorusCurrent.extraDouble("egg_hatch_chance_normal", 9.0D);
         ignivorusBuffer.eggLootBastionTreasure = ignivorusCurrent.extraDouble("egg_loot_bastion_treasure", 0.15D);
@@ -196,6 +204,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     config.raevyxAdditionalBiomes.clear();
                     config.raevyxAdditionalBiomes.addAll(list);
                 },
+                () -> config.raevyxExcludedBiomes, list -> {
+                    config.raevyxExcludedBiomes.clear();
+                    config.raevyxExcludedBiomes.addAll(list);
+                },
                 null, null, true,
                 1, 1, 2);
 
@@ -206,6 +218,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.stegonautAdditionalBiomes, list -> {
                     config.stegonautAdditionalBiomes.clear();
                     config.stegonautAdditionalBiomes.addAll(list);
+                },
+                () -> config.stegonautExcludedBiomes, list -> {
+                    config.stegonautExcludedBiomes.clear();
+                    config.stegonautExcludedBiomes.addAll(list);
                 },
                 null, null, true,
                 5, 1, 4);
@@ -218,6 +234,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     config.cindervaneAdditionalBiomes.clear();
                     config.cindervaneAdditionalBiomes.addAll(list);
                 },
+                () -> config.cindervaneExcludedBiomes, list -> {
+                    config.cindervaneExcludedBiomes.clear();
+                    config.cindervaneExcludedBiomes.addAll(list);
+                },
                 () -> config.cindervaneEggBlockWorldgen, value -> config.cindervaneEggBlockWorldgen = value, true,
                 3, 1, 3);
 
@@ -229,6 +249,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     config.nulljawAdditionalBiomes.clear();
                     config.nulljawAdditionalBiomes.addAll(list);
                 },
+                () -> config.nulljawExcludedBiomes, list -> {
+                    config.nulljawExcludedBiomes.clear();
+                    config.nulljawExcludedBiomes.addAll(list);
+                },
                 () -> config.nulljawEggBlockWorldgen, value -> config.nulljawEggBlockWorldgen = value, true,
                 2, 1, 2);
 
@@ -239,6 +263,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.ignivorusAdditionalBiomes, list -> {
                     config.ignivorusAdditionalBiomes.clear();
                     config.ignivorusAdditionalBiomes.addAll(list);
+                },
+                () -> config.ignivorusExcludedBiomes, list -> {
+                    config.ignivorusExcludedBiomes.clear();
+                    config.ignivorusExcludedBiomes.addAll(list);
                 },
                 null, null, true,
                 1, 1, 2);
@@ -275,6 +303,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                  IntConsumer maxSetter,
                                  Supplier<List<String>> biomesGetter,
                                  Consumer<List<String>> biomesSetter,
+                                 Supplier<List<String>> excludedBiomesGetter,
+                                 Consumer<List<String>> excludedBiomesSetter,
                                  BooleanSupplier eggBlockWorldgenGetter,
                                  Consumer<Boolean> eggBlockWorldgenSetter,
                                  boolean defaultEggBlockWorldgen,
@@ -305,6 +335,11 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setDefaultValue(List.of())
                 .setSaveConsumer(values -> biomesSetter.accept(new ArrayList<>(values)))
                 .build());
+        List<String> excludedListCopy = new ArrayList<>(excludedBiomesGetter.get());
+        entries.add(entryBuilder.startStrList(Component.translatable("config.saintsdragons.spawn.excluded_biomes"), excludedListCopy)
+                .setDefaultValue(List.of())
+                .setSaveConsumer(values -> excludedBiomesSetter.accept(new ArrayList<>(values)))
+                .build());
         if (eggBlockWorldgenGetter != null && eggBlockWorldgenSetter != null) {
             entries.add(entryBuilder.startBooleanToggle(
                             Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
@@ -332,7 +367,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)
-                .setMax(30.0D)
+                .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.flying_speed"), buffer.flyingSpeed)
@@ -423,7 +458,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)
-                .setMax(30.0D)
+                .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"), buffer.tamingChanceBase)
@@ -474,7 +509,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)
-                .setMax(30.0D)
+                .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.flying_speed"), buffer.flyingSpeed)
@@ -611,7 +646,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)
-                .setMax(30.0D)
+                .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.swim_speed"), buffer.swimSpeed)
@@ -701,7 +736,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)
-                .setMax(30.0D)
+                .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.flying_speed"), buffer.flyingSpeed)
@@ -749,13 +784,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_damage"), buffer.ultimateDamage)
                 .setDefaultValue(defaults.abilityDamage("ultimate", 200.0D))
                 .setMin(0.0D)
-                .setMax(500.0D)
+                .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.ultimateDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_penalty"), buffer.ultimatePenalty)
                 .setDefaultValue(defaults.extraDouble("ultimate_penalty_health", 50.0D))
                 .setMin(1.0D)
-                .setMax(500.0D)
+                .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.ultimatePenalty = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_base"), buffer.tamingChanceBase)
@@ -816,6 +851,30 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.fireBreathIgniteBlockChance = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_on_chance"), buffer.phase2ToggleOnChance)
+                .setDefaultValue(defaults.extraDouble("phase2_toggle_on_chance", 0.85D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.phase2ToggleOnChance = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_off_chance"), buffer.phase2ToggleOffChance)
+                .setDefaultValue(defaults.extraDouble("phase2_toggle_off_chance", 0.05D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.phase2ToggleOffChance = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_min_ticks"), buffer.phase2DecisionMinTicks)
+                .setDefaultValue(defaults.extraDouble("phase2_decision_min_ticks", 60.0D))
+                .setMin(1.0D)
+                .setMax(1200.0D)
+                .setSaveConsumer(value -> buffer.phase2DecisionMinTicks = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_max_ticks"), buffer.phase2DecisionMaxTicks)
+                .setDefaultValue(defaults.extraDouble("phase2_decision_max_ticks", 120.0D))
+                .setMin(1.0D)
+                .setMax(1200.0D)
+                .setSaveConsumer(value -> buffer.phase2DecisionMaxTicks = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_hatch_chance_normal"), buffer.eggHatchChanceNormal)
                 .setDefaultValue(defaults.extraDouble("egg_hatch_chance_normal", 9.0D))
@@ -1074,6 +1133,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double fireBreathFlameSpeedMultiplier;
         double fireBreathFlameLifetimeMultiplier;
         double fireBreathIgniteBlockChance;
+        double phase2ToggleOnChance;
+        double phase2ToggleOffChance;
+        double phase2DecisionMinTicks;
+        double phase2DecisionMaxTicks;
         boolean legacyTaming;
         double eggHatchChanceNormal;
         double eggLootBastionTreasure;
@@ -1114,6 +1177,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("fire_breath_flame_speed_multiplier", buffer.fireBreathFlameSpeedMultiplier);
         extras.put("fire_breath_flame_lifetime_multiplier", buffer.fireBreathFlameLifetimeMultiplier);
         extras.put("fire_breath_ignite_block_chance", buffer.fireBreathIgniteBlockChance);
+        extras.put("phase2_toggle_on_chance", buffer.phase2ToggleOnChance);
+        extras.put("phase2_toggle_off_chance", buffer.phase2ToggleOffChance);
+        extras.put("phase2_decision_min_ticks", buffer.phase2DecisionMinTicks);
+        extras.put("phase2_decision_max_ticks", buffer.phase2DecisionMaxTicks);
         extras.put("egg_hatch_chance_normal", buffer.eggHatchChanceNormal);
         extras.put("egg_loot_bastion_treasure", buffer.eggLootBastionTreasure);
         extras.put("egg_loot_nether_bridge", buffer.eggLootNetherBridge);

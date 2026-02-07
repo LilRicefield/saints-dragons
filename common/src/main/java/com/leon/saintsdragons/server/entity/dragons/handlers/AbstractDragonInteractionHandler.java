@@ -23,7 +23,7 @@ public abstract class AbstractDragonInteractionHandler<T extends DragonEntity> {
         }
 
         ItemStack heldItem = player.getItemInHand(hand);
-        if (heldItem.is(ModItems.DRAGON_BRUSH.get())) {
+        if (ModItems.isDragonBrush(heldItem)) {
             // Always acknowledge brush use on client so server interaction still runs.
             if (!dragon.level().isClientSide) {
                 dragon.tryBrush(player, heldItem);

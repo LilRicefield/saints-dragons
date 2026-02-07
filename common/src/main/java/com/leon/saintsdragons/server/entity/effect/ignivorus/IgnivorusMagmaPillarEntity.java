@@ -75,6 +75,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     }
 
     public IgnivorusMagmaPillarEntity(Level level, Vec3 pos, Ignivorus owner, int stageIndex,
+                                      float yaw,
                                       float impactDamage, double knockbackStrength,
                                       int warmupTicks, int lifetimeTicks) {
         this(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), level);
@@ -88,11 +89,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         setStage(stageIndex);
         setVisualScale(1.0f + stageIndex * 0.2f);
 
-        // Set rotation AFTER all other initialization, then lock it
-        // Snap to nearest cardinal direction (0°, 90°, 180°, 270°) for consistent appearance
-        float ownerYaw = owner != null ? owner.getYRot() : 0f;
-        float yaw = Math.round(ownerYaw / 90.0f) * 90.0f;
-
+        // Use explicit yaw computed by the ability from its spawn-forward vector.
         initializeRotation(yaw);
         this.rotationLocked = true; // Lock rotation from now on
     }
