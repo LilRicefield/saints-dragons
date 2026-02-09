@@ -106,7 +106,20 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
             }
             return configList.get().stream()
                     .map(AddDragonsBiomeModifier::normalizeBiomeId)
-                    .anyMatch(biomeId::equals);
+                    .anyMatch(id -> id != null && biomeId.equals(id));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if a biome matches any configured biome tag entries (format: #namespace:path).
+     */
+    private static boolean isInConfigBiomeTags(Holder<Biome> biome, com.leon.saintsdragons.platform.ConfigHelper.ListValue configList) {
+        try {
+            return configList.get().stream()
+                    .map(AddDragonsBiomeModifier::normalizeBiomeTag)
+                    .anyMatch(tag -> tag != null && biome.is(tag));
         } catch (Exception e) {
             return false;
         }
@@ -116,8 +129,11 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                                               TagKey<Biome> defaultTag,
                                               com.leon.saintsdragons.platform.ConfigHelper.ListValue additionalBiomes,
                                               com.leon.saintsdragons.platform.ConfigHelper.ListValue excludedBiomes) {
-        boolean explicitlyIncluded = isInConfigBiomes(biome, additionalBiomes);
-        boolean defaultAllowed = biome.is(defaultTag) && !isInConfigBiomes(biome, excludedBiomes);
+        boolean explicitlyIncluded = isInConfigBiomes(biome, additionalBiomes)
+                || isInConfigBiomeTags(biome, additionalBiomes);
+        boolean explicitlyExcluded = isInConfigBiomes(biome, excludedBiomes)
+                || isInConfigBiomeTags(biome, excludedBiomes);
+        boolean defaultAllowed = biome.is(defaultTag) && !explicitlyExcluded;
         return explicitlyIncluded || defaultAllowed;
     }
 
@@ -130,11 +146,34 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
             return null;
         }
         String trimmed = raw.trim();
-        if (trimmed.isEmpty()) {
+        if (trimmed.isEmpty() || trimmed.startsWith("#")) {
             return null;
         }
         String candidate = trimmed.contains(":") ? trimmed : "minecraft:" + trimmed;
         return ResourceLocation.tryParse(candidate);
+    }
+
+    /**
+     * Parse biome tag entries from config, using "#namespace:path" syntax.
+     */
+    private static TagKey<Biome> normalizeBiomeTag(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        if (!trimmed.startsWith("#")) {
+            return null;
+        }
+        String tagId = trimmed.substring(1).trim();
+        if (tagId.isEmpty()) {
+            return null;
+        }
+        String candidate = tagId.contains(":") ? tagId : "minecraft:" + tagId;
+        ResourceLocation rl = ResourceLocation.tryParse(candidate);
+        if (rl == null) {
+            return null;
+        }
+        return TagKey.create(Registries.BIOME, rl);
     }
 
     private static void addSpawn(ModifiableBiomeInfo.BiomeInfo.Builder builder,

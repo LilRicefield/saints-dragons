@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectionContext;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -162,7 +163,7 @@ public final class FabricDragonSpawns {
 
         BiomeModifications.addSpawn(
                 context -> context.hasTag(biomeTag)
-                        && !isBiomeExcluded(context.getBiomeKey().location(), excludedBiomes),
+                        && !isBiomeExcluded(context, excludedBiomes),
                 category,
                 entityType,
                 weight,
@@ -194,11 +195,24 @@ public final class FabricDragonSpawns {
             }
 
             // Parse biome IDs and register spawns
-            for (String biomeIdStr : biomes) {
+            for (String rawEntry : biomes) {
                 try {
-                    ResourceLocation biomeId = normalizeBiomeId(biomeIdStr);
+                    TagKey<net.minecraft.world.level.biome.Biome> biomeTag = normalizeBiomeTag(rawEntry);
+                    if (biomeTag != null) {
+                        BiomeModifications.addSpawn(
+                                BiomeSelectors.tag(biomeTag),
+                                category,
+                                entityType,
+                                weight,
+                                minGroupSize,
+                                maxGroupSize
+                        );
+                        continue;
+                    }
+
+                    ResourceLocation biomeId = normalizeBiomeId(rawEntry);
                     if (biomeId == null) {
-                        SaintsDragonsCommon.LOGGER.warn("Invalid biome ID in config: {}", biomeIdStr);
+                        SaintsDragonsCommon.LOGGER.warn("Invalid biome ID or biome tag in config: {}", rawEntry);
                         continue;
                     }
                     net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome> biomeKey =
@@ -213,7 +227,7 @@ public final class FabricDragonSpawns {
                             maxGroupSize
                     );
                 } catch (Exception e) {
-                    SaintsDragonsCommon.LOGGER.warn("Invalid biome ID in config: {}", biomeIdStr);
+                    SaintsDragonsCommon.LOGGER.warn("Invalid biome ID or biome tag in config: {}", rawEntry);
                 }
             }
         } catch (Exception e) {
@@ -229,11 +243,21 @@ public final class FabricDragonSpawns {
                 return;
             }
 
-            for (String biomeIdStr : biomes) {
+            for (String rawEntry : biomes) {
                 try {
-                    ResourceLocation biomeId = normalizeBiomeId(biomeIdStr);
+                    TagKey<net.minecraft.world.level.biome.Biome> biomeTag = normalizeBiomeTag(rawEntry);
+                    if (biomeTag != null) {
+                        BiomeModifications.addFeature(
+                                BiomeSelectors.tag(biomeTag),
+                                GenerationStep.Decoration.VEGETAL_DECORATION,
+                                featureKey
+                        );
+                        continue;
+                    }
+
+                    ResourceLocation biomeId = normalizeBiomeId(rawEntry);
                     if (biomeId == null) {
-                        SaintsDragonsCommon.LOGGER.warn("Invalid biome ID in config: {}", biomeIdStr);
+                        SaintsDragonsCommon.LOGGER.warn("Invalid biome ID or biome tag in config: {}", rawEntry);
                         continue;
                     }
                     net.minecraft.resources.ResourceKey<net.minecraft.world.level.biome.Biome> biomeKey =
@@ -245,7 +269,7 @@ public final class FabricDragonSpawns {
                             featureKey
                     );
                 } catch (Exception e) {
-                    SaintsDragonsCommon.LOGGER.warn("Invalid biome ID in config: {}", biomeIdStr);
+                    SaintsDragonsCommon.LOGGER.warn("Invalid biome ID or biome tag in config: {}", rawEntry);
                 }
             }
         } catch (Exception e) {
@@ -253,12 +277,19 @@ public final class FabricDragonSpawns {
         }
     }
 
-    private static boolean isBiomeExcluded(ResourceLocation biomeId,
+    private static boolean isBiomeExcluded(BiomeSelectionContext context,
                                            com.leon.saintsdragons.platform.ConfigHelper.ListValue excludedBiomes) {
         try {
+            ResourceLocation biomeId = context.getBiomeKey().location();
             return excludedBiomes.get().stream()
-                    .map(FabricDragonSpawns::normalizeBiomeId)
-                    .anyMatch(biomeId::equals);
+                    .anyMatch(entry -> {
+                        TagKey<net.minecraft.world.level.biome.Biome> tag = normalizeBiomeTag(entry);
+                        if (tag != null) {
+                            return context.hasTag(tag);
+                        }
+                        ResourceLocation id = normalizeBiomeId(entry);
+                        return id != null && biomeId.equals(id);
+                    });
         } catch (Exception e) {
             return false;
         }
@@ -273,10 +304,33 @@ public final class FabricDragonSpawns {
             return null;
         }
         String trimmed = raw.trim();
-        if (trimmed.isEmpty()) {
+        if (trimmed.isEmpty() || trimmed.startsWith("#")) {
             return null;
         }
         String candidate = trimmed.contains(":") ? trimmed : "minecraft:" + trimmed;
         return ResourceLocation.tryParse(candidate);
+    }
+
+    /**
+     * Parse biome tag entries from config, using "#namespace:path" syntax.
+     */
+    private static TagKey<net.minecraft.world.level.biome.Biome> normalizeBiomeTag(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        if (!trimmed.startsWith("#")) {
+            return null;
+        }
+        String tagId = trimmed.substring(1).trim();
+        if (tagId.isEmpty()) {
+            return null;
+        }
+        String candidate = tagId.contains(":") ? tagId : "minecraft:" + tagId;
+        ResourceLocation rl = ResourceLocation.tryParse(candidate);
+        if (rl == null) {
+            return null;
+        }
+        return TagKey.create(Registries.BIOME, rl);
     }
 }

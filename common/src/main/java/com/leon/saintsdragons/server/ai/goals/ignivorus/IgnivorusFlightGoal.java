@@ -1,8 +1,9 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
+import com.leon.saintsdragons.server.ai.goals.base.DragonAerialLandingController;
+import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ClipContext;
@@ -17,27 +18,26 @@ import java.util.EnumSet;
  * Fire dragons are bold and active, preferring to patrol their territory from the air.
  */
 public class IgnivorusFlightGoal extends Goal {
+    private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.ignivorus();
     private final Ignivorus dragon;
+    private final DragonAerialLandingController<Ignivorus> landingController;
     private Vec3 targetPosition;
-    private Vec3 landingPosition;
-    private boolean landingApproach;
-    private int landingApproachTicks = 0;
-    private boolean landingForceDrop = false;
     private int stuckCounter = 0;
     private int timeSinceTargetChange = 0;
 
     // Landing cooldown to prevent immediate takeoff after landing
-    private static final int LANDING_COOLDOWN_TICKS = 60; // 3 seconds minimum on ground
     private long lastLandingTime = 0;
-    private static final int LANDING_FORCE_DROP_TICKS = 80;
-    private static final int LANDING_EMERGENCY_GROUNDING_TICKS = 100; // 5 seconds - force ground if stuck
-    private static final double LANDING_STATE_ALTITUDE = 1.5D;
 
     // Flight decision cooldown
     private int flightDecisionCooldown = 0;
 
     public IgnivorusFlightGoal(Ignivorus dragon) {
         this.dragon = dragon;
+        this.landingController = new DragonAerialLandingController<>(
+                dragon,
+                Ignivorus.LANDING_BLEND_ALTITUDE,
+                dragon::handleAiLandingComplete
+        );
         this.setFlags(EnumSet.of(Flag.MOVE));
         this.flightDecisionCooldown = 0;
     }
@@ -75,7 +75,7 @@ public class IgnivorusFlightGoal extends Goal {
 
         // Use server game time for landing cooldown checks
         long currentTime = dragon.level().getGameTime();
-        int cooldown = LANDING_COOLDOWN_TICKS;
+        int cooldown = PROFILE.landingCooldownTicks();
 
         if (!dragon.isFlying() && (currentTime - lastLandingTime) < cooldown) {
             return false;
@@ -109,8 +109,7 @@ public class IgnivorusFlightGoal extends Goal {
         }
 
         if (shouldFly) {
-            landingApproach = false;
-            landingPosition = null;
+            landingController.reset();
             this.targetPosition = findFlightTarget();
             this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
             return true;
@@ -125,9 +124,9 @@ public class IgnivorusFlightGoal extends Goal {
         if (dragon.isBaby()) {
             return false;
         }
-        if (landingApproach) {
+        if (landingController.isLandingApproachActive()) {
             if (dragon.onGround()) {
-                finishLanding();
+                landingController.finishLanding();
                 return false;
             }
             return true;
@@ -180,8 +179,7 @@ public class IgnivorusFlightGoal extends Goal {
         dragon.setFlying(true);
         dragon.setLanding(false);
         dragon.setHovering(false);
-        landingApproach = false;
-        landingPosition = null;
+        landingController.reset();
         if (targetPosition != null) {
             dragon.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, dragon.getFlightSpeed());
         }
@@ -191,82 +189,8 @@ public class IgnivorusFlightGoal extends Goal {
     public void tick() {
         timeSinceTargetChange++;
 
-        if (landingApproach) {
-            if (dragon.isInWaterOrBubble()) {
-                landingApproach = false;
-                landingApproachTicks = 0;
-                landingForceDrop = false;
-                targetPosition = null;
-                landingPosition = null;
-                dragon.setLanding(false);
-                dragon.setHovering(false);
-                dragon.setTakeoff(false);
-                dragon.setFlying(false);
-                return;
-            }
-            landingApproachTicks++;
-
-            // Emergency grounding: if stuck floating for too long, abort landing and let entity fall
-            if (landingApproachTicks > LANDING_EMERGENCY_GROUNDING_TICKS && !dragon.onGround()) {
-                landingApproach = false;
-                landingApproachTicks = 0;
-                landingForceDrop = false;
-                targetPosition = null;
-                landingPosition = null;
-                dragon.setNoGravity(false);
-                dragon.setFlying(false);
-                dragon.setLanding(true);
-                // Goal will stop, let gravity take over
-                return;
-            }
-
-            if (!landingForceDrop && landingApproachTicks > LANDING_FORCE_DROP_TICKS) {
-                landingForceDrop = true;
-                Vec3 dropTarget = findValidDropTarget();
-                if (dropTarget != null) {
-                    landingPosition = dropTarget;
-                } else {
-                    // Can't find anywhere to drop - abort landing
-                    landingApproach = false;
-                    landingApproachTicks = 0;
-                    dragon.setLanding(false);
-                    return;
-                }
-            }
-            if (landingPosition != null) {
-                BlockPos landingGround = BlockPos.containing(landingPosition.x, landingPosition.y - 1.0, landingPosition.z);
-                if (!landingForceDrop && !isWideLandingSurface(landingGround)) {
-                    landingPosition = findLandingTarget();
-                    if (landingPosition == null) {
-                        // No valid surface - abort landing
-                        landingApproach = false;
-                        landingApproachTicks = 0;
-                        dragon.setLanding(false);
-                        return;
-                    }
-                }
-                double altitude = dragon.getY() - landingPosition.y;
-
-                // Apply downward velocity throughout descent, not just when far away
-                if (!dragon.isInWaterOrBubble() && !dragon.onGround()) {
-                    Vec3 motion = dragon.getDeltaMovement();
-                    // Stronger descent when high, gentler when close
-                    double descentRate = altitude > Ignivorus.LANDING_BLEND_ALTITUDE ? 0.18 : 0.08;
-                    double newY = Math.max(motion.y - descentRate, -1.6);
-                    dragon.setDeltaMovement(motion.x, newY, motion.z);
-                }
-                dragon.getMoveControl().setWantedPosition(landingPosition.x, landingPosition.y, landingPosition.z, 1.6);
-                if (!dragon.isLanding()
-                        && altitude >= -0.25D
-                        && altitude <= LANDING_STATE_ALTITUDE) {
-                    double dx = dragon.getX() - landingPosition.x;
-                    double dz = dragon.getZ() - landingPosition.z;
-                    double horizontalDistSq = dx * dx + dz * dz;
-                    if (horizontalDistSq <= 4.0D) {
-                        dragon.setLanding(true);
-                    }
-                }
-            }
+        if (landingController.isLandingApproachActive()) {
+            landingController.tickLandingApproach();
             return;
         }
 
@@ -298,7 +222,7 @@ public class IgnivorusFlightGoal extends Goal {
             double distanceToTarget = dragon.distanceToSqr(targetPosition);
 
             // Reached target - larger acceptance radius for smooth flight
-            if (distanceToTarget < 64.0) { // 8 blocks - matches Raevyx
+            if (distanceToTarget < PROFILE.targetReachedDistanceSq()) {
                 needNewTarget = true;
             }
 
@@ -327,7 +251,7 @@ public class IgnivorusFlightGoal extends Goal {
             }
 
             // Been going to same target for too long
-            if (timeSinceTargetChange > 400) { // ~20 seconds
+            if (timeSinceTargetChange > PROFILE.maxTargetAgeTicks()) {
                 needNewTarget = true;
             }
         }
@@ -342,10 +266,7 @@ public class IgnivorusFlightGoal extends Goal {
     @Override
     public void stop() {
         targetPosition = null;
-        landingPosition = null;
-        landingApproach = false;
-        landingApproachTicks = 0;
-        landingForceDrop = false;
+        landingController.reset();
         stuckCounter = 0;
         timeSinceTargetChange = 0;
         dragon.getNavigation().stop();
@@ -376,125 +297,15 @@ public class IgnivorusFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        if (landingApproach) {
-            return;
+        landingController.beginLandingApproach();
+        if (landingController.isLandingApproachActive()) {
+            targetPosition = null;
         }
-
-        landingPosition = findLandingTarget();
-        if (landingPosition == null) {
-            // No valid landing spot found - abort landing and keep flying
-            return;
-        }
-
-        landingApproach = true;
-        landingApproachTicks = 0;
-        landingForceDrop = false;
-        targetPosition = landingPosition;
-        dragon.setHovering(false);
-        dragon.setTakeoff(false);
     }
 
     private void finishLanding() {
-        landingApproach = false;
-        landingApproachTicks = 0;
-        landingForceDrop = false;
         targetPosition = null;
-        landingPosition = null;
-        dragon.handleAiLandingComplete();
-        dragon.setHovering(false);
-        dragon.setFlying(false);
-    }
-
-    private Vec3 findLandingTarget() {
-        BlockPos origin = dragon.blockPosition();
-        int radius = 16; // Increased search radius
-
-        for (int attempt = 0; attempt < 24; attempt++) {
-            int dx = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
-            int dz = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
-            BlockPos column = origin.offset(dx, 0, dz);
-            if (!dragon.level().hasChunkAt(column)) {
-                continue;
-            }
-
-            // Use WORLD_SURFACE to get actual ground, not tree trunks
-            int surfaceY = dragon.level().getHeight(Heightmap.Types.WORLD_SURFACE,
-                    column.getX(), column.getZ());
-            BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
-            if (isWideLandingSurface(ground)) {
-                return new Vec3(column.getX() + 0.5, ground.getY() + 1.0, column.getZ() + 0.5);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Finds a valid drop target that's actually solid ground, not water
-     * Searches in expanding radius around current position
-     */
-    private Vec3 findValidDropTarget() {
-        BlockPos origin = dragon.blockPosition();
-
-        // Search in expanding radius for solid ground
-        for (int radius = 0; radius <= 32; radius += 8) {
-            for (int attempt = 0; attempt < 12; attempt++) {
-                int dx = radius == 0 ? 0 : dragon.getRandom().nextInt(radius * 2 + 1) - radius;
-                int dz = radius == 0 ? 0 : dragon.getRandom().nextInt(radius * 2 + 1) - radius;
-                BlockPos checkPos = origin.offset(dx, 0, dz);
-
-                if (!dragon.level().hasChunkAt(checkPos)) {
-                    continue;
-                }
-
-                // Get surface level
-                int surfaceY = dragon.level().getHeight(Heightmap.Types.WORLD_SURFACE,
-                        checkPos.getX(), checkPos.getZ());
-                BlockPos groundPos = new BlockPos(checkPos.getX(), surfaceY - 1, checkPos.getZ());
-
-                var state = dragon.level().getBlockState(groundPos);
-
-                // Must be solid and not fluid
-                if (!state.isAir() && state.getFluidState().isEmpty() &&
-                    state.isFaceSturdy(dragon.level(), groundPos, Direction.UP)) {
-                    return new Vec3(checkPos.getX() + 0.5, groundPos.getY() + 1.0, checkPos.getZ() + 0.5);
-                }
-            }
-        }
-
-        return null; // No valid drop target found
-    }
-
-    /**
-     * Checks if the landing surface is wide enough for the dragon's bounding box
-     * Dragons are large creatures, so we check a 3x3 area
-     */
-    private boolean isWideLandingSurface(BlockPos ground) {
-        if (!dragon.level().hasChunkAt(ground)) {
-            return false;
-        }
-
-        var state = dragon.level().getBlockState(ground);
-        if (state.isAir() || !state.getFluidState().isEmpty()) {
-            return false;
-        }
-        if (!state.isFaceSturdy(dragon.level(), ground, Direction.UP)) {
-            return false;
-        }
-        return isLandingSpaceClear(ground);
-    }
-
-    private boolean isLandingSpaceClear(BlockPos ground) {
-        BlockPos above = ground.above();
-        BlockPos aboveTwo = above.above();
-        var aboveState = dragon.level().getBlockState(above);
-        if (!aboveState.getCollisionShape(dragon.level(), above).isEmpty()
-                || !aboveState.getFluidState().isEmpty()) {
-            return false;
-        }
-        var aboveTwoState = dragon.level().getBlockState(aboveTwo);
-        return aboveTwoState.getCollisionShape(dragon.level(), aboveTwo).isEmpty()
-                && aboveTwoState.getFluidState().isEmpty();
+        landingController.finishLanding();
     }
 
     private Vec3 generateFlightCandidate(Vec3 anchor, Vec3 dragonPos, int attempt) {
@@ -661,7 +472,7 @@ public class IgnivorusFlightGoal extends Goal {
     // ===== DECISION MAKING =====
 
     private int flightDecisionInterval() {
-        return 10; // Check every ~0.5 seconds - fire dragons are active
+        return PROFILE.decisionIntervalClear();
     }
 
     private int nextDecisionCooldown(int baseInterval) {
@@ -675,7 +486,7 @@ public class IgnivorusFlightGoal extends Goal {
         }
 
         // Fire dragons are bold - higher chance to take off
-        return dragon.getRandom().nextInt(30) == 0; // ~3.3% chance
+        return dragon.getRandom().nextInt(PROFILE.takeoffRollClear()) == 0;
     }
 
     private boolean shouldKeepFlying() {
@@ -684,7 +495,7 @@ public class IgnivorusFlightGoal extends Goal {
         }
 
         // Fire dragons patrol for extended periods (~2-3 minutes average)
-        return dragon.getRandom().nextInt(3000) != 0;
+        return dragon.getRandom().nextInt(PROFILE.keepFlyingRollClear()) != 0;
     }
 
     // ===== UTILITY METHODS =====

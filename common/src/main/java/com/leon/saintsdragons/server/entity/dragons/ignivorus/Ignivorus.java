@@ -322,6 +322,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private boolean leapImpactTriggered = false;
     private boolean wasAirborneBeforeLanding = false; // Track if we were in the air before landing
     private int leapGroundedTicks = 0; // Failsafe for rare cases where we never leave the ground
+    private long lastAiLandedAnimTick = -40L;
 
     // Animation timing constants (in ticks, 20 ticks = 1 second)
     private static final int LEAP_IMPACT_RECOVERY_DURATION = 20;
@@ -2327,11 +2328,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
         if (!level().isClientSide) {
-            String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-            triggerAnim("action", landedAnim);
-            // Match rider landing pacing so AI does not instantly chain attacks on touchdown.
-            lockRiderControls(13);
-            suppressSleep(60);
+            long now = level().getGameTime();
+            if (now - lastAiLandedAnimTick >= 15L) {
+                String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
+                triggerAnim("action", landedAnim);
+                lockRiderControls(13);
+                suppressSleep(60);
+                lastAiLandedAnimTick = now;
+            }
         }
         markLandedNow();
     }
@@ -2472,6 +2476,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public void setLanding(boolean landing) {
+        if (landing && this.onGround() && !this.isFlying() && !this.isTakeoff()) {
+            return;
+        }
         this.entityData.set(DATA_LANDING, landing);
     }
 
@@ -3181,6 +3188,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             bankSmoothedYaw = 0f;
             bankAngle = 0f;
             prevBankAngle = 0f;
+            return;
+        }
+
+        if (horizontalCollision || verticalCollision) {
+            bankSmoothedYaw *= 0.45f;
+            bankAngle = Mth.lerp(0.55f, bankAngle, 0f);
+            if (Math.abs(bankAngle) < 0.01f) {
+                bankAngle = 0f;
+            }
             return;
         }
 
