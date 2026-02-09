@@ -412,7 +412,7 @@ public class IgnivorusAirCombatGoal extends Goal {
     private void triggerEmergencyLanding() {
         dragon.setLanding(true);
         dragon.setFlying(false);
-        dragon.setHovering(true);
+        dragon.setHovering(false);
         shotFromBelowCounter = 0; // Reset counter
     }
 

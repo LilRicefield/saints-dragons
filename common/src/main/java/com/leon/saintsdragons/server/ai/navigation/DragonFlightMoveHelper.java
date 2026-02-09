@@ -21,6 +21,19 @@ import net.minecraft.world.phys.HitResult;
  */
 public class DragonFlightMoveHelper extends MoveControl {
     private static final String WILD_FLYING_SPEED_MULTIPLIER_KEY = "wild_flying_speed_multiplier";
+    private static final float COLLISION_AVOID_YAW_STEP = 42.0F;
+    private static final int COLLISION_RECOVERY_WINDOW_TICKS = 14;
+    private static final float COLLISION_RECOVERY_SPEED_CAP = 1.05F;
+    private static final float COLLISION_RECOVERY_YAW_STEP_CAP = 2.5F;
+    private static final float COLLISION_RECOVERY_PITCH_MAX_DOWN = 12.0F;
+    private static final double COLLISION_FORWARD_SAMPLE_DISTANCE = 4.0D;
+    private static final int ESCAPE_MODE_TICKS = 14;
+    private static final int COLLISION_WINDOW_TICKS = 20;
+    private static final int ESCAPE_TRIGGER_COLLISIONS = 4;
+    private static final int REPATHE_TRIGGER_COLLISIONS = 7;
+    private static final double ESCAPE_SIDE_DISTANCE = 8.0D;
+    private static final double ESCAPE_FORWARD_DISTANCE = 5.0D;
+    private static final double ESCAPE_UP_DISTANCE = 3.0D;
 
     private final DragonFlightCapable dragon;
     private final net.minecraft.world.entity.Mob mob;
@@ -38,6 +51,12 @@ public class DragonFlightMoveHelper extends MoveControl {
     // Performance optimization: cache obstruction check
     private int obstructionCheckCooldown = 0;
     private boolean cachedObstructionResult = false;
+    private int collisionRecoveryTicks = 0;
+    private int collisionWindowTicks = 0;
+    private int collisionHitsInWindow = 0;
+    private int lastAvoidTurnDirection = 1;
+    private int escapeTicks = 0;
+    private Vec3 escapeTarget = null;
 
     public DragonFlightMoveHelper(DragonFlightCapable dragon) {
         this(dragon, getDefaultParameters());
@@ -98,8 +117,11 @@ public class DragonFlightMoveHelper extends MoveControl {
             return;
         }
 
-        // Handle different flight modes
-        if (dragon.isHovering()) {
+        // Landing should never be treated as stationary hover movement.
+        // Goals decide WHEN to land; MoveHelper just ensures motion follows that intent.
+        if (dragon.isLanding()) {
+            handleGlidingMovement();
+        } else if (dragon.isHovering()) {
             handleHoveringMovement();
         } else {
             handleGlidingMovement();
@@ -110,23 +132,71 @@ public class DragonFlightMoveHelper extends MoveControl {
      * Gliding movement - this is where the magic happens
      */
     private void handleGlidingMovement() {
-        // Collision handling - simple 180 turn
+        // Collision handling - avoid repeated yaw flips that cause visual wobble
         if (mob.horizontalCollision) {
-            mob.setYRot(mob.getYRot() + 180.0F);
-            this.speedFactor = speedFactorMin;
-            mob.getNavigation().stop();
+            collisionWindowTicks = COLLISION_WINDOW_TICKS;
+            collisionHitsInWindow++;
+            if (collisionRecoveryTicks <= 0) {
+                int avoidDirection = chooseAvoidTurnDirection();
+                float avoidYaw = mob.getYRot() + avoidDirection * COLLISION_AVOID_YAW_STEP;
+                mob.setYRot(avoidYaw);
+                mob.yBodyRot = avoidYaw;
+                mob.getNavigation().stop();
+                collisionRecoveryTicks = COLLISION_RECOVERY_WINDOW_TICKS;
+            } else {
+                collisionRecoveryTicks--;
+            }
+
+            this.speedFactor = Mth.clamp(
+                    Math.min(COLLISION_RECOVERY_SPEED_CAP, this.speedFactor * 0.68F),
+                    Math.max(0.35F, speedFactorMin * 0.7F),
+                    COLLISION_RECOVERY_SPEED_CAP
+            );
+            if (collisionHitsInWindow >= ESCAPE_TRIGGER_COLLISIONS && escapeTicks <= 0) {
+                activateEscapeMode();
+            }
+            if (collisionHitsInWindow >= REPATHE_TRIGGER_COLLISIONS) {
+                this.operation = Operation.WAIT;
+                mob.getNavigation().stop();
+                collisionRecoveryTicks = 0;
+                collisionWindowTicks = 0;
+                collisionHitsInWindow = 0;
+                escapeTicks = 0;
+                escapeTarget = null;
+                return;
+            }
+            Vec3 motion = mob.getDeltaMovement();
+            double lift = dragon.isTakeoff() ? 0.16D : (collisionHitsInWindow >= ESCAPE_TRIGGER_COLLISIONS ? 0.14D : 0.10D);
+            mob.setDeltaMovement(motion.x * 0.35D, Math.max(motion.y, lift), motion.z * 0.35D);
             return;
         }
 
+        if (collisionWindowTicks > 0) {
+            collisionWindowTicks--;
+            if (collisionWindowTicks == 0) {
+                collisionHitsInWindow = 0;
+            }
+        }
+        if (escapeTicks > 0) {
+            escapeTicks--;
+            if (escapeTicks <= 0) {
+                escapeTarget = null;
+            }
+        }
+        if (collisionRecoveryTicks > 0) {
+            collisionRecoveryTicks--;
+        }
+
         // Calculate movement vectors to target
-        float distX = (float) (this.wantedX - mob.getX());
-        float distY = (float) (this.wantedY - mob.getY());
-        float distZ = (float) (this.wantedZ - mob.getZ());
+        Vec3 wantedPos = (escapeTicks > 0 && escapeTarget != null) ? escapeTarget : new Vec3(this.wantedX, this.wantedY, this.wantedZ);
+        float distX = (float) (wantedPos.x - mob.getX());
+        float distY = (float) (wantedPos.y - mob.getY());
+        float distZ = (float) (wantedPos.z - mob.getZ());
 
         // Performance optimization: check for obstruction once every 5 ticks instead of twice per tick
         // This reduces expensive raycasting from ~64 calls/second to ~4 calls/second per dragon
         if (obstructionCheckCooldown <= 0) {
-            cachedObstructionResult = isLineObstructed(mob.position(), new Vec3(this.wantedX, this.wantedY, this.wantedZ));
+            cachedObstructionResult = isBodyPathObstructed(mob.position(), wantedPos);
             obstructionCheckCooldown = 5; // Check every 5 ticks (0.25 seconds)
         } else {
             obstructionCheckCooldown--;
@@ -158,7 +228,10 @@ public class DragonFlightMoveHelper extends MoveControl {
         // Smooth yaw approach
         float wrappedCurrentYaw = Mth.wrapDegrees(currentYaw + 90.0F);
         float wrappedDesiredYaw = Mth.wrapDegrees(desiredYaw);
-        mob.setYRot(Mth.approachDegrees(wrappedCurrentYaw, wrappedDesiredYaw, maxYawChange) - 90.0F);
+        float yawStep = collisionRecoveryTicks > 0
+                ? Math.min(maxYawChange, COLLISION_RECOVERY_YAW_STEP_CAP)
+                : maxYawChange;
+        mob.setYRot(Mth.approachDegrees(wrappedCurrentYaw, wrappedDesiredYaw, yawStep) - 90.0F);
 
         // Banking handled in animation/predicate; keep MoveHelper focused on movement
         // MoveHelper only handles movement - no banking calculation needed
@@ -168,6 +241,9 @@ public class DragonFlightMoveHelper extends MoveControl {
 
         // === PITCH CALCULATION ===
         float desiredPitch = (float) (-(Mth.atan2(-distY, horizontalDist) * 57.295776F));
+        if (collisionRecoveryTicks > 0) {
+            desiredPitch = Math.min(desiredPitch, COLLISION_RECOVERY_PITCH_MAX_DOWN);
+        }
         mob.setXRot(Mth.approachDegrees(mob.getXRot(), desiredPitch, maxPitchChange));
 
         // === ENHANCED SPEED MODULATION ===
@@ -201,6 +277,9 @@ public class DragonFlightMoveHelper extends MoveControl {
         // If straight path to wanted position is obstructed by blocks, damp speed to avoid wall pushing
         if (cachedObstructionResult) {
             targetSpeedFactor *= 0.5f;
+        }
+        if (collisionRecoveryTicks > 0) {
+            targetSpeedFactor = Math.min(targetSpeedFactor, COLLISION_RECOVERY_SPEED_CAP);
         }
 
         this.speedFactor = Mth.clamp(Mth.approach(this.speedFactor, targetSpeedFactor, speedTransitionRate),
@@ -307,5 +386,56 @@ public class DragonFlightMoveHelper extends MoveControl {
 
     public boolean hasGivenUp() {
         return this.operation == Operation.WAIT;
+    }
+
+    private int chooseAvoidTurnDirection() {
+        Vec3 from = mob.position().add(0.0D, mob.getBbHeight() * 0.5D, 0.0D);
+        Vec3 leftDir = Vec3.directionFromRotation(0.0F, mob.getYRot() + COLLISION_AVOID_YAW_STEP);
+        Vec3 rightDir = Vec3.directionFromRotation(0.0F, mob.getYRot() - COLLISION_AVOID_YAW_STEP);
+
+        boolean leftBlocked = isBodyPathObstructed(from, from.add(leftDir.scale(COLLISION_FORWARD_SAMPLE_DISTANCE)));
+        boolean rightBlocked = isBodyPathObstructed(from, from.add(rightDir.scale(COLLISION_FORWARD_SAMPLE_DISTANCE)));
+
+        int chosen;
+        if (leftBlocked != rightBlocked) {
+            chosen = leftBlocked ? -1 : 1;
+        } else {
+            chosen = -lastAvoidTurnDirection;
+        }
+        lastAvoidTurnDirection = chosen;
+        return chosen;
+    }
+
+    private void activateEscapeMode() {
+        int direction = chooseAvoidTurnDirection();
+        Vec3 side = Vec3.directionFromRotation(0.0F, mob.getYRot() + direction * 90.0F).normalize();
+        Vec3 forward = Vec3.directionFromRotation(0.0F, mob.getYRot()).normalize();
+        Vec3 base = mob.position();
+        escapeTarget = base.add(side.scale(ESCAPE_SIDE_DISTANCE))
+                .add(forward.scale(ESCAPE_FORWARD_DISTANCE))
+                .add(0.0D, ESCAPE_UP_DISTANCE, 0.0D);
+        escapeTicks = ESCAPE_MODE_TICKS;
+    }
+
+    private boolean isBodyPathObstructed(Vec3 from, Vec3 to) {
+        Vec3 flat = new Vec3(to.x - from.x, 0.0D, to.z - from.z);
+        Vec3 side = flat.lengthSqr() > 1.0e-6
+                ? new Vec3(-flat.z, 0.0D, flat.x).normalize()
+                : Vec3.ZERO;
+        double halfWidth = mob.getBbWidth() * 0.45D + 0.2D;
+        Vec3 midOffset = new Vec3(0.0D, mob.getBbHeight() * 0.5D, 0.0D);
+
+        Vec3 fromMid = from.add(midOffset);
+        Vec3 toMid = to.add(midOffset);
+        if (isLineObstructed(fromMid, toMid)) {
+            return true;
+        }
+        if (side.lengthSqr() <= 1.0e-6) {
+            return false;
+        }
+
+        Vec3 lateral = side.scale(halfWidth);
+        return isLineObstructed(fromMid.add(lateral), toMid.add(lateral))
+                || isLineObstructed(fromMid.subtract(lateral), toMid.subtract(lateral));
     }
 }

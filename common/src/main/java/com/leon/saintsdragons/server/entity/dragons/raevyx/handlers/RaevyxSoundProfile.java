@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
+import com.leon.saintsdragons.client.sound.raevyx.RaevyxRoarSoundController;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -239,9 +240,13 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             pitch *= BABY_PITCH_MULTIPLIER;
         }
 
-        // Roar uses stereo on client, mono on server
+        // Roar is tested as moving positional audio that tracks the dragon.
         if ("roar".equals(vocalKey)) {
-            playDualSound(dragon, at, ModSounds.RAEVYX_ROAR.get(), ModSounds.RAEVYX_ROAR_STEREO.get(), entry.volume(), pitch);
+            if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx raevyx) {
+                RaevyxRoarSoundController.playRoar(raevyx, entry.volume(), pitch);
+            } else {
+                playClientSound(dragon, at, ModSounds.RAEVYX_ROAR.get(), entry.volume(), pitch);
+            }
         } else {
             playClientSound(dragon, at, entry.soundSupplier().get(), entry.volume(), pitch);
         }

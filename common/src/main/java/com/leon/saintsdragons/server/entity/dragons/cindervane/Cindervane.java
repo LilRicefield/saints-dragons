@@ -997,6 +997,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             return;
         }
 
+        if (horizontalCollision || verticalCollision) {
+            bankSmoothedYaw *= 0.45f;
+            bankAngle = Mth.lerp(0.55f, bankAngle, 0f);
+            if (Math.abs(bankAngle) < 0.01f) {
+                bankAngle = 0f;
+            }
+            return;
+        }
+
         // Exponential smoothing on yaw delta to avoid jitter, wrap to account for crossing 360 -> 0
         float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
         bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;

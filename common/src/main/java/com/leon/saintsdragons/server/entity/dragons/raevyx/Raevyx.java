@@ -2854,6 +2854,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             return;
         }
 
+        if (horizontalCollision || verticalCollision) {
+            bankSmoothedYaw *= 0.45f;
+            bankAngle = Mth.lerp(0.55f, bankAngle, 0f);
+            if (Math.abs(bankAngle) < 0.01f) {
+                bankAngle = 0f;
+            }
+            return;
+        }
+
         // Exponential smoothing on yaw delta to avoid jitter, wrap to account for crossing 360 -> 0
         float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
         bankSmoothedYaw = bankSmoothedYaw * 0.65f + yawChange * 0.35f; // More reactive (was 0.75/0.25)
