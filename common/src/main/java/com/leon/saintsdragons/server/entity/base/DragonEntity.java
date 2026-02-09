@@ -93,6 +93,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_YAW_VELOCITY =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
 
     public static final int HUNGER_MAX = DragonHungerComponent.HUNGER_MAX;
     public static final int HAPPINESS_MAX = DragonHappinessComponent.HAPPINESS_MAX;
@@ -247,6 +249,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.define(DATA_BODY_DEVIATION, 0.0f);
         this.entityData.define(DATA_PITCH_DEVIATION, 0.0f);
         this.entityData.define(DATA_YAW_VELOCITY, 0.0f);
+        this.entityData.define(DATA_TEXTURE_VARIANT, 0);
     }
 
     /**
@@ -389,6 +392,80 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return genderComponent != null && genderComponent.hasGender();
     }
 
+    // ===== TEXTURE VARIANT SYSTEM =====
+
+    public int getTextureVariant() {
+        return this.entityData.get(DATA_TEXTURE_VARIANT);
+    }
+
+    public void setTextureVariant(int variant) {
+        int clamped = Math.max(0, Math.min(getMaxTextureVariant(), variant));
+        this.entityData.set(DATA_TEXTURE_VARIANT, clamped);
+    }
+
+    /**
+     * Maximum valid texture variant index for this dragon.
+     * Default is 0 (single texture/no variants).
+     */
+    protected int getMaxTextureVariant() {
+        return 0;
+    }
+
+    /**
+     * Exposes the maximum valid texture variant index for command/UI helpers.
+     */
+    public int getMaxTextureVariantIndex() {
+        return getMaxTextureVariant();
+    }
+
+    /**
+     * Human-readable variant names accepted by commands.
+     * Default dragons support only "default".
+     */
+    public Map<String, Integer> getTextureVariantNameMap() {
+        return Map.of("default", 0);
+    }
+
+    /**
+     * Resolves a variant id to its configured command/display name.
+     */
+    public String getTextureVariantName(int variantId) {
+        int clamped = Math.max(0, Math.min(getMaxTextureVariant(), variantId));
+        for (Map.Entry<String, Integer> entry : getTextureVariantNameMap().entrySet()) {
+            if (entry.getValue() == clamped) {
+                return entry.getKey();
+            }
+        }
+        return "default";
+    }
+
+    public String getTextureVariantTranslationKey(int variantId) {
+        return "saintsdragons.variant." + getTextureVariantName(variantId);
+    }
+
+    /**
+     * Rolls a random valid texture variant index using this dragon's configured range.
+     */
+    protected int rollRandomTextureVariant() {
+        int maxVariant = getMaxTextureVariant();
+        if (maxVariant <= 0) {
+            return 0;
+        }
+        return this.getRandom().nextInt(maxVariant + 1);
+    }
+
+    /**
+     * Hook for spawn-time variant selection.
+     * By default, picks a random variant from 0..maxVariant.
+     */
+    protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
+                                            @NotNull DifficultyInstance difficulty,
+                                            @NotNull MobSpawnType reason,
+                                            @Nullable SpawnGroupData spawnData,
+                                            @Nullable CompoundTag spawnTag) {
+        return rollRandomTextureVariant();
+    }
+
     public boolean tryBrush(Player player, net.minecraft.world.item.ItemStack brushStack) {
         return groomingComponent != null && player != null && brushStack != null
                 && groomingComponent.tryBrush(player, brushStack);
@@ -426,6 +503,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                                                  @Nullable SpawnGroupData spawnData, @Nullable CompoundTag spawnTag) {
         SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
         ensureGenderInitialized();
+        setTextureVariant(chooseSpawnTextureVariant(levelAccessor, difficulty, reason, spawnData, spawnTag));
 
         // If baby spawned from spawn egg, reposition on ground to prevent falling from sky
         if (this.isBaby() && reason == MobSpawnType.SPAWN_EGG) {
@@ -1756,6 +1834,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         if (genderComponent != null) {
             genderComponent.saveToNBT(tag);
         }
+        tag.putInt("TextureVariant", getTextureVariant());
         tag.putBoolean("BoundInBinder", this.boundInBinder);
 
         allyManager.saveToNBT(tag);
@@ -1790,6 +1869,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         if (sleepComponent != null) {
             sleepComponent.loadFromNBT(tag);
+        }
+        if (tag.contains("TextureVariant")) {
+            setTextureVariant(tag.getInt("TextureVariant"));
         }
         this.boundInBinder = tag.getBoolean("BoundInBinder");
         allyManager.loadFromNBT(tag);

@@ -393,10 +393,7 @@ public class DragonCodexSavedData extends SavedData {
     }
 
     private static int resolveVariantId(DragonEntity dragon) {
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
-            return ignivorus.getTextureVariant();
-        }
-        return 0;
+        return dragon.getTextureVariant();
     }
 
     private static String resolveDragonType(DragonEntity dragon) {

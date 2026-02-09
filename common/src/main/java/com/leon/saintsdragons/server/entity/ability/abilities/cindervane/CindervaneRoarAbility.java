@@ -40,9 +40,9 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
             return;
         }
         if (section.sectionType == STARTUP) {
-            // Fire the authored action clip; controller name is "actions" for Amphithere
             Cindervane dragon = getUser();
-            dragon.triggerAnim("actions", "roar");
+            String animation = dragon.isFlying() ? "roar_air" : "roar";
+            dragon.triggerAnim("actions", animation);
             soundQueued = true;
         }
     }

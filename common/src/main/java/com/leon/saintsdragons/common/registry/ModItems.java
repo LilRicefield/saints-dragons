@@ -131,6 +131,18 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> CINDERVANE_SCALE =
+            REGISTER.register("cindervane_scale",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> IGNIVORUS_SCALE =
+            REGISTER.register("ignivorus_scale",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> STEGONAUT_BINDER =
             REGISTER.register("stegonaut_binder",
                     () -> new StegonautBinderItem(

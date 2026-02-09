@@ -31,6 +31,8 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.DRAGON_BRUSH.get());
                                 output.accept(ModItems.GOLDEN_DRAGON_BRUSH.get());
                                 output.accept(ModItems.RAEVYX_SCALE.get());
+                                output.accept(ModItems.CINDERVANE_SCALE.get());
+                                output.accept(ModItems.IGNIVORUS_SCALE.get());
                                 output.accept(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
                                 output.accept(ModItems.HEARTY_DRAGON_MEAL.get());
                                 output.accept(ModItems.RAEVYX_EGG.get());

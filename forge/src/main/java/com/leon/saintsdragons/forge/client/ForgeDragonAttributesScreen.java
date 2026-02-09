@@ -151,6 +151,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED::get,
                 ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.wild_flying_speed_multiplier"),
+                ForgeDragonAttributesConfig.CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER::get,
+                ForgeDragonAttributesConfig.CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.bite_damage"),
                 ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE::set,
@@ -246,6 +250,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.flying_speed"),
                 ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED::get,
                 ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.wild_flying_speed_multiplier"),
+                ForgeDragonAttributesConfig.RAEVYX_WILD_FLYING_SPEED_MULTIPLIER::get,
+                ForgeDragonAttributesConfig.RAEVYX_WILD_FLYING_SPEED_MULTIPLIER::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.bite_damage"),
                 ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE::get,
@@ -403,6 +411,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_FLYING_SPEED::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_FLYING_SPEED::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.wild_flying_speed_multiplier"),
+                ForgeDragonAttributesConfig.IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.bite_damage"),
                 ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE::set,
@@ -535,6 +547,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_MAX_HEALTH.set(ForgeDragonAttributesConfig.CINDERVANE_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_ARMOR.set(ForgeDragonAttributesConfig.CINDERVANE_ARMOR.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED.set(ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.getDefault());
@@ -561,6 +574,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.set(ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_ARMOR.set(ForgeDragonAttributesConfig.RAEVYX_ARMOR.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED.set(ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_WILD_FLYING_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.RAEVYX_WILD_FLYING_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE.getDefault());
@@ -601,6 +615,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_ARMOR.set(ForgeDragonAttributesConfig.IGNIVORUS_ARMOR.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FLYING_SPEED.set(ForgeDragonAttributesConfig.IGNIVORUS_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE.getDefault());

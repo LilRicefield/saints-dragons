@@ -63,6 +63,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         cindervaneBuffer.eggDropChance = cindervaneCurrent.extraDouble("egg_drop_chance", 0.12D);
         cindervaneBuffer.fireBodyExplosionDamage = cindervaneCurrent.extraDouble("fire_body_explosion_damage", 200.0D);
         cindervaneBuffer.fireBodySelfDamageOnCrash = cindervaneCurrent.extraDouble("fire_body_self_damage_on_crash", 40.0D);
+        cindervaneBuffer.wildFlyingSpeedMultiplier = cindervaneCurrent.extraDouble("wild_flying_speed_multiplier",
+                cindervaneDefaults.extraDouble("wild_flying_speed_multiplier", 1.0D));
         cindervaneBuffer.aggressiveWild = cindervaneCurrent.extraBoolean("aggressive_wild", false);
         cindervaneBuffer.reactiveTerrainClearingOnDamage = cindervaneCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
         cindervaneBuffer.reactiveTerrainClearingOnDamageTamed = cindervaneCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
@@ -83,6 +85,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxBuffer.tamingChanceHearty = raevyxCurrent.extraDouble("taming_chance_hearty", 3.0);
         raevyxBuffer.tamingStunHealth = raevyxCurrent.extraDouble("taming_stun_health",
                 raevyxDefaults.extraDouble("taming_stun_health", 60.0D));
+        raevyxBuffer.wildFlyingSpeedMultiplier = raevyxCurrent.extraDouble("wild_flying_speed_multiplier",
+                raevyxDefaults.extraDouble("wild_flying_speed_multiplier", 1.0D));
         raevyxBuffer.beamDrainPerTick = raevyxCurrent.extraDouble("beam_drain_per_tick",
                 raevyxDefaults.extraDouble("beam_drain_per_tick", 0.014D));
         raevyxBuffer.beamRegenPerTick = raevyxCurrent.extraDouble("beam_regen_per_tick",
@@ -154,6 +158,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ignivorusBuffer.tamingChanceHearty = ignivorusCurrent.extraDouble("taming_chance_hearty", 4.0);
         ignivorusBuffer.tamingStunHealth = ignivorusCurrent.extraDouble("taming_stun_health",
                 ignivorusDefaults.extraDouble("taming_stun_health", 100.0D));
+        ignivorusBuffer.wildFlyingSpeedMultiplier = ignivorusCurrent.extraDouble("wild_flying_speed_multiplier",
+                ignivorusDefaults.extraDouble("wild_flying_speed_multiplier", 1.0D));
         ignivorusBuffer.fireBreathDrainPerTick = ignivorusCurrent.extraDouble("fire_breath_drain_per_tick",
                 ignivorusDefaults.extraDouble("fire_breath_drain_per_tick", 0.00625D));
         ignivorusBuffer.fireBreathRegenPerTick = ignivorusCurrent.extraDouble("fire_breath_regen_per_tick",
@@ -376,6 +382,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(2.0D)
                 .setSaveConsumer(value -> buffer.flyingSpeed = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.wild_flying_speed_multiplier"), buffer.wildFlyingSpeedMultiplier)
+                .setDefaultValue(defaults.extraDouble("wild_flying_speed_multiplier", 1.0D))
+                .setMin(0.05D)
+                .setMax(10.0D)
+                .setSaveConsumer(value -> buffer.wildFlyingSpeedMultiplier = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.bite_damage"), buffer.biteDamage)
                 .setDefaultValue(defaults.abilityDamage("bite", 12.0D))
                 .setMin(0.0D)
@@ -517,6 +529,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(2.0D)
                 .setSaveConsumer(value -> buffer.flyingSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.wild_flying_speed_multiplier"), buffer.wildFlyingSpeedMultiplier)
+                .setDefaultValue(defaults.extraDouble("wild_flying_speed_multiplier", 1.0D))
+                .setMin(0.05D)
+                .setMax(10.0D)
+                .setSaveConsumer(value -> buffer.wildFlyingSpeedMultiplier = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.bite_damage"), buffer.biteDamage)
                 .setDefaultValue(defaults.abilityDamage("bite", 15.0D))
@@ -745,6 +763,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(2.0D)
                 .setSaveConsumer(value -> buffer.flyingSpeed = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.wild_flying_speed_multiplier"), buffer.wildFlyingSpeedMultiplier)
+                .setDefaultValue(defaults.extraDouble("wild_flying_speed_multiplier", 1.0D))
+                .setMin(0.05D)
+                .setMax(10.0D)
+                .setSaveConsumer(value -> buffer.wildFlyingSpeedMultiplier = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.bite_damage"), buffer.biteDamage)
                 .setDefaultValue(defaults.abilityDamage("bite", 50.0D))
                 .setMin(0.0D)
@@ -946,7 +970,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         "egg_hatch_chance_normal", cindervaneBuffer.eggHatchChanceNormal,
                         "egg_drop_chance", cindervaneBuffer.eggDropChance,
                         "fire_body_explosion_damage", cindervaneBuffer.fireBodyExplosionDamage,
-                        "fire_body_self_damage_on_crash", cindervaneBuffer.fireBodySelfDamageOnCrash
+                        "fire_body_self_damage_on_crash", cindervaneBuffer.fireBodySelfDamageOnCrash,
+                        "wild_flying_speed_multiplier", cindervaneBuffer.wildFlyingSpeedMultiplier
                 ),
                 Map.of(
                         "aggressive_wild", cindervaneBuffer.aggressiveWild,
@@ -1055,6 +1080,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double eggDropChance;
         double fireBodyExplosionDamage;
         double fireBodySelfDamageOnCrash;
+        double wildFlyingSpeedMultiplier;
         boolean aggressiveWild;
         boolean reactiveTerrainClearingOnDamage;
         boolean reactiveTerrainClearingOnDamageTamed;
@@ -1080,6 +1106,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double tamingChanceBase;
         double tamingChanceHearty;
         double tamingStunHealth;
+        double wildFlyingSpeedMultiplier;
         double beamDrainPerTick;
         double beamRegenPerTick;
         boolean legacyTaming;
@@ -1127,6 +1154,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double tamingChanceBase;
         double tamingChanceHearty;
         double tamingStunHealth;
+        double wildFlyingSpeedMultiplier;
         double fireBreathDrainPerTick;
         double fireBreathRegenPerTick;
         double fireBreathFlameSpawnMultiplier;
@@ -1153,6 +1181,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("taming_chance_base", buffer.tamingChanceBase);
         extras.put("taming_chance_hearty", buffer.tamingChanceHearty);
         extras.put("taming_stun_health", buffer.tamingStunHealth);
+        extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);
         extras.put("beam_drain_per_tick", buffer.beamDrainPerTick);
         extras.put("beam_regen_per_tick", buffer.beamRegenPerTick);
         extras.put("egg_hatch_chance_normal", buffer.eggHatchChanceNormal);
@@ -1171,6 +1200,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("taming_chance_base", buffer.tamingChanceBase);
         extras.put("taming_chance_hearty", buffer.tamingChanceHearty);
         extras.put("taming_stun_health", buffer.tamingStunHealth);
+        extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);
         extras.put("fire_breath_drain_per_tick", buffer.fireBreathDrainPerTick);
         extras.put("fire_breath_regen_per_tick", buffer.fireBreathRegenPerTick);
         extras.put("fire_breath_flame_spawn_multiplier", buffer.fireBreathFlameSpawnMultiplier);

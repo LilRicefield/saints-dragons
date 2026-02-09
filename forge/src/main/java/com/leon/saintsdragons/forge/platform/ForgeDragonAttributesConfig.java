@@ -13,6 +13,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_ARMOR;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FLYING_SPEED;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_MAGMA_VOLLEY_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_BASE;
@@ -30,6 +31,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue RAEVYX_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue RAEVYX_ARMOR;
     public static ForgeConfigSpec.DoubleValue RAEVYX_FLYING_SPEED;
+    public static ForgeConfigSpec.DoubleValue RAEVYX_WILD_FLYING_SPEED_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue RAEVYX_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_LIGHTNING_BEAM_DAMAGE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_HORN_GORE_DAMAGE;
@@ -71,6 +73,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_ARMOR;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FLYING_SPEED;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_BODY_SLAM_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_DAMAGE;
@@ -124,6 +127,7 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_MAX_HEALTH = builder.defineInRange("max_health", 80.0, 1.0, 10000.0);
         CINDERVANE_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 10000.0);
         CINDERVANE_FLYING_SPEED = builder.defineInRange("flying_speed", 0.60, 0.0, 2.0);
+        CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         CINDERVANE_BITE_DAMAGE = builder.defineInRange("bite_damage", 12.0, 0.0, 100.0);
         CINDERVANE_MAGMA_VOLLEY_DAMAGE = builder.defineInRange("magma_volley_damage", 20.0, 0.0, 100.0);
@@ -152,6 +156,7 @@ public final class ForgeDragonAttributesConfig {
         RAEVYX_MAX_HEALTH = builder.defineInRange("max_health", 180.0, 1.0, 10000.0);
         RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 10000.0);
         RAEVYX_FLYING_SPEED = builder.defineInRange("flying_speed", 1.0, 0.0, 2.0);
+        RAEVYX_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         RAEVYX_BITE_DAMAGE = builder.defineInRange("bite_damage", 15.0, 0.0, 100.0);
         RAEVYX_LIGHTNING_BEAM_DAMAGE = builder.defineInRange("lightning_beam_damage", 35.0, 0.0, 100.0);
@@ -217,6 +222,7 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 10000.0);
         IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 10000.0);
         IGNIVORUS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.40, 0.0, 2.0);
+        IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         IGNIVORUS_BITE_DAMAGE = builder.defineInRange("bite_damage", 50.0, 0.0, 200.0);
         IGNIVORUS_BODY_SLAM_DAMAGE = builder.defineInRange("body_slam_damage", 40.0, 0.0, 200.0);

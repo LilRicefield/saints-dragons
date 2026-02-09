@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Manages the creation and updating of hitbox parts.
  */
 @Mixin(Ignivorus.class)
-public abstract class IgnivorusMultipartMixin implements IgnivorusPartProvider {
+public abstract class IgnivorusPartLifecycleMixin implements IgnivorusPartProvider {
 
     @Unique
     private FabricIgnivorusPartManager saintsdragons$fabricPartManager;

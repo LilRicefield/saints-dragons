@@ -70,7 +70,7 @@ public final class DragonGroomingComponent {
 
     private static GroomingProfile getProfile(DragonEntity dragon) {
         if (dragon instanceof Ignivorus) {
-            return new GroomingProfile(0.35F, Items.BLAZE_POWDER, 1, 2);
+            return new GroomingProfile(0.35F, ModItems.IGNIVORUS_SCALE.get(), 1, 2);
         }
         if (dragon instanceof Raevyx) {
             return new GroomingProfile(0.35F, ModItems.RAEVYX_SCALE.get(), 1, 2);
@@ -79,7 +79,7 @@ public final class DragonGroomingComponent {
             return new GroomingProfile(0.30F, Items.PRISMARINE_SHARD, 1, 2);
         }
         if (dragon instanceof Cindervane) {
-            return new GroomingProfile(0.30F, Items.FIRE_CHARGE, 1, 1);
+            return new GroomingProfile(0.30F, ModItems.CINDERVANE_SCALE.get(), 1, 1);
         }
         if (dragon instanceof Stegonaut) {
             return new GroomingProfile(0.30F, Items.SCUTE, 1, 2);

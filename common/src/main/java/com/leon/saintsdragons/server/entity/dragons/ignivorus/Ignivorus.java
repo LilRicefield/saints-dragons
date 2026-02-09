@@ -97,7 +97,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
-    public static final int TAKEOFF_ANIMATION_TICKS = 31;
+    public static final int TAKEOFF_ANIMATION_TICKS = 30;
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -163,10 +163,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     /** Entity data accessor for rider pitch key mode */
     public static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
-    /** Tracks the texture variant (0 = default, 1 = second variant) */
-    public static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
 
     /** Tracks the fireball charge level for UI display (0 = not charging, 1-3 = charge level) */
     public static final EntityDataAccessor<Integer> DATA_FIREBALL_CHARGE =
@@ -436,7 +432,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
-        this.entityData.define(DATA_TEXTURE_VARIANT, 0);
         this.entityData.define(DATA_FIREBALL_CHARGE, 0);
     }
 
@@ -505,10 +500,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
         applyConfiguredAttributes();
         this.setHealth(this.getMaxHealth());
-
-        // Randomly assign variant (50/50 chance between default and crimson)
-        int variant = this.getRandom().nextBoolean() ? 0 : 1;
-        this.setTextureVariant(variant);
 
         return data;
     }
@@ -730,14 +721,18 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, ticks));
     }
 
-    // ===== TEXTURE VARIANT SYSTEM =====
-
-    public int getTextureVariant() {
-        return this.entityData.get(DATA_TEXTURE_VARIANT);
+    @Override
+    protected int getMaxTextureVariant() {
+        // 0 = default, 1 = crimson
+        return 1;
     }
 
-    public void setTextureVariant(int variant) {
-        this.entityData.set(DATA_TEXTURE_VARIANT, variant);
+    @Override
+    public java.util.Map<String, Integer> getTextureVariantNameMap() {
+        return java.util.Map.of(
+                "default", 0,
+                "crimson", 1
+        );
     }
 
     // ===== FIREBALL CHARGE SYSTEM =====
@@ -3778,6 +3773,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             baby.skipRespawnTicks = 5;
             baby.setAge(-24000);
             baby.setBaby(true);
+            baby.setTextureVariant(baby.rollRandomTextureVariant());
             baby.applyConfiguredAttributes();
             baby.setHealth(baby.getMaxHealth());
 
@@ -3795,7 +3791,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         tag.putInt("TimeFlying", timeFlying);  // Save flying duration
         this.combatManager.saveToNBT(tag);
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
-        tag.putInt("TextureVariant", this.entityData.get(DATA_TEXTURE_VARIANT));
         tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putBoolean("Bulldozing", bulldozing);
         tag.putInt("BulldozeCooldownTicks", Math.max(0, bulldozeCooldownTicks));
@@ -3817,9 +3812,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.combatManager.loadFromNBT(tag);
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
-        }
-        if (tag.contains("TextureVariant")) {
-            this.entityData.set(DATA_TEXTURE_VARIANT, tag.getInt("TextureVariant"));
         }
         if (tag.contains("RiderPitchKeyMode")) {
             setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));

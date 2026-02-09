@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.entity.part;
 
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import net.minecraft.world.entity.Entity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.phys.Vec3;
@@ -104,6 +105,9 @@ public class FabricIgnivorusPartManager {
 
     public void updatePartPositions() {
         boolean isClient = dragon.level().isClientSide;
+        if (isClient && (dragon.tickCount % 20 == 0)) {
+            cleanupStaleClientParts();
+        }
         Vec3 dragonPos = dragon.position();
         float yawRad = (float) Math.toRadians(dragon.getYRot());
         double cosYaw = Math.cos(yawRad);
@@ -163,6 +167,35 @@ public class FabricIgnivorusPartManager {
                 double worldZ = dragonPos.z + (sinYaw * forward) + (cosYaw * side);
 
                 part.updatePosition(worldX, worldY, worldZ);
+            }
+        }
+    }
+
+    /**
+     * Secondary safety cleanup for client range-unload/reload edge cases.
+     * Removes orphaned parts and stale parts from older Ignivorus instances.
+     */
+    private void cleanupStaleClientParts() {
+        if (!dragon.level().isClientSide) {
+            return;
+        }
+
+        for (Entity entity : dragon.level().getEntities(dragon, dragon.getBoundingBox().inflate(32.0D),
+            e -> e instanceof FabricDragonPart)) {
+            FabricDragonPart other = (FabricDragonPart) entity;
+
+            if (parts.containsValue(other)) {
+                continue;
+            }
+
+            boolean orphaned = other.parent == null || other.parent.isRemoved();
+            boolean staleParent = other.parent instanceof Ignivorus otherIgnivorus
+                && otherIgnivorus.getUUID().equals(dragon.getUUID())
+                && otherIgnivorus != dragon;
+
+            if (orphaned || staleParent) {
+                other.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+                FabricPartClientHooks.removeClientPart(dragon.level(), other);
             }
         }
     }

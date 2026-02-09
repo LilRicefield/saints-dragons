@@ -210,6 +210,19 @@ public class FabricDragonPart extends Entity {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+
+        // Safety cleanup: if the parent despawns/unloads client-side, orphaned parts
+        // can remain in the client entity map and stack up on re-entry.
+        if (this.parent == null
+            || this.parent.isRemoved()
+            || this.parent.level() != this.level()) {
+            this.remove(RemovalReason.DISCARDED);
+        }
+    }
+
+    @Override
     public boolean isPushable() {
         return false;
     }

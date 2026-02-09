@@ -26,8 +26,8 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
             Map.entry("grumble1", 40),
             Map.entry("grumble2", 60),
             Map.entry("grumble3", 30),
-            Map.entry("hurt", 20),
-            Map.entry("die", 75)
+            Map.entry("stegonaut_hurt", 20),
+            Map.entry("stegonaut_die", 75)
     );
 
     private static final Map<String, DragonEntity.VocalEntry> FALLBACK_VOCALS =
@@ -38,9 +38,9 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
                             ModSounds.STEGONAUT_GRUMBLE_2, 0.6f, 1.1f, 0.2f, false, false, false)
                     .add("grumble3", "action", "animation.stegonaut.grumble3",
                             ModSounds.STEGONAUT_GRUMBLE_3, 0.6f, 1.1f, 0.2f, false, false, false)
-                    .add("hurt", "action", "animation.stegonaut.hurt",
+                    .add("stegonaut_hurt", "instant", "animation.stegonaut.hurt",
                             ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
-                    .add("die", "action", "animation.stegonaut.die",
+                    .add("stegonaut_die", "instant", "animation.stegonaut.die",
                             ModSounds.STEGONAUT_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
                     .build();
 
@@ -48,8 +48,8 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
             Map.entry("stegonaut_grumble1", "grumble1"),
             Map.entry("stegonaut_grumble2", "grumble2"),
             Map.entry("stegonaut_grumble3", "grumble3"),
-            Map.entry("stegonaut_hurt", "hurt"),
-            Map.entry("stegonaut_die", "die")
+            Map.entry("stegonaut_hurt", "stegonaut_hurt"),
+            Map.entry("stegonaut_die", "stegonaut_die")
     );
 
     private StegonautSoundProfile() {}

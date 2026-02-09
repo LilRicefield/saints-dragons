@@ -563,8 +563,13 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack itemstack = player.getItemInHand(hand);
         if (com.leon.saintsdragons.common.registry.ModItems.isDragonBrush(itemstack)) {
+            // Match other dragons: acknowledge brush on client so hand swing plays,
+            // while the actual grooming logic executes on the server.
+            if (this.level().isClientSide) {
+                return InteractionResult.sidedSuccess(true);
+            }
             boolean brushed = this.tryBrush(player, itemstack);
-            return brushed ? InteractionResult.sidedSuccess(this.level().isClientSide) : InteractionResult.CONSUME;
+            return brushed ? InteractionResult.sidedSuccess(false) : InteractionResult.CONSUME;
         }
         if (!this.isTame()) {
             return handleUntamedInteraction(player, hand);
