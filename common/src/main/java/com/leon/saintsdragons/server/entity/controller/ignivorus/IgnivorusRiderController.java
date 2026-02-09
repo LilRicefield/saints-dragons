@@ -35,7 +35,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     private static final double STRAFE_POWER = 0.5;
 
     // ===== VERTICAL PHYSICS =====
-    private static final double ASCEND_THRUST = 0.08D;
+    private static final double ASCEND_THRUST = 0.45D;
     private static final double DESCEND_THRUST = 1.0D;
     private static final double TERMINAL_VELOCITY = 1.5D;
     private static final double VERTICAL_DRAG = 0.92D;
@@ -224,7 +224,12 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             // === DIVE SPEED BOOST ===
             // Smooth progressive speed boost when diving (like real birds)
             // NOTE: Minecraft xRot is POSITIVE when looking down (90° = straight down)
+            final boolean keyPitchMode = dragon.isRiderPitchKeyMode();
             float pitchRad = getEffectivePitchRadians(player);
+            if (keyPitchMode) {
+                // In pitch-lock mode, keep forward travel level and let ascend/descend keys own vertical control.
+                pitchRad = 0.0f;
+            }
             float pitchDegrees = (float) Math.toDegrees(pitchRad);
 
             // Calculate smooth dive intensity from 0.0 (shallow) to 1.0 (straight down)
@@ -256,7 +261,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             // pitchRad already calculated above for dive speed
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
-            double forwardY = -Math.sin(pitchRad);
+            double forwardY = keyPitchMode ? 0.0 : -Math.sin(pitchRad);
             double forwardZ = Math.cos(yawRad) * forwardXZ;
             double rightX = Math.cos(yawRad);
             double rightZ = Math.sin(yawRad);
@@ -297,7 +302,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
             // When diving (pitch >= 45°), use the physics-calculated velocity - don't override!
             // This allows dive speed boost to work properly
-            boolean isDiving = pitchDegrees >= 45.0f && hasInput;
+            boolean isDiving = !keyPitchMode && pitchDegrees >= 45.0f && hasInput;
 
             if (!isDiving) {
                 // Vertical control - takeoff provides optional boost but doesn't block descent

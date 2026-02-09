@@ -2,7 +2,7 @@ package com.leon.saintsdragons.fabric.entity.part;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import com.leon.saintsdragons.fabric.mixin.ClientLevelAccessor;
+import com.leon.saintsdragons.fabric.mixin.ClientLevelEntityMapAccessor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -19,7 +19,7 @@ public final class FabricPartClientHooks {
         if (clientLevel.getEntity(part.getId()) != null) {
             return;
         }
-        ((ClientLevelAccessor) clientLevel).saintsdragons$addEntity(part.getId(), part);
+        ((ClientLevelEntityMapAccessor) clientLevel).saintsdragons$addEntity(part.getId(), part);
     }
 
     public static void removeClientPart(Level level, Entity part) {
@@ -29,6 +29,6 @@ public final class FabricPartClientHooks {
         if (clientLevel.getEntity(part.getId()) == null) {
             return;
         }
-        ((ClientLevelAccessor) clientLevel).saintsdragons$removeEntity(part.getId(), Entity.RemovalReason.DISCARDED);
+        ((ClientLevelEntityMapAccessor) clientLevel).saintsdragons$removeEntity(part.getId(), Entity.RemovalReason.DISCARDED);
     }
 }

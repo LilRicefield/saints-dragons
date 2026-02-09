@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.command;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -27,9 +26,9 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Command to change Ignivorus dragon variant (default/crimson).
- * The variant texture displayed depends on both variant and gender (male/female).
- * Usage: /setvariant <dragon_uuid> <default|crimson>
+ * Command to change dragon texture variants.
+ * Dragons with no variants are treated as default-only.
+ * Usage: /setvariant <dragon_uuid> <variant_name>
  */
 public final class DragonSetVariantCommand {
     private static final double HIT_RANGE = 64.0D;
@@ -38,8 +37,8 @@ public final class DragonSetVariantCommand {
         CommandSourceStack source = context.getSource();
         Set<DragonEntity> ordered = new LinkedHashSet<>();
 
-        // Only suggest the dragon being looked at if it's an Ignivorus
-        DragonEntity lookedAt = findLookedAtIgnivorus(source);
+        // Suggest the dragon being looked at (any dragon type)
+        DragonEntity lookedAt = findLookedAtDragon(source);
         if (lookedAt != null) {
             ordered.add(lookedAt);
         }
@@ -51,17 +50,24 @@ public final class DragonSetVariantCommand {
         return builder.buildFuture();
     };
 
-    private static final SuggestionProvider<CommandSourceStack> VARIANT_SUGGESTIONS = (context, builder) ->
-        SharedSuggestionProvider.suggest(new String[]{"default", "crimson"}, builder);
+    private static final SuggestionProvider<CommandSourceStack> VARIANT_SUGGESTIONS = (context, builder) -> {
+        try {
+            UUID dragonId = UuidArgument.getUuid(context, "dragon");
+            DragonEntity dragon = findDragon(context.getSource(), dragonId);
+            if (dragon != null) {
+                return SharedSuggestionProvider.suggest(dragon.getTextureVariantNameMap().keySet(), builder);
+            }
+        } catch (IllegalArgumentException ignored) {
+            // Ignore and fall back to default suggestion.
+        }
+        return SharedSuggestionProvider.suggest(new String[]{"default"}, builder);
+    };
 
     private static final DynamicCommandExceptionType ERROR_UNKNOWN_DRAGON =
         new DynamicCommandExceptionType(id -> Component.translatable("saintsdragons.command.setvariant.not_found", id));
 
     private static final SimpleCommandExceptionType ERROR_INVALID_VARIANT =
         new SimpleCommandExceptionType(Component.translatable("saintsdragons.command.setvariant.invalid_variant"));
-
-    private static final SimpleCommandExceptionType ERROR_NOT_IGNIVORUS =
-        new SimpleCommandExceptionType(Component.translatable("saintsdragons.command.setvariant.not_ignivorus"));
 
     private DragonSetVariantCommand() {
     }
@@ -85,39 +91,26 @@ public final class DragonSetVariantCommand {
         String variantStr = StringArgumentType.getString(context, "variant").toLowerCase();
         CommandSourceStack source = context.getSource();
 
-        // Parse variant
-        int variant;
-        switch (variantStr) {
-            case "default":
-                variant = 0;
-                break;
-            case "crimson":
-                variant = 1;
-                break;
-            default:
-                throw ERROR_INVALID_VARIANT.create();
-        }
-
         // Find dragon
         DragonEntity dragon = findDragon(source, dragonId);
         if (dragon == null) {
             throw ERROR_UNKNOWN_DRAGON.create(dragonId.toString());
         }
 
-        // Check if dragon is an Ignivorus
-        if (!(dragon instanceof Ignivorus ignivorus)) {
-            throw ERROR_NOT_IGNIVORUS.create();
+        Integer variant = dragon.getTextureVariantNameMap().get(variantStr);
+        if (variant == null) {
+            throw ERROR_INVALID_VARIANT.create();
         }
 
-        // Set variant
-        int oldVariant = ignivorus.getTextureVariant();
-        ignivorus.setTextureVariant(variant);
+        int oldVariant = dragon.getTextureVariant();
+        dragon.setTextureVariant(variant);
 
         // Send success message
+        String labelKey = dragon.getTextureVariantTranslationKey(variant);
         Component successMessage = Component.translatable(
             "saintsdragons.command.setvariant.success",
             dragon.getDisplayName(),
-            Component.translatable("saintsdragons.variant." + variantStr)
+            Component.translatable(labelKey)
         );
         source.sendSuccess(() -> successMessage, false);
 
@@ -141,7 +134,7 @@ public final class DragonSetVariantCommand {
         return null;
     }
 
-    private static DragonEntity findLookedAtIgnivorus(CommandSourceStack source) {
+    private static DragonEntity findLookedAtDragon(CommandSourceStack source) {
         Entity sourceEntity = source.getEntity();
         if (!(sourceEntity instanceof LivingEntity living)) {
             return null;
@@ -158,7 +151,7 @@ public final class DragonSetVariantCommand {
             start,
             end,
             box,
-            target -> target instanceof Ignivorus && target.isPickable()
+            target -> target instanceof DragonEntity && target.isPickable()
         );
 
         if (result != null && result.getEntity() instanceof DragonEntity dragon) {

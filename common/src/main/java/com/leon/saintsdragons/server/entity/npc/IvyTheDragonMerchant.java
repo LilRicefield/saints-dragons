@@ -94,9 +94,20 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     public IvyTheDragonMerchant(EntityType<? extends AbstractVillager> entityType, Level level) {
         super(entityType, level);
+        this.setPersistenceRequired();
         this.lookControl = new HumanLookControl(this);
         this.soundHandler = new HumanSoundHandler(this, new IvySoundProfile());
         this.idleVariantCooldown = IDLE_VARIANT_MIN_COOLDOWN + random.nextInt(IDLE_VARIANT_MAX_COOLDOWN - IDLE_VARIANT_MIN_COOLDOWN);
+    }
+
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return false;
+    }
+
+    @Override
+    public boolean requiresCustomPersistence() {
+        return true;
     }
 
     @Override

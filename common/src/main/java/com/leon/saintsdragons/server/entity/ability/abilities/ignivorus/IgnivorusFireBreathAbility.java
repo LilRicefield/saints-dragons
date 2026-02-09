@@ -250,10 +250,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
             // Apply block effects only at the impact point to avoid excessive destruction
             boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING;
-            // Fallback damage for modpacks where optimization/entity limiter mods intermittently reject
-            // flame entity spawns. If at least one flame was accepted this tick, keep impact damage at 0
-            // to avoid stacking projectile and impact damage.
-            float fallbackImpactDamage = spawnedFlames == 0 ? computeDamage(dragon, sizeScale) : 0.0f;
+            // Projectile-only damage model: flame entities are the sole source of entity damage.
+            // Keep impact damage at 0 to avoid look/area damage before flames visually arrive.
+            float fallbackImpactDamage = 0.0f;
             DragonDestructionManager.applyFireBreathImpact(
                 serverLevel,
                 dragon,

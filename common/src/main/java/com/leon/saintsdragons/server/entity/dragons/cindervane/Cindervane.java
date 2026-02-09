@@ -265,6 +265,20 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.entityData.set(DATA_FEEDING_COOLDOWN, ticks);
     }
 
+    @Override
+    protected int getMaxTextureVariant() {
+        // 0 = default, 1 = albino
+        return 1;
+    }
+
+    @Override
+    public java.util.Map<String, Integer> getTextureVariantNameMap() {
+        return java.util.Map.of(
+                "default", 0,
+                "albino", 1
+        );
+    }
+
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
 

@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Environment(EnvType.CLIENT)
 @Mixin(ClientLevel.class)
-public interface ClientLevelAccessor {
+public interface ClientLevelEntityMapAccessor {
     @Invoker("addEntity")
     void saintsdragons$addEntity(int entityId, Entity entity);
 

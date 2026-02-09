@@ -26,6 +26,7 @@ public class CodexEcologyPanel {
             new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
     private static final List<ResourceLocation> IGNIVORUS_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "ignivorus_scale"),
             new ResourceLocation("saintsdragons", "ignivorus_egg")
     );
     private static final List<ResourceLocation> RAEVYX_FAVORITE_FOODS = List.of(
@@ -52,6 +53,7 @@ public class CodexEcologyPanel {
             new ResourceLocation("minecraft", "salmon")
     );
     private static final List<ResourceLocation> CINDERVANE_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "cindervane_scale"),
             new ResourceLocation("saintsdragons", "cindervane_egg")
     );
     private static final List<ResourceLocation> STEGONAUT_FAVORITE_FOODS = List.of(

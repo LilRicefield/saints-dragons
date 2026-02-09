@@ -40,11 +40,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
      * Main animation predicate - handles idle, walk, run, fly, and sit animations
      */
     public PlayState handleMovementAnimation(AnimationState<Ignivorus> state) {
-        // Reduced transition to prevent overlapping step sounds during animation changes
         state.getController().transitionLength(6);
-
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        // Wait for entity data to sync from server before processing animations
         if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
             state.setAndContinue(IDLE);
             return PlayState.CONTINUE;
@@ -432,7 +428,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public PlayState instantActionPredicate(AnimationState<Ignivorus> state) {
-        state.getController().transitionLength(2);
+        state.getController().transitionLength(1);
         return PlayState.STOP;
     }
 

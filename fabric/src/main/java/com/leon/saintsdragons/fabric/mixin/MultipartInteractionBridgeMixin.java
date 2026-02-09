@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * intersects with any PartEntity on the server side, and dispatch the attack to that part.
  */
 @Mixin(ServerGamePacketListenerImpl.class)
-public abstract class ServerGamePacketListenerMixin {
+public abstract class MultipartInteractionBridgeMixin {
 
     @Unique
     private static final double ATTACK_REACH = 6.0; // Player attack reach
@@ -40,7 +40,7 @@ public abstract class ServerGamePacketListenerMixin {
         ServerLevel level = this.player.serverLevel();
 
         // Get the entity ID from the packet using our accessor
-        int entityId = ((ServerboundInteractPacketAccessor) packet).getEntityId();
+        int entityId = ((ServerboundInteractPacketIdAccessor) packet).getEntityId();
 
         // First check if vanilla can find it (regular entity)
         Entity vanillaEntity = level.getEntity(entityId);

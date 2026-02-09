@@ -4,13 +4,13 @@
   "package": "com.leon.saintsdragons.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "IgnivorusMultipartMixin",
+    "IgnivorusPartLifecycleMixin",
     "RangedAttributeAccessor",
-    "ServerboundInteractPacketAccessor",
-    "ServerGamePacketListenerMixin"
+    "ServerboundInteractPacketIdAccessor",
+    "MultipartInteractionBridgeMixin"
   ],
   "client": [
-    "ClientLevelAccessor"
+    "ClientLevelEntityMapAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

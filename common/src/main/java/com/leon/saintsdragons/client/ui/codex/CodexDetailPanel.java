@@ -116,10 +116,21 @@ public class CodexDetailPanel {
         guiGraphics.blit(variantIcon, iconX, iconY, 0, 0,
                 CodexLayout.STAT_ICON_WIDTH, CodexLayout.STAT_ICON_HEIGHT,
                 CodexLayout.STAT_ICON_WIDTH, CodexLayout.STAT_ICON_HEIGHT);
-        String key = selected.variantId() == 1 ? "saintsdragons.variant.crimson" : "saintsdragons.variant.default";
+        String key = resolveVariantTranslationKey(selected);
         String value = Component.translatable(key).getString();
         guiGraphics.drawString(font, value, iconX + CodexLayout.STAT_ICON_WIDTH + 2,
                 iconY + CodexLayout.STAT_TEXT_OFFSET_Y, CodexLayout.TEXT_COLOR, false);
+    }
+
+    private String resolveVariantTranslationKey(CodexDragonEntry selected) {
+        if (selected.variantId() <= 0) {
+            return "saintsdragons.variant.default";
+        }
+        return switch (selected.dragonType()) {
+            case "ignivorus" -> "saintsdragons.variant.crimson";
+            case "cindervane" -> "saintsdragons.variant.albino";
+            default -> "saintsdragons.variant.default";
+        };
     }
 
     private void drawGenderStat(GuiGraphics guiGraphics, Font font, CodexDragonEntry selected, int leftPos, int topPos) {

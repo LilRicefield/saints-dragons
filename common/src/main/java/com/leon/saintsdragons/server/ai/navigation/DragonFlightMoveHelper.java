@@ -1,6 +1,12 @@
 package com.leon.saintsdragons.server.ai.navigation;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.util.DragonMathUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.control.MoveControl;
@@ -14,6 +20,8 @@ import net.minecraft.world.phys.HitResult;
  * Works with any entity that implements DragonFlightCapable interface
  */
 public class DragonFlightMoveHelper extends MoveControl {
+    private static final String WILD_FLYING_SPEED_MULTIPLIER_KEY = "wild_flying_speed_multiplier";
+
     private final DragonFlightCapable dragon;
     private final net.minecraft.world.entity.Mob mob;
     private float speedFactor = 1.0F;
@@ -180,6 +188,7 @@ public class DragonFlightMoveHelper extends MoveControl {
         // Distance-based speed scaling (IaF-inspired): keep speed up at range, ease gently near goal
         float distScale = Mth.clamp((float) (totalDist / 45.0) + 0.35f, 0.35f, 1.0f);
         targetSpeedFactor *= distScale;
+        targetSpeedFactor *= getWildFlyingSpeedMultiplier();
 
         // Combat bias: fly a bit faster when we have a live target and are airborne
         var target = mob.getTarget();
@@ -212,6 +221,26 @@ public class DragonFlightMoveHelper extends MoveControl {
         delta = clampPerAxis(delta, accelCap);
         Vec3 blended = motion.add(delta);
         mob.setDeltaMovement(blended);
+    }
+
+    private float getWildFlyingSpeedMultiplier() {
+        if (!(mob instanceof DragonEntity dragonEntity) || dragonEntity.isTame()) {
+            return 1.0F;
+        }
+
+        DragonAttributeConfig config;
+        if (mob instanceof Cindervane) {
+            config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
+        } else if (mob instanceof Raevyx) {
+            config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        } else if (mob instanceof Ignivorus) {
+            config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        } else {
+            return 1.0F;
+        }
+
+        double multiplier = config.extraDouble(WILD_FLYING_SPEED_MULTIPLIER_KEY, 1.0D);
+        return (float) Mth.clamp(multiplier, 0.05D, 10.0D);
     }
 
     /**

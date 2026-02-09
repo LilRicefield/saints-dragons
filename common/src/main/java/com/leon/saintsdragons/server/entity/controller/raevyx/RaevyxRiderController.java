@@ -159,7 +159,12 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // === DIVE SPEED BOOST ===
             // Smooth progressive speed boost when diving (like real birds)
             // NOTE: Minecraft xRot is POSITIVE when looking down (90° = straight down)
+            final boolean keyPitchMode = wyvern.isRiderPitchKeyMode();
             float pitchRad = getEffectivePitchRadians(player);
+            if (keyPitchMode) {
+                // In pitch-lock mode, forward input should not alter altitude.
+                pitchRad = 0.0f;
+            }
             float pitchDegrees = (float) Math.toDegrees(pitchRad);
 
             // Calculate smooth dive intensity from 0.0 (shallow) to 1.0 (straight down)
@@ -192,7 +197,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
             // pitchRad already calculated above for dive speed
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
-            double forwardY = -Math.sin(pitchRad);
+            double forwardY = keyPitchMode ? 0.0 : -Math.sin(pitchRad);
             double forwardZ = Math.cos(yawRad) * forwardXZ;
             double rightX = Math.cos(yawRad);
             double rightZ = Math.sin(yawRad);
@@ -245,7 +250,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
             // When diving (pitch >= 45°), use the physics-calculated velocity - don't override!
             // This allows dive speed boost to work properly
-            boolean isDiving = pitchDegrees >= 45.0f && hasInput;
+            boolean isDiving = !keyPitchMode && pitchDegrees >= 45.0f && hasInput;
 
             if (!isDiving) {
                 // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)
@@ -293,10 +298,10 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
     private float getKeyPitchRadians() {
         if (wyvern.isGoingUp()) {
-            return (float) Math.toRadians(Raevyx.RIDER_KEY_PITCH_DEG);
+            return (float) -Math.toRadians(Raevyx.RIDER_KEY_PITCH_DEG);
         }
         if (wyvern.isGoingDown()) {
-            return (float) -Math.toRadians(Raevyx.RIDER_KEY_PITCH_DEG);
+            return (float) Math.toRadians(Raevyx.RIDER_KEY_PITCH_DEG);
         }
         return 0.0f;
     }

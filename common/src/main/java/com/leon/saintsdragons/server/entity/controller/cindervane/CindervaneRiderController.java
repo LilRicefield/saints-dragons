@@ -36,7 +36,7 @@ public record CindervaneRiderController(Cindervane dragon) {
     private static final double STRAFE_POWER = 0.4;        // Slightly weaker strafe than Raevyx (glider feel)
 
     // ===== VERTICAL PHYSICS (dive acceleration, no gravity) =====
-    private static final double ASCEND_THRUST = 0.06D;      // Slightly weaker climb than Raevyx
+    private static final double ASCEND_THRUST = 0.45D;      // Responsive climb in pitch-lock mode
     private static final double DESCEND_THRUST = 0.85D;     // Strong dive acceleration
     private static final double TERMINAL_VELOCITY = 1.2D;   // Slower terminal velocity (wing drag)
     private static final double VERTICAL_DRAG = 0.95D;      // Higher air resistance than Raevyx (massive wings)
@@ -160,7 +160,12 @@ public record CindervaneRiderController(Cindervane dragon) {
             // === DIVE SPEED BOOST ===
             // Smooth progressive speed boost when diving (like real birds)
             // NOTE: Minecraft xRot is POSITIVE when looking down (90° = straight down)
+            final boolean keyPitchMode = dragon.isRiderPitchKeyMode();
             float pitchRad = getEffectivePitchRadians(player);
+            if (keyPitchMode) {
+                // In pitch-lock mode, forward input should stay level and not inject vertical drift.
+                pitchRad = 0.0f;
+            }
             float pitchDegrees = (float) Math.toDegrees(pitchRad);
 
             // Calculate smooth dive intensity from 0.0 (shallow) to 1.0 (straight down)
@@ -193,7 +198,7 @@ public record CindervaneRiderController(Cindervane dragon) {
             // pitchRad already calculated above for dive speed
             double forwardXZ = Math.cos(pitchRad);
             double forwardX = -Math.sin(yawRad) * forwardXZ;
-            double forwardY = -Math.sin(pitchRad);
+            double forwardY = keyPitchMode ? 0.0 : -Math.sin(pitchRad);
             double forwardZ = Math.cos(yawRad) * forwardXZ;
             double strafeX = Math.cos(yawRad);
             double strafeZ = Math.sin(yawRad);
@@ -252,7 +257,7 @@ public record CindervaneRiderController(Cindervane dragon) {
 
             // When diving (pitch >= 45°), use the physics-calculated velocity - don't override!
             // This allows dive speed boost to work properly
-            boolean isDiving = pitchDegrees >= 45.0f && hasInput;
+            boolean isDiving = !keyPitchMode && pitchDegrees >= 45.0f && hasInput;
 
             if (!isDiving) {
                 // PRIORITY: Respect automated takeoff boost (overrides rider input during takeoff window)

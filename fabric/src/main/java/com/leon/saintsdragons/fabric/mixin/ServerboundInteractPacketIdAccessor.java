@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
  * This is needed to properly look up PartEntities on the server side.
  */
 @Mixin(ServerboundInteractPacket.class)
-public interface ServerboundInteractPacketAccessor {
+public interface ServerboundInteractPacketIdAccessor {
 
     @Accessor("entityId")
     int getEntityId();

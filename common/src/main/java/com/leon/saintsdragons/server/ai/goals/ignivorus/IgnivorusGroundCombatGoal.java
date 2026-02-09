@@ -28,6 +28,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
     private final double chaseSpeed = 1.75D;
     private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
+    private int pathFailureBackoff = 0;
     private double lastTargetX;
     private double lastTargetY;
     private double lastTargetZ;
@@ -171,7 +172,8 @@ public class IgnivorusGroundCombatGoal extends Goal {
         dragon.setAggressive(false);
         dragon.setGroundMoveStateFromAI(0);
         cancelFireBreathIfActive();
-        pathRecalcCooldown = 0;
+        pathRecalcCooldown = 8;
+        pathFailureBackoff = 0;
 
         // Reset ultimate opener for next combat encounter
         hasUsedUltimateOpener = false;
@@ -205,7 +207,8 @@ public class IgnivorusGroundCombatGoal extends Goal {
         LivingEntity target = dragon.getTarget();
         if (target != null) {
             dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            dragon.getNavigation().moveTo(target, chaseSpeed);
+            // Avoid forcing an immediate expensive repath on every goal (re)start.
+            pathRecalcCooldown = Math.max(pathRecalcCooldown, 8);
             rememberTargetPosition(target);
         }
     }
@@ -214,7 +217,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
     public void tick() {
         if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
             dragon.getNavigation().stop();
-            pathRecalcCooldown = 0;
+            pathRecalcCooldown = 8;
             updateGroundMoveState();
             return;
         }
@@ -229,7 +232,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         if (dragon.isAiPhase2Locked()) {
             dragon.getNavigation().stop();
-            pathRecalcCooldown = 0;
+            pathRecalcCooldown = 8;
             updateGroundMoveState();
             return;
         }
@@ -312,7 +315,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
         } else {
             // In melee range (0-6 blocks) - stop moving and attack
             dragon.getNavigation().stop();
-            pathRecalcCooldown = 0;
+            pathRecalcCooldown = 8;
             tryAttack(target);
         }
 
@@ -401,7 +404,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         dragon.getNavigation().stop();
-        pathRecalcCooldown = 0;
+        pathRecalcCooldown = 8;
         dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
         attackCooldown = 60;
         breathCooldown = BREATH_COOLDOWN_TICKS;
@@ -423,7 +426,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         if (fireballMode == FireballMode.STATIONARY) {
             dragon.getNavigation().stop();
-            pathRecalcCooldown = 0;
+            pathRecalcCooldown = 8;
         } else if (fireballMode == FireballMode.MOVING) {
             updateChasePath(target);
         }
@@ -602,14 +605,36 @@ public class IgnivorusGroundCombatGoal extends Goal {
     }
 
     private void updateChasePath(LivingEntity target) {
+        if (pathFailureBackoff > 0) {
+            pathFailureBackoff--;
+            return;
+        }
+
+        if (pathRecalcCooldown > 0) {
+            pathRecalcCooldown--;
+        }
+
         boolean phase2 = dragon.isPhase2Active();
-        if (--pathRecalcCooldown <= 0 || (!phase2 && targetMovedSignificantly(target))) {
+        boolean targetMoved = targetMovedSignificantly(target);
+        boolean shouldRepath = pathRecalcCooldown <= 0
+            || (!phase2 && targetMoved && !dragon.getNavigation().isInProgress());
+
+        if (shouldRepath) {
             rememberTargetPosition(target);
             double distance = dragon.distanceTo(target);
-            pathRecalcCooldown = phase2
+            int baseCooldown = phase2
                 ? Mth.clamp((int) (distance * 0.7D), 10, 30)
                 : Mth.clamp((int) (distance * 0.6D), 5, 20);
-            dragon.getNavigation().moveTo(target, chaseSpeed);
+            boolean started = dragon.getNavigation().moveTo(target, chaseSpeed);
+
+            if (started) {
+                pathRecalcCooldown = baseCooldown;
+                pathFailureBackoff = 0;
+            } else {
+                // Back off after failed path attempts to prevent pathfinding storms.
+                pathRecalcCooldown = Math.max(baseCooldown, 20);
+                pathFailureBackoff = 20 + dragon.getRandom().nextInt(21);
+            }
         }
     }
 

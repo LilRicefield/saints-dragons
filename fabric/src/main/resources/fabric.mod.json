@@ -19,7 +19,7 @@
   },
   "mixins": [
     "saintsdragons.mixins.json",
-    "saintsdragons-multipart.mixins.json"
+    "saintsdragons-hooks.mixins.json"
   ],
   "accessWidener": "saintsdragons.accesswidener",
   "depends": {
