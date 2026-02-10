@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.network.chat.Component;
@@ -70,6 +71,7 @@ public class NulljawInteractionHandler extends AbstractDragonInteractionHandler<
             }
 
             dragon.triggerAnim("action", "eat");
+            playEatSound();
             dragon.setFeedingCooldown(40);
 
             boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
@@ -166,6 +168,7 @@ public class NulljawInteractionHandler extends AbstractDragonInteractionHandler<
             }
 
             dragon.triggerAnim("action", "eat");
+            playEatSound();
             dragon.setFeedingCooldown(61);
             dragon.setInLove(player);
             sendStatusMessage(player, "entity.saintsdragons.nulljaw.breeding_ready");
@@ -191,6 +194,7 @@ public class NulljawInteractionHandler extends AbstractDragonInteractionHandler<
             }
 
             dragon.triggerAnim("action", "eat");
+            playEatSound();
             dragon.setFeedingCooldown(50);
 
             boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
@@ -277,6 +281,7 @@ public class NulljawInteractionHandler extends AbstractDragonInteractionHandler<
             }
 
             dragon.triggerAnim("action", "eat");
+            playEatSound();
             dragon.setFeedingCooldown(50);
 
             if (heartyMeal) {
@@ -303,6 +308,13 @@ public class NulljawInteractionHandler extends AbstractDragonInteractionHandler<
         }
 
         return InteractionResult.sidedSuccess(client);
+    }
+
+    private void playEatSound() {
+        if (!dragon.level().isClientSide) {
+            float pitch = dragon.isBaby() ? 1.6f : 1.0f;
+            dragon.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_EAT.get(), 1.0f, pitch, 59);
+        }
     }
 
     private InteractionResult handleMounting(Player player) {

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -85,6 +86,9 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
 
             // Trigger stomp animation via GeckoLib action controller
             dragon.triggerAnim("action", animationName);
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_STOMP.get(), 1.0f, 1.0f, 68);
+            }
 
             // Toggle for next time
             dragon.toggleWingSwipeSide();

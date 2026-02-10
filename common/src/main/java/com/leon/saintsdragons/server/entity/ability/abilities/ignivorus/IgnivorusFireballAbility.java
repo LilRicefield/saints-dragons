@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -243,10 +244,26 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     }
 
     private void triggerChargeAnimation(int level) {
+        Ignivorus dragon = getUser();
         switch (level) {
-            case 1 -> getUser().triggerAnim("action", "fireball_level1_charge");
-            case 2 -> getUser().triggerAnim("action", "fireball_level2_charge");
-            case 3 -> getUser().triggerAnim("action", "fireball_level3_charge");
+            case 1 -> {
+                dragon.triggerAnim("action", "fireball_level1_charge");
+                if (!dragon.level().isClientSide) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL1_CHARGE.get(), 1.0f, 1.0f, 54);
+                }
+            }
+            case 2 -> {
+                dragon.triggerAnim("action", "fireball_level2_charge");
+                if (!dragon.level().isClientSide) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL2_CHARGE.get(), 1.0f, 1.0f, 68);
+                }
+            }
+            case 3 -> {
+                dragon.triggerAnim("action", "fireball_level3_charge");
+                if (!dragon.level().isClientSide) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL3_CHARGE.get(), 1.0f, 1.0f, 94);
+                }
+            }
             default -> { }
         }
     }
@@ -256,11 +273,32 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     }
 
     private void triggerShootAnimation(int level) {
+        Ignivorus dragon = getUser();
         switch (level) {
-            case 1 -> getUser().triggerAnim("action", "fireball_level1_shoot");
-            case 2 -> getUser().triggerAnim("action", "fireball_level2_shoot");
-            case 3 -> getUser().triggerAnim("action", "fireball_level3_shoot");
-            default -> getUser().triggerAnim("action", "fireball_level1_shoot");
+            case 1 -> {
+                dragon.triggerAnim("action", "fireball_level1_shoot");
+                if (!dragon.level().isClientSide) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL1_SHOOTS.get(), 1.0f, 1.0f, 66);
+                }
+            }
+            case 2 -> {
+                dragon.triggerAnim("action", "fireball_level2_shoot");
+                if (!dragon.level().isClientSide) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL2_SHOOTS.get(), 1.0f, 1.0f, 76);
+                }
+            }
+            case 3 -> {
+                dragon.triggerAnim("action", "fireball_level3_shoot");
+                if (!dragon.level().isClientSide) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL3_SHOOTS.get(), 1.0f, 1.0f, 45);
+                }
+            }
+            default -> {
+                dragon.triggerAnim("action", "fireball_level1_shoot");
+                if (!dragon.level().isClientSide) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL1_SHOOTS.get(), 1.0f, 1.0f, 66);
+                }
+            }
         }
     }
 }

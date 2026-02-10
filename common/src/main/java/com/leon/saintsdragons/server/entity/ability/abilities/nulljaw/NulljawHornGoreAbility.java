@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -49,12 +50,11 @@ public class NulljawHornGoreAbility extends DragonAbility<Nulljaw> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            // Trigger gore animation via normal GeckoLib action trigger
             getUser().triggerAnim("action", "horn_gore");
+            if (!getUser().level().isClientSide) {
+                getUser().getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_HORNGORE.get(), 1.0f, 1.0f, 24);
+            }
             hitIdsThisUse.clear();
-        } else if (section.sectionType == AbilitySectionType.ACTIVE) {
-            // TODO: Add horn gore sound when created
-            // Sound will be triggered via animation keyframes
         }
     }
 

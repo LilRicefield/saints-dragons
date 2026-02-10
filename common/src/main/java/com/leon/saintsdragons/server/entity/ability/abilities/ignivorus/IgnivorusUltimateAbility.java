@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -141,6 +142,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
                 // Play Phase 2 ultimate animation
                 dragon.triggerAnim("action", "phase2_ultimate");
+                if (!dragon.level().isClientSide) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE.get(), 1.0f, 1.0f, 127);
+                }
 
                 // Initialize damage tracking flag
                 phase2DamageApplied = false;
@@ -177,8 +181,14 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 // Play ONLY the first animation (start) - use _air variant if airborne
                 if (isAirborne) {
                     dragon.triggerAnim("action", "ultimate_start_air");
+                    if (!dragon.level().isClientSide) {
+                        dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_START_AIR.get(), 1.0f, 1.0f, 54);
+                    }
                 } else {
                     dragon.triggerAnim("action", "ultimate_start");
+                    if (!dragon.level().isClientSide) {
+                        dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_START.get(), 1.0f, 1.0f, 92);
+                    }
                 }
                 startAnimPlayed = true;
                 applyPenaltyHealth(dragon);
@@ -228,8 +238,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         if (!loopAnimPlayed && ticks >= startEndTick) {
             if (isAirborneMode) {
                 dragon.triggerAnim("action", "ultimate_air");
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 112);
             } else {
                 dragon.triggerAnim("action", "ultimate");
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE.get(), 1.0f, 1.0f, 127);
             }
             loopAnimPlayed = true;
         }
@@ -254,8 +266,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         if (!endAnimPlayed && ticks >= loopEndTick) {
             if (isAirborneMode) {
                 dragon.triggerAnim("action", "ultimate_end_air");
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_END_AIR.get(), 1.0f, 1.0f, 38);
             } else {
                 dragon.triggerAnim("action", "ultimate_end");
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_END.get(), 1.0f, 1.0f, 57);
             }
             endAnimPlayed = true;
         }

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -58,6 +59,9 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
             releaseTicks = 0;
             shootAnimTriggered = false;
             getUser().triggerAnim("action", "ground_eating");
+            if (!getUser().level().isClientSide) {
+                getUser().getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_GROUND_EATING.get(), 1.0f, getUser().isBaby() ? 1.6f : 1.0f, 37);
+            }
         }
     }
 
@@ -76,6 +80,9 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
         if (releaseRequested) {
             if (cancelRequested) {
                 getUser().triggerAnim("action", "ground_eating_cancel");
+                if (!getUser().level().isClientSide) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_GROUND_EATING_CANCEL.get(), 1.0f, getUser().isBaby() ? 1.6f : 1.0f, 22);
+                }
                 resolved = true;
                 end();
                 return;
@@ -83,6 +90,9 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
 
             if (!shootAnimTriggered) {
                 getUser().triggerAnim("action", "ground_eating_shoot");
+                if (!getUser().level().isClientSide) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_GROUND_EATING_SHOOT.get(), 1.0f, getUser().isBaby() ? 1.6f : 1.0f, 75);
+                }
                 shootAnimTriggered = true;
                 releaseTicks = 0;
             }

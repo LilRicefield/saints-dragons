@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.core.animation.*;
@@ -111,6 +112,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
      */
     public void triggerDodgeLeftAnimation() {
         wyvern.triggerAnim("action", "dodge_left");
+        if (!wyvern.level().isClientSide) {
+            wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
+        }
     }
 
     /**
@@ -118,6 +122,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
      */
     public void triggerDodgeRightAnimation() {
         wyvern.triggerAnim("action", "dodge_right");
+        if (!wyvern.level().isClientSide) {
+            wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
+        }
     }
 
     /**
@@ -125,6 +132,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
      */
     public void triggerDodgeBackwardAnimation() {
         wyvern.triggerAnim("action", "dash_backward");
+        if (!wyvern.level().isClientSide) {
+            wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
+        }
     }
 
 

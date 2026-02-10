@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -37,6 +38,7 @@ public class NulljawTailAttackAbility extends DragonAbility<Nulljaw> {
 
     // Animation timing: 1.4583 seconds = 29 ticks total
     private static final int CONTROL_LOCK_TICKS = (int) Math.round(1.4583 * 20);
+    private static final int TAIL_ATTACK_SOUND_TICKS = 50;
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 12),
             new AbilitySectionDuration(ACTIVE, 2),
@@ -71,6 +73,9 @@ public class NulljawTailAttackAbility extends DragonAbility<Nulljaw> {
             dragon.lockRiderControls(CONTROL_LOCK_TICKS);
             String animName = useLeftTail ? "tail_attack_left" : "tail_attack_right";
             dragon.triggerAnim("instant", animName);
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_TAIL_ATTACK.get(), 1.0f, 1.0f, TAIL_ATTACK_SOUND_TICKS);
+            }
             appliedHit = false;
         }
     }

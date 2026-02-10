@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -113,6 +114,9 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
             // Play first animation (ground: phase2_start, underwater: phase2_underwater)
             String startTrigger = resolvePhaseAnimation();
             getUser().triggerAnim("action", startTrigger);
+            if (!getUser().level().isClientSide) {
+                getUser().getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_PHASE2_START.get(), 1.0f, 1.0f, GROUND_START_TICKS);
+            }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (enteringPhaseTwo) {
                 if (!phaseToggleApplied) {
@@ -133,6 +137,9 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
                     boolean underwater = getUser().isInWaterOrBubble();
                     String revertAnim = underwater ? "phase1_underwater" : "phase1";
                     getUser().triggerAnim("action", revertAnim);
+                    if (!getUser().level().isClientSide) {
+                        getUser().getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_PHASE1.get(), 1.0f, 1.0f, 85);
+                    }
                 }
             }
         }
@@ -162,6 +169,9 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
             // Chain main animation (phase2) after start animation
             if (!mainAnimPlayed && ticks >= GROUND_START_TICKS) {
                 getUser().triggerAnim("action", "phase2");
+                if (!getUser().level().isClientSide) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_PHASE2.get(), 1.0f, 1.0f, GROUND_MAIN_TICKS);
+                }
                 mainAnimPlayed = true;
                 screenShakeActive = true; // Start screen shake during main animation
                 // Phase already toggled in beginSection(STARTUP)
@@ -170,6 +180,9 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
             // Chain end animation (phase2_end) after main animation
             if (!endAnimPlayed && ticks >= (GROUND_START_TICKS + GROUND_MAIN_TICKS)) {
                 getUser().triggerAnim("action", "phase2_end");
+                if (!getUser().level().isClientSide) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_PHASE2_END.get(), 1.0f, 1.0f, GROUND_END_TICKS);
+                }
                 endAnimPlayed = true;
                 screenShakeActive = false; // Stop screen shake when entering end animation
             }
@@ -178,6 +191,9 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
             // Chain main animation (phase2_underwater) after start animation
             if (!mainAnimPlayed && ticks >= UNDERWATER_START_TICKS) {
                 getUser().triggerAnim("action", "phase2_underwater");
+                if (!getUser().level().isClientSide) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_PHASE2.get(), 1.0f, 1.0f, UNDERWATER_MAIN_TICKS);
+                }
                 mainAnimPlayed = true;
                 screenShakeActive = true; // Start screen shake during main animation
                 // Phase already toggled in beginSection(STARTUP)
@@ -186,6 +202,9 @@ public class NulljawPhaseShiftAbility extends DragonAbility<Nulljaw> {
             // Chain stop animation (phase2_underwater_stop) after main animation
             if (!endAnimPlayed && ticks >= (UNDERWATER_START_TICKS + UNDERWATER_MAIN_TICKS)) {
                 getUser().triggerAnim("action", "phase2_underwater_end");
+                if (!getUser().level().isClientSide) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_PHASE2_END.get(), 1.0f, 1.0f, UNDERWATER_STOP_TICKS);
+                }
                 endAnimPlayed = true;
                 screenShakeActive = false; // Stop screen shake when entering stop animation
             }

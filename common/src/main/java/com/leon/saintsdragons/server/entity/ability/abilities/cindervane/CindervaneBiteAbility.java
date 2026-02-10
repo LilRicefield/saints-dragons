@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -55,6 +56,9 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
             Cindervane dragon = getUser();
             String animation = dragon.isFlying() ? "bite_air" : "bite";
             dragon.triggerAnim("actions", animation);
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_BITE.get(), 1.0f, 0.95f, 25);
+            }
             appliedHit = false;
         }
     }

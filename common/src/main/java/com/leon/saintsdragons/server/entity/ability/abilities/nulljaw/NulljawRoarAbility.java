@@ -36,8 +36,6 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
     };
 
     private static final int ROAR_TOTAL_TICKS = 100; // 5 seconds @ 20 TPS
-    private static final int SOUND_ADVANCE_TICKS = 3; // Play sound 3 ticks early to compensate for network delay
-
     // Swipe timing in ticks (relative to ACTIVE section start, animation starts at STARTUP tick 0)
     // Animation total: 95 ticks (4.75s), STARTUP is 6 ticks, so subtract 6 from animation timings
     private static final int FIRST_SWIPE_TICK = 7;    // 0.67s from animation start (13 ticks - 6)
@@ -76,8 +74,15 @@ public class NulljawRoarAbility extends DragonAbility<Nulljaw> {
             // Sound is handled via animation keyframe (client-side, no delay)
             String trigger = phaseTwo ? "roar2" : "roar";
             dragon.triggerAnim("action", trigger);
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(
+                        phaseTwo ? ModSounds.NULLJAW_ROAR2.get() : ModSounds.NULLJAW_ROAR.get(),
+                        1.0f,
+                        1.0f,
+                        180
+                );
+            }
 
-            // Lock abilities for full animation duration but allow walking/running
             dragon.lockAbilities(ROAR_TOTAL_TICKS);
         }
     }

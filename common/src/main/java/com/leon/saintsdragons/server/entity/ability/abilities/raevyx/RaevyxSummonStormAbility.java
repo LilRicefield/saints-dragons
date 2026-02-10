@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.sounds.SoundEvents;
@@ -63,12 +64,26 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         if (!loopAnimPlayed && ticks >= startTicks) {
             String loopTrigger = isGroundCast ? "summon_storm_ground" : "summon_storm_air";
             getUser().triggerAnim("action", loopTrigger);
+            if (!getUser().level().isClientSide) {
+                if (isGroundCast) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM.get(), 1.6f, 1.0f, 98);
+                } else {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR.get(), 1.6f, 1.0f, 98);
+                }
+            }
             loopAnimPlayed = true;
             screenShakeActive = true;
         }
         if (!endAnimPlayed && ticks >= loopEndTicks) {
             String endTrigger = isGroundCast ? "summon_storm_ground_end" : "summon_storm_air_end";
             getUser().triggerAnim("action", endTrigger);
+            if (!getUser().level().isClientSide) {
+                if (isGroundCast) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_END.get(), 1.2f, 1.0f, 64);
+                } else {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR_END.get(), 1.6f, 1.0f, 44);
+                }
+            }
             endAnimPlayed = true;
             screenShakeActive = false;
         }
@@ -96,6 +111,13 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
             // Play appropriate animation variant (sound is handled by keyframe at 1.76s)
             String startTrigger = isGroundCast ? "summon_storm_ground_start" : "summon_storm_air_start";
             getUser().triggerAnim("action", startTrigger);
+            if (!getUser().level().isClientSide) {
+                if (isGroundCast) {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_START.get(), 1.2f, 1.0f, 63);
+                } else {
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR_START.get(), 1.2f, 1.0f, 67);
+                }
+            }
             loopAnimPlayed = false;
             endAnimPlayed = false;
             screenShakeActive = false;

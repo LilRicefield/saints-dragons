@@ -95,45 +95,24 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     }
 
     // --- Helpers ---
-    private static final float L_LEFT_X =  2.2f,  L_LEFT_Y = 0.05f, L_LEFT_Z = 2.85f;
-    private static final float L_RIGHT_X = -2.2f, L_RIGHT_Y = 0.05f, L_RIGHT_Z = 2.85f;
     private static final float MOUTH_X = 0.1f, MOUTH_Y = 8.7f, MOUTH_Z = -17.4f;
-    private static final float BODY_X = 0.0f, BODY_Y = 10.0f, BODY_Z = 0.0f;
     // Passenger bone offsets (in pixels, divided by 16 to convert to blocks)
     // X = left/right, Y = up/down (negative pushes down), Z = forward/back (negative = forward)
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
 
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) return;
-        model.getBone("leftfeet").ifPresent(b -> b.setTrackingMatrices(true));
-        model.getBone("rightfeet").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("head").ifPresent(b -> b.setTrackingMatrices(true));
-        model.getBone("heightController").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("passengerBone").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("beamBone").ifPresent(b -> b.setTrackingMatrices(true));
     }
 
     private void sampleAndStashLocatorsAccurate(Raevyx entity) {
         if (this.lastBakedModel == null || entity == null) return;
-        // Sample left foot
-        this.lastBakedModel.getBone("leftfeet").ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, L_LEFT_X, L_LEFT_Y, L_LEFT_Z);
-            if (world != null) entity.setClientLocatorPosition("leftfeetLocator", world);
-        });
-        // Sample right foot
-        this.lastBakedModel.getBone("rightfeet").ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, L_RIGHT_X, L_RIGHT_Y, L_RIGHT_Z);
-            if (world != null) entity.setClientLocatorPosition("rightfeetLocator", world);
-        });
         // Sample mouth origin
         this.lastBakedModel.getBone("head").ifPresent(b -> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, MOUTH_X, MOUTH_Y, MOUTH_Z);
             if (world != null) entity.setClientLocatorPosition("mouth_origin", world);
-        });
-        // Sample body locator
-        this.lastBakedModel.getBone("heightController").ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, BODY_X, BODY_Y, BODY_Z);
-            if (world != null) entity.setClientLocatorPosition("bodyLocator", world);
         });
         // Sample passenger bone position for rider placement
         this.lastBakedModel.getBone("passengerBone").ifPresent(b -> {

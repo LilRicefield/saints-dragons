@@ -57,6 +57,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
 
             // Trigger eat animation
             dragon.triggerAnim("actions", "eat");
+            dragon.playEatMovingSound();
 
             // Set feeding cooldown (2.2083 seconds * 20 ticks/second = 44 ticks)
             dragon.setFeedingCooldown(44);
@@ -229,6 +230,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             }
 
             dragon.triggerAnim("actions", "eat");
+            dragon.playEatMovingSound();
             dragon.setFeedingCooldown(61);
             dragon.setInLove(player);
             sendStatusMessage(player, "entity.saintsdragons.cindervane.breeding_ready");
@@ -259,6 +261,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
 
             // Trigger eat animation
             dragon.triggerAnim("actions", "eat");
+            dragon.playEatMovingSound();
 
             // Set feeding cooldown (2.2083 seconds * 20 ticks/second = 44 ticks)
             dragon.setFeedingCooldown(44);
@@ -380,6 +383,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             }
 
             dragon.triggerAnim("actions", "eat");
+            dragon.playEatMovingSound();
             dragon.setFeedingCooldown(44);
 
             if (hearty) {

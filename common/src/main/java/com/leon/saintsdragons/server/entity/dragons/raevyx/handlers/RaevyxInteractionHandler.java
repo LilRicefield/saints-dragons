@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.network.chat.Component;
@@ -93,6 +94,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
             // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+            dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
 
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             dragon.setFeedingCooldown(61);
@@ -170,6 +172,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
             // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+            dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
 
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             dragon.setFeedingCooldown(61);
@@ -278,6 +281,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
             // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+            dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
 
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             dragon.setFeedingCooldown(61);
@@ -311,6 +315,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
             // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+            dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
 
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             dragon.setFeedingCooldown(22);

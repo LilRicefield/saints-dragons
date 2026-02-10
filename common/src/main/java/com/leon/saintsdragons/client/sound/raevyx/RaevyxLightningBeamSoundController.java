@@ -37,30 +37,41 @@ public final class RaevyxLightningBeamSoundController {
         cleanupFinished(minecraft);
 
         Set<Integer> seen = new HashSet<>();
+        if (minecraft.player != null && minecraft.player.getVehicle() instanceof Raevyx riddenRaevyx) {
+            processRaevyx(minecraft, riddenRaevyx, seen);
+        }
         for (Entity entity : level.entitiesForRendering()) {
             if (entity instanceof Raevyx raevyx) {
-                int id = raevyx.getId();
-                seen.add(id);
-                boolean beaming = raevyx.isBeaming();
-                boolean wasBeaming = LAST_BEAMING_STATE.getOrDefault(id, false);
-
-                if (beaming && !wasBeaming) {
-                    startLoop(minecraft, raevyx);
-                } else if (!beaming && wasBeaming) {
-                    stopLoop(minecraft, id);
-                }
-                LAST_BEAMING_STATE.put(id, beaming);
+                processRaevyx(minecraft, raevyx, seen);
             }
         }
 
         Iterator<Map.Entry<Integer, Boolean>> iterator = LAST_BEAMING_STATE.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Integer, Boolean> entry = iterator.next();
-            if (!seen.contains(entry.getKey())) {
+            int id = entry.getKey();
+            Entity entity = level.getEntity(id);
+            if (!(entity instanceof Raevyx)) {
                 stopLoop(minecraft, entry.getKey());
                 iterator.remove();
+            } else if (seen.contains(id)) {
+                continue;
             }
         }
+    }
+
+    private static void processRaevyx(Minecraft minecraft, Raevyx raevyx, Set<Integer> seen) {
+        int id = raevyx.getId();
+        seen.add(id);
+        boolean beaming = raevyx.isBeaming();
+        boolean wasBeaming = LAST_BEAMING_STATE.getOrDefault(id, false);
+
+        if (beaming && !wasBeaming) {
+            startLoop(minecraft, raevyx);
+        } else if (!beaming && wasBeaming) {
+            stopLoop(minecraft, id);
+        }
+        LAST_BEAMING_STATE.put(id, beaming);
     }
 
     private static void cleanupFinished(Minecraft minecraft) {

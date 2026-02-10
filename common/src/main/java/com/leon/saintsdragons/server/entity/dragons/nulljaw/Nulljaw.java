@@ -67,7 +67,6 @@ import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -188,6 +187,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private int wildRideTicks = 0;
     private int nextBuckAttemptTick = 0;
     private int cumulativeWildRideProgress = 0;
+    private int groundStepSoundCooldownTicks = 0;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -471,8 +471,14 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         if (phaseTwo) {
             lastDashWasRight = !lastDashWasRight;
             triggerAnim("instant", lastDashWasRight ? "phase2_dash_right" : "phase2_dash_left");
+            if (!this.level().isClientSide) {
+                this.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_PHASE2_DASH.get(), 1.0f, 1.0f, LEAP_DURATION);
+            }
         } else {
             triggerAnim("instant", "tail_swipe_left");
+            if (!this.level().isClientSide) {
+                this.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_TAIL_SWIPE.get(), 1.0f, 1.0f, 100);
+            }
         }
         return true;
     }
@@ -663,10 +669,9 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         AnimationController<Nulljaw> instantActions =
                 new AnimationController<>(this, "instant", 10, animationHandler::instantActionPredicate);
 
-        // Sound keyframes
-        movementController.setSoundKeyframeHandler(this::onAnimationSound);
-        actions.setSoundKeyframeHandler(this::onAnimationSound);
-        instantActions.setSoundKeyframeHandler(this::onAnimationSound);
+        movementController.setSoundKeyframeHandler(event -> {});
+        actions.setSoundKeyframeHandler(event -> {});
+        instantActions.setSoundKeyframeHandler(event -> {});
 
         // Setup animation triggers
         animationHandler.setupActionController(actions);
@@ -796,6 +801,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             tickLeapState();
             handleAmbientSounds();
             tickRiderControlLock();
+            tickGroundStepAudio();
             boolean inWater = this.isInWaterOrBubble();
             if (inWater) {
                 this.setAirSupply(this.getMaxAirSupply());
@@ -1683,9 +1689,46 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         return NulljawAbilities.NULLJAW_PHASE_SHIFT;
     }
 
-    public void onAnimationSound(SoundKeyframeEvent<Nulljaw> event) {
-        // Delegate all keyframed sounds to the sound handler
-        this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
+    private void tickGroundStepAudio() {
+        if (groundStepSoundCooldownTicks > 0) {
+            groundStepSoundCooldownTicks--;
+        }
+        if (this.isInWaterOrBubble() || this.isSwimming() || !this.onGround() || this.areRiderControlsLocked()) {
+            groundStepSoundCooldownTicks = 0;
+            return;
+        }
+        int moveState = this.entityData.get(DATA_GROUND_MOVE_STATE);
+        if (moveState <= 0) {
+            double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
+            if (speedSqr > 0.02D) {
+                moveState = 2;
+            } else if (speedSqr > 0.001D) {
+                moveState = 1;
+            }
+        }
+        if (moveState <= 0) {
+            groundStepSoundCooldownTicks = 0;
+            return;
+        }
+        if (groundStepSoundCooldownTicks > 0) {
+            return;
+        }
+        boolean running = moveState == 2;
+        if (this.isPhaseTwoActive()) {
+            int duration = running ? 24 : 38;
+            this.getSoundHandler().playMovingEntitySound(
+                    running ? ModSounds.NULLJAW_RUN2.get() : ModSounds.NULLJAW_WALK2.get(),
+                    1.0f, 1.0f, duration
+            );
+            groundStepSoundCooldownTicks = duration;
+            return;
+        }
+        int duration = running ? 27 : 35;
+        this.getSoundHandler().playMovingEntitySound(
+                running ? ModSounds.NULLJAW_RUN.get() : ModSounds.NULLJAW_WALK.get(),
+                1.0f, 1.0f, duration
+        );
+        groundStepSoundCooldownTicks = duration;
     }
 
     private void handleRiddenSwimming(Vec3 input) {

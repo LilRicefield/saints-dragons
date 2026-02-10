@@ -88,7 +88,6 @@ import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -340,6 +339,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int nextAmbientSoundDelay;
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 520;
+    private int groundStepSoundCooldownTicks = 0;
     private static final double BABY_MAX_HEALTH = 90.0D;
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
@@ -588,6 +588,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             tamingController.tickServer();
             tickFireBreathEnergy();
             tickTerrainClearing();
+            tickGroundStepAudio();
             handleAmbientSounds();
             if (isFlying() && tickCount % 2 == 0) {
                 tickWaterDisturbance();
@@ -1064,6 +1065,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (onGround() && wasAirborneBeforeLanding) {
             // We've landed! Apply slam damage
             applyLeapSlamDamage();
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_IMPACT.get(), 1.0f, 1.0f, 43);
             if (!leapImpactTriggered) {
                 animationHandler.triggerLeapImpactAnimation();
                 leapImpactTriggered = true;
@@ -2054,6 +2056,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             bulldozeCooldownTicks = 40; // 2 second cooldown
             lockRiderControls(20); // Lock controls for 1 second during exit animation
             animationHandler.triggerBulldozeExitAnimation();
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BULLDOZER_EXIT.get(), 1.0f, 1.0f, 45);
         } else {
             // Turn ON
             bulldozing = true;
@@ -2061,6 +2064,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             setAccelerating(true); // Force sprint
             lockRiderControls(20); // Lock controls for 1 second during enter animation
             animationHandler.triggerBulldozeEnterAnimation();
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BULLDOZER_ENTER.get(), 1.0f, 1.0f, 41);
         }
     }
 
@@ -2155,6 +2159,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.getNavigation().stop();
         this.hasImpulse = true;
         leapGroundedTicks = 0;
+        getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEAP.get(), 1.0f, 1.0f, 58);
 
         if (level() instanceof ServerLevel server) {
             breakGroundCircle(server, position(), 8.0D);
@@ -2194,12 +2199,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             phase2CooldownTicks = 40; // 2 second cooldown
             lockRiderControls(13); // Lock controls for 0.63 seconds during exit animation
             animationHandler.triggerPhase2ExitAnimation();
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_EXIT.get(), 1.0f, 1.0f, 38);
         } else {
             // Turn ON
             phase2Active = true;
             this.entityData.set(DATA_PHASE2, true);
             lockRiderControls(20); // Lock controls for 1 second during enter animation
             animationHandler.triggerPhase2EnterAnimation();
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0f, 1.0f, 47);
         }
     }
 
@@ -2251,10 +2258,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (enable) {
             startAiPhase2Lock(20);
             animationHandler.triggerPhase2EnterAnimation();
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0f, 1.0f, 47);
         } else {
             phase2CooldownTicks = 40; // 2 second cooldown
             startAiPhase2Lock(13);
             animationHandler.triggerPhase2ExitAnimation();
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_EXIT.get(), 1.0f, 1.0f, 38);
         }
         return true;
     }
@@ -2332,6 +2341,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             if (now - lastAiLandedAnimTick >= 15L) {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
                 triggerAnim("action", landedAnim);
+                if (isPhase2Active()) {
+                    getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
+                } else {
+                    getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LANDED.get(), 1.0f, 1.0f, 42);
+                }
                 lockRiderControls(13);
                 suppressSleep(60);
                 lastAiLandedAnimTick = now;
@@ -2418,8 +2432,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.set(DATA_TAKEOFF, takeoff);
         if (takeoff && !wasTakeoff && !level().isClientSide) {
             triggerAnim("instant", isPhase2Active() ? "phase2_takeoff" : "takeoff");
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
         }
-        // Takeoff sound is handled via animation keyframe for stereo/mono routing.
     }
 
     /**
@@ -3330,6 +3344,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     // Use Phase 2 landed animation if in Phase 2 mode
                     String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
                     triggerAnim("action", landedAnim);  // Trigger as one-shot animation
+                    if (isPhase2Active()) {
+                        getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
+                    } else {
+                        getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LANDED.get(), 1.0f, 1.0f, 42);
+                    }
                     lockRiderControls(13);  // Lock controls for 0.63 seconds while animation plays
                 }
             }
@@ -3606,7 +3625,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         // Movement controller handles idle/walk/run/flight/sit animations
         AnimationController<Ignivorus> movementController =
             new AnimationController<>(this, "movement", 8, animationHandler::handleMovementAnimation);
-        movementController.setSoundKeyframeHandler(this::onAnimationSound);
+        movementController.setSoundKeyframeHandler(event -> {});
 
         // Action controller for triggerable animations (sit transitions, fire breath, etc.)
         AnimationController<Ignivorus> actionController =
@@ -3621,54 +3640,13 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         AnimationController<Ignivorus> instantController =
             new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
         animationHandler.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(this::onAnimationSound);
+        instantController.setSoundKeyframeHandler(event -> {});
 
         // Register all action animations via handler
         animationHandler.setupActionController(actionController);
-        actionController.setSoundKeyframeHandler(this::onAnimationSound);
+        actionController.setSoundKeyframeHandler(event -> {});
 
         controllers.add(movementController, instantController, actionController);
-    }
-
-    private void onAnimationSound(SoundKeyframeEvent<Ignivorus> event) {
-        if (!level().isClientSide) {
-            return;
-        }
-
-        Object data = event.getKeyframeData();
-        String key = extractSoundKey(data);
-        String controllerName = event.getController() != null ? event.getController().getName() : "unknown";
-
-        // Ignore step sounds from non-movement controllers to prevent duplicates
-        if (key != null && (key.contains("ignivorus_walk") || key.contains("ignivorus_run")) && !"movement".equals(controllerName)) {
-            return;
-        }
-
-        soundHandler.handleAnimationSound(this, data, event.getController());
-    }
-
-    private String extractSoundKey(Object data) {
-        if (data == null) {
-            return null;
-        }
-        try {
-            Object value = data.getClass().getMethod("getSound").invoke(data);
-            return value instanceof String ? ((String) value).toLowerCase(java.util.Locale.ROOT) : null;
-        } catch (ReflectiveOperationException ignored) {
-            return null;
-        }
-    }
-
-    private String extractLocator(Object data) {
-        if (data == null) {
-            return null;
-        }
-        try {
-            Object value = data.getClass().getMethod("getLocator").invoke(data);
-            return value instanceof String ? (String) value : null;
-        } catch (ReflectiveOperationException ignored) {
-            return null;
-        }
     }
 
     @Override
@@ -3695,7 +3673,48 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
-        // GeckoLib handles walking/running audio via keyframes.
+    }
+
+    private void tickGroundStepAudio() {
+        if (groundStepSoundCooldownTicks > 0) {
+            groundStepSoundCooldownTicks--;
+        }
+        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || !onGround()) {
+            groundStepSoundCooldownTicks = 0;
+            return;
+        }
+        int moveState = this.entityData.get(DATA_GROUND_MOVE_STATE);
+        if (moveState <= 0) {
+            double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
+            if (speedSqr > 0.02D) {
+                moveState = 2;
+            } else if (speedSqr > 0.0008D) {
+                moveState = 1;
+            }
+        }
+        if (moveState <= 0) {
+            groundStepSoundCooldownTicks = 0;
+            return;
+        }
+        if (groundStepSoundCooldownTicks > 0) {
+            return;
+        }
+        boolean running = moveState == 2;
+        if (isPhase2Active()) {
+            int duration = running ? 27 : 34;
+            getSoundHandler().playMovingEntitySound(
+                    running ? ModSounds.IGNIVORUS_PHASE2_RUN.get() : ModSounds.IGNIVORUS_PHASE2_WALK.get(),
+                    1.0f, 1.0f, duration
+            );
+            groundStepSoundCooldownTicks = duration;
+            return;
+        }
+        int duration = running ? 22 : 38;
+        getSoundHandler().playMovingEntitySound(
+                running ? ModSounds.IGNIVORUS_RUN.get() : ModSounds.IGNIVORUS_WALK.get(),
+                1.0f, 1.0f, duration
+        );
+        groundStepSoundCooldownTicks = duration;
     }
 
     // ===== CLIENT LOCATOR CACHE =====

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -54,6 +55,9 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
             ticksSinceVolley = VOLLEY_INTERVAL_TICKS;
             volleysFired = 0;
             getUser().triggerAnim("actions", "magma_blast");
+            if (!getUser().level().isClientSide) {
+                getUser().getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_MAGMA_BLAST.get(), 2.0f, 1.0f, 66);
+            }
         }
     }
 

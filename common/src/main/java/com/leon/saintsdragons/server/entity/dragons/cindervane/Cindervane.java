@@ -92,7 +92,6 @@ import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
@@ -115,6 +114,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private int ambientSoundTimer;
     private int nextAmbientSoundDelay;
+    private int groundStepSoundCooldownTicks = 0;
 
     /**
      * Family group spawning: When a wild Cindervane spawns naturally, it has a 5% chance
@@ -703,6 +703,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (tickCount % 5 == 0) {
             handleAmbientSounds();
         }
+        tickGroundStepAudio();
 
         // === SERVER-SIDE: SLEEP WAKE-UP LOGIC ===
         // Wake up if sleeping and conditions changed
@@ -930,6 +931,40 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(range);
     }
 
+    private void tickGroundStepAudio() {
+        if (groundStepSoundCooldownTicks > 0) {
+            groundStepSoundCooldownTicks--;
+        }
+        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || !onGround()) {
+            groundStepSoundCooldownTicks = 0;
+            return;
+        }
+        int moveState = this.entityData.get(DATA_GROUND_MOVE_STATE);
+        if (moveState != 2) {
+            double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
+            if (speedSqr > 0.02D) {
+                moveState = 2;
+            }
+        }
+        if (moveState != 2) {
+            groundStepSoundCooldownTicks = 0;
+            return;
+        }
+        if (groundStepSoundCooldownTicks > 0) {
+            return;
+        }
+        getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_RUN.get(), 1.0f, 1.0f, 22);
+        groundStepSoundCooldownTicks = 30;
+    }
+
+    public void playEatMovingSound() {
+        if (level().isClientSide) {
+            return;
+        }
+        float pitch = isBaby() ? 1.6f : 1.0f;
+        getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_EAT.get(), 1.0f, pitch, 33);
+    }
+
     private void clearStatesWhenMounted() {
         if (level().isClientSide || !this.isVehicle()) {
             return;
@@ -1039,6 +1074,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                     setTakeoff(false);
                     timeFlying = 0;
                     triggerAnim("actions", "landed");
+                    getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
                     lockRiderControls(34);  // Lock controls for 1.67 seconds while animation plays
                 }
             }
@@ -2112,23 +2148,19 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Cindervane> movement = new AnimationController<>(this, "movement", 5, animationHandler::handleMovementAnimation);
-        movement.setSoundKeyframeHandler(this::onAnimationSound);
+        movement.setSoundKeyframeHandler(event -> {});
         controllers.add(movement);
 
         AnimationController<Cindervane> actions = new AnimationController<>(this, "actions", 5, animationHandler::actionPredicate);
         animationHandler.setupActionController(actions);
-        actions.setSoundKeyframeHandler(this::onAnimationSound);
+        actions.setSoundKeyframeHandler(event -> {});
         controllers.add(actions);
 
         AnimationController<Cindervane> instantController = new AnimationController<>(this, "instant", 1,
                 animationHandler::instantActionPredicate);
         animationHandler.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(this::onAnimationSound);
+        instantController.setSoundKeyframeHandler(event -> {});
         controllers.add(instantController);
-    }
-
-    private void onAnimationSound(SoundKeyframeEvent<Cindervane> event) {
-        soundHandler.handleAnimationSound(this, event.getKeyframeData(), event.getController());
     }
 
     public DragonSoundHandler getSoundHandler() {
@@ -2484,8 +2516,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.entityData.set(DATA_TAKEOFF, takeoff);
         if (takeoff && !wasTakeoff && !level().isClientSide) {
             triggerAnim("instant", "takeoff");
+            getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, 1.0f, 55);
         }
-        // Takeoff sound is handled via animation keyframe for stereo/mono routing.
     }
 
     /**
@@ -2611,6 +2643,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
         if (!level().isClientSide) {
             triggerAnim("actions", "landed");
+            getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
             suppressSleep(60);
         }
         markLandedNow();
