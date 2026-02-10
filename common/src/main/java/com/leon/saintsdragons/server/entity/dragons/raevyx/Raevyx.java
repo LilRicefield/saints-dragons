@@ -86,7 +86,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 
 //WHO ARE THESE SUCKAS
 import org.jetbrains.annotations.Nullable;
@@ -534,6 +533,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
         if (!level().isClientSide) {
             triggerAnim("action", "landed");
+            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
             suppressSleep(60);
         }
         markLandedNow();
@@ -635,7 +635,27 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void playStepSound(@Nonnull BlockPos pos, @Nonnull BlockState state) {
-        // Intentionally empty — step sounds are driven by GeckoLib keyframes (step1/step2)
+        if (this.level().isClientSide) {
+            return;
+        }
+        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble()) {
+            return;
+        }
+
+        long now = this.level().getGameTime();
+        double horizontalSpeedSq = this.getDeltaMovement().horizontalDistanceSqr();
+        boolean running = isActuallyRunning() || horizontalSpeedSq > 0.02D;
+        long minIntervalTicks = running ? 20L : 33L;
+        if (now - getSoundHandler().getLastStepTick() < minIntervalTicks) {
+            return;
+        }
+        getSoundHandler().setLastStepTick(now);
+
+        if (running) {
+            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_RUN.get(), 1.0f, 1.0f, 20);
+        } else {
+            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_WALK.get(), 1.0f, 1.0f, 34);
+        }
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -1170,8 +1190,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.set(DATA_TAKEOFF, takeoff);
         if (takeoff && !wasTakeoff && !level().isClientSide) {
             triggerAnim("instant", "takeoff");
+            float pitch = 0.94f + getRandom().nextFloat() * 0.12f;
+            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch, 56);
         }
-        // Takeoff sound is now handled by animation keyframe in RaevyxSoundProfile
     }
 
     /**
@@ -1759,6 +1780,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         lastDashWasRight = !lastDashWasRight;
         this.entityData.set(DATA_LAST_DASH_RIGHT, lastDashWasRight);
+        getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DASH.get(), 1.6f, 1.0f, 56);
 
         return true;
     }
@@ -1870,6 +1892,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // Toggle which dash animation will play next (movement controller handles the actual animation)
         lastDashWasRight = !lastDashWasRight;
         this.entityData.set(DATA_LAST_DASH_RIGHT, lastDashWasRight);
+        getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DASH.get(), 1.6f, 1.0f, 56);
 
         // No control lock - allow melee attacks during dash!
     }
@@ -2895,6 +2918,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     setTakeoff(false);
                     timeFlying = 0;
                     triggerAnim("action", "landed");  // Trigger as one-shot animation
+                    getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
                     lockRiderControls(30);  // Lock controls for 1.50 seconds while animation plays
                 }
             }
@@ -3097,6 +3121,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             resetAmbientSoundTimer();
         }
     }
+
     /**
      * Resets the ambient sound timer with some randomness
      */
@@ -4165,14 +4190,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     return PlayState.STOP;
                 });
 
-        movementController.setSoundKeyframeHandler(this::onAnimationSound);
-        actionController.setSoundKeyframeHandler(this::onAnimationSound);
+        movementController.setSoundKeyframeHandler(event -> {});
+        actionController.setSoundKeyframeHandler(event -> {});
         animationHandler.setupActionController(actionController);
 
         AnimationController<Raevyx> instantController =
                 new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
         animationHandler.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(this::onAnimationSound);
+        instantController.setSoundKeyframeHandler(event -> {});
         controllers.add(instantController);
 
         controllers.add(movementController);
@@ -4208,11 +4233,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return RaevyxAbilities.RAEVYX_SUMMON_STORM;
     }
 
-    public void onAnimationSound(SoundKeyframeEvent<Raevyx> event) {
-        // Delegate all keyframed sounds to the sound handler
-        // Pass the raw event data to the sound handler
-        this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
-    }
     @Override
     public void lockRiderControls(int ticks) {
         super.lockRiderControls(ticks);  // Base handles tick counting and entity data

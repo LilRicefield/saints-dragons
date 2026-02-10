@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -65,6 +66,9 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
         if (section.sectionType == STARTUP) {
             impactApplied = false;
             dragon.triggerAnim("action", "body_slam");
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BODY_SLAM.get(), 1.0f, 1.0f, 53);
+            }
             dragon.lockRiderControls(CONTROL_LOCK_TICKS);
         }
     }

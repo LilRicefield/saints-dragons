@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -77,9 +78,11 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
 
         if (section.sectionType == STARTUP) {
             Nulljaw dragon = getUser();
-            // Trigger the appropriate claw animation
             String animName = useLeftClaw ? "claw_left" : "claw_right";
             dragon.triggerAnim("action", animName);
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_CLAW.get(), 1.0f, 1.0f, 18);
+            }
             appliedHit = false;
         }
     }

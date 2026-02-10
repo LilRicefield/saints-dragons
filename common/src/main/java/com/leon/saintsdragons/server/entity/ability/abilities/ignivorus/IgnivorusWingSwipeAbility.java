@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -73,6 +74,9 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
 
             // Trigger wing swipe animation via GeckoLib action controller
             dragon.triggerAnim("action", animationName);
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_WING_SWIPE.get(), 1.0f, 1.0f, 55);
+            }
 
             // Toggle for next time
             dragon.toggleWingSwipeSide();

@@ -64,18 +64,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_DODGE = registerSound("raevyx_dodge");
     public static final Supplier<SoundEvent> RAEVYX_DASH = registerSound("raevyx_dash");
 
-    // Stereo variants (non-positional for local player)
-    public static final Supplier<SoundEvent> RAEVYX_BITE_STEREO = registerSound("raevyx_bite_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_DASH_STEREO = registerSound("raevyx_dash_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_DODGE_STEREO = registerSound("raevyx_dodge_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_HORNGORE_STEREO = registerSound("raevyx_horngore_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_TAKEOFF_STEREO = registerSound("raevyx_takeoff_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_ROAR_STEREO = registerSound("raevyx_roar_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_WALK_STEREO = registerSound("raevyx_walk_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_RUN_STEREO = registerSound("raevyx_run_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAM_START_STEREO = registerSound("raevyx_lightning_beam_start_stereo");
-    public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAM_STOP_STEREO = registerSound("raevyx_lightning_beam_stop_stereo");
-
     // Cindervane
     public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");
     public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_2 = registerSound("cindervane_grumble2");
@@ -83,7 +71,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> CINDERVANE_ROAR = registerSound("cindervane_roar");
     public static final Supplier<SoundEvent> CINDERVANE_HURT = registerSound("cindervane_hurt");
     public static final Supplier<SoundEvent> CINDERVANE_BITE = registerSound("cindervane_bite");
-    public static final Supplier<SoundEvent> CINDERVANE_BITE_STEREO = registerSound("cindervane_bite_stereo");
     public static final Supplier<SoundEvent> CINDERVANE_DIE = registerSound("cindervane_die");
     public static final Supplier<SoundEvent> CINDERVANE_RUN = registerSound("cindervane_run");
     public static final Supplier<SoundEvent> CINDERVANE_FLAP = registerSound("cindervane_flap");
@@ -91,9 +78,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> CINDERVANE_LANDED = registerSound("cindervane_landed");
     public static final Supplier<SoundEvent> CINDERVANE_EAT = registerSound("cindervane_eat");
     public static final Supplier<SoundEvent> CINDERVANE_MAGMA_BLAST = registerSound("cindervane_magma_blast");
-    public static final Supplier<SoundEvent> CINDERVANE_MAGMA_BLAST_STEREO = registerSound("cindervane_magma_blast_stereo");
-    public static final Supplier<SoundEvent> CINDERVANE_ROAR_STEREO = registerSound("cindervane_roar_stereo");
-    public static final Supplier<SoundEvent> CINDERVANE_TAKEOFF_STEREO = registerSound("cindervane_takeoff_stereo");
 
     // Nulljaw
     public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_1 = registerSound("nulljaw_grumble1");
@@ -118,17 +102,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> NULLJAW_HURT = registerSound("nulljaw_hurt");
     public static final Supplier<SoundEvent> NULLJAW_DIE = registerSound("nulljaw_die");
     public static final Supplier<SoundEvent> NULLJAW_EAT = registerSound("nulljaw_eat");
-
-    // Nulljaw stereo variants (non-positional for local rider)
-    public static final Supplier<SoundEvent> NULLJAW_WALK_STEREO = registerSound("nulljaw_walk_stereo");
-    public static final Supplier<SoundEvent> NULLJAW_RUN_STEREO = registerSound("nulljaw_run_stereo");
-    public static final Supplier<SoundEvent> NULLJAW_WALK2_STEREO = registerSound("nulljaw_walk2_stereo");
-    public static final Supplier<SoundEvent> NULLJAW_RUN2_STEREO = registerSound("nulljaw_run2_stereo");
-    public static final Supplier<SoundEvent> NULLJAW_BITE_STEREO = registerSound("nulljaw_bite_stereo");
-    public static final Supplier<SoundEvent> NULLJAW_PHASE2_DASH_STEREO = registerSound("nulljaw_phase2_dash_stereo");
-    public static final Supplier<SoundEvent> NULLJAW_HORNGORE_STEREO = registerSound("nulljaw_horngore_stereo");
-    public static final Supplier<SoundEvent> NULLJAW_ROAR2_STEREO = registerSound("nulljaw_roar2_stereo");
-    public static final Supplier<SoundEvent> NULLJAW_TAIL_SWIPE_STEREO = registerSound("nulljaw_tail_swipe_stereo");
 
     // Ignivorus
     public static final Supplier<SoundEvent> IGNIVORUS_ROAR = registerSound("ignivorus_roar");
@@ -173,17 +146,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_LEVEL2_SHOOTS = registerSound("ignivorus_level2_shoots");
     public static final Supplier<SoundEvent> IGNIVORUS_LEVEL3_CHARGE = registerSound("ignivorus_level3_charge");
     public static final Supplier<SoundEvent> IGNIVORUS_LEVEL3_SHOOTS = registerSound("ignivorus_level3_shoots");
-
-    // Ignivorus stereo variants (non-positional for local player)
-    public static final Supplier<SoundEvent> IGNIVORUS_TAKEOFF_STEREO = registerSound("ignivorus_takeoff_stereo");
-    public static final Supplier<SoundEvent> IGNIVORUS_WALK_STEREO = registerSound("ignivorus_walk_stereo");
-    public static final Supplier<SoundEvent> IGNIVORUS_RUN_STEREO = registerSound("ignivorus_run_stereo");
-    public static final Supplier<SoundEvent> IGNIVORUS_ROAR_STEREO = registerSound("ignivorus_roar_stereo");
-    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_WALK_STEREO = registerSound("ignivorus_phase2_walk_stereo");
-    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_RUN_STEREO = registerSound("ignivorus_phase2_run_stereo");
-    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_ENTER_STEREO = registerSound("ignivorus_phase2_enter_stereo");
-    public static final Supplier<SoundEvent> IGNIVORUS_PHASE2_EXIT_STEREO = registerSound("ignivorus_phase2_exit_stereo");
-
 
     private static Supplier<SoundEvent> registerSound(String name) {
         return REGISTER.register(name, () -> SoundEvent.createVariableRangeEvent(SaintsDragonsCommon.rl(name)));

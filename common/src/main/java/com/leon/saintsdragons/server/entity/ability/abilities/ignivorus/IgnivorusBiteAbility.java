@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -64,6 +65,9 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
             Ignivorus dragon = getUser();
             // Trigger bite animation via GeckoLib action controller
             dragon.triggerAnim("action", "bite");
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BITE.get(), 1.0f, 1.0f, 60);
+            }
             appliedHit = false;
         }
     }

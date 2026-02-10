@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -92,6 +93,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
             // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+            playEatSound();
 
             // Set feeding cooldown
             dragon.setFeedingCooldown(20);
@@ -218,6 +220,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
             // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+            playEatSound();
 
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             dragon.setFeedingCooldown(61);
@@ -256,6 +259,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
             // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+            playEatSound();
 
             // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
             dragon.setFeedingCooldown(61);
@@ -310,6 +314,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
             // Trigger eat animation
             dragon.triggerAnim("action", "eat");
+            playEatSound();
 
             // Set feeding cooldown
             dragon.setFeedingCooldown(23);
@@ -424,6 +429,13 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             case 2: // Wander
                 dragon.setOrderedToSit(false);
                 break;
+        }
+    }
+
+    private void playEatSound() {
+        if (!dragon.level().isClientSide) {
+            float pitch = dragon.isBaby() ? 1.6f : 1.0f;
+            dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_EAT.get(), 1.0f, pitch, 75);
         }
     }
 

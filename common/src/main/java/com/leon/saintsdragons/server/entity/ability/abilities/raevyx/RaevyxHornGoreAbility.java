@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -44,8 +45,11 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            // Trigger gore animation via normal GeckoLib action trigger
             getUser().triggerAnim("action", "horn_gore");
+            if (!getUser().level().isClientSide) {
+                float pitch = 0.9f + getUser().getRandom().nextFloat() * 0.2f;
+                getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_HORNGORE.get(), 1.3f, pitch, 19);
+            }
             hitIdsThisUse.clear();
             playedSoundThisUse = false;
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {

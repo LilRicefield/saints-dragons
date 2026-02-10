@@ -2,8 +2,8 @@ package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
-import com.leon.saintsdragons.client.sound.raevyx.RaevyxRoarSoundController;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
+import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -75,8 +75,8 @@ public class FabricClientEventHandler {
     }
 
     private static void onClientTick(Minecraft minecraft) {
+        DragonSoundRuntime.tick(minecraft);
         RaevyxLightningBeamSoundController.tick(minecraft);
-        RaevyxRoarSoundController.tick(minecraft);
         IgnivorusFireBreathSoundController.tick(minecraft);
         // Camera adjustments happen during render, not tick
         // We'll handle this in the render phase via mixin

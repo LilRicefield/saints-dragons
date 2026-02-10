@@ -2,8 +2,8 @@ package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
-import com.leon.saintsdragons.client.sound.raevyx.RaevyxRoarSoundController;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -368,8 +368,8 @@ public class ClientEventHandler {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
+        DragonSoundRuntime.tick(minecraft);
         RaevyxLightningBeamSoundController.tick(minecraft);
-        RaevyxRoarSoundController.tick(minecraft);
         IgnivorusFireBreathSoundController.tick(minecraft);
     }
 }

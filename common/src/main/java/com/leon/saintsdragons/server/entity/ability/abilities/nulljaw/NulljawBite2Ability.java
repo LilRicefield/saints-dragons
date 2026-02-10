@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -63,6 +64,9 @@ public class NulljawBite2Ability extends DragonAbility<Nulljaw> {
         if (section.sectionType == STARTUP) {
             Nulljaw dragon = getUser();
             dragon.triggerAnim("action", "bite2");
+            if (!dragon.level().isClientSide) {
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_BITE.get(), 1.0f, 1.0f, 38);
+            }
             appliedHit = false;
         }
     }

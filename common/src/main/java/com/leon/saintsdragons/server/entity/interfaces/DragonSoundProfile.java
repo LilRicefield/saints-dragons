@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.interfaces;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
+import com.leon.saintsdragons.sound.api.DragonSoundSpec;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -83,6 +84,10 @@ public interface DragonSoundProfile {
 
     default boolean handleVocal(DragonSoundHandler handler, DragonEntity dragon, String key) {
         return false;
+    }
+
+    default DragonSoundSpec getVocalSpec(DragonSoundHandler handler, DragonEntity dragon, String key, DragonEntity.VocalEntry entry) {
+        return null;
     }
 
     default boolean allowOverlap(String locator) {

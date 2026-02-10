@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.network;
 
+import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.DragonAllyScreen;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
@@ -10,6 +11,7 @@ import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAllyDelta;
 import com.leon.saintsdragons.common.network.MessageDragonAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
+import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -90,5 +92,15 @@ public final class ClientPacketHandlers {
         }
         DragonUIRegistry.getMeleeModeNotification()
                 .showNotification(message.mode());
+    }
+
+    public static void handleDragonMovingSound(MessageDragonMovingSound message) {
+        DragonSoundRuntime.playMoving(
+                message.entityId(),
+                message.soundId(),
+                message.volume(),
+                message.pitch(),
+                message.durationTicks()
+        );
     }
 }

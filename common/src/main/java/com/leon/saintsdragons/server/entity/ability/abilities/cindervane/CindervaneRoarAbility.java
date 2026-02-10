@@ -5,8 +5,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.phys.Vec3;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
@@ -69,16 +67,10 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
 
         if (soundQueued && section.sectionType == STARTUP && getTicksInSection() >= SOUND_DELAY_TICKS) {
             if (!dragon.level().isClientSide) {
-                Vec3 mouth = dragon.getMouthPosition();
                 boolean flying = dragon.isFlying();
                 float basePitch = flying ? 1.05f : 0.9f;
                 float pitch = basePitch + dragon.getRandom().nextFloat() * 0.05f;
-                dragon.level().playSound(null,
-                        mouth.x, mouth.y, mouth.z,
-                        ModSounds.CINDERVANE_ROAR.get(),
-                        SoundSource.NEUTRAL,
-                        1.5f,
-                        pitch);
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_ROAR.get(), 1.5f, pitch, 60);
             }
             soundQueued = false;
         }

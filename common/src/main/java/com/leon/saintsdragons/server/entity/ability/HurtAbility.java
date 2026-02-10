@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 
 /**
@@ -55,6 +56,32 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
         // Trigger animation, sound is handled by animation keyframes
         if (animationTrigger != null) {
             getUser().triggerAnim(controllerId, animationTrigger);
+        }
+
+        if ("raevyx_hurt".equals(animationTrigger) && !getUser().level().isClientSide
+                && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx raevyx) {
+            float pitch = 0.95f + raevyx.getRandom().nextFloat() * 0.1f;
+            raevyx.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_HURT.get(), 1.2f, pitch, 40);
+        }
+        if ("ignivorus_hurt".equals(animationTrigger) && !getUser().level().isClientSide
+                && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
+            float pitch = 0.95f + ignivorus.getRandom().nextFloat() * 0.1f;
+            ignivorus.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_HURT.get(), 1.2f, pitch, 40);
+        }
+        if ("cindervane_hurt".equals(animationTrigger) && !getUser().level().isClientSide
+                && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane cindervane) {
+            float pitch = 0.95f + cindervane.getRandom().nextFloat() * 0.1f;
+            cindervane.getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_HURT.get(), 1.2f, pitch, 52);
+        }
+        if ("nulljaw_hurt".equals(animationTrigger) && !getUser().level().isClientSide
+                && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw nulljaw) {
+            float pitch = 0.95f + nulljaw.getRandom().nextFloat() * 0.1f;
+            nulljaw.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_HURT.get(), 1.2f, pitch, 34);
+        }
+        if ("stegonaut_hurt".equals(animationTrigger) && !getUser().level().isClientSide
+                && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut stegonaut) {
+            float pitch = 0.95f + stegonaut.getRandom().nextFloat() * 0.1f;
+            stegonaut.getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_HURT.get(), 1.2f, pitch, 30);
         }
     }
 

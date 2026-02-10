@@ -60,7 +60,6 @@ import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class Stegonaut extends RideableDragonBase implements SoundHandledDragon {
@@ -152,6 +151,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
     // Server-side hold timer to prevent flickering when stopping
     private int walkAnimationHoldTicks = 0;
+    private int groundStepSoundCooldownTicks = 0;
 
     public Stegonaut(EntityType<? extends Stegonaut> entityType, Level level) {
         super(entityType, level);
@@ -407,18 +407,18 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         // Use the new smooth animation controller
         AnimationController<Stegonaut> movementController = new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
-        movementController.setSoundKeyframeHandler(this::onAnimationSound);
+        movementController.setSoundKeyframeHandler(event -> {});
         controllers.add(movementController);
 
         // Add action controller for grumble animations
         AnimationController<Stegonaut> actionController = new AnimationController<>(this, "action", 5, animationController::actionPredicate);
         animationController.setupActionController(actionController);
-        actionController.setSoundKeyframeHandler(this::onAnimationSound);
+        actionController.setSoundKeyframeHandler(event -> {});
         controllers.add(actionController);
 
         AnimationController<Stegonaut> instantController = new AnimationController<>(this, "instant", 1, animationController::instantActionPredicate);
         animationController.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(this::onAnimationSound);
+        instantController.setSoundKeyframeHandler(event -> {});
         controllers.add(instantController);
     }
 
@@ -596,6 +596,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
             // Trigger eat animation
             this.triggerAnim("action", "eat");
+            playEatMovingSound();
 
             DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
@@ -731,6 +732,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             }
 
             this.triggerAnim("action", "eat");
+            playEatMovingSound();
             this.setInLove(player);
             sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_ready");
         }
@@ -749,6 +751,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
             // Trigger eat animation
             this.triggerAnim("action", "eat");
+            playEatMovingSound();
 
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             boolean wasHungry = this.isHungry();
@@ -1139,6 +1142,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         // Handle ambient sounds (server-side only)
         if (!level().isClientSide) {
             handleAmbientSounds();
+            tickGroundStepAudio();
         }
 
         // Tick passive buff ability (only if alive)
@@ -1179,14 +1183,43 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
     }
 
-    // ===== SOUND KEYFRAME HANDLING =====
+    private void tickGroundStepAudio() {
+        if (groundStepSoundCooldownTicks > 0) {
+            groundStepSoundCooldownTicks--;
+        }
+        if (isSleeping() || isSleepTransitioning() || isOrderedToSit() || areRiderControlsLocked() || !onGround() || isInWaterOrBubble()) {
+            groundStepSoundCooldownTicks = 0;
+            return;
+        }
+        int moveState = this.entityData.get(DATA_GROUND_MOVE_STATE);
+        if (moveState <= 0) {
+            double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
+            if (speedSqr > 0.0064D) {
+                moveState = 2;
+            } else if (speedSqr > 0.001D) {
+                moveState = 1;
+            }
+        }
+        if (moveState <= 0) {
+            groundStepSoundCooldownTicks = 0;
+            return;
+        }
+        if (groundStepSoundCooldownTicks > 0) {
+            return;
+        }
+        boolean running = moveState == 2;
+        int duration = running ? 27 : 40;
+        getSoundHandler().playMovingEntitySound(
+                running ? ModSounds.STEGONAUT_RUN.get() : ModSounds.STEGONAUT_WALK.get(),
+                1.0f, isBaby() ? 1.6f : 1.0f, duration
+        );
+        groundStepSoundCooldownTicks = duration;
+    }
 
-    /**
-     * Handle sound keyframes from animations (for grumble sounds)
-     */
-    public void onAnimationSound(SoundKeyframeEvent<Stegonaut> event) {
-        // Delegate all keyframed sounds to the sound handler
-        this.getSoundHandler().handleAnimationSound(this, event.getKeyframeData(), event.getController());
+    private void playEatMovingSound() {
+        if (!level().isClientSide) {
+            getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_EAT.get(), 1.0f, isBaby() ? 1.6f : 1.0f, 22);
+        }
     }
 
     // ===== CLIENT LOCATOR CACHE METHODS =====

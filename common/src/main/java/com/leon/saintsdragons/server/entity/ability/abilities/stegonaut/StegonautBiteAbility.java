@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -47,6 +48,9 @@ public class StegonautBiteAbility extends DragonAbility<Stegonaut> {
         }
         if (section.sectionType == STARTUP) {
             getUser().triggerAnim("action", "bite");
+            if (!getUser().level().isClientSide) {
+                getUser().getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_BITE.get(), 1.0f, getUser().isBaby() ? 1.6f : 1.0f, 59);
+            }
             appliedHit = false;
         }
     }

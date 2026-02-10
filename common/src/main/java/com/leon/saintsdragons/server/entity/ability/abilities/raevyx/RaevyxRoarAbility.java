@@ -24,9 +24,6 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
             new AbilitySectionDuration(AbilitySectionType.RECOVERY, 12)
     };
 
-    private boolean roarQueued = false;
-    private static final int ROAR_DELAY_TICKS = 3;   // ~0.15s (closest to 0.17s at 20 TPS)
-    private static final int ROAR_TOTAL_TICKS = 69;  // ~3.45s (animation length ~3.4167s)
     private int strikesLeft = 0;
     private int strikeCooldown = 0;
     private java.util.List<Integer> targetIds = java.util.Collections.emptyList();
@@ -40,30 +37,20 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            // Unified roar animation for all states
-            getUser().triggerAnim("action", "roar");
-            // Queue the roar sound slightly delayed to sync with mouth opening
-            roarQueued = true;
-            // Screen shake is now handled by the animation predicate
-            // No takeoff restriction - allow full mobility during roar
-            // Preselect targets and number of strikes
+            getUser().getSoundHandler().playVocal("roar");
             selectLightningTargets();
-            // If multiple targets, cover more with extra strikes; else 2-3 strikes on single target
             int count = targetIds.size();
             boolean isSupercharged = getUser().isSupercharged();
             
             if (count > 1) {
                 strikesLeft = Math.min(6, Math.max(3, count * 2));
             } else {
-                strikesLeft = 2 + getUser().getRandom().nextInt(2); // 2-3 strikes
+                strikesLeft = 2 + getUser().getRandom().nextInt(2);
             }
-            
-            // Double the strikes when supercharged
             if (isSupercharged) {
                 strikesLeft *= 2;
             }
-            
-            strikeCooldown = 0; // strike asap when ACTIVE begins
+            strikeCooldown = 0;
         }
     }
 
@@ -71,14 +58,6 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
     public void tickUsing() {
         var section = getCurrentSection();
         if (section == null) return;
-
-        // Roar sound is now handled by animation keyframe in RaevyxSoundProfile
-        // Just mark the queue as processed
-        if (section.sectionType == AbilitySectionType.STARTUP && roarQueued) {
-            if (getTicksInSection() >= ROAR_DELAY_TICKS) {
-                roarQueued = false;
-            }
-        }
 
         // Continuously trigger screen shake during the entire ability
         if (!getUser().level().isClientSide) {

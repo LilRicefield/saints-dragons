@@ -131,6 +131,14 @@ public final class NetworkHandler {
                 MessageDragonMeleeMode::decode,
                 MessageDragonMeleeMode::handle
         );
+
+        NETWORK.registerClientbound(
+                MessageDragonMovingSound.class,
+                id("dragon_moving_sound"),
+                MessageDragonMovingSound::encode,
+                MessageDragonMovingSound::decode,
+                MessageDragonMovingSound::handle
+        );
     }
 
     public static void sendToServer(Object message) {
