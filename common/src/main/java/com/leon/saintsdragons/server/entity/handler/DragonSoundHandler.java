@@ -22,6 +22,8 @@ public class DragonSoundHandler {
     );
     private final Map<String, Integer> vocalCooldowns = new HashMap<>();
     private long lastStepTick = -100;
+    private static final int COOLDOWN_PRUNE_INTERVAL_TICKS = 200;
+    private int pruneCooldownCounter = 0;
 
     public DragonSoundHandler(DragonEntity dragon) {
         this.dragon = dragon;
@@ -30,6 +32,10 @@ public class DragonSoundHandler {
     }
 
     public void tick() {
+        if (++pruneCooldownCounter >= COOLDOWN_PRUNE_INTERVAL_TICKS) {
+            pruneCooldownCounter = 0;
+            vocalCooldowns.entrySet().removeIf(entry -> entry.getValue() <= dragon.tickCount);
+        }
     }
 
     private boolean isInCooldown(String key) {

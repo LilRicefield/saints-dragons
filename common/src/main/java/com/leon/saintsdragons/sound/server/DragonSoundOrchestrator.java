@@ -7,11 +7,16 @@ import com.leon.saintsdragons.sound.api.DragonSoundMode;
 import com.leon.saintsdragons.sound.api.DragonSoundSpec;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public final class DragonSoundOrchestrator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DragonSoundOrchestrator.class);
+
     private DragonSoundOrchestrator() {
     }
 
@@ -46,6 +51,9 @@ public final class DragonSoundOrchestrator {
         }
         var soundId = BuiltInRegistries.SOUND_EVENT.getKey(spec.sound());
         if (soundId == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Sound event not registered for dragon {}: {}", dragon.getId(), spec.sound());
+            }
             return;
         }
         MessageDragonMovingSound packet = new MessageDragonMovingSound(
@@ -56,7 +64,7 @@ public final class DragonSoundOrchestrator {
                 spec.durationTicks()
         );
         NetworkHandler.sendToTracking(dragon, packet);
-        Set<java.util.UUID> sent = new HashSet<>();
+        Set<UUID> sent = new HashSet<>();
         if (dragon.getControllingPassenger() instanceof ServerPlayer rider) {
             NetworkHandler.sendToPlayer(rider, packet);
             sent.add(rider.getUUID());

@@ -6,6 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,8 +15,9 @@ import java.util.Map;
 
 @Environment(EnvType.CLIENT)
 public final class DragonMovingSoundController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DragonMovingSoundController.class);
     private static final Map<String, ActiveEntry> ACTIVE_SOUNDS = new HashMap<>();
-    private static final long DUPLICATE_SIGNAL_WINDOW_TICKS = 1L;
+    private static final long DUPLICATE_SIGNAL_WINDOW_TICKS = 2L;
 
     private DragonMovingSoundController() {
     }
@@ -27,10 +30,16 @@ public final class DragonMovingSoundController {
 
         ResourceLocation resourceLocation = ResourceLocation.tryParse(soundId);
         if (resourceLocation == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Failed to parse sound ID for entity {}: {}", entityId, soundId);
+            }
             return;
         }
         SoundEvent sound = BuiltInRegistries.SOUND_EVENT.get(resourceLocation);
         if (sound == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Sound event not found in registry for entity {}: {}", entityId, resourceLocation);
+            }
             return;
         }
 
