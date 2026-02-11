@@ -131,6 +131,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingChanceHearty = 3.0D;
         double beamDrainPerTick = 0.014D;
         double beamRegenPerTick = 0.0025D;
+        double summonStormCooldownTicks = 4800.0D;
+        double summonStormSuperchargeTicks = 1200.0D;
+        double summonStormSuperchargeDamageMultiplier = 2.0D;
+        double summonStormDurationTicks = 1200.0D;
         boolean legacyTaming = false;
         double eggHatchChanceNormal = 2.0D;
         double eggHatchChanceThunder = 1.0D;
@@ -158,6 +162,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingChanceHearty = (double) configClass.getField("RAEVYX_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_HEARTY").get(null));
                 beamDrainPerTick = (double) configClass.getField("RAEVYX_BEAM_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BEAM_DRAIN_PER_TICK").get(null));
                 beamRegenPerTick = (double) configClass.getField("RAEVYX_BEAM_REGEN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BEAM_REGEN_PER_TICK").get(null));
+                summonStormCooldownTicks = (double) configClass.getField("RAEVYX_SUMMON_STORM_COOLDOWN_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_SUMMON_STORM_COOLDOWN_TICKS").get(null));
+                summonStormSuperchargeTicks = (double) configClass.getField("RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS").get(null));
+                summonStormSuperchargeDamageMultiplier = (double) configClass.getField("RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER").get(null));
+                summonStormDurationTicks = (double) configClass.getField("RAEVYX_SUMMON_STORM_DURATION_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_SUMMON_STORM_DURATION_TICKS").get(null));
                 legacyTaming = (boolean) configClass.getField("RAEVYX_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_LEGACY_TAMING").get(null));
                 eggHatchChanceNormal = (double) configClass.getField("RAEVYX_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggHatchChanceThunder = (double) configClass.getField("RAEVYX_EGG_HATCH_CHANCE_THUNDER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_CHANCE_THUNDER").get(null));
@@ -180,6 +188,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("taming_chance_hearty", tamingChanceHearty);
         extras.put("beam_drain_per_tick", beamDrainPerTick);
         extras.put("beam_regen_per_tick", beamRegenPerTick);
+        extras.put("summon_storm_cooldown_ticks", summonStormCooldownTicks);
+        extras.put("summon_storm_supercharge_ticks", summonStormSuperchargeTicks);
+        extras.put("summon_storm_supercharge_damage_multiplier", summonStormSuperchargeDamageMultiplier);
+        extras.put("summon_storm_duration_ticks", summonStormDurationTicks);
         extras.put("egg_hatch_chance_normal", eggHatchChanceNormal);
         extras.put("egg_hatch_chance_thunder", eggHatchChanceThunder);
         extras.put("egg_storm_instant_chance", eggStormInstantChance);
@@ -402,9 +414,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     private static DragonAttributeConfig stegonautDefaults() {
         double maxHealth = 100.0D;
         double armor = 15.0D;
+        double biteDamage = 5.0D;
+        double chinSlamDamage = 8.0D;
+        double groundEatingDamage = 10.0D;
         double tamingChanceBase = 1.0D;
         double tamingChanceHearty = 1.0D;
         double eggHatchChanceNormal = 2.0D;
+        double eggDropChance = 0.12D;
         boolean reactiveTerrainClearingOnDamage = true;
         boolean reactiveTerrainClearingOnDamageTamed = false;
 
@@ -415,12 +431,20 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         .invoke(configClass.getField("STEGONAUT_MAX_HEALTH").get(null));
                 armor = (double) configClass.getField("STEGONAUT_ARMOR").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_ARMOR").get(null));
+                biteDamage = (double) configClass.getField("STEGONAUT_BITE_DAMAGE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_BITE_DAMAGE").get(null));
+                chinSlamDamage = (double) configClass.getField("STEGONAUT_CHIN_SLAM_DAMAGE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_CHIN_SLAM_DAMAGE").get(null));
+                groundEatingDamage = (double) configClass.getField("STEGONAUT_GROUND_EATING_DAMAGE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_GROUND_EATING_DAMAGE").get(null));
                 tamingChanceBase = (double) configClass.getField("STEGONAUT_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_TAMING_CHANCE_BASE").get(null));
                 tamingChanceHearty = (double) configClass.getField("STEGONAUT_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_TAMING_CHANCE_HEARTY").get(null));
                 eggHatchChanceNormal = (double) configClass.getField("STEGONAUT_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_EGG_HATCH_CHANCE_NORMAL").get(null));
+                eggDropChance = (double) configClass.getField("STEGONAUT_EGG_DROP_CHANCE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_EGG_DROP_CHANCE").get(null));
                 reactiveTerrainClearingOnDamage = (boolean) configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
                 reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get")
@@ -433,11 +457,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 maxHealth,
                 armor,
                 0.0D,
-                Map.of(),
+                Map.of(
+                        "bite", DragonAbilityOverride.ofDamage(biteDamage),
+                        "chin_slam", DragonAbilityOverride.ofDamage(chinSlamDamage),
+                        "ground_eating", DragonAbilityOverride.ofDamage(groundEatingDamage)
+                ),
                 Map.of(
                         "taming_chance_base", tamingChanceBase,
                         "taming_chance_hearty", tamingChanceHearty,
-                        "egg_hatch_chance_normal", eggHatchChanceNormal
+                        "egg_hatch_chance_normal", eggHatchChanceNormal,
+                        "egg_drop_chance", eggDropChance
                 ),
                 Map.of(
                         "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
@@ -527,6 +556,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillLegacyTaming(path, entry.getKey());
                 backfillExtraBooleans(path, entry.getKey());
                 backfillBeamEnergyTuning(path, entry.getKey(), entry.getValue());
+                backfillRaevyxSummonStormTuning(path, entry.getKey(), entry.getValue());
                 backfillTamingStunHealth(path, entry.getKey(), entry.getValue());
                 backfillCindervaneFireBodyExplosionDamage(path, entry.getKey(), entry.getValue());
                 backfillWildFlyingSpeedMultiplier(path, entry.getKey(), entry.getValue());
@@ -820,6 +850,46 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         }
     }
 
+    private void backfillRaevyxSummonStormTuning(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
+        if (!id.equals(RAEVYX_ID)) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            JsonObject extra = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            boolean updated = false;
+
+            if (!extra.has("summon_storm_cooldown_ticks")) {
+                extra.addProperty("summon_storm_cooldown_ticks",
+                        mergedConfig.extraDouble("summon_storm_cooldown_ticks", 4800.0D));
+                updated = true;
+            }
+            if (!extra.has("summon_storm_supercharge_ticks")) {
+                extra.addProperty("summon_storm_supercharge_ticks",
+                        mergedConfig.extraDouble("summon_storm_supercharge_ticks", 1200.0D));
+                updated = true;
+            }
+            if (!extra.has("summon_storm_supercharge_damage_multiplier")) {
+                extra.addProperty("summon_storm_supercharge_damage_multiplier",
+                        mergedConfig.extraDouble("summon_storm_supercharge_damage_multiplier", 2.0D));
+                updated = true;
+            }
+            if (!extra.has("summon_storm_duration_ticks")) {
+                extra.addProperty("summon_storm_duration_ticks",
+                        mergedConfig.extraDouble("summon_storm_duration_ticks", 1200.0D));
+                updated = true;
+            }
+
+            if (updated) {
+                json.add("extra", extra);
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill raevyx summon storm tuning at {}", path, e);
+        }
+    }
+
     private void backfillTamingStunHealth(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
         boolean isRaevyx = id.equals(RAEVYX_ID);
         boolean isIgnivorus = id.equals(IGNIVORUS_ID);
@@ -927,6 +997,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         hints.addProperty("reactive_terrain_clearing_on_damage_tamed", "true = tamed dragons can also clear on hurt (off = safer bases)");
         hints.addProperty("taming_stun_health", "Health threshold for taming stun (0 = disable stun)");
         hints.addProperty("wild_flying_speed_multiplier", "Scales AI flight speed only for untamed dragons (1 = default, ridden flight unchanged)");
+        hints.addProperty("summon_storm_cooldown_ticks", "Cooldown for Summon Storm (20 ticks = 1 second)");
+        hints.addProperty("summon_storm_supercharge_ticks", "How long Summon Storm supercharge lasts (20 ticks = 1 second)");
+        hints.addProperty("summon_storm_supercharge_damage_multiplier", "Damage multiplier applied while supercharged (1 = normal damage)");
+        hints.addProperty("summon_storm_duration_ticks", "How long thunderstorm weather is enforced (20 ticks = 1 second)");
 
         if (id.equals(NULLJAW_ID)) {
             hints.addProperty("swim_speed", "Min 0.1, Max 5.0");

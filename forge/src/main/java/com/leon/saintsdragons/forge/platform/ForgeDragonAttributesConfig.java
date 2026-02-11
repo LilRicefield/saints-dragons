@@ -37,6 +37,10 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue RAEVYX_HORN_GORE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_BEAM_DRAIN_PER_TICK;
     public static ForgeConfigSpec.DoubleValue RAEVYX_BEAM_REGEN_PER_TICK;
+    public static ForgeConfigSpec.DoubleValue RAEVYX_SUMMON_STORM_COOLDOWN_TICKS;
+    public static ForgeConfigSpec.DoubleValue RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS;
+    public static ForgeConfigSpec.DoubleValue RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER;
+    public static ForgeConfigSpec.DoubleValue RAEVYX_SUMMON_STORM_DURATION_TICKS;
     public static ForgeConfigSpec.DoubleValue RAEVYX_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue RAEVYX_TAMING_STUN_HEALTH;
@@ -109,9 +113,13 @@ public final class ForgeDragonAttributesConfig {
     // Stegonaut
     public static ForgeConfigSpec.DoubleValue STEGONAUT_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_ARMOR;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_BITE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_CHIN_SLAM_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_GROUND_EATING_DAMAGE;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_HATCH_CHANCE_NORMAL;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
     public static ForgeConfigSpec.BooleanValue STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
@@ -164,6 +172,11 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Beam Energy Tuning");
         RAEVYX_BEAM_DRAIN_PER_TICK = builder.defineInRange("beam_drain_per_tick", 0.014, 0.0, 1.0);
         RAEVYX_BEAM_REGEN_PER_TICK = builder.defineInRange("beam_regen_per_tick", 0.0025, 0.0, 1.0);
+        builder.comment("Summon Storm Tuning");
+        RAEVYX_SUMMON_STORM_COOLDOWN_TICKS = builder.defineInRange("summon_storm_cooldown_ticks", 4800.0, 20.0, 120000.0);
+        RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS = builder.defineInRange("summon_storm_supercharge_ticks", 1200.0, 20.0, 120000.0);
+        RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER = builder.defineInRange("summon_storm_supercharge_damage_multiplier", 2.0, 0.0, 100.0);
+        RAEVYX_SUMMON_STORM_DURATION_TICKS = builder.defineInRange("summon_storm_duration_ticks", 1200.0, 20.0, 120000.0);
         builder.comment("Taming Chances (lower = easier)");
         RAEVYX_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 5.0, 1.0, 20.0);
         RAEVYX_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 3.0, 1.0, 20.0);
@@ -273,11 +286,17 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Core Attributes");
         STEGONAUT_MAX_HEALTH = builder.defineInRange("max_health", 100.0, 1.0, 10000.0);
         STEGONAUT_ARMOR = builder.defineInRange("armor", 15.0, 0.0, 10000.0);
+        builder.comment("Ability Damage");
+        STEGONAUT_BITE_DAMAGE = builder.defineInRange("bite_damage", 5.0, 0.0, 100.0);
+        STEGONAUT_CHIN_SLAM_DAMAGE = builder.defineInRange("chin_slam_damage", 8.0, 0.0, 100.0);
+        STEGONAUT_GROUND_EATING_DAMAGE = builder.defineInRange("ground_eating_damage", 10.0, 0.0, 100.0);
         builder.comment("Taming Chances (lower = easier)");
         STEGONAUT_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 1.0, 1.0, 20.0);
         STEGONAUT_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 1.0, 1.0, 20.0);
         builder.comment("Eggs (1 in N chance per random tick)");
         STEGONAUT_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 2.0, 1.0, 200.0);
+        builder.comment("Egg drop chance (0-1)");
+        STEGONAUT_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Reactive terrain clearing (requires mobGriefing)");
         STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
         STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);

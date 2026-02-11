@@ -3,10 +3,14 @@ package com.leon.saintsdragons.server.world;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.HashMap;
@@ -28,7 +32,12 @@ public class VillageIvySpawner {
 
     private static final int CHECK_INTERVAL = 200;
     private static final int VILLAGE_RADIUS = 128; // How far from player to search for villages
-    private static final int IVY_SEARCH_RADIUS = 48; // How far to search for existing Ivy
+    private static final int IVY_SEARCH_RADIUS = 96; // How far to search for existing Ivy
+    private static final int VILLAGE_CLUSTER_SIZE = 96;
+    private static final TagKey<Biome> IVY_VILLAGE_BIOME_TAG = TagKey.create(
+            Registries.BIOME,
+            new ResourceLocation("saintsdragons", "has_ivy_village_spawn")
+    );
 
     /**
      * Tick the spawner. Call this from your world tick event.
@@ -69,11 +78,14 @@ public class VillageIvySpawner {
         poiManager.getInRange(
             poi -> poi.is(PoiTypes.MEETING),
             playerPos,
-            VILLAGE_RADIUS * 2, // Search radius around player
+            VILLAGE_RADIUS,
             PoiManager.Occupancy.ANY
         ).forEach(poi -> {
             BlockPos villageCenter = poi.getPos();
-            long villageKey = villageCenter.asLong();
+            if (!level.getBiome(villageCenter).is(IVY_VILLAGE_BIOME_TAG)) {
+                return;
+            }
+            long villageKey = getVillageClusterKey(villageCenter);
 
             // If this village is tracked, confirm Ivy is still alive nearby.
             // This allows auto-recovery if Ivy died/despawned/was removed.
@@ -103,6 +115,12 @@ public class VillageIvySpawner {
             ivy -> ivy.isAlive()
         );
         return !nearbyIvys.isEmpty();
+    }
+
+    private static long getVillageClusterKey(BlockPos pos) {
+        int x = Math.floorDiv(pos.getX(), VILLAGE_CLUSTER_SIZE);
+        int z = Math.floorDiv(pos.getZ(), VILLAGE_CLUSTER_SIZE);
+        return (((long) x) << 32) ^ (z & 0xffffffffL);
     }
 
     private static void spawnIvy(ServerLevel level, BlockPos villageCenter) {

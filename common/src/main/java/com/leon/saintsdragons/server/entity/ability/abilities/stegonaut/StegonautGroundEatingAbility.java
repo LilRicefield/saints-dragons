@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -153,7 +154,7 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
         BlockState blockState = resolveGroundBlockState(dragon);
 
         StegonautGroundChunkEntity projectile = new StegonautGroundChunkEntity(
-                server, spawnPos, dragon, blockState, PROJECTILE_RADIUS, PROJECTILE_DAMAGE, PROJECTILE_LIFETIME_TICKS
+                server, spawnPos, dragon, blockState, PROJECTILE_RADIUS, resolveDamage(), PROJECTILE_LIFETIME_TICKS
         );
         projectile.setVisualScale(PROJECTILE_SCALE);
         projectile.setDeltaMovement(direction.scale(PROJECTILE_SPEED));
@@ -199,5 +200,11 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
         resolved = false;
         releaseTicks = 0;
         shootAnimTriggered = false;
+    }
+
+    private float resolveDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID)
+                .abilityDamage("ground_eating", PROJECTILE_DAMAGE);
     }
 }

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.init.CommonBrewingRecipes;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.fabric.entity.part.FabricPartEntities;
 import com.leon.saintsdragons.fabric.loot.FabricLootTableModifier;
@@ -30,6 +31,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         SaintsDragonsCommon.init();
+        CommonBrewingRecipes.register();
         raiseVanillaAttributeCaps();
         FabricPartEntities.register();
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonAttributeReloadListener());

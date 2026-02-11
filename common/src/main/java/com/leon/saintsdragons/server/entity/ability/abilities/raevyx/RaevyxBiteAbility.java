@@ -187,7 +187,10 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
 
             // Damage and VFX
             float mult = wyvern.getDamageMultiplier();
-            next.hurt(wyvern.level().damageSources().lightningBolt(), damage * mult * conductivity.damageMultiplier());
+            DamageSource chainSource = next instanceof com.leon.saintsdragons.server.entity.base.DragonEntity
+                    ? wyvern.level().damageSources().mobAttack(wyvern)
+                    : wyvern.level().damageSources().lightningBolt();
+            next.hurt(chainSource, damage * mult * conductivity.damageMultiplier());
             wyvern.noteAggroFrom(next);
             spawnArc(current.position().add(0, current.getBbHeight() * 0.5, 0),
                     next.position().add(0, next.getBbHeight() * 0.5, 0), conductivity);

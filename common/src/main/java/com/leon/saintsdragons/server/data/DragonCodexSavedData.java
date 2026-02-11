@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.data;
 
+import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -397,16 +398,9 @@ public class DragonCodexSavedData extends SavedData {
     }
 
     private static String resolveDragonType(DragonEntity dragon) {
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus) {
-            return "ignivorus";
-        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
-            return "raevyx";
-        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw) {
-            return "nulljaw";
-        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane) {
-            return "cindervane";
-        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut) {
-            return "stegonaut";
+        DragonType type = DragonType.fromEntity(dragon);
+        if (type != null) {
+            return type.getName();
         }
         return "ignivorus"; // Default fallback
     }

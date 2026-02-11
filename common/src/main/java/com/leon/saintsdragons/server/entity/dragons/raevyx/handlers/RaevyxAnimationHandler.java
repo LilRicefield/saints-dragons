@@ -378,12 +378,8 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.eat"));
         actionController.triggerableAnim("taunt",
                 RawAnimation.begin().thenPlay("animation.raevyx.taunt"));
-        actionController.triggerableAnim("summon_storm_ground_start",
-                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_ground_start"));
-        actionController.triggerableAnim("summon_storm_ground",
-                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_ground"));
-        actionController.triggerableAnim("summon_storm_ground_end",
-                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_ground_end"));
+        actionController.triggerableAnim("summon_storm",
+                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm"));
         actionController.triggerableAnim("summon_storm_air_start",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air_start"));
         actionController.triggerableAnim("summon_storm_air",

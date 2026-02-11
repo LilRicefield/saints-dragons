@@ -1671,7 +1671,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     protected boolean canAddPassenger(@NotNull Entity passenger) {
-        // Allow up to 2 passengers
+        // Two-seater is intended for players only.
+        if (!(passenger instanceof Player)) {
+            return false;
+        }
         return this.getPassengers().size() < getMaxPassengers();
     }
 

@@ -2,15 +2,18 @@
   "type": "minecraft:crafting_shaped",
   "pattern": [
     "  L",
-    " LN",
-    "LNN"
+    " LS",
+    "LSN"
   ],
   "key": {
+    "N": {
+      "item": "saintsdragons:nulljaw_scale"
+    },
+    "S": {
+      "item": "minecraft:nautilus_shell"
+    },
     "L": {
       "item": "minecraft:lapis_lazuli"
-    },
-    "N": {
-      "item": "minecraft:nautilus_shell"
     }
   },
   "result": {

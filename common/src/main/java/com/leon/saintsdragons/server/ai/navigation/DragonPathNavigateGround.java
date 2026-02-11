@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 
-/**
- * Provides intelligent path following with shortcutting and better collision detection.
- */
 public class DragonPathNavigateGround extends GroundPathNavigation {
+    private static final double MAX_SHORTCUT_DISTANCE = 10.0D;
+    private static final int MAX_SWEEP_STEPS = 12;
+
     public DragonPathNavigateGround(Mob mob, Level world) {
         super(mob, world);
     }
@@ -55,9 +55,6 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
         this.doStuckDetection(entityPos);
     }
 
-    /**
-     * Check if the entity is close enough to the current path node to consider it reached.
-     */
     private boolean isAt(Path path, float threshold) {
         final Vec3 pathPos = path.getNextEntityPos(this.mob);
         return Mth.abs((float) (this.mob.getX() - pathPos.x)) < threshold &&
@@ -65,9 +62,6 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
                 Math.abs(this.mob.getY() - pathPos.y) < 1.0D;
     }
 
-    /**
-     * Check if the path involves elevation changes ahead.
-     */
     private boolean atElevationChange(Path path) {
         final int curr = path.getNextNodeIndex();
         final int end = Math.min(path.getNodeCount(), curr + Mth.ceil(this.mob.getBbWidth() * 0.5F) + 1);
@@ -80,13 +74,12 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
         return false;
     }
 
-    /**
-     * Try to shortcut to later path nodes if there's a clear path.
-     * This prevents jerky "stop at every waypoint" behavior.
-     */
     private boolean tryShortcut(Path path, Vec3 entityPos, int pathLength, Vec3 base, Vec3 max) {
         for (int i = pathLength; --i > path.getNextNodeIndex(); ) {
             final Vec3 vec = path.getEntityPosAtNode(this.mob, i).subtract(entityPos);
+            if (vec.lengthSqr() > MAX_SHORTCUT_DISTANCE * MAX_SHORTCUT_DISTANCE) {
+                continue;
+            }
             if (this.sweep(vec, base, max)) {
                 path.setNextNodeIndex(i);
                 return false; // Found a shortcut
@@ -95,23 +88,35 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
         return true; // No shortcut found, continue normally
     }
 
-    /**
-     * Simplified sweep collision detection.
-     * For dragons, we'll use a more permissive approach than the original Cataclysm implementation.
-     */
     private boolean sweep(Vec3 vec, Vec3 base, Vec3 max) {
-        // For dragons, we'll be more lenient with collision detection
-        // This allows for smoother movement through tight spaces
-        float distance = (float) vec.length();
-        if (distance < 1.0E-8F) return true;
-        
-        // Simple distance-based check - if the movement is short, assume it's clear
-        if (distance < 3.0F) {
-            return true;
+        double distance = vec.length();
+        if (distance < 1.0E-6D) return true;
+
+        // Sweep the mob's body AABB along the candidate shortcut path.
+        // If any sample collides, reject the shortcut and keep vanilla node progression.
+        int steps = Mth.clamp((int) Math.ceil(distance), 2, MAX_SWEEP_STEPS);
+        Vec3 step = vec.scale(1.0D / steps);
+
+        double minX = base.x;
+        double minY = base.y;
+        double minZ = base.z;
+        double maxX = max.x;
+        double maxY = max.y;
+        double maxZ = max.z;
+
+        for (int n = 1; n <= steps; n++) {
+            double dx = step.x * n;
+            double dy = step.y * n;
+            double dz = step.z * n;
+            net.minecraft.world.phys.AABB probe = new net.minecraft.world.phys.AABB(
+                    minX + dx, minY + dy, minZ + dz,
+                    maxX + dx, maxY + dy, maxZ + dz
+            );
+            if (!this.level.noCollision(this.mob, probe)) {
+                return false;
+            }
         }
-        
-        // For longer movements, we could implement more sophisticated collision detection here
-        // For now, we'll be permissive to improve movement smoothness
+
         return true;
     }
 

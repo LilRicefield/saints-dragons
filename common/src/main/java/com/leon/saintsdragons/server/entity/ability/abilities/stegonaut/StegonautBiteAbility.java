@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -68,7 +69,7 @@ public class StegonautBiteAbility extends DragonAbility<Stegonaut> {
 
     private void applyHit(LivingEntity target) {
         Stegonaut dragon = getUser();
-        float damage = BASE_DAMAGE * dragon.getHungerMeleeDamageMultiplier();
+        float damage = resolveDamage() * dragon.getHungerMeleeDamageMultiplier();
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
         target.hurt(source, damage);
 
@@ -132,5 +133,11 @@ public class StegonautBiteAbility extends DragonAbility<Stegonaut> {
                 Mth.clamp(p.y, box.minY, box.maxY),
                 Mth.clamp(p.z, box.minZ, box.maxZ)
         );
+    }
+
+    private float resolveDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID)
+                .abilityDamage("bite", BASE_DAMAGE);
     }
 }

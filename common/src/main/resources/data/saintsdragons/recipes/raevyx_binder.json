@@ -1,13 +1,16 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "RDR",
-    "DRD",
-    "RDR"
+    "DND",
+    "NRN",
+    "DND"
   ],
   "key": {
     "R": {
-      "item": "minecraft:redstone"
+      "item": "saintsdragons:raevyx_scale"
+    },
+    "N": {
+      "item": "minecraft:netherite_ingot"
     },
     "D": {
       "item": "minecraft:deepslate"

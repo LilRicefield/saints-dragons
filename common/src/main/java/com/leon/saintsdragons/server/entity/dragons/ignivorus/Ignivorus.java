@@ -340,6 +340,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 520;
     private int groundStepSoundCooldownTicks = 0;
+    private int teethChipDropCooldownTicks = 0;
     private static final double BABY_MAX_HEALTH = 90.0D;
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
@@ -586,6 +587,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 tamingAbortCalmTicks--;
             }
             tamingController.tickServer();
+            if (isTamingStunned()) {
+                tamingController.enforceGroundingTick();
+            }
             tickFireBreathEnergy();
             tickTerrainClearing();
             tickGroundStepAudio();
@@ -597,6 +601,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             int cooldown = this.entityData.get(DATA_FEEDING_COOLDOWN);
             if (cooldown > 0) {
                 this.entityData.set(DATA_FEEDING_COOLDOWN, cooldown - 1);
+            }
+            if (teethChipDropCooldownTicks > 0) {
+                teethChipDropCooldownTicks--;
             }
         }
 
@@ -629,7 +636,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             wakeUpImmediately();
             suppressSleep(200);
         }
-        return super.hurt(damageSource, amount);
+        boolean hurt = super.hurt(damageSource, amount);
+        if (hurt
+                && !level().isClientSide
+                && amount > 0.0F
+                && damageSource.getEntity() != null
+                && teethChipDropCooldownTicks <= 0
+                && this.random.nextFloat() < 0.12F) {
+            this.spawnAtLocation(ModItems.IGNIVORUS_TEETH.get());
+            teethChipDropCooldownTicks = 30;
+        }
+        return hurt;
     }
 
     /**
@@ -4039,6 +4056,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         // Female dragons have a configurable chance to drop one egg on death
         if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
             this.spawnAtLocation(ModItems.IGNIVORUS_EGG.get());
+        }
+
+        if (!level().isClientSide) {
+            if (this.random.nextFloat() < 0.35F) {
+                this.spawnAtLocation(ModItems.IGNIVORUS_TEETH.get());
+            }
+            if (this.random.nextFloat() < 0.90F) {
+                this.spawnAtLocation(ModItems.IGNIVORUS_HEART.get());
+            }
         }
     }
 

@@ -357,9 +357,16 @@ public record CindervaneRiderController(Cindervane dragon) {
 
             moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
         } else {
-            double x = dragon.getX();
+            // Server fallback when client locator bones are unavailable: keep seats separated.
+            float yawRad = (float) Math.toRadians(dragon.getYRot());
+            double localX = seatIndex == 0 ? -0.45D : 0.45D;
+            double localZ = 0.05D;
+            double worldX = localX * Math.cos(yawRad) - localZ * Math.sin(yawRad);
+            double worldZ = localX * Math.sin(yawRad) + localZ * Math.cos(yawRad);
+
+            double x = dragon.getX() + worldX;
             double y = dragon.getY() + getPassengersRidingOffset() + seatHeightAdjust + passenger.getMyRidingOffset();
-            double z = dragon.getZ();
+            double z = dragon.getZ() + worldZ;
             moveFunction.accept(passenger, x, y, z);
         }
     }

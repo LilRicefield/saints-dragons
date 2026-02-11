@@ -1,16 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    " N ",
-    "NMN",
-    " N "
+    "N N",
+    "NIN",
+    "SNS"
   ],
   "key": {
     "N": {
       "item": "minecraft:netherite_ingot"
     },
-    "M": {
-      "item": "minecraft:magma_block"
+    "I": {
+      "item": "saintsdragons:ignivorus_heart"
+    },
+    "S": {
+      "item": "saintsdragons:ignivorus_scale"
     }
   },
   "result": {

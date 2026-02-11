@@ -143,7 +143,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 // Play Phase 2 ultimate animation
                 dragon.triggerAnim("action", "phase2_ultimate");
                 if (!dragon.level().isClientSide) {
-                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE.get(), 1.0f, 1.0f, 127);
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 127);
                 }
 
                 // Initialize damage tracking flag

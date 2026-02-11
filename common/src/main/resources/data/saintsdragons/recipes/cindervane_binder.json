@@ -2,12 +2,12 @@
   "type": "minecraft:crafting_shaped",
   "pattern": [
     "S S",
-    "SOS",
+    "SCS",
     "S S"
   ],
   "key": {
-    "O": {
-      "item": "minecraft:orange_terracotta"
+    "C": {
+      "item": "saintsdragons:cindervane_scale"
     },
     "S": {
       "item": "minecraft:stone_bricks"

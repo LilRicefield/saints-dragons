@@ -110,7 +110,7 @@ public class StegonautCombatGoal extends Goal {
             return;
         }
 
-        dragon.combatManager.tryUseAbility(dragon.getPrimaryAttackAbility());
+        dragon.combatManager.tryUseAbility(dragon.getRandomAiAttackAbility());
         attackCooldown = 26;
     }
 

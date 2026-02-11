@@ -27,6 +27,8 @@ public class CodexEcologyPanel {
     );
     private static final List<ResourceLocation> IGNIVORUS_DROPS = List.of(
             new ResourceLocation("saintsdragons", "ignivorus_scale"),
+            new ResourceLocation("saintsdragons", "ignivorus_teeth"),
+            new ResourceLocation("saintsdragons", "ignivorus_heart"),
             new ResourceLocation("saintsdragons", "ignivorus_egg")
     );
     private static final List<ResourceLocation> RAEVYX_FAVORITE_FOODS = List.of(
@@ -44,6 +46,7 @@ public class CodexEcologyPanel {
             new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
     private static final List<ResourceLocation> NULLJAW_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "nulljaw_scale"),
             new ResourceLocation("saintsdragons", "nulljaw_egg")
     );
     private static final List<ResourceLocation> CINDERVANE_FAVORITE_FOODS = List.of(
@@ -61,7 +64,11 @@ public class CodexEcologyPanel {
             new ResourceLocation("minecraft", "salmon"),
             new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
-    private static final List<ResourceLocation> STEGONAUT_DROPS = List.of();
+    private static final List<ResourceLocation> STEGONAUT_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "stegonaut_scale"),
+            new ResourceLocation("minecraft", "amethyst_shard"),
+            new ResourceLocation("saintsdragons", "stegonaut_egg")
+    );
     private Button ecologyPrevPageButton;
     private Button ecologyNextPageButton;
     private int linkScrollOffset = 0;

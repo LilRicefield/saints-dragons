@@ -39,9 +39,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_CONTENT = registerSound("raevyx_content");
     public static final Supplier<SoundEvent> RAEVYX_EXCITED = registerSound("raevyx_excited");
     public static final Supplier<SoundEvent> RAEVYX_ROAR = registerSound("raevyx_roar");
-    public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_START = registerSound("raevyx_summon_storm_ground_start");
-    public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM = registerSound("raevyx_summon_storm_ground");
-    public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_END = registerSound("raevyx_summon_storm_ground_end");
+    public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM = registerSound("raevyx_summon_storm");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_AIR_START = registerSound("raevyx_summon_storm_air_start");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_AIR = registerSound("raevyx_summon_storm_air");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_AIR_END = registerSound("raevyx_summon_storm_air_end");
