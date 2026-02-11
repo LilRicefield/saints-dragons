@@ -81,7 +81,6 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     @Override
     public void render(@NotNull Raevyx entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
-
         // Call normal rendering first
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
@@ -119,7 +118,6 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
             if (world != null) {
                 entity.setClientLocatorPosition("passengerLocator", world);
-                // Alias key for compatibility with shared rider positioning fallbacks.
                 entity.setClientLocatorPosition("passengerSeat0", world);
             }
         });

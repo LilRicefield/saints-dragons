@@ -6,6 +6,7 @@ import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusMouthSmok
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,11 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     private static final String RIGHT_FRONT_LEG_BONE = "rightfrontleg";
     private static final String LEFT_BACK_LEG_BONE = "leftbackleg";
     private static final String RIGHT_BACK_LEG_BONE = "rightbackleg";
+    private static final int SYNC_INTERVAL_TICKS = 2;
+    private static final double SNAPSHOT_PRECISION = 1000.0D;
 
     private BakedGeoModel lastBakedModel;
+    private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
 
     public IgnivorusRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new IgnivorusModel());
@@ -164,17 +168,19 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         sendBonePositionsToServer(entity);
     }
 
-    private int syncTickCounter = 0;
-    private static final int SYNC_INTERVAL = 2; // Sync every 2 frames
-
     private void sendBonePositionsToServer(Ignivorus entity) {
-        syncTickCounter++;
-        if (syncTickCounter < SYNC_INTERVAL) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || entity.getControllingPassenger() != minecraft.player) {
             return;
         }
-        syncTickCounter = 0;
 
-        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>();
+        // Per-entity cadence so one dragon's render calls do not throttle another's.
+        if ((entity.tickCount + entity.getId()) % SYNC_INTERVAL_TICKS != 0) {
+            return;
+        }
+
+        java.util.Map<String, net.minecraft.world.phys.Vec3> positions =
+                new java.util.HashMap<>(com.leon.saintsdragons.common.network.MessageDragonBonePositions.SYNCED_BONES.length);
         for (String boneName : com.leon.saintsdragons.common.network.MessageDragonBonePositions.SYNCED_BONES) {
             net.minecraft.world.phys.Vec3 pos = entity.getClientLocatorPosition(boneName);
             if (pos != null) {
@@ -182,11 +188,40 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
             }
         }
 
+        if (positions.isEmpty()) {
+            return;
+        }
+
+        int snapshotHash = computeSnapshotHash(positions);
+        Integer previousHash = lastBoneSnapshotHashes.put(entity.getId(), snapshotHash);
+        if (previousHash != null && previousHash == snapshotHash) {
+            return;
+        }
+
         if (!positions.isEmpty()) {
             com.leon.saintsdragons.common.network.NetworkHandler.sendToServer(
                 new com.leon.saintsdragons.common.network.MessageDragonBonePositions(entity.getId(), positions)
             );
         }
+    }
+
+    private static int computeSnapshotHash(java.util.Map<String, net.minecraft.world.phys.Vec3> positions) {
+        int hash = 1;
+        for (String boneName : com.leon.saintsdragons.common.network.MessageDragonBonePositions.SYNCED_BONES) {
+            net.minecraft.world.phys.Vec3 pos = positions.get(boneName);
+            if (pos == null) {
+                continue;
+            }
+            hash = 31 * hash + boneName.hashCode();
+            hash = 31 * hash + quantize(pos.x);
+            hash = 31 * hash + quantize(pos.y);
+            hash = 31 * hash + quantize(pos.z);
+        }
+        return hash;
+    }
+
+    private static int quantize(double value) {
+        return (int) Math.round(value * SNAPSHOT_PRECISION);
     }
 
     private void trackBone(String boneName, String locatorName, Ignivorus entity) {

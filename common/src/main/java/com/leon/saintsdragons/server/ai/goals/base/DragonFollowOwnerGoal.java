@@ -400,7 +400,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return new FollowConfig(
                     20.0,   // startFollowDist
                     8.0,    // stopFollowDist (must be lower than landingDistance so flight follow can transition into landing)
-                    500.0,  // teleportDist
+                    128.0,  // teleportDist
                     25.0,   // runDist
                     20.0,   // flightTriggerDist
                     8.0,    // flightHeightDiff
@@ -418,7 +418,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return new FollowConfig(
                     20.0,   // startFollowDist
                     5.0,    // stopFollowDist
-                    500.0,  // teleportDist
+                    64.0,  // teleportDist
                     20.0,   // runDist
                     30.0,   // flightTriggerDist
                     8.0,    // flightHeightDiff
@@ -435,7 +435,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         public static FollowConfig forCindervane() {
             return new FollowConfig(20.,    // startFollowDist
                     8.0,    // stopFollowDist
-                    500.0,  // teleportDist
+                    64.0,  // teleportDist
                     10.0,   // runDist
                     24.0,   // flightTriggerDist
                     6.0,    // flightHeightDiff

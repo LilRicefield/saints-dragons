@@ -49,12 +49,12 @@ public abstract class MultipartInteractionBridgeMixin {
             packet.dispatch(new ServerboundInteractPacket.Handler() {
                 @Override
                 public void onInteraction(InteractionHand hand) {
-                    directPart.interact(player, hand);
+                    // Intentionally ignore multipart right-click interaction.
                 }
 
                 @Override
                 public void onInteraction(InteractionHand hand, Vec3 pos) {
-                    directPart.interactAt(player, pos, hand);
+                    // Intentionally ignore multipart right-click interaction.
                 }
 
                 @Override
@@ -76,12 +76,12 @@ public abstract class MultipartInteractionBridgeMixin {
                 packet.dispatch(new ServerboundInteractPacket.Handler() {
                     @Override
                     public void onInteraction(InteractionHand hand) {
-                        hitPart.interact(player, hand);
+                        // Intentionally ignore multipart right-click interaction.
                     }
 
                     @Override
                     public void onInteraction(InteractionHand hand, Vec3 pos) {
-                        hitPart.interactAt(player, pos, hand);
+                        // Intentionally ignore multipart right-click interaction.
                     }
 
                     @Override
@@ -132,4 +132,5 @@ public abstract class MultipartInteractionBridgeMixin {
 
         return closestPart;
     }
+
 }

@@ -455,11 +455,12 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             dragon.setCommandManual(0);
         }
 
-        // Start riding
-        if (player.startRiding(dragon)) {
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        // Start riding only on server to avoid client/server mount desync.
+        if (!dragon.level().isClientSide) {
+            if (!player.startRiding(dragon)) {
+                return InteractionResult.FAIL;
+            }
         }
-
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
     }
 

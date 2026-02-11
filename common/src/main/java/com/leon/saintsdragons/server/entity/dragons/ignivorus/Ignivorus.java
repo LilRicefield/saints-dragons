@@ -629,6 +629,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             damageSource.is(DamageTypes.ON_FIRE) ||
             damageSource.is(DamageTypes.LAVA) ||
             damageSource.is(DamageTypes.HOT_FLOOR)) {
+            if (this.isOnFire() || this.getRemainingFireTicks() > 0) {
+                this.clearFire();
+                this.setRemainingFireTicks(0);
+            }
             return false;
         }
         // Wake if sleeping and suppress re-entry on damage
