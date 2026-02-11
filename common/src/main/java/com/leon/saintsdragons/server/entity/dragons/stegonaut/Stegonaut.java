@@ -5,6 +5,8 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonPackDefendPackGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
@@ -18,10 +20,12 @@ import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.Stegonaut
 import com.leon.saintsdragons.server.entity.controller.stegonaut.StegonautRiderController;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -39,10 +43,12 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.AgeableMob;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
@@ -62,7 +68,7 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class Stegonaut extends RideableDragonBase implements SoundHandledDragon {
+public class Stegonaut extends RideableDragonBase implements SoundHandledDragon, PackMember<Stegonaut> {
 
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
@@ -142,6 +148,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
     // Binding state for Drake Binder
     private boolean boundToBinder = false;
+    @Nullable
+    private UUID packLeaderUuid;
+
+    private static final int MAX_PACK_SIZE = 6;
+    private static final double PACK_SEARCH_RADIUS = 48.0D;
 
     // Client-side smoothing for ground movement states to avoid animation flicker when idle
     private static final int CLIENT_GROUND_STATE_STABLE_TICKS = 3;
@@ -203,10 +214,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
         this.goalSelector.addGoal(4, new StegonautCombatGoal(this));
         this.goalSelector.addGoal(5, new StegonautFollowOwnerGoal(this));
-        this.goalSelector.addGoal(6, new StegonautGroundWanderGoal(this, 0.35D, 120));
+        this.goalSelector.addGoal(6, new DragonPackFollowLeaderGoal<>(this, Stegonaut.class, 0.75D, 16.0D, 8.0D));
+        this.goalSelector.addGoal(7, new StegonautGroundWanderGoal(this, 0.35D, 120));
 
-        this.goalSelector.addGoal(7, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(8, new StegonautRandomLookAroundGoal(this));
+        this.goalSelector.addGoal(8, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(9, new StegonautRandomLookAroundGoal(this));
 
         // Retaliation/assist targeting only:
         // - owner hurt by target
@@ -215,7 +227,8 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         this.targetSelector.addGoal(1, new DragonProtectBabiesGoal<>(this, Stegonaut.class));
         this.targetSelector.addGoal(2, new DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(3, new DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(4, new DragonPackDefendPackGoal<>(this, Stegonaut.class, 36.0D));
+        this.targetSelector.addGoal(5, new HurtByTargetGoal(this));
     }
 
     @Override
@@ -286,11 +299,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             forceEndActiveAbility();
         }
     }
-
-    public boolean isTameable() {
-        return true; // Can be tamed like other dragons
-    }
-
     @Override
     public boolean canTakeoff() {
         return false;
@@ -328,6 +336,12 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         return getMeleeMode() == 0
+                ? StegonautAbilities.STEGONAUT_BITE
+                : StegonautAbilities.STEGONAUT_CHIN_SLAM;
+    }
+
+    public DragonAbilityType<?, ?> getRandomAiAttackAbility() {
+        return this.getRandom().nextBoolean()
                 ? StegonautAbilities.STEGONAUT_BITE
                 : StegonautAbilities.STEGONAUT_CHIN_SLAM;
     }
@@ -379,13 +393,53 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     }
 
     @Override
+    protected void dropAllDeathLoot(@NotNull DamageSource source) {
+        // Keep loot timing aligned with death animation completion.
+        if (deathTime < getDeathAnimationDurationTicks()) {
+            return;
+        }
+
+        super.dropAllDeathLoot(source);
+
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
+        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
+            this.spawnAtLocation(ModItems.STEGONAUT_EGG.get());
+        }
+    }
+
+    @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
         // During dying sequence, ignore all damage (entity is already dead, playing death animation)
         if (isDying()) {
             return false;
         }
+        if (!isWildStegonautDamageAllowed(source)) {
+            return false;
+        }
 
         return super.hurt(source, amount);
+    }
+
+    private boolean isWildStegonautDamageAllowed(@NotNull DamageSource source) {
+        Entity attacker = source.getEntity();
+        if (!(attacker instanceof Stegonaut other)) {
+            return true;
+        }
+
+        // Tamed Stegonauts are treated as outsiders for pack systems.
+        if (this.isTame() || other.isTame()) {
+            return true;
+        }
+
+        // Babies are never valid participants in Stegonaut-vs-Stegonaut combat.
+        if (this.isBaby() || other.isBaby()) {
+            return false;
+        }
+
+        // Wild Stegonauts do not damage each other in simplified pack mode.
+        return false;
     }
 
     /**
@@ -608,6 +662,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
             if (this.getRandom().nextInt(Math.max(1, tameRoll)) == 0) {
                 this.tame(player);
+                this.setPackLeaderUuid(null); // Tamed Stegonauts leave wild packs immediately.
                 this.setOrderedToSit(true);
                 this.setCommand(1); // Set command to Sit (1) to match the sitting state
 
@@ -863,50 +918,19 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     // ===== SOUND SYSTEM =====
 
     private int grumbleCooldown = 0;
-
-    /**
-     * Get the sound handler for this drake
-     */
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
     }
 
-
-    /**
-     * Play random grumble sounds for personality
-     */
-    public void playRandomGrumble() {
-        if (level().isClientSide || isDying() || isBaby()) return;
-
-        float grumbleChance = getRandom().nextFloat();
-        String vocalKey;
-
-        if (grumbleChance < 0.4f) {
-            vocalKey = "grumble1";
-        } else if (grumbleChance < 0.7f) {
-            vocalKey = "grumble2";
-        } else {
-            vocalKey = "grumble3";
-        }
-
-        // Play the grumble sound (this will trigger the animation automatically)
-        getSoundHandler().playVocal(vocalKey);
-    }
-
-    /**
-     * Plays appropriate ambient sound based on drake's current mood and state
-     */
     private void playCustomAmbientSound() {
         RandomSource random = getRandom();
 
-        // Don't make ambient sounds if we're in combat, dying, or a baby
         if (isDying() || getTarget() != null || isBaby()) {
             return;
         }
 
         String vocalKey = null;
 
-        // Simple drake has simple moods - mostly just grumbles
         float moodRoll = random.nextFloat();
 
         if (moodRoll < 0.4f) {
@@ -917,31 +941,19 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
             vocalKey = "grumble3";
         }
 
-        // Play/animate if we chose one
         this.getSoundHandler().playVocal(vocalKey);
     }
-
-    /**
-     * Handles all the ambient grumbling and personality sounds
-     * Because a silent drake is a boring drake
-     */
     private void handleAmbientSounds() {
         if (isDying() || isSleeping() || isSleepTransitioning()) {
             return;
         }
 
         ambientSoundTimer++;
-
-        // Time to make some noise?
         if (ambientSoundTimer >= nextAmbientSoundDelay) {
             playCustomAmbientSound();
             resetAmbientSoundTimer();
         }
     }
-
-    /**
-     * Resets the ambient sound timer with some randomness
-     */
     private void resetAmbientSoundTimer() {
         RandomSource random = getRandom();
         ambientSoundTimer = 0;
@@ -951,6 +963,12 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
     @Override
     public void aiStep() {
         super.aiStep();
+        if (!level().isClientSide) {
+            if (this.isTame()) {
+                // Safety net for migrated saves / runtime state transitions.
+                this.packLeaderUuid = null;
+            }
+        }
         tickRiderControlLock();
         tickAnimationStates();
     }
@@ -1366,6 +1384,9 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
         // Save binding state
         tag.putBoolean("BoundToBinder", boundToBinder);
+        if (this.packLeaderUuid != null) {
+            tag.putUUID("PackLeaderUuid", this.packLeaderUuid);
+        }
 
         // Save sit progress for animation state
         saveSitProgress(tag);
@@ -1393,6 +1414,10 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
         // Load binding state
         boundToBinder = tag.getBoolean("BoundToBinder");
+        this.packLeaderUuid = tag.hasUUID("PackLeaderUuid") ? tag.getUUID("PackLeaderUuid") : null;
+        if (this.isTame()) {
+            this.packLeaderUuid = null;
+        }
 
         // Load sit progress for animation state prior to command refresh so poses align immediately
         if (tag.contains("SitProgress")) {
@@ -1405,6 +1430,78 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
 
         // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
         // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
+    }
+
+    @Override
+    public @Nullable UUID getPackLeaderUuid() {
+        return this.packLeaderUuid;
+    }
+
+    @Override
+    public void setPackLeaderUuid(@Nullable UUID leaderUuid) {
+        this.packLeaderUuid = leaderUuid;
+    }
+
+    @Override
+    public boolean canParticipateInPack() {
+        if (this.isTame()) {
+            return false;
+        }
+        if (this.isBaby() || this.isDying()) {
+            return false;
+        }
+        if (!this.isAlive() || this.isRemoved()) {
+            return false;
+        }
+        return !this.isOrderedToSit() && this.getCommand() != 1;
+    }
+
+    @Override
+    public boolean canLeadPack() {
+        // Alpha role is male-only by design.
+        return canParticipateInPack() && !this.isFemale();
+    }
+
+    @Override
+    public int getPackLeadershipPriority() {
+        // Prefer healthier adults as alpha; deterministic UUID tie-break is handled in goal.
+        return (int) Math.round((this.getHealth() / Math.max(1.0F, this.getMaxHealth())) * 100.0F);
+    }
+
+    @Override
+    public int getMaxPackSize() {
+        return MAX_PACK_SIZE;
+    }
+
+    @Override
+    public double getPackSearchRadius() {
+        return PACK_SEARCH_RADIUS;
+    }
+
+    @Override
+    public int getPackLeaderRefreshIntervalTicks() {
+        return 60;
+    }
+
+    @Override
+    public boolean canTarget(net.minecraft.world.entity.Entity entity) {
+        // Babies should not engage in combat targeting logic.
+        if (this.isBaby()) {
+            return false;
+        }
+
+        if (entity instanceof Stegonaut otherStegonaut) {
+            if (otherStegonaut.isBaby()) {
+                return false;
+            }
+            // Simplified pack mode: Stegonauts never target other Stegonauts.
+            return false;
+        }
+        if (entity instanceof Player player && !this.isTame()) {
+            // Wild Stegonauts should only retaliate against players that actually hurt them.
+            return this.getLastHurtByMob() == player;
+        }
+        return super.canTarget(entity);
     }
 
     @Override
@@ -1544,25 +1641,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon 
         return false;
     }
 
-    // ===== DRAKE BINDER FUNCTIONALITY =====
-
-    /**
-     * Check if this drake is bound to a Drake Binder
-     */
-    public boolean isBoundToBinder() {
-        return boundToBinder;
-    }
-
-    /**
-     * Set the binding state for Drake Binder
-     */
-    public void setBoundToBinder(boolean bound) {
-        this.boundToBinder = bound;
-    }
-
-    /**
-     * Check if this drake can be bound (not sleeping, not dying, etc.)
-     */
     public boolean canBeBound() {
         return !isSleeping() && !isDying();
     }

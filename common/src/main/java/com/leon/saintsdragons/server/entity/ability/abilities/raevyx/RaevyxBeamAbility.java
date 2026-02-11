@@ -252,9 +252,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             // Check if the beam actually intersects the entity's bounding box (inflated by radius)
             var targetAABB = target.getBoundingBox().inflate(RADIUS);
             var hit = targetAABB.clip(start, end);
+            boolean pointBlankOverlap = targetAABB.contains(start) || targetAABB.contains(end);
 
-            if (hit.isPresent()) {
-                var hitPos = hit.get();
+            if (hit.isPresent() || pointBlankOverlap) {
+                var hitPos = hit.orElse(start);
                 target.hurt(resolveBeamDamageSource(wyvern, target), DAMAGE);
                 // Knockback away from hit position
                 var away = target.position().subtract(hitPos).normalize();
@@ -288,6 +289,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     }
 
     private net.minecraft.world.damagesource.DamageSource resolveBeamDamageSource(Raevyx wyvern, net.minecraft.world.entity.LivingEntity target) {
+        if (target instanceof com.leon.saintsdragons.server.entity.base.DragonEntity) {
+            // Dragon-vs-dragon beam should bypass lightning-tag immunities and use direct attacker damage.
+            return wyvern.level().damageSources().mobAttack(wyvern);
+        }
         if (isIafLightningDragon(target)) {
             return wyvern.level().damageSources().mobAttack(wyvern);
         }

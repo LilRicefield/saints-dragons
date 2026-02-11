@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.entity.component.DragonGenderComponent;
 import com.leon.saintsdragons.server.entity.component.DragonGroomingComponent;
 import com.leon.saintsdragons.server.entity.component.DragonHappinessComponent;
 import com.leon.saintsdragons.server.entity.component.DragonHungerComponent;
+import com.leon.saintsdragons.server.entity.component.DragonRecoveryComponent;
 import com.leon.saintsdragons.server.entity.component.DragonSitComponent;
 import com.leon.saintsdragons.server.entity.component.DragonSleepComponent;
 import com.leon.saintsdragons.server.entity.controller.BodyControl;
@@ -126,6 +127,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private final DragonSitComponent sitComponent;
     @Nullable
     private final DragonSleepComponent sleepComponent;
+    @Nullable
+    private final DragonRecoveryComponent recoveryComponent;
 
     private final com.leon.saintsdragons.util.math.SmoothValue fallbackBodyRotDeviation =
             com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
@@ -133,6 +136,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
     private final com.leon.saintsdragons.util.math.SmoothValue fallbackYawVelocity =
             com.leon.saintsdragons.util.math.SmoothValue.value(0.0);
+    @Nullable
+    private DragonType cachedDragonType;
 
     // Death sequence management
     private boolean dying = false;
@@ -166,6 +171,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.happinessComponent = createHappinessComponent();
         this.groomingComponent = createGroomingComponent();
         this.sleepComponent = createSleepComponent();
+        this.recoveryComponent = createRecoveryComponent();
         this.animationSyncComponent = createAnimationSyncComponent();
         this.sitComponent = createSitComponent();
         // Set custom look control (lookControl field is protected in Mob)
@@ -200,6 +206,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     @Nullable
     protected DragonSleepComponent createSleepComponent() {
         return new DragonSleepComponent(this, DATA_SLEEPING, DATA_SLEEPING_ENTERING, DATA_SLEEPING_EXITING);
+    }
+
+    @Nullable
+    protected DragonRecoveryComponent createRecoveryComponent() {
+        return new DragonRecoveryComponent(this);
     }
 
     @Nullable
@@ -678,11 +689,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     @Override
     public boolean fireImmune() {
-        // Check if this dragon's element grants fire immunity
-        DragonType dragonType = getDragonType();
-        if (dragonType != null && dragonType.getElement() == com.leon.saintsdragons.common.registry.Element.FIRE) {
-            return true;
-        }
+        // Keep base behavior here; specific dragons gate mundane fire in their own hurt() overrides.
+        // This avoids over-broad immunity paths that can accidentally swallow non-fire damage channels.
         return super.fireImmune();
     }
 
@@ -812,17 +820,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     @Nullable
     private ResourceLocation getDragonAttributeConfigId() {
-        DragonType type = DragonType.fromEntity(this);
-        if (type == null) {
-            return null;
-        }
-        return switch (type) {
-            case FIRE -> DragonAttributeConfigLoader.CINDERVANE_ID;
-            case LIGHTNING -> DragonAttributeConfigLoader.RAEVYX_ID;
-            case PHYSICAL_BRUTE -> DragonAttributeConfigLoader.NULLJAW_ID;
-            case PHYSICAL_SUPPORT -> DragonAttributeConfigLoader.STEGONAUT_ID;
-            case IGNIVORUS -> DragonAttributeConfigLoader.IGNIVORUS_ID;
-        };
+        DragonType type = getDragonType();
+        return type != null ? type.getConfigId() : null;
     }
 
     private boolean isUpperBodyObstructed() {
@@ -995,7 +994,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     @Nullable
     public DragonType getDragonType() {
-        return DragonType.fromEntity(this);
+        if (cachedDragonType == null) {
+            cachedDragonType = DragonType.fromEntity(this);
+        }
+        return cachedDragonType;
     }
 
     /**
@@ -1568,6 +1570,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                 }
             } else if (happinessComponent != null) {
                 happinessComponent.clearSpeedModifiers();
+            }
+            if (recoveryComponent != null) {
+                recoveryComponent.tick();
             }
         }
 

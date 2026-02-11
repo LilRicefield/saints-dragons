@@ -12,23 +12,14 @@ import java.util.*;
  * Handles resistances, immunities, and weaknesses to damage types.
  */
 public class ElementalProfile {
-    private final Element element;
     private final Set<TagKey<DamageType>> immunities;
     private final Map<TagKey<DamageType>, Float> resistances;
     private final Map<TagKey<DamageType>, Float> weaknesses;
 
     private ElementalProfile(Builder builder) {
-        this.element = builder.element;
         this.immunities = Set.copyOf(builder.immunities);
         this.resistances = Map.copyOf(builder.resistances);
         this.weaknesses = Map.copyOf(builder.weaknesses);
-    }
-
-    /**
-     * Get the element this profile is for
-     */
-    public Element getElement() {
-        return element;
     }
 
     /**
@@ -68,21 +59,19 @@ public class ElementalProfile {
     /**
      * Create a new builder for an elemental profile
      */
-    public static Builder builder(Element element) {
-        return new Builder(element);
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
      * Builder for creating elemental profiles
      */
     public static class Builder {
-        private final Element element;
         private final Set<TagKey<DamageType>> immunities = new HashSet<>();
         private final Map<TagKey<DamageType>, Float> resistances = new HashMap<>();
         private final Map<TagKey<DamageType>, Float> weaknesses = new HashMap<>();
 
-        private Builder(Element element) {
-            this.element = element;
+        private Builder() {
         }
 
         /**

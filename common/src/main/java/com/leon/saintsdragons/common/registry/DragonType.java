@@ -5,79 +5,67 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.EntityType;
 import java.util.function.Supplier;
 
-/**
- * Enum representing different dragon types in the mod.
- * Each dragon has an elemental affinity that defines its damage resistances,
- * immunities, and special interactions with the environment.
- */
 public enum DragonType {
-    /**
-     * Lightning element - electrical attacks, storm affinity
-     * Immune to lightning, benefits from rain/storms
-     */
-    LIGHTNING("lightning", Element.LIGHTNING, Raevyx.class, ModEntities.RAEVYX,
-        ElementalProfile.builder(Element.LIGHTNING)
+
+    RAEVYX("raevyx", ElementalClass.LIGHTNING,
+        DragonAttributeConfigLoader.RAEVYX_ID,
+        Raevyx.class, ModEntities.RAEVYX,
+        ElementalProfile.builder()
             .immuneTo(DamageTypeTags.IS_LIGHTNING)
             .build()),
 
-    /**
-     * Fire element - flame attacks, heat affinity
-     * Immune to vanilla environmental fire only (fire, lava, magma blocks)
-     * Vulnerable to magical fire (fire magic is enhanced with magic, not mundane)
-     * Benefits from hot biomes (Nether, desert)
-     */
-    FIRE("fire", Element.FIRE, Cindervane.class, ModEntities.CINDERVANE,
-        ElementalProfile.builder(Element.FIRE)
+    CINDERVANE("cindervane", ElementalClass.FIRE,
+        DragonAttributeConfigLoader.CINDERVANE_ID,
+        Cindervane.class, ModEntities.CINDERVANE,
+        ElementalProfile.builder()
             // Note: Specific vanilla fire immunity is handled in Cindervane.hurt()
             // This allows magical fire from mods to deal damage
             .build()),
 
-    /**
-     * Physical/brute type - pure melee combat, no elemental attacks
-     * Aquatic-adapted but no water-based elemental damage
-     */
-    PHYSICAL_BRUTE("physical", Element.NONE, Nulljaw.class, ModEntities.NULLJAW,
-        ElementalProfile.builder(Element.NONE)
+    NULLJAW("nulljaw", ElementalClass.NON_ELEMENTAL,
+        DragonAttributeConfigLoader.NULLJAW_ID,
+        Nulljaw.class, ModEntities.NULLJAW,
+        ElementalProfile.builder()
             .resistantTo(DamageTypeTags.IS_DROWNING, 0.5f)  // Semi-aquatic, less drowning damage
             .build()),
 
-    /**
-     * Physical/support type - buffs and utility, no elemental attacks
-     */
-    PHYSICAL_SUPPORT("physical", Element.NONE, Stegonaut.class, ModEntities.STEGONAUT,
-        ElementalProfile.builder(Element.NONE)
+    STEGONAUT("stegonaut", ElementalClass.NON_ELEMENTAL,
+        DragonAttributeConfigLoader.STEGONAUT_ID,
+        Stegonaut.class, ModEntities.STEGONAUT,
+        ElementalProfile.builder()
             .resistantTo(DamageTypeTags.IS_FALL, 0.3f)  // Sturdy, reduced fall damage
             .build()),
 
-    /**
-     * Fire element - massive fire-breathing dragon
-     * Immune to vanilla environmental fire only:
-     * - Fire (in_fire, on_fire)
-     * - Lava (lava pools, lava buckets)
-     * - Hot floor (magma blocks)
-     * Vulnerable to magical fire (fire magic is enhanced with magic, not mundane)
-     */
-    IGNIVORUS("ignivorus", Element.FIRE, com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus.class, ModEntities.IGNIVORUS,
-        ElementalProfile.builder(Element.FIRE)
+    IGNIVORUS("ignivorus", ElementalClass.FIRE,
+        DragonAttributeConfigLoader.IGNIVORUS_ID,
+        com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus.class, ModEntities.IGNIVORUS,
+        ElementalProfile.builder()
             // Note: Specific vanilla fire immunity is handled in Ignivorus.hurt()
             // This allows magical fire from mods to deal damage
             .build());
 
     private final String name;
-    private final Element element;
+    private final ElementalClass elementalClass;
+    private final ResourceLocation configId;
     private final Class<? extends DragonEntity> entityClass;
     private final Supplier<? extends EntityType<? extends DragonEntity>> entityType;
     private final ElementalProfile elementalProfile;
 
-    DragonType(String name, Element element, Class<? extends DragonEntity> entityClass,
+    DragonType(String name,
+               ElementalClass elementalClass,
+               ResourceLocation configId,
+               Class<? extends DragonEntity> entityClass,
                Supplier<? extends EntityType<? extends DragonEntity>> entityType,
                ElementalProfile elementalProfile) {
         this.name = name;
-        this.element = element;
+        this.elementalClass = elementalClass;
+        this.configId = configId;
         this.entityClass = entityClass;
         this.entityType = entityType;
         this.elementalProfile = elementalProfile;
@@ -91,10 +79,30 @@ public enum DragonType {
     }
 
     /**
-     * Get the elemental affinity of this dragon type
+     * Get the elemental class for shared elemental logic.
      */
-    public Element getElement() {
-        return element;
+    public ElementalClass getElementalClass() {
+        return elementalClass;
+    }
+
+    public String getElementId() {
+        return elementalClass.id;
+    }
+
+    public int getElementColor() {
+        return elementalClass.color;
+    }
+
+    public boolean isAffectedByWeather() {
+        return elementalClass.affectedByWeather;
+    }
+
+    public boolean isAffectedByBiome() {
+        return elementalClass.affectedByBiome;
+    }
+
+    public boolean isFireElement() {
+        return elementalClass == ElementalClass.FIRE;
     }
 
     /**
@@ -108,7 +116,11 @@ public enum DragonType {
      * Check if this dragon has elemental attacks (not purely physical)
      */
     public boolean hasElementalAttacks() {
-        return element.isElemental();
+        return elementalClass != ElementalClass.NON_ELEMENTAL;
+    }
+
+    public ResourceLocation getConfigId() {
+        return configId;
     }
 
     /**
@@ -144,7 +156,7 @@ public enum DragonType {
      */
     public static DragonType fromEntityClass(Class<? extends DragonEntity> entityClass) {
         for (DragonType type : values()) {
-            if (type.entityClass.equals(entityClass)) {
+            if (type.entityClass.isAssignableFrom(entityClass)) {
                 return type;
             }
         }
@@ -156,5 +168,23 @@ public enum DragonType {
      */
     public static DragonType fromEntity(DragonEntity entity) {
         return fromEntityClass(entity.getClass());
+    }
+
+    public enum ElementalClass {
+        LIGHTNING("lightning", 0x7DD3FC, true, false),
+        FIRE("fire", 0xFF6B35, false, true),
+        NON_ELEMENTAL("none", 0xFFFFFF, false, false);
+
+        private final String id;
+        private final int color;
+        private final boolean affectedByWeather;
+        private final boolean affectedByBiome;
+
+        ElementalClass(String id, int color, boolean affectedByWeather, boolean affectedByBiome) {
+            this.id = id;
+            this.color = color;
+            this.affectedByWeather = affectedByWeather;
+            this.affectedByBiome = affectedByBiome;
+        }
     }
 }

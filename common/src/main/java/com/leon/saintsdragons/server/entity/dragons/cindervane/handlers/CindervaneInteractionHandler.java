@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -133,11 +134,26 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             if (passengers.isEmpty() && dragon.canOwnerMount(player)) {
                 if (!dragon.level().isClientSide) {
                     dragon.prepareForMounting();
-                    player.startRiding(dragon);
+                    if (!player.startRiding(dragon)) {
+                        return InteractionResult.FAIL;
+                    }
                 }
                 return InteractionResult.sidedSuccess(dragon.level().isClientSide);
             } else if (!passengers.isEmpty() && passengers.get(0) != player) {
-                // Owner tried to mount but someone else is in seat 0 (shouldn't happen normally)
+                // Seat 0 occupied: owner can reclaim control if it's a non-owner occupant.
+                Entity firstPassenger = passengers.get(0);
+                boolean seat0IsOwner = firstPassenger instanceof Player firstPlayer && dragon.isOwnedBy(firstPlayer);
+                if (!seat0IsOwner && dragon.canOwnerMount(player)) {
+                    if (!dragon.level().isClientSide) {
+                        firstPassenger.stopRiding();
+                        dragon.prepareForMounting();
+                        if (!player.startRiding(dragon)) {
+                            return InteractionResult.FAIL;
+                        }
+                    }
+                    return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+                }
+
                 if (!dragon.level().isClientSide) {
                     player.displayClientMessage(
                         Component.translatable("entity.saintsdragons.cindervane.mount_occupied"),
@@ -178,7 +194,9 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             if (passengers.get(0) instanceof Player firstPlayer && dragon.isOwnedBy(firstPlayer)) {
                 // Owner is driving, non-owner can mount as passenger
                 if (!dragon.level().isClientSide) {
-                    player.startRiding(dragon);
+                    if (!player.startRiding(dragon)) {
+                        return InteractionResult.FAIL;
+                    }
                 }
                 return InteractionResult.sidedSuccess(dragon.level().isClientSide);
             } else {

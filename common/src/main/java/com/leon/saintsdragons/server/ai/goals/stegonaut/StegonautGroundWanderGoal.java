@@ -35,9 +35,13 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
             return false;
         }
 
-        // Don't wander during combat
+        // Don't wander during valid combat; clear stale/unattackable targets so AI can recover.
         if (drake.getTarget() != null && drake.getTarget().isAlive()) {
-            return false;
+            if (!drake.isTargetValid(drake.getTarget()) || !drake.canTarget(drake.getTarget())) {
+                drake.setTarget(null);
+            } else {
+                return false;
+            }
         }
 
         if (drake.isInLove()) {
@@ -62,9 +66,13 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
 
     @Override
     public boolean canContinueToUse() {
-        // Stop if combat starts
+        // Stop only for valid combat; clear stale targets.
         if (drake.getTarget() != null && drake.getTarget().isAlive()) {
-            return false;
+            if (!drake.isTargetValid(drake.getTarget()) || !drake.canTarget(drake.getTarget())) {
+                drake.setTarget(null);
+            } else {
+                return false;
+            }
         }
 
         if (drake.isInLove()) {

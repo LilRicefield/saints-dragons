@@ -91,6 +91,14 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxDefaults.extraDouble("beam_drain_per_tick", 0.014D));
         raevyxBuffer.beamRegenPerTick = raevyxCurrent.extraDouble("beam_regen_per_tick",
                 raevyxDefaults.extraDouble("beam_regen_per_tick", 0.0025D));
+        raevyxBuffer.summonStormCooldownTicks = raevyxCurrent.extraDouble("summon_storm_cooldown_ticks",
+                raevyxDefaults.extraDouble("summon_storm_cooldown_ticks", 4800.0D));
+        raevyxBuffer.summonStormSuperchargeTicks = raevyxCurrent.extraDouble("summon_storm_supercharge_ticks",
+                raevyxDefaults.extraDouble("summon_storm_supercharge_ticks", 1200.0D));
+        raevyxBuffer.summonStormSuperchargeDamageMultiplier = raevyxCurrent.extraDouble("summon_storm_supercharge_damage_multiplier",
+                raevyxDefaults.extraDouble("summon_storm_supercharge_damage_multiplier", 2.0D));
+        raevyxBuffer.summonStormDurationTicks = raevyxCurrent.extraDouble("summon_storm_duration_ticks",
+                raevyxDefaults.extraDouble("summon_storm_duration_ticks", 1200.0D));
         raevyxBuffer.legacyTaming = raevyxCurrent.extraBoolean("legacy_taming", false);
         raevyxBuffer.eggHatchChanceNormal = raevyxCurrent.extraDouble("egg_hatch_chance_normal", 2.0D);
         raevyxBuffer.eggHatchChanceThunder = raevyxCurrent.extraDouble("egg_hatch_chance_thunder", 1.0D);
@@ -126,9 +134,16 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         StegonautAttributeBuffer stegonautBuffer = new StegonautAttributeBuffer();
         stegonautBuffer.maxHealth = stegonautCurrent.maxHealth();
         stegonautBuffer.armor = stegonautCurrent.armor();
+        stegonautBuffer.biteDamage = stegonautCurrent.abilityDamage("bite",
+                stegonautDefaults.abilityDamage("bite", 5.0D));
+        stegonautBuffer.chinSlamDamage = stegonautCurrent.abilityDamage("chin_slam",
+                stegonautDefaults.abilityDamage("chin_slam", 8.0D));
+        stegonautBuffer.groundEatingDamage = stegonautCurrent.abilityDamage("ground_eating",
+                stegonautDefaults.abilityDamage("ground_eating", 10.0D));
         stegonautBuffer.tamingChanceBase = stegonautCurrent.extraDouble("taming_chance_base", 1.0);
         stegonautBuffer.tamingChanceHearty = stegonautCurrent.extraDouble("taming_chance_hearty", 1.0);
         stegonautBuffer.eggHatchChanceNormal = stegonautCurrent.extraDouble("egg_hatch_chance_normal", 2.0D);
+        stegonautBuffer.eggDropChance = stegonautCurrent.extraDouble("egg_drop_chance", 0.12D);
         stegonautBuffer.reactiveTerrainClearingOnDamage = stegonautCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
         stegonautBuffer.reactiveTerrainClearingOnDamageTamed = stegonautCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
@@ -473,6 +488,24 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.bite_damage"), buffer.biteDamage)
+                .setDefaultValue(defaults.abilityDamage("bite", 5.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.biteDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.chin_slam_damage"), buffer.chinSlamDamage)
+                .setDefaultValue(defaults.abilityDamage("chin_slam", 8.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.chinSlamDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_eating_damage"), buffer.groundEatingDamage)
+                .setDefaultValue(defaults.abilityDamage("ground_eating", 10.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.groundEatingDamage = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"), buffer.tamingChanceBase)
                 .setDefaultValue(defaults.extraDouble("taming_chance_base", 1.0))
                 .setMin(1.0D)
@@ -490,6 +523,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(1.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_drop_chance"), buffer.eggDropChance)
+                .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.eggDropChance = value)
                 .build());
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"), buffer.reactiveTerrainClearingOnDamage)
                 .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage", true))
@@ -588,6 +627,30 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.beamRegenPerTick = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.summon_storm_cooldown_ticks"), buffer.summonStormCooldownTicks)
+                .setDefaultValue(defaults.extraDouble("summon_storm_cooldown_ticks", 4800.0D))
+                .setMin(20.0D)
+                .setMax(120000.0D)
+                .setSaveConsumer(value -> buffer.summonStormCooldownTicks = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.summon_storm_supercharge_ticks"), buffer.summonStormSuperchargeTicks)
+                .setDefaultValue(defaults.extraDouble("summon_storm_supercharge_ticks", 1200.0D))
+                .setMin(20.0D)
+                .setMax(120000.0D)
+                .setSaveConsumer(value -> buffer.summonStormSuperchargeTicks = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.summon_storm_supercharge_damage_multiplier"), buffer.summonStormSuperchargeDamageMultiplier)
+                .setDefaultValue(defaults.extraDouble("summon_storm_supercharge_damage_multiplier", 2.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.summonStormSuperchargeDamageMultiplier = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.summon_storm_duration_ticks"), buffer.summonStormDurationTicks)
+                .setDefaultValue(defaults.extraDouble("summon_storm_duration_ticks", 1200.0D))
+                .setMin(20.0D)
+                .setMax(120000.0D)
+                .setSaveConsumer(value -> buffer.summonStormDurationTicks = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.egg_hatch_chance_normal"), buffer.eggHatchChanceNormal)
                 .setDefaultValue(defaults.extraDouble("egg_hatch_chance_normal", 2.0D))
@@ -981,15 +1044,21 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.CINDERVANE_ID, updated);
 
+        DragonAttributeConfig stegonautCurrent = loader.getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
+        Map<String, DragonAbilityOverride> stegonautAbilities = new HashMap<>(stegonautCurrent.abilities());
+        stegonautAbilities.put("bite", DragonAbilityOverride.ofDamage(stegonautBuffer.biteDamage));
+        stegonautAbilities.put("chin_slam", DragonAbilityOverride.ofDamage(stegonautBuffer.chinSlamDamage));
+        stegonautAbilities.put("ground_eating", DragonAbilityOverride.ofDamage(stegonautBuffer.groundEatingDamage));
         DragonAttributeConfig updatedStegonaut = new DragonAttributeConfig(
                 stegonautBuffer.maxHealth,
                 stegonautBuffer.armor,
                 0.0D,
-                Map.of(),
+                stegonautAbilities,
                 Map.of(
                         "taming_chance_base", stegonautBuffer.tamingChanceBase,
                         "taming_chance_hearty", stegonautBuffer.tamingChanceHearty,
-                        "egg_hatch_chance_normal", stegonautBuffer.eggHatchChanceNormal
+                        "egg_hatch_chance_normal", stegonautBuffer.eggHatchChanceNormal,
+                        "egg_drop_chance", stegonautBuffer.eggDropChance
                 ),
                 Map.of(
                         "reactive_terrain_clearing_on_damage", stegonautBuffer.reactiveTerrainClearingOnDamage,
@@ -1089,9 +1158,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static final class StegonautAttributeBuffer {
         double maxHealth;
         double armor;
+        double biteDamage;
+        double chinSlamDamage;
+        double groundEatingDamage;
         double tamingChanceBase;
         double tamingChanceHearty;
         double eggHatchChanceNormal;
+        double eggDropChance;
         boolean reactiveTerrainClearingOnDamage;
         boolean reactiveTerrainClearingOnDamageTamed;
     }
@@ -1109,6 +1182,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double wildFlyingSpeedMultiplier;
         double beamDrainPerTick;
         double beamRegenPerTick;
+        double summonStormCooldownTicks;
+        double summonStormSuperchargeTicks;
+        double summonStormSuperchargeDamageMultiplier;
+        double summonStormDurationTicks;
         boolean legacyTaming;
         double eggHatchChanceNormal;
         double eggHatchChanceThunder;
@@ -1184,6 +1261,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);
         extras.put("beam_drain_per_tick", buffer.beamDrainPerTick);
         extras.put("beam_regen_per_tick", buffer.beamRegenPerTick);
+        extras.put("summon_storm_cooldown_ticks", buffer.summonStormCooldownTicks);
+        extras.put("summon_storm_supercharge_ticks", buffer.summonStormSuperchargeTicks);
+        extras.put("summon_storm_supercharge_damage_multiplier", buffer.summonStormSuperchargeDamageMultiplier);
+        extras.put("summon_storm_duration_ticks", buffer.summonStormDurationTicks);
         extras.put("egg_hatch_chance_normal", buffer.eggHatchChanceNormal);
         extras.put("egg_hatch_chance_thunder", buffer.eggHatchChanceThunder);
         extras.put("egg_storm_instant_chance", buffer.eggStormInstantChance);

@@ -215,6 +215,18 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_ARMOR::get,
                 ForgeDragonAttributesConfig.STEGONAUT_ARMOR::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.bite_damage"),
+                ForgeDragonAttributesConfig.STEGONAUT_BITE_DAMAGE::get,
+                ForgeDragonAttributesConfig.STEGONAUT_BITE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.chin_slam_damage"),
+                ForgeDragonAttributesConfig.STEGONAUT_CHIN_SLAM_DAMAGE::get,
+                ForgeDragonAttributesConfig.STEGONAUT_CHIN_SLAM_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_eating_damage"),
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_EATING_DAMAGE::get,
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_EATING_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"),
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE::get,
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE::set,
@@ -226,6 +238,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_hatch_chance_normal"),
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_drop_chance"),
+                ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE::get,
+                ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
                 () -> ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
@@ -274,6 +290,22 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.beam_regen_per_tick"),
                 ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK::get,
                 ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.summon_storm_cooldown_ticks"),
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_COOLDOWN_TICKS::get,
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_COOLDOWN_TICKS::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.summon_storm_supercharge_ticks"),
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS::get,
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.summon_storm_supercharge_damage_multiplier"),
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER::get,
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.summon_storm_duration_ticks"),
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_DURATION_TICKS::get,
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_DURATION_TICKS::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.taming_base"),
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE::get,
@@ -564,9 +596,13 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case STEGONAUT -> {
                 ForgeDragonAttributesConfig.STEGONAUT_MAX_HEALTH.set(ForgeDragonAttributesConfig.STEGONAUT_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_ARMOR.set(ForgeDragonAttributesConfig.STEGONAUT_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_BITE_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_CHIN_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_CHIN_SLAM_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_EATING_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_GROUND_EATING_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
@@ -580,6 +616,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_COOLDOWN_TICKS.set(ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_COOLDOWN_TICKS.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS.set(ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER.set(ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_DURATION_TICKS.set(ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_DURATION_TICKS.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.set(ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.getDefault());

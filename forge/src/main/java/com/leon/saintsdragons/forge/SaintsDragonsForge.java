@@ -3,6 +3,7 @@ package com.leon.saintsdragons.forge;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
+import com.leon.saintsdragons.forge.init.ForgeBrewingRecipes;
 import com.leon.saintsdragons.forge.loot.ModLootModifiers;
 import com.leon.saintsdragons.forge.mixin.RangedAttributeAccessor;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
@@ -29,6 +30,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
@@ -68,6 +70,7 @@ public final class SaintsDragonsForge {
         modEventBus.addListener(this::onEntityAttributeCreation);
         modEventBus.addListener(this::onBuildCreativeTabs);
         modEventBus.addListener(this::onRegisterSpawnPlacements);
+        modEventBus.addListener(this::onCommonSetup);
         modEventBus.addListener(this::onModConfigEvent);
 
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
@@ -118,6 +121,10 @@ public final class SaintsDragonsForge {
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
         CommonModEvents.registerCommands(event.getDispatcher());
+    }
+
+    private void onCommonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(ForgeBrewingRecipes::register);
     }
 
     private void onAddReloadListeners(AddReloadListenerEvent event) {

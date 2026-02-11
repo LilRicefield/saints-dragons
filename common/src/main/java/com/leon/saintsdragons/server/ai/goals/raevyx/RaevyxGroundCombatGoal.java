@@ -31,10 +31,7 @@ public class RaevyxGroundCombatGoal extends Goal {
     // Beam cooldown mechanic (AI only - 3 minute cooldown)
     private int beamCooldown = 0;
     private static final int BEAM_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
-    private static final float BEAM_RANDOM_CHANCE = 0.12f; // 12% chance per attack window
-    private static final float DASH_RANDOM_CHANCE = 0.18f; // 18% chance when in dash range
-    private static final double DASH_MIN_RANGE = 8.0;
-    private static final double DASH_MAX_RANGE = 26.0;
+    private final RaevyxCombatDirector combatDirector = new RaevyxCombatDirector();
 
     public RaevyxGroundCombatGoal(Raevyx wyvern) {
         this.wyvern = wyvern;
@@ -114,6 +111,7 @@ public class RaevyxGroundCombatGoal extends Goal {
         // Don't modify running state - let other systems handle it
         wyvern.setAggressive(false);
         pathRecalcCooldown = 0;
+        combatDirector.reset();
 
         // Reset roar opener for next combat encounter
         hasUsedRoarOpener = false;
@@ -124,6 +122,7 @@ public class RaevyxGroundCombatGoal extends Goal {
     public void start() {
         // Don't set running to avoid speed boost - just use chaseSpeed multiplier
         wyvern.setAggressive(true);
+        combatDirector.reset();
 
         // Initialize roar opener - wait for sleep transitions to finish
         hasUsedRoarOpener = false;
@@ -176,17 +175,25 @@ public class RaevyxGroundCombatGoal extends Goal {
             // Normal combat after roar opener
             double gap = getGapToTarget(target);
             boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
+            boolean beamReady = beamCooldown <= 0;
+            combatDirector.tick(wyvern, target, gap, hasLineOfSight, beamReady);
 
-            if (tryRandomBeam(target, hasLineOfSight)) {
-                return;
-            } else if (shouldDashTarget(target, gap)) {
-                if (wyvern.tryAIGroundDash(target)) {
-                    return;
-                }
-            } else if (shouldDodgeTarget(target, gap)) {
+            if (combatDirector.shouldTryDodge(wyvern, target, gap, isCurrentlyAttacking())) {
                 if (wyvern.tryAIGroundDodge(target)) {
+                    attackCooldown = Math.max(attackCooldown, 8);
                     return;
                 }
+            }
+
+            if (combatDirector.shouldTryDash(wyvern, gap, isCurrentlyAttacking())) {
+                if (wyvern.tryAIGroundDash(target)) {
+                    attackCooldown = Math.max(attackCooldown, 12);
+                    return;
+                }
+            }
+
+            if (tryDirectedBeam(target, hasLineOfSight, beamReady)) {
+                return;
             } else if (gap > goreRange) {
                 // Medium-long range (4.5-32 blocks) OR beam on cooldown - chase to get closer
                 if (!isCurrentlyAttacking()) {
@@ -238,43 +245,16 @@ public class RaevyxGroundCombatGoal extends Goal {
         // Note: 4.5-32 block range has no attack - wyvern will chase to get closer
     }
 
-    private boolean tryRandomBeam(LivingEntity target, boolean hasLineOfSight) {
-        if (attackCooldown > 0 || isCurrentlyAttacking()) {
+    private boolean tryDirectedBeam(LivingEntity target, boolean hasLineOfSight, boolean beamReady) {
+        if (!combatDirector.shouldTryBeam(wyvern, getGapToTarget(target), hasLineOfSight, beamReady, isCurrentlyAttacking(), attackCooldown)) {
             return false;
         }
-        if (!hasLineOfSight || beamCooldown > 0) {
-            return false;
-        }
-        if (wyvern.getRandom().nextFloat() >= BEAM_RANDOM_CHANCE) {
-            return false;
-        }
-
         wyvern.getNavigation().stop();
         pathRecalcCooldown = 0;
         wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM);
         attackCooldown = 60;
         beamCooldown = BEAM_COOLDOWN_TICKS;
         return true;
-    }
-
-    private boolean shouldDodgeTarget(LivingEntity target, double gap) {
-        if (gap > 18.0) {
-            return false;
-        }
-        if (isCurrentlyAttacking() || wyvern.isBeaming() || wyvern.isDodging()) {
-            return false;
-        }
-        return wyvern.getRandom().nextFloat() < 0.05f;
-    }
-
-    private boolean shouldDashTarget(LivingEntity target, double gap) {
-        if (gap < DASH_MIN_RANGE || gap > DASH_MAX_RANGE) {
-            return false;
-        }
-        if (isCurrentlyAttacking() || wyvern.isBeaming() || wyvern.isDodging()) {
-            return false;
-        }
-        return wyvern.getRandom().nextFloat() < DASH_RANDOM_CHANCE;
     }
 
     /**

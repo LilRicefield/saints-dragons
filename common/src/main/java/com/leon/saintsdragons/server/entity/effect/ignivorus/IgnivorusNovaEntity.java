@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -36,6 +37,7 @@ public class IgnivorusNovaEntity extends Entity {
             SynchedEntityData.defineId(IgnivorusNovaEntity.class, EntityDataSerializers.FLOAT);
 
     private UUID ownerUUID;
+    private Entity owner;
     private int age;
     private final Set<UUID> damagedEntities = new HashSet<>();
 
@@ -48,6 +50,7 @@ public class IgnivorusNovaEntity extends Entity {
         this(ModEntities.IGNIVORUS_NOVA.get(), level);
         setPos(position);
         this.ownerUUID = owner != null ? owner.getUUID() : null;
+        this.owner = owner;
         setDamage(damage);
     }
 
@@ -143,14 +146,13 @@ public class IgnivorusNovaEntity extends Entity {
     }
 
     private Entity getOwner() {
-        if (ownerUUID != null && level() != null) {
-            for (Entity entity : level().getEntities(null, AABB.ofSize(position(), 100, 100, 100))) {
-                if (entity.getUUID().equals(ownerUUID)) {
-                    return entity;
-                }
+        if (owner == null && ownerUUID != null && level() instanceof ServerLevel serverLevel) {
+            Entity resolved = serverLevel.getEntity(ownerUUID);
+            if (resolved != null) {
+                owner = resolved;
             }
         }
-        return null;
+        return owner;
     }
 
     @Override

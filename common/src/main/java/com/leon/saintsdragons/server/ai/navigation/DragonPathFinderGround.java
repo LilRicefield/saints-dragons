@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Fixes vanilla Minecraft pathfinding issues and provides smoother movement.
- */
 public class DragonPathFinderGround extends PathFinder {
     public DragonPathFinderGround(NodeEvaluator processor, int maxVisitedNodes) {
         super(processor, maxVisitedNodes);
@@ -33,10 +30,6 @@ public class DragonPathFinderGround extends PathFinder {
         return path == null ? null : new DragonPatchedPath(path);
     }
 
-    /**
-     * Custom path implementation that fixes vanilla entity positioning issues.
-     * Properly accounts for entity bounding box width when calculating path positions.
-     */
     static class DragonPatchedPath extends Path {
         public DragonPatchedPath(Path original) {
             super(copyPathPoints(original), original.getTarget(), original.canReach());
