@@ -9,11 +9,14 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Network message for requesting the player's tamed dragons list for the Draconic Codex.
  */
 public class MessageDraconicCodexRequest {
+    private static final long REQUEST_COOLDOWN_TICKS = 10L;
+    private static final ConcurrentHashMap<UUID, Long> NEXT_ALLOWED_REQUEST_TICK = new ConcurrentHashMap<>();
 
     public static void encode(MessageDraconicCodexRequest message, FriendlyByteBuf buffer) {
     }
@@ -29,6 +32,13 @@ public class MessageDraconicCodexRequest {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
             return;
         }
+        long now = serverLevel.getGameTime();
+        UUID playerId = player.getUUID();
+        long nextAllowed = NEXT_ALLOWED_REQUEST_TICK.getOrDefault(playerId, 0L);
+        if (now < nextAllowed) {
+            return;
+        }
+        NEXT_ALLOWED_REQUEST_TICK.put(playerId, now + REQUEST_COOLDOWN_TICKS);
 
         DragonCodexSavedData data = DragonCodexSavedData.get(serverLevel);
         List<DragonCodexSavedData.DragonCodexEntry> entries = data.getEntriesFor(player);

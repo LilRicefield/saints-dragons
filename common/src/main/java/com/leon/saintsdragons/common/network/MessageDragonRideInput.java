@@ -14,6 +14,7 @@ public record MessageDragonRideInput(
         float strafe,
         float yaw
 ) {
+    private static final int MAX_ABILITY_NAME_LENGTH = 64;
 
     public boolean hasAbilityName() {
         return abilityName != null && !abilityName.isEmpty();
@@ -24,7 +25,7 @@ public record MessageDragonRideInput(
         buf.writeBoolean(msg.goingDown());
         buf.writeEnum(msg.action() != null ? msg.action() : DragonRiderAction.NONE);
         if (msg.action() == DragonRiderAction.ABILITY_USE || msg.action() == DragonRiderAction.ABILITY_STOP) {
-            buf.writeUtf(msg.abilityName() != null ? msg.abilityName() : "");
+            buf.writeUtf(msg.abilityName() != null ? msg.abilityName() : "", MAX_ABILITY_NAME_LENGTH);
         }
         buf.writeFloat(msg.forward());
         buf.writeFloat(msg.strafe());
@@ -37,7 +38,7 @@ public record MessageDragonRideInput(
         DragonRiderAction action = buf.readEnum(DragonRiderAction.class);
         String abilityName = null;
         if (action == DragonRiderAction.ABILITY_USE || action == DragonRiderAction.ABILITY_STOP) {
-            abilityName = buf.readUtf();
+            abilityName = buf.readUtf(MAX_ABILITY_NAME_LENGTH);
             if (abilityName.isEmpty()) {
                 abilityName = null;
             }

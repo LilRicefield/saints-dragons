@@ -6,13 +6,8 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.sound.api.DragonSoundMode;
 import com.leon.saintsdragons.sound.api.DragonSoundSpec;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 
 public final class DragonSoundOrchestrator {
     private static final Logger LOGGER = LoggerFactory.getLogger(DragonSoundOrchestrator.class);
@@ -63,14 +58,7 @@ public final class DragonSoundOrchestrator {
                 spec.pitch(),
                 spec.durationTicks()
         );
+        // Tracking already includes nearby rider/owner and avoids duplicate client restarts.
         NetworkHandler.sendToTracking(dragon, packet);
-        Set<UUID> sent = new HashSet<>();
-        if (dragon.getControllingPassenger() instanceof ServerPlayer rider) {
-            NetworkHandler.sendToPlayer(rider, packet);
-            sent.add(rider.getUUID());
-        }
-        if (dragon.getOwner() instanceof ServerPlayer owner && sent.add(owner.getUUID())) {
-            NetworkHandler.sendToPlayer(owner, packet);
-        }
     }
 }

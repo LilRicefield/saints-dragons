@@ -17,7 +17,7 @@ public class StegonautFollowOwnerGoal extends Goal {
     // Distance constants - tuned for ground-based following
     private static final double START_FOLLOW_DIST = 12.0;
     private static final double STOP_FOLLOW_DIST = 8.0;
-    private static final double TELEPORT_DIST = 2000.0;
+    private static final double TELEPORT_DIST = 32;
 
     // Performance optimization - don't re-path constantly
     private int pathRecalcCooldown = 0;

@@ -463,13 +463,12 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
         // Clear all combat and AI states when mounting
         dragon.clearAllStatesForMounting();
         
-        // Start riding
-        if (player.startRiding(dragon)) {
+        // Start riding only on server to avoid client/server mount desync.
+        if (!dragon.level().isClientSide && player.startRiding(dragon)) {
             // Play excited sound when mounting
             dragon.playExcitedSound();
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
-        
+
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
     }
     
