@@ -8134,6 +8134,7 @@
 		},
 		"animation.ignivorus.flap": {
 			"loop": true,
+			"animation_length": 12,
 			"bones": {
 				"leftfrontleg": {
 					"rotation": {
@@ -8167,22 +8168,22 @@
 				},
 				"tail1": {
 					"rotation": {
-						"vector": ["0-math.sin(query.anim_time*150)* -4", "0-math.sin(query.anim_time*80)* -3", 0]
+						"vector": ["0-math.sin(query.anim_time*150)* -4", "0-math.sin(query.anim_time*180)* -3", 0]
 					}
 				},
 				"tail2": {
 					"rotation": {
-						"vector": ["-2.5-math.sin(query.anim_time*150)* -3", 0, "0+math.sin(query.anim_time*80)* 5"]
+						"vector": ["-2.5-math.sin(query.anim_time*150)* -3", 0, "0+math.sin(query.anim_time*180)* 5"]
 					}
 				},
 				"tail3": {
 					"rotation": {
-						"vector": ["math.cos(query.anim_time * 150- 200) * 5", 0, "math.cos(query.anim_time * 80- 200) * 5"]
+						"vector": ["math.cos(query.anim_time * 150- 200) * 5", 0, "math.cos(query.anim_time * 180- 200) * 5"]
 					}
 				},
 				"tail4": {
 					"rotation": {
-						"vector": ["math.cos(query.anim_time * 150- 200) * 5", 0, "math.cos(query.anim_time * 80- 200) * 5"]
+						"vector": ["math.cos(query.anim_time * 150- 200) * 5", 0, "math.cos(query.anim_time * 180- 200) * 5"]
 					}
 				},
 				"rightfrontleg": {
@@ -8295,12 +8296,12 @@
 				},
 				"neck1Controller": {
 					"rotation": {
-						"vector": ["-5-math.sin(query.anim_time*150-80)* 5", 0, 0]
+						"vector": ["-5-math.sin(query.anim_time*180-80)* 5", 0, 0]
 					}
 				},
 				"neck2Controller": {
 					"rotation": {
-						"vector": ["0-math.sin(query.anim_time*150-50)* 5", "math.sin(query.anim_time *100+80) * 3", 0]
+						"vector": ["0-math.sin(query.anim_time*150-50)* 5", "math.sin(query.anim_time *180+80) * 3", 0]
 					}
 				},
 				"neck3Controller": {
@@ -8347,6 +8348,23 @@
 					"rotation": {
 						"vector": ["5-math.sin(query.anim_time*150+100)* 6", 0, "math.sin(query.anim_time *100-150) * 3.4"]
 					}
+				}
+			},
+			"sound_effects": {
+				"0.75": {
+					"effect": "ignivorus_flap"
+				},
+				"3.25": {
+					"effect": "ignivorus_flap"
+				},
+				"5.6667": {
+					"effect": "ignivorus_flap"
+				},
+				"8.0": {
+					"effect": "ignivorus_flap"
+				},
+				"10.375": {
+					"effect": "ignivorus_flap"
 				}
 			}
 		},
@@ -8530,6 +8548,7 @@
 		},
 		"animation.ignivorus.sprint_flap": {
 			"loop": true,
+			"animation_length": 9.5833,
 			"bones": {
 				"leftfrontleg": {
 					"rotation": {
@@ -8693,6 +8712,32 @@
 					"rotation": {
 						"vector": ["17.5+math.sin(query.anim_time *300-100)* 5", 0, 0]
 					}
+				}
+			},
+			"sound_effects": {
+				"0.5833": {
+					"effect": "ignivorus_flap"
+				},
+				"1.8333": {
+					"effect": "ignivorus_flap"
+				},
+				"3.0417": {
+					"effect": "ignivorus_flap"
+				},
+				"4.25": {
+					"effect": "ignivorus_flap"
+				},
+				"5.4583": {
+					"effect": "ignivorus_flap"
+				},
+				"6.625": {
+					"effect": "ignivorus_flap"
+				},
+				"7.7917": {
+					"effect": "ignivorus_flap"
+				},
+				"9.0": {
+					"effect": "ignivorus_flap"
 				}
 			}
 		},
@@ -20746,6 +20791,7 @@
 		},
 		"animation.ignivorus.fly_idle": {
 			"loop": true,
+			"animation_length": 7.2083,
 			"bones": {
 				"heightController": {
 					"rotation": {
@@ -21094,6 +21140,17 @@
 					"rotation": {
 						"vector": ["2.5+math.sin(query.anim_time *150-50) * 7", 0, 0]
 					}
+				}
+			},
+			"sound_effects": {
+				"0.75": {
+					"effect": "ignivorus_flap"
+				},
+				"3.2083": {
+					"effect": "ignivorus_flap"
+				},
+				"5.7083": {
+					"effect": "ignivorus_flap"
 				}
 			}
 		},
@@ -28372,8 +28429,7 @@
 						}
 					}
 				}
-			},
-			"sound_effects": {}
+			}
 		},
 		"animation.ignivorus.bulldozing": {
 			"loop": true,

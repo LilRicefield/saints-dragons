@@ -5,7 +5,7 @@ import com.leon.saintsdragons.common.network.MessageDraconicCodexRequest;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.client.ui.codex.CodexAllyPanel;
-import com.leon.saintsdragons.client.ui.codex.CodexDetailPanel;
+import com.leon.saintsdragons.client.ui.codex.CodexPhysiologyPanel;
 import com.leon.saintsdragons.client.ui.codex.CodexDragonEntry;
 import com.leon.saintsdragons.client.ui.codex.CodexDragonListPanel;
 import com.leon.saintsdragons.client.ui.codex.CodexDragonRenderer;
@@ -71,7 +71,7 @@ public class DraconicCodexScreen extends Screen {
     private final CodexDragonRenderer dragonRenderer = new CodexDragonRenderer();
     private final CodexEcologyPanel ecologyPanel = new CodexEcologyPanel(IGNIVORUS_EGG_TEXTURE);
     private final CodexAllyPanel allyPanel = new CodexAllyPanel(CODEX_EDIT_BOX, ADD_ICON, REMOVE_ICON);
-    private final CodexDetailPanel detailPanel = new CodexDetailPanel(
+    private final CodexPhysiologyPanel detailPanel = new CodexPhysiologyPanel(
             HEALTH_ICON, ARMOR_ICON, GENDER_ICON, HUNGER_ICON, HAPPINESS_ICON, VARIANT_ICON
     );
 
@@ -122,6 +122,7 @@ public class DraconicCodexScreen extends Screen {
 
         updateAllyWidgetVisibility();
         updateEcologyWidgetVisibility();
+        playCodexFlipSound();
     }
 
     @Override
@@ -187,9 +188,13 @@ public class DraconicCodexScreen extends Screen {
     }
 
     private boolean handleEcologyLinkClick(double mouseX, double mouseY) {
-        return ecologyPanel.handleLinkClick(mouseX, mouseY,
+        boolean clicked = ecologyPanel.handleLinkClick(mouseX, mouseY,
                 page -> ecologyPage = page,
                 this::updateEcologyWidgetVisibility);
+        if (clicked) {
+            playCodexFlipSound();
+        }
+        return clicked;
     }
 
     private boolean handleTabClick(double mouseX, double mouseY) {
@@ -204,6 +209,7 @@ public class DraconicCodexScreen extends Screen {
         }
         updateAllyWidgetVisibility();
         updateEcologyWidgetVisibility();
+        playCodexFlipSound();
         return true;
     }
 
@@ -326,5 +332,19 @@ public class DraconicCodexScreen extends Screen {
         if (grumbleSound != null) {
             this.minecraft.player.playSound(grumbleSound, 0.8f, 1.0f);
         }
+    }
+
+    @Override
+    public void onClose() {
+        playCodexFlipSound();
+        super.onClose();
+    }
+
+    private void playCodexFlipSound() {
+        if (this.minecraft == null || this.minecraft.player == null) {
+            return;
+        }
+        float pitch = 0.95f + (this.minecraft.player.getRandom().nextFloat() * 0.1f);
+        this.minecraft.player.playSound(ModSounds.DRACONIC_CODEX_FLIP.get(), 0.75f, pitch);
     }
 }

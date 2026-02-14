@@ -11,6 +11,7 @@
     "minecraft:sunflower_plains",
     "minecraft:savanna_plateau",
     "minecraft:beach",
+    "minecraft:stony_shore",
     {"id": "biomeswevegone:lush_stacks", "required":  false},
     {"id": "biomesoplenty:floodplain", "required":  false},
     {"id": "biomesoplenty:marsh", "required":  false},

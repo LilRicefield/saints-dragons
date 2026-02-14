@@ -2291,18 +2291,33 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Cindervane> movement = new AnimationController<>(this, "movement", 5, animationHandler::handleMovementAnimation);
-        movement.setSoundKeyframeHandler(event -> {});
+        movement.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         controllers.add(movement);
 
         AnimationController<Cindervane> actions = new AnimationController<>(this, "actions", 5, animationHandler::actionPredicate);
         animationHandler.setupActionController(actions);
-        actions.setSoundKeyframeHandler(event -> {});
+        actions.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         controllers.add(actions);
 
         AnimationController<Cindervane> instantController = new AnimationController<>(this, "instant", 1,
                 animationHandler::instantActionPredicate);
         animationHandler.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(event -> {});
+        instantController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         controllers.add(instantController);
     }
 
@@ -2319,6 +2334,18 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public DragonSoundProfile getSoundProfile() {
         return CindervaneSoundProfile.INSTANCE;
+    }
+
+    private void handleAnimationSound(String soundKey) {
+        DragonSoundProfile profile = getSoundProfile();
+        if (profile != null) {
+            // Let the profile handle it (it knows about flaps, steps, etc.)
+            boolean handled = profile.handleAnimationSound(getSoundHandler(), this, soundKey, null);
+            if (!handled) {
+                // Profile didn't handle it, try as vocal
+                getSoundHandler().playVocal(soundKey);
+            }
+        }
     }
 
     @Override

@@ -237,10 +237,10 @@ public class CodexEcologyPanel {
                 }
             }
             case "nulljaw" -> {
-                if (ecologyPage == 7) {
+                if (ecologyPage == 6) {
                     drawFavoriteFoods(guiGraphics, font, contentX, startY, NULLJAW_FAVORITE_FOODS);
                 }
-                if (ecologyPage == 8) {
+                if (ecologyPage == 7) {
                     drawDrops(guiGraphics, font, contentX, startY, NULLJAW_DROPS);
                 }
             }
@@ -372,8 +372,8 @@ public class CodexEcologyPanel {
                         new SectionLink("1. Overview", 1, ecologyPage == 1),
                         new SectionLink("2. Egg Information", 4, ecologyPage == 4),
                         new SectionLink("3. Biome", 5, ecologyPage == 5),
-                        new SectionLink("4. Favorite food", 7, ecologyPage == 7),
-                        new SectionLink("5. Drops", 8, ecologyPage == 8)
+                        new SectionLink("4. Favorite food", 6, ecologyPage == 6),
+                        new SectionLink("5. Drops", 7, ecologyPage == 7)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
