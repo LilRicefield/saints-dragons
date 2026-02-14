@@ -6,6 +6,12 @@
     "bite": {
       "damage": 12.0
     },
+    "slash_grab_hit1": {
+      "damage": 5.0
+    },
+    "slash_grab_hit2": {
+      "damage": 7.0
+    },
     "magma_volley": {
       "damage": 20.0
     }
@@ -16,6 +22,11 @@
     "taming_chance_hearty": 2.0,
     "egg_hatch_chance_normal": 2.0,
     "egg_drop_chance": 0.12,
+    "slash_grab_mount_tick": 12.0,
+    "slash_grab_hit_tick": 22.0,
+    "slash_grab_dismount_tick": 32.0,
+    "slash_grab_max_target_width": 1.6,
+    "slash_grab_max_target_height": 2.6,
     "aggressive_wild": false
   }
 }

@@ -6,6 +6,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
@@ -151,6 +152,12 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (target != null) {
             wyvern.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
+            // In water, use direct swim steering instead of land path navigation to avoid sinking/stalling.
+            if (wyvern.isInWaterOrBubble()) {
+                handleWaterCombat(target);
+                return;
+            }
+
             // Handle roar opener - use roar once at the start of combat
             if (!hasUsedRoarOpener) {
                 if (wyvern.isSleepTransitioning()) {
@@ -275,11 +282,65 @@ public class RaevyxGroundCombatGoal extends Goal {
     }
 
     private void updateChasePath(LivingEntity target) {
+        if (wyvern.isInWaterOrBubble()) {
+            // Ground navigation is unreliable in water for this dragon.
+            return;
+        }
         if (--pathRecalcCooldown <= 0 || targetMovedSignificantly(target)) {
             rememberTargetPosition(target);
             double distance = wyvern.distanceTo(target);
             pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
             wyvern.getNavigation().moveTo(target, chaseSpeed);
+        }
+    }
+
+    private void handleWaterCombat(LivingEntity target) {
+        wyvern.getNavigation().stop();
+
+        // Keep roar opener behavior in water too.
+        if (!hasUsedRoarOpener) {
+            if (wyvern.isSleepTransitioning()) {
+                roarOpenerDelay = Math.max(roarOpenerDelay, 8);
+            } else if (roarOpenerDelay > 0) {
+                roarOpenerDelay--;
+            } else {
+                wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_ROAR);
+                hasUsedRoarOpener = true;
+                attackCooldown = 40;
+            }
+        }
+
+        boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
+        double gap = getGapToTarget(target);
+        boolean inAttackRange = gap <= goreRange;
+
+        // Direct steering toward target with gentle buoyancy so it doesn't sink while aggroing.
+        Vec3 current = wyvern.getDeltaMovement();
+        Vec3 toTarget = target.position().subtract(wyvern.position());
+        Vec3 horizontal = new Vec3(toTarget.x, 0.0, toTarget.z);
+        Vec3 desiredHorizontal = horizontal.lengthSqr() > 1.0E-4
+                ? horizontal.normalize().scale(0.27D)
+                : Vec3.ZERO;
+
+        double nx = current.x + (desiredHorizontal.x - current.x) * 0.30D;
+        double nz = current.z + (desiredHorizontal.z - current.z) * 0.30D;
+
+        double targetY = target.getY() + target.getBbHeight() * 0.45D;
+        double yDiff = targetY - wyvern.getY();
+        double ny = current.y;
+        if (yDiff > 0.9D) {
+            ny = Math.max(current.y + 0.035D, 0.06D);
+        } else if (yDiff < -1.3D) {
+            ny = Math.min(current.y - 0.03D, -0.08D);
+        } else {
+            ny = current.y + 0.012D;
+        }
+
+        wyvern.setDeltaMovement(nx, ny, nz);
+        wyvern.getMoveControl().setWantedPosition(target.getX(), targetY, target.getZ(), 1.0D);
+
+        if (hasUsedRoarOpener && inAttackRange && hasLineOfSight) {
+            tryAttack(target);
         }
     }
 

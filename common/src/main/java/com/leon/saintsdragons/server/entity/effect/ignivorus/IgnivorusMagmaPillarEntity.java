@@ -47,6 +47,12 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             RawAnimation.begin().thenPlay("animation.ignivorus_magma_pillar.subside");
     private static final int SUBSIDE_DURATION_TICKS = 9; // Matches 0.416s subside animation
     private static final EntityDimensions BASE_DIMENSIONS = EntityDimensions.scalable(5.5F, 5.5F);
+    // Damage volume tuning: widen pillar hit detection so near-edge targets are still affected.
+    private static final double DAMAGE_RADIUS_BASE = 2.25D;
+    private static final double DAMAGE_RADIUS_SCALE_MULTIPLIER = 0.65D;
+    private static final double DAMAGE_VERTICAL_BELOW = 0.75D;
+    private static final double DAMAGE_VERTICAL_HEIGHT_BASE = 5.5D;
+    private static final double DAMAGE_VERTICAL_HEIGHT_SCALE_MULTIPLIER = 2.4D;
 
     private static final EntityDataAccessor<Integer> DATA_STAGE =
             SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.INT);
@@ -239,10 +245,11 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             return;
         }
 
-        double radius = 1.6D * getVisualScale();
-        double height = 4.0D + getVisualScale() * 2.0D;
-        AABB area = new AABB(getX() - radius, getY(), getZ() - radius,
-                getX() + radius, getY() + height, getZ() + radius);
+        double radius = DAMAGE_RADIUS_BASE + (getVisualScale() * DAMAGE_RADIUS_SCALE_MULTIPLIER);
+        double minY = getY() - DAMAGE_VERTICAL_BELOW;
+        double height = DAMAGE_VERTICAL_HEIGHT_BASE + getVisualScale() * DAMAGE_VERTICAL_HEIGHT_SCALE_MULTIPLIER;
+        AABB area = new AABB(getX() - radius, minY, getZ() - radius,
+                getX() + radius, minY + height, getZ() + radius);
 
         List<LivingEntity> hits = server.getEntitiesOfClass(LivingEntity.class, area, target -> {
             if (!target.isAlive() || !target.attackable()) {

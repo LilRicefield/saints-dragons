@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "saintsdragons:item/ignivorus/ignivorus_teeth"
+    "layer0": "saintsdragons:item/ignivorus/ignivorus_tooth"
   }
 }

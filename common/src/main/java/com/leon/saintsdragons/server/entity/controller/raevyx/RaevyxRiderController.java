@@ -407,38 +407,6 @@ public record RaevyxRiderController(Raevyx wyvern) {
      * Forces the wyvern to take off when being ridden. Called when player presses Space while on ground.
      */
     public void requestRiderTakeoff() {
-        if (!wyvern.isTame() || getRidingPlayer() == null || wyvern.isFlying()) return;
-        // Block takeoff if locked (e.g., during roar)
-        if (wyvern.isTakeoffLocked()) return;
-        // Gentle cooldown after landing to prevent spam takeoff/land jitter
-        long now = wyvern.level().getGameTime();
-        long lastLand = wyvern.getLastLandingGameTime();
-        if (lastLand != Long.MIN_VALUE && (now - lastLand) < 5.0) { // ~1s cooldown
-            return;
-        }
-
-        // Ensure clean state and give the takeoff request some upward intent even before new input packets arrive
-        wyvern.getNavigation().stop();
-        wyvern.setGoingDown(false);
-        wyvern.setGoingUp(true); // Latch ascend so we don't rely on a follow-up look/move packet
-
-        // Reset all flight states for a fresh takeoff
-        wyvern.timeFlying = 0;
-        wyvern.landingFlag = false;
-        wyvern.landingTimer = 0;
-
-        // Initiate takeoff sequence
-        wyvern.setFlying(true);
-        wyvern.setTakeoff(true);
-        wyvern.setHovering(false);
-        wyvern.setLanding(false);
-        // Keep takeoff active for a brief window so server flight logic applies upward force
-        wyvern.setRiderTakeoffTicks(Raevyx.TAKEOFF_ANIMATION_TICKS);
-
-        // Give an initial upward push so the wyvern actually leaves the ground before rider input changes
-        Vec3 current = wyvern.getDeltaMovement();
-        double upward = Math.max(current.y, 0.55D); // big first shove to eliminate post-takeoff stutter
-        wyvern.setDeltaMovement(current.x, upward, current.z);
-        wyvern.hasImpulse = true;
+        wyvern.requestRiderTakeoff();
     }
 }

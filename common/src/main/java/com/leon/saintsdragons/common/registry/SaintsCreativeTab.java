@@ -36,10 +36,15 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.CINDERVANE_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_HEART.get());
-                                output.accept(ModItems.IGNIVORUS_TEETH.get());
+                                output.accept(ModItems.IGNIVORUS_TOOTH.get());
                                 output.accept(ModItems.NULLJAW_SCALE.get());
                                 output.accept(ModItems.STEGONAUT_SCALE.get());
                                 output.accept(PotionUtils.setPotion(new ItemStack(Items.POTION), ModPotions.NULLJAW_TIDEGUARD.get()));
+                                output.accept(PotionUtils.setPotion(new ItemStack(Items.SPLASH_POTION), ModPotions.NULLJAW_TIDEGUARD.get()));
+                                output.accept(PotionUtils.setPotion(new ItemStack(Items.LINGERING_POTION), ModPotions.NULLJAW_TIDEGUARD.get()));
+                                output.accept(PotionUtils.setPotion(new ItemStack(Items.POTION), ModPotions.SEARING.get()));
+                                output.accept(PotionUtils.setPotion(new ItemStack(Items.SPLASH_POTION), ModPotions.SEARING.get()));
+                                output.accept(PotionUtils.setPotion(new ItemStack(Items.LINGERING_POTION), ModPotions.SEARING.get()));
                                 output.accept(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
                                 output.accept(ModItems.HEARTY_DRAGON_MEAL.get());
                                 output.accept(ModItems.RAEVYX_EGG.get());

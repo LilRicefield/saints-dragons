@@ -159,6 +159,14 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.slash_grab_hit1_damage"),
+                ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT1_DAMAGE::get,
+                ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT1_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.slash_grab_hit2_damage"),
+                ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT2_DAMAGE::get,
+                ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT2_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.volley_damage"),
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE::set,
@@ -581,6 +589,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED.set(ForgeDragonAttributesConfig.CINDERVANE_FLYING_SPEED.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT1_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT1_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT2_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT2_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.getDefault());

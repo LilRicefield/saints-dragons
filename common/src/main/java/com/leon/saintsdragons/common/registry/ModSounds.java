@@ -40,9 +40,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_EXCITED = registerSound("raevyx_excited");
     public static final Supplier<SoundEvent> RAEVYX_ROAR = registerSound("raevyx_roar");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM = registerSound("raevyx_summon_storm");
-    public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_AIR_START = registerSound("raevyx_summon_storm_air_start");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_AIR = registerSound("raevyx_summon_storm_air");
-    public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_AIR_END = registerSound("raevyx_summon_storm_air_end");
     public static final Supplier<SoundEvent> RAEVYX_WALK = registerSound("raevyx_walk");
     public static final Supplier<SoundEvent> RAEVYX_RUN = registerSound("raevyx_run");
     public static final Supplier<SoundEvent> RAEVYX_LANDED = registerSound("raevyx_landed");
@@ -69,6 +67,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> CINDERVANE_ROAR = registerSound("cindervane_roar");
     public static final Supplier<SoundEvent> CINDERVANE_HURT = registerSound("cindervane_hurt");
     public static final Supplier<SoundEvent> CINDERVANE_BITE = registerSound("cindervane_bite");
+    public static final Supplier<SoundEvent> CINDERVANE_SLASH = registerSound("cindervane_slash");
     public static final Supplier<SoundEvent> CINDERVANE_DIE = registerSound("cindervane_die");
     public static final Supplier<SoundEvent> CINDERVANE_RUN = registerSound("cindervane_run");
     public static final Supplier<SoundEvent> CINDERVANE_FLAP = registerSound("cindervane_flap");

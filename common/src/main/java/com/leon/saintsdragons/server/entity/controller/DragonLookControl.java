@@ -32,6 +32,10 @@ public class DragonLookControl<T extends DragonEntity> extends LookControl {
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
             return;
         }
+        // Keep seated dragons visually still; no idle look-around while sitting.
+        if (!dragon.isVehicle() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.0f)) {
+            return;
+        }
 
         // When being ridden, skip custom clamping but still call vanilla logic
         // (vanilla tick() might update internal state needed for camera smoothness)

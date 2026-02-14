@@ -11,6 +11,8 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.entity.Entity;
 
 import java.util.function.Consumer;
@@ -181,6 +183,18 @@ public final class DragonRideInputHandler {
         float strafe = player.xxa;
         float yaw = player.getYRot();
 
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut) {
+            if (mc.screen instanceof InventoryScreen || mc.screen instanceof CreativeModeInventoryScreen) {
+                mc.setScreen(null);
+                sendInput(false, false, DragonRiderAction.OPEN_INVENTORY, null, forward, strafe, yaw);
+                return;
+            }
+            if (mc.screen == null && mc.options.keyInventory.consumeClick()) {
+                sendInput(false, false, DragonRiderAction.OPEN_INVENTORY, null, forward, strafe, yaw);
+                return;
+            }
+        }
+
         boolean movementChanged = forward != lastForward
                 || strafe != lastStrafe
                 || Math.abs(yaw - lastYaw) > 0.1f
@@ -204,9 +218,20 @@ public final class DragonRideInputHandler {
         }
 
         // Only send takeoff request for dragons that can fly
-        if (ascendDown && !wasAscendPressed && !dragon.isFlying() && dragon.canTakeoff()) {
-            // Preserve the current ascend/descend state so the server keeps Space latched on takeoff
-            sendInput(ascendDown, descendDown, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
+        if (ascendDown && !wasAscendPressed) {
+            boolean canTakeoffNow = dragon.canTakeoff();
+            boolean alreadyFlying = dragon.isFlying();
+            boolean breachWaterBypass =
+                    (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
+                    || dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane
+                    || dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus)
+                    && dragon.isInWaterOrBubble()
+                    && !dragon.isUnderWater()
+                    && !alreadyFlying;
+            if ((!alreadyFlying && canTakeoffNow) || breachWaterBypass) {
+                // Preserve the current ascend/descend state so the server keeps Space latched on takeoff
+                sendInput(ascendDown, descendDown, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
+            }
         }
 
         if (toggleMeleeDown && !wasToggleMeleeDown) {

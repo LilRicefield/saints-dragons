@@ -80,6 +80,8 @@ public final class SaintsDragonsConfig {
 
         builder.push("spawning");
         builder.comment("Dragon spawn configuration - control where and how often dragons spawn");
+        builder.comment("Note: spawn weights are relative per biome/category roll.");
+        builder.comment("Final spawn frequency also depends on each dragon's spawn predicate and placement checks.");
 
         builder.comment("Raevyx spawn settings");
         RAEVYX_SPAWN_WEIGHT = builder.defineInt("raevyxSpawnWeight", RAEVYX_SPAWN_WEIGHT_DEFAULT, 0, 100);
@@ -90,7 +92,7 @@ public final class SaintsDragonsConfig {
         builder.comment("Biome IDs or biome tags to exclude from default Raevyx spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
         RAEVYX_EXCLUDED_BIOMES = builder.defineList("raevyxExcludedBiomes", Collections.emptyList());
 
-        builder.comment("Stegonaut spawn settings");
+        builder.comment("Stegonaut spawn settings (land-focused; broaden via additional biome IDs/tags as needed)");
         STEGONAUT_SPAWN_WEIGHT = builder.defineInt("stegonautSpawnWeight", STEGONAUT_SPAWN_WEIGHT_DEFAULT, 0, 100);
         STEGONAUT_MIN_GROUP_SIZE = builder.defineInt("stegonautMinGroupSize", STEGONAUT_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         STEGONAUT_MAX_GROUP_SIZE = builder.defineInt("stegonautMaxGroupSize", STEGONAUT_MAX_GROUP_SIZE_DEFAULT, 1, 10);
@@ -110,7 +112,7 @@ public final class SaintsDragonsConfig {
         builder.comment("Whether Cindervane egg blocks generate in worldgen feature patches");
         CINDERVANE_EGG_BLOCK_WORLDGEN = builder.defineBoolean("cindervaneEggBlockWorldgen", CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT);
 
-        builder.comment("Nulljaw spawn settings");
+        builder.comment("Nulljaw spawn settings (semi-aquatic; biome tags can massively expand coverage)");
         NULLJAW_SPAWN_WEIGHT = builder.defineInt("nulljawSpawnWeight", NULLJAW_SPAWN_WEIGHT_DEFAULT, 0, 100);
         NULLJAW_MIN_GROUP_SIZE = builder.defineInt("nulljawMinGroupSize", NULLJAW_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         NULLJAW_MAX_GROUP_SIZE = builder.defineInt("nulljawMaxGroupSize", NULLJAW_MAX_GROUP_SIZE_DEFAULT, 1, 10);

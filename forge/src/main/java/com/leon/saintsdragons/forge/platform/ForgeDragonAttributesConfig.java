@@ -15,6 +15,8 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FLYING_SPEED;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_BITE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_SLASH_GRAB_HIT1_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_SLASH_GRAB_HIT2_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_MAGMA_VOLLEY_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_CHICKEN;
@@ -138,6 +140,8 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         CINDERVANE_BITE_DAMAGE = builder.defineInRange("bite_damage", 12.0, 0.0, 100.0);
+        CINDERVANE_SLASH_GRAB_HIT1_DAMAGE = builder.defineInRange("slash_grab_hit1_damage", 5.0, 0.0, 100.0);
+        CINDERVANE_SLASH_GRAB_HIT2_DAMAGE = builder.defineInRange("slash_grab_hit2_damage", 7.0, 0.0, 100.0);
         CINDERVANE_MAGMA_VOLLEY_DAMAGE = builder.defineInRange("magma_volley_damage", 20.0, 0.0, 100.0);
         builder.comment("Taming Chances (lower = easier)");
         CINDERVANE_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 4.0, 1.0, 20.0);

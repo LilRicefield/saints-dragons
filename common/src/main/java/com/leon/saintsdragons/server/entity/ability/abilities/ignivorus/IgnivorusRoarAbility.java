@@ -52,7 +52,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
     private boolean cosmeticMode; // True when roaring mid-flight (no pillars/damage)
 
     public IgnivorusRoarAbility(DragonAbilityType<Ignivorus, IgnivorusRoarAbility> type, Ignivorus user) {
-        super(type, user, TRACK, 80);
+        super(type, user, TRACK, 50);
     }
 
     @Override

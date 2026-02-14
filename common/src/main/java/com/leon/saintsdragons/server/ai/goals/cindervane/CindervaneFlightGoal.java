@@ -55,6 +55,12 @@ public class CindervaneFlightGoal extends Goal {
             return false;
         }
 
+        // Never start autonomous flight while submerged.
+        // Water behavior is handled by swim goals/combat steering instead.
+        if (amphithere.isInWater() || amphithere.isInWaterOrBubble() || amphithere.isInLava()) {
+            return false;
+        }
+
         // Don't interfere with landing sequence
         if (amphithere.isLanding()) {
             return false;
@@ -65,17 +71,21 @@ public class CindervaneFlightGoal extends Goal {
             return false;
         }
 
+        // Never start ambient/autonomous flight during combat.
+        // Combat goals handle movement (including water steering) directly.
+        LivingEntity combatTarget = amphithere.getTarget();
+        if (combatTarget != null && combatTarget.isAlive()) {
+            return false;
+        }
+
         // Don't take off while sleeping or waking up
         if (amphithere.isSleeping() || amphithere.isSleepingExiting()) {
             return false;
         }
 
-        // Prevent autonomous flight when tamed - amphitheres should stay grounded
-        if (amphithere.isTame() && amphithere.getOwner() != null) {
-            // Only allow flight when over danger (void, lava, water)
-            if (!isOverDanger()) {
-                return false;
-            }
+        // In Wander command, tamed flyers should stay grounded and roam on foot.
+        if (amphithere.isTame() && amphithere.getCommand() == 2) {
+            return false;
         }
 
         // Weather state snapshot for this decision
@@ -158,6 +168,15 @@ public class CindervaneFlightGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        // If we end up in fluid, stop autonomous flight behavior immediately.
+        if (amphithere.isInWater() || amphithere.isInWaterOrBubble() || amphithere.isInLava()) {
+            if (amphithere.isFlying()) {
+                beginLandingApproach();
+                return true;
+            }
+            return false;
+        }
+
         if (landingController.isLandingApproachActive()) {
             if (amphithere.onGround()) {
                 landingController.finishLanding();
@@ -176,12 +195,13 @@ public class CindervaneFlightGoal extends Goal {
             return false;
         }
 
-        // Tamed amphitheres only fly autonomously when over danger
-        if (amphithere.isTame() && amphithere.getOwner() != null) {
-            if (!isOverDanger()) {
+        // In Wander command, tamed flyers should not remain in autonomous flight.
+        if (amphithere.isTame() && amphithere.getCommand() == 2) {
+            if (amphithere.isFlying()) {
                 beginLandingApproach();
                 return true;
             }
+            return false;
         }
 
         // Stop if combat starts
@@ -215,6 +235,9 @@ public class CindervaneFlightGoal extends Goal {
 
     @Override
     public void start() {
+        if (amphithere.isInWater() || amphithere.isInWaterOrBubble() || amphithere.isInLava()) {
+            return;
+        }
         amphithere.setFlying(true);
         amphithere.setLanding(false);
         amphithere.setHovering(false);
@@ -246,7 +269,7 @@ public class CindervaneFlightGoal extends Goal {
             }
         }
 
-        if (amphithere.isTame() && amphithere.getOwner() != null && !isOverDanger()) {
+        if (amphithere.isTame() && amphithere.getCommand() == 2) {
             beginLandingApproach();
             return;
         }

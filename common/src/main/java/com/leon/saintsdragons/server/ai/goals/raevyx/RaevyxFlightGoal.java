@@ -54,6 +54,10 @@ public class RaevyxFlightGoal extends Goal {
         if (wyvern.isBaby()) {
             return false;
         }
+        // Tamed Raevyx flight should be command/rider driven, not autonomous storm patrol.
+        if (wyvern.isTame()) {
+            return false;
+        }
 
         // Don't interfere with landing sequence
         if (wyvern.isLanding()) {
@@ -87,17 +91,6 @@ public class RaevyxFlightGoal extends Goal {
         // Update weather state tracking
         wasThundering = thundering;
         wasRaining = raining;
-
-        // If tamed, don't take off due to weather - only take off if in danger
-        if (wyvern.isTame()) {
-            var owner = wyvern.getOwner();
-            if (owner != null && wyvern.distanceToSqr(owner) < 15.0 * 15.0) {
-                // Only take off if over danger, not due to weather
-                if (!isOverDanger()) {
-                    return false;
-                }
-            }
-        }
 
         // Use server game time for landing cooldown checks
         long currentTime = wyvern.level().getGameTime();
@@ -164,6 +157,14 @@ public class RaevyxFlightGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (wyvern.isTame()) {
+            if (wyvern.isFlying()) {
+                beginLandingApproach();
+                return true;
+            }
+            return false;
+        }
+
         if (landingController.isLandingApproachActive()) {
             if (wyvern.onGround()) {
                 landingController.finishLanding();

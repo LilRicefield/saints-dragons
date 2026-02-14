@@ -1,6 +1,11 @@
 {
   "replace": false,
   "values": [
+    {"id": "#minecraft:is_mountain", "required": false},
+    {"id": "#minecraft:is_hill", "required": false},
+    {"id": "#c:is_mountain", "required": false},
+    {"id": "#c:is_mountain/peak", "required": false},
+    {"id": "#c:is_hot/overworld", "required": false},
     "minecraft:plains",
     "minecraft:sunflower_plains",
     "minecraft:windswept_hills",

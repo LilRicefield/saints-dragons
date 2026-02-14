@@ -6,6 +6,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
@@ -15,7 +16,8 @@ import java.util.EnumSet;
  */
 public class StegonautCombatGoal extends Goal {
     private final Stegonaut dragon;
-    private final double attackRange = 2.9D;
+    private final double attackRangeGround = 3.4D;
+    private final double attackRangeWater = 6.0D;
     private final double chaseSpeed = 0.75D;
     private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
@@ -65,6 +67,8 @@ public class StegonautCombatGoal extends Goal {
     public void stop() {
         dragon.getNavigation().stop();
         pathRecalcCooldown = 0;
+        // Always clear combat target when this goal stops so idle swim goals can take over.
+        dragon.setTarget(null);
     }
 
     @Override
@@ -81,8 +85,13 @@ public class StegonautCombatGoal extends Goal {
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
         double distanceSq = dragon.distanceToSqr(target);
-        boolean inAttackRange = distanceSq <= getAttackReachSqr(target);
+        boolean inAttackRange = distanceSq <= getAttackReachSqr(target, dragon.isInWaterOrBubble());
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
+
+        if (dragon.isInWaterOrBubble()) {
+            handleWaterCombatChase(target, inAttackRange, hasLineOfSight);
+            return;
+        }
 
         if (!inAttackRange || !hasLineOfSight) {
             if (!isCurrentlyAttacking()) {
@@ -119,9 +128,9 @@ public class StegonautCombatGoal extends Goal {
                 || dragon.combatManager.isAbilityActive(StegonautAbilities.STEGONAUT_CHIN_SLAM);
     }
 
-    private double getAttackReachSqr(LivingEntity target) {
+    private double getAttackReachSqr(LivingEntity target, boolean inWater) {
         double combinedRadii = (dragon.getBbWidth() + target.getBbWidth()) * 0.5D;
-        double reach = attackRange + combinedRadii;
+        double reach = (inWater ? attackRangeWater : attackRangeGround) + combinedRadii;
         return reach * reach;
     }
 
@@ -142,6 +151,39 @@ public class StegonautCombatGoal extends Goal {
         }
     }
 
+    private void handleWaterCombatChase(LivingEntity target, boolean inAttackRange, boolean hasLineOfSight) {
+        // In water, use direct steering instead of ground pathing.
+        dragon.getNavigation().stop();
+
+        Vec3 current = dragon.getDeltaMovement();
+        Vec3 toTarget = target.position().subtract(dragon.position());
+        Vec3 horizontal = new Vec3(toTarget.x, 0.0, toTarget.z);
+        Vec3 desiredHorizontal = horizontal.lengthSqr() > 1.0E-4
+                ? horizontal.normalize().scale(0.18D)
+                : Vec3.ZERO;
+
+        double nx = current.x + (desiredHorizontal.x - current.x) * 0.35D;
+        double nz = current.z + (desiredHorizontal.z - current.z) * 0.35D;
+
+        double targetY = target.getY() + target.getBbHeight() * 0.5D;
+        double yDiff = targetY - dragon.getY();
+        double ny = current.y;
+        if (yDiff > 0.7D) {
+            ny = Math.max(current.y + 0.045D, 0.07D);
+        } else if (yDiff < -1.0D) {
+            ny = Math.min(current.y - 0.04D, -0.09D);
+        } else {
+            ny = current.y + 0.008D;
+        }
+
+        dragon.setDeltaMovement(nx, ny, nz);
+        dragon.getMoveControl().setWantedPosition(target.getX(), targetY, target.getZ(), 1.0D);
+
+        if (inAttackRange && hasLineOfSight) {
+            tryPerformMelee(target);
+        }
+    }
+
     private void rememberTargetPosition(LivingEntity target) {
         this.lastTargetX = target.getX();
         this.lastTargetY = target.getY();
@@ -154,4 +196,5 @@ public class StegonautCombatGoal extends Goal {
         double dz = target.getZ() - this.lastTargetZ;
         return dx * dx + dy * dy + dz * dz > 4.0D;
     }
+
 }

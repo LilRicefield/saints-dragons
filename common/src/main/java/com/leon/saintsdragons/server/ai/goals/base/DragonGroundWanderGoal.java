@@ -97,26 +97,10 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
 
     /**
      * Find a suitable wander position.
-     * Biases toward owner if tamed and far away.
      */
     @Nullable
     protected Vec3 getWanderPosition() {
-        // If tamed and owner is far, bias movement toward owner
-        if (dragon.isTame()) {
-            var owner = dragon.getOwner();
-            if (owner != null && dragon.distanceToSqr(owner) > 20.0 * 20.0) {
-                // Move generally toward owner (60-degree cone)
-                return DefaultRandomPos.getPosTowards(
-                        dragon,
-                        16, // range
-                        7,  // vertical range
-                        owner.position(),
-                        (float) Math.PI / 3F
-                );
-            }
-        }
-
-        // Default random wandering
+        // Fully independent wandering (no owner tether in Wander mode).
         return DefaultRandomPos.getPos(dragon, 20, 8);
     }
 }

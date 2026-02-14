@@ -16,7 +16,6 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 import net.minecraft.util.Mth;
 import java.util.Map;
 import java.util.WeakHashMap;
-import org.joml.Vector3f;
 
 /**
  * - Draws a multi-layered cylindrical beam with inner core and outer glow
@@ -26,17 +25,14 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     // Core textures: inner (crisp) + outer (soft)
     private static final ResourceLocation INNER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/lightning_beam_inner.png");
     private static final ResourceLocation OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/lightning_beam_outer.png");
-    private static final ResourceLocation[] STORM_FRAMES = buildStormFrames("lightning_storm_", 8);
+    private static final ResourceLocation GOLDEN_INNER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/golden_lightning_beam_inner.png");
+    private static final ResourceLocation GOLDEN_OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/golden_lightning_beam_outer.png");
     // Beam tuning constants - adjust these to change beam appearance
     private static final float BASE_BEAM_WIDTH = 0.45F;        // Base width of the beam
     private static final float OUTER_BEAM_BONUS = 0.15F;      // Extra width for outer glow layer
     private static final float INNER_SPEED_MULTIPLIER = 0.25F; // Animation speed for inner beam
     private static final float OUTER_SPEED_MULTIPLIER = 0.25F; // Animation speed for outer beam
     private static final float BEAM_SHAKE_INTENSITY = 0.01F; // Intensity of beam shake effect
-    private static final float LIGHTNING_SQUARE_PADDING = 0.1F;
-    private static final float LIGHTNING_SEGMENT_LENGTH = 1.6F;
-    private static final float LIGHTNING_SEGMENT_GAP = 0.45F;
-    private static final float LIGHTNING_FRAME_INTERVAL_TICKS = 2.0F;
 
     // No end-caps; beam is a tubular mesh only
 
@@ -165,11 +161,14 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         float scaledLength = Math.max(0.001f, length * visScale);
         float scaledWidth = Math.max(0.001f, BASE_BEAM_WIDTH * (0.75f + 0.25f * visScale));
 
+        boolean isNightGold = animatable.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+        ResourceLocation innerTex = isNightGold ? GOLDEN_INNER_TEX : INNER_TEX;
+        ResourceLocation outerTex = isNightGold ? GOLDEN_OUTER_TEX : OUTER_TEX;
+
         // Render inner beam
-        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, true, INNER_TEX);
+        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, true, innerTex);
         // Render outer beam
-        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, false, OUTER_TEX);
-        renderLightningStormLayer(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, visScale);
+        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, false, outerTex);
 
         poseStack.popPose();
 
@@ -196,7 +195,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         }
 
         float v = ((float) entity.tickCount + partialTicks) * -0.25F * speed;
-        float v1 = v + length * (inner ? 0.5F : 0.15F);
+        float v1 = v + length * (inner ? 0.5F : 0.5F);
         float f4 = -width;
         float f5 = 0;
         float f6 = 0.0F;
@@ -271,104 +270,6 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
                 dragon
         ));
         return hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS ? hit.getLocation() : tentativeEnd;
-    }
-
-    private void renderLightningStormLayer(Raevyx entity, PoseStack poseStack, MultiBufferSource source,
-                                           float partialTicks, float baseWidth, float length, float visibility) {
-        if (visibility <= 0.0F) {
-            return;
-        }
-        float width = baseWidth + LIGHTNING_SQUARE_PADDING;
-        float totalLength = Math.max(0.001F, length);
-        float segmentLen = Math.max(0.25F, Math.min(LIGHTNING_SEGMENT_LENGTH, totalLength));
-        float cursor = 0.0F;
-        int segmentIndex = 0;
-        while (cursor < totalLength) {
-            float remaining = totalLength - cursor;
-            float currentLen = Math.min(segmentLen, remaining);
-            float alphaPulse = 0.65F + 0.35F * Mth.sin((entity.tickCount + partialTicks + segmentIndex * 3.5F) * 0.45F);
-            float alpha = Mth.clamp(visibility * alphaPulse, 0.05F, 1.0F);
-            ResourceLocation texture = getStormFrameTexture(entity, partialTicks + segmentIndex * 0.25F);
-            poseStack.pushPose();
-            poseStack.translate(0.0F, 0.0F, cursor);
-            if ((segmentIndex & 1) == 1) {
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            }
-            renderLightningSegment(texture, poseStack, source, width, currentLen, alpha);
-            poseStack.popPose();
-            cursor += currentLen + LIGHTNING_SEGMENT_GAP;
-            segmentIndex++;
-        }
-    }
-
-    private void renderLightningSegment(ResourceLocation texture, PoseStack poseStack, MultiBufferSource source,
-                                        float width, float length, float alpha) {
-        VertexConsumer consumer = source.getBuffer(RenderType.entityTranslucent(texture));
-        PoseStack.Pose pose = poseStack.last();
-        Matrix4f matrix4f = pose.pose();
-        Matrix3f normalMatrix = pose.normal();
-        renderLightningPlane(consumer, matrix4f, normalMatrix, width, 0.0F, length, alpha, true, true);
-        renderLightningPlane(consumer, matrix4f, normalMatrix, -width, 0.0F, length, alpha, true, false);
-        renderLightningPlane(consumer, matrix4f, normalMatrix, width, 0.0F, length, alpha, false, true);
-        renderLightningPlane(consumer, matrix4f, normalMatrix, -width, 0.0F, length, alpha, false, false);
-    }
-
-    private static ResourceLocation getStormFrameTexture(Raevyx entity, float partialTicks) {
-        float ticks = (entity.tickCount + partialTicks) / LIGHTNING_FRAME_INTERVAL_TICKS;
-        int idx = (int) (ticks % STORM_FRAMES.length);
-        return STORM_FRAMES[idx];
-    }
-
-    private void renderLightningPlane(VertexConsumer consumer, Matrix4f poseMatrix, Matrix3f normalMatrix,
-                                      float fixedCoord, float zStart, float zEnd, float alpha, boolean axisX, boolean positive) {
-        float half = Math.max(0.001F, Math.abs(fixedCoord));
-        float u0 = 0.0F;
-        float u1 = 1.0F;
-        float v0 = 0.0F;
-        float v1 = 1.0F;
-
-        Vector3f normalVec;
-        if (axisX) {
-            normalVec = new Vector3f(positive ? 1.0F : -1.0F, 0.0F, 0.0F);
-            normalMatrix.transform(normalVec);
-            float x = fixedCoord;
-            float yMin = -half;
-            float yMax = half;
-            consumer.vertex(poseMatrix, x, yMin, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v0)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, x, yMin, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v1)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, x, yMax, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v1)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, x, yMax, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v0)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-        } else {
-            normalVec = new Vector3f(0.0F, positive ? 1.0F : -1.0F, 0.0F);
-            normalMatrix.transform(normalVec);
-            float y = fixedCoord;
-            float xMin = -half;
-            float xMax = half;
-            consumer.vertex(poseMatrix, xMin, y, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v0)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, xMin, y, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u0, v1)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, xMax, y, zEnd).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v1)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-            consumer.vertex(poseMatrix, xMax, y, zStart).color(1.0F, 1.0F, 1.0F, alpha).uv(u1, v0)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normalVec.x(), normalVec.y(), normalVec.z()).endVertex();
-        }
-    }
-
-    private static ResourceLocation[] buildStormFrames(String prefix, int count) {
-        ResourceLocation[] frames = new ResourceLocation[count];
-        for (int i = 0; i < count; i++) {
-            frames[i] = particle(prefix + i);
-        }
-        return frames;
-    }
-
-    private static ResourceLocation particle(String path) {
-        return SaintsDragonsCommon.rl("textures/particle/raevyx/" + path + ".png");
     }
 
     /**

@@ -24,6 +24,8 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     private BakedGeoModel lastBakedModel;
     private static final ResourceLocation TEXTURE_MALE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx.png");
     private static final ResourceLocation TEXTURE_FEMALE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_female.png");
+    private static final ResourceLocation TEXTURE_NIGHT_GOLD_MALE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_night_gold.png");
+    private static final ResourceLocation TEXTURE_NIGHT_GOLD_FEMALE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_night_gold_female.png");
     private static final ResourceLocation TEXTURE_BABY_MALE = SaintsDragonsCommon.rl("textures/entity/raevyx/baby_raevyx.png");
     private static final ResourceLocation TEXTURE_BABY_FEMALE = SaintsDragonsCommon.rl("textures/entity/raevyx/baby_raevyx_female.png");
 
@@ -43,6 +45,9 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     public @NotNull ResourceLocation getTextureLocation(@NotNull Raevyx entity) {
         if (entity.isBaby()) {
             return entity.isFemale() ? TEXTURE_BABY_FEMALE : TEXTURE_BABY_MALE;
+        }
+        if (entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD) {
+            return entity.isFemale() ? TEXTURE_NIGHT_GOLD_FEMALE : TEXTURE_NIGHT_GOLD_MALE;
         }
         return entity.isFemale() ? TEXTURE_FEMALE : TEXTURE_MALE;
     }

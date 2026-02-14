@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.controller;
 
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
@@ -53,6 +54,10 @@ public class BodyControl extends BodyRotationControl {
         if (this.entity.isVehicle()) {
             return;
         }
+        if (shouldLockForSitting()) {
+            freezeSeatedRotation();
+            return;
+        }
 
         // Shift history
         for (int i = this.histPosX.length - 1; i > 0; --i) {
@@ -98,6 +103,10 @@ public class BodyControl extends BodyRotationControl {
     public void serverTick() {
         // Skip if ridden (rider controls rotation)
         if (this.entity.isVehicle()) {
+            return;
+        }
+        if (shouldLockForSitting()) {
+            freezeSeatedRotation();
             return;
         }
 
@@ -184,5 +193,19 @@ public class BodyControl extends BodyRotationControl {
         float delta = Mth.wrapDegrees(target - current);
         delta = Mth.clamp(delta, -maxDelta, maxDelta);
         return current + delta * speed;
+    }
+
+    private boolean shouldLockForSitting() {
+        if (!(this.entity instanceof DragonEntity dragon)) {
+            return false;
+        }
+        return dragon.isOrderedToSit() || dragon.getSitProgress() > 0.0f;
+    }
+
+    private void freezeSeatedRotation() {
+        float yaw = this.entity.getYRot();
+        this.entity.yBodyRot = yaw;
+        this.entity.yHeadRot = yaw;
+        this.targetYawHead = yaw;
     }
 }

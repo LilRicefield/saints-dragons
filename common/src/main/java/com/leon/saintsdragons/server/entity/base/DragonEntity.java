@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAnimationSyncComponent;
+import com.leon.saintsdragons.server.entity.component.DragonBabyComponent;
 import com.leon.saintsdragons.server.entity.component.DragonCommandComponent;
 import com.leon.saintsdragons.server.entity.component.DragonGenderComponent;
 import com.leon.saintsdragons.server.entity.component.DragonGroomingComponent;
@@ -129,6 +130,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private final DragonSleepComponent sleepComponent;
     @Nullable
     private final DragonRecoveryComponent recoveryComponent;
+    @Nullable
+    private final DragonBabyComponent babyComponent;
 
     private final com.leon.saintsdragons.util.math.SmoothValue fallbackBodyRotDeviation =
             com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
@@ -174,6 +177,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.recoveryComponent = createRecoveryComponent();
         this.animationSyncComponent = createAnimationSyncComponent();
         this.sitComponent = createSitComponent();
+        this.babyComponent = createBabyComponent();
         // Set custom look control (lookControl field is protected in Mob)
         this.lookControl = new com.leon.saintsdragons.server.entity.controller.DragonLookControl<>(this);
     }
@@ -221,6 +225,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     @Nullable
     protected DragonSitComponent createSitComponent() {
         return new DragonSitComponent(this, DATA_SIT_PROGRESS);
+    }
+
+    @Nullable
+    /**
+     * Optional hook for baby lifecycle behavior.
+     * Subclasses may return null to opt out without breaking base behavior.
+     */
+    protected DragonBabyComponent createBabyComponent() {
+        return new DragonBabyComponent(this);
     }
 
     @Override
@@ -1033,6 +1046,37 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
         // Default no-op.
+    }
+
+    /**
+     * Resolves egg ownership from breeding parents.
+     * Prefers the caller parent, then falls back to the partner parent.
+     */
+    @Nullable
+    protected java.util.UUID resolveEggOwnerUUID(@Nullable DragonEntity partner) {
+        if (babyComponent != null) {
+            return babyComponent.resolveEggOwnerUUID(partner);
+        }
+        if (this.isTame() && this.getOwnerUUID() != null) return this.getOwnerUUID();
+        if (partner != null && partner.isTame() && partner.getOwnerUUID() != null) return partner.getOwnerUUID();
+        return null;
+    }
+
+    /**
+     * Registers a dragon in the owner's codex when ownership exists.
+     * Useful for spawn-egg offspring paths that bypass hatch registration.
+     */
+    protected void registerToOwnerCodex(@Nullable DragonEntity dragon, @Nullable net.minecraft.server.level.ServerLevel level) {
+        if (babyComponent != null) {
+            babyComponent.registerToOwnerCodex(dragon, level);
+            return;
+        }
+        if (dragon == null || level == null || level.isClientSide) {
+            return;
+        }
+        if (dragon.isTame() && dragon.getOwnerUUID() != null) {
+            DragonCodexSavedData.get(level).addDragon(dragon.getOwnerUUID(), dragon);
+        }
     }
 
     // ===== DRAGON STATE METHODS =====

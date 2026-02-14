@@ -112,7 +112,7 @@ public final class ModEntities {
     public static final Supplier<EntityType<IgnivorusFlameEntity>> IGNIVORUS_FLAME =
             REGISTER.register("ignivorus_flame", () -> EntityType.Builder.<IgnivorusFlameEntity>of(IgnivorusFlameEntity::new, MobCategory.MISC)
                     .sized(0.5F, 0.5F)
-                    .clientTrackingRange(128)
+                    .clientTrackingRange(64)
                     .updateInterval(1)
                     .fireImmune()
                     .noSummon()

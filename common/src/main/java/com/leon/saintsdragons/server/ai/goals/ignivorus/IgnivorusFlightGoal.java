@@ -47,6 +47,20 @@ public class IgnivorusFlightGoal extends Goal {
         if (dragon.isBaby()) {
             return false;
         }
+        // Never start autonomous flight while submerged.
+        if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
+            return false;
+        }
+        // Do not run autonomous flight while actively in combat.
+        LivingEntity target = dragon.getTarget();
+        if (target != null && dragon.isTargetValid(target)) {
+            return false;
+        }
+        // Tamed Ignivorus movement should be command-driven (follow/wander ground logic),
+        // not autonomous patrol flight.
+        if (dragon.isTame()) {
+            return false;
+        }
         // Don't interfere with landing sequence
         if (dragon.isLanding()) {
             return false;
@@ -63,14 +77,6 @@ public class IgnivorusFlightGoal extends Goal {
         // Don't take off while sleeping or waking up
         if (dragon.isSleeping() || dragon.isSleepingExiting()) {
             return false;
-        }
-
-        // Tamed dragons should NEVER randomly patrol - only fly for danger escape
-        if (dragon.isTame()) {
-            // Only allow this goal if over immediate danger (water/lava/void)
-            if (!isOverDanger()) {
-                return false;
-            }
         }
 
         // Use server game time for landing cooldown checks
@@ -121,7 +127,27 @@ public class IgnivorusFlightGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        // If we end up in fluid, stop autonomous flight behavior immediately.
+        if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
+            if (dragon.isFlying()) {
+                beginLandingApproach();
+                return true;
+            }
+            return false;
+        }
+
         if (dragon.isBaby()) {
+            return false;
+        }
+        LivingEntity target = dragon.getTarget();
+        if (target != null && dragon.isTargetValid(target)) {
+            return false;
+        }
+        if (dragon.isTame()) {
+            if (dragon.isFlying()) {
+                beginLandingApproach();
+                return true;
+            }
             return false;
         }
         if (landingController.isLandingApproachActive()) {
@@ -145,14 +171,6 @@ public class IgnivorusFlightGoal extends Goal {
             return false;
         }
 
-        // Tamed dragons should land immediately once danger is cleared
-        if (dragon.isTame() && !isOverDanger()) {
-            beginLandingApproach();
-            return true;
-        }
-
-        // Stop if combat starts
-        var target = dragon.getTarget();
         if (target != null && target.isAlive()) {
             return false;
         }
@@ -176,6 +194,9 @@ public class IgnivorusFlightGoal extends Goal {
 
     @Override
     public void start() {
+        if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
+            return;
+        }
         dragon.setFlying(true);
         dragon.setLanding(false);
         dragon.setHovering(false);
@@ -205,12 +226,6 @@ public class IgnivorusFlightGoal extends Goal {
                 finishLanding();
                 return;
             }
-        }
-
-        // Tamed dragons should land immediately once danger is cleared
-        if (dragon.isTame() && !isOverDanger()) {
-            beginLandingApproach();
-            return;
         }
 
         // Check if we need a new target

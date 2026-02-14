@@ -17,11 +17,17 @@ public final class ForgeBrewingRecipes {
     public static void register() {
         ItemStack awkwardPotion = PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.AWKWARD);
         ItemStack tideguardPotion = PotionUtils.setPotion(new ItemStack(Items.POTION), ModPotions.NULLJAW_TIDEGUARD.get());
+        ItemStack searingPotion = PotionUtils.setPotion(new ItemStack(Items.POTION), ModPotions.SEARING.get());
 
         BrewingRecipeRegistry.addRecipe(
                 StrictNBTIngredient.of(awkwardPotion),
                 Ingredient.of(ModItems.NULLJAW_SCALE.get()),
                 tideguardPotion
+        );
+        BrewingRecipeRegistry.addRecipe(
+                StrictNBTIngredient.of(awkwardPotion),
+                Ingredient.of(ModItems.IGNIVORUS_TOOTH.get()),
+                searingPotion
         );
     }
 }

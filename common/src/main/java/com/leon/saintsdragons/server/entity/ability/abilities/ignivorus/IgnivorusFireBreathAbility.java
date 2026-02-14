@@ -350,6 +350,15 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                 spawnedCount++;
             }
         }
+        if (count > 0 && spawnedCount == 0 && dragon.tickCount % 20 == 0) {
+            System.out.println("[IGNIVORUS_DEBUG][FIRE_BREATH] Flame spawn rejected this tick"
+                    + " count=" + count
+                    + " spawnMultiplier=" + spawnMultiplier
+                    + " speedMultiplier=" + speedMultiplier
+                    + " lifetimeMultiplier=" + lifetimeMultiplier
+                    + " dragon=" + dragon.getName().getString()
+                    + " pos=" + dragon.position());
+        }
         return spawnedCount;
     }
 

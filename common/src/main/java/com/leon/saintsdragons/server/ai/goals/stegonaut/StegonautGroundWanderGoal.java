@@ -57,11 +57,7 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
         }
         // Untamed drakes can always wander (they don't follow commands)
 
-        boolean canUse = super.canUse();
-        if (canUse && drake.tickCount % 40 == 0) {
-            System.out.println("[StegonautWander] canUse wandering");
-        }
-        return canUse;
+        return super.canUse();
     }
 
     @Override
@@ -99,22 +95,7 @@ public class StegonautGroundWanderGoal extends RandomStrollGoal {
     @Nullable
     @Override
     protected Vec3 getPosition() {
-        // If tamed and owner is far, bias movement towards owner
-        if (drake.isTame()) {
-            var owner = drake.getOwner();
-            if (owner != null && drake.distanceToSqr(owner) > 20.0 * 20.0) {
-                // Move generally towards owner but not directly (maintain some independence)
-                return DefaultRandomPos.getPosTowards(
-                        this.mob,
-                        16, // range
-                        7,  // vertical range
-                        owner.position(),
-                        (float) Math.PI / 3F // 60-degree cone towards owner
-                );
-            }
-        }
-
-        // Default random wandering
+        // Fully independent wandering (no owner tether in Wander mode).
         return DefaultRandomPos.getPos(this.mob, 20, 8);
     }
 }

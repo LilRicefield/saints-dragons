@@ -1,9 +1,12 @@
 package com.leon.saintsdragons.client.renderer.cindervane;
 
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
+import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.NotNull;
@@ -15,13 +18,21 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     // Offset from bone pivot for rider positioning (adjust as needed)
     private static final float PASSENGER_SEAT0_X = 0.0f, PASSENGER_SEAT0_Y = -3.0f, PASSENGER_SEAT0_Z = 0.0f;
     private static final float PASSENGER_SEAT1_X = 0.0f, PASSENGER_SEAT1_Y = -3.0f, PASSENGER_SEAT1_Z = 0.0f;
+    private static final String AUTO_MOUNT_BONE = "automountBoneRight";
+    private static final String AUTO_MOUNT_LOCATOR = "automountBoneRight";
+    private static final float AUTO_MOUNT_OFFSET_X = 0.0f;
+    private static final float AUTO_MOUNT_OFFSET_Y = 0.0f;
+    private static final float AUTO_MOUNT_OFFSET_Z = 0.0f;
     private static final String MOUTH_LOCATOR_NAME = "mouth_origin";
     private static final String MOUTH_BONE = "jawController";
     private static final float MOUTH_OFFSET_X = 0.0f;
     private static final float MOUTH_OFFSET_Y = 1.5f;
     private static final float MOUTH_OFFSET_Z = -9.0f;
+    private static final int SYNC_INTERVAL_TICKS = 2;
+    private static final double SNAPSHOT_PRECISION = 1000.0;
 
     private BakedGeoModel lastBakedModel;
+    private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
 
     public CindervaneRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new CindervaneModel());
@@ -74,6 +85,7 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         // Enable tracking for both passenger seat bones
         model.getBone("passengerBone1").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("passengerBone2").ifPresent(b -> b.setTrackingMatrices(true));
+        model.getBone(AUTO_MOUNT_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(MOUTH_BONE).ifPresent(b -> b.setTrackingMatrices(true));
     }
     @Override
@@ -101,6 +113,13 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
                 }
             });
 
+            this.lastBakedModel.getBone(AUTO_MOUNT_BONE).ifPresent(b -> {
+                net.minecraft.world.phys.Vec3 world = transformLocator(b, AUTO_MOUNT_OFFSET_X, AUTO_MOUNT_OFFSET_Y, AUTO_MOUNT_OFFSET_Z);
+                if (world != null) {
+                    entity.setClientLocatorPosition(AUTO_MOUNT_LOCATOR, world);
+                }
+            });
+
             // Sample accurate mouth locator from jaw controller so bite abilities originate at the model mouth
             this.lastBakedModel.getBone(MOUTH_BONE).ifPresent(b -> {
                 net.minecraft.world.phys.Vec3 world = transformLocator(b, MOUTH_OFFSET_X, MOUTH_OFFSET_Y, MOUTH_OFFSET_Z);
@@ -109,6 +128,64 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
                 }
             });
         }
+
+        sendBonePositionsToServer(entity);
+    }
+
+    private void sendBonePositionsToServer(Cindervane entity) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || entity.getControllingPassenger() != minecraft.player) {
+            return;
+        }
+
+        if ((entity.tickCount + entity.getId()) % SYNC_INTERVAL_TICKS != 0) {
+            return;
+        }
+
+        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>(2);
+        net.minecraft.world.phys.Vec3 autoMount = entity.getClientLocatorPosition(AUTO_MOUNT_LOCATOR);
+        if (autoMount != null) {
+            positions.put(AUTO_MOUNT_LOCATOR, autoMount);
+        }
+        net.minecraft.world.phys.Vec3 mouth = entity.getClientLocatorPosition(MOUTH_LOCATOR_NAME);
+        if (mouth != null) {
+            positions.put(MOUTH_LOCATOR_NAME, mouth);
+        }
+
+        if (positions.isEmpty()) {
+            return;
+        }
+
+        int snapshotHash = computeSnapshotHash(positions);
+        Integer previousHash = lastBoneSnapshotHashes.put(entity.getId(), snapshotHash);
+        if (previousHash != null && previousHash == snapshotHash) {
+            return;
+        }
+
+        NetworkHandler.sendToServer(new MessageDragonBonePositions(entity.getId(), positions));
+    }
+
+    private static int computeSnapshotHash(java.util.Map<String, net.minecraft.world.phys.Vec3> positions) {
+        int hash = 1;
+        net.minecraft.world.phys.Vec3 autoMount = positions.get(AUTO_MOUNT_LOCATOR);
+        if (autoMount != null) {
+            hash = 31 * hash + AUTO_MOUNT_LOCATOR.hashCode();
+            hash = 31 * hash + quantize(autoMount.x);
+            hash = 31 * hash + quantize(autoMount.y);
+            hash = 31 * hash + quantize(autoMount.z);
+        }
+        net.minecraft.world.phys.Vec3 mouth = positions.get(MOUTH_LOCATOR_NAME);
+        if (mouth != null) {
+            hash = 31 * hash + MOUTH_LOCATOR_NAME.hashCode();
+            hash = 31 * hash + quantize(mouth.x);
+            hash = 31 * hash + quantize(mouth.y);
+            hash = 31 * hash + quantize(mouth.z);
+        }
+        return hash;
+    }
+
+    private static int quantize(double value) {
+        return (int) Math.round(value * SNAPSHOT_PRECISION);
     }
 
     /**

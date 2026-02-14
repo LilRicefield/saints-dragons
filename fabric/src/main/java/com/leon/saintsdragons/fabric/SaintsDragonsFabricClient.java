@@ -16,6 +16,7 @@ public final class SaintsDragonsFabricClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         CommonClientModEvents.registerEntityRenderers(EntityRendererRegistry::register);
+        CommonClientModEvents.registerMenuScreens();
         EntityRendererRegistry.register(FabricPartEntities.DRAGON_PART, FabricDragonPartRenderer::new);
         FabricParticleRegistry.registerParticleFactories();
         FabricDragonRideKeybinds.init();

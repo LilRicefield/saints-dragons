@@ -10,14 +10,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * Item used to open the wyvern ally management GUI.
@@ -52,13 +50,5 @@ public class DragonAllyBookItem extends Item {
     @Environment(EnvType.CLIENT)
     private void openCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
         net.minecraft.client.Minecraft.getInstance().setScreen(new DraconicCodexScreen(preselectedDragonId, initialTab));
-    }
-    
-    @Override
-    @Environment(EnvType.CLIENT)
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, List<net.minecraft.network.chat.Component> tooltip, @NotNull TooltipFlag flag) {
-        tooltip.add(net.minecraft.network.chat.Component.translatable("saintsdragons.tooltip.dragon_ally_book.line1"));
-        tooltip.add(net.minecraft.network.chat.Component.translatable("saintsdragons.tooltip.dragon_ally_book.line2"));
-        tooltip.add(net.minecraft.network.chat.Component.translatable("saintsdragons.tooltip.dragon_ally_book.line3"));
     }
 }

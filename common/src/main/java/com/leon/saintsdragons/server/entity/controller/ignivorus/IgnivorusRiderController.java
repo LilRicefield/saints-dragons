@@ -410,22 +410,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     }
 
     public void requestRiderTakeoff() {
-        if (!dragon.isTame() || getRidingPlayer() == null || dragon.isFlying()) return;
-
-        dragon.getNavigation().stop();
-        dragon.setGoingDown(false);
-        dragon.setGoingUp(true); // latch ascend intent at takeoff so holding Space keeps climb
-
-        dragon.timeFlying = 0;
-        dragon.setFlying(true);
-        dragon.setTakeoff(true);
-        dragon.setHovering(false);
-        dragon.setLanding(false);
-
-        Vec3 current = dragon.getDeltaMovement();
-        double upward = Math.max(current.y, 0.25D); // slightly stronger initial shove but still controlled
-        dragon.setDeltaMovement(current.x, upward, current.z);
-        dragon.hasImpulse = true;
+        dragon.requestRiderTakeoff();
     }
 
     private boolean isTakeoffWindowActive() {
