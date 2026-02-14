@@ -380,12 +380,8 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.taunt"));
         actionController.triggerableAnim("summon_storm",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm"));
-        actionController.triggerableAnim("summon_storm_air_start",
-                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air_start"));
         actionController.triggerableAnim("summon_storm_air",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air"));
-        actionController.triggerableAnim("summon_storm_air_end",
-                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air_end"));
 
         // Sit transition animations (player command)
         actionController.triggerableAnim("sit_down",

@@ -6,6 +6,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
@@ -107,6 +108,11 @@ public class CindervaneCombatGoal extends Goal {
         if (target != null) {
             amphithere.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
+            if (amphithere.isInWaterOrBubble()) {
+                handleWaterCombat(target);
+                return;
+            }
+
             double distanceSq = amphithere.distanceToSqr(target);
             double attackReachSq = getAttackReachSqr(target);
             boolean inAttackRange = distanceSq <= attackReachSq;
@@ -207,11 +213,51 @@ public class CindervaneCombatGoal extends Goal {
     }
 
     private void updateChasePath(LivingEntity target) {
+        if (amphithere.isInWaterOrBubble()) {
+            return;
+        }
         if (--pathRecalcCooldown <= 0 || targetMovedSignificantly(target)) {
             rememberTargetPosition(target);
             double distance = amphithere.distanceTo(target);
             pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
             amphithere.getNavigation().moveTo(target, chaseSpeed);
+        }
+    }
+
+    private void handleWaterCombat(LivingEntity target) {
+        amphithere.getNavigation().stop();
+        deactivateFireBodyIfActive();
+
+        double distanceSq = amphithere.distanceToSqr(target);
+        boolean inAttackRange = distanceSq <= getAttackReachSqr(target);
+        boolean hasLineOfSight = amphithere.getSensing().hasLineOfSight(target);
+
+        Vec3 current = amphithere.getDeltaMovement();
+        Vec3 toTarget = target.position().subtract(amphithere.position());
+        Vec3 horizontal = new Vec3(toTarget.x, 0.0D, toTarget.z);
+        Vec3 desiredHorizontal = horizontal.lengthSqr() > 1.0E-4
+                ? horizontal.normalize().scale(0.22D)
+                : Vec3.ZERO;
+
+        double nx = current.x + (desiredHorizontal.x - current.x) * 0.30D;
+        double nz = current.z + (desiredHorizontal.z - current.z) * 0.30D;
+
+        double targetY = target.getY() + target.getBbHeight() * 0.45D;
+        double yDiff = targetY - amphithere.getY();
+        double ny = current.y;
+        if (yDiff > 0.9D) {
+            ny = Math.max(current.y + 0.035D, 0.06D);
+        } else if (yDiff < -1.3D) {
+            ny = Math.min(current.y - 0.03D, -0.08D);
+        } else {
+            ny = current.y + 0.012D;
+        }
+
+        amphithere.setDeltaMovement(nx, ny, nz);
+        amphithere.getMoveControl().setWantedPosition(target.getX(), targetY, target.getZ(), 1.0D);
+
+        if (inAttackRange && hasLineOfSight) {
+            tryPerformBite(target);
         }
     }
 

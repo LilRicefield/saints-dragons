@@ -129,6 +129,7 @@ public class CodexDetailPanel {
         return switch (selected.dragonType()) {
             case "ignivorus" -> "saintsdragons.variant.crimson";
             case "cindervane" -> "saintsdragons.variant.albino";
+            case "raevyx" -> "saintsdragons.variant.night_gold";
             default -> "saintsdragons.variant.default";
         };
     }

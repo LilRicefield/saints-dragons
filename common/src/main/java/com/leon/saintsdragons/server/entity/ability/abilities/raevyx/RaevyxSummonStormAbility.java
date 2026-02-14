@@ -25,23 +25,20 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private static final int MIN_COOLDOWN_TICKS = 20;
     private static final int GROUND_ONE_SHOT_TICKS = 125;
     private static final int GROUND_SOUND_TICKS = 140;
-    private static final int GROUND_SHAKE_START_TICKS = 55;
-    private static final int AIR_START_TICKS = 29;
-    private static final int AIR_LOOP_TICKS = 83;
-    private static final int AIR_END_TICKS = 29;
-    private static final int AIR_TOTAL_SEQUENCE_TICKS = AIR_START_TICKS + AIR_LOOP_TICKS + AIR_END_TICKS;
+    private static final int GROUND_SHAKE_START_TICKS = 53;
+    private static final int AIR_SHAKE_START_TICKS = 35;
+    private static final int AIR_ONE_SHOT_TICKS = 110;
+    private static final int AIR_SOUND_TICKS = 115;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(AbilitySectionType.STARTUP, AIR_TOTAL_SEQUENCE_TICKS),
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, AIR_ONE_SHOT_TICKS),
             new AbilitySectionInstant(AbilitySectionType.ACTIVE),
             new AbilitySectionDuration(AbilitySectionType.RECOVERY, 20)
     };
 
     private boolean isGroundCast;
-    private boolean loopAnimPlayed;
-    private boolean endAnimPlayed;
     private boolean screenShakeActive;
-    private int activeStartupDuration = AIR_TOTAL_SEQUENCE_TICKS;
+    private int activeStartupDuration = AIR_ONE_SHOT_TICKS;
 
     public RaevyxSummonStormAbility(DragonAbilityType<Raevyx, RaevyxSummonStormAbility> type, Raevyx user) {
         super(type, user, TRACK, 0);
@@ -70,27 +67,12 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
             return;
         }
 
-        int startTicks = getCurrentStartTicks();
-        int loopEndTicks = startTicks + getCurrentLoopTicks();
-
-        if (!loopAnimPlayed && ticks >= startTicks) {
-            getUser().triggerAnim("action", "summon_storm_air");
-            if (!getUser().level().isClientSide) {
-                getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR.get(), 1.6f, 1.0f, 98);
-            }
-            loopAnimPlayed = true;
+        if (!screenShakeActive && ticks >= AIR_SHAKE_START_TICKS) {
             screenShakeActive = true;
-        }
-        if (!endAnimPlayed && ticks >= loopEndTicks) {
-            getUser().triggerAnim("action", "summon_storm_air_end");
-            if (!getUser().level().isClientSide) {
-                getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR_END.get(), 1.6f, 1.0f, 44);
-            }
-            endAnimPlayed = true;
-            screenShakeActive = false;
         }
 
         if (ticks >= activeStartupDuration) {
+            screenShakeActive = false;
             nextSection();
         }
     }
@@ -101,7 +83,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         if (section.sectionType == AbilitySectionType.STARTUP) {
             // Determine if this is a ground or air cast
             isGroundCast = !getUser().isFlying();
-            activeStartupDuration = isGroundCast ? GROUND_ONE_SHOT_TICKS : getCurrentTotalTicks();
+            activeStartupDuration = isGroundCast ? GROUND_ONE_SHOT_TICKS : AIR_ONE_SHOT_TICKS;
 
             // Grant invulnerability for the full animation duration
             getUser().startTemporaryInvuln(activeStartupDuration);
@@ -115,16 +97,12 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
                 if (!getUser().level().isClientSide) {
                     getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM.get(), 1.6f, 1.0f, GROUND_SOUND_TICKS);
                 }
-                loopAnimPlayed = true;
-                endAnimPlayed = true;
                 screenShakeActive = false;
             } else {
-                getUser().triggerAnim("action", "summon_storm_air_start");
+                getUser().triggerAnim("action", "summon_storm_air");
                 if (!getUser().level().isClientSide) {
-                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR_START.get(), 1.2f, 1.0f, 67);
+                    getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR.get(), 1.6f, 1.0f, AIR_SOUND_TICKS);
                 }
-                loopAnimPlayed = false;
-                endAnimPlayed = false;
                 screenShakeActive = false;
             }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
@@ -181,22 +159,6 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         getUser().clearTakeoffLock();
         getUser().clearRiderControlLock();
         screenShakeActive = false;
-    }
-
-    private int getCurrentStartTicks() {
-        return AIR_START_TICKS;
-    }
-
-    private int getCurrentLoopTicks() {
-        return AIR_LOOP_TICKS;
-    }
-
-    private int getCurrentEndTicks() {
-        return AIR_END_TICKS;
-    }
-
-    private int getCurrentTotalTicks() {
-        return getCurrentStartTicks() + getCurrentLoopTicks() + getCurrentEndTicks();
     }
 
     @Override

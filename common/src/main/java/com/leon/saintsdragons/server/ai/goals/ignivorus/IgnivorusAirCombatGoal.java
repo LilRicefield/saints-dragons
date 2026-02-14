@@ -435,4 +435,5 @@ public class IgnivorusAirCombatGoal extends Goal {
                 dragon.getControllingPassenger() == null &&
                 dragon.getActiveAbility() == null; // Don't interrupt abilities
     }
+
 }

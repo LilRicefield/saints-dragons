@@ -115,6 +115,8 @@ public class RaevyxEggBlock extends BaseEntityBlock {
                 }
                 if (eggEntity.getBabyGender() != null) {
                     baby.setGender(eggEntity.getBabyGender());
+                } else {
+                    baby.setGender(level.random.nextBoolean() ? DragonGender.MALE : DragonGender.FEMALE);
                 }
             } else {
                 // Fallback: random gender

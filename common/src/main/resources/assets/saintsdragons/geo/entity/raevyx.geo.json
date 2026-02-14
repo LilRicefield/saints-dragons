@@ -4,11 +4,11 @@
 		{
 			"description": {
 				"identifier": "geometry.raevyx",
-				"texture_width": 2048,
-				"texture_height": 2048,
+				"texture_width": 966,
+				"texture_height": 884,
 				"visible_bounds_width": 47,
-				"visible_bounds_height": 17,
-				"visible_bounds_offset": [0, 5.5, 0]
+				"visible_bounds_height": 26,
+				"visible_bounds_offset": [0, 1, 0]
 			},
 			"bones": [
 				{
@@ -26,8 +26,13 @@
 					"pivot": [0, 50, -7.5]
 				},
 				{
-					"name": "upperbody",
+					"name": "spinBone",
 					"parent": "heightController",
+					"pivot": [0, 50, -7.5]
+				},
+				{
+					"name": "upperbody",
+					"parent": "spinBone",
 					"pivot": [0, 54, 11.5],
 					"cubes": [
 						{"origin": [-1, 66, -24], "size": [2, 65, 39], "uv": [506, 725]},
@@ -303,7 +308,7 @@
 				},
 				{
 					"name": "hip",
-					"parent": "heightController",
+					"parent": "spinBone",
 					"pivot": [4.33333, 52.16667, 12.16667],
 					"cubes": [
 						{"origin": [-12, 39.75, 10], "size": [24, 25.5, 33], "uv": [732, 179]},

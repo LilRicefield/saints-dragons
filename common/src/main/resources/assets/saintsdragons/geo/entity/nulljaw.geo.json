@@ -4,8 +4,8 @@
 		{
 			"description": {
 				"identifier": "geometry.nulljaw",
-				"texture_width": 1024,
-				"texture_height": 1024,
+				"texture_width": 640,
+				"texture_height": 640,
 				"visible_bounds_width": 28,
 				"visible_bounds_height": 10.5,
 				"visible_bounds_offset": [0, 4.75, 0]

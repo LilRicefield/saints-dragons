@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
@@ -286,6 +287,13 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
+
+        // Water combat: swim-chase target directly (ground navigation is unreliable in water).
+        if (dragon.isInWaterOrBubble()) {
+            handleWaterCombatChase(target, gap, hasLineOfSight);
+            updateGroundMoveState();
+            return;
+        }
 
         maybeTogglePhase2(target, gap, hasLineOfSight);
 
@@ -659,6 +667,45 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
     }
 
+    private void handleWaterCombatChase(LivingEntity target, double gap, boolean hasLineOfSight) {
+        dragon.getNavigation().stop();
+        pathRecalcCooldown = 8;
+
+        Vec3 current = dragon.getDeltaMovement();
+        Vec3 toTarget = target.position().subtract(dragon.position());
+        Vec3 horizontal = new Vec3(toTarget.x, 0.0, toTarget.z);
+        Vec3 desiredHorizontal = horizontal.lengthSqr() > 1.0E-4
+                ? horizontal.normalize().scale(0.34D)
+                : Vec3.ZERO;
+
+        double nx = current.x + (desiredHorizontal.x - current.x) * 0.30D;
+        double nz = current.z + (desiredHorizontal.z - current.z) * 0.30D;
+
+        double targetY = target.getY() + (target.getBbHeight() * 0.5D);
+        double yDiff = targetY - dragon.getY();
+        double ny = current.y;
+        if (dragon.horizontalCollision) {
+            // Shore lip / bank collision: force a stronger upward pop for this large body.
+            ny = Math.max(current.y + 0.16D, 0.42D);
+        } else if (yDiff > 0.25D) {
+            // Start climbing earlier when the target is even slightly above waterline.
+            ny = Math.max(current.y + 0.09D, 0.14D);
+        } else if (yDiff < -1.1D) {
+            ny = Math.min(current.y - 0.05D, -0.11D);
+        } else {
+            ny = current.y + 0.03D;
+        }
+
+        dragon.setDeltaMovement(nx, ny, nz);
+        dragon.getMoveControl().setWantedPosition(target.getX(), targetY, target.getZ(), 1.2D);
+
+        if (!isCurrentlyAttacking() && hasLineOfSight && gap <= meleeEngageRange) {
+            tryAttack(target);
+        } else if (!isCurrentlyAttacking()) {
+            tryRandomBreath(target, hasLineOfSight);
+        }
+    }
+
     private enum FireballMode {
         NONE,
         STATIONARY,
@@ -688,4 +735,5 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         return false;
     }
+
 }

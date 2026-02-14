@@ -32,6 +32,7 @@ import com.leon.saintsdragons.server.entity.interfaces.ElectricalConductivityCap
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
+import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -48,10 +49,12 @@ import net.minecraft.util.Mth;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.*;
@@ -100,6 +103,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         DragonFlightCapable, ShakesScreen, SoundHandledDragon, ElectricalConductivityCapable {
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
+    public static final int VARIANT_DEFAULT = 0;
+    public static final int VARIANT_NIGHT_GOLD = 1;
 
     // ===== CONSTANTS =====
 
@@ -171,7 +176,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     /** Tracks whether the emissive glow layer should be active (beam startup/active) */
     public static final EntityDataAccessor<Boolean> DATA_BEAM_GLOW =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
     /** Entity data accessor for rider landing blend active state */
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
@@ -256,8 +260,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public static final float MAX_BEAM_YAW_DEG = 40.0f;
     public static final float MAX_BEAM_PITCH_DEG = 50.0f;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
-
-
     private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
     private static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
@@ -437,6 +439,30 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.set(DATA_FEEDING_COOLDOWN, ticks);
     }
 
+    @Override
+    protected int getMaxTextureVariant() {
+        // 0 = default, 1 = night_gold
+        return VARIANT_NIGHT_GOLD;
+    }
+
+    @Override
+    protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
+                                            @NotNull DifficultyInstance difficulty,
+                                            @NotNull MobSpawnType reason,
+                                            @Nullable SpawnGroupData spawnData,
+                                            @Nullable CompoundTag spawnTag) {
+        // Night Gold is rare: 15% chance, default is 85%.
+        return this.getRandom().nextFloat() < 0.15F ? VARIANT_NIGHT_GOLD : VARIANT_DEFAULT;
+    }
+
+    @Override
+    public java.util.Map<String, Integer> getTextureVariantNameMap() {
+        return java.util.Map.of(
+                "default", VARIANT_DEFAULT,
+                "night_gold", VARIANT_NIGHT_GOLD
+        );
+    }
+
     public boolean isTamingStunned() {
         return this.entityData.get(DATA_TAMING_STUNNED);
     }
@@ -553,6 +579,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     // ===== SPECIALIZED HANDLER SYSTEMS =====
     private final RaevyxRiderController riderController;
+    private final DragonRiderFlightComponent riderFlightComponent;
     private final DragonSoundHandler soundHandler;
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
@@ -595,6 +622,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // Initialize specialized handler systems
         this.riderController = new RaevyxRiderController(this);
+        this.riderFlightComponent = createRiderFlightComponent();
         this.soundHandler = new DragonSoundHandler(this);
 
         // Desynchronize ambient system across instances to avoid synchronized vocals/animations
@@ -605,6 +633,105 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (!level.isClientSide) {
             applyConfiguredAttributes();
         }
+    }
+
+    private DragonRiderFlightComponent createRiderFlightComponent() {
+        return new DragonRiderFlightComponent(new DragonRiderFlightComponent.Host() {
+            @Override
+            public Entity asEntity() { return Raevyx.this; }
+
+            @Override
+            public Level level() { return Raevyx.this.level(); }
+
+            @Override
+            public AABB getBoundingBox() { return Raevyx.this.getBoundingBox(); }
+
+            @Override
+            public boolean isVehicle() { return Raevyx.this.isVehicle(); }
+
+            @Override
+            public boolean isFlying() { return Raevyx.this.isFlying(); }
+
+            @Override
+            public boolean isTakeoff() { return Raevyx.this.isTakeoff(); }
+
+            @Override
+            public boolean isGoingUp() { return Raevyx.this.isGoingUp(); }
+
+            @Override
+            public boolean isUnderWater() { return Raevyx.this.isUnderWater(); }
+
+            @Override
+            public boolean isInWaterOrBubble() { return Raevyx.this.isInWaterOrBubble(); }
+
+            @Override
+            public boolean isTame() { return Raevyx.this.isTame(); }
+
+            @Override
+            public boolean hasControllingRider() { return riderController.getRidingPlayer() != null; }
+
+            @Override
+            public boolean canTakeoff() { return Raevyx.this.canTakeoff(); }
+
+            @Override
+            public void setFlying(boolean value) { Raevyx.this.setFlying(value); }
+
+            @Override
+            public void setTakeoff(boolean value) { Raevyx.this.setTakeoff(value); }
+
+            @Override
+            public void setHovering(boolean value) { Raevyx.this.setHovering(value); }
+
+            @Override
+            public void setLanding(boolean value) { Raevyx.this.setLanding(value); }
+
+            @Override
+            public void switchToAirNavigation() { Raevyx.this.switchToAirNavigation(); }
+
+            @Override
+            public void setGoingUp(boolean value) { Raevyx.this.setGoingUp(value); }
+
+            @Override
+            public void setGoingDown(boolean value) { Raevyx.this.setGoingDown(value); }
+
+            @Override
+            public void stopNavigation() { Raevyx.this.getNavigation().stop(); }
+
+            @Override
+            public Vec3 getDeltaMovement() { return Raevyx.this.getDeltaMovement(); }
+
+            @Override
+            public void setDeltaMovement(Vec3 movement) { Raevyx.this.setDeltaMovement(movement); }
+
+            @Override
+            public void markImpulse() { Raevyx.this.hasImpulse = true; }
+
+            @Override
+            public long getGameTime() { return Raevyx.this.level().getGameTime(); }
+
+            @Override
+            public long getLastLandingGameTime() { return Raevyx.this.getLastLandingGameTime(); }
+
+            @Override
+            public boolean isTakeoffLocked() { return Raevyx.this.isTakeoffLocked(); }
+
+            @Override
+            public void onManualTakeoffStart() {
+                Raevyx.this.timeFlying = 0;
+                Raevyx.this.landingFlag = false;
+                Raevyx.this.landingTimer = 0;
+            }
+
+            @Override
+            public void setRiderTakeoffTicks(int ticks) { Raevyx.this.setRiderTakeoffTicks(ticks); }
+        }, new DragonRiderFlightComponent.Config(
+                true,
+                5,
+                0.55D,
+                TAKEOFF_ANIMATION_TICKS,
+                0.45D,
+                TAKEOFF_ANIMATION_TICKS
+        ));
     }
 
     @Override
@@ -911,7 +1038,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
      * Forces the wyvern to take off when being ridden. Called when player presses Space while on ground.
      */
     public void requestRiderTakeoff() {
-        riderController.requestRiderTakeoff();
+        riderFlightComponent.requestRiderTakeoff();
     }
 
     // (External callers should use triggerable action keys on the GeckoLib controller.)
@@ -1568,7 +1695,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     protected void onRiderDodge(net.minecraft.world.entity.player.Player player, boolean isLeft) {
         // Only allow dodge on ground - dragon is fast enough in air with strafe
-        if (isFlying()) {
+        if (isFlying() || isInWaterOrBubble()) {
             return;
         }
 
@@ -1627,7 +1754,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     protected void onRiderBackwardDodge(net.minecraft.world.entity.player.Player player) {
         // Only allow dodge on ground - dragon is fast enough in air with strafe
-        if (isFlying()) {
+        if (isFlying() || isInWaterOrBubble()) {
             return;
         }
 
@@ -1678,7 +1805,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     public boolean tryAIGroundDodge(@Nullable LivingEntity threat) {
         // Only allow dodge on ground - dragon is fast enough in air with strafe
-        if (isFlying() || isDodging()) {
+        if (isFlying() || isInWaterOrBubble() || isDodging()) {
             return false;
         }
 
@@ -1736,7 +1863,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     public boolean tryAIGroundDash(@Nullable LivingEntity target) {
         // Only allow dash on ground
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble()) {
             return false;
         }
         if (dashing || isDodging()) {
@@ -1848,7 +1975,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     protected void onRiderDash(Player player) {
         // Only allow dash on ground
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble()) {
             return;
         }
 
@@ -2749,6 +2876,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             setCommandAuto(0);
         }
 
+        // Failsafe is strictly for Follow mode; Wander/Sit should not pull toward owner.
+        if (this.isTame() && this.getCommand() != 0) {
+            return;
+        }
+
         LivingEntity owner = getOwner();
         if (owner == null || !owner.isAlive()) {
             return;
@@ -3208,11 +3340,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // Check if in water (prioritize water handling over flight)
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
 
-        // WATER OVERRIDE: If in water, clear ALL states that might block movement
+        // WATER OVERRIDE: If in water, clear flight states unless a rider is actively breaching into takeoff.
         if (inWater) {
             if (!level().isClientSide) {
-                // Exit flight mode if flying
-                if (isFlying()) {
+                // Exit flight mode if flying, except while a rider breach-takeoff is in progress.
+                if (riderFlightComponent.shouldClearFlightStateInWater(this.riderTakeoffTicks)) {
                     this.setFlying(false);
                     this.setTakeoff(false);
                     this.setHovering(false);
@@ -3293,24 +3425,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.setDeltaMovement(blended);
         this.move(MoverType.SELF, this.getDeltaMovement());
 
-        // AFTER movement, check for breach attempt
-        // If at surface with good upward velocity, allow takeoff
+        // AFTER movement, check for breach attempt.
+        // Auto-takeoff when rider is holding ascend at the waterline and there is headroom.
         boolean atSurface = !this.isUnderWater(); // Head above water
         boolean tryingToAscend = isGoingUp();
-        double currentVelY = this.getDeltaMovement().y;
+        boolean hasHeadroom = riderFlightComponent.hasBreachTakeoffClearance();
 
-        if (atSurface && tryingToAscend && currentVelY > 0.0D && !this.isFlying()) {
-            // Breach the surface and start flying!
+        if (!this.isFlying() && atSurface && tryingToAscend && hasHeadroom) {
             if (!level().isClientSide) {
-                this.setFlying(true);
-                this.setTakeoff(true);
-                this.setHovering(false);
-                this.setLanding(false);
-                this.switchToAirNavigation();
-                // Give upward boost for breach
-                this.setDeltaMovement(this.getDeltaMovement().add(0, 0.4D, 0));
-                // Trigger takeoff (FlightController removed)
-                this.riderTakeoffTicks = 35;
+                riderFlightComponent.tryAutoBreachTakeoff();
             }
         }
     }
@@ -3511,8 +3634,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // ===== AI GOALS =====
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal((com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable)this));
+        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this, 0.004D, -0.03D, 0.1F));
         // Sleep is now handled by DragonSleepBehavior in base class tick
 
         // Babies don't have combat abilities
@@ -3531,6 +3653,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forRaevyx()));
         this.goalSelector.addGoal(9, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 60));
+        // Idle water behavior when no target: swim instead of passively sinking.
+        this.goalSelector.addGoal(10, new com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
         this.goalSelector.addGoal(10, new RaevyxTemptGoal(this, 1.2,
                 net.minecraft.world.item.crafting.Ingredient.of(net.minecraft.world.item.Items.SALMON,
                                                                net.minecraft.world.item.Items.COD,
@@ -3569,6 +3693,22 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     public AABB getBoundingBoxForCulling() {
         return super.getBoundingBoxForCulling().inflate(5.0, 3.0, 5.0);
+    }
+
+    @Override
+    public boolean canTarget(net.minecraft.world.entity.Entity entity) {
+        // Babies should not engage in combat targeting logic.
+        if (this.isBaby()) {
+            return false;
+        }
+
+        if (entity instanceof Player player && !this.isTame()) {
+            // Wild Raevyx should only start aggro from retaliation, but once locked onto
+            // a target, keep pursuing that same player instead of dropping aggro mid-fight.
+            return this.getLastHurtByMob() == player || this.getTarget() == player;
+        }
+
+        return super.canTarget(entity);
     }
 
     @Override
@@ -3621,6 +3761,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return result;
     }
 
+    @Override
+    public boolean fireImmune() {
+        return false;
+    }
+
     // Lightning immunity is now handled by DragonEntity base class via DragonType.LIGHTNING elemental profile
 
     // ===== BREATHING / AIR SUPPLY =====
@@ -3664,6 +3809,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             // Heal to full health
             this.setHealth(this.getMaxHealth());
             this.allowGroundBeamDuringStorm = true;
+            // Stagger first visual pulse so weather transition and VFX don't spike on the same instant.
+            this.superchargeVfxCooldown = 20;
         }
     }
     
@@ -4370,8 +4517,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             return;
         }
 
-        if (this.isTame() && this.getOwnerUUID() != null) {
-            eggEntity.setOwnerUUID(this.getOwnerUUID());
+        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
+        if (ownerUUID != null) {
+            eggEntity.setOwnerUUID(ownerUUID);
         }
 
         DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
@@ -4402,6 +4550,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
             double spawnY = safePos != null ? safePos.getY() : this.getY();
             baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
+            registerToOwnerCodex(baby, level);
         }
         return baby;
     }
@@ -4589,4 +4738,5 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
     }
 }
+
 

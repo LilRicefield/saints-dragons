@@ -301,8 +301,25 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
     private boolean isIafLightningDragon(net.minecraft.world.entity.LivingEntity entity) {
         String className = entity.getClass().getName();
-        return "com.github.alexthe666.iceandfire.entity.EntityLightningDragon".equals(className)
-                || "com.iafenvoy.iceandfire.entity.LightningDragonEntity".equals(className);
+        if ("com.github.alexthe666.iceandfire.entity.EntityLightningDragon".equals(className)
+                || "com.iafenvoy.iceandfire.entity.LightningDragonEntity".equals(className)) {
+            return true;
+        }
+
+        // Fallback for forks/remapped classes: detect by entity type id.
+        net.minecraft.resources.ResourceLocation id =
+                net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        if (id == null) {
+            return false;
+        }
+
+        String namespace = id.getNamespace();
+        String path = id.getPath();
+        boolean iafNamespace = "iceandfire".equals(namespace) || "ice_and_fire".equals(namespace);
+        boolean looksLikeLightningDragon = path != null
+                && path.contains("lightning")
+                && path.contains("dragon");
+        return iafNamespace && looksLikeLightningDragon;
     }
 
     private record BeamPath(net.minecraft.world.phys.Vec3 origin, net.minecraft.world.phys.Vec3 impact) {}

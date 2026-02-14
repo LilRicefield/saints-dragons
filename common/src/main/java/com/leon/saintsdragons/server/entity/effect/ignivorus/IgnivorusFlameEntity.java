@@ -38,6 +38,7 @@ public class IgnivorusFlameEntity extends Entity {
             SynchedEntityData.defineId(IgnivorusFlameEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_LIFETIME =
             SynchedEntityData.defineId(IgnivorusFlameEntity.class, EntityDataSerializers.INT);
+    private static final int ENTITY_COLLISION_CHECK_INTERVAL = 2;
 
     private UUID ownerUUID;
     private LivingEntity owner;
@@ -119,8 +120,10 @@ public class IgnivorusFlameEntity extends Entity {
                 return;
             }
 
-            // Check for entity hits first (bullet-style collision)
-            if (!hasHitEntity && checkEntityCollision()) {
+            // Entity scans are the hottest path; running every 2 ticks reduces load significantly.
+            if (!hasHitEntity
+                    && (this.age % ENTITY_COLLISION_CHECK_INTERVAL == 0)
+                    && checkEntityCollision()) {
                 this.discard(); // Disappear after hitting an entity (like a bullet)
                 return;
             }

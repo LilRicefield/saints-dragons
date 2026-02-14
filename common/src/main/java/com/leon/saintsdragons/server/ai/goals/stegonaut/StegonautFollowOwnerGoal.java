@@ -32,6 +32,11 @@ public class StegonautFollowOwnerGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        // Follow goal only runs in Follow command mode (0).
+        if (drake.isTame() && drake.getCommand() != 0) {
+            return false;
+        }
+
         // Basic requirements
         if (!drake.isTame() || drake.isOrderedToSit()) {
             return false;
@@ -65,15 +70,16 @@ public class StegonautFollowOwnerGoal extends Goal {
 
         // Only follow if owner is far enough away
         double ownerDist = drake.distanceToSqr(owner);
-        boolean shouldFollow = ownerDist > START_FOLLOW_DIST * START_FOLLOW_DIST;
-        if (shouldFollow && drake.tickCount % 40 == 0) {
-            System.out.println("[StegonautFollowOwner] canUse follow owner dist=" + String.format("%.2f", Math.sqrt(ownerDist)));
-        }
-        return shouldFollow;
+        return ownerDist > START_FOLLOW_DIST * START_FOLLOW_DIST;
     }
 
     @Override
     public boolean canContinueToUse() {
+        // Follow goal only runs in Follow command mode (0).
+        if (drake.isTame() && drake.getCommand() != 0) {
+            return false;
+        }
+
         LivingEntity owner = drake.getOwner();
         if (owner == null || !owner.isAlive() || drake.isOrderedToSit()) {
             return false;

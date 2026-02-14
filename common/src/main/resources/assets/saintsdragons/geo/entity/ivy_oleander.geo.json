@@ -4,8 +4,8 @@
 		{
 			"description": {
 				"identifier": "geometry.unknown",
-				"texture_width": 128,
-				"texture_height": 128,
+				"texture_width": 90,
+				"texture_height": 78,
 				"visible_bounds_width": 3,
 				"visible_bounds_height": 3.5,
 				"visible_bounds_offset": [0, 1.25, 0]
@@ -59,7 +59,14 @@
 						{"origin": [-4.25, 23.75, -3.25], "size": [8.5, 8.5, 8.5], "uv": [0, 16]},
 						{"origin": [-3.25, 18.75, 3.95], "size": [6.5, 12.5, 1], "uv": [72, 26]},
 						{"origin": [-7.25, 23.75, 1], "size": [14.5, 11.5, 0], "uv": [26, 40]},
-						{"origin": [-7.25, 23.75, 1], "size": [14.5, 11.5, 0], "pivot": [0, 29.5, 1], "rotation": [0, -45, 0], "uv": [0, 51]},
+						{"origin": [-7.25, 23.75, 1], "size": [14.5, 11.5, 0], "pivot": [0, 29.5, 1], "rotation": [0, -45, 0], "uv": [0, 51]}
+					]
+				},
+				{
+					"name": "bone",
+					"parent": "head",
+					"pivot": [0, 29.5, 1],
+					"cubes": [
 						{"origin": [-7.25, 23.75, 1], "size": [14.5, 11.5, 0], "pivot": [0, 29.5, 1], "rotation": [0, 45, 0], "uv": [28, 51]}
 					]
 				},

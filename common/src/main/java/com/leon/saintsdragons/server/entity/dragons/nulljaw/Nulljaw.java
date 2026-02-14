@@ -33,11 +33,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -57,7 +53,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.Vec3;
@@ -68,7 +63,6 @@ import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
@@ -76,7 +70,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, ShakesScreen, SoundHandledDragon {
-
     // ===== VOCAL ENTRIES =====
     // IMPORTANT: Keys MUST match animation trigger names registered in NulljawAnimationHandler
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
@@ -638,7 +631,23 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         this.goalSelector.addGoal(7, new NulljawFollowOwnerGoal(this));
         this.goalSelector.addGoal(8, new DirectSwimToTargetGoal(this, 8.0F, 0.25D, false));
         this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
-        this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100);
+        this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100) {
+            @Override
+            protected boolean canUseAdditional() {
+                if (Nulljaw.this.isInWaterOrBubble()) {
+                    return false;
+                }
+                return super.canUseAdditional();
+            }
+
+            @Override
+            protected boolean canContinueAdditional() {
+                if (Nulljaw.this.isInWaterOrBubble()) {
+                    return false;
+                }
+                return super.canContinueAdditional();
+            }
+        };
         this.goalSelector.addGoal(11, groundWanderGoal);
         this.goalSelector.addGoal(11, new DragonFollowParentGoal<>(this, Nulljaw.class, 1.1D));
         this.goalSelector.addGoal(11, new RandomLookAroundGoal(this));
@@ -1262,6 +1271,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             baby.applyConfiguredAttributes();
             baby.setHealth(baby.getMaxHealth());
             baby.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
+            registerToOwnerCodex(baby, level);
         }
         return baby;
     }
@@ -1305,8 +1315,9 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             return;
         }
 
-        if (this.isTame() && this.getOwnerUUID() != null) {
-            eggEntity.setOwnerUUID(this.getOwnerUUID());
+        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
+        if (ownerUUID != null) {
+            eggEntity.setOwnerUUID(ownerUUID);
         }
 
         DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
@@ -1339,24 +1350,11 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                                        MobSpawnType spawnType,
                                        BlockPos pos,
                                        RandomSource random) {
-        // Allow amphibious spawning: valid on solid ground OR in water
-        boolean fluidHere = !level.getFluidState(pos).isEmpty();
-
-        if (!fluidHere) {
-            // Land: require sturdy ground and free feet/head
-            BlockPos below = pos.below();
-            boolean solidGround = level.getBlockState(below).isFaceSturdy(level, below, Direction.UP);
-            boolean feetFree = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
-            boolean headFree = level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
-            return solidGround && feetFree && headFree;
-        } else {
-            // Water: require water at feet and head positions for clearance
-            FluidState feet = level.getFluidState(pos);
-            FluidState head = level.getFluidState(pos.above());
-            boolean feetWater = !feet.isEmpty() && feet.isSource();
-            boolean headWater = !head.isEmpty();
-            return feetWater && headWater;
-        }
+        boolean mobRules = Mob.checkMobSpawnRules(type, level, spawnType, pos, random);
+        boolean feetDry = level.getFluidState(pos).isEmpty();
+        boolean belowDry = level.getFluidState(pos.below()).isEmpty();
+        boolean sturdyBelow = level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
+        return mobRules && feetDry && belowDry && sturdyBelow;
     }
 
     private void enterSwimState() {
@@ -2499,6 +2497,11 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             suppressSleep(200);
         }
         return super.hurt(damageSource, amount);
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return false;
     }
 
     /**

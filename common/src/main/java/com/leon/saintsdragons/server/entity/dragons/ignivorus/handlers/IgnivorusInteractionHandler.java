@@ -374,10 +374,11 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
      * Handle command cycling (Follow/Sit/Wander).
      */
     private InteractionResult handleCommandCycling(Player player) {
+        boolean client = dragon.level().isClientSide;
         boolean isTransitioning = dragon.isInSitTransition();
         if (isTransitioning) {
             // Dragon is in the middle of sitting down or standing up - ignore command spam
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
                 // Determine which transition is happening
                 boolean sittingDown = dragon.isSittingDownAnimation();
                 boolean standingUp = dragon.isStandingUpAnimation();
@@ -392,27 +393,24 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                         true
                 );
             }
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+            return InteractionResult.sidedSuccess(client);
         }
-        int currentCommand = dragon.getCommand();
-        int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
 
-        // Apply the new command
+        // Server-authoritative command cycling to avoid client/server double-advance desync.
+        if (client) {
+            return InteractionResult.SUCCESS;
+        }
+
+        int nextCommand = (dragon.getCommand() + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
+
         dragon.setCommandManual(nextCommand);
         applyCommandState(nextCommand);
 
-        // Send feedback message to player
-        if (!dragon.level().isClientSide) {
-            player.displayClientMessage(
-                Component.translatable(
-                    "entity.saintsdragons.all.command_" + nextCommand,
-                    dragon.getName()
-                ),
-                true
-            );
-        }
+        // On successful command change, show final state message (Follow/Sit/Wander).
+        String messageKey = "entity.saintsdragons.all.command_" + nextCommand;
+        player.displayClientMessage(Component.translatable(messageKey, dragon.getName()), true);
 
-        return InteractionResult.SUCCESS;
+        return InteractionResult.CONSUME;
     }
 
     /**
@@ -428,6 +426,12 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 break;
             case 2: // Wander
                 dragon.setOrderedToSit(false);
+                // Tamed wander is ground-only for Ignivorus.
+                if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
+                    dragon.setTakeoff(false);
+                    dragon.setHovering(false);
+                    dragon.setLanding(true);
+                }
                 break;
         }
     }

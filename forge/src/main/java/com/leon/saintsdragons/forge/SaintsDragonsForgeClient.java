@@ -20,6 +20,7 @@ public final class SaintsDragonsForgeClient {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            CommonClientModEvents.registerMenuScreens();
             new ClientProxy().clientInit();
         });
     }

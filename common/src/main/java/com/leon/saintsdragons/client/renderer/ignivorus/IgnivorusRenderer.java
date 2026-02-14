@@ -170,7 +170,13 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
 
     private void sendBonePositionsToServer(Ignivorus entity) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || entity.getControllingPassenger() != minecraft.player) {
+        if (minecraft.player == null || !entity.isAlive()) {
+            return;
+        }
+
+        // Keep server-side multipart hitboxes aligned even when nobody is riding.
+        // Limit to nearby entities to avoid unnecessary traffic.
+        if (minecraft.player.distanceToSqr(entity) > 96.0D * 96.0D) {
             return;
         }
 

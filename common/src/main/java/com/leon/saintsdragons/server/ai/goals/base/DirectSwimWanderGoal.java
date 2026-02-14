@@ -22,6 +22,7 @@ public class DirectSwimWanderGoal extends Goal {
     private final float turnSpeed;
     private final double swimSpeed;
     private final int interval;
+    private final boolean preferShore;
 
     private Vec3 targetPos;
     private double currentYaw;
@@ -31,10 +32,15 @@ public class DirectSwimWanderGoal extends Goal {
     private boolean cachedObstructionResult;
 
     public DirectSwimWanderGoal(Mob mob, float turnSpeedDegrees, double swimSpeed, int interval) {
+        this(mob, turnSpeedDegrees, swimSpeed, interval, false);
+    }
+
+    public DirectSwimWanderGoal(Mob mob, float turnSpeedDegrees, double swimSpeed, int interval, boolean preferShore) {
         this.mob = mob;
         this.turnSpeed = turnSpeedDegrees;
         this.swimSpeed = swimSpeed;
         this.interval = interval;
+        this.preferShore = preferShore;
         this.currentYaw = mob.getYRot();
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
@@ -159,10 +165,44 @@ public class DirectSwimWanderGoal extends Goal {
         if (mob instanceof SemiAquaticDragon dragon) {
             speed = dragon.getSwimSpeed() * swimSpeed;
         }
-        mob.setDeltaMovement(dirX * speed, dirY * speed, dirZ * speed);
+        double vx = dirX * speed;
+        double vy = dirY * speed;
+        double vz = dirZ * speed;
+
+        // Shore-preferring land dragons need extra "hop" to climb out at the lip.
+        if (preferShore && mob.isInWaterOrBubble()) {
+            // Ignivorus needs a bit more vertical help to reliably clear shoreline lips.
+            double collisionHop = 0.32D;
+            double upwardAssist = 0.18D;
+            double upwardAssistThreshold = 0.5D;
+            boolean ignivorus = mob.getType().toString().contains("ignivorus");
+            if (ignivorus) {
+                collisionHop = 0.58D;
+                upwardAssist = 0.36D;
+                upwardAssistThreshold = 0.18D;
+            }
+
+            double yDiff = targetPos != null ? (targetPos.y - mob.getY()) : 0.0D;
+            if (mob.horizontalCollision) {
+                vy = Math.max(vy, collisionHop);
+            } else if (targetPos != null) {
+                if (yDiff > upwardAssistThreshold) {
+                    vy = Math.max(vy, upwardAssist);
+                }
+            }
+        }
+
+        mob.setDeltaMovement(vx, vy, vz);
     }
 
     private Vec3 findRandomSwimTarget() {
+        if (preferShore) {
+            Vec3 shore = findNearbyShoreTarget();
+            if (shore != null) {
+                return shore;
+            }
+        }
+
         // Pick random horizontal position (32-96 blocks away)
         double angle = mob.getRandom().nextDouble() * Math.PI * 2.0;
         double distance = 32.0 + mob.getRandom().nextDouble() * 64.0;
@@ -224,6 +264,49 @@ public class DirectSwimWanderGoal extends Goal {
         return new Vec3(targetX, targetY, targetZ);
     }
 
+    private Vec3 findNearbyShoreTarget() {
+        BlockPos start = mob.blockPosition();
+        int maxRadius = 28;
+
+        for (int radius = 4; radius <= maxRadius; radius += 4) {
+            for (int angle = 0; angle < 360; angle += 15) {
+                double rad = Math.toRadians(angle);
+                int x = start.getX() + (int) (Math.cos(rad) * radius);
+                int z = start.getZ() + (int) (Math.sin(rad) * radius);
+
+                int groundY = mob.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z);
+                BlockPos ground = new BlockPos(x, groundY, z);
+
+                if (!mob.level().getFluidState(ground).isEmpty()) {
+                    continue;
+                }
+                if (!(mob.level().getBlockState(ground).isSolid() || mob.level().getBlockState(ground.below()).isSolid())) {
+                    continue;
+                }
+
+                // If any adjacent block has water, this is a shoreline candidate.
+                boolean shoreline = false;
+                for (int dx = -1; dx <= 1 && !shoreline; dx++) {
+                    for (int dz = -1; dz <= 1 && !shoreline; dz++) {
+                        if (dx == 0 && dz == 0) continue;
+                        BlockPos neighbor = ground.offset(dx, 0, dz);
+                        if (mob.level().getFluidState(neighbor).is(FluidTags.WATER)
+                                || mob.level().getFluidState(neighbor.below()).is(FluidTags.WATER)) {
+                            shoreline = true;
+                        }
+                    }
+                }
+
+                if (shoreline) {
+                    // Aim just above shoreline lip; too-high targets cause bobbing against banks.
+                    return new Vec3(x + 0.5D, groundY + 0.15D, z + 0.5D);
+                }
+            }
+        }
+
+        return null;
+    }
+
     private boolean isLineObstructed(Vec3 from, Vec3 to) {
         HitResult hit = mob.level().clip(new ClipContext(
                 from, to,
@@ -233,4 +316,5 @@ public class DirectSwimWanderGoal extends Goal {
         ));
         return hit.getType() != HitResult.Type.MISS;
     }
+
 }

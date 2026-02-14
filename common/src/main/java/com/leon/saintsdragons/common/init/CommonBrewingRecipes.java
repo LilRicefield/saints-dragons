@@ -11,5 +11,6 @@ public final class CommonBrewingRecipes {
 
     public static void register() {
         PotionBrewing.addMix(Potions.AWKWARD, ModItems.NULLJAW_SCALE.get(), ModPotions.NULLJAW_TIDEGUARD.get());
+        PotionBrewing.addMix(Potions.AWKWARD, ModItems.IGNIVORUS_TOOTH.get(), ModPotions.SEARING.get());
     }
 }

@@ -28,6 +28,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
+import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
@@ -200,6 +201,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     private static final double MODEL_SCALE = 1.0D;
     private static final float FIRE_BREATH_ENERGY_REGEN = 0.0025f;
+    private static final float FIRE_BREATH_DEPLETED_THRESHOLD = 0.01f;
+    private static final float FIRE_BREATH_REARM_THRESHOLD = 0.20f;
 
     public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
@@ -245,6 +248,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     // Flight mode state (moved from physics controller for performance)
     private boolean riderHighAltitudeGlide = false;
     private final IgnivorusRiderController riderController;
+    private final DragonRiderFlightComponent riderFlightComponent;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
     private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
 
@@ -390,10 +394,147 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
 
         this.riderController = new IgnivorusRiderController(this);
+        this.riderFlightComponent = createRiderFlightComponent();
         resetAmbientSoundTimer();
         if (!level.isClientSide) {
             applyConfiguredAttributes();
         }
+    }
+
+    private DragonRiderFlightComponent createRiderFlightComponent() {
+        return new DragonRiderFlightComponent(new DragonRiderFlightComponent.Host() {
+            @Override
+            public Entity asEntity() {
+                return Ignivorus.this;
+            }
+
+            @Override
+            public Level level() {
+                return Ignivorus.this.level();
+            }
+
+            @Override
+            public AABB getBoundingBox() {
+                return Ignivorus.this.getBoundingBox();
+            }
+
+            @Override
+            public boolean isVehicle() {
+                return Ignivorus.this.isVehicle();
+            }
+
+            @Override
+            public boolean isFlying() {
+                return Ignivorus.this.isFlying();
+            }
+
+            @Override
+            public boolean isTakeoff() {
+                return Ignivorus.this.isTakeoff();
+            }
+
+            @Override
+            public boolean isGoingUp() {
+                return Ignivorus.this.isGoingUp();
+            }
+
+            @Override
+            public boolean isUnderWater() {
+                return Ignivorus.this.isUnderWater();
+            }
+
+            @Override
+            public boolean isInWaterOrBubble() {
+                return Ignivorus.this.isInWaterOrBubble();
+            }
+
+            @Override
+            public boolean isTame() {
+                return Ignivorus.this.isTame();
+            }
+
+            @Override
+            public boolean hasControllingRider() {
+                return riderController.getRidingPlayer() != null;
+            }
+
+            @Override
+            public boolean canTakeoff() {
+                return Ignivorus.this.canTakeoff();
+            }
+
+            @Override
+            public void setFlying(boolean value) {
+                Ignivorus.this.setFlying(value);
+            }
+
+            @Override
+            public void setTakeoff(boolean value) {
+                Ignivorus.this.setTakeoff(value);
+            }
+
+            @Override
+            public void setHovering(boolean value) {
+                Ignivorus.this.setHovering(value);
+            }
+
+            @Override
+            public void setLanding(boolean value) {
+                Ignivorus.this.setLanding(value);
+            }
+
+            @Override
+            public void switchToAirNavigation() {
+                Ignivorus.this.switchToAirNavigation();
+            }
+
+            @Override
+            public void setGoingUp(boolean value) {
+                Ignivorus.this.setGoingUp(value);
+            }
+
+            @Override
+            public void setGoingDown(boolean value) {
+                Ignivorus.this.setGoingDown(value);
+            }
+
+            @Override
+            public void stopNavigation() {
+                Ignivorus.this.getNavigation().stop();
+            }
+
+            @Override
+            public Vec3 getDeltaMovement() {
+                return Ignivorus.this.getDeltaMovement();
+            }
+
+            @Override
+            public void setDeltaMovement(Vec3 movement) {
+                Ignivorus.this.setDeltaMovement(movement);
+            }
+
+            @Override
+            public void markImpulse() {
+                Ignivorus.this.hasImpulse = true;
+            }
+
+            @Override
+            public long getGameTime() {
+                return Ignivorus.this.level().getGameTime();
+            }
+
+            @Override
+            public void onManualTakeoffStart() {
+                Ignivorus.this.timeFlying = 0;
+            }
+        }, new DragonRiderFlightComponent.Config(
+                true,
+                0,
+                0.25D,
+                0,
+                0.45D,
+                0
+        ));
     }
 
     @Override
@@ -457,8 +598,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal((com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable)this));
+        // Large body needs stronger buoyancy to keep shoreline exits reliable.
+        this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this, 0.018D, -0.02D, 0.95F));
         if (!this.isBaby()) {
             this.goalSelector.addGoal(2, new IgnivorusSpecialCombatGoal(this));
             this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
@@ -471,7 +612,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(this, 1.0D, Ignivorus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         }
         this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 120));
-        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+        // Idle water behavior when no target: swim and prefer reaching nearby shore.
+        this.goalSelector.addGoal(9, new com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
+        this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
 
         if (!this.isBaby()) {
             this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
@@ -647,7 +790,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 && damageSource.getEntity() != null
                 && teethChipDropCooldownTicks <= 0
                 && this.random.nextFloat() < 0.12F) {
-            this.spawnAtLocation(ModItems.IGNIVORUS_TEETH.get());
+            this.spawnAtLocation(ModItems.IGNIVORUS_TOOTH.get());
             teethChipDropCooldownTicks = 30;
         }
         return hurt;
@@ -748,6 +891,16 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     protected int getMaxTextureVariant() {
         // 0 = default, 1 = crimson
         return 1;
+    }
+
+    @Override
+    protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
+                                            @NotNull DifficultyInstance difficulty,
+                                            @NotNull MobSpawnType reason,
+                                            @Nullable SpawnGroupData spawnData,
+                                            @Nullable CompoundTag spawnTag) {
+        // Crimson is rare: 25% chance, default is 75%.
+        return this.getRandom().nextFloat() < 0.25F ? 1 : 0;
     }
 
     @Override
@@ -1595,6 +1748,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         this.setDeltaMovement(blended);
         this.move(MoverType.SELF, this.getDeltaMovement());
+
+        // Shared component handles waterline breach -> flight transition.
+        riderFlightComponent.tryAutoBreachTakeoff();
     }
 
     private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed) {
@@ -2299,14 +2455,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected void onRiderTakeoffRequest(Player player) {
-        if (!isFlying() && onGround()) {
+        if (!isFlying()) {
             enforcePrimaryMeleeForFlight(player);
-            riderController.requestRiderTakeoff();
+            requestRiderTakeoff();
         }
     }
 
     public void requestRiderTakeoff() {
-        riderController.requestRiderTakeoff();
+        riderFlightComponent.requestRiderTakeoff();
     }
 
     @Override
@@ -2427,12 +2583,20 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public boolean canTakeoff() {
-        return !isBaby() && !isFlying() && onGround();
+        return !isBaby()
+                && !isFlying()
+                && onGround()
+                && !isInWaterOrBubble()
+                && !isInLava();
     }
 
     // ===== STATE MANAGEMENT =====
 
     public void setFlying(boolean flying) {
+        // Never let autonomous/AI paths force flight start while submerged.
+        if (flying && !this.isVehicle() && (this.isInWater() || this.isInWaterOrBubble() || this.isInLava())) {
+            return;
+        }
         boolean wasFlying = isFlying();
         this.entityData.set(DATA_FLYING, flying);
 
@@ -2745,13 +2909,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public void setFireBreathEnergy(float energy) {
         float clamped = Mth.clamp(energy, 0.0f, 1.0f);
         this.entityData.set(DATA_FIRE_BREATH_ENERGY, clamped);
-        if (clamped >= 0.999f && isFireBreathDepleted()) {
+        // Hysteresis: deplete at near-empty, re-arm at a higher threshold to avoid flicker.
+        if (clamped >= FIRE_BREATH_REARM_THRESHOLD && isFireBreathDepleted()) {
             setFireBreathDepleted(false);
         }
     }
 
     public boolean hasFireBreathEnergy() {
-        return getFireBreathEnergy() > 0.01f;
+        return getFireBreathEnergy() > FIRE_BREATH_DEPLETED_THRESHOLD;
     }
 
     public boolean isFireBreathEnergyFull() {
@@ -3809,8 +3974,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (!(blockEntity instanceof IgnivorusEggBlockEntity eggEntity)) {
             return;
         }
-        if (this.isTame() && this.getOwnerUUID() != null) {
-            eggEntity.setOwnerUUID(this.getOwnerUUID());
+        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
+        if (ownerUUID != null) {
+            eggEntity.setOwnerUUID(ownerUUID);
         }
         DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
         eggEntity.setBabyGender(babyGender);
@@ -3836,6 +4002,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
             double spawnY = safePos != null ? safePos.getY() : this.getY();
             baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
+            registerToOwnerCodex(baby, level);
         }
         return baby;
     }
@@ -4064,7 +4231,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         if (!level().isClientSide) {
             if (this.random.nextFloat() < 0.35F) {
-                this.spawnAtLocation(ModItems.IGNIVORUS_TEETH.get());
+                this.spawnAtLocation(ModItems.IGNIVORUS_TOOTH.get());
             }
             if (this.random.nextFloat() < 0.90F) {
                 this.spawnAtLocation(ModItems.IGNIVORUS_HEART.get());

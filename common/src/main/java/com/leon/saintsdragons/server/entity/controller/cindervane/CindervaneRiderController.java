@@ -21,6 +21,7 @@ public record CindervaneRiderController(Cindervane dragon) {
     private static final double SEAT_BASE_FACTOR = 0.05D; // 0.0..1.0 of bbHeight
     private static final double SEAT0_HEIGHT_ADJUST = 0.00D;
     private static final double SEAT1_HEIGHT_ADJUST = 0.00D;
+    private static final double AUTO_GRAB_HEIGHT_ADJUST = 0.00D;
 
     // ===== SIMPLIFIED ARCADE FLIGHT PHYSICS =====
     // Speed multipliers relative to base FLYING_SPEED attribute
@@ -317,6 +318,47 @@ public record CindervaneRiderController(Cindervane dragon) {
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
         if (!dragon.hasPassenger(passenger)) return;
 
+        if (dragon.isSlashGrabPassenger(passenger)) {
+            final String locatorName = "automountBoneRight";
+            Vec3 passengerLoc = dragon.getBonePositionForPassenger(locatorName);
+
+            if (passengerLoc != null) {
+                Vec3 dragonOldPos = new Vec3(dragon.xo, dragon.yo, dragon.zo);
+                float oldYaw = dragon.yRotO;
+                Vec3 worldOffset = passengerLoc.subtract(dragonOldPos);
+
+                double oldYawRad = Math.toRadians(-oldYaw);
+                double cosOld = Math.cos(oldYawRad);
+                double sinOld = Math.sin(oldYawRad);
+                double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
+                double localY = worldOffset.y;
+                double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
+
+                float currentYaw = dragon.getYRot();
+                double currentYawRad = Math.toRadians(-currentYaw);
+                double cosCurrent = Math.cos(currentYawRad);
+                double sinCurrent = Math.sin(currentYawRad);
+                double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
+                double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
+
+                Vec3 dragonCurrentPos = dragon.position();
+                Vec3 passengerCurrentPos = dragonCurrentPos.add(currentWorldX, localY + AUTO_GRAB_HEIGHT_ADJUST, currentWorldZ);
+                moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
+            } else {
+                float yawRad = (float) Math.toRadians(dragon.getYRot());
+                double localX = 0.95D;
+                double localZ = -0.15D;
+                double worldX = localX * Math.cos(yawRad) - localZ * Math.sin(yawRad);
+                double worldZ = localX * Math.sin(yawRad) + localZ * Math.cos(yawRad);
+
+                double x = dragon.getX() + worldX;
+                double y = dragon.getY() + getPassengersRidingOffset() + AUTO_GRAB_HEIGHT_ADJUST + passenger.getMyRidingOffset();
+                double z = dragon.getZ() + worldZ;
+                moveFunction.accept(passenger, x, y, z);
+            }
+            return;
+        }
+
         // Determine which seat the passenger is in (0 = driver, 1 = passenger)
         var passengers = dragon.getPassengers();
         int seatIndex = passengers.indexOf(passenger);
@@ -376,6 +418,20 @@ public record CindervaneRiderController(Cindervane dragon) {
         var level = dragon.level();
         Vec3 base = dragon.position();
 
+        if (dragon.isSlashGrabPassenger(passenger)) {
+            // Slash-grab release should always dismount to dragon-right, not vanilla safe-spot left drift.
+            float yawRad = (float) Math.toRadians(dragon.getYRot());
+            double localX = 1.8D;
+            double localZ = 0.1D;
+            double worldX = localX * Math.cos(yawRad) - localZ * Math.sin(yawRad);
+            double worldZ = localX * Math.sin(yawRad) + localZ * Math.cos(yawRad);
+            return new Vec3(
+                    base.x + worldX,
+                    base.y + getPassengersRidingOffset() + 0.2D,
+                    base.z + worldZ
+            );
+        }
+
         // Sample radial candidates around the dragon for a safe dismount
         double[] radii = new double[] { 2.5, 3.5, 1.8 };
         int[] angles = new int[] { 0, 30, -30, 60, -60, 90, -90, 150, -150, 180 };
@@ -429,21 +485,6 @@ public record CindervaneRiderController(Cindervane dragon) {
      * Forces the dragon to take off when being ridden. Called when player presses Space while on ground.
      */
     public void requestRiderTakeoff() {
-        if (!dragon.isTame() || getRidingPlayer() == null || dragon.isFlying()) return;
-        if (!dragon.canTakeoff()) return;
-
-        dragon.getNavigation().stop();
-        dragon.setGoingDown(false);
-        dragon.setGoingUp(true); // latch ascend so we don't depend on a follow-up packet
-        dragon.setFlying(true);
-        dragon.setTakeoff(true);
-        dragon.setHovering(false);
-        dragon.setLanding(false);
-        dragon.setRiderTakeoffTicks(Cindervane.TAKEOFF_ANIMATION_TICKS);
-
-        Vec3 current = dragon.getDeltaMovement();
-        double upward = Math.max(current.y, 0.55D); // strong initial shove to clear the ground smoothly
-        dragon.setDeltaMovement(current.x, upward, current.z);
-        dragon.hasImpulse = true;
+        dragon.requestRiderTakeoff();
     }
 }

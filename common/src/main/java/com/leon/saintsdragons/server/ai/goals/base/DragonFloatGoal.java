@@ -14,11 +14,22 @@ import java.util.EnumSet;
 public class DragonFloatGoal extends Goal {
 
     private final Mob mob;
-    private static final double GENTLE_BUOYANCY = 0.008; // Gentler than vanilla's 0.015
-    private static final double SINKING_THRESHOLD = -0.01; // Only apply buoyancy if sinking
+    private static final double DEFAULT_GENTLE_BUOYANCY = 0.008; // Gentler than vanilla's 0.015
+    private static final double DEFAULT_SINKING_THRESHOLD = -0.01; // Only apply buoyancy if sinking
+    private static final float DEFAULT_JUMP_CHANCE = 0.8F;
+    private final double gentleBuoyancy;
+    private final double sinkingThreshold;
+    private final float jumpChance;
 
     public DragonFloatGoal(Mob mob) {
+        this(mob, DEFAULT_GENTLE_BUOYANCY, DEFAULT_SINKING_THRESHOLD, DEFAULT_JUMP_CHANCE);
+    }
+
+    public DragonFloatGoal(Mob mob, double gentleBuoyancy, double sinkingThreshold, float jumpChance) {
         this.mob = mob;
+        this.gentleBuoyancy = gentleBuoyancy;
+        this.sinkingThreshold = sinkingThreshold;
+        this.jumpChance = jumpChance;
         this.setFlags(EnumSet.of(Flag.JUMP));
     }
 
@@ -39,12 +50,12 @@ public class DragonFloatGoal extends Goal {
         Vec3 deltaMovement = mob.getDeltaMovement();
 
         // If sinking (negative Y velocity), apply gentle buoyancy
-        if (deltaMovement.y < SINKING_THRESHOLD) {
+        if (deltaMovement.y < sinkingThreshold) {
             // Apply gentler buoyancy than vanilla
-            mob.setDeltaMovement(deltaMovement.add(0.0, GENTLE_BUOYANCY, 0.0));
+            mob.setDeltaMovement(deltaMovement.add(0.0, gentleBuoyancy, 0.0));
 
             // If dragon is a swimmer or has jumping capability, allow jump
-            if (mob.getRandom().nextFloat() < 0.8F) {
+            if (mob.getRandom().nextFloat() < jumpChance) {
                 mob.getJumpControl().jump();
             }
         }

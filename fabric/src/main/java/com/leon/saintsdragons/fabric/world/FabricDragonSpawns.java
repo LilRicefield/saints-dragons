@@ -162,8 +162,11 @@ public final class FabricDragonSpawns {
         }
 
         BiomeModifications.addSpawn(
-                context -> context.hasTag(biomeTag)
-                        && !isBiomeExcluded(context, excludedBiomes),
+                context -> {
+                    boolean hasTag = context.hasTag(biomeTag);
+                    boolean excluded = isBiomeExcluded(context, excludedBiomes);
+                    return hasTag && !excluded;
+                },
                 category,
                 entityType,
                 weight,

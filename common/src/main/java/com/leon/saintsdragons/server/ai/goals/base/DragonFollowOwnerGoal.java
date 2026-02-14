@@ -31,6 +31,11 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     @Override
     protected boolean canUseAdditional() {
+        // Follow goal only runs in Follow command mode (0).
+        if (dragon.isTame() && dragon.getCommand() != 0) {
+            return false;
+        }
+
         if (dragon.isInLove()) {
             return false;
         }
@@ -62,6 +67,11 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     @Override
     protected boolean canContinueAdditional() {
+        // Follow goal only runs in Follow command mode (0).
+        if (dragon.isTame() && dragon.getCommand() != 0) {
+            return false;
+        }
+
         if (dragon.isInLove()) {
             return false;
         }

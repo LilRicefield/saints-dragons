@@ -71,7 +71,7 @@ public final class CommonModEvents {
         );
         registrar.register(
                 ModEntities.NULLJAW.get(),
-                SpawnPlacements.Type.NO_RESTRICTIONS,
+                SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Nulljaw::canSpawnHere
         );

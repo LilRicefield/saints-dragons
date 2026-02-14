@@ -300,6 +300,8 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.roar_air"));
         controller.triggerableAnim("magma_blast",
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
+        controller.triggerableAnim("slash_left",
+                RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
         controller.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.cindervane.eat"));
 

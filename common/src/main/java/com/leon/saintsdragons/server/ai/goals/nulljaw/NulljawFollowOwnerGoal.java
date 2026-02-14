@@ -29,6 +29,11 @@ public class NulljawFollowOwnerGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        // Follow goal only runs in Follow command mode (0).
+        if (drake.isTame() && drake.getCommand() != 0) {
+            return false;
+        }
+
         if (!drake.isTame() || drake.isOrderedToSit() || drake.isVehicle()) {
             return false;
         }
@@ -52,6 +57,11 @@ public class NulljawFollowOwnerGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        // Follow goal only runs in Follow command mode (0).
+        if (drake.isTame() && drake.getCommand() != 0) {
+            return false;
+        }
+
         if (!drake.isTame() || drake.isOrderedToSit() || drake.isVehicle()) {
             return false;
         }

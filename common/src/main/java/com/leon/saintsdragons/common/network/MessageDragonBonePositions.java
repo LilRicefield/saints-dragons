@@ -27,6 +27,7 @@ public record MessageDragonBonePositions(
             "hip",
             "fireBoneOrigin",
             "mouth_origin",
+            "automountBoneRight",
             "leftwing",
             "rightwing",
             "leftwingjoint",
@@ -88,17 +89,24 @@ public record MessageDragonBonePositions(
 
         // Find the entity in the server world
         Entity entity = player.serverLevel().getEntity(msg.entityId());
-        if (!(entity instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus)) {
+        if (entity instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
+            // Allow nearby clients tracking the dragon to provide locator updates so multipart
+            // hitboxes stay accurate even when the dragon is not being ridden.
+            if (player.distanceToSqr(ignivorus) > 128.0D * 128.0D) {
+                return;
+            }
+            for (Map.Entry<String, Vec3> entry : msg.bonePositions().entrySet()) {
+                ignivorus.setServerBonePosition(entry.getKey(), entry.getValue());
+            }
             return;
         }
-
-        // Only accept bone updates for the dragon the sender is actively controlling.
-        if (player.getVehicle() != ignivorus || !ignivorus.canBeControlledBy(player)) {
-            return;
-        }
-
-        for (Map.Entry<String, Vec3> entry : msg.bonePositions().entrySet()) {
-            ignivorus.setServerBonePosition(entry.getKey(), entry.getValue());
+        if (entity instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane cindervane) {
+            if (player.getVehicle() != cindervane || !cindervane.canBeControlledBy(player)) {
+                return;
+            }
+            for (Map.Entry<String, Vec3> entry : msg.bonePositions().entrySet()) {
+                cindervane.setServerBonePosition(entry.getKey(), entry.getValue());
+            }
         }
     }
 }

@@ -16,9 +16,12 @@ import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGroundChunkRend
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
 import com.leon.saintsdragons.client.renderer.VisualFallingBlockRenderer;
 import com.leon.saintsdragons.client.renderer.npc.IvyTheDragonMerchantRenderer;
+import com.leon.saintsdragons.client.ui.StegonautInventoryScreen;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import com.leon.saintsdragons.common.registry.ModMenus;
 
 public final class CommonClientModEvents {
     private CommonClientModEvents() {
@@ -42,8 +45,13 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchantRenderer::new);
     }
 
+    public static void registerMenuScreens() {
+        MenuScreens.register(ModMenus.STEGONAUT_INVENTORY.get(), StegonautInventoryScreen::new);
+    }
+
     @FunctionalInterface
     public interface RendererRegistrar {
         <T extends Entity> void register(EntityType<? extends T> type, EntityRendererProvider<? super T> provider);
     }
+
 }

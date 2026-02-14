@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
+import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -140,6 +142,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
+    private final DragonRiderFlightComponent riderFlightComponent;
 
     private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
@@ -159,6 +162,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private boolean wasVehicleLastTick;
     private boolean fireBodyCrashArmed;
     private double fireBodyCrashMaxHeight;
+    private boolean autoGrabPassengerMountAllowed;
+    @Nullable
+    private UUID slashGrabPassengerUuid;
 
     // Banking smoothing state (procedural - no animation controllers needed)
     private float bankSmoothedYaw = 0f;
@@ -281,6 +287,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
     private final Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
+    // ===== SERVER BONE POSITION CACHE (synced from rider client for precision mounting) =====
+    private final Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     // ===== Client animation overrides (for robust observer sync) =====
 
@@ -304,6 +312,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.moveControl = new MoveControl(this);
         this.usingAirNav = false;
         this.riderController = new CindervaneRiderController(this);
+        this.riderFlightComponent = createRiderFlightComponent();
 
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
@@ -315,6 +324,92 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (!level.isClientSide) {
             applyConfiguredAttributes();
         }
+    }
+
+    private DragonRiderFlightComponent createRiderFlightComponent() {
+        return new DragonRiderFlightComponent(new DragonRiderFlightComponent.Host() {
+            @Override
+            public Entity asEntity() { return Cindervane.this; }
+
+            @Override
+            public Level level() { return Cindervane.this.level(); }
+
+            @Override
+            public AABB getBoundingBox() { return Cindervane.this.getBoundingBox(); }
+
+            @Override
+            public boolean isVehicle() { return Cindervane.this.isVehicle(); }
+
+            @Override
+            public boolean isFlying() { return Cindervane.this.isFlying(); }
+
+            @Override
+            public boolean isTakeoff() { return Cindervane.this.isTakeoff(); }
+
+            @Override
+            public boolean isGoingUp() { return Cindervane.this.isGoingUp(); }
+
+            @Override
+            public boolean isUnderWater() { return Cindervane.this.isUnderWater(); }
+
+            @Override
+            public boolean isInWaterOrBubble() { return Cindervane.this.isInWaterOrBubble(); }
+
+            @Override
+            public boolean isTame() { return Cindervane.this.isTame(); }
+
+            @Override
+            public boolean hasControllingRider() { return riderController.getRidingPlayer() != null; }
+
+            @Override
+            public boolean canTakeoff() { return Cindervane.this.canTakeoff(); }
+
+            @Override
+            public void setFlying(boolean value) { Cindervane.this.setFlying(value); }
+
+            @Override
+            public void setTakeoff(boolean value) { Cindervane.this.setTakeoff(value); }
+
+            @Override
+            public void setHovering(boolean value) { Cindervane.this.setHovering(value); }
+
+            @Override
+            public void setLanding(boolean value) { Cindervane.this.setLanding(value); }
+
+            @Override
+            public void switchToAirNavigation() { Cindervane.this.switchToAirNavigation(); }
+
+            @Override
+            public void setGoingUp(boolean value) { Cindervane.this.setGoingUp(value); }
+
+            @Override
+            public void setGoingDown(boolean value) { Cindervane.this.setGoingDown(value); }
+
+            @Override
+            public void stopNavigation() { Cindervane.this.getNavigation().stop(); }
+
+            @Override
+            public Vec3 getDeltaMovement() { return Cindervane.this.getDeltaMovement(); }
+
+            @Override
+            public void setDeltaMovement(Vec3 movement) { Cindervane.this.setDeltaMovement(movement); }
+
+            @Override
+            public void markImpulse() { Cindervane.this.hasImpulse = true; }
+
+            @Override
+            public long getGameTime() { return Cindervane.this.level().getGameTime(); }
+
+            @Override
+            public void setRiderTakeoffTicks(int ticks) { Cindervane.this.setRiderTakeoffTicks(ticks); }
+        }, new DragonRiderFlightComponent.Config(
+                true,
+                0,
+                0.55D,
+                TAKEOFF_ANIMATION_TICKS,
+                0.45D,
+                TAKEOFF_ANIMATION_TICKS
+        ));
     }
 
     @Override
@@ -449,6 +544,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_SLASH_GRAB_PASSENGER_ID =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
 
     // Sleep system entity data accessors
 
@@ -485,6 +582,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.entityData.define(DATA_GOING_UP, false);
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
+        this.entityData.define(DATA_SLASH_GRAB_PASSENGER_ID, -1);
     }
 
     // Implementation of abstract accessor methods
@@ -534,7 +632,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this));
-        this.goalSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonWaterEscapeGoal((com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable) this));
         this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
 
         // Babies don't have flight or combat abilities
@@ -548,10 +645,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forCindervane()));
         this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 0.6D, 160));
+        // Idle water behavior: prefer swimming toward shore rather than sinking/hovering in place.
+        this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
 
         // Adults can breed, babies cannot
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(
+            this.goalSelector.addGoal(9, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(
                 this, 1.0D, Cindervane.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
             ));
         }
@@ -1658,7 +1757,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        return new RiderAbilityBinding(CindervaneAbilities.BITE_ID, RiderAbilityBinding.Activation.PRESS);
+        String abilityId = getMeleeMode() == 0
+                ? CindervaneAbilities.BITE_ID
+                : CindervaneAbilities.SLASH_GRAB_ID;
+        return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
     }
 
 
@@ -1671,15 +1773,43 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     protected boolean canAddPassenger(@NotNull Entity passenger) {
-        // Two-seater is intended for players only.
-        if (!(passenger instanceof Player)) {
+        if (passenger instanceof Player) {
+            return this.getPassengers().size() < getMaxPassengers();
+        }
+        if (autoGrabPassengerMountAllowed && passenger instanceof LivingEntity) {
+            return this.getPassengers().size() < getMaxPassengers();
+        }
+        return false;
+    }
+
+    public void setAutoGrabPassengerMountAllowed(boolean allowed) {
+        this.autoGrabPassengerMountAllowed = allowed;
+    }
+
+    public void setSlashGrabPassenger(@Nullable Entity passenger) {
+        UUID newUuid = passenger == null ? null : passenger.getUUID();
+        int newId = passenger == null ? -1 : passenger.getId();
+        if (java.util.Objects.equals(this.slashGrabPassengerUuid, newUuid)
+                && this.entityData.get(DATA_SLASH_GRAB_PASSENGER_ID) == newId) {
+            return;
+        }
+        this.slashGrabPassengerUuid = newUuid;
+        this.entityData.set(DATA_SLASH_GRAB_PASSENGER_ID, newId);
+    }
+
+    public boolean isSlashGrabPassenger(Entity passenger) {
+        if (passenger == null) {
             return false;
         }
-        return this.getPassengers().size() < getMaxPassengers();
+        int syncedId = this.entityData.get(DATA_SLASH_GRAB_PASSENGER_ID);
+        if (syncedId >= 0 && passenger.getId() == syncedId) {
+            return true;
+        }
+        return slashGrabPassengerUuid != null && slashGrabPassengerUuid.equals(passenger.getUUID());
     }
 
     public void requestRiderTakeoff() {
-        riderController.requestRiderTakeoff();
+        riderFlightComponent.requestRiderTakeoff();
     }
 
     public double getPassengersRidingOffset() {
@@ -1699,6 +1829,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
         return riderController.getControllingPassenger();
+    }
+
+    @Override
+    public void removePassenger(@NotNull Entity passenger) {
+        if (isSlashGrabPassenger(passenger)) {
+            setSlashGrabPassenger(null);
+        }
+        super.removePassenger(passenger);
     }
 
     @Override
@@ -1799,7 +1937,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
 
         if (inWater && !level().isClientSide) {
-            if (isFlying()) {
+            if (riderFlightComponent.shouldClearFlightStateInWater(this.riderTakeoffTicks)) {
                 this.setFlying(false);
                 this.setTakeoff(false);
                 this.setHovering(false);
@@ -1863,6 +2001,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         this.setDeltaMovement(blended);
         this.move(MoverType.SELF, this.getDeltaMovement());
+
+        riderFlightComponent.tryAutoBreachTakeoff();
     }
 
     private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed, Vec3 velocity) {
@@ -2183,12 +2323,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return CindervaneAbilities.BITE;
+        return getMeleeMode() == 0
+                ? CindervaneAbilities.BITE
+                : CindervaneAbilities.SLASH_GRAB;
     }
 
     @Override
     public boolean hasSecondaryMelee() {
-        return false; // Cindervane only has bite, no secondary melee
+        return true;
     }
 
     @Override
@@ -2221,6 +2363,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             source.is(net.minecraft.world.damagesource.DamageTypes.ON_FIRE) ||
             source.is(net.minecraft.world.damagesource.DamageTypes.LAVA) ||
             source.is(net.minecraft.world.damagesource.DamageTypes.HOT_FLOOR)) {
+            if (this.isOnFire() || this.getRemainingFireTicks() > 0) {
+                this.clearFire();
+                this.setRemainingFireTicks(0);
+            }
             return false;
         }
 
@@ -2279,7 +2425,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             return;
         }
         DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
-        if (type == CindervaneAbilities.BITE || type == CindervaneAbilities.FIRE_BODY || type == CindervaneAbilities.ROAR || type == CindervaneAbilities.FIRE_BREATH_VOLLEY) {
+        if (type == CindervaneAbilities.BITE
+                || type == CindervaneAbilities.SLASH_GRAB
+                || type == CindervaneAbilities.FIRE_BODY
+                || type == CindervaneAbilities.ROAR
+                || type == CindervaneAbilities.FIRE_BREATH_VOLLEY) {
             combatManager.tryUseAbility(type);
         }
     }
@@ -2292,9 +2442,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.@NotNull Entity target) {
-        // Use bite ability for melee attacks
+        // Use currently selected melee ability.
         if (!this.isVehicle() && !this.isOrderedToSit()) {
-            combatManager.tryUseAbility(CindervaneAbilities.BITE);
+            combatManager.tryUseAbility(getPrimaryAttackAbility());
         }
         // Return true to indicate we handled the attack
         return true;
@@ -2384,10 +2534,23 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob partner) {
         Cindervane baby = ModEntities.CINDERVANE.get().create(level);
         if (baby != null) {
+            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+            java.util.UUID ownerId = this.getOwnerUUID();
+            if (ownerId != null) {
+                baby.setOwnerUUID(ownerId);
+                baby.setTame(true);
+            }
+            baby.skipRespawnTicks = 5;
+            baby.setAge(-24000);
+            baby.setBaby(true);
+            baby.applyConfiguredAttributes();
+            baby.setHealth(baby.getMaxHealth());
+
             // Position the baby near the parent to prevent Y=0 spawning
             net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
             double spawnY = safePos != null ? safePos.getY() : this.getY();
             baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
+            registerToOwnerCodex(baby, level);
         }
         return baby;
     }
@@ -2492,6 +2655,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public void setFlying(boolean flying) {
+        // Never let autonomous/AI paths force flight start while submerged.
+        if (flying && !this.isVehicle() && (this.isInWater() || this.isInWaterOrBubble() || this.isInLava())) {
+            return;
+        }
         if (flying == isFlying()) {
             return;
         }
@@ -2731,6 +2898,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.clientLocatorCache.put(name, pos);
     }
 
+    public void setServerBonePosition(String boneName, Vec3 position) {
+        if (boneName == null || position == null) return;
+        this.serverBonePositionCache.put(boneName, position);
+    }
+
     /**
      * Get a client-side locator position (used by rider controller to position passengers)
      */
@@ -2738,6 +2910,16 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public Vec3 getClientLocatorPosition(String name) {
         if (name == null) return null;
         return this.clientLocatorCache.get(name);
+    }
+
+    public Vec3 getBonePositionForPassenger(String boneName) {
+        if (boneName == null) {
+            return null;
+        }
+        if (this.level().isClientSide) {
+            return this.clientLocatorCache.get(boneName);
+        }
+        return this.serverBonePositionCache.get(boneName);
     }
 
     @Override
@@ -2903,8 +3085,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             return;
         }
 
-        if (this.isTame() && this.getOwnerUUID() != null) {
-            eggEntity.setOwnerUUID(this.getOwnerUUID());
+        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
+        if (ownerUUID != null) {
+            eggEntity.setOwnerUUID(ownerUUID);
         }
 
         DragonGender babyGender =

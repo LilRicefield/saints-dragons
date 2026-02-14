@@ -4,8 +4,8 @@
 		{
 			"description": {
 				"identifier": "geometry.cindervane",
-				"texture_width": 1024,
-				"texture_height": 1024,
+				"texture_width": 765,
+				"texture_height": 744,
 				"visible_bounds_width": 45,
 				"visible_bounds_height": 26,
 				"visible_bounds_offset": [0, 3, 0]
@@ -465,6 +465,11 @@
 						{"origin": [-282.7825, 36.89826, -28.66921], "size": [179.27, 0, 41.587], "uv": [0, 382], "mirror": true},
 						{"origin": [-275.5025, 35.39676, -26.89471], "size": [105.56, 3.003, 2.093], "pivot": [-184.0475, 36.89826, -26.89471], "rotation": [0, 15, 0], "uv": [576, 432], "mirror": true}
 					]
+				},
+				{
+					"name": "automountBoneRight",
+					"parent": "rightforearm2",
+					"pivot": [-103.5075, 37.35326, -35.89571]
 				},
 				{
 					"name": "rightclaw",

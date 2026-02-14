@@ -55,6 +55,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         cindervaneBuffer.flyingSpeed = cindervaneCurrent.flyingSpeed();
         cindervaneBuffer.biteDamage = cindervaneCurrent.abilityDamage("bite",
                 cindervaneDefaults.abilityDamage("bite", 12.0D));
+        cindervaneBuffer.slashGrabHit1Damage = cindervaneCurrent.abilityDamage("slash_grab_hit1",
+                cindervaneDefaults.abilityDamage("slash_grab_hit1", 5.0D));
+        cindervaneBuffer.slashGrabHit2Damage = cindervaneCurrent.abilityDamage("slash_grab_hit2",
+                cindervaneDefaults.abilityDamage("slash_grab_hit2", 7.0D));
         cindervaneBuffer.volleyDamage = cindervaneCurrent.abilityDamage("magma_volley",
                 cindervaneDefaults.abilityDamage("magma_volley", 20.0D));
         cindervaneBuffer.tamingChanceBase = cindervaneCurrent.extraDouble("taming_chance_base", 4.0);
@@ -408,6 +412,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.biteDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.slash_grab_hit1_damage"), buffer.slashGrabHit1Damage)
+                .setDefaultValue(defaults.abilityDamage("slash_grab_hit1", 5.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.slashGrabHit1Damage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.slash_grab_hit2_damage"), buffer.slashGrabHit2Damage)
+                .setDefaultValue(defaults.abilityDamage("slash_grab_hit2", 7.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.slashGrabHit2Damage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.volley_damage"), buffer.volleyDamage)
                 .setDefaultValue(defaults.abilityDamage("magma_volley", 20.0D))
@@ -1021,6 +1037,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         Map<String, DragonAbilityOverride> abilities = new HashMap<>(current.abilities());
         abilities.put("bite", DragonAbilityOverride.ofDamage(cindervaneBuffer.biteDamage));
+        abilities.put("slash_grab_hit1", DragonAbilityOverride.ofDamage(cindervaneBuffer.slashGrabHit1Damage));
+        abilities.put("slash_grab_hit2", DragonAbilityOverride.ofDamage(cindervaneBuffer.slashGrabHit2Damage));
         abilities.put("magma_volley", DragonAbilityOverride.ofDamage(cindervaneBuffer.volleyDamage));
         DragonAttributeConfig updated = new DragonAttributeConfig(
                 cindervaneBuffer.maxHealth,
@@ -1142,6 +1160,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double armor;
         double flyingSpeed;
         double biteDamage;
+        double slashGrabHit1Damage;
+        double slashGrabHit2Damage;
         double volleyDamage;
         double tamingChanceBase;
         double tamingChanceHearty;

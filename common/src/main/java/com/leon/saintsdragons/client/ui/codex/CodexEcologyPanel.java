@@ -27,7 +27,7 @@ public class CodexEcologyPanel {
     );
     private static final List<ResourceLocation> IGNIVORUS_DROPS = List.of(
             new ResourceLocation("saintsdragons", "ignivorus_scale"),
-            new ResourceLocation("saintsdragons", "ignivorus_teeth"),
+            new ResourceLocation("saintsdragons", "ignivorus_tooth"),
             new ResourceLocation("saintsdragons", "ignivorus_heart"),
             new ResourceLocation("saintsdragons", "ignivorus_egg")
     );
