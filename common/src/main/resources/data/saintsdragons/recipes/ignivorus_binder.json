@@ -1,7 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "N N",
+    "T T",
     "NIN",
     "SNS"
   ],
@@ -14,6 +14,9 @@
     },
     "S": {
       "item": "saintsdragons:ignivorus_scale"
+    },
+    "T": {
+      "item": "saintsdragons:ignivorus_tooth"
     }
   },
   "result": {

@@ -53,18 +53,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
     }
 
     @Override
-    public boolean handleSoundByName(DragonSoundHandler handler, DragonEntity dragon, String key) {
-        if (dragon.isBaby()) {
-            return true;
-        }
-        if (key.startsWith("raevyx_flap") || key.startsWith("flap")) {
-            playWingFlap(handler, dragon);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
     public int getVocalAnimationWindowTicks(String key) {
         return VOCAL_WINDOWS.getOrDefault(key, -1);
     }

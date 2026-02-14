@@ -4348,14 +4348,29 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     return PlayState.STOP;
                 });
 
-        movementController.setSoundKeyframeHandler(event -> {});
-        actionController.setSoundKeyframeHandler(event -> {});
+        movementController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
+        actionController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         animationHandler.setupActionController(actionController);
 
         AnimationController<Raevyx> instantController =
                 new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
         animationHandler.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(event -> {});
+        instantController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         controllers.add(instantController);
 
         controllers.add(movementController);
@@ -4370,6 +4385,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     public DragonSoundProfile getSoundProfile() {
         return RaevyxSoundProfile.INSTANCE;
+    }
+
+    private void handleAnimationSound(String soundKey) {
+        DragonSoundProfile profile = getSoundProfile();
+        if (profile != null) {
+            // Let the profile handle it (it knows about flaps, steps, etc.)
+            boolean handled = profile.handleAnimationSound(getSoundHandler(), this, soundKey, null);
+            if (!handled) {
+                // Profile didn't handle it, try as vocal
+                getSoundHandler().playVocal(soundKey);
+            }
+        }
     }
 
     @Override

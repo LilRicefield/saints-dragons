@@ -28,6 +28,31 @@
       }
     ]
   },
+  "draconic_codex_flip": {
+    "subtitle": "Book pages flip",
+    "sounds": [
+      {
+        "name": "saintsdragons:gui/draconiccodex/book_flip0",
+        "volume": 1.0,
+        "pitch": 1.0
+      },
+      {
+        "name": "saintsdragons:gui/draconiccodex/book_flip1",
+        "volume": 1.0,
+        "pitch": 1.0
+      },
+      {
+        "name": "saintsdragons:gui/draconiccodex/book_flip2",
+        "volume": 1.0,
+        "pitch": 1.0
+      },
+      {
+        "name": "saintsdragons:gui/draconiccodex/book_flip3",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_grumble_1": {
     "subtitle": "Raevyx grumbles",
     "sounds": [
@@ -187,8 +212,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/cindervane/cindervane_flap",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 16
       }
     ]
   },
@@ -370,8 +396,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_flap",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 3.0,
+        "pitch": 1.0,
+        "attenuation_distance": 16
       }
     ]
   },

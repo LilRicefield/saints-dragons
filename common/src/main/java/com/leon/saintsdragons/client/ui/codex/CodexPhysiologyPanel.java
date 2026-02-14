@@ -5,7 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-public class CodexDetailPanel {
+public class CodexPhysiologyPanel {
     private final ResourceLocation healthIcon;
     private final ResourceLocation armorIcon;
     private final ResourceLocation genderIcon;
@@ -13,8 +13,8 @@ public class CodexDetailPanel {
     private final ResourceLocation happinessIcon;
     private final ResourceLocation variantIcon;
 
-    public CodexDetailPanel(ResourceLocation healthIcon, ResourceLocation armorIcon, ResourceLocation genderIcon,
-                            ResourceLocation hungerIcon, ResourceLocation happinessIcon, ResourceLocation variantIcon) {
+    public CodexPhysiologyPanel(ResourceLocation healthIcon, ResourceLocation armorIcon, ResourceLocation genderIcon,
+                                ResourceLocation hungerIcon, ResourceLocation happinessIcon, ResourceLocation variantIcon) {
         this.healthIcon = healthIcon;
         this.armorIcon = armorIcon;
         this.genderIcon = genderIcon;
@@ -162,14 +162,14 @@ public class CodexDetailPanel {
                 formatCoordinate(selected.posX()),
                 formatCoordinate(selected.posY()),
                 formatCoordinate(selected.posZ()));
-        drawWrappedLine(guiGraphics, font, line, textX, textY, 120, 3);
+        drawWrappedLine(guiGraphics, font, line, textX, textY, 90, 5);
     }
 
     private void drawBiomeStat(GuiGraphics guiGraphics, Font font, CodexDragonEntry selected, int leftPos, int topPos) {
         int textX = leftPos + 231;
-        int textY = topPos + 40;
+        int textY = topPos + 50;
         Component line = Component.translatable("saintsdragons.gui.draconic_codex.physiology.biome", selected.biomeId());
-        drawWrappedLine(guiGraphics, font, line, textX, textY, 140, 3);
+        drawWrappedLine(guiGraphics, font, line, textX, textY, 140, 10);
     }
 
     private String formatCoordinate(double value) {

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.common.item.CindervaneBinderItem;
 import com.leon.saintsdragons.common.item.DragonBrushItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
+import com.leon.saintsdragons.common.item.FixedPotionItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
@@ -165,6 +166,20 @@ public class ModItems {
             REGISTER.register("stegonaut_scale",
                     () -> new Item(
                             new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> POTION_OF_TIDEGUARD =
+            REGISTER.register("potion_of_tideguard",
+                    () -> new FixedPotionItem(
+                            new Item.Properties().stacksTo(1),
+                            ModPotions.NULLJAW_TIDEGUARD
+                    ));
+
+    public static final Supplier<Item> POTION_OF_SEARING =
+            REGISTER.register("potion_of_searing",
+                    () -> new FixedPotionItem(
+                            new Item.Properties().stacksTo(1),
+                            ModPotions.SEARING
                     ));
 
     public static final Supplier<Item> STEGONAUT_BINDER =
