@@ -34,11 +34,13 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
+import com.leon.saintsdragons.server.entity.util.ClientAnimationInitHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -305,6 +307,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final double LEAP_HORIZONTAL_DRAG = 0.94D; // Air resistance (less drag = more distance)
     private static final double LEAP_GRAVITY = 0.06D; // Gravity applied during leap (lower = floatier arc)
     private static final float LEAP_SLAM_DAMAGE = 50.0F; // Damage on landing
+    private static final float DEFAULT_BULLDOZE_DAMAGE = 10.0F;
     private static final double LEAP_SLAM_RADIUS = 20.0D; // AoE damage radius on landing
     private static final double LEAP_KNOCKBACK = 5.5D; // Knockback strength
     private static final double LEAP_LIFT = 0.8D; // Upward launch on hit
@@ -357,7 +360,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
-    private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
 
     // Position tracking for FLY_IDLE detection (xo/yo/zo are synced too early in tick cycle)
     // Public for physics controller access
@@ -662,10 +664,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Update client-side sit progress
         if (level().isClientSide) {
-            // Increment animation initialization counter (prevents T-pose on rejoin with shaders)
-            if (clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
-                clientAnimInitTicks++;
-            }
+            // Grace period avoids shader-time race conditions that can cause brief T-poses on rejoin.
+            clientAnimInitTicks = ClientAnimationInitHelper.tickClientCounter(true, clientAnimInitTicks);
         }
 
         // Update air/ground time
@@ -1077,8 +1077,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                         continue; // Skip this entity, still on cooldown
                     }
 
-                    // Apply damage (10 HP)
-                    target.hurt(this.damageSources().mobAttack(this), 10.0F);
+                    // Apply configured bulldoze collision damage
+                    target.hurt(this.damageSources().mobAttack(this), resolveBulldozeDamage());
 
                     // Apply knockback from mouth position for that DISRESPECTFUL shove
                     double knockbackStrength = 2.0D;
@@ -1338,11 +1338,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     private float resolveLeapSlamDamage() {
-        double attack = getAttributeValue(Attributes.ATTACK_DAMAGE);
-        float baseDamage = (float) DragonAttributeConfigLoader.getInstance()
+        return (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
                 .abilityDamage("leap_slam", LEAP_SLAM_DAMAGE);
-        return baseDamage + (float) (attack * 0.75D);
+    }
+
+    private float resolveBulldozeDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("bulldoze", DEFAULT_BULLDOZE_DAMAGE);
     }
 
     /**
@@ -1479,6 +1483,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
      * Inspired by Epic Fight's Demolition Leap
      */
     private void breakGroundCircle(ServerLevel level, Vec3 center, double radius) {
+        if (!DragonGriefingRules.canIgnivorusGriefing()) {
+            return;
+        }
         // Check if mob griefing is allowed
         if (!level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
             return;
@@ -1878,7 +1885,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
     public boolean isClientAnimationReady() {
-        return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
+        return ClientAnimationInitHelper.isReady(clientAnimInitTicks);
     }
 
     /**
@@ -2628,6 +2635,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private void breakBlocksDuringTakeoff() {
         if (level().isClientSide) return;
         if (!level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) return;
+        if (!DragonGriefingRules.canIgnivorusGriefing()) return;
 
         // Get bounding box
         var bb = this.getBoundingBox();
@@ -3621,6 +3629,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     private void tickTerrainClearing() {
         if (level().isClientSide || this.isBaby() || !this.isAlive()) {
+            return;
+        }
+        if (!DragonGriefingRules.canIgnivorusGriefing()) {
             return;
         }
         if (!level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {

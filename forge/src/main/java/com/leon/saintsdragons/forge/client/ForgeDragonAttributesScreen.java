@@ -171,6 +171,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_damage"),
+                ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_DAMAGE::get,
+                ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.taming_base"),
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE::set,
@@ -202,6 +206,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.cindervane.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.cindervane.griefing_enabled"),
+                () -> ForgeDragonAttributesConfig.CINDERVANE_GRIEFING_ENABLED.get(),
+                ForgeDragonAttributesConfig.CINDERVANE_GRIEFING_ENABLED::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
                 () -> ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
@@ -251,6 +259,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE::set,
                 null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"),
+                () -> ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.get(),
+                ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD::set,
+                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
                 () -> ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
                 ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
@@ -290,6 +302,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.horn_damage"),
                 ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE::get,
                 ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.dash_damage"),
+                ForgeDragonAttributesConfig.RAEVYX_DASH_DAMAGE::get,
+                ForgeDragonAttributesConfig.RAEVYX_DASH_DAMAGE::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.beam_drain_per_tick"),
                 ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK::get,
@@ -395,6 +411,18 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE::get,
                 ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.tail_attack"),
+                ForgeDragonAttributesConfig.NULLJAW_TAIL_ATTACK_DAMAGE::get,
+                ForgeDragonAttributesConfig.NULLJAW_TAIL_ATTACK_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.dash_tail_swipe"),
+                ForgeDragonAttributesConfig.NULLJAW_DASH_TAIL_SWIPE_DAMAGE::get,
+                ForgeDragonAttributesConfig.NULLJAW_DASH_TAIL_SWIPE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.dash_claw"),
+                ForgeDragonAttributesConfig.NULLJAW_DASH_CLAW_DAMAGE::get,
+                ForgeDragonAttributesConfig.NULLJAW_DASH_CLAW_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase1"),
                 ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE::get,
                 ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE::set,
@@ -426,6 +454,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.griefing_enabled"),
+                () -> ForgeDragonAttributesConfig.NULLJAW_GRIEFING_ENABLED.get(),
+                ForgeDragonAttributesConfig.NULLJAW_GRIEFING_ENABLED::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
                 () -> ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
@@ -463,6 +495,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.leap_slam_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_LEAP_SLAM_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_LEAP_SLAM_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_damage"),
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE::set,
@@ -471,6 +507,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_FIREBALL_DAMAGE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_FIREBALL_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.magma_pillar_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_MAGMA_PILLAR_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_MAGMA_PILLAR_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.wing_swipe_damage"),
                 ForgeDragonAttributesConfig.IGNIVORUS_WING_SWIPE_DAMAGE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_WING_SWIPE_DAMAGE::set,
@@ -478,6 +518,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.stomp_damage"),
                 ForgeDragonAttributesConfig.IGNIVORUS_STOMP_DAMAGE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_STOMP_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.bulldoze_damage"),
+                ForgeDragonAttributesConfig.IGNIVORUS_BULLDOZE_DAMAGE::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_BULLDOZE_DAMAGE::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_damage"),
                 ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE::get,
@@ -571,6 +615,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 () -> ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD::set,
                 null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.griefing_enabled"),
+                () -> ForgeDragonAttributesConfig.IGNIVORUS_GRIEFING_ENABLED.get(),
+                ForgeDragonAttributesConfig.IGNIVORUS_GRIEFING_ENABLED::set,
+                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
                 () -> ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
                 ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
@@ -592,6 +640,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT1_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT1_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT2_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT2_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.getDefault());
@@ -600,6 +649,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH.set(ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_GRIEFING_ENABLED.set(ForgeDragonAttributesConfig.CINDERVANE_GRIEFING_ENABLED.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
@@ -613,6 +663,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
@@ -624,6 +675,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_HORN_GORE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_DASH_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_DASH_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.RAEVYX_BEAM_DRAIN_PER_TICK.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.RAEVYX_BEAM_REGEN_PER_TICK.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_COOLDOWN_TICKS.set(ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_COOLDOWN_TICKS.getDefault());
@@ -650,6 +702,9 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED.set(ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_TAIL_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_TAIL_ATTACK_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_DASH_TAIL_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_DASH_TAIL_SWIPE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_DASH_CLAW_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_DASH_CLAW_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE.set(ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE.getDefault());
@@ -658,6 +713,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_GRIEFING_ENABLED.set(ForgeDragonAttributesConfig.NULLJAW_GRIEFING_ENABLED.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
@@ -668,10 +724,13 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_BODY_SLAM_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_LEAP_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_LEAP_SLAM_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIREBALL_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIREBALL_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_MAGMA_PILLAR_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_MAGMA_PILLAR_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_WING_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_WING_SWIPE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_STOMP_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_STOMP_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_BULLDOZE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_BULLDOZE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK.getDefault());
@@ -695,6 +754,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_GRIEFING_ENABLED.set(ForgeDragonAttributesConfig.IGNIVORUS_GRIEFING_ENABLED.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }

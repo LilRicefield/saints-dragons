@@ -23,6 +23,7 @@ import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.util.ClientAnimationInitHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import com.leon.saintsdragons.server.entity.controller.nulljaw.NulljawRiderController;
@@ -167,6 +168,8 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     private boolean lastDashWasRight = false;
     private static final double LEAP_HORIZONTAL_DRAG = 0.92D;
     private static final double LEAP_VERTICAL_DRAG = 0.98D;
+    private static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = 14.0F;
+    private static final float DEFAULT_DASH_CLAW_DAMAGE = 16.0F;
 
     // ===== UNTAMED RIDE / TAMING STATE =====
     private static final int MIN_WILD_TAME_TICKS = 60;
@@ -184,7 +187,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
-    private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
 
     // Derived from mouth_origin locator in rift_drake.geo (Z negative means forward in model space)
     private static final double MODEL_SCALE = 1.0D;
@@ -255,7 +257,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
     public boolean isClientAnimationReady() {
-        return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
+        return ClientAnimationInitHelper.isReady(clientAnimInitTicks);
     }
 
     @Override
@@ -533,7 +535,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
 
             for (LivingEntity target : entities) {
                 // Deal damage
-                float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE) * 1.5F;
+                float damage = phaseTwo ? resolveDashClawDamage() : resolveDashTailSwipeDamage();
                 target.hurt(this.damageSources().mobAttack(this), damage);
 
                 if (!phaseTwo) {
@@ -544,6 +546,18 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
                 }
             }
         }
+    }
+
+    private float resolveDashTailSwipeDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.NULLJAW_ID)
+                .abilityDamage("dash_tail_swipe", DEFAULT_DASH_TAIL_SWIPE_DAMAGE);
+    }
+
+    private float resolveDashClawDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.NULLJAW_ID)
+                .abilityDamage("dash_claw", DEFAULT_DASH_CLAW_DAMAGE);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -789,10 +803,8 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         super.tick();
         soundHandler.tick();
 
-        // Increment animation initialization counter on client (prevents T-pose on rejoin with shaders)
-        if (level().isClientSide && clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
-            clientAnimInitTicks++;
-        }
+        // Grace period avoids shader-time race conditions that can cause brief T-poses on rejoin.
+        clientAnimInitTicks = ClientAnimationInitHelper.tickClientCounter(level().isClientSide, clientAnimInitTicks);
 
         tickSittingState();
         tickMountedState();
@@ -2497,11 +2509,6 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
             suppressSleep(200);
         }
         return super.hurt(damageSource, amount);
-    }
-
-    @Override
-    public boolean fireImmune() {
-        return false;
     }
 
     /**

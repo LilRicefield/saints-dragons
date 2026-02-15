@@ -11,6 +11,9 @@
     },
     "horn_gore": {
       "damage": 15.0
+    },
+    "dash": {
+      "damage": 10.0
     }
   },
   "extra": {

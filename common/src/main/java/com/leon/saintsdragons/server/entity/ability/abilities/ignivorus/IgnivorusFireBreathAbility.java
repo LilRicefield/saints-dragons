@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -249,7 +250,8 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             Vec3 currentImpact = origin.add(impact.subtract(origin).scale(progressRatio));
 
             // Apply block effects only at the impact point to avoid excessive destruction
-            boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING;
+            boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING
+                    && DragonGriefingRules.canIgnivorusGriefing();
             // Projectile-only damage model: flame entities are the sole source of entity damage.
             // Keep impact damage at 0 to avoid look/area damage before flames visually arrive.
             float fallbackImpactDamage = 0.0f;

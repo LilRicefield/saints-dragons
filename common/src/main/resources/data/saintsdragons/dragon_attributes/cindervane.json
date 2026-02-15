@@ -14,6 +14,9 @@
     },
     "magma_volley": {
       "damage": 20.0
+    },
+    "fire_body": {
+      "damage": 3.0
     }
   },
   "extra": {
@@ -27,6 +30,7 @@
     "slash_grab_dismount_tick": 32.0,
     "slash_grab_max_target_width": 1.6,
     "slash_grab_max_target_height": 2.6,
+    "griefing_enabled": true,
     "aggressive_wild": false
   }
 }

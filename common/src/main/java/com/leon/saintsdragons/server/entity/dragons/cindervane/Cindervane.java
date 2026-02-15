@@ -21,6 +21,8 @@ import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
+import com.leon.saintsdragons.server.entity.util.ClientAnimationInitHelper;
 import java.util.Map;
 import java.util.HashMap;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -179,7 +181,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
-    private static final int ANIM_INIT_GRACE_PERIOD = 5; // Wait 5 ticks for entity data sync
 
     // Position tracking for FLY_IDLE detection (xo/yo/zo are synced too early in tick cycle)
     // Public for physics controller access
@@ -754,10 +755,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         tickScreenShake();
         // === CLIENT-SIDE ONLY ===
         if (level().isClientSide) {
-            // Increment animation initialization counter (prevents T-pose on rejoin with shaders)
-            if (clientAnimInitTicks < ANIM_INIT_GRACE_PERIOD) {
-                clientAnimInitTicks++;
-            }
+            // Grace period avoids shader-time race conditions that can cause brief T-poses on rejoin.
+            clientAnimInitTicks = ClientAnimationInitHelper.tickClientCounter(true, clientAnimInitTicks);
             return; // Early exit for client - nothing else needed
         }
 
@@ -1200,7 +1199,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
     public boolean isClientAnimationReady() {
-        return clientAnimInitTicks >= ANIM_INIT_GRACE_PERIOD;
+        return ClientAnimationInitHelper.isReady(clientAnimInitTicks);
     }
 
     private double getAltitudeAboveTerrain() {
@@ -2075,6 +2074,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (!(level() instanceof ServerLevel server)) {
             return;
         }
+        boolean allowGriefing = DragonGriefingRules.canCindervaneGriefing();
         double x = this.getX();
         double y = this.getY();
         double z = this.getZ();
@@ -2102,8 +2102,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             }
         };
 
+        Explosion.BlockInteraction blockInteraction = allowGriefing
+                ? Explosion.BlockInteraction.DESTROY
+                : Explosion.BlockInteraction.KEEP;
         Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), calculator,
-                x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, true, Explosion.BlockInteraction.DESTROY);
+                x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, true, blockInteraction);
 
         List<LivingEntity> allies = grantAlliesExplosionImmunity(server, x, y, z);
         double protectionRadius = FIRE_BODY_EXPLOSION_RADIUS + 4.0D;
@@ -2139,30 +2142,34 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         applyFireBodyBlastDamage(server, x, y, z, immune);
         applyFireBodyCrashSelfDamage(server);
 
-        carveFireBodyImprint(server, BlockPos.containing(x, y, z));
+        if (allowGriefing) {
+            carveFireBodyImprint(server, BlockPos.containing(x, y, z));
+        }
 
         server.sendParticles(ParticleTypes.FLAME, x, y + 0.8D, z, 150, 2.0D, 1.0D, 2.0D, 0.2D);
         server.sendParticles(ParticleTypes.SMALL_FLAME, x, y + 0.5D, z, 120, 1.8D, 0.8D, 1.8D, 0.15D);
         server.sendParticles(ParticleTypes.LAVA, x, y + 0.5D, z, 40, 1.3D, 0.6D, 1.3D, 0.12D);
         server.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 0.5D, z, 80, 2.2D, 0.7D, 2.2D, 0.05D);
 
-        BlockPos.MutableBlockPos flamePos = new BlockPos.MutableBlockPos();
-        int baseY = this.getBlockY();
-        for (int dx = -3; dx <= 3; dx++) {
-            for (int dz = -3; dz <= 3; dz++) {
-                if (this.getRandom().nextFloat() > 0.45F) {
-                    continue;
-                }
-                flamePos.set(x + dx, baseY, z + dz);
-                if (!server.isLoaded(flamePos)) {
-                    continue;
-                }
-                if (!server.getBlockState(flamePos).isAir()) {
-                    continue;
-                }
-                BlockState belowState = server.getBlockState(flamePos.below());
-                if (!belowState.isAir() && Blocks.FIRE.defaultBlockState().canSurvive(server, flamePos)) {
-                    server.setBlock(flamePos, Blocks.FIRE.defaultBlockState(), 11);
+        if (allowGriefing) {
+            BlockPos.MutableBlockPos flamePos = new BlockPos.MutableBlockPos();
+            int baseY = this.getBlockY();
+            for (int dx = -3; dx <= 3; dx++) {
+                for (int dz = -3; dz <= 3; dz++) {
+                    if (this.getRandom().nextFloat() > 0.45F) {
+                        continue;
+                    }
+                    flamePos.set(x + dx, baseY, z + dz);
+                    if (!server.isLoaded(flamePos)) {
+                        continue;
+                    }
+                    if (!server.getBlockState(flamePos).isAir()) {
+                        continue;
+                    }
+                    BlockState belowState = server.getBlockState(flamePos.below());
+                    if (!belowState.isAir() && Blocks.FIRE.defaultBlockState().canSurvive(server, flamePos)) {
+                        server.setBlock(flamePos, Blocks.FIRE.defaultBlockState(), 11);
+                    }
                 }
             }
         }
@@ -2723,6 +2730,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
      */
     private void breakBlocksDuringTakeoff() {
         if (level().isClientSide) return;
+        if (!level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) return;
+        if (!DragonGriefingRules.canCindervaneGriefing()) return;
 
         // Get bounding box
         var bb = this.getBoundingBox();

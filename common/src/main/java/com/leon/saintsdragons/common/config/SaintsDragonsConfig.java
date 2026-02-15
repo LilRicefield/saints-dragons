@@ -25,6 +25,7 @@ public final class SaintsDragonsConfig {
     public static final int IGNIVORUS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int IGNIVORUS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 2;
+    public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
     public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean NULLJAW_EGG_BLOCK_WORLDGEN_DEFAULT = true;
 
@@ -59,6 +60,7 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue IGNIVORUS_MAX_GROUP_SIZE;
     public static ConfigHelper.ListValue IGNIVORUS_ADDITIONAL_BIOMES;
     public static ConfigHelper.ListValue IGNIVORUS_EXCLUDED_BIOMES;
+    public static ConfigHelper.BooleanValue DRAGON_GRIEFING_ENABLED;
 
     private static volatile boolean initialized = false;
 
@@ -132,6 +134,11 @@ public final class SaintsDragonsConfig {
         builder.comment("Biome IDs or biome tags to exclude from default Ignivorus spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
         IGNIVORUS_EXCLUDED_BIOMES = builder.defineList("ignivorusExcludedBiomes", Collections.emptyList());
 
+        builder.pop();
+
+        builder.push("gameplay");
+        builder.comment("Master switch for all dragon-caused block destruction/terrain griefing.");
+        DRAGON_GRIEFING_ENABLED = builder.defineBoolean("dragonGriefingEnabled", DRAGON_GRIEFING_ENABLED_DEFAULT);
         builder.pop();
         builder.build();
     }

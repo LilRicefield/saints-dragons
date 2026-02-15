@@ -365,7 +365,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         double flameSpeed = 1.2;
         float flameScale = 2.0F;
         int flameLifetime = 30;
-        float flameDamage = 30.0F;
+        // Keep burst flames visual-only so ultimate damage is controlled by the configured ultimate value.
+        float flameDamage = 0.0F;
 
         var random = dragon.getRandom();
         Vec3 spawnPos = center.add(0, 4.0, 0);
