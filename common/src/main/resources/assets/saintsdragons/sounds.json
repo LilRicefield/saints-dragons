@@ -212,7 +212,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/cindervane/cindervane_flap",
-        "volume": 2.0,
+        "volume": 3.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
@@ -1130,7 +1130,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_flap",
-        "volume": 1.2,
+        "volume": 3.0,
         "pitch": 1.0
       }
     ]
