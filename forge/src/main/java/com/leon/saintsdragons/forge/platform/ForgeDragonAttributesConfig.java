@@ -18,6 +18,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_SLASH_GRAB_HIT1_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_SLASH_GRAB_HIT2_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_MAGMA_VOLLEY_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_CHICKEN;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_HEARTY;
@@ -26,6 +27,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH;
     public static ForgeConfigSpec.BooleanValue CINDERVANE_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue CINDERVANE_GRIEFING_ENABLED;
     public static ForgeConfigSpec.BooleanValue CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
     public static ForgeConfigSpec.BooleanValue CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
@@ -37,6 +39,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue RAEVYX_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_LIGHTNING_BEAM_DAMAGE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_HORN_GORE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue RAEVYX_DASH_DAMAGE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_BEAM_DRAIN_PER_TICK;
     public static ForgeConfigSpec.DoubleValue RAEVYX_BEAM_REGEN_PER_TICK;
     public static ForgeConfigSpec.DoubleValue RAEVYX_SUMMON_STORM_COOLDOWN_TICKS;
@@ -63,6 +66,9 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue NULLJAW_ARMOR;
     public static ForgeConfigSpec.DoubleValue NULLJAW_BITE_PHASE1_DAMAGE;
     public static ForgeConfigSpec.DoubleValue NULLJAW_BITE_PHASE2_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue NULLJAW_TAIL_ATTACK_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue NULLJAW_DASH_TAIL_SWIPE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue NULLJAW_DASH_CLAW_DAMAGE;
     public static ForgeConfigSpec.DoubleValue NULLJAW_HORN_GORE_PHASE1_DAMAGE;
     public static ForgeConfigSpec.DoubleValue NULLJAW_HORN_GORE_PHASE2_DAMAGE;
     public static ForgeConfigSpec.DoubleValue NULLJAW_SWIM_SPEED;
@@ -72,6 +78,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue NULLJAW_EGG_HATCH_CHANCE_NORMAL;
     public static ForgeConfigSpec.DoubleValue NULLJAW_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue NULLJAW_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue NULLJAW_GRIEFING_ENABLED;
     public static ForgeConfigSpec.BooleanValue NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
     public static ForgeConfigSpec.BooleanValue NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
@@ -82,10 +89,13 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_BODY_SLAM_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_LEAP_SLAM_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIREBALL_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_MAGMA_PILLAR_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_WING_SWIPE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_STOMP_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_BULLDOZE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_ULTIMATE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_ULTIMATE_PENALTY_HEALTH;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK;
@@ -109,6 +119,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_ANCIENT_CITY;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue IGNIVORUS_GRIEFING_ENABLED;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
@@ -122,6 +133,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_HATCH_CHANCE_NORMAL;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_DROP_CHANCE;
+    public static ForgeConfigSpec.BooleanValue STEGONAUT_AGGRESSIVE_WILD;
     public static ForgeConfigSpec.BooleanValue STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
     public static ForgeConfigSpec.BooleanValue STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
@@ -143,6 +155,7 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_SLASH_GRAB_HIT1_DAMAGE = builder.defineInRange("slash_grab_hit1_damage", 5.0, 0.0, 100.0);
         CINDERVANE_SLASH_GRAB_HIT2_DAMAGE = builder.defineInRange("slash_grab_hit2_damage", 7.0, 0.0, 100.0);
         CINDERVANE_MAGMA_VOLLEY_DAMAGE = builder.defineInRange("magma_volley_damage", 20.0, 0.0, 100.0);
+        CINDERVANE_FIRE_BODY_DAMAGE = builder.defineInRange("fire_body_damage", 3.0, 0.0, 100.0);
         builder.comment("Taming Chances (lower = easier)");
         CINDERVANE_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 4.0, 1.0, 20.0);
         CINDERVANE_TAMING_CHANCE_CHICKEN = builder.defineInRange("taming_chance_chicken", 3.0, 1.0, 20.0);
@@ -157,6 +170,8 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH = builder.defineInRange("fire_body_self_damage_on_crash", 40.0, 0.0, 1000.0);
         builder.comment("Aggressive wild behavior");
         CINDERVANE_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        builder.comment("Allow this dragon to damage/destroy blocks with abilities and movement");
+        CINDERVANE_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
         builder.comment("Reactive terrain clearing (requires mobGriefing)");
         CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
         CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
@@ -173,6 +188,7 @@ public final class ForgeDragonAttributesConfig {
         RAEVYX_BITE_DAMAGE = builder.defineInRange("bite_damage", 15.0, 0.0, 100.0);
         RAEVYX_LIGHTNING_BEAM_DAMAGE = builder.defineInRange("lightning_beam_damage", 35.0, 0.0, 100.0);
         RAEVYX_HORN_GORE_DAMAGE = builder.defineInRange("horn_gore_damage", 15.0, 0.0, 100.0);
+        RAEVYX_DASH_DAMAGE = builder.defineInRange("dash_damage", 10.0, 0.0, 200.0);
         builder.comment("Beam Energy Tuning");
         RAEVYX_BEAM_DRAIN_PER_TICK = builder.defineInRange("beam_drain_per_tick", 0.014, 0.0, 1.0);
         RAEVYX_BEAM_REGEN_PER_TICK = builder.defineInRange("beam_regen_per_tick", 0.0025, 0.0, 1.0);
@@ -215,6 +231,9 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Ability Damage");
         NULLJAW_BITE_PHASE1_DAMAGE = builder.defineInRange("bite_phase1_damage", 40.0, 0.0, 200.0);
         NULLJAW_BITE_PHASE2_DAMAGE = builder.defineInRange("bite_phase2_damage", 50.0, 0.0, 200.0);
+        NULLJAW_TAIL_ATTACK_DAMAGE = builder.defineInRange("tail_attack_damage", 8.0, 0.0, 200.0);
+        NULLJAW_DASH_TAIL_SWIPE_DAMAGE = builder.defineInRange("dash_tail_swipe_damage", 14.0, 0.0, 200.0);
+        NULLJAW_DASH_CLAW_DAMAGE = builder.defineInRange("dash_claw_damage", 16.0, 0.0, 200.0);
         NULLJAW_HORN_GORE_PHASE1_DAMAGE = builder.defineInRange("horn_gore_phase1_damage", 16.0, 0.0, 200.0);
         NULLJAW_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", 20.8, 0.0, 200.0);
         builder.comment("Taming Chance (lower = easier)");
@@ -228,6 +247,8 @@ public final class ForgeDragonAttributesConfig {
         NULLJAW_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         NULLJAW_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        builder.comment("Allow this dragon to damage/destroy blocks with abilities and movement");
+        NULLJAW_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
         builder.comment("Reactive terrain clearing (requires mobGriefing)");
         NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
         NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
@@ -243,10 +264,13 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Ability Damage");
         IGNIVORUS_BITE_DAMAGE = builder.defineInRange("bite_damage", 50.0, 0.0, 200.0);
         IGNIVORUS_BODY_SLAM_DAMAGE = builder.defineInRange("body_slam_damage", 40.0, 0.0, 200.0);
+        IGNIVORUS_LEAP_SLAM_DAMAGE = builder.defineInRange("leap_slam_damage", 50.0, 0.0, 200.0);
         IGNIVORUS_FIRE_BREATH_DAMAGE = builder.defineInRange("fire_breath_damage", 80.0, 0.0, 200.0);
         IGNIVORUS_FIREBALL_DAMAGE = builder.defineInRange("fireball_damage", 70.0, 0.0, 200.0);
+        IGNIVORUS_MAGMA_PILLAR_DAMAGE = builder.defineInRange("magma_pillar_damage", 18.0, 0.0, 200.0);
         IGNIVORUS_WING_SWIPE_DAMAGE = builder.defineInRange("wing_swipe_damage", 15.0, 0.0, 200.0);
         IGNIVORUS_STOMP_DAMAGE = builder.defineInRange("stomp_damage", 18.0, 0.0, 200.0);
+        IGNIVORUS_BULLDOZE_DAMAGE = builder.defineInRange("bulldoze_damage", 10.0, 0.0, 200.0);
         IGNIVORUS_ULTIMATE_DAMAGE = builder.defineInRange("ultimate_damage", 200.0, 0.0, 10000.0);
         builder.comment("Ultimate ability health penalty");
         IGNIVORUS_ULTIMATE_PENALTY_HEALTH = builder.defineInRange("ultimate_penalty_health", 50.0, 1.0, 10000.0);
@@ -280,6 +304,8 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         IGNIVORUS_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        builder.comment("Allow this dragon to damage/destroy blocks with abilities and movement");
+        IGNIVORUS_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
         builder.comment("Reactive terrain clearing (requires mobGriefing)");
         IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
         IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
@@ -301,6 +327,8 @@ public final class ForgeDragonAttributesConfig {
         STEGONAUT_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 2.0, 1.0, 200.0);
         builder.comment("Egg drop chance (0-1)");
         STEGONAUT_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
+        builder.comment("Aggressive wild behavior");
+        STEGONAUT_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
         builder.comment("Reactive terrain clearing (requires mobGriefing)");
         STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
         STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);

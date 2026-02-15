@@ -37,6 +37,10 @@ public final class DragonRecoveryComponent {
         if (!dragon.isAlive() || dragon.isRemoved() || dragon.isDying()) {
             return false;
         }
+        // Never regenerate while taking environmental fire damage.
+        if (dragon.isOnFire() || dragon.getRemainingFireTicks() > 0 || dragon.isInLava()) {
+            return false;
+        }
         if (dragon.isTame()) {
             return false;
         }

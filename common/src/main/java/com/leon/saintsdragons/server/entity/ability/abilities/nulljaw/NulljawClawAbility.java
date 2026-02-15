@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -137,6 +138,12 @@ public class NulljawClawAbility extends DragonAbility<Nulljaw> {
      */
     private void breakBlocksInPath(Nulljaw dragon) {
         if (!(dragon.level() instanceof ServerLevel server)) {
+            return;
+        }
+        if (!server.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
+            return;
+        }
+        if (!DragonGriefingRules.canNulljawGriefing()) {
             return;
         }
 

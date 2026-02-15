@@ -61,6 +61,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double slashGrabHit1Damage = 5.0D;
         double slashGrabHit2Damage = 7.0D;
         double magmaVolleyDamage = 20.0D;
+        double fireBodyDamage = 3.0D;
         double tamingChanceBase = 4.0D;
         double tamingChanceChicken = 3.0D;
         double tamingChanceHearty = 2.0D;
@@ -70,6 +71,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double fireBodySelfDamageOnCrash = 40.0D;
         double wildFlyingSpeedMultiplier = 1.0D;
         boolean aggressiveWild = false;
+        boolean griefingEnabled = true;
         boolean reactiveTerrainClearingOnDamage = true;
         boolean reactiveTerrainClearingOnDamageTamed = false;
 
@@ -83,6 +85,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 slashGrabHit1Damage = (double) configClass.getField("CINDERVANE_SLASH_GRAB_HIT1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_SLASH_GRAB_HIT1_DAMAGE").get(null));
                 slashGrabHit2Damage = (double) configClass.getField("CINDERVANE_SLASH_GRAB_HIT2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_SLASH_GRAB_HIT2_DAMAGE").get(null));
                 magmaVolleyDamage = (double) configClass.getField("CINDERVANE_MAGMA_VOLLEY_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_MAGMA_VOLLEY_DAMAGE").get(null));
+                fireBodyDamage = (double) configClass.getField("CINDERVANE_FIRE_BODY_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FIRE_BODY_DAMAGE").get(null));
                 tamingChanceBase = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_BASE").get(null));
                 tamingChanceChicken = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_CHICKEN").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_CHICKEN").get(null));
                 tamingChanceHearty = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_HEARTY").get(null));
@@ -92,6 +95,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 fireBodySelfDamageOnCrash = (double) configClass.getField("CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER").get(null));
                 aggressiveWild = (boolean) configClass.getField("CINDERVANE_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_AGGRESSIVE_WILD").get(null));
+                griefingEnabled = (boolean) configClass.getField("CINDERVANE_GRIEFING_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_GRIEFING_ENABLED").get(null));
                 reactiveTerrainClearingOnDamage = (boolean) configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
                 reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
@@ -106,7 +110,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "bite", DragonAbilityOverride.ofDamage(biteDamage),
                         "slash_grab_hit1", DragonAbilityOverride.ofDamage(slashGrabHit1Damage),
                         "slash_grab_hit2", DragonAbilityOverride.ofDamage(slashGrabHit2Damage),
-                        "magma_volley", DragonAbilityOverride.ofDamage(magmaVolleyDamage)
+                        "magma_volley", DragonAbilityOverride.ofDamage(magmaVolleyDamage),
+                        "fire_body", DragonAbilityOverride.ofDamage(fireBodyDamage)
                 ),
                 Map.of(
                         "taming_chance_base", tamingChanceBase,
@@ -120,6 +125,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ),
                 Map.of(
                         "aggressive_wild", aggressiveWild,
+                        "griefing_enabled", griefingEnabled,
                         "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
                         "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
                 )
@@ -133,6 +139,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double biteDamage = 15.0D;
         double lightningBeamDamage = 35.0D;
         double hornGoreDamage = 15.0D;
+        double dashDamage = 10.0D;
         double tamingChanceBase = 5.0D;
         double tamingChanceHearty = 3.0D;
         double beamDrainPerTick = 0.014D;
@@ -152,6 +159,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
         boolean aggressiveWild = false;
+        boolean griefingEnabled = true;
         boolean reactiveTerrainClearingOnDamage = true;
         boolean reactiveTerrainClearingOnDamageTamed = false;
 
@@ -164,6 +172,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 biteDamage = (double) configClass.getField("RAEVYX_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BITE_DAMAGE").get(null));
                 lightningBeamDamage = (double) configClass.getField("RAEVYX_LIGHTNING_BEAM_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_LIGHTNING_BEAM_DAMAGE").get(null));
                 hornGoreDamage = (double) configClass.getField("RAEVYX_HORN_GORE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_HORN_GORE_DAMAGE").get(null));
+                dashDamage = (double) configClass.getField("RAEVYX_DASH_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_DASH_DAMAGE").get(null));
                 tamingChanceBase = (double) configClass.getField("RAEVYX_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_BASE").get(null));
                 tamingChanceHearty = (double) configClass.getField("RAEVYX_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_HEARTY").get(null));
                 beamDrainPerTick = (double) configClass.getField("RAEVYX_BEAM_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BEAM_DRAIN_PER_TICK").get(null));
@@ -215,7 +224,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "bite", DragonAbilityOverride.ofDamage(biteDamage),
                         "lightning_beam", DragonAbilityOverride.ofDamage(lightningBeamDamage),
-                        "horn_gore", DragonAbilityOverride.ofDamage(hornGoreDamage)
+                        "horn_gore", DragonAbilityOverride.ofDamage(hornGoreDamage),
+                        "dash", DragonAbilityOverride.ofDamage(dashDamage)
                 ),
                 extras,
                 Map.of(
@@ -232,6 +242,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double armor = 8.0D;
         double bitePhase1Damage = 40.0D;
         double bitePhase2Damage = 50.0D;
+        double tailAttackDamage = 8.0D;
+        double dashTailSwipeDamage = 14.0D;
+        double dashClawDamage = 16.0D;
         double hornPhase1Damage = 16.0D;
         double hornPhase2Damage = 20.8D;
         double swimSpeed = 1.45D;
@@ -241,6 +254,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double eggHatchChanceNormal = 3.0D;
         double eggDropChance = 0.12D;
         boolean aggressiveWild = false;
+        boolean griefingEnabled = true;
         boolean reactiveTerrainClearingOnDamage = true;
         boolean reactiveTerrainClearingOnDamageTamed = false;
 
@@ -251,6 +265,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 armor = (double) configClass.getField("NULLJAW_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_ARMOR").get(null));
                 bitePhase1Damage = (double) configClass.getField("NULLJAW_BITE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_BITE_PHASE1_DAMAGE").get(null));
                 bitePhase2Damage = (double) configClass.getField("NULLJAW_BITE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_BITE_PHASE2_DAMAGE").get(null));
+                tailAttackDamage = (double) configClass.getField("NULLJAW_TAIL_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_TAIL_ATTACK_DAMAGE").get(null));
+                dashTailSwipeDamage = (double) configClass.getField("NULLJAW_DASH_TAIL_SWIPE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_DASH_TAIL_SWIPE_DAMAGE").get(null));
+                dashClawDamage = (double) configClass.getField("NULLJAW_DASH_CLAW_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_DASH_CLAW_DAMAGE").get(null));
                 hornPhase1Damage = (double) configClass.getField("NULLJAW_HORN_GORE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_HORN_GORE_PHASE1_DAMAGE").get(null));
                 hornPhase2Damage = (double) configClass.getField("NULLJAW_HORN_GORE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_HORN_GORE_PHASE2_DAMAGE").get(null));
                 swimSpeed = (double) configClass.getField("NULLJAW_SWIM_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_SWIM_SPEED").get(null));
@@ -260,6 +277,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 eggHatchChanceNormal = (double) configClass.getField("NULLJAW_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggDropChance = (double) configClass.getField("NULLJAW_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_EGG_DROP_CHANCE").get(null));
                 aggressiveWild = (boolean) configClass.getField("NULLJAW_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_AGGRESSIVE_WILD").get(null));
+                griefingEnabled = (boolean) configClass.getField("NULLJAW_GRIEFING_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_GRIEFING_ENABLED").get(null));
                 reactiveTerrainClearingOnDamage = (boolean) configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
                 reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
@@ -273,6 +291,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "bite_phase1", DragonAbilityOverride.ofDamage(bitePhase1Damage),
                         "bite_phase2", DragonAbilityOverride.ofDamage(bitePhase2Damage),
+                        "tail_attack", DragonAbilityOverride.ofDamage(tailAttackDamage),
+                        "dash_tail_swipe", DragonAbilityOverride.ofDamage(dashTailSwipeDamage),
+                        "dash_claw", DragonAbilityOverride.ofDamage(dashClawDamage),
                         "horn_gore_phase1", DragonAbilityOverride.ofDamage(hornPhase1Damage),
                         "horn_gore_phase2", DragonAbilityOverride.ofDamage(hornPhase2Damage)
                 ),
@@ -286,6 +307,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "legacy_taming", legacyTaming,
                         "aggressive_wild", aggressiveWild,
+                        "griefing_enabled", griefingEnabled,
                         "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
                         "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
                 )
@@ -298,10 +320,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double flyingSpeed = 0.40D;
         double biteDamage = 50.0D;
         double bodySlamDamage = 40.0D;
+        double leapSlamDamage = 50.0D;
         double fireBreathDamage = 80.0D;
         double fireballDamage = 70.0D;
+        double magmaPillarDamage = 18.0D;
         double wingSwipeDamage = 15.0D;
         double stompDamage = 18.0D;
+        double bulldozeDamage = 10.0D;
         double ultimateDamage = 200.0D;
         double ultimatePenaltyHealth = 50.0D;
         double tamingChanceBase = 7.0D;
@@ -326,6 +351,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
         boolean aggressiveWild = false;
+        boolean griefingEnabled = true;
         boolean reactiveTerrainClearingOnDamage = true;
         boolean reactiveTerrainClearingOnDamageTamed = false;
 
@@ -337,10 +363,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 flyingSpeed = (double) configClass.getField("IGNIVORUS_FLYING_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FLYING_SPEED").get(null));
                 biteDamage = (double) configClass.getField("IGNIVORUS_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_BITE_DAMAGE").get(null));
                 bodySlamDamage = (double) configClass.getField("IGNIVORUS_BODY_SLAM_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_BODY_SLAM_DAMAGE").get(null));
+                leapSlamDamage = (double) configClass.getField("IGNIVORUS_LEAP_SLAM_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_LEAP_SLAM_DAMAGE").get(null));
                 fireBreathDamage = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_DAMAGE").get(null));
                 fireballDamage = (double) configClass.getField("IGNIVORUS_FIREBALL_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIREBALL_DAMAGE").get(null));
+                magmaPillarDamage = (double) configClass.getField("IGNIVORUS_MAGMA_PILLAR_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_MAGMA_PILLAR_DAMAGE").get(null));
                 wingSwipeDamage = (double) configClass.getField("IGNIVORUS_WING_SWIPE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_WING_SWIPE_DAMAGE").get(null));
                 stompDamage = (double) configClass.getField("IGNIVORUS_STOMP_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_STOMP_DAMAGE").get(null));
+                bulldozeDamage = (double) configClass.getField("IGNIVORUS_BULLDOZE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_BULLDOZE_DAMAGE").get(null));
                 ultimateDamage = (double) configClass.getField("IGNIVORUS_ULTIMATE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ULTIMATE_DAMAGE").get(null));
                 ultimatePenaltyHealth = (double) configClass.getField("IGNIVORUS_ULTIMATE_PENALTY_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ULTIMATE_PENALTY_HEALTH").get(null));
                 tamingChanceBase = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_BASE").get(null));
@@ -365,6 +394,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingStunHealth = (double) configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null));
                 aggressiveWild = (boolean) configClass.getField("IGNIVORUS_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_AGGRESSIVE_WILD").get(null));
+                griefingEnabled = (boolean) configClass.getField("IGNIVORUS_GRIEFING_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_GRIEFING_ENABLED").get(null));
                 reactiveTerrainClearingOnDamage = (boolean) configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
                 reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
@@ -401,16 +431,20 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "bite", DragonAbilityOverride.ofDamage(biteDamage),
                         "body_slam", DragonAbilityOverride.ofDamage(bodySlamDamage),
+                        "leap_slam", DragonAbilityOverride.ofDamage(leapSlamDamage),
                         "fire_breath", DragonAbilityOverride.ofDamage(fireBreathDamage),
                         "fireball", DragonAbilityOverride.ofDamage(fireballDamage),
+                        "magma_pillar", DragonAbilityOverride.ofDamage(magmaPillarDamage),
                         "wing_swipe", DragonAbilityOverride.ofDamage(wingSwipeDamage),
                         "stomp", DragonAbilityOverride.ofDamage(stompDamage),
+                        "bulldoze", DragonAbilityOverride.ofDamage(bulldozeDamage),
                         "ultimate", DragonAbilityOverride.ofDamage(ultimateDamage)
                 ),
                 extras,
                 Map.of(
                         "legacy_taming", legacyTaming,
                         "aggressive_wild", aggressiveWild,
+                        "griefing_enabled", griefingEnabled,
                         "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
                         "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
                 )
@@ -427,6 +461,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingChanceHearty = 1.0D;
         double eggHatchChanceNormal = 2.0D;
         double eggDropChance = 0.12D;
+        boolean aggressiveWild = false;
         boolean reactiveTerrainClearingOnDamage = true;
         boolean reactiveTerrainClearingOnDamageTamed = false;
 
@@ -451,6 +486,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         .invoke(configClass.getField("STEGONAUT_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggDropChance = (double) configClass.getField("STEGONAUT_EGG_DROP_CHANCE").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_EGG_DROP_CHANCE").get(null));
+                aggressiveWild = (boolean) configClass.getField("STEGONAUT_AGGRESSIVE_WILD").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_AGGRESSIVE_WILD").get(null));
                 reactiveTerrainClearingOnDamage = (boolean) configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
                 reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get")
@@ -475,6 +512,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "egg_drop_chance", eggDropChance
                 ),
                 Map.of(
+                        "aggressive_wild", aggressiveWild,
                         "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
                         "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
                 )
@@ -999,6 +1037,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         hints.addProperty("egg_loot_bastion_treasure", "Chance (0-1) for egg in bastion treasure chests");
         hints.addProperty("egg_loot_nether_bridge", "Chance (0-1) for egg in nether fortress chests");
         hints.addProperty("aggressive_wild", "true = wild dragons aggro on sight, false = only retaliate");
+        hints.addProperty("griefing_enabled", "true = this dragon can break/destroy blocks (global dragonGriefingEnabled must also be true)");
         hints.addProperty("reactive_terrain_clearing_on_damage", "true = clear soft obstructing blocks when hurt (requires mobGriefing)");
         hints.addProperty("reactive_terrain_clearing_on_damage_tamed", "true = tamed dragons can also clear on hurt (off = safer bases)");
         hints.addProperty("taming_stun_health", "Health threshold for taming stun (0 = disable stun)");

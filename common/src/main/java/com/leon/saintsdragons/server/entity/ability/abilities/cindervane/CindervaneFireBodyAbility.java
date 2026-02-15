@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -124,7 +125,9 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
             if (!hitThisTick.add(target)) {
                 continue;
             }
-            float damage = BASE_DAMAGE;
+            float damage = (float) DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID)
+                    .abilityDamage("fire_body", BASE_DAMAGE);
             target.hurt(level.damageSources().dragonBreath(), damage);
             target.setSecondsOnFire(FIRE_SECONDS);
 

@@ -15,7 +15,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -118,7 +117,7 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
             return;
         }
 
-        float damage = computeDamage(dragon) * dragon.getHungerMeleeDamageMultiplier();
+        float damage = computeDamage() * dragon.getHungerMeleeDamageMultiplier();
         DamageSource source = server.damageSources().mobAttack(dragon);
 
         for (LivingEntity target : targets) {
@@ -135,9 +134,8 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
         }
     }
 
-    private static float computeDamage(Ignivorus dragon) {
-        double attack = dragon.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        return resolveBaseDamage() + (float) (attack * 0.75D);
+    private static float computeDamage() {
+        return resolveBaseDamage();
     }
 
     private static float resolveBaseDamage() {

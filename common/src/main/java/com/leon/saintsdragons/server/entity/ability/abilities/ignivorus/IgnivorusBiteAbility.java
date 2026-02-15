@@ -8,16 +8,11 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.util.Mth;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
@@ -103,17 +98,9 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
     }
 
     private void applyHit(Ignivorus dragon, LivingEntity target) {
-        // Calculate base damage from attack attribute
+        // Use configured bite damage directly so low config values are respected.
         float damage = resolveBiteDamage();
         float hungerMult = dragon.getHungerMeleeDamageMultiplier();
-        AttributeInstance attackAttr = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (attackAttr != null) {
-            double value = attackAttr.getValue();
-            if (value > 0) {
-                // Use attribute value if it's higher than base
-                damage = Math.max(BASE_DAMAGE, (float) value);
-            }
-        }
 
         // Apply damage as a direct melee hit so even fire-immune bosses (e.g. Wardens) take it,
         // then layer the burning effect separately.

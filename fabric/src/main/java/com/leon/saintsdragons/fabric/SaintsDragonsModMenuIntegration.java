@@ -61,6 +61,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 cindervaneDefaults.abilityDamage("slash_grab_hit2", 7.0D));
         cindervaneBuffer.volleyDamage = cindervaneCurrent.abilityDamage("magma_volley",
                 cindervaneDefaults.abilityDamage("magma_volley", 20.0D));
+        cindervaneBuffer.fireBodyDamage = cindervaneCurrent.abilityDamage("fire_body",
+                cindervaneDefaults.abilityDamage("fire_body", 3.0D));
         cindervaneBuffer.tamingChanceBase = cindervaneCurrent.extraDouble("taming_chance_base", 4.0);
         cindervaneBuffer.tamingChanceHearty = cindervaneCurrent.extraDouble("taming_chance_hearty", 2.0);
         cindervaneBuffer.eggHatchChanceNormal = cindervaneCurrent.extraDouble("egg_hatch_chance_normal", 2.0);
@@ -85,6 +87,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxDefaults.abilityDamage("lightning_beam", 35.0D));
         raevyxBuffer.hornDamage = raevyxCurrent.abilityDamage("horn_gore",
                 raevyxDefaults.abilityDamage("horn_gore", 15.0D));
+        raevyxBuffer.dashDamage = raevyxCurrent.abilityDamage("dash",
+                raevyxDefaults.abilityDamage("dash", 10.0D));
         raevyxBuffer.tamingChanceBase = raevyxCurrent.extraDouble("taming_chance_base", 5.0);
         raevyxBuffer.tamingChanceHearty = raevyxCurrent.extraDouble("taming_chance_hearty", 3.0);
         raevyxBuffer.tamingStunHealth = raevyxCurrent.extraDouble("taming_stun_health",
@@ -123,6 +127,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         nulljawBuffer.swimSpeed = nulljawCurrent.extraDouble("swim_speed", 1.45D);
         nulljawBuffer.bitePhase1 = nulljawCurrent.abilityDamage("bite_phase1", 40.0D);
         nulljawBuffer.bitePhase2 = nulljawCurrent.abilityDamage("bite_phase2", 50.0D);
+        nulljawBuffer.tailAttack = nulljawCurrent.abilityDamage("tail_attack", 8.0D);
+        nulljawBuffer.dashTailSwipe = nulljawCurrent.abilityDamage("dash_tail_swipe", 14.0D);
+        nulljawBuffer.dashClaw = nulljawCurrent.abilityDamage("dash_claw", 16.0D);
         nulljawBuffer.hornPhase1 = nulljawCurrent.abilityDamage("horn_gore_phase1", 16.0D);
         nulljawBuffer.hornPhase2 = nulljawCurrent.abilityDamage("horn_gore_phase2", 20.8D);
         nulljawBuffer.tamingChance = nulljawCurrent.extraDouble("taming_chance", 6.0);
@@ -148,6 +155,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         stegonautBuffer.tamingChanceHearty = stegonautCurrent.extraDouble("taming_chance_hearty", 1.0);
         stegonautBuffer.eggHatchChanceNormal = stegonautCurrent.extraDouble("egg_hatch_chance_normal", 2.0D);
         stegonautBuffer.eggDropChance = stegonautCurrent.extraDouble("egg_drop_chance", 0.12D);
+        stegonautBuffer.aggressiveWild = stegonautCurrent.extraBoolean("aggressive_wild", false);
         stegonautBuffer.reactiveTerrainClearingOnDamage = stegonautCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
         stegonautBuffer.reactiveTerrainClearingOnDamageTamed = stegonautCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
@@ -161,14 +169,20 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.abilityDamage("bite", 50.0D));
         ignivorusBuffer.bodySlamDamage = ignivorusCurrent.abilityDamage("body_slam",
                 ignivorusDefaults.abilityDamage("body_slam", 40.0D));
+        ignivorusBuffer.leapSlamDamage = ignivorusCurrent.abilityDamage("leap_slam",
+                ignivorusDefaults.abilityDamage("leap_slam", 50.0D));
         ignivorusBuffer.fireBreathDamage = ignivorusCurrent.abilityDamage("fire_breath",
                 ignivorusDefaults.abilityDamage("fire_breath", 80.0D));
         ignivorusBuffer.fireballDamage = ignivorusCurrent.abilityDamage("fireball",
                 ignivorusDefaults.abilityDamage("fireball", 70.0D));
+        ignivorusBuffer.magmaPillarDamage = ignivorusCurrent.abilityDamage("magma_pillar",
+                ignivorusDefaults.abilityDamage("magma_pillar", 18.0D));
         ignivorusBuffer.wingSwipeDamage = ignivorusCurrent.abilityDamage("wing_swipe",
                 ignivorusDefaults.abilityDamage("wing_swipe", 15.0D));
         ignivorusBuffer.stompDamage = ignivorusCurrent.abilityDamage("stomp",
                 ignivorusDefaults.abilityDamage("stomp", 18.0D));
+        ignivorusBuffer.bulldozeDamage = ignivorusCurrent.abilityDamage("bulldoze",
+                ignivorusDefaults.abilityDamage("bulldoze", 10.0D));
         ignivorusBuffer.ultimateDamage = ignivorusCurrent.abilityDamage("ultimate",
                 ignivorusDefaults.abilityDamage("ultimate", 200.0D));
         ignivorusBuffer.ultimatePenalty = ignivorusCurrent.extraDouble("ultimate_penalty_health",
@@ -431,6 +445,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.volleyDamage = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_damage"), buffer.fireBodyDamage)
+                .setDefaultValue(defaults.abilityDamage("fire_body", 3.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.fireBodyDamage = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.taming_base"), buffer.tamingChanceBase)
                 .setDefaultValue(defaults.extraDouble("taming_chance_base", 4.0))
                 .setMin(1.0D)
@@ -546,6 +566,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.eggDropChance = value)
                 .build());
+        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"), buffer.aggressiveWild)
+                .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
+                .setSaveConsumer(value -> buffer.aggressiveWild = value)
+                .build());
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"), buffer.reactiveTerrainClearingOnDamage)
                 .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage", true))
                 .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamage = value)
@@ -608,6 +632,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.hornDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.dash_damage"), buffer.dashDamage)
+                .setDefaultValue(defaults.abilityDamage("dash", 10.0D))
+                .setMin(0.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.dashDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_base"), buffer.tamingChanceBase)
                 .setDefaultValue(defaults.extraDouble("taming_chance_base", 5.0))
@@ -764,6 +794,24 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.bitePhase2 = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.tail_attack"), buffer.tailAttack)
+                .setDefaultValue(defaults.abilityDamage("tail_attack", 8.0D))
+                .setMin(0.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.tailAttack = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.dash_tail_swipe"), buffer.dashTailSwipe)
+                .setDefaultValue(defaults.abilityDamage("dash_tail_swipe", 14.0D))
+                .setMin(0.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.dashTailSwipe = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.dash_claw"), buffer.dashClaw)
+                .setDefaultValue(defaults.abilityDamage("dash_claw", 16.0D))
+                .setMin(0.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.dashClaw = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase1"), buffer.hornPhase1)
                 .setDefaultValue(defaults.abilityDamage("horn_gore_phase1", 16.0D))
                 .setMin(0.0D)
@@ -860,6 +908,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.bodySlamDamage = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.leap_slam_damage"), buffer.leapSlamDamage)
+                .setDefaultValue(defaults.abilityDamage("leap_slam", 50.0D))
+                .setMin(0.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.leapSlamDamage = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_damage"), buffer.fireBreathDamage)
                 .setDefaultValue(defaults.abilityDamage("fire_breath", 80.0D))
                 .setMin(0.0D)
@@ -872,6 +926,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.fireballDamage = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.magma_pillar_damage"), buffer.magmaPillarDamage)
+                .setDefaultValue(defaults.abilityDamage("magma_pillar", 18.0D))
+                .setMin(0.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.magmaPillarDamage = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.wing_swipe_damage"), buffer.wingSwipeDamage)
                 .setDefaultValue(defaults.abilityDamage("wing_swipe", 15.0D))
                 .setMin(0.0D)
@@ -883,6 +943,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.stompDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.bulldoze_damage"), buffer.bulldozeDamage)
+                .setDefaultValue(defaults.abilityDamage("bulldoze", 10.0D))
+                .setMin(0.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.bulldozeDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_damage"), buffer.ultimateDamage)
                 .setDefaultValue(defaults.abilityDamage("ultimate", 200.0D))
@@ -1040,6 +1106,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         abilities.put("slash_grab_hit1", DragonAbilityOverride.ofDamage(cindervaneBuffer.slashGrabHit1Damage));
         abilities.put("slash_grab_hit2", DragonAbilityOverride.ofDamage(cindervaneBuffer.slashGrabHit2Damage));
         abilities.put("magma_volley", DragonAbilityOverride.ofDamage(cindervaneBuffer.volleyDamage));
+        abilities.put("fire_body", DragonAbilityOverride.ofDamage(cindervaneBuffer.fireBodyDamage));
         DragonAttributeConfig updated = new DragonAttributeConfig(
                 cindervaneBuffer.maxHealth,
                 cindervaneBuffer.armor,
@@ -1079,6 +1146,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         "egg_drop_chance", stegonautBuffer.eggDropChance
                 ),
                 Map.of(
+                        "aggressive_wild", stegonautBuffer.aggressiveWild,
                         "reactive_terrain_clearing_on_damage", stegonautBuffer.reactiveTerrainClearingOnDamage,
                         "reactive_terrain_clearing_on_damage_tamed", stegonautBuffer.reactiveTerrainClearingOnDamageTamed
                 )
@@ -1090,6 +1158,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxAbilities.put("bite", DragonAbilityOverride.ofDamage(raevyxBuffer.biteDamage));
         raevyxAbilities.put("lightning_beam", DragonAbilityOverride.ofDamage(raevyxBuffer.beamDamage));
         raevyxAbilities.put("horn_gore", DragonAbilityOverride.ofDamage(raevyxBuffer.hornDamage));
+        raevyxAbilities.put("dash", DragonAbilityOverride.ofDamage(raevyxBuffer.dashDamage));
         DragonAttributeConfig updatedRaevyx = new DragonAttributeConfig(
                 raevyxBuffer.maxHealth,
                 raevyxBuffer.armor,
@@ -1108,6 +1177,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         Map<String, DragonAbilityOverride> nulljawAbilities = new HashMap<>();
         nulljawAbilities.put("bite_phase1", DragonAbilityOverride.ofDamage(nulljawBuffer.bitePhase1));
         nulljawAbilities.put("bite_phase2", DragonAbilityOverride.ofDamage(nulljawBuffer.bitePhase2));
+        nulljawAbilities.put("tail_attack", DragonAbilityOverride.ofDamage(nulljawBuffer.tailAttack));
+        nulljawAbilities.put("dash_tail_swipe", DragonAbilityOverride.ofDamage(nulljawBuffer.dashTailSwipe));
+        nulljawAbilities.put("dash_claw", DragonAbilityOverride.ofDamage(nulljawBuffer.dashClaw));
         nulljawAbilities.put("horn_gore_phase1", DragonAbilityOverride.ofDamage(nulljawBuffer.hornPhase1));
         nulljawAbilities.put("horn_gore_phase2", DragonAbilityOverride.ofDamage(nulljawBuffer.hornPhase2));
         DragonAttributeConfig updatedNulljaw = new DragonAttributeConfig(
@@ -1134,10 +1206,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         Map<String, DragonAbilityOverride> ignivorusAbilities = new HashMap<>(ignivorusCurrent.abilities());
         ignivorusAbilities.put("bite", DragonAbilityOverride.ofDamage(ignivorusBuffer.biteDamage));
         ignivorusAbilities.put("body_slam", DragonAbilityOverride.ofDamage(ignivorusBuffer.bodySlamDamage));
+        ignivorusAbilities.put("leap_slam", DragonAbilityOverride.ofDamage(ignivorusBuffer.leapSlamDamage));
         ignivorusAbilities.put("fire_breath", DragonAbilityOverride.ofDamage(ignivorusBuffer.fireBreathDamage));
         ignivorusAbilities.put("fireball", DragonAbilityOverride.ofDamage(ignivorusBuffer.fireballDamage));
+        ignivorusAbilities.put("magma_pillar", DragonAbilityOverride.ofDamage(ignivorusBuffer.magmaPillarDamage));
         ignivorusAbilities.put("wing_swipe", DragonAbilityOverride.ofDamage(ignivorusBuffer.wingSwipeDamage));
         ignivorusAbilities.put("stomp", DragonAbilityOverride.ofDamage(ignivorusBuffer.stompDamage));
+        ignivorusAbilities.put("bulldoze", DragonAbilityOverride.ofDamage(ignivorusBuffer.bulldozeDamage));
         ignivorusAbilities.put("ultimate", DragonAbilityOverride.ofDamage(ignivorusBuffer.ultimateDamage));
         DragonAttributeConfig updatedIgnivorus = new DragonAttributeConfig(
                 ignivorusBuffer.maxHealth,
@@ -1163,6 +1238,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double slashGrabHit1Damage;
         double slashGrabHit2Damage;
         double volleyDamage;
+        double fireBodyDamage;
         double tamingChanceBase;
         double tamingChanceHearty;
         double eggHatchChanceNormal;
@@ -1185,6 +1261,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double tamingChanceHearty;
         double eggHatchChanceNormal;
         double eggDropChance;
+        boolean aggressiveWild;
         boolean reactiveTerrainClearingOnDamage;
         boolean reactiveTerrainClearingOnDamageTamed;
     }
@@ -1196,6 +1273,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double biteDamage;
         double beamDamage;
         double hornDamage;
+        double dashDamage;
         double tamingChanceBase;
         double tamingChanceHearty;
         double tamingStunHealth;
@@ -1225,6 +1303,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double swimSpeed;
         double bitePhase1;
         double bitePhase2;
+        double tailAttack;
+        double dashTailSwipe;
+        double dashClaw;
         double hornPhase1;
         double hornPhase2;
         double tamingChance;
@@ -1242,10 +1323,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double flyingSpeed;
         double biteDamage;
         double bodySlamDamage;
+        double leapSlamDamage;
         double fireBreathDamage;
         double fireballDamage;
+        double magmaPillarDamage;
         double wingSwipeDamage;
         double stompDamage;
+        double bulldozeDamage;
         double ultimateDamage;
         double ultimatePenalty;
         double tamingChanceBase;

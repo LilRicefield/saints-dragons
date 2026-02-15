@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -144,7 +145,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
 
             IgnivorusMagmaPillarEntity pillar = new IgnivorusMagmaPillarEntity(
                     server, spawnPos, dragon, waveIndex, pillarYaw,
-                    BASE_DAMAGE + waveIndex * DAMAGE_PER_WAVE,
+                    resolveMagmaPillarDamage() + waveIndex * DAMAGE_PER_WAVE,
                     BASE_KNOCKBACK + waveIndex * KNOCKBACK_PER_WAVE,
                     PILLAR_WARMUP_TICKS,
                     PILLAR_LIFETIME_TICKS);
@@ -176,5 +177,11 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
             cosmeticMode = false;
         }
         return success;
+    }
+
+    private float resolveMagmaPillarDamage() {
+        return (float) DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .abilityDamage("magma_pillar", BASE_DAMAGE);
     }
 }

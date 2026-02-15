@@ -9,17 +9,26 @@
     "body_slam": {
       "damage": 40.0
     },
+    "leap_slam": {
+      "damage": 50.0
+    },
     "fire_breath": {
       "damage": 80.0
     },
     "fireball": {
       "damage": 70.0
     },
+    "magma_pillar": {
+      "damage": 18.0
+    },
     "wing_swipe": {
       "damage": 15.0
     },
     "stomp": {
       "damage": 18.0
+    },
+    "bulldoze": {
+      "damage": 10.0
     },
     "ultimate": {
       "damage": 200.0
@@ -46,6 +55,7 @@
     "egg_loot_ancient_city": 0.1,
     "egg_drop_chance": 0.12,
     "taming_stun_health": 100.0,
+    "griefing_enabled": true,
     "aggressive_wild": false
   }
 }

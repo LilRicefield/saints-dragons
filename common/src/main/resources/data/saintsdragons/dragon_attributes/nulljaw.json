@@ -9,6 +9,15 @@
     "bite_phase2": {
       "damage": 50.0
     },
+    "tail_attack": {
+      "damage": 8.0
+    },
+    "dash_tail_swipe": {
+      "damage": 14.0
+    },
+    "dash_claw": {
+      "damage": 16.0
+    },
     "horn_gore_phase1": {
       "damage": 16.0
     },
@@ -22,6 +31,7 @@
     "taming_chance_tropical": 4.0,
     "egg_hatch_chance_normal": 3.0,
     "egg_drop_chance": 0.12,
+    "griefing_enabled": true,
     "aggressive_wild": false
   }
 }
