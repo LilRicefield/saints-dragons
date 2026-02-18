@@ -107,6 +107,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final float DEFAULT_DASH_DAMAGE = 10.0F;
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_NIGHT_GOLD = 1;
+    private static final float NIGHT_GOLD_VARIANT_CHANCE = 0.15F;
 
     // ===== CONSTANTS =====
 
@@ -453,7 +454,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                                             @Nullable SpawnGroupData spawnData,
                                             @Nullable CompoundTag spawnTag) {
         // Night Gold is rare: 15% chance, default is 85%.
-        return this.getRandom().nextFloat() < 0.15F ? VARIANT_NIGHT_GOLD : VARIANT_DEFAULT;
+        return rollAdultVariant();
     }
 
     @Override
@@ -4506,9 +4507,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     public void ageBoundaryReached() {
         super.ageBoundaryReached();
+        // Babies use shared baby textures; when reaching adulthood, roll adult skin variant.
+        // Keep an explicitly-set non-default variant (e.g., command/admin override).
+        if (this.getTextureVariant() == VARIANT_DEFAULT) {
+            this.setTextureVariant(rollAdultVariant());
+        }
         // Refresh hitbox dimensions when baby grows into adult
         applyConfiguredAttributes();
         this.refreshDimensions();
+    }
+
+    private int rollAdultVariant() {
+        return this.getRandom().nextFloat() < NIGHT_GOLD_VARIANT_CHANCE ? VARIANT_NIGHT_GOLD : VARIANT_DEFAULT;
     }
     @Override
     public boolean canMate(@Nonnull Animal otherAnimal) {
