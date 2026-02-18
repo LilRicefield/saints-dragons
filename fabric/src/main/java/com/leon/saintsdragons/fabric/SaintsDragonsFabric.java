@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonBrewingRecipes;
 import com.leon.saintsdragons.common.init.CommonModEvents;
+import com.leon.saintsdragons.common.registry.ModPotions;
 import com.leon.saintsdragons.fabric.entity.part.FabricPartEntities;
 import com.leon.saintsdragons.fabric.loot.FabricLootTableModifier;
 import com.leon.saintsdragons.fabric.mixin.RangedAttributeAccessor;
@@ -23,6 +24,10 @@ import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class SaintsDragonsFabric implements ModInitializer {
@@ -46,6 +51,12 @@ public final class SaintsDragonsFabric implements ModInitializer {
         CommonModEvents.registerCreativeTabEntries((tab, itemSupplier) ->
                 ItemGroupEvents.modifyEntriesEvent(tab)
                         .register(entries -> entries.accept(itemSupplier.get())));
+
+        // Hide vanilla bottle variants for custom potions from vanilla tabs/search.
+        ItemGroupEvents.modifyEntriesEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES)
+                .register(entries -> entries.getDisplayStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant));
+        ItemGroupEvents.modifyEntriesEvent(net.minecraft.world.item.CreativeModeTabs.SEARCH)
+                .register(entries -> entries.getSearchTabStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant));
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 CommonModEvents.registerCommands(dispatcher));
@@ -76,5 +87,18 @@ public final class SaintsDragonsFabric implements ModInitializer {
     ) {
         // Avoid IDE contract false-positives on wildcard capture in inline lambdas.
         FabricDefaultAttributeRegistry.register(type, builder.build());
+    }
+
+    private static boolean isHiddenVanillaPotionVariant(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+
+        if (!stack.is(Items.POTION) && !stack.is(Items.SPLASH_POTION) && !stack.is(Items.LINGERING_POTION)) {
+            return false;
+        }
+
+        Potion potion = PotionUtils.getPotion(stack);
+        return potion == ModPotions.NULLJAW_TIDEGUARD.get() || potion == ModPotions.SEARING.get();
     }
 }

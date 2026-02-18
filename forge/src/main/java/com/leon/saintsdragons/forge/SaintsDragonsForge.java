@@ -3,6 +3,7 @@ package com.leon.saintsdragons.forge;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
+import com.leon.saintsdragons.common.registry.ModPotions;
 import com.leon.saintsdragons.forge.init.ForgeBrewingRecipes;
 import com.leon.saintsdragons.forge.loot.ModLootModifiers;
 import com.leon.saintsdragons.forge.mixin.RangedAttributeAccessor;
@@ -15,6 +16,10 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
@@ -37,6 +42,10 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.server.ServerLifecycleHooks;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Forge entry point that bridges common setup into the mod lifecycle.
@@ -103,6 +112,29 @@ public final class SaintsDragonsForge {
                 event.accept(itemSupplier::get);
             }
         });
+
+        List<ItemStack> toRemove = new ArrayList<>();
+        for (Map.Entry<ItemStack, ?> entry : event.getEntries()) {
+            if (isHiddenVanillaPotionVariant(entry.getKey())) {
+                toRemove.add(entry.getKey());
+            }
+        }
+        for (ItemStack stack : toRemove) {
+            event.getEntries().remove(stack);
+        }
+    }
+
+    private static boolean isHiddenVanillaPotionVariant(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+
+        if (!stack.is(Items.POTION) && !stack.is(Items.SPLASH_POTION) && !stack.is(Items.LINGERING_POTION)) {
+            return false;
+        }
+
+        Potion potion = PotionUtils.getPotion(stack);
+        return potion == ModPotions.NULLJAW_TIDEGUARD.get() || potion == ModPotions.SEARING.get();
     }
 
     private void onRegisterSpawnPlacements(SpawnPlacementRegisterEvent event) {

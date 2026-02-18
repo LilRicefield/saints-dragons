@@ -50,6 +50,12 @@ public class CindervaneFlightGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        // In Follow command, owner-follow goal should own movement entirely.
+        // Otherwise this autonomous flight goal can take off and drift away from the owner.
+        if (isInOwnerFollowMode()) {
+            return false;
+        }
+
         // Babies cannot fly
         if (amphithere.isBaby()) {
             return false;
@@ -168,6 +174,11 @@ public class CindervaneFlightGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        // Stop autonomous flight immediately when follow mode is active.
+        if (isInOwnerFollowMode()) {
+            return false;
+        }
+
         // If we end up in fluid, stop autonomous flight behavior immediately.
         if (amphithere.isInWater() || amphithere.isInWaterOrBubble() || amphithere.isInLava()) {
             if (amphithere.isFlying()) {
@@ -512,6 +523,15 @@ public class CindervaneFlightGoal extends Goal {
 
     private boolean isTamedWander() {
         return amphithere.isTame() && amphithere.getCommand() == 2 && amphithere.getOwner() != null;
+    }
+
+    private boolean isInOwnerFollowMode() {
+        LivingEntity owner = amphithere.getOwner();
+        return amphithere.isTame()
+                && amphithere.getCommand() == 0
+                && owner != null
+                && owner.isAlive()
+                && owner.level() == amphithere.level();
     }
 
     private boolean isValidFlightTarget(Vec3 target) {

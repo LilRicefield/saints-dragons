@@ -17,7 +17,7 @@ public class CindervaneCombatGoal extends Goal {
     private final Cindervane amphithere;
     private final double attackRange = 4.5; // Amphithere has longer neck, slightly more range
     private final double fireBodyActivationRange = 8.0; // Activate FireBody when enemy is within this range
-    private final double chaseSpeed = 1.2D;
+    private final double chaseSpeed = 0.85D;
     private int attackCooldown = 0;
     private int fireBodyCheckCooldown = 0;
     private int pathRecalcCooldown = 0;
