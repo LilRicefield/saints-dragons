@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.item;
 
+import com.leon.saintsdragons.common.item.util.BinderComponentUtil;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.nbt.CompoundTag;
@@ -8,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -322,5 +324,11 @@ public class StegonautBinderItem extends Item {
     public boolean isFoil(@NotNull ItemStack stack) {
         // Make bound binders have enchantment glint
         return isBound(stack);
+    }
+
+    @Override
+    public void onDestroyed(@NotNull ItemEntity itemEntity) {
+        BinderComponentUtil.handleDestroyedBoundBinder(itemEntity);
+        super.onDestroyed(itemEntity);
     }
 }
