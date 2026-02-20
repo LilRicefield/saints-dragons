@@ -354,7 +354,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startIntField(Component.translatable("config.saintsdragons.spawn.weight"), weightGetter.getAsInt())
                 .setDefaultValue(defaultWeight)
                 .setMin(0)
-                .setMax(100)
+                .setMax(5000)
                 .setSaveConsumer(weightSetter::accept)
                 .build());
         entries.add(entryBuilder.startIntField(Component.translatable("config.saintsdragons.spawn.min_group"), minGetter.getAsInt())
