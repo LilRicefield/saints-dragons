@@ -11,7 +11,7 @@ import java.util.List;
 public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int raevyxSpawnWeight = 1;
 
     @ConfigEntry.Category("spawning")
@@ -33,7 +33,7 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int stegonautSpawnWeight = 5;
 
     @ConfigEntry.Category("spawning")
@@ -55,7 +55,7 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int cindervaneSpawnWeight = 3;
 
     @ConfigEntry.Category("spawning")
@@ -81,7 +81,7 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int nulljawSpawnWeight = 2;
 
     @ConfigEntry.Category("spawning")
@@ -107,7 +107,7 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 0, max = 100)
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int ignivorusSpawnWeight = 1;
 
     @ConfigEntry.Category("spawning")
