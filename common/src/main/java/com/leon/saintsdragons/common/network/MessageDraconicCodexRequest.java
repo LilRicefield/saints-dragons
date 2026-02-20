@@ -44,20 +44,18 @@ public class MessageDraconicCodexRequest {
         DragonCodexSavedData data = DragonCodexSavedData.get(serverLevel);
         List<DragonCodexSavedData.DragonCodexEntry> entries = data.getEntriesFor(player);
 
-        if (entries.isEmpty()) {
-            List<DragonEntity> dragons = serverLevel.getEntitiesOfClass(
-                    DragonEntity.class,
-                    player.getBoundingBox().inflate(256.0),
-                    dragon -> dragon.isTame() && dragon.isOwnedBy(player)
-            );
-            for (DragonEntity dragon : dragons) {
-                data.addDragon(player, dragon);
-            }
-            entries = data.getEntriesFor(player);
+        List<DragonEntity> dragons = serverLevel.getEntitiesOfClass(
+                DragonEntity.class,
+                player.getBoundingBox().inflate(256.0),
+                dragon -> dragon.isTame() && dragon.isOwnedBy(player)
+        );
+        for (DragonEntity dragon : dragons) {
+            data.addDragon(player, dragon);
         }
+        entries = data.getEntriesFor(player);
 
         if (!entries.isEmpty()) {
-            List<UUID> staleDragonIds = new java.util.ArrayList<>();
+            List<UUID> staleBoundDragonIds = new java.util.ArrayList<>();
             for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
                 UUID dragonId = entry.dragonId();
                 DragonEntity dragon = findDragon(serverLevel, dragonId);
@@ -68,20 +66,22 @@ public class MessageDraconicCodexRequest {
                     continue;
                 }
 
-                boolean stillBound = BinderComponentUtil.playerHasBoundDragon(player, dragonId);
-                if (stillBound) {
-                    data.updateDragonBoundState(player.getUUID(), dragonId, true);
-                } else {
-                    staleDragonIds.add(dragonId);
+                if (entry.boundInBinder()) {
+                    boolean binderExists = BinderComponentUtil.isDragonBoundInLoadedWorld(serverLevel, dragonId);
+                    if (binderExists) {
+                        data.updateDragonBoundState(player.getUUID(), dragonId, true);
+                    } else {
+                        // Bound entry with no live dragon and no binder found anywhere loaded:
+                        // this is a true disappearance (e.g., creative delete/discard/despawn).
+                        staleBoundDragonIds.add(dragonId);
+                    }
                 }
             }
 
-            for (UUID staleDragonId : staleDragonIds) {
+            for (UUID staleDragonId : staleBoundDragonIds) {
                 data.removeDragon(player.getUUID(), staleDragonId);
             }
-            if (!staleDragonIds.isEmpty()) {
-                entries = data.getEntriesFor(player);
-            }
+            entries = data.getEntriesFor(player);
         }
 
         List<DragonCodexSavedData.DragonCodexEntry> sortedEntries = new java.util.ArrayList<>(entries);
