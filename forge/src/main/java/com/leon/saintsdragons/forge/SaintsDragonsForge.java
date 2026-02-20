@@ -52,7 +52,7 @@ import java.util.Map;
  */
 @Mod(SaintsDragonsCommon.MOD_ID)
 public final class SaintsDragonsForge {
-    private static final double MAX_HEALTH_ATTRIBUTE_CAP = 10000.0D;
+    private static final double ATTRIBUTE_CAP = 100000.0D;
 
     private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIERS =
             DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, SaintsDragonsCommon.MOD_ID);
@@ -90,16 +90,28 @@ public final class SaintsDragonsForge {
 
     private static void raiseVanillaMaxHealthCap() {
         if (!(Attributes.MAX_HEALTH instanceof RangedAttribute ranged)) {
+            raiseVanillaArmorCap();
             return;
         }
 
         RangedAttributeAccessor accessor = (RangedAttributeAccessor) ranged;
-        if (accessor.saintsdragons$getMaxValue() >= MAX_HEALTH_ATTRIBUTE_CAP) {
+        if (accessor.saintsdragons$getMaxValue() < ATTRIBUTE_CAP) {
+            accessor.saintsdragons$setMaxValue(ATTRIBUTE_CAP);
+            SaintsDragonsCommon.LOGGER.info("Raised MAX_HEALTH attribute cap to {}", ATTRIBUTE_CAP);
+        }
+        raiseVanillaArmorCap();
+    }
+
+    private static void raiseVanillaArmorCap() {
+        if (!(Attributes.ARMOR instanceof RangedAttribute ranged)) {
             return;
         }
-
-        accessor.saintsdragons$setMaxValue(MAX_HEALTH_ATTRIBUTE_CAP);
-        SaintsDragonsCommon.LOGGER.info("Raised MAX_HEALTH attribute cap to {}", MAX_HEALTH_ATTRIBUTE_CAP);
+        RangedAttributeAccessor accessor = (RangedAttributeAccessor) ranged;
+        if (accessor.saintsdragons$getMaxValue() >= ATTRIBUTE_CAP) {
+            return;
+        }
+        accessor.saintsdragons$setMaxValue(ATTRIBUTE_CAP);
+        SaintsDragonsCommon.LOGGER.info("Raised ARMOR attribute cap to {}", ATTRIBUTE_CAP);
     }
 
     private void onEntityAttributeCreation(EntityAttributeCreationEvent event) {

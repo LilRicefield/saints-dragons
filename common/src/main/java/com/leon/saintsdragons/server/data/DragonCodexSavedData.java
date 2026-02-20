@@ -58,6 +58,7 @@ public class DragonCodexSavedData extends SavedData {
                 entry.setGenderKnown(dragon.hasGender());
                 entry.setDragonType(resolveDragonType(dragon));
                 entry.setIsBaby(dragon.isBaby());
+                entry.setBoundInBinder(dragon.isBoundInBinder());
                 entry.setPosition(dragon.getX(), dragon.getY(), dragon.getZ());
                 entry.setBiomeId(resolveBiomeId(dragon));
                 setDirty();
@@ -77,6 +78,7 @@ public class DragonCodexSavedData extends SavedData {
                 dragon.hasGender(),
                 resolveDragonType(dragon),
                 dragon.isBaby(),
+                dragon.isBoundInBinder(),
                 dragon.getX(),
                 dragon.getY(),
                 dragon.getZ(),
@@ -138,9 +140,29 @@ public class DragonCodexSavedData extends SavedData {
                 entry.setGenderKnown(dragon.hasGender());
                 entry.setDragonType(resolveDragonType(dragon));
                 entry.setIsBaby(dragon.isBaby());
+                entry.setBoundInBinder(dragon.isBoundInBinder());
                 entry.setPosition(dragon.getX(), dragon.getY(), dragon.getZ());
                 entry.setBiomeId(resolveBiomeId(dragon));
                 setDirty();
+                return;
+            }
+        }
+    }
+
+    public void updateDragonBoundState(UUID ownerId, UUID dragonId, boolean boundInBinder) {
+        if (ownerId == null || dragonId == null) {
+            return;
+        }
+        List<DragonCodexEntry> entries = entriesByOwner.get(ownerId);
+        if (entries == null) {
+            return;
+        }
+        for (DragonCodexEntry entry : entries) {
+            if (entry.dragonId().equals(dragonId)) {
+                if (entry.boundInBinder() != boundInBinder) {
+                    entry.setBoundInBinder(boundInBinder);
+                    setDirty();
+                }
                 return;
             }
         }
@@ -178,6 +200,7 @@ public class DragonCodexSavedData extends SavedData {
                 dragonTag.putBoolean("GenderKnown", dragonEntry.genderKnown());
                 dragonTag.putString("DragonType", dragonEntry.dragonType());
                 dragonTag.putBoolean("IsBaby", dragonEntry.isBaby());
+                dragonTag.putBoolean("BoundInBinder", dragonEntry.boundInBinder());
                 dragonTag.putDouble("PosX", dragonEntry.posX());
                 dragonTag.putDouble("PosY", dragonEntry.posY());
                 dragonTag.putDouble("PosZ", dragonEntry.posZ());
@@ -221,12 +244,13 @@ public class DragonCodexSavedData extends SavedData {
                         boolean genderKnown = dragonTag.contains("GenderKnown") && dragonTag.getBoolean("GenderKnown");
                         String dragonType = dragonTag.contains("DragonType") ? dragonTag.getString("DragonType") : "ignivorus";
                         boolean isBaby = dragonTag.contains("IsBaby") && dragonTag.getBoolean("IsBaby");
+                        boolean boundInBinder = dragonTag.contains("BoundInBinder") && dragonTag.getBoolean("BoundInBinder");
                         double posX = dragonTag.contains("PosX") ? dragonTag.getDouble("PosX") : 0.0D;
                         double posY = dragonTag.contains("PosY") ? dragonTag.getDouble("PosY") : 0.0D;
                         double posZ = dragonTag.contains("PosZ") ? dragonTag.getDouble("PosZ") : 0.0D;
                         String biomeId = dragonTag.contains("BiomeId") ? dragonTag.getString("BiomeId") : "minecraft:unknown";
                         entries.add(new DragonCodexEntry(dragonId, name, maxHealth, currentHealth, armor, hunger, happiness,
-                                variantId, genderId, genderKnown, dragonType, isBaby, posX, posY, posZ, biomeId));
+                                variantId, genderId, genderKnown, dragonType, isBaby, boundInBinder, posX, posY, posZ, biomeId));
                     }
                 }
                 data.entriesByOwner.put(ownerId, entries);
@@ -248,6 +272,7 @@ public class DragonCodexSavedData extends SavedData {
         private boolean genderKnown;
         private String dragonType;
         private boolean isBaby;
+        private boolean boundInBinder;
         private double posX;
         private double posY;
         private double posZ;
@@ -255,7 +280,8 @@ public class DragonCodexSavedData extends SavedData {
 
         public DragonCodexEntry(UUID dragonId, String displayName, double maxHealth, double currentHealth, double armor,
                                 double hunger, double happiness, int variantId, byte genderId, boolean genderKnown,
-                                String dragonType, boolean isBaby, double posX, double posY, double posZ, String biomeId) {
+                                String dragonType, boolean isBaby, boolean boundInBinder,
+                                double posX, double posY, double posZ, String biomeId) {
             this.dragonId = dragonId;
             this.displayName = displayName;
             this.maxHealth = maxHealth;
@@ -268,6 +294,7 @@ public class DragonCodexSavedData extends SavedData {
             this.genderKnown = genderKnown;
             this.dragonType = dragonType;
             this.isBaby = isBaby;
+            this.boundInBinder = boundInBinder;
             this.posX = posX;
             this.posY = posY;
             this.posZ = posZ;
@@ -364,6 +391,14 @@ public class DragonCodexSavedData extends SavedData {
 
         public void setIsBaby(boolean isBaby) {
             this.isBaby = isBaby;
+        }
+
+        public boolean boundInBinder() {
+            return boundInBinder;
+        }
+
+        public void setBoundInBinder(boolean boundInBinder) {
+            this.boundInBinder = boundInBinder;
         }
 
         public double posX() {

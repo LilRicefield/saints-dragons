@@ -31,7 +31,7 @@ import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class SaintsDragonsFabric implements ModInitializer {
-    private static final double ATTRIBUTE_CAP = 10000.0D;
+    private static final double ATTRIBUTE_CAP = 100000.0D;
 
     @Override
     public void onInitialize() {

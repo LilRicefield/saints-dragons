@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -156,6 +157,10 @@ public class CindervaneBinderItem extends Item {
         // Set the tag on the new stack
         newStack.setTag(tag);
 
+        if (player.level() instanceof ServerLevel serverLevel) {
+            DragonCodexSavedData.get(serverLevel).updateDragonBoundState(player.getUUID(), amphithere.getUUID(), true);
+        }
+
         // Remove the amphithere from the world
         amphithere.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
 
@@ -239,6 +244,11 @@ public class CindervaneBinderItem extends Item {
         }
 
         serverLevel.addFreshEntity(newAmphithere);
+        DragonCodexSavedData.get(serverLevel).updateDragonBoundState(
+                ownerUUID != null ? ownerUUID : player.getUUID(),
+                originalUUID,
+                false
+        );
 
         tag.remove(BOUND_DRAGON_UUID);
         tag.remove(BOUND_DRAGON_NAME);

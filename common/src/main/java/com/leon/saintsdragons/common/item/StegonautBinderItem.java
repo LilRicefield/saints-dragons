@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.item;
 
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -155,6 +156,10 @@ public class StegonautBinderItem extends Item {
         // Set the tag on the new stack
         newStack.setTag(tag);
 
+        if (player.level() instanceof ServerLevel serverLevel) {
+            DragonCodexSavedData.get(serverLevel).updateDragonBoundState(player.getUUID(), drake.getUUID(), true);
+        }
+
         // Remove the drake from the world
         drake.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
         
@@ -241,6 +246,11 @@ public class StegonautBinderItem extends Item {
 
         // Spawn the drake
         serverLevel.addFreshEntity(newDrake);
+        DragonCodexSavedData.get(serverLevel).updateDragonBoundState(
+                ownerUUID != null ? ownerUUID : player.getUUID(),
+                originalUUID,
+                false
+        );
 
         // Clear binder data
         tag.remove(BOUND_DRAGON_UUID);

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -139,6 +140,10 @@ public class NulljawBinderItem extends Item {
 
         copied.setTag(tag);
 
+        if (player.level() instanceof ServerLevel serverLevel) {
+            DragonCodexSavedData.get(serverLevel).updateDragonBoundState(player.getUUID(), drake.getUUID(), true);
+        }
+
         drake.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
 
         player.displayClientMessage(
@@ -212,6 +217,11 @@ public class NulljawBinderItem extends Item {
         }
 
         serverLevel.addFreshEntity(newDrake);
+        DragonCodexSavedData.get(serverLevel).updateDragonBoundState(
+                ownerUUID != null ? ownerUUID : player.getUUID(),
+                originalUUID,
+                false
+        );
 
         tag.remove(BOUND_DRAGON_UUID);
         tag.remove(BOUND_DRAGON_NAME);

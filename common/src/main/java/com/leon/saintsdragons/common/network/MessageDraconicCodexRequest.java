@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.common.item.util.BinderComponentUtil;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.network.FriendlyByteBuf;
@@ -56,6 +57,7 @@ public class MessageDraconicCodexRequest {
         }
 
         if (!entries.isEmpty()) {
+            List<UUID> staleDragonIds = new java.util.ArrayList<>();
             for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
                 UUID dragonId = entry.dragonId();
                 DragonEntity dragon = findDragon(serverLevel, dragonId);
@@ -63,7 +65,22 @@ public class MessageDraconicCodexRequest {
                     data.updateDragonName(player.getUUID(), dragonId, dragon.getName().getString());
                     data.updateDragonStats(player.getUUID(), dragon);
                     entry.setDisplayName(dragon.getName().getString());
+                    continue;
                 }
+
+                boolean stillBound = BinderComponentUtil.playerHasBoundDragon(player, dragonId);
+                if (stillBound) {
+                    data.updateDragonBoundState(player.getUUID(), dragonId, true);
+                } else {
+                    staleDragonIds.add(dragonId);
+                }
+            }
+
+            for (UUID staleDragonId : staleDragonIds) {
+                data.removeDragon(player.getUUID(), staleDragonId);
+            }
+            if (!staleDragonIds.isEmpty()) {
+                entries = data.getEntriesFor(player);
             }
         }
 

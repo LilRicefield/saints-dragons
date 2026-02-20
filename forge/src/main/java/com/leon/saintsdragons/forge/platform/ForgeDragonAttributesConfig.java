@@ -146,8 +146,8 @@ public final class ForgeDragonAttributesConfig {
         // Cindervane Configuration
         builder.comment("Cindervane Dragon Attributes").push("cindervane");
         builder.comment("Core Attributes");
-        CINDERVANE_MAX_HEALTH = builder.defineInRange("max_health", 80.0, 1.0, 10000.0);
-        CINDERVANE_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 10000.0);
+        CINDERVANE_MAX_HEALTH = builder.defineInRange("max_health", 80.0, 1.0, 100000.0);
+        CINDERVANE_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
         CINDERVANE_FLYING_SPEED = builder.defineInRange("flying_speed", 0.60, 0.0, 2.0);
         CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
@@ -180,8 +180,8 @@ public final class ForgeDragonAttributesConfig {
         // Raevyx Configuration
         builder.comment("Raevyx Dragon Attributes").push("raevyx");
         builder.comment("Core Attributes");
-        RAEVYX_MAX_HEALTH = builder.defineInRange("max_health", 180.0, 1.0, 10000.0);
-        RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 10000.0);
+        RAEVYX_MAX_HEALTH = builder.defineInRange("max_health", 180.0, 1.0, 100000.0);
+        RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 100000.0);
         RAEVYX_FLYING_SPEED = builder.defineInRange("flying_speed", 1.0, 0.0, 2.0);
         RAEVYX_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
@@ -225,8 +225,8 @@ public final class ForgeDragonAttributesConfig {
         // Nulljaw Configuration
         builder.comment("Nulljaw Dragon Attributes").push("nulljaw");
         builder.comment("Core Attributes");
-        NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 250.0, 1.0, 10000.0);
-        NULLJAW_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 10000.0);
+        NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 250.0, 1.0, 100000.0);
+        NULLJAW_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 100000.0);
         NULLJAW_SWIM_SPEED = builder.defineInRange("swim_speed", 1.45, 0.1, 5.0);
         builder.comment("Ability Damage");
         NULLJAW_BITE_PHASE1_DAMAGE = builder.defineInRange("bite_phase1_damage", 40.0, 0.0, 200.0);
@@ -257,8 +257,8 @@ public final class ForgeDragonAttributesConfig {
         // Ignivorus Configuration
         builder.comment("Ignivorus Dragon Attributes").push("ignivorus");
         builder.comment("Core Attributes");
-        IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 10000.0);
-        IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 10000.0);
+        IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 100000.0);
+        IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
         IGNIVORUS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.40, 0.0, 2.0);
         IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
@@ -314,8 +314,8 @@ public final class ForgeDragonAttributesConfig {
         // Stegonaut Configuration
         builder.comment("Stegonaut Dragon Attributes").push("stegonaut");
         builder.comment("Core Attributes");
-        STEGONAUT_MAX_HEALTH = builder.defineInRange("max_health", 100.0, 1.0, 10000.0);
-        STEGONAUT_ARMOR = builder.defineInRange("armor", 15.0, 0.0, 10000.0);
+        STEGONAUT_MAX_HEALTH = builder.defineInRange("max_health", 100.0, 1.0, 100000.0);
+        STEGONAUT_ARMOR = builder.defineInRange("armor", 15.0, 0.0, 100000.0);
         builder.comment("Ability Damage");
         STEGONAUT_BITE_DAMAGE = builder.defineInRange("bite_damage", 5.0, 0.0, 100.0);
         STEGONAUT_CHIN_SLAM_DAMAGE = builder.defineInRange("chin_slam_damage", 8.0, 0.0, 100.0);
