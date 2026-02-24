@@ -20,7 +20,10 @@ import org.joml.Matrix4f;
  */
 public class IgnivorusFlameRenderer extends EntityRenderer<IgnivorusFlameEntity> {
 
-    private static final int TOTAL_FRAMES = 16;
+    private static final int TOTAL_FRAMES = 5;
+    private static final float FLAME_RENDER_SCALE = 0.65F;
+    private static final float SPAWN_START_SCALE_FACTOR = 0.18F;
+    private static final float SPAWN_GROWTH_TICKS = 5.0F;
     private static final ResourceLocation[] TEXTURES = new ResourceLocation[TOTAL_FRAMES];
 
     static {
@@ -42,12 +45,12 @@ public class IgnivorusFlameRenderer extends EntityRenderer<IgnivorusFlameEntity>
 
         ResourceLocation texture = TEXTURES[frame];
 
-        // Progressive scale growth - starts at base scale, grows to 2x by end
-        int lifetime = entity.getLifetime();
-        float ageRatio = Mth.clamp((float) age / (float) lifetime, 0.0F, 1.0F);
-        float baseScale = entity.getScale();
-        float growthMultiplier = 1.0F + ageRatio; // 1.0 at start, 2.0 at end
-        float scale = baseScale * growthMultiplier;
+        // Spawn ease-in: start tiny, then quickly ramp up to the fixed flame size.
+        float baseScale = entity.getScale() * FLAME_RENDER_SCALE;
+        float ageWithPartial = Math.max(0.0F, age + partialTicks);
+        float spawnProgress = Mth.clamp(ageWithPartial / SPAWN_GROWTH_TICKS, 0.0F, 1.0F);
+        float spawnScaleFactor = Mth.lerp(spawnProgress, SPAWN_START_SCALE_FACTOR, 1.0F);
+        float scale = baseScale * spawnScaleFactor;
         float alpha = 1.0F;
 
         poseStack.pushPose();
