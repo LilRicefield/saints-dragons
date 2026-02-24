@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.client.renderer.cindervane;
 
+import com.leon.saintsdragons.client.render.RiderBullcrap;
+import com.leon.saintsdragons.client.render.RiderConfig;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -8,8 +10,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.joml.Vector3d;
+import org.joml.Vector4f;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
@@ -91,6 +98,7 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     @Override
     public void render(@NotNull Cindervane entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        RiderBullcrap.notifyRendered(entity.getId());
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
         // Sample passenger bone positions and store in entity's locator cache for RiderController to use
@@ -130,6 +138,52 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         }
 
         sendBonePositionsToServer(entity);
+    }
+
+    @Override
+    public void renderRecursively(PoseStack poseStack, Cindervane animatable, GeoBone bone, RenderType renderType,
+                                  MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
+                                  float partialTick, int packedLight, int packedOverlay,
+                                  float red, float green, float blue, float alpha) {
+        super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender,
+                partialTick, packedLight, packedOverlay, red, green, blue, alpha);
+
+        int seatIndex = -1;
+        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(animatable);
+        if (riderSpec == null) {
+            return;
+        }
+        if (bone.getName().equals(RiderConfig.getSeatBoneName(animatable, 0))) {
+            seatIndex = 0;
+        } else if (bone.getName().equals(RiderConfig.getSeatBoneName(animatable, 1))) {
+            seatIndex = 1;
+        }
+        if (seatIndex < 0) {
+            return;
+        }
+        if (!RiderBullcrap.tryLockForFrame(animatable.getId(), seatIndex)) {
+            return;
+        }
+
+        Matrix4f viewMatrix = new Matrix4f((Matrix4fc) poseStack.last().pose());
+        Vector4f boneViewPos4 = new Vector4f(0.0f, 0.0f, 0.0f, 1.0f).mul((Matrix4fc) viewMatrix);
+        double viewSpaceDistance = Math.sqrt(
+                boneViewPos4.x() * boneViewPos4.x()
+                        + boneViewPos4.y() * boneViewPos4.y()
+                        + boneViewPos4.z() * boneViewPos4.z()
+        );
+        if (viewSpaceDistance >= riderSpec.maxCaptureDistance) {
+            return;
+        }
+
+        RiderBullcrap.store(animatable.getId(), seatIndex, viewMatrix);
+        Vector3d boneWorldPosJoml = bone.getWorldPosition();
+        net.minecraft.world.phys.Vec3 boneWorldPos = new net.minecraft.world.phys.Vec3(
+                boneWorldPosJoml.x,
+                boneWorldPosJoml.y,
+                boneWorldPosJoml.z
+        );
+        RiderBullcrap.storeCameraOffset(animatable.getId(), seatIndex, boneWorldPos.subtract(animatable.position()));
     }
 
     private void sendBonePositionsToServer(Cindervane entity) {

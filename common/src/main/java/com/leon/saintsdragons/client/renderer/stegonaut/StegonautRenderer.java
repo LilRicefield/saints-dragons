@@ -1,16 +1,25 @@
 package com.leon.saintsdragons.client.renderer.stegonaut;
 
+import com.leon.saintsdragons.client.render.RiderBullcrap;
+import com.leon.saintsdragons.client.render.RiderConfig;
 import com.leon.saintsdragons.client.model.stegonaut.StegonautModel;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.joml.Vector3d;
+import org.joml.Vector4f;
+import net.minecraft.world.phys.Vec3;
 
 @Environment(EnvType.CLIENT)
 public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
@@ -67,10 +76,44 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
     @Override
     public void render(@NotNull Stegonaut entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        RiderBullcrap.notifyRendered(entity.getId());
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
         
         // After bones have been processed, sample accurate world positions for mouth locator
         sampleAndStashLocatorsAccurate(entity);
+    }
+
+    @Override
+    public void renderRecursively(PoseStack poseStack, Stegonaut animatable, GeoBone bone, RenderType renderType,
+                                  MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
+                                  float partialTick, int packedLight, int packedOverlay,
+                                  float red, float green, float blue, float alpha) {
+        super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender,
+                partialTick, packedLight, packedOverlay, red, green, blue, alpha);
+
+        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(animatable);
+        if (riderSpec == null || !bone.getName().equals(riderSpec.boneName)) {
+            return;
+        }
+        if (!RiderBullcrap.tryLockForFrame(animatable.getId(), 0)) {
+            return;
+        }
+
+        Matrix4f viewMatrix = new Matrix4f((Matrix4fc) poseStack.last().pose());
+        Vector4f boneViewPos4 = new Vector4f(0.0f, 0.0f, 0.0f, 1.0f).mul((Matrix4fc) viewMatrix);
+        double viewSpaceDistance = Math.sqrt(
+                boneViewPos4.x() * boneViewPos4.x()
+                        + boneViewPos4.y() * boneViewPos4.y()
+                        + boneViewPos4.z() * boneViewPos4.z()
+        );
+        if (viewSpaceDistance >= riderSpec.maxCaptureDistance) {
+            return;
+        }
+
+        RiderBullcrap.store(animatable.getId(), 0, viewMatrix);
+        Vector3d boneWorldPosJoml = bone.getWorldPosition();
+        Vec3 boneWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
+        RiderBullcrap.storeCameraOffset(animatable.getId(), 0, boneWorldPos.subtract(animatable.position()));
     }
 
     private void enableTrackingForBones(BakedGeoModel model) {

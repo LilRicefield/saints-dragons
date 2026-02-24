@@ -200,57 +200,68 @@ public class FabricClientEventHandler {
         }
 
         // Dragon riding camera adjustments - Cindervane
-        if (player.isPassenger() && player.getVehicle() instanceof Cindervane cindervane && camera.isDetached()) {
-            // Determine target zoom based on flight state
-            boolean isFlying = cindervane.isFlying();
+        if (player.isPassenger() && player.getVehicle() instanceof Cindervane cindervane) {
+            int seatIndex = cindervane.getPassengers().indexOf(player);
+            if (camera.isDetached()) {
+                // Determine target zoom based on flight state
+                boolean isFlying = cindervane.isFlying();
 
-            // Flying: zoom to 15F, grounded: 5F base
-            cindervaneCameraZoomTarget = isFlying ? 15F : 5F;
+                // Flying: zoom to 15F, grounded: 5F base
+                cindervaneCameraZoomTarget = isFlying ? 15F : 5F;
 
-            // Smooth transition
-            float blendRate = 0.05F;
-            cindervaneCameraZoom += (cindervaneCameraZoomTarget - cindervaneCameraZoom) * blendRate;
+                // Smooth transition
+                float blendRate = 0.05F;
+                cindervaneCameraZoom += (cindervaneCameraZoomTarget - cindervaneCameraZoom) * blendRate;
 
-            // Calculate camera shift based on banking (only when flying)
-            double targetCameraShift = 0.0;
-            if (isFlying) {
-                // Get interpolated bank angle (-90 to +90 degrees)
-                float bankAngle = cindervane.getBankAngleDegrees(partialTicks);
+                // Calculate camera shift based on banking (only when flying)
+                double targetCameraShift = 0.0;
+                if (isFlying) {
+                    // Get interpolated bank angle (-90 to +90 degrees)
+                    float bankAngle = cindervane.getBankAngleDegrees(partialTicks);
 
-                // Calculate lateral shift magnitude based on bank angle and velocity
-                // More banking = more shift. Scale by velocity for dynamic feel.
-                double velocity = cindervane.getDeltaMovement().horizontalDistance();
-                double velocityFactor = Math.min(velocity * 2.0, 1.5); // Cap at 1.5x
+                    // Calculate lateral shift magnitude based on bank angle and velocity
+                    // More banking = more shift. Scale by velocity for dynamic feel.
+                    double velocity = cindervane.getDeltaMovement().horizontalDistance();
+                    double velocityFactor = Math.min(velocity * 2.0, 1.5); // Cap at 1.5x;
 
-                targetCameraShift = -(bankAngle / 45.0) * 5.5 * velocityFactor;
+                    targetCameraShift = -(bankAngle / 45.0) * 5.5 * velocityFactor;
+                }
+
+                // Smooth the camera shift for gradual, natural movement
+                double shiftBlendRate = 0.15; // Faster response than zoom for snappy feel
+                cindervaneCameraShift += (targetCameraShift - cindervaneCameraShift) * shiftBlendRate;
+
+                // Calculate vertical camera shift based on ascending/descending
+                double targetVerticalShift = isFlying ? 50.0 : 0.0;
+                // Smooth vertical shift
+                double verticalBlendRate = 0.12; // Slightly slower than lateral for smoother feel
+                verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+
+                // Apply the smoothed zoom and lateral shift using the mixin accessor
+                CameraAccessor cameraAccessor = (CameraAccessor) camera;
+                double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(cindervaneCameraZoom);
+
+                // Move camera: back (zoom), no vertical, lateral shift based on banking
+                cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+                // Apply lateral and vertical shifts
+                cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, cindervaneCameraShift);
+                // Slight downward tilt for better forward visibility
+                float cindervaneTargetPitch = isFlying ? 10.0f : 0.0f;
+                float cindervanePitchBlendRate = 0.15f;
+                cindervaneCameraPitch += (cindervaneTargetPitch - cindervaneCameraPitch) * cindervanePitchBlendRate;
+                float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
+                float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
+                float clampedPitch = Mth.clamp(currentPitch + cindervaneCameraPitch, -90.0f, 90.0f);
+                cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
+            } else {
+                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
+                        cindervane,
+                        Math.max(seatIndex, 0),
+                        partialTicks,
+                        cindervane.getBankAngleDegrees(partialTicks),
+                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
+                );
             }
-
-            // Smooth the camera shift for gradual, natural movement
-            double shiftBlendRate = 0.15; // Faster response than zoom for snappy feel
-            cindervaneCameraShift += (targetCameraShift - cindervaneCameraShift) * shiftBlendRate;
-
-            // Calculate vertical camera shift based on ascending/descending
-            double targetVerticalShift = isFlying ? 50.0 : 0.0;
-            // Smooth vertical shift
-            double verticalBlendRate = 0.12; // Slightly slower than lateral for smoother feel
-            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
-
-            // Apply the smoothed zoom and lateral shift using the mixin accessor
-            CameraAccessor cameraAccessor = (CameraAccessor) camera;
-            double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(cindervaneCameraZoom);
-
-            // Move camera: back (zoom), no vertical, lateral shift based on banking
-            cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
-            // Apply lateral and vertical shifts
-            cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, cindervaneCameraShift);
-            // Slight downward tilt for better forward visibility
-            float cindervaneTargetPitch = isFlying ? 10.0f : 0.0f;
-            float cindervanePitchBlendRate = 0.15f;
-            cindervaneCameraPitch += (cindervaneTargetPitch - cindervaneCameraPitch) * cindervanePitchBlendRate;
-            float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
-            float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
-            float clampedPitch = Mth.clamp(currentPitch + cindervaneCameraPitch, -90.0f, 90.0f);
-            cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
             cindervaneCameraZoom = 5F;
@@ -261,66 +272,75 @@ public class FabricClientEventHandler {
         }
 
         // Dragon riding camera adjustments - Ignivorus
-        if (player.isPassenger() && player.getVehicle() instanceof Ignivorus ignivorus && camera.isDetached()) {
-            // Determine target zoom based on flight state
-            boolean isFlying = ignivorus.isFlying();
-            boolean isPhase2 = ignivorus.isPhase2Active();
-            boolean isBaby = ignivorus.isBaby();
+        if (player.isPassenger() && player.getVehicle() instanceof Ignivorus ignivorus) {
+            if (camera.isDetached()) {
+                // Determine target zoom based on flight state
+                boolean isFlying = ignivorus.isFlying();
+                boolean isPhase2 = ignivorus.isPhase2Active();
+                boolean isBaby = ignivorus.isBaby();
 
-            // Phase 2 only affects grounded camera zoom
-            if (isBaby) {
-                ignivorusCameraZoomTarget = 9F;
-            } else if (isFlying) {
-                ignivorusCameraZoomTarget = 30F;
-            } else if (isPhase2) {
-                ignivorusCameraZoomTarget = 25F; // Phase 2 grounded = zoom out more
+                // Phase 2 only affects grounded camera zoom
+                if (isBaby) {
+                    ignivorusCameraZoomTarget = 9F;
+                } else if (isFlying) {
+                    ignivorusCameraZoomTarget = 30F;
+                } else if (isPhase2) {
+                    ignivorusCameraZoomTarget = 25F; // Phase 2 grounded = zoom out more
+                } else {
+                    ignivorusCameraZoomTarget = 15F; // Normal grounded
+                }
+
+                // Smooth transition
+                float blendRate = 0.05F;
+                ignivorusCameraZoom += (ignivorusCameraZoomTarget - ignivorusCameraZoom) * blendRate;
+
+                // Calculate camera shift based on banking (only when flying)
+                double targetCameraShift = 0.0;
+                if (isFlying) {
+                    // Get interpolated bank angle (-90 to +90 degrees)
+                    float bankAngle = ignivorus.getBankAngleDegrees(partialTicks);
+
+                    // Calculate lateral shift magnitude based on bank angle and velocity
+                    double velocity = ignivorus.getDeltaMovement().horizontalDistance();
+                    double velocityFactor = Math.min(velocity * 2.0, 1.5); // Cap at 1.5x
+
+                    // Convert bank angle to shift
+                    // Scale: at 45° bank with full velocity, shift ~4.5 blocks (between Cindervane and Raevyx)
+                    targetCameraShift = -(bankAngle / 45.0) * 6.5 * velocityFactor;
+                }
+
+                // Smooth the camera shift for gradual, natural movement
+                double shiftBlendRate = 0.15;
+                ignivorusCameraShift += (targetCameraShift - ignivorusCameraShift) * shiftBlendRate;
+
+                // Calculate vertical camera shift based on ascending/descending
+                double targetVerticalShift = isFlying ?50.0 : 0.0;
+                // Smooth vertical shift for Ignivorus
+                double verticalBlendRate = 0.12;
+                verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
+
+                // Apply the smoothed zoom using the mixin accessor
+                CameraAccessor cameraAccessor = (CameraAccessor) camera;
+                double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(ignivorusCameraZoom);
+                cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+                // Apply lateral and vertical shifts
+                cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, ignivorusCameraShift);
+                // Slight downward tilt for better forward visibility
+                float ignivorusTargetPitch = isFlying ? 10.0f : 0.0f;
+                float ignivorusPitchBlendRate = 0.15f;
+                ignivorusCameraPitch += (ignivorusTargetPitch - ignivorusCameraPitch) * ignivorusPitchBlendRate;
+                float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
+                float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
+                float clampedPitch = Mth.clamp(currentPitch + ignivorusCameraPitch, -90.0f, 90.0f);
+                cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
             } else {
-                ignivorusCameraZoomTarget = 15F; // Normal grounded
+                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
+                        ignivorus,
+                        partialTicks,
+                        ignivorus.getBankAngleDegrees(partialTicks),
+                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
+                );
             }
-
-            // Smooth transition
-            float blendRate = 0.05F;
-            ignivorusCameraZoom += (ignivorusCameraZoomTarget - ignivorusCameraZoom) * blendRate;
-
-            // Calculate camera shift based on banking (only when flying)
-            double targetCameraShift = 0.0;
-            if (isFlying) {
-                // Get interpolated bank angle (-90 to +90 degrees)
-                float bankAngle = ignivorus.getBankAngleDegrees(partialTicks);
-
-                // Calculate lateral shift magnitude based on bank angle and velocity
-                double velocity = ignivorus.getDeltaMovement().horizontalDistance();
-                double velocityFactor = Math.min(velocity * 2.0, 1.5); // Cap at 1.5x
-
-                // Convert bank angle to shift
-                // Scale: at 45° bank with full velocity, shift ~4.5 blocks (between Cindervane and Raevyx)
-                targetCameraShift = -(bankAngle / 45.0) * 6.5 * velocityFactor;
-            }
-
-            // Smooth the camera shift for gradual, natural movement
-            double shiftBlendRate = 0.15;
-            ignivorusCameraShift += (targetCameraShift - ignivorusCameraShift) * shiftBlendRate;
-
-            // Calculate vertical camera shift based on ascending/descending
-            double targetVerticalShift = isFlying ?50.0 : 0.0;
-            // Smooth vertical shift for Ignivorus
-            double verticalBlendRate = 0.12;
-            verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
-
-            // Apply the smoothed zoom using the mixin accessor
-            CameraAccessor cameraAccessor = (CameraAccessor) camera;
-            double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(ignivorusCameraZoom);
-            cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
-            // Apply lateral and vertical shifts
-            cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, ignivorusCameraShift);
-            // Slight downward tilt for better forward visibility
-            float ignivorusTargetPitch = isFlying ? 10.0f : 0.0f;
-            float ignivorusPitchBlendRate = 0.15f;
-            ignivorusCameraPitch += (ignivorusTargetPitch - ignivorusCameraPitch) * ignivorusPitchBlendRate;
-            float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
-            float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
-            float clampedPitch = Mth.clamp(currentPitch + ignivorusCameraPitch, -90.0f, 90.0f);
-            cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom and shift when not riding Ignivorus
             ignivorusCameraZoom = 15F;
@@ -372,13 +392,23 @@ public class FabricClientEventHandler {
             }
         }
 
-        if (player.isPassenger() && player.getVehicle() instanceof Stegonaut stegonaut && camera.isDetached()) {
-            stegonautCameraZoomTarget = 8F;
-            float blendRate = 0.05F;
-            stegonautCameraZoom += (stegonautCameraZoomTarget - stegonautCameraZoom) * blendRate;
-            CameraAccessor cameraAccessor = (CameraAccessor) camera;
-            double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(stegonautCameraZoom);
-            cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+        if (player.isPassenger() && player.getVehicle() instanceof Stegonaut stegonaut) {
+            if (camera.isDetached()) {
+                stegonautCameraZoomTarget = 8F;
+                float blendRate = 0.05F;
+                stegonautCameraZoom += (stegonautCameraZoomTarget - stegonautCameraZoom) * blendRate;
+                CameraAccessor cameraAccessor = (CameraAccessor) camera;
+                double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(stegonautCameraZoom);
+                cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+            } else {
+                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
+                        stegonaut,
+                        0,
+                        partialTicks,
+                        0.0f,
+                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
+                );
+            }
         } else if (!(player.getVehicle() instanceof Stegonaut)) {
             stegonautCameraZoom = 8F;
             stegonautCameraZoomTarget = 8F;

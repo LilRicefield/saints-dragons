@@ -36,6 +36,10 @@ public abstract class RiderMixin {
         if (riderSpec == null) {
             return;
         }
+        int seatIndex = dragon.getPassengers().indexOf(player);
+        if (seatIndex < 0) {
+            return;
+        }
 
         long now = System.currentTimeMillis();
         long lastRender = RiderBullcrap.getLastRenderTime(dragon.getId());
@@ -43,17 +47,17 @@ public abstract class RiderMixin {
             return;
         }
 
-        Matrix4f viewMatrix = RiderBullcrap.get(dragon.getId());
+        Matrix4f viewMatrix = RiderBullcrap.get(dragon.getId(), seatIndex);
         if (viewMatrix == null) {
             return;
         }
 
-        long lastUpdate = RiderBullcrap.getTimestamp(dragon.getId());
+        long lastUpdate = RiderBullcrap.getTimestamp(dragon.getId(), seatIndex);
         if (now - lastUpdate > riderSpec.staleMs) {
             return;
         }
 
-        Vector3f seatOffset = RiderConfig.getSeatOffset(dragon);
+        Vector3f seatOffset = RiderConfig.getSeatOffset(dragon, seatIndex);
         float seatOffsetX = seatOffset.x();
         float seatOffsetY = seatOffset.y();
         float seatOffsetZ = seatOffset.z();
@@ -64,6 +68,6 @@ public abstract class RiderMixin {
 
         poseStack.translate(seatOffsetX, seatOffsetY, seatOffsetZ);
         float dragonYaw = Mth.rotLerp(partialTick, dragon.yBodyRotO, dragon.yBodyRot);
-        poseStack.mulPose(Axis.YP.rotationDegrees(dragonYaw + riderSpec.yawOffsetDeg));
+        poseStack.mulPose(Axis.YP.rotationDegrees(dragonYaw + RiderConfig.getYawOffset(dragon, seatIndex)));
     }
 }
