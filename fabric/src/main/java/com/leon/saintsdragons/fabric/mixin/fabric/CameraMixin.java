@@ -19,6 +19,9 @@ public abstract class CameraMixin implements CameraAccessor {
     protected abstract double getMaxZoom(double distance);
 
     @Shadow
+    protected abstract void setPosition(double x, double y, double z);
+
+    @Shadow
     protected abstract void setRotation(float yaw, float pitch);
 
     @Shadow
@@ -38,6 +41,11 @@ public abstract class CameraMixin implements CameraAccessor {
     @Override
     public double saintsdragons$invokeGetMaxZoom(double distance) {
         return this.getMaxZoom(distance);
+    }
+
+    @Override
+    public void saintsdragons$invokeSetPosition(double x, double y, double z) {
+        this.setPosition(x, y, z);
     }
 
     @Override

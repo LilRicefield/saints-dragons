@@ -314,45 +314,10 @@ public record RaevyxRiderController(Raevyx wyvern) {
     
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
         if (!wyvern.hasPassenger(passenger)) return;
-
-        Vec3 passengerLoc = null;
-        if (wyvern.level().isClientSide) {
-            passengerLoc = wyvern.getClientLocatorPosition("passengerLocator");
-            if (passengerLoc == null) {
-                // Compatibility fallback for packs that rename locator keys.
-                passengerLoc = wyvern.getClientLocatorPosition("passengerSeat0");
-            }
-        }
-
-        if (passengerLoc != null) {
-            Vec3 wyvernOldPos = new Vec3(wyvern.xo, wyvern.yo, wyvern.zo);
-            float oldYaw = wyvern.yRotO;
-            Vec3 worldOffset = passengerLoc.subtract(wyvernOldPos);
-
-            double oldYawRad = Math.toRadians(-oldYaw);
-            double cosOld = Math.cos(oldYawRad);
-            double sinOld = Math.sin(oldYawRad);
-            double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
-            double localY = worldOffset.y;
-            double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
-
-            float currentYaw = wyvern.getYRot();
-            double currentYawRad = Math.toRadians(-currentYaw);
-            double cosCurrent = Math.cos(currentYawRad);
-            double sinCurrent = Math.sin(currentYawRad);
-            double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
-            double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
-
-            Vec3 wyvernCurrentPos = wyvern.position();
-            Vec3 passengerCurrentPos = wyvernCurrentPos.add(currentWorldX, localY + SEAT_HEIGHT_ADJUST, currentWorldZ);
-
-            moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
-        } else {
-            double x = wyvern.getX();
-            double y = wyvern.getY() + getPassengersRidingOffset() + SEAT_HEIGHT_ADJUST + passenger.getMyRidingOffset();
-            double z = wyvern.getZ();
-            moveFunction.accept(passenger, x, y, z);
-        }
+        double x = wyvern.getX();
+        double y = wyvern.getY() + getPassengersRidingOffset() + SEAT_HEIGHT_ADJUST + passenger.getMyRidingOffset();
+        double z = wyvern.getZ();
+        moveFunction.accept(passenger, x, y, z);
     }
     
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
