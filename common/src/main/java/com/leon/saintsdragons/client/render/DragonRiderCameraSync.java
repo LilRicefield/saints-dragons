@@ -15,6 +15,10 @@ public final class DragonRiderCameraSync {
     }
 
     public static boolean applyFirstPersonBoneAnchor(RideableDragonBase dragon, float partialTick, float rollDegrees, CameraPositionSink cameraSink) {
+        return applyFirstPersonBoneAnchor(dragon, 0, partialTick, rollDegrees, cameraSink);
+    }
+
+    public static boolean applyFirstPersonBoneAnchor(RideableDragonBase dragon, int seatIndex, float partialTick, float rollDegrees, CameraPositionSink cameraSink) {
         RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(dragon);
         if (riderSpec == null) {
             return false;
@@ -22,12 +26,12 @@ public final class DragonRiderCameraSync {
 
         long now = System.currentTimeMillis();
         long lastRender = RiderBullcrap.getLastRenderTime(dragon.getId());
-        long lastUpdate = RiderBullcrap.getTimestamp(dragon.getId());
+        long lastUpdate = RiderBullcrap.getTimestamp(dragon.getId(), seatIndex);
         if (now - lastRender > riderSpec.staleMs || now - lastUpdate > riderSpec.staleMs) {
             return false;
         }
 
-        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(dragon.getId());
+        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(dragon.getId(), seatIndex);
         if (saddleOffset == null) {
             return false;
         }
@@ -39,7 +43,7 @@ public final class DragonRiderCameraSync {
         double interpY = Mth.lerp(partialTick, dragon.yo, dragon.getY());
         double interpZ = Mth.lerp(partialTick, dragon.zo, dragon.getZ());
 
-        Vector3f firstPersonOffset = RiderConfig.getFirstPersonOffset(dragon);
+        Vector3f firstPersonOffset = RiderConfig.getFirstPersonOffset(dragon, seatIndex);
         Vec3 rotatedFirstPersonOffset = rotateByDragon(
                 new Vec3(firstPersonOffset.x(), firstPersonOffset.y(), firstPersonOffset.z()),
                 (float) Math.toRadians(Mth.rotLerp(partialTick, dragon.yBodyRotO, dragon.yBodyRot)),
