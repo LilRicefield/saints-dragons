@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.fabric.client.event;
 
+import com.leon.saintsdragons.client.render.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
@@ -177,6 +178,13 @@ public class FabricClientEventHandler {
                 float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
                 float clampedPitch = Mth.clamp(currentPitch + raevyxCameraPitch, -90.0f, 90.0f);
                 cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
+            } else {
+                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
+                        raevyx,
+                        partialTicks,
+                        raevyx.getBankAngleDegrees(partialTicks),
+                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
+                );
             }
         } else {
             // Reset zoom and shift when not riding Raevyx

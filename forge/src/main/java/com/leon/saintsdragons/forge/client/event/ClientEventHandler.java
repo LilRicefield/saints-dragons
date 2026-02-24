@@ -1,8 +1,10 @@
 package com.leon.saintsdragons.forge.client.event;
 
+import com.leon.saintsdragons.client.render.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.forge.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -151,6 +153,13 @@ public class ClientEventHandler {
                 float raevyxPitchBlendRate = 0.15f;
                 raevyxCameraPitch += (raevyxTargetPitch - raevyxCameraPitch) * raevyxPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + raevyxCameraPitch, -90.0f, 90.0f));
+            } else {
+                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
+                        raevyx,
+                        (float) event.getPartialTick(),
+                        raevyx.getBankAngleDegrees((float) event.getPartialTick()),
+                        ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
+                );
             }
         } else {
             // Reset zoom and shift when not riding Raevyx

@@ -1,14 +1,18 @@
 package com.leon.saintsdragons.forge.mixin.client;
 
+import com.leon.saintsdragons.forge.client.accessor.CameraAccessor;
 import net.minecraft.client.Camera;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(Camera.class)
-public interface CameraMixin {
+public interface CameraMixin extends CameraAccessor {
     @Invoker("move")
-    void invokeMove(double distance, double yaw, double pitch);
+    void saintsdragons$invokeMove(double distance, double yaw, double pitch);
 
     @Invoker("getMaxZoom")
-    double invokeGetMaxZoom(double distance);
+    double saintsdragons$invokeGetMaxZoom(double distance);
+
+    @Invoker("setPosition")
+    void saintsdragons$invokeSetPosition(double x, double y, double z);
 }
