@@ -1309,5 +1309,16 @@
         "attenuation_distance": 16
       }
     ]
+  },
+  "volitans_roar": {
+    "subtitle": "Volitans roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_roar",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
   }
 }

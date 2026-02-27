@@ -51,6 +51,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAEVYX_SPAWN_EGG.get());
                                 output.accept(ModItems.NULLJAW_SPAWN_EGG.get());
                                 output.accept(ModItems.STEGONAUT_SPAWN_EGG.get());
+                                output.accept(ModItems.VOLITANS_SPAWN_EGG.get());
                                 output.accept(ModItems.IVY_THE_MERCHANT_SPAWN_EGG.get());
 
                                 })

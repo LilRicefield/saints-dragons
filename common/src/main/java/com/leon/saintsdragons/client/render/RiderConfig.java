@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import org.joml.Vector3f;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,18 @@ public final class RiderConfig {
     public static final double STEGONAUT_CAPTURE_DISTANCE = 80.0;
     public static final float STEGONAUT_YAW_OFFSET_DEG = -180.0f;
 
+    // ===== VOLITANS TUNING =====
+    public static final String VOLITANS_BONE = "passengerBone";
+    public static final float VOLITANS_SEAT_X = 0.0f;
+    public static final float VOLITANS_SEAT_Y = 2.40f;
+    public static final float VOLITANS_SEAT_Z = -2.15f;
+    public static final float VOLITANS_FIRST_PERSON_X = 0.0f;
+    public static final float VOLITANS_FIRST_PERSON_Y = 1.4f;
+    public static final float VOLITANS_FIRST_PERSON_Z = 0.0f;
+    public static final long VOLITANS_STALE_MS = 200L;
+    public static final double VOLITANS_CAPTURE_DISTANCE = 80.0;
+    public static final float VOLITANS_YAW_OFFSET_DEG = -180.0f;
+
     private static Map<Class<?>, RiderSpec> riderConfigs;
 
     private RiderConfig() {
@@ -116,6 +129,14 @@ public final class RiderConfig {
                 STEGONAUT_STALE_MS,
                 STEGONAUT_CAPTURE_DISTANCE,
                 STEGONAUT_YAW_OFFSET_DEG
+        ));
+        riderConfigs.put(Volitans.class, new RiderSpec(
+                VOLITANS_BONE,
+                new Vector3f(VOLITANS_SEAT_X, VOLITANS_SEAT_Y, VOLITANS_SEAT_Z),
+                new Vector3f(VOLITANS_FIRST_PERSON_X, VOLITANS_FIRST_PERSON_Y, VOLITANS_FIRST_PERSON_Z),
+                VOLITANS_STALE_MS,
+                VOLITANS_CAPTURE_DISTANCE,
+                VOLITANS_YAW_OFFSET_DEG
         ));
     }
 

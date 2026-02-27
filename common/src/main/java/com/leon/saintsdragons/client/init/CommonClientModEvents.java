@@ -14,6 +14,7 @@ import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRendere
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGroundChunkRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
+import com.leon.saintsdragons.client.renderer.volitans.VolitansRenderer;
 import com.leon.saintsdragons.client.renderer.VisualFallingBlockRenderer;
 import com.leon.saintsdragons.client.renderer.npc.IvyTheDragonMerchantRenderer;
 import com.leon.saintsdragons.client.ui.StegonautInventoryScreen;
@@ -34,6 +35,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.CINDERVANE.get(), CindervaneRenderer::new);
         registrar.register(ModEntities.NULLJAW.get(), NulljawRenderer::new);
         registrar.register(ModEntities.IGNIVORUS.get(), IgnivorusRenderer::new);
+        registrar.register(ModEntities.VOLITANS.get(), VolitansRenderer::new);
         registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), IgnivorusMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), IgnivorusMagmaPillarRenderer::new);

@@ -38,6 +38,7 @@
   "item.saintsdragons.cindervane_spawn_egg": "Cindervane Spawn Egg",
   "item.saintsdragons.nulljaw_spawn_egg": "Nulljaw Spawn Egg",
   "item.saintsdragons.ignivorus_spawn_egg": "Ignivorus Spawn Egg",
+  "item.saintsdragons.volitans_spawn_egg": "Volitans Spawn Egg",
   "itemGroup.saintsdragons": "Saint's Dragons",
   
   "entity.saintsdragons.raevyx": "Raevyx",
@@ -46,6 +47,7 @@
   "entity.saintsdragons.cindervane": "Cindervane",
   "entity.saintsdragons.nulljaw": "Nulljaw",
   "entity.saintsdragons.ignivorus": "Ignivorus",
+  "entity.saintsdragons.volitans": "Volitans",
   "entity.saintsdragons.dragon_merchant": "Ivy Oleander, the Merchant",
   "entity.saintsdragons.ivy_oleander": "Ivy Oleander",
   "merchant.saintsdragons.ivy_oleander": "Ivy Oleander",

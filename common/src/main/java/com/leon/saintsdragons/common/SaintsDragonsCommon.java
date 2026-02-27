@@ -10,6 +10,7 @@ import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
 import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
+import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.GeckoLib;
 import org.slf4j.Logger;
@@ -50,6 +51,7 @@ public final class SaintsDragonsCommon {
         IgnivorusAbilities.init();
         CindervaneAbilities.init();
         StegonautAbilities.init();
+        VolitansAbilities.init();
 
         NetworkHandler.register();
     }

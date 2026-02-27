@@ -145,6 +145,9 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_LEVEL3_CHARGE = registerSound("ignivorus_level3_charge");
     public static final Supplier<SoundEvent> IGNIVORUS_LEVEL3_SHOOTS = registerSound("ignivorus_level3_shoots");
 
+    // Volitans
+    public static final Supplier<SoundEvent> VOLITANS_ROAR = registerSound("volitans_roar");
+
     private static Supplier<SoundEvent> registerSound(String name) {
         return REGISTER.register(name, () -> SoundEvent.createVariableRangeEvent(SaintsDragonsCommon.rl(name)));
     }

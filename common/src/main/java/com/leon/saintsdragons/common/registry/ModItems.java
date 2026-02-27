@@ -68,6 +68,14 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> VOLITANS_SPAWN_EGG =
+            REGISTER.register("volitans_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.VOLITANS,
+                            0x2E6B7A, 0x9AD0D9,
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> IVY_THE_MERCHANT_SPAWN_EGG =
             REGISTER.register("ivy_the_merchant_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(

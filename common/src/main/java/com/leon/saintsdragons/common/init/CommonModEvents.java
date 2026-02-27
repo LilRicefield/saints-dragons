@@ -10,6 +10,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.resources.ResourceKey;
@@ -42,6 +43,7 @@ public final class CommonModEvents {
         registrar.accept(ModEntities.CINDERVANE.get(), Cindervane.createAttributes());
         registrar.accept(ModEntities.NULLJAW.get(), Nulljaw.createAttributes());
         registrar.accept(ModEntities.IGNIVORUS.get(), Ignivorus.createAttributes());
+        registrar.accept(ModEntities.VOLITANS.get(), Volitans.createAttributes());
         registrar.accept(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchant.createAttributes());
     }
 
@@ -80,6 +82,12 @@ public final class CommonModEvents {
                 SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Ignivorus::canSpawnHere
+        );
+        registrar.register(
+                ModEntities.VOLITANS.get(),
+                SpawnPlacements.Type.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Volitans::canSpawnHere
         );
     }
 
