@@ -17,6 +17,8 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -159,6 +161,22 @@ public final class ModEntities {
                     .updateInterval(1)  // Update every tick for smooth movement
                     .noSummon()
                     .build("visual_falling_block"));
+
+    public static final Supplier<EntityType<VolitansSpineEntity>> VOLITANS_SPINE =
+            REGISTER.register("volitans_spine", () -> EntityType.Builder.<VolitansSpineEntity>of(VolitansSpineEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("volitans_spine"));
+
+    public static final Supplier<EntityType<VolitansWaterBreathEntity>> VOLITANS_WATER_BREATH =
+            REGISTER.register("volitans_water_breath", () -> EntityType.Builder.<VolitansWaterBreathEntity>of(VolitansWaterBreathEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("volitans_water_breath"));
 
     private ModEntities() {
     }

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.client.input;
 
+import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
@@ -109,6 +111,12 @@ public final class DragonRideInputHandler {
     private static boolean wasToggleMeleeDown = false;
     private static boolean wasTogglePitchModeDown = false;
     private static boolean wasTauntDown = false;
+    private static int volitansTertiaryHoldTicks = 0;
+    private static boolean volitansBreathActive = false;
+    private static final int VOLITANS_TERTIARY_HOLD_TICKS = 5;
+    private static int raevyxSecondaryHoldTicks = 0;
+    private static boolean raevyxGroundRendTriggered = false;
+    private static final int RAEVYX_SECONDARY_HOLD_TICKS = 6;
 
     private static float lastForward = 0f;
     private static float lastStrafe = 0f;
@@ -235,6 +243,10 @@ public final class DragonRideInputHandler {
         }
 
         if (toggleMeleeDown && !wasToggleMeleeDown) {
+            // Volitans breath mode switch uses X while actively breathing; skip melee UI/messages.
+            if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans && volitansBreathActive) {
+                sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
+            } else
             if (dragon.hasSecondaryMelee()) {
                 sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
 
@@ -319,9 +331,17 @@ public final class DragonRideInputHandler {
             wasBackwardKeyDown = backwardDown;
         }
 
-        handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+            handleVolitansDualTertiary(tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
+        } else {
+            handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
+        }
         handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
-        handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+            handleRaevyxDualSecondary(secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
+        } else {
+            handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
+        }
         handleAbilityBinding(dragon.getAttackRiderAbility(), attackDown, wasAttackDown, forward, strafe, yaw);
 
         wasAscendPressed = ascendDown;
@@ -363,6 +383,66 @@ public final class DragonRideInputHandler {
         }
     }
 
+    private static void handleVolitansDualTertiary(boolean currentDown,
+                                                   boolean previousDown,
+                                                   float forward,
+                                                   float strafe,
+                                                   float yaw) {
+        if (currentDown) {
+            if (!previousDown) {
+                volitansTertiaryHoldTicks = 0;
+                volitansBreathActive = false;
+            }
+            volitansTertiaryHoldTicks++;
+            if (!volitansBreathActive && volitansTertiaryHoldTicks >= VOLITANS_TERTIARY_HOLD_TICKS) {
+                sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                        VolitansAbilities.VOLITANS_BREATH_ID, forward, strafe, yaw);
+                volitansBreathActive = true;
+            }
+            return;
+        }
+
+        if (previousDown) {
+            if (volitansBreathActive) {
+                sendInput(false, false, DragonRiderAction.ABILITY_STOP,
+                        VolitansAbilities.VOLITANS_BREATH_ID, forward, strafe, yaw);
+            } else {
+                sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                        VolitansAbilities.VOLITANS_CLAW_ID, forward, strafe, yaw);
+            }
+        }
+        volitansTertiaryHoldTicks = 0;
+        volitansBreathActive = false;
+    }
+
+    private static void handleRaevyxDualSecondary(boolean currentDown,
+                                                  boolean previousDown,
+                                                  float forward,
+                                                  float strafe,
+                                                  float yaw) {
+        if (currentDown) {
+            if (!previousDown) {
+                raevyxSecondaryHoldTicks = 0;
+                raevyxGroundRendTriggered = false;
+            }
+            raevyxSecondaryHoldTicks++;
+            if (!raevyxGroundRendTriggered && raevyxSecondaryHoldTicks >= RAEVYX_SECONDARY_HOLD_TICKS) {
+                sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                        RaevyxAbilities.RAEVYX_GROUND_REND.getName(), forward, strafe, yaw);
+                raevyxGroundRendTriggered = true;
+            }
+            return;
+        }
+
+        if (previousDown && !raevyxGroundRendTriggered) {
+            sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                    RaevyxAbilities.RAEVYX_SUMMON_STORM.getName(), forward, strafe, yaw);
+        }
+
+        raevyxSecondaryHoldTicks = 0;
+        raevyxGroundRendTriggered = false;
+    }
+
     private static void handleLockedInputs(Minecraft mc, RideableDragonBase dragon) {
         boolean tertiaryDown = DRAGON_TERTIARY_ABILITY.isDown();
         boolean primaryDown = DRAGON_PRIMARY_ABILITY.isDown();
@@ -372,7 +452,19 @@ public final class DragonRideInputHandler {
         boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
         boolean tauntDown = DRAGON_TAUNT.isDown() && isCtrlDown(mc);
 
-        handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+            if (volitansBreathActive) {
+                sendInput(false, false, DragonRiderAction.ABILITY_STOP, VolitansAbilities.VOLITANS_BREATH_ID, 0f, 0f, 0f);
+            }
+            volitansTertiaryHoldTicks = 0;
+            volitansBreathActive = false;
+        } else {
+            handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
+        }
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+            raevyxSecondaryHoldTicks = 0;
+            raevyxGroundRendTriggered = false;
+        }
         handleLockedAbilityRelease(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown);
         handleLockedAbilityRelease(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown);
         handleLockedAbilityRelease(dragon.getAttackRiderAbility(), attackDown, wasAttackDown);
@@ -444,6 +536,10 @@ public final class DragonRideInputHandler {
         wasForwardKeyDown = false;
         lastBackwardTapTime = 0;
         wasBackwardKeyDown = false;
+        volitansTertiaryHoldTicks = 0;
+        volitansBreathActive = false;
+        raevyxSecondaryHoldTicks = 0;
+        raevyxGroundRendTriggered = false;
     }
 
     private static boolean isCtrlDown(Minecraft mc) {

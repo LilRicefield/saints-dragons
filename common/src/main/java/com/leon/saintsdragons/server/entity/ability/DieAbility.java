@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -47,6 +48,9 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
             animationTrigger = "baby_die";
         } else if ("nulljaw_die".equals(abilityId)) {
             animationTrigger = "nulljaw_die";
+        } else if ("volitans_die".equals(abilityId)) {
+            animationTrigger = "volitans_die";
+            controllerId = "instant";
         }
         dragon.triggerAnim(controllerId, animationTrigger);
     }
@@ -60,6 +64,12 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         if (getTicksInSection() == 1 && !getLevel().isClientSide) {
             T dragon = getUser();
             String abilityId = this.getAbilityType().getName();
+            if ("volitans_die".equals(abilityId)
+                    && dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans volitans) {
+                float pitch = 0.95f + volitans.getRandom().nextFloat() * 0.1f;
+                volitans.playSound(ModSounds.VOLITANS_DIE.get(), 1.6f, pitch);
+                return;
+            }
 
             // Look up the vocal entry to get the sound event
             VocalEntry deathEntry = dragon.getVocalEntries().get(abilityId);

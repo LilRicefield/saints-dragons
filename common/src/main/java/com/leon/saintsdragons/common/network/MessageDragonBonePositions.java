@@ -26,6 +26,7 @@ public record MessageDragonBonePositions(
             "neck3Controller",
             "hip",
             "fireBoneOrigin",
+            "breathBoneOrigin",
             "mouth_origin",
             "automountBoneRight",
             "leftwing",
@@ -106,6 +107,15 @@ public record MessageDragonBonePositions(
             }
             for (Map.Entry<String, Vec3> entry : msg.bonePositions().entrySet()) {
                 cindervane.setServerBonePosition(entry.getKey(), entry.getValue());
+            }
+            return;
+        }
+        if (entity instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans volitans) {
+            if (player.getVehicle() != volitans || !volitans.canBeControlledBy(player)) {
+                return;
+            }
+            for (Map.Entry<String, Vec3> entry : msg.bonePositions().entrySet()) {
+                volitans.setServerBonePosition(entry.getKey(), entry.getValue());
             }
         }
     }

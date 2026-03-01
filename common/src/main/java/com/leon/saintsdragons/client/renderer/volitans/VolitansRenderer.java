@@ -3,11 +3,14 @@ package com.leon.saintsdragons.client.renderer.volitans;
 import com.leon.saintsdragons.client.model.volitans.VolitansModel;
 import com.leon.saintsdragons.client.render.RiderBullcrap;
 import com.leon.saintsdragons.client.render.RiderConfig;
+import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -26,6 +29,9 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
     private static final float PASSENGER_Y = -3.0f;
     private static final float PASSENGER_Z = 0.0f;
     private static final String PASSENGER_BONE = "passengerBone";
+    private static final String BREATH_BONE = "breathBone";
+    private static final String MOUTH_LOCATOR_BONE = "mouth_origin";
+    private static final int SYNC_INTERVAL_TICKS = 2;
 
     private BakedGeoModel lastBakedModel;
 
@@ -58,6 +64,8 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
         this.lastBakedModel = model;
         if (model != null) {
             model.getBone(PASSENGER_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+            model.getBone(BREATH_BONE).ifPresent(b -> b.setTrackingMatrices(true));
+            model.getBone(MOUTH_LOCATOR_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         }
 
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
@@ -81,6 +89,22 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
                 entity.setClientLocatorPosition("passengerSeat0", world);
             }
         });
+
+        this.lastBakedModel.getBone(BREATH_BONE).ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
+            if (world != null) {
+                entity.setClientLocatorPosition("breathBoneOrigin", world);
+            }
+        });
+
+        this.lastBakedModel.getBone(MOUTH_LOCATOR_BONE).ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
+            if (world != null) {
+                entity.setClientLocatorPosition("mouth_origin", world);
+            }
+        });
+
+        sendBreathLocatorToServer(entity);
     }
 
     @Override
@@ -132,5 +156,32 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
         org.joml.Vector4f in = new org.joml.Vector4f(lx, ly, lz, 1f);
         org.joml.Vector4f out = worldMat.transform(in);
         return new net.minecraft.world.phys.Vec3(out.x(), out.y(), out.z());
+    }
+
+    private void sendBreathLocatorToServer(Volitans entity) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || !entity.isAlive()) {
+            return;
+        }
+        if (minecraft.player.getVehicle() != entity) {
+            return;
+        }
+        if ((entity.tickCount + entity.getId()) % SYNC_INTERVAL_TICKS != 0) {
+            return;
+        }
+
+        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>(2);
+        net.minecraft.world.phys.Vec3 breath = entity.getClientLocatorPosition("breathBoneOrigin");
+        if (breath != null) {
+            positions.put("breathBoneOrigin", breath);
+        }
+        net.minecraft.world.phys.Vec3 mouth = entity.getClientLocatorPosition("mouth_origin");
+        if (mouth != null) {
+            positions.put("mouth_origin", mouth);
+        }
+
+        if (!positions.isEmpty()) {
+            NetworkHandler.sendToServer(new MessageDragonBonePositions(entity.getId(), positions));
+        }
     }
 }

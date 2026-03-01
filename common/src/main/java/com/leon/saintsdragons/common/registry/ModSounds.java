@@ -60,6 +60,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_EAT = registerSound("raevyx_eat");
     public static final Supplier<SoundEvent> RAEVYX_DODGE = registerSound("raevyx_dodge");
     public static final Supplier<SoundEvent> RAEVYX_DASH = registerSound("raevyx_dash");
+    public static final Supplier<SoundEvent> RAEVYX_GROUND_REND = registerSound("raevyx_ground_rend");
 
     // Cindervane
     public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");
@@ -147,6 +148,12 @@ public final class ModSounds {
 
     // Volitans
     public static final Supplier<SoundEvent> VOLITANS_ROAR = registerSound("volitans_roar");
+    public static final Supplier<SoundEvent> VOLITANS_BITE = registerSound("volitans_bite");
+    public static final Supplier<SoundEvent> VOLITANS_HORN_GORE = registerSound("volitans_horn_gore");
+    public static final Supplier<SoundEvent> VOLITANS_HURT = registerSound("volitans_hurt");
+    public static final Supplier<SoundEvent> VOLITANS_DIE = registerSound("volitans_die");
+    public static final Supplier<SoundEvent> VOLITANS_SLAMMING = registerSound("volitans_slamming");
+    public static final Supplier<SoundEvent> VOLITANS_SLAMMED = registerSound("volitans_slammed");
 
     private static Supplier<SoundEvent> registerSound(String name) {
         return REGISTER.register(name, () -> SoundEvent.createVariableRangeEvent(SaintsDragonsCommon.rl(name)));

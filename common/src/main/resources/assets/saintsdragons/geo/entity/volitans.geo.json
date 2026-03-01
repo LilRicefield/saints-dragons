@@ -386,6 +386,11 @@
 					]
 				},
 				{
+					"name": "breathBone",
+					"parent": "headController",
+					"pivot": [0, 30.45633, -75.4984]
+				},
+				{
 					"name": "lefthorn",
 					"parent": "headController",
 					"pivot": [0, 35, -50.5],

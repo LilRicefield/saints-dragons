@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -20,6 +21,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class VolitansBiteAbility extends DragonAbility<Volitans> {
+    private static final int BITE_SOUND_TICKS = 30; // 1.5s
     private static final float BASE_DAMAGE = 12.0f;
     private static final double BASE_RANGE = 4.6;
     private static final double RIDDEN_RANGE_BONUS = 1.4;
@@ -46,6 +48,14 @@ public class VolitansBiteAbility extends DragonAbility<Volitans> {
         }
         if (section.sectionType == STARTUP) {
             getUser().triggerAnim("actions", "bite");
+            if (!getUser().level().isClientSide) {
+                getUser().getSoundHandler().playMovingEntitySound(
+                        ModSounds.VOLITANS_BITE.get(),
+                        1.4f,
+                        1.0f,
+                        BITE_SOUND_TICKS
+                );
+            }
             appliedHit = false;
         }
     }

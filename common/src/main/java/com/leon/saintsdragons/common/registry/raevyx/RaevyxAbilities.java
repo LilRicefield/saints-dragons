@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxHornG
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxRoarAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxSummonStormAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxGroundRendAbility;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
 import com.leon.saintsdragons.server.entity.ability.DieAbility;
 
@@ -33,6 +34,10 @@ public final class RaevyxAbilities {
     // Ultimate ability
     public static final DragonAbilityType<Raevyx, RaevyxSummonStormAbility> RAEVYX_SUMMON_STORM =
             AbilityRegistry.register(new DragonAbilityType<>("raevyx_summon_storm", RaevyxSummonStormAbility::new));
+
+    // Ground utility ability (hold-H)
+    public static final DragonAbilityType<Raevyx, RaevyxGroundRendAbility> RAEVYX_GROUND_REND =
+            AbilityRegistry.register(new DragonAbilityType<>("raevyx_ground_rend", RaevyxGroundRendAbility::new));
 
     // Generic abilities (can be used by any wyvern)
     public static final DragonAbilityType<Raevyx, HurtAbility<Raevyx>> HURT =

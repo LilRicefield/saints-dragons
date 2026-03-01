@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -17,6 +18,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
+    private static final int HORN_GORE_SOUND_TICKS = 30; // 1.5s
     private static final float BASE_DAMAGE = 15.0f;
     private static final double BASE_RANGE = 6.2;
     private static final double RIDDEN_RANGE_BONUS = 1.6;
@@ -43,6 +45,14 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
         }
         if (section.sectionType == STARTUP) {
             getUser().triggerAnim("actions", "horn_gore");
+            if (!getUser().level().isClientSide) {
+                getUser().getSoundHandler().playMovingEntitySound(
+                        ModSounds.VOLITANS_HORN_GORE.get(),
+                        1.4f,
+                        1.0f,
+                        HORN_GORE_SOUND_TICKS
+                );
+            }
             hitIds.clear();
         }
     }

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -30,9 +31,9 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
     private static final int ROAR_EFFECT_DURATION_TICKS = 40;
     private static final float ROAR_DAMAGE = 10.0F;
     private static final float ROAR_SHAKE_INTENSITY = 0.85F;
-    private static final int POISON_DURATION_TICKS = 9000;
+    private static final int POISON_DURATION_TICKS = 1200;
     private static final int POISON_AMPLIFIER = 3;
-    private static final double HIT_RADIUS = 24.0D;
+    private static final double HIT_RADIUS = 20.0D;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
@@ -79,6 +80,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
             Volitans dragon = getUser();
             if (!shakeTriggered) {
                 dragon.triggerScreenShake(ROAR_SHAKE_INTENSITY, ROAR_EFFECT_DURATION_TICKS);
+                spawnRoarSpines();
                 shakeTriggered = true;
             }
             applyRoarPulse();
@@ -111,6 +113,32 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
             }
             target.hurt(source, ROAR_DAMAGE);
             target.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, POISON_AMPLIFIER));
+        }
+    }
+
+    private void spawnRoarSpines() {
+        Volitans dragon = getUser();
+        Vec3 center = dragon.position().add(0.0D, dragon.getBbHeight() * 0.55D, 0.0D);
+        double spawnRadius = Math.max(1.25D, dragon.getBbWidth() * 0.65D);
+
+        for (int i = 0; i < 10; i++) {
+            Vec3 direction;
+            if (i < 8) {
+                double angle = (Math.PI * 2.0D * i) / 8.0D;
+                // Horizontal radial burst with a slight vertical lift.
+                direction = new Vec3(Math.cos(angle), 0.18D, Math.sin(angle)).normalize();
+            } else if (i == 8) {
+                direction = new Vec3(0.0D, 1.0D, 0.0D);
+            } else {
+                direction = new Vec3(0.0D, -0.65D, 0.0D).normalize();
+            }
+
+            VolitansSpineEntity spine = new VolitansSpineEntity(dragon.level(), dragon);
+            Vec3 spawnPos = center.add(direction.scale(spawnRadius));
+            spine.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
+            spine.shoot(direction.x, direction.y, direction.z, 1.35F, 0.0F);
+            spine.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
+            dragon.level().addFreshEntity(spine);
         }
     }
 }

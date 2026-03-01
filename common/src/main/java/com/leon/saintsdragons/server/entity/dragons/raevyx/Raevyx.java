@@ -405,6 +405,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private boolean lastDashWasRight = false; // Track which dash animation to play next (alternating)
     private final java.util.Map<Integer, Integer> dashHitCooldowns = new java.util.HashMap<>(); // entityId -> cooldown ticks
 
+    // Ground Rend forward movement system (ability-driven)
+    private boolean groundRending = false;
+    private Vec3 groundRendVec = Vec3.ZERO;
+
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
 
@@ -1040,6 +1044,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
      * Forces the wyvern to take off when being ridden. Called when player presses Space while on ground.
      */
     public void requestRiderTakeoff() {
+        if (isGroundRending()) {
+            return;
+        }
         riderFlightComponent.requestRiderTakeoff();
     }
 
@@ -1685,6 +1692,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return this.entityData.get(DATA_LAST_DASH_RIGHT);
     }
 
+    // Ground Rend system
+    public boolean isGroundRending() { return groundRending; }
+    public void setGroundRending(boolean rending) {
+        this.groundRending = rending;
+        if (!rending) {
+            this.groundRendVec = Vec3.ZERO;
+        }
+    }
+    public void setGroundRendVelocity(Vec3 vec) { this.groundRendVec = vec; }
+    public float getRiderForwardInput() { return this.entityData.get(DATA_RIDER_FORWARD); }
+
     public void beginDodge(Vec3 vec, int ticks) {
         this.dodging = true;
         this.dodgeVec = vec;
@@ -2174,6 +2192,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (dashing) {
             handleDashMovement();
             // Don't return - allow beam tracking and other systems during dash
+        }
+
+        // Handle ground rend movement
+        if (groundRending) {
+            handleGroundRendMovement();
         }
 
         // Beam head tracking - only needed when beaming or cleaning up beam offsets
@@ -3317,6 +3340,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
     }
 
+    private void handleGroundRendMovement() {
+        // Apply the ground rend velocity directly (no decay - ability controls it)
+        this.setDeltaMovement(groundRendVec);
+        this.hasImpulse = true;
+    }
+
     // ===== TRAVEL METHOD =====
     @Override
     public void travel(@NotNull Vec3 motion) {
@@ -3328,6 +3357,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // During a dash, preserve the stored dash velocity and let vanilla travel apply it without rider overrides.
         if (dashing) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
+        // During ground rend, preserve stored velocity and bypass rider input
+        if (groundRending) {
             super.travel(Vec3.ZERO);
             return;
         }
@@ -4706,7 +4741,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     
     @Override
     public boolean canTakeoff() {
-        return !isInWaterOrBubble() && !isInLava() && onGround();
+        return !isGroundRending() && !isInWaterOrBubble() && !isInLava() && onGround();
     }
 
     private boolean shouldStaySeatedCommand() {

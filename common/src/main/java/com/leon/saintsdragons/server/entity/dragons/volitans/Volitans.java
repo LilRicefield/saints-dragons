@@ -8,7 +8,6 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
@@ -86,6 +85,10 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_ULTIMATE_SLAM_ACTIVE =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_BREATH_MODE =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
 
     private static final double RIDER_WALK_SPEED = 0.24D;
     private static final double RIDER_RUN_SPEED = 0.34D;
@@ -108,6 +111,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private final VolitansRiderController riderController;
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final java.util.Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
     private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
     private boolean usingAirNav;
@@ -201,6 +205,15 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
+    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        // During ultimate slam, preserve ability-driven vertical flags.
+        if (locked && isUltimateSlamActive()) {
+            return;
+        }
+        super.applyRiderVerticalInput(player, goingUp, goingDown, locked);
+    }
+
+    @Override
     protected void defineRideableDragonData() {
         this.entityData.define(DATA_FLYING, false);
         this.entityData.define(DATA_TAKEOFF, false);
@@ -216,6 +229,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         this.entityData.define(DATA_GOING_DOWN, false);
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        this.entityData.define(DATA_ULTIMATE_SLAM_ACTIVE, false);
+        this.entityData.define(DATA_BREATH_MODE, 0); // 0=water, 1=poison
     }
 
     @Override
@@ -462,6 +477,20 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
+        if (action == DragonRiderAction.TOGGLE_MELEE && !locked) {
+            if (combatManager.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
+                toggleBreathMode();
+                player.displayClientMessage(
+                        net.minecraft.network.chat.Component.translatable(
+                                isPoisonBreathMode()
+                                        ? "saintsdragons.message.volitans_breath_poison"
+                                        : "saintsdragons.message.volitans_breath_water"
+                        ),
+                        true
+                );
+                return true;
+            }
+        }
         return false;
     }
 
@@ -489,11 +518,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
             tickRiderLandingBlendTimer();
 
-            if (this.isInWaterOrBubble() && isFlying() && !isGoingUp()) {
+            if (!isUltimateSlamActive() && this.isInWaterOrBubble() && isFlying() && !isGoingUp()) {
                 markLandedNow();
             }
 
-            if (isFlying()) {
+            if (isFlying() && !isUltimateSlamActive()) {
                 boolean riddenByOwner = isRiddenByOwner();
                 if (this.onGround() && !isTakeoff() && !isGoingUp()) {
                     markLandedNow();
@@ -528,6 +557,15 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
+        if (isUltimateSlamActive()) {
+            player.fallDistance = 0.0F;
+            this.fallDistance = 0.0F;
+            this.setTarget(null);
+            copyRiderYaw(player);
+            this.setAccelerating(false);
+            return;
+        }
+
         super.tickRidden(player, travelVector);
 
         if (areRiderControlsLocked()) {
@@ -562,6 +600,12 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public void travel(@NotNull Vec3 motion) {
+        if (isUltimateSlamActive()) {
+            // Ultimate slam uses velocity-based movement - bypass normal travel and directly apply velocity
+            this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+            return;
+        }
+
         if (areRiderControlsLocked()) {
             super.travel(Vec3.ZERO);
             return;
@@ -679,8 +723,23 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
+    protected DragonAbilityType<?, ?> getHurtAbilityType() {
+        return VolitansAbilities.HURT;
+    }
+
+    @Override
+    protected DragonAbilityType<?, ?> getDeathAbilityType() {
+        return VolitansAbilities.DIE;
+    }
+
+    @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
         return new RiderAbilityBinding(VolitansAbilities.VOLITANS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return new RiderAbilityBinding(VolitansAbilities.VOLITANS_ULTIMATE_ID, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
@@ -703,6 +762,14 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public Vec3 getMouthPosition() {
+        Vec3 breathLocator = getBonePositionForBreath("breathBoneOrigin");
+        if (breathLocator != null) {
+            return breathLocator;
+        }
+        Vec3 mouthLocator = getBonePositionForBreath("mouth_origin");
+        if (mouthLocator != null) {
+            return mouthLocator;
+        }
         return this.position().add(0.0D, this.getBbHeight() * 0.72D, 0.9D);
     }
 
@@ -713,12 +780,29 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         this.clientLocatorCache.put(name, pos);
     }
 
+    public void setServerBonePosition(String boneName, Vec3 position) {
+        if (boneName == null || position == null) {
+            return;
+        }
+        this.serverBonePositionCache.put(boneName, position);
+    }
+
     @Override
     public Vec3 getClientLocatorPosition(String name) {
         if (name == null) {
             return null;
         }
         return this.clientLocatorCache.get(name);
+    }
+
+    public Vec3 getBonePositionForBreath(String boneName) {
+        if (boneName == null) {
+            return null;
+        }
+        if (this.level().isClientSide) {
+            return this.clientLocatorCache.get(boneName);
+        }
+        return this.serverBonePositionCache.get(boneName);
     }
 
     @Override
@@ -730,6 +814,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         loadRideableData(tag);
+        if (tag.contains("VolitansBreathMode")) {
+            setBreathMode(tag.getInt("VolitansBreathMode"));
+        }
         applyConfiguredAttributes();
     }
 
@@ -737,6 +824,12 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
+        tag.putInt("VolitansBreathMode", getBreathMode());
+    }
+
+    @Override
+    public int getDeathAnimationDurationTicks() {
+        return 70; // 3.5s
     }
 
     @Override
@@ -796,9 +889,43 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (type == VolitansAbilities.VOLITANS_ROAR
                 || type == VolitansAbilities.VOLITANS_BITE
                 || type == VolitansAbilities.VOLITANS_CLAW
-                || type == VolitansAbilities.VOLITANS_HORN_GORE) {
+                || type == VolitansAbilities.VOLITANS_BREATH
+                || type == VolitansAbilities.VOLITANS_HORN_GORE
+                || type == VolitansAbilities.VOLITANS_ULTIMATE) {
             combatManager.tryUseAbility(type);
         }
+    }
+
+    public int getBreathMode() {
+        return this.entityData.get(DATA_BREATH_MODE);
+    }
+
+    public void setBreathMode(int mode) {
+        this.entityData.set(DATA_BREATH_MODE, Mth.clamp(mode, 0, 1));
+    }
+
+    public boolean isPoisonBreathMode() {
+        return getBreathMode() == 1;
+    }
+
+    public void toggleBreathMode() {
+        setBreathMode(isPoisonBreathMode() ? 0 : 1);
+    }
+
+    public boolean isUltimateSlamActive() {
+        return this.entityData.get(DATA_ULTIMATE_SLAM_ACTIVE);
+    }
+
+    public void startUltimateSlamMovement() {
+        this.entityData.set(DATA_ULTIMATE_SLAM_ACTIVE, true);
+        setFlying(true);
+        setTakeoff(false);
+        setHovering(false);
+        setLanding(false);
+    }
+
+    public void stopUltimateSlamMovement() {
+        this.entityData.set(DATA_ULTIMATE_SLAM_ACTIVE, false);
     }
 
     public void forceEndActiveAbility() {
@@ -927,6 +1054,12 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private void tickRiderLandingBlendTimer() {
+        // Ultimate slam owns touchdown presentation ("slammed"), so skip generic landed handling.
+        if (isUltimateSlamActive()) {
+            consumeRiderTouchdownFromAir(1.0D);
+            return;
+        }
+
         trackRiderAirborneForLanding();
 
         if (!isVehicle() || !isFlying() || onGround()) {

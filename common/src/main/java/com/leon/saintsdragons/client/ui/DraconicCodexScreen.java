@@ -13,6 +13,7 @@ import com.leon.saintsdragons.client.ui.codex.CodexEcologyPanel;
 import com.leon.saintsdragons.client.ui.codex.CodexLayout;
 import com.leon.saintsdragons.client.ui.codex.CodexTab;
 import com.leon.saintsdragons.client.ui.codex.CodexTabPanel;
+import net.minecraft.client.gui.components.Button;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
@@ -85,6 +86,8 @@ public class DraconicCodexScreen extends Screen {
     private List<String> allyList = new ArrayList<>();
     private int allyScrollOffset = 0;
     private int ecologyPage = 1;
+    @Nullable
+    private Button refreshEntryButton;
     public DraconicCodexScreen() {
         this(null, CodexTab.PHYSIOLOGY);
     }
@@ -108,9 +111,17 @@ public class DraconicCodexScreen extends Screen {
         this.leftPos = Math.max(0, (this.width - actualWidth) / 2);
         this.topPos = Math.max(0, (this.height - actualHeight) / 2);
 
-        // Request current tamed dragon list from server
-        NetworkHandler.sendToServer(new MessageDraconicCodexRequest());
+        // Request current tamed dragon list from server (safe path: no prune)
+        requestCodexRefresh(false);
         NetworkHandler.sendToServer(new com.leon.saintsdragons.common.network.MessageGlobalAllyRequest());
+
+        refreshEntryButton = addRenderableWidget(Button.builder(
+                        Component.translatable("saintsdragons.gui.draconic_codex.refresh_entry"),
+                        button -> requestCodexRefresh(true))
+                .pos(leftPos + 7, topPos + 25)
+                .size(120, 18)
+                .build());
+        refreshEntryButton.active = true;
 
         allyPanel.initWidgets(this::addRenderableWidget, this.font, leftPos, topPos,
                 this::addAllyFromInput, this::removeAllyFromInput);
@@ -262,6 +273,9 @@ public class DraconicCodexScreen extends Screen {
         }
 
         listScrollOffset = Math.min(listScrollOffset, Math.max(0, dragonEntries.size() - CodexLayout.MAX_VISIBLE_DRAGONS));
+        if (refreshEntryButton != null) {
+            refreshEntryButton.active = true;
+        }
     }
 
     public void updateAllyList(List<String> newAllyList) {
@@ -346,5 +360,9 @@ public class DraconicCodexScreen extends Screen {
         }
         float pitch = 0.95f + (this.minecraft.player.getRandom().nextFloat() * 0.1f);
         this.minecraft.player.playSound(ModSounds.DRACONIC_CODEX_FLIP.get(), 0.75f, pitch);
+    }
+
+    private void requestCodexRefresh(boolean pruneMissingBoundEntries) {
+        NetworkHandler.sendToServer(new MessageDraconicCodexRequest(pruneMissingBoundEntries));
     }
 }

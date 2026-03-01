@@ -1299,6 +1299,17 @@
       }
     ]
   },
+  "raevyx_ground_rend": {
+    "subtitle": "Raevyx rends the ground",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_ground_rend",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
   "ignivorus_phase2_exit": {
     "subtitle": "Ignivorus reverts stance",
     "sounds": [
@@ -1316,6 +1327,72 @@
       {
         "name": "saintsdragons:entity/volitans/volitans_roar",
         "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_bite": {
+    "subtitle": "Volitans bites",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_bite",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "volitans_horn_gore": {
+    "subtitle": "Volitans gores",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_horn_gore",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "volitans_hurt": {
+    "subtitle": "Volitans hurts",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_hurt",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "volitans_die": {
+    "subtitle": "Volitans dies",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_die",
+        "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_slamming": {
+    "subtitle": "Volitans slams downward",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_slamming",
+        "volume": 1.6,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "volitans_slammed": {
+    "subtitle": "Volitans impacts the ground",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_slammed",
+        "volume": 1.9,
         "pitch": 1.0,
         "attenuation_distance": 40
       }

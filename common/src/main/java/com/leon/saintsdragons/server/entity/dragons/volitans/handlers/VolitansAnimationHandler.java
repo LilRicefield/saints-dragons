@@ -29,6 +29,11 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation SWIPE_LEFT = RawAnimation.begin().thenPlay("animation.volitans.swipe_left");
     private static final RawAnimation SWIPE_RIGHT = RawAnimation.begin().thenPlay("animation.volitans.swipe_right");
     private static final RawAnimation ROAR = RawAnimation.begin().thenPlay("animation.volitans.roar");
+    private static final RawAnimation BREATH_START = RawAnimation.begin().thenPlay("animation.volitans.breath_start");
+    private static final RawAnimation BREATHING = RawAnimation.begin().thenLoop("animation.volitans.breathing");
+    private static final RawAnimation BREATH_END = RawAnimation.begin().thenPlay("animation.volitans.breath_end");
+    private static final RawAnimation SLAMMING = RawAnimation.begin().thenPlay("animation.volitans.slamming");
+    private static final RawAnimation SLAMMED = RawAnimation.begin().thenPlay("animation.volitans.slammed");
 
     private final Volitans dragon;
 
@@ -130,10 +135,15 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("swipe_left", SWIPE_LEFT);
         controller.triggerableAnim("swipe_right", SWIPE_RIGHT);
         controller.triggerableAnim("roar", ROAR);
+        controller.triggerableAnim("breath_start", BREATH_START);
+        controller.triggerableAnim("breathing", BREATHING);
+        controller.triggerableAnim("breath_end", BREATH_END);
         controller.triggerableAnim("landed", LANDED);
     }
 
     public void setupInstantActionController(AnimationController<Volitans> controller) {
+        controller.triggerableAnim("slamming", SLAMMING);
+        controller.triggerableAnim("slammed", SLAMMED);
         controller.triggerableAnim("volitans_hurt",
                 RawAnimation.begin().thenPlay("animation.volitans.hurt"));
         controller.triggerableAnim("volitans_die",

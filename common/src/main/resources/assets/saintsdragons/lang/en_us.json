@@ -113,6 +113,7 @@
   "saintsdragons.gui.draconic_codex.ally.input": "Enter username...",
   "saintsdragons.gui.draconic_codex.ally.add": "Add",
   "saintsdragons.gui.draconic_codex.ally.remove": "Remove",
+  "saintsdragons.gui.draconic_codex.refresh_entry": "Refresh entry",
   
   "saintsdragons.tooltip.draconic_codex.line1": "Right-click to open the Draconic Codex",
   "saintsdragons.tooltip.draconic_codex.line2": "View tamed dragons and manage allies",
@@ -359,6 +360,8 @@
   "saintsdragons.message.ally.is_owner": "Must you try? You are the owner of this dragon.",
   "saintsdragons.message.ally.inappropriate_content": "Trying to be funny?",
   "saintsdragons.message.no_secondary_melee": "This dragon has no secondary melee attack",
+  "saintsdragons.message.volitans_breath_water": "Volitans breath mode: Water",
+  "saintsdragons.message.volitans_breath_poison": "Volitans breath mode: Poison",
   "saintsdragons.message.ignivorus_secondary_ground_only": "Ignivorus can only body slam while on the ground.",
   "saintsdragons.message.ignivorus.ultimate_requires_full_health": "Ignivorus must be at full health to unleash its cataclysm.",
   "saintsdragons.message.ignivorus.ultimate_penalty": "Ignivorus sacrifices its vitality to fuel the inferno!",

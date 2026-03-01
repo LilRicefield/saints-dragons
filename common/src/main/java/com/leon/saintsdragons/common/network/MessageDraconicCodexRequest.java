@@ -18,12 +18,22 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MessageDraconicCodexRequest {
     private static final long REQUEST_COOLDOWN_TICKS = 10L;
     private static final ConcurrentHashMap<UUID, Long> NEXT_ALLOWED_REQUEST_TICK = new ConcurrentHashMap<>();
+    private final boolean pruneMissingBoundEntries;
+
+    public MessageDraconicCodexRequest() {
+        this(false);
+    }
+
+    public MessageDraconicCodexRequest(boolean pruneMissingBoundEntries) {
+        this.pruneMissingBoundEntries = pruneMissingBoundEntries;
+    }
 
     public static void encode(MessageDraconicCodexRequest message, FriendlyByteBuf buffer) {
+        buffer.writeBoolean(message.pruneMissingBoundEntries);
     }
 
     public static MessageDraconicCodexRequest decode(FriendlyByteBuf buffer) {
-        return new MessageDraconicCodexRequest();
+        return new MessageDraconicCodexRequest(buffer.readBoolean());
     }
 
     public static void handle(MessageDraconicCodexRequest message, ServerPlayer player) {
@@ -55,7 +65,9 @@ public class MessageDraconicCodexRequest {
         entries = data.getEntriesFor(player);
 
         if (!entries.isEmpty()) {
-            List<UUID> staleBoundDragonIds = new java.util.ArrayList<>();
+            List<UUID> staleBoundDragonIds = message.pruneMissingBoundEntries
+                    ? new java.util.ArrayList<>()
+                    : java.util.Collections.emptyList();
             for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
                 UUID dragonId = entry.dragonId();
                 DragonEntity dragon = findDragon(serverLevel, dragonId);
@@ -70,16 +82,16 @@ public class MessageDraconicCodexRequest {
                     boolean binderExists = BinderComponentUtil.isDragonBoundInLoadedWorld(serverLevel, dragonId);
                     if (binderExists) {
                         data.updateDragonBoundState(player.getUUID(), dragonId, true);
-                    } else {
-                        // Bound entry with no live dragon and no binder found anywhere loaded:
-                        // this is a true disappearance (e.g., creative delete/discard/despawn).
+                    } else if (message.pruneMissingBoundEntries) {
                         staleBoundDragonIds.add(dragonId);
                     }
                 }
             }
 
-            for (UUID staleDragonId : staleBoundDragonIds) {
-                data.removeDragon(player.getUUID(), staleDragonId);
+            if (message.pruneMissingBoundEntries && !staleBoundDragonIds.isEmpty()) {
+                for (UUID staleDragonId : staleBoundDragonIds) {
+                    data.removeDragon(player.getUUID(), staleDragonId);
+                }
             }
             entries = data.getEntriesFor(player);
         }
