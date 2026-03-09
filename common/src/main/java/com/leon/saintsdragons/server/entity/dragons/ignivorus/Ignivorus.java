@@ -15,7 +15,6 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
@@ -1940,9 +1939,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonEntity.DragonSleepPreferences getSleepPreferences() {
         // Ignivorus are nocturnal sleepers (sleep at night)
-        return DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
+        return DragonEntity.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override

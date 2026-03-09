@@ -26,9 +26,11 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
     private static final int ACTIVE_TICKS = 46;
     private static final int RECOVERY_TICKS = 16;
     private static final int ROAR_ANIM_TOTAL_TICKS = STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS; // 70 ticks (3.5s)
-    private static final int SOUND_DURATION_TICKS = 100; // 5s
+    private static final int SOUND_DURATION_TICKS = 100;
+    private static final int AIR_WATER_ROAR_TICKS = 60;
     private static final int ROAR_EFFECT_START_TICK = 23;
     private static final int ROAR_EFFECT_DURATION_TICKS = 40;
+    private static final int ROAR_SPINE_PULSE_INTERVAL_TICKS = 6;
     private static final float ROAR_DAMAGE = 10.0F;
     private static final float ROAR_SHAKE_INTENSITY = 0.85F;
     private static final int POISON_DURATION_TICKS = 1200;
@@ -43,6 +45,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
 
     private final Set<Integer> hitTargetIds = new HashSet<>();
     private boolean shakeTriggered;
+    private boolean airOrWaterRoar;
 
     public VolitansRoarAbility(DragonAbilityType<Volitans, VolitansRoarAbility> type, Volitans user) {
         super(type, user, TRACK, 30);
@@ -55,13 +58,20 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
         }
         if (section.sectionType == STARTUP) {
             Volitans dragon = getUser();
-            dragon.triggerAnim("actions", "roar");
-            dragon.lockRiderControls(ROAR_ANIM_TOTAL_TICKS);
+            airOrWaterRoar = dragon.isFlying() || dragon.isInWaterOrBubble();
+            dragon.triggerAnim(airOrWaterRoar ? "instant" : "actions", airOrWaterRoar ? "roar_air_water" : "roar");
+            if (!airOrWaterRoar) {
+                dragon.lockRiderControls(ROAR_ANIM_TOTAL_TICKS);
+            }
             hitTargetIds.clear();
             shakeTriggered = false;
 
             if (!dragon.level().isClientSide) {
-                dragon.getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_ROAR.get(), 1.6f, 1.0f, SOUND_DURATION_TICKS);
+                if (airOrWaterRoar) {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_ROAR_AIR_WATER.get(), 1.6f, 1.0f, AIR_WATER_ROAR_TICKS);
+                } else {
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_ROAR.get(), 1.6f, 1.0f, SOUND_DURATION_TICKS);
+                }
             }
         }
     }
@@ -74,14 +84,29 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
         }
 
         int ticksInUse = getTicksInUse();
+        if (airOrWaterRoar) {
+            if (ticksInUse >= AIR_WATER_ROAR_TICKS) {
+                end();
+                return;
+            }
+            if (ticksInUse % ROAR_SPINE_PULSE_INTERVAL_TICKS == 0) {
+                spawnRoarSpinesAirWater(ticksInUse / ROAR_SPINE_PULSE_INTERVAL_TICKS);
+            }
+            applyRoarPulse();
+            return;
+        }
+
         boolean inEffectWindow = ticksInUse >= ROAR_EFFECT_START_TICK
                 && ticksInUse < ROAR_EFFECT_START_TICK + ROAR_EFFECT_DURATION_TICKS;
         if (inEffectWindow) {
             Volitans dragon = getUser();
             if (!shakeTriggered) {
                 dragon.triggerScreenShake(ROAR_SHAKE_INTENSITY, ROAR_EFFECT_DURATION_TICKS);
-                spawnRoarSpines();
                 shakeTriggered = true;
+            }
+            int effectTick = ticksInUse - ROAR_EFFECT_START_TICK;
+            if (effectTick % ROAR_SPINE_PULSE_INTERVAL_TICKS == 0) {
+                spawnRoarSpines(effectTick / ROAR_SPINE_PULSE_INTERVAL_TICKS);
             }
             applyRoarPulse();
         }
@@ -116,29 +141,53 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
         }
     }
 
-    private void spawnRoarSpines() {
+    private void spawnRoarSpines(int pulseIndex) {
         Volitans dragon = getUser();
         Vec3 center = dragon.position().add(0.0D, dragon.getBbHeight() * 0.55D, 0.0D);
         double spawnRadius = Math.max(1.25D, dragon.getBbWidth() * 0.65D);
+        double angleOffset = (pulseIndex % 2 == 0) ? 0.0D : (Math.PI / 12.0D);
 
-        for (int i = 0; i < 10; i++) {
-            Vec3 direction;
-            if (i < 8) {
-                double angle = (Math.PI * 2.0D * i) / 8.0D;
-                // Horizontal radial burst with a slight vertical lift.
-                direction = new Vec3(Math.cos(angle), 0.18D, Math.sin(angle)).normalize();
-            } else if (i == 8) {
-                direction = new Vec3(0.0D, 1.0D, 0.0D);
-            } else {
-                direction = new Vec3(0.0D, -0.65D, 0.0D).normalize();
-            }
+        spawnSpineRing(dragon, center, spawnRadius, 10, angleOffset, 0.22D, 1.20F);
+        spawnSpineRing(dragon, center, spawnRadius * 0.85D, 8, angleOffset + (Math.PI / 8.0D), 0.05D, 1.45F);
 
-            VolitansSpineEntity spine = new VolitansSpineEntity(dragon.level(), dragon);
-            Vec3 spawnPos = center.add(direction.scale(spawnRadius));
-            spine.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
-            spine.shoot(direction.x, direction.y, direction.z, 1.35F, 0.0F);
-            spine.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
-            dragon.level().addFreshEntity(spine);
+    }
+
+    private void spawnRoarSpinesAirWater(int pulseIndex) {
+        Volitans dragon = getUser();
+        Vec3 center = dragon.position().add(0.0D, dragon.getBbHeight() * 0.55D, 0.0D);
+        double spawnRadius = Math.max(1.1D, dragon.getBbWidth() * 0.58D);
+        double angleOffset = (pulseIndex % 2 == 0) ? 0.0D : (Math.PI / 12.0D);
+
+        // Lighter visual density for air/underwater roar.
+        spawnSpineRing(dragon, center, spawnRadius, 5, angleOffset, 0.18D, 1.05F);
+        spawnSpineRing(dragon, center, spawnRadius * 0.82D, 4, angleOffset + (Math.PI / 8.0D), 0.04D, 1.25F);
+    }
+
+    private void spawnSpineRing(Volitans dragon, Vec3 center, double radius, int count, double angleOffset, double verticalBias, float speed) {
+        for (int i = 0; i < count; i++) {
+            double angle = angleOffset + (Math.PI * 2.0D * i) / (double) count;
+            double jitterX = (dragon.getRandom().nextDouble() - 0.5D) * 0.08D;
+            double jitterY = (dragon.getRandom().nextDouble() - 0.5D) * 0.06D;
+            double jitterZ = (dragon.getRandom().nextDouble() - 0.5D) * 0.08D;
+            Vec3 direction = new Vec3(Math.cos(angle) + jitterX, verticalBias + jitterY, Math.sin(angle) + jitterZ).normalize();
+            float variedSpeed = speed + (dragon.getRandom().nextFloat() - 0.5F) * 0.16F;
+            spawnSpine(dragon, center, direction, radius, variedSpeed);
         }
+    }
+
+    private void spawnSpine(Volitans dragon, Vec3 center, Vec3 direction, double radius, float speed) {
+        VolitansSpineEntity spine = new VolitansSpineEntity(dragon.level(), dragon);
+        Vec3 horizontal = new Vec3(direction.x, 0.0D, direction.z);
+        if (horizontal.lengthSqr() < 1.0E-4D) {
+            horizontal = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            horizontal = horizontal.normalize();
+        }
+        // Keep origins on a flat ring so spikes do not spawn above/below the dragon.
+        Vec3 spawnPos = center.add(horizontal.scale(radius));
+        spine.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
+        spine.shoot(direction.x, direction.y, direction.z, speed, 0.0F);
+        spine.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
+        dragon.level().addFreshEntity(spine);
     }
 }

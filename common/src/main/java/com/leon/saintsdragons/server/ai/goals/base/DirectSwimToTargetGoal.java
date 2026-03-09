@@ -11,11 +11,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
- * Direct swimming control that bypasses pathfinding entirely.
- * Calculates direction to target and applies velocity directly.
- * Designed for large aquatic/semi-aquatic creatures.
- */
 public class DirectSwimToTargetGoal extends Goal {
 
     private static final double FOLLOW_START_DISTANCE_SQR = 20.0D * 20.0D;

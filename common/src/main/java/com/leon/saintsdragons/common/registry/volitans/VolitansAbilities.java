@@ -5,8 +5,10 @@ import com.leon.saintsdragons.server.entity.ability.DieAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBiteAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansClawAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansHornGoreAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansRoarAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansUltimateAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBreathAbility;
@@ -19,6 +21,8 @@ public final class VolitansAbilities {
     public static final String VOLITANS_CLAW_ID = "volitans_claw";
     public static final String VOLITANS_HORN_GORE_ID = "volitans_horn_gore";
     public static final String VOLITANS_ROAR_ID = "volitans_roar";
+    public static final String VOLITANS_BURROW_ID = "volitans_burrow";
+    public static final String VOLITANS_POISON_BALL_ID = "volitans_poison_ball";
     public static final String VOLITANS_BREATH_ID = "volitans_breath";
     // Backward-compatible alias for existing input calls/references.
     public static final String VOLITANS_WATER_BREATH_ID = VOLITANS_BREATH_ID;
@@ -37,6 +41,12 @@ public final class VolitansAbilities {
 
     public static final DragonAbilityType<Volitans, VolitansRoarAbility> VOLITANS_ROAR =
             AbilityRegistry.register(new DragonAbilityType<>(VOLITANS_ROAR_ID, VolitansRoarAbility::new));
+
+    public static final DragonAbilityType<Volitans, VolitansBurrowAbility> VOLITANS_BURROW =
+            AbilityRegistry.register(new DragonAbilityType<>(VOLITANS_BURROW_ID, VolitansBurrowAbility::new));
+
+    public static final DragonAbilityType<Volitans, VolitansPoisonBallAbility> VOLITANS_POISON_BALL =
+            AbilityRegistry.register(new DragonAbilityType<>(VOLITANS_POISON_BALL_ID, VolitansPoisonBallAbility::new));
 
     public static final DragonAbilityType<Volitans, VolitansBreathAbility> VOLITANS_BREATH =
             AbilityRegistry.register(new DragonAbilityType<>(VOLITANS_BREATH_ID, VolitansBreathAbility::new));

@@ -15,6 +15,7 @@ import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGroundChunkRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansRenderer;
+import com.leon.saintsdragons.client.renderer.volitans.VolitansPoisonBallRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansSpineRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansWaterBreathRenderer;
 import com.leon.saintsdragons.client.renderer.VisualFallingBlockRenderer;
@@ -48,6 +49,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.VISUAL_FALLING_BLOCK.get(), VisualFallingBlockRenderer::new);
         registrar.register(ModEntities.VOLITANS_SPINE.get(), VolitansSpineRenderer::new);
         registrar.register(ModEntities.VOLITANS_WATER_BREATH.get(), VolitansWaterBreathRenderer::new);
+        registrar.register(ModEntities.VOLITANS_POISON_BALL.get(), VolitansPoisonBallRenderer::new);
         registrar.register(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchantRenderer::new);
     }
 

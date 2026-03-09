@@ -7,7 +7,6 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.ai.goals.cindervane.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
@@ -3105,9 +3104,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
-    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonEntity.DragonSleepPreferences getSleepPreferences() {
         // Cindervane are nocturnal sleepers (sleep at night, active during day)
-        return DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
+        return DragonEntity.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override

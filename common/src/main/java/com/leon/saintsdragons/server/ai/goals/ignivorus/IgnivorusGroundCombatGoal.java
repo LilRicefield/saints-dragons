@@ -14,11 +14,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * All-in-one combat goal for Ignivorus - handles movement, attack selection, and execution.
- * Fire dragon combat: AGGRESSIVE melee-focused with randomized attacks.
- * Prioritizes unpredictable bite/body slam combos, only uses fire breath at long range.
- */
 public class IgnivorusGroundCombatGoal extends Goal {
     private final Ignivorus dragon;
 

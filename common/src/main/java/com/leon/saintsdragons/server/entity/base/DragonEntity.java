@@ -5,7 +5,6 @@ package com.leon.saintsdragons.server.entity.base;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.DragonType;
-import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAnimationSyncComponent;
@@ -1415,9 +1414,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      * Get this dragon's sleep preferences (day/night, weather, etc.)
      * Override in each dragon to define their sleep behavior
      */
-    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonSleepPreferences getSleepPreferences() {
         // Default: flexible sleeper (any time)
-        return DragonSleepBehavior.DragonSleepPreferences.FLEXIBLE();
+        return DragonSleepPreferences.FLEXIBLE();
     }
 
     /**
@@ -1425,6 +1424,35 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     public boolean canSleepNow() {
         return true; // Override for custom logic
+    }
+
+    /**
+     * Sleep preferences - each dragon defines their own.
+     */
+    public record DragonSleepPreferences(
+            boolean canSleepAtNight,
+            boolean canSleepDuringDay,
+            boolean avoidsThunderstorms
+    ) {
+        public boolean canSleepDuringConditions(net.minecraft.world.level.Level level) {
+            if (avoidsThunderstorms && level.isThundering()) return false;
+            boolean isDay = level.isDay();
+            if (isDay && !canSleepDuringDay) return false;
+            if (!isDay && !canSleepAtNight) return false;
+            return true;
+        }
+
+        public static DragonSleepPreferences DIURNAL() {
+            return new DragonSleepPreferences(false, true, true);
+        }
+
+        public static DragonSleepPreferences NOCTURNAL() {
+            return new DragonSleepPreferences(true, false, true);
+        }
+
+        public static DragonSleepPreferences FLEXIBLE() {
+            return new DragonSleepPreferences(true, true, true);
+        }
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -23,6 +24,7 @@ public class VolitansClawAbility extends DragonAbility<Volitans> {
     private static final double CLAW_ANGLE_DEG = 95.0;
     private static final double SWEEP_HORIZONTAL = 3.0;
     private static final double SWEEP_VERTICAL = 2.6;
+    private static final int CLAW_SOUND_TICKS = 26; // 1.3s
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 3),
@@ -46,6 +48,15 @@ public class VolitansClawAbility extends DragonAbility<Volitans> {
         }
         if (section.sectionType == STARTUP) {
             getUser().triggerAnim("actions", useLeftClaw ? "swipe_left" : "swipe_right");
+            if (!getUser().level().isClientSide) {
+                float pitch = 0.96f + getUser().getRandom().nextFloat() * 0.08f;
+                getUser().getSoundHandler().playMovingEntitySound(
+                        ModSounds.VOLITANS_CLAWS.get(),
+                        1.9f,
+                        pitch,
+                        CLAW_SOUND_TICKS
+                );
+            }
             appliedHit = false;
         }
     }

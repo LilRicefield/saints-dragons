@@ -348,6 +348,9 @@
   "entity.saintsdragons.nulljaw.sitting_down": "%s is settling down...",
   "entity.saintsdragons.nulljaw.standing_up": "%s is standing up...",
   "entity.saintsdragons.nulljaw.transitioning": "%s is reshaping its stance...",
+  "entity.saintsdragons.volitans.sitting_down": "%s is settling down...",
+  "entity.saintsdragons.volitans.standing_up": "%s is standing up...",
+  "entity.saintsdragons.volitans.transitioning": "%s is adjusting posture...",
   
   "saintsdragons.message.ally.success": "Successfully managed ally %s",
   "saintsdragons.message.ally.invalid_username": "Invalid username! Must be 3-16 characters, letters/numbers/underscores only, and appropriate content",

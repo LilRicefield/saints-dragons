@@ -148,10 +148,25 @@ public final class ModSounds {
 
     // Volitans
     public static final Supplier<SoundEvent> VOLITANS_ROAR = registerSound("volitans_roar");
+    public static final Supplier<SoundEvent> VOLITANS_ROAR_AIR_WATER = registerSound("volitans_roar_air_water");
     public static final Supplier<SoundEvent> VOLITANS_BITE = registerSound("volitans_bite");
     public static final Supplier<SoundEvent> VOLITANS_HORN_GORE = registerSound("volitans_horn_gore");
+    public static final Supplier<SoundEvent> VOLITANS_CLAWS = registerSound("volitans_claws");
+    public static final Supplier<SoundEvent> VOLITANS_BREATH_START = registerSound("volitans_breath_start");
+    public static final Supplier<SoundEvent> VOLITANS_BREATHING = registerSound("volitans_breathing");
+    public static final Supplier<SoundEvent> VOLITANS_BREATH_END = registerSound("volitans_breath_end");
+    public static final Supplier<SoundEvent> VOLITANS_ENTER_BURROW = registerSound("volitans_enter_burrow");
+    public static final Supplier<SoundEvent> VOLITANS_BURROW_IDLE = registerSound("volitans_burrow_idle");
+    public static final Supplier<SoundEvent> VOLITANS_BURROW_MOVE = registerSound("volitans_burrow_move");
+    public static final Supplier<SoundEvent> VOLITANS_BURROW_EXIT = registerSound("volitans_burrow_exit");
+    public static final Supplier<SoundEvent> VOLITANS_WALK = registerSound("volitans_walk");
+    public static final Supplier<SoundEvent> VOLITANS_RUN = registerSound("volitans_run");
+    public static final Supplier<SoundEvent> VOLITANS_POISON_BALL_READY = registerSound("volitans_poison_ball_ready");
+    public static final Supplier<SoundEvent> VOLITANS_POISON_BALL_SHOOT = registerSound("volitans_poison_ball_shoot");
     public static final Supplier<SoundEvent> VOLITANS_HURT = registerSound("volitans_hurt");
     public static final Supplier<SoundEvent> VOLITANS_DIE = registerSound("volitans_die");
+    public static final Supplier<SoundEvent> VOLITANS_TAKEOFF = registerSound("volitans_takeoff");
+    public static final Supplier<SoundEvent> VOLITANS_LANDED = registerSound("volitans_landed");
     public static final Supplier<SoundEvent> VOLITANS_SLAMMING = registerSound("volitans_slamming");
     public static final Supplier<SoundEvent> VOLITANS_SLAMMED = registerSound("volitans_slammed");
 

@@ -17,7 +17,6 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
-import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -3676,7 +3675,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this, 0.004D, -0.03D, 0.1F));
-        // Sleep is now handled by DragonSleepBehavior in base class tick
+        // Sleep is now handled by DragonSleepComponent in base class tick
 
         // Babies don't have combat abilities
         if (!this.isBaby()) {
@@ -3760,6 +3759,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
         // Invulnerability during dodge (i-frames)
         if (dodgeIFramesTicks > 0) {
+            return false;
+        }
+        // Invulnerability while Ground Rend ability is active.
+        if (isGroundRending()) {
             return false;
         }
         // Immune to lightning damage
@@ -3951,9 +3954,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     @Override
-    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonEntity.DragonSleepPreferences getSleepPreferences() {
         // Raevyx are daylight sleepers (avoid thunderstorms)
-        return DragonSleepBehavior.DragonSleepPreferences.DIURNAL();
+        return DragonEntity.DragonSleepPreferences.DIURNAL();
     }
 
     @Override
@@ -4292,7 +4295,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
-        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
+        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepComponent
         boolean shouldHaveNoGravity = isFlying() || isHovering();
         this.setNoGravity(shouldHaveNoGravity);
 

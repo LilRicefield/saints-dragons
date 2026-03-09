@@ -37,6 +37,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
     private static final int POISON_DURATION_TICKS = 20 * 30; // 30 seconds
     private static final int POISON_AMPLIFIER = 1;
     private static final int SLAMMING_SOUND_TICKS = 90;
+    private static final int IMPACT_SPINE_WAVES = 3;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[]{
             new AbilitySectionDuration(STARTUP, SLAMMING_ANIM_TICKS),
@@ -237,24 +238,42 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
     private void spawnImpactSpines(Volitans dragon) {
         Vec3 center = dragon.position().add(0.0D, dragon.getBbHeight() * 0.55D, 0.0D);
         double spawnRadius = Math.max(1.25D, dragon.getBbWidth() * 0.65D);
+        for (int wave = 0; wave < IMPACT_SPINE_WAVES; wave++) {
+            double waveRadius = spawnRadius * (1.0D + (wave * 0.35D));
+            double angleOffset = (Math.PI / 10.0D) * wave;
+            float ringSpeed = 1.20F + (wave * 0.25F);
+            double verticalBias = 0.14D + (wave * 0.07D);
+            int ringCount = 10 + (wave * 2);
 
-        for (int i = 0; i < 10; i++) {
-            Vec3 direction;
-            if (i < 8) {
-                double angle = (Math.PI * 2.0D * i) / 8.0D;
-                direction = new Vec3(Math.cos(angle), 0.18D, Math.sin(angle)).normalize();
-            } else if (i == 8) {
-                direction = new Vec3(0.0D, 1.0D, 0.0D);
-            } else {
-                direction = new Vec3(0.0D, -0.65D, 0.0D).normalize();
-            }
-
-            VolitansSpineEntity spine = new VolitansSpineEntity(dragon.level(), dragon);
-            Vec3 spawnPos = center.add(direction.scale(spawnRadius));
-            spine.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
-            spine.shoot(direction.x, direction.y, direction.z, 1.35F, 0.0F);
-            spine.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
-            dragon.level().addFreshEntity(spine);
+            spawnSpineRing(dragon, center, waveRadius, ringCount, angleOffset, verticalBias, ringSpeed);
         }
+    }
+
+    private void spawnSpineRing(Volitans dragon, Vec3 center, double radius, int count, double angleOffset, double verticalBias, float speed) {
+        for (int i = 0; i < count; i++) {
+            double angle = angleOffset + (Math.PI * 2.0D * i) / (double) count;
+            double jitterX = (dragon.getRandom().nextDouble() - 0.5D) * 0.10D;
+            double jitterY = (dragon.getRandom().nextDouble() - 0.5D) * 0.06D;
+            double jitterZ = (dragon.getRandom().nextDouble() - 0.5D) * 0.10D;
+            Vec3 direction = new Vec3(Math.cos(angle) + jitterX, verticalBias + jitterY, Math.sin(angle) + jitterZ).normalize();
+            float variedSpeed = speed + (dragon.getRandom().nextFloat() - 0.5F) * 0.18F;
+            spawnSpine(dragon, center, direction, radius, variedSpeed);
+        }
+    }
+
+    private void spawnSpine(Volitans dragon, Vec3 center, Vec3 direction, double radius, float speed) {
+        VolitansSpineEntity spine = new VolitansSpineEntity(dragon.level(), dragon);
+        Vec3 horizontal = new Vec3(direction.x, 0.0D, direction.z);
+        if (horizontal.lengthSqr() < 1.0E-4D) {
+            horizontal = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            horizontal = horizontal.normalize();
+        }
+        // Keep origins on a flat ring so spikes do not spawn above/below the dragon.
+        Vec3 spawnPos = center.add(horizontal.scale(radius));
+        spine.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
+        spine.shoot(direction.x, direction.y, direction.z, speed, 0.0F);
+        spine.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
+        dragon.level().addFreshEntity(spine);
     }
 }

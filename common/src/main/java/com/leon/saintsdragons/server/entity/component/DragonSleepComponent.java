@@ -1,17 +1,16 @@
 package com.leon.saintsdragons.server.entity.component;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 public final class DragonSleepComponent {
     private final DragonEntity dragon;
     private final EntityDataAccessor<Boolean> dataSleeping;
     private final EntityDataAccessor<Boolean> dataSleepingEntering;
     private final EntityDataAccessor<Boolean> dataSleepingExiting;
-    private final DragonSleepBehavior behavior;
-
     private boolean sleeping = false;
     private boolean sleepingEntering = false;
     private boolean sleepingExiting = false;
@@ -24,7 +23,8 @@ public final class DragonSleepComponent {
     private int sleepTransitionTicks = 0;
     private int sleepAmbientCooldownTicks = 0;
     private int sleepReentryCooldownTicks = 0;
-    private int sleepCancelTicks = 0;
+    private int sleepActionCooldown = 0;
+    private SleepPhase currentPhase = SleepPhase.IDLE;
 
     public DragonSleepComponent(DragonEntity dragon,
                                 EntityDataAccessor<Boolean> dataSleeping,
@@ -34,17 +34,17 @@ public final class DragonSleepComponent {
         this.dataSleeping = dataSleeping;
         this.dataSleepingEntering = dataSleepingEntering;
         this.dataSleepingExiting = dataSleepingExiting;
-        this.behavior = new DragonSleepBehavior(dragon);
+        if (shouldSleepBasedOnConditions()) {
+            delaySleep(60, 80);
+        } else {
+            delaySleep(100, 300);
+        }
     }
 
     public void tick() {
-        behavior.tick();
+        tickSleepDecisions();
         tickSleepTransitions();
         tickSleepCooldowns();
-    }
-
-    public DragonSleepBehavior getBehavior() {
-        return behavior;
     }
 
     public boolean isSleeping() {
@@ -87,7 +87,214 @@ public final class DragonSleepComponent {
     public void clearCooldowns() {
         sleepAmbientCooldownTicks = 0;
         sleepReentryCooldownTicks = 0;
-        sleepCancelTicks = 0;
+    }
+
+    private void tickSleepDecisions() {
+        if (dragon.level().isClientSide) {
+            return;
+        }
+        if (!dragon.supportsSleep()) {
+            return;
+        }
+
+        if (sleepActionCooldown > 0) {
+            sleepActionCooldown--;
+        }
+
+        // Wild dragons: clear any persisted sit order/command after reload so sleep can re-evaluate.
+        if (!dragon.isTame() && dragon.isOrderedToSit() && !dragon.isSleeping() && !dragon.isSleepTransitioning()) {
+            dragon.setOrderedToSit(false);
+            if (dragon.getCommand() == 1) {
+                dragon.setCommand(0);
+            }
+            if (dragon.getSitProgress() > 0f || dragon.getPrevSitProgress() > 0f) {
+                dragon.clearSitProgress();
+            }
+        }
+
+        updatePhase();
+
+        if (dragon.isTame()) {
+            handleTamedDragonSleep();
+        }
+
+        if (currentPhase == SleepPhase.IDLE && shouldAttemptSleep()) {
+            if (tryStartSleeping()) {
+                currentPhase = SleepPhase.ENTERING;
+            }
+        } else if (currentPhase == SleepPhase.SLEEPING) {
+            boolean shouldWake = shouldWakeUp();
+            if (shouldWake && tryWakeUp()) {
+                currentPhase = SleepPhase.EXITING;
+            }
+        }
+    }
+
+    private void updatePhase() {
+        if (dragon.isSleepTransitioning()) {
+            if (dragon.isSleeping()) {
+                if (currentPhase != SleepPhase.EXITING) {
+                    currentPhase = SleepPhase.EXITING;
+                }
+            } else if (currentPhase != SleepPhase.ENTERING) {
+                currentPhase = SleepPhase.ENTERING;
+            }
+        } else if (dragon.isSleeping()) {
+            currentPhase = SleepPhase.SLEEPING;
+        } else if (currentPhase != SleepPhase.IDLE) {
+            currentPhase = SleepPhase.IDLE;
+            delaySleep(40, 60);
+        }
+    }
+
+    private void handleTamedDragonSleep() {
+        if (shouldFollowOwnerSleepNow()) {
+            // Owner-bed sleep should not be blocked by stale wake/suppression cooldowns.
+            sleepActionCooldown = 0;
+            sleepReentryCooldownTicks = 0;
+            return;
+        }
+
+        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
+            sleepActionCooldown = 0;
+            tryWakeUp();
+        }
+    }
+
+    private boolean shouldSleepBasedOnConditions() {
+        if (!dragon.supportsSleep()) {
+            return false;
+        }
+
+        if (dragon.isTame()) {
+            return shouldFollowOwnerSleepNow();
+        }
+
+        DragonEntity.DragonSleepPreferences prefs = dragon.getSleepPreferences();
+        if (!prefs.canSleepDuringConditions(dragon.level())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean shouldFollowOwnerSleepNow() {
+        // Owner-follow sleep trigger: tamed dragon, owner sleeping, and nighttime.
+        return dragon.isTame() && !dragon.level().isDay() && isOwnerSleeping();
+    }
+
+    private boolean shouldAttemptSleep() {
+        if (!dragon.supportsSleep()) {
+            return false;
+        }
+        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
+            return false;
+        }
+        if (sleepActionCooldown > 0) {
+            return false;
+        }
+        if (!dragon.canSleepNow()) {
+            return false;
+        }
+        if (!canSleepInCurrentEnvironment()) {
+            return false;
+        }
+
+        if (dragon.isTame()) {
+            return shouldFollowOwnerSleepNow();
+        }
+
+        DragonEntity.DragonSleepPreferences prefs = dragon.getSleepPreferences();
+        if (!prefs.canSleepDuringConditions(dragon.level())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean shouldWakeUp() {
+        if (!dragon.supportsSleep()) return false;
+        if (!dragon.isSleeping()) return false;
+        if (!dragon.canSleepNow()) return true;
+        if (!canSleepInCurrentEnvironment()) return true;
+
+        if (dragon.isTame()) {
+            return !shouldFollowOwnerSleepNow();
+        }
+
+        DragonEntity.DragonSleepPreferences prefs = dragon.getSleepPreferences();
+        if (!prefs.canSleepDuringConditions(dragon.level())) return true;
+
+        return false;
+    }
+
+    private boolean canSleepInCurrentEnvironment() {
+        if (dragon.isDying() || !dragon.isAlive() || dragon.isDeadOrDying()) return false;
+        if (dragon.isVehicle()) return false;
+        if (dragon.getTarget() != null) return false;
+        if (dragon.isInWaterOrBubble() || dragon.isInLava()) return false;
+
+        boolean alreadySleepingOrTransitioning = dragon.isSleeping() || dragon.isSleepTransitioning();
+        boolean ownerBedSleep = shouldFollowOwnerSleepNow();
+        boolean ownerSitCommand = dragon.isTame() && (dragon.isOrderedToSit() || dragon.getCommand() == 1);
+        if (!alreadySleepingOrTransitioning) {
+            // Some sit poses can transiently report off-ground. Allow owner-bed sleep when explicitly owner-sat.
+            if (!dragon.onGround() && !(ownerBedSleep && ownerSitCommand)) return false;
+            if (dragon instanceof com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable flyer) {
+                if (flyer.isFlying() || flyer.isHovering() || flyer.isTakeoff() || flyer.isLanding()) {
+                    return false;
+                }
+            }
+        }
+
+        if (dragon.isSleepSuppressed() && !shouldFollowOwnerSleepNow()) return false;
+        return true;
+    }
+
+    public boolean tryStartSleeping() {
+        if (sleepActionCooldown > 0) return false;
+        if (!dragon.supportsSleep()) return false;
+        if (!dragon.canSleepNow()) return false;
+        if (!canSleepInCurrentEnvironment()) return false;
+        if (dragon.isSleeping() || dragon.isSleepTransitioning()) return false;
+        dragon.startSleepEnter();
+        delaySleep(20, 40);
+        return true;
+    }
+
+    public boolean tryWakeUp() {
+        if (sleepActionCooldown > 0) return false;
+        if (!dragon.supportsSleep()) return false;
+        if (!dragon.isSleeping() && !dragon.isSleepTransitioning()) return false;
+        dragon.startSleepExit();
+        delaySleep(20, 40);
+        return true;
+    }
+
+    public void forceWakeUp() {
+        sleepActionCooldown = 0;
+        if (!dragon.supportsSleep()) {
+            return;
+        }
+        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
+            dragon.wakeUpImmediately();
+        }
+        delaySleep(90, 120);
+    }
+
+    public void delaySleep(int min, int max) {
+        this.sleepActionCooldown = min + dragon.getRandom().nextInt(max - min + 1);
+    }
+
+    public int getSleepCooldown() {
+        return sleepActionCooldown;
+    }
+
+    private boolean isOwnerSleeping() {
+        LivingEntity owner = dragon.getOwner();
+        if (!(owner instanceof Player player)) return false;
+        if (!player.isSleeping() || !player.isAlive()) return false;
+        return player.level() == dragon.level();
     }
 
     public void startSleepEnter() {
@@ -110,6 +317,10 @@ public final class DragonSleepComponent {
 
         boolean alreadySeated = dragon.sleepIsAlreadySeatedForSleep();
         boolean forceSitDown = dragon.sleepShouldForceSitDownOnEnter();
+        if (dragon.isTame() && (dragon.isOrderedToSit() || dragon.getCommand() == 1) && alreadySeated) {
+            // For owner-commanded sit, skip sit-down and play fall-asleep directly.
+            forceSitDown = false;
+        }
         dragon.sleepOnLockCommand(sleepCommandSnapshot);
         dragon.sleepOnFreezeTick();
         if (alreadySeated && !forceSitDown) {
@@ -177,14 +388,12 @@ public final class DragonSleepComponent {
     }
 
     public void saveToNBT(CompoundTag tag) {
-        tag.putInt("SleepCancelTicks", sleepCancelTicks);
         if (sleepCommandSnapshot >= 0) {
             tag.putInt("SleepCommandSnapshot", sleepCommandSnapshot);
         }
     }
 
     public void loadFromNBT(CompoundTag tag) {
-        sleepCancelTicks = tag.contains("SleepCancelTicks") ? tag.getInt("SleepCancelTicks") : 0;
         sleepCommandSnapshot = tag.contains("SleepCommandSnapshot") ? tag.getInt("SleepCommandSnapshot") : -1;
 
         sleepTransitionTicks = 0;
@@ -308,7 +517,6 @@ public final class DragonSleepComponent {
     private void tickSleepCooldowns() {
         if (sleepAmbientCooldownTicks > 0) sleepAmbientCooldownTicks--;
         if (sleepReentryCooldownTicks > 0) sleepReentryCooldownTicks--;
-        if (sleepCancelTicks > 0) sleepCancelTicks--;
     }
 
     private void releaseSleepLock() {
@@ -318,5 +526,12 @@ public final class DragonSleepComponent {
             sleepLocked = false;
             dragon.sleepOnUnlockCommand(desired);
         }
+    }
+
+    private enum SleepPhase {
+        IDLE,
+        ENTERING,
+        SLEEPING,
+        EXITING
     }
 }

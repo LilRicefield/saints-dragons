@@ -2,15 +2,20 @@ package com.leon.saintsdragons.server.entity.dragons.volitans;
 
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansInteractionHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
@@ -41,7 +46,6 @@ import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
@@ -89,13 +93,45 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_BREATH_MODE =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_BREATHING =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_BURROWING =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
 
     private static final double RIDER_WALK_SPEED = 0.24D;
     private static final double RIDER_RUN_SPEED = 0.34D;
-    private static final double RIDER_SWIM_SPEED = 0.42D;
+    private static final double RIDER_BURROW_SPEED = 0.40D;
+    private static final double RIDER_SWIM_SPEED = 1.42D;
     private static final double RIDER_FLY_SPEED = 0.38D;
     public static final int TAKEOFF_ANIMATION_TICKS = 30;
+    private static final int SIT_DOWN_ANIMATION_TICKS = 50; // animation.volitans.down = 2.5s
+    private static final int SIT_UP_ANIMATION_TICKS = 25;   // animation.volitans.up = 1.25s
     private static final int LANDED_CONTROL_LOCK_TICKS = 20;
+    private static final int WALK_SOUND_DURATION_TICKS = 60;
+    private static final int RUN_SOUND_DURATION_TICKS = 30;
+    private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = 52;
+    private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = 25;
+    private static final int RIDER_BACK_DASH_COOLDOWN_TICKS = 30;
+    private static final int RIDER_BACK_DASH_LOCK_TICKS = 0;
+    private static final double RIDER_BACK_DASH_SPEED = 2.60D;
+    private static final double RIDER_BACK_DASH_GROUND_LIFT = 0.0D;
+    private static final int RIDER_BACK_DASH_DURATION_TICKS = 8;
+    private static final double RIDER_BACK_DASH_HORIZONTAL_DRAG = 0.90D;
+    private static final double RIDER_BACK_DASH_VERTICAL_DRAG = 0.95D;
+    private static final int RIDER_BACK_DASH_RECOVERY_TICKS = 5;
+    private static final double RIDER_BACK_DASH_RECOVERY_DRAG = 0.82D;
+    private static final int RIDER_BACK_DASH_SPIKE_COUNT = 3;
+    private static final float RIDER_BACK_DASH_SPIKE_DAMAGE = 5.0F;
+    private static final int RIDER_BACK_DASH_SPIKE_POISON_DURATION_TICKS = 100;
+    private static final int RIDER_BACK_DASH_SPIKE_POISON_AMPLIFIER = 0;
+    private static final float RIDER_BACK_DASH_SPIKE_SPEED = 2.9F;
+    private static final float RIDER_BACK_DASH_SPIKE_INACCURACY = 0.10F;
+    private static final int RIDER_SIDE_DODGE_DURATION_TICKS = 7;
+    private static final double RIDER_SIDE_DODGE_HORIZONTAL_DRAG = 0.90D;
+    private static final double RIDER_SIDE_DODGE_VERTICAL_DRAG = 0.95D;
+    private static final double RIDER_SIDE_DODGE_DISTANCE_BLOCKS = 10.0D;
+    private static final int RIDER_SIDE_DODGE_RECOVERY_TICKS = 5;
+    private static final double RIDER_SIDE_DODGE_RECOVERY_DRAG = 0.82D;
     private static final double LANDING_BLEND_ALTITUDE = 8.0D;
     public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
@@ -105,9 +141,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public static final int RIDER_WATER_SCAN_RADIUS = 2;
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
     private static final float SHAKE_DECAY_PER_TICK = 0.045F;
+    private static final float BURROW_MOVE_SHAKE_INTENSITY = 0.12F;
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final VolitansAnimationHandler animationHandler = new VolitansAnimationHandler(this);
+    private final VolitansInteractionHandler interactionHandler = new VolitansInteractionHandler(this);
     private final VolitansRiderController riderController;
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final java.util.Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
@@ -132,6 +170,18 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private float screenShakeAmount = 0.0F;
     private int screenShakeHoldTicks = 0;
     private float screenShakeHoldIntensity = 0.0F;
+    private int sitTransitionTicks = 0;
+    private boolean isSittingDown = false;
+    private boolean isStandingUp = false;
+    private int riderBackDashCooldownTicks = 0;
+    private boolean riderBackDashing = false;
+    private int riderBackDashTicksLeft = 0;
+    private Vec3 riderBackDashVec = Vec3.ZERO;
+    private int riderBackDashRecoveryTicks = 0;
+    private boolean riderSideDodging = false;
+    private int riderSideDodgeTicksLeft = 0;
+    private Vec3 riderSideDodgeVec = Vec3.ZERO;
+    private int riderSideDodgeRecoveryTicks = 0;
 
     public Volitans(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
@@ -182,6 +232,30 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
+    protected void playStepSound(net.minecraft.core.BlockPos pos, BlockState state) {
+        if (this.level().isClientSide) {
+            return;
+        }
+        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || isBurrowing()) {
+            return;
+        }
+
+        long now = this.level().getGameTime();
+        boolean running = getGroundMoveState() == 2;
+        long minIntervalTicks = running ? RUN_SOUND_REPLAY_INTERVAL_TICKS : WALK_SOUND_REPLAY_INTERVAL_TICKS;
+        if (now - getSoundHandler().getLastStepTick() < minIntervalTicks) {
+            return;
+        }
+        getSoundHandler().setLastStepTick(now);
+
+        if (running) {
+            getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_RUN.get(), 1.0f, 1.0f, RUN_SOUND_DURATION_TICKS);
+        } else {
+            getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_WALK.get(), 1.0f, 1.0f, WALK_SOUND_DURATION_TICKS);
+        }
+    }
+
+    @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new DragonFloatGoal(this));
         this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
@@ -199,7 +273,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
-            case ABILITY_USE, ABILITY_STOP -> true;
+            case ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_S -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -231,6 +305,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_ULTIMATE_SLAM_ACTIVE, false);
         this.entityData.define(DATA_BREATH_MODE, 0); // 0=water, 1=poison
+        this.entityData.define(DATA_BREATHING, false);
+        this.entityData.define(DATA_BURROWING, false);
     }
 
     @Override
@@ -403,9 +479,13 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public void setTakeoff(boolean takeoff) {
+        boolean wasTakeoff = this.entityData.get(DATA_TAKEOFF);
         this.entityData.set(DATA_TAKEOFF, takeoff);
         if (takeoff) {
             this.takeoffTicks = TAKEOFF_ANIMATION_TICKS;
+            if (!wasTakeoff && !level().isClientSide) {
+                getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_TAKEOFF.get(), 2.0f, 1.0f, 40);
+            }
         }
     }
 
@@ -451,6 +531,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected void onRiderTakeoffRequest(Player player) {
+        if (isBurrowing()) {
+            return;
+        }
         if (canTakeoff()) {
             setFlying(true);
             setTakeoff(true);
@@ -463,20 +546,89 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (isBurrowing()) {
+            if (VolitansAbilities.VOLITANS_BURROW_ID.equals(abilityName)) {
+                var active = combatManager.getActiveAbility();
+                if (active instanceof VolitansBurrowAbility burrowAbility
+                        && active.getAbilityType() == VolitansAbilities.VOLITANS_BURROW) {
+                    burrowAbility.requestExit(true);
+                } else {
+                    // Fail-safe for save/rejoin or interrupted ability state: never trap rider in burrow visuals.
+                    setBurrowing(false);
+                }
+            }
+            return;
+        }
         if (abilityName != null && !abilityName.isEmpty()) {
+            if (VolitansAbilities.VOLITANS_BURROW_ID.equals(abilityName)) {
+                var active = combatManager.getActiveAbility();
+                if (active instanceof VolitansBurrowAbility burrowAbility
+                        && active.getAbilityType() == VolitansAbilities.VOLITANS_BURROW) {
+                    burrowAbility.requestExit(true);
+                    return;
+                }
+            }
             useRidingAbility(abilityName);
         }
     }
 
     @Override
+    protected void onRiderAccelerationStart(Player player) {
+        if (isBurrowing()) {
+            setAccelerating(false);
+            return;
+        }
+        super.onRiderAccelerationStart(player);
+    }
+
+    @Override
+    protected void onRiderAccelerationStop(Player player) {
+        if (isBurrowing()) {
+            setAccelerating(false);
+            return;
+        }
+        super.onRiderAccelerationStop(player);
+    }
+
+    @Override
     protected void onRiderAbilityStop(Player player, String abilityName) {
+        if (isBurrowing()) {
+            return;
+        }
         if (abilityName != null && !abilityName.isEmpty()) {
+            if (VolitansAbilities.VOLITANS_POISON_BALL_ID.equals(abilityName)) {
+                var active = combatManager.getActiveAbility();
+                if (active != null && active.getAbilityType() == VolitansAbilities.VOLITANS_POISON_BALL) {
+                    ((VolitansPoisonBallAbility) active).requestRelease();
+                    return;
+                }
+            }
             forceEndActiveAbility();
         }
     }
 
     @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
+        if (locked) {
+            return false;
+        }
+        if (isBurrowing() && action == DragonRiderAction.TOGGLE_MELEE) {
+            return true;
+        }
+
+        if (action == DragonRiderAction.DOUBLE_TAP_S) {
+            onRiderBackwardDodge(player);
+            return true;
+        }
+        if (action == DragonRiderAction.DOUBLE_TAP_A) {
+            onRiderDodge(player, true);
+            return true;
+        }
+        if (action == DragonRiderAction.DOUBLE_TAP_D) {
+            onRiderDodge(player, false);
+            return true;
+        }
+
         if (action == DragonRiderAction.TOGGLE_MELEE && !locked) {
             if (combatManager.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
                 toggleBreathMode();
@@ -495,6 +647,58 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
+    protected void onRiderBackwardDodge(Player player) {
+        if (isBurrowing() || riderBackDashCooldownTicks > 0 || riderBackDashing || riderBackDashRecoveryTicks > 0
+                || riderSideDodging || riderSideDodgeRecoveryTicks > 0
+                || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition()) {
+            return;
+        }
+
+        Vec3 forward = getRiderDashForwardVector();
+        Vec3 backward = new Vec3(-forward.x, 0.0D, -forward.z).normalize();
+        Vec3 launch = new Vec3(backward.x * RIDER_BACK_DASH_SPEED, getDeltaMovement().y, backward.z * RIDER_BACK_DASH_SPEED);
+        if (onGround() && !isFlying() && !isInWaterOrBubble()) {
+            launch = launch.add(0.0D, RIDER_BACK_DASH_GROUND_LIFT, 0.0D);
+        }
+
+        beginRiderBackDash(launch);
+        if (RIDER_BACK_DASH_LOCK_TICKS > 0) {
+            lockRiderControls(RIDER_BACK_DASH_LOCK_TICKS);
+        }
+        riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
+        triggerAnim("instant", "dash_backwards");
+        fireBackwardDashSpikes();
+    }
+
+    @Override
+    protected void onRiderDodge(Player player, boolean isLeft) {
+        if (isBurrowing() || isFlying() || isInWaterOrBubble() || riderBackDashCooldownTicks > 0
+                || riderBackDashing || riderBackDashRecoveryTicks > 0
+                || riderSideDodging || riderSideDodgeRecoveryTicks > 0
+                || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition()) {
+            return;
+        }
+
+        float yawRad = (float) Math.toRadians(this.getYRot());
+        double rightX = Math.cos(yawRad);
+        double rightZ = Math.sin(yawRad);
+        double dragScale = 1.0D - Math.pow(RIDER_SIDE_DODGE_HORIZONTAL_DRAG, RIDER_SIDE_DODGE_DURATION_TICKS);
+        if (dragScale <= 1.0E-6D) {
+            return;
+        }
+        double perTickSpeed = RIDER_SIDE_DODGE_DISTANCE_BLOCKS
+                * (1.0D - RIDER_SIDE_DODGE_HORIZONTAL_DRAG) / dragScale;
+
+        double dodgeDirX = rightX * (isLeft ? 1 : -1);
+        double dodgeDirZ = rightZ * (isLeft ? 1 : -1);
+        Vec3 dodgeVector = new Vec3(dodgeDirX * perTickSpeed, 0.0D, dodgeDirZ * perTickSpeed);
+
+        beginRiderSideDodge(dodgeVector);
+        riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
+        triggerAnim("instant", isLeft ? "dodge_left" : "dodge_right");
+    }
+
+    @Override
     public void tick() {
         super.tick();
         tickScreenShake();
@@ -502,6 +706,21 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (!this.level().isClientSide) {
             tickRiderControlLock();
             this.soundHandler.tick();
+            if (riderBackDashing) {
+                handleRiderBackDashMovement();
+            }
+            if (riderBackDashRecoveryTicks > 0) {
+                handleRiderBackDashRecoveryMovement();
+            }
+            if (riderSideDodging) {
+                handleRiderSideDodgeMovement();
+            }
+            if (riderSideDodgeRecoveryTicks > 0) {
+                handleRiderSideDodgeRecoveryMovement();
+            }
+            if (riderBackDashCooldownTicks > 0) {
+                riderBackDashCooldownTicks--;
+            }
 
             if (takeoffTicks > 0) {
                 takeoffTicks--;
@@ -517,6 +736,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             }
 
             tickRiderLandingBlendTimer();
+            updateSittingProgress();
 
             if (!isUltimateSlamActive() && this.isInWaterOrBubble() && isFlying() && !isGoingUp()) {
                 markLandedNow();
@@ -538,6 +758,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         tickBankingLogic();
         tickPitchingLogic();
 
+        this.noPhysics = false;
         if (isFlying()) {
             this.setNoGravity(true);
             switchToAirNavigation();
@@ -552,6 +773,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
         if (!this.level().isClientSide) {
             tickAnimationStates();
+            tickBurrowRumbleShake();
         }
     }
 
@@ -606,6 +828,23 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             return;
         }
 
+        if (riderBackDashing) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+        if (riderBackDashRecoveryTicks > 0) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+        if (riderSideDodging) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+        if (riderSideDodgeRecoveryTicks > 0) {
+            super.travel(Vec3.ZERO);
+            return;
+        }
+
         if (areRiderControlsLocked()) {
             super.travel(Vec3.ZERO);
             return;
@@ -613,7 +852,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player rider
                 && this.isTame() && this.isOwnedBy(rider)) {
-            if (!isFlying() && isGoingUp() && canTakeoff()) {
+            if (!isBurrowing() && !isFlying() && isGoingUp() && canTakeoff()) {
                 setFlying(true);
                 setTakeoff(true);
                 setLanding(false);
@@ -629,6 +868,14 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
             if (this.isInWaterOrBubble()) {
                 riderController.handleSwimTravel(rider, riddenInput);
+                return;
+            }
+
+            if (isBurrowing()) {
+                this.setRunning(false);
+                this.setAccelerating(false);
+                this.setSpeed((float) RIDER_BURROW_SPEED);
+                super.travel(motion);
                 return;
             }
 
@@ -649,23 +896,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
-        ItemStack heldItem = player.getItemInHand(hand);
-
-        if (this.isTame() && this.isOwnedBy(player) && hand == InteractionHand.MAIN_HAND) {
-            if (!player.isCrouching() && heldItem.isEmpty() && !this.isVehicle() && this.canOwnerMount(player)) {
-                if (!this.level().isClientSide) {
-                    if (this.isOrderedToSit()) {
-                        this.setOrderedToSit(false);
-                    }
-                    if (this.getCommand() == 1) {
-                        this.setCommand(0);
-                    }
-                    this.setTarget(null);
-                    this.getNavigation().stop();
-                    player.startRiding(this);
-                }
-                return InteractionResult.sidedSuccess(this.level().isClientSide);
-            }
+        InteractionResult handlerResult = interactionHandler.handleInteraction(player, hand);
+        if (handlerResult != InteractionResult.PASS) {
+            return handlerResult;
         }
 
         return super.mobInteract(player, hand);
@@ -691,6 +924,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Volitans> movement =
                 new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        // Volitans does not use keyframed audio on movement tracks.
+        movement.setSoundKeyframeHandler(event -> { });
         controllers.add(movement);
 
         AnimationController<Volitans> actions =
@@ -739,7 +974,10 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
-        return new RiderAbilityBinding(VolitansAbilities.VOLITANS_ULTIMATE_ID, RiderAbilityBinding.Activation.PRESS);
+        String abilityId = (isFlying() || !onGround())
+                ? VolitansAbilities.VOLITANS_ULTIMATE_ID
+                : VolitansAbilities.VOLITANS_BURROW_ID;
+        return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
@@ -817,6 +1055,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (tag.contains("VolitansBreathMode")) {
             setBreathMode(tag.getInt("VolitansBreathMode"));
         }
+        // Burrow is an active ability state and should never survive reconnect/reload.
+        setBurrowing(false);
         applyConfiguredAttributes();
     }
 
@@ -887,9 +1127,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
         DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
         if (type == VolitansAbilities.VOLITANS_ROAR
+                || type == VolitansAbilities.VOLITANS_BURROW
                 || type == VolitansAbilities.VOLITANS_BITE
                 || type == VolitansAbilities.VOLITANS_CLAW
                 || type == VolitansAbilities.VOLITANS_BREATH
+                || type == VolitansAbilities.VOLITANS_POISON_BALL
                 || type == VolitansAbilities.VOLITANS_HORN_GORE
                 || type == VolitansAbilities.VOLITANS_ULTIMATE) {
             combatManager.tryUseAbility(type);
@@ -906,6 +1148,22 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     public boolean isPoisonBreathMode() {
         return getBreathMode() == 1;
+    }
+
+    public boolean isBreathing() {
+        return this.entityData.get(DATA_BREATHING);
+    }
+
+    public void setBreathing(boolean breathing) {
+        this.entityData.set(DATA_BREATHING, breathing);
+    }
+
+    public boolean isBurrowing() {
+        return this.entityData.get(DATA_BURROWING);
+    }
+
+    public void setBurrowing(boolean burrowing) {
+        this.entityData.set(DATA_BURROWING, burrowing);
     }
 
     public void toggleBreathMode() {
@@ -959,6 +1217,142 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (Math.abs(bankAngle) < 0.01f) {
             bankAngle = 0f;
         }
+    }
+
+    private Vec3 getRiderDashForwardVector() {
+        LivingEntity rider = getControllingPassenger();
+        if (rider != null) {
+            Vec3 riderLook = rider.getLookAngle();
+            if (riderLook.lengthSqr() > 1.0E-6D) {
+                return riderLook.normalize();
+            }
+        }
+        Vec3 look = getLookAngle();
+        if (look.lengthSqr() > 1.0E-6D) {
+            return look.normalize();
+        }
+        float yawRad = getYRot() * Mth.DEG_TO_RAD;
+        return new Vec3(-Mth.sin(yawRad), 0.0D, Mth.cos(yawRad)).normalize();
+    }
+
+    private void beginRiderBackDash(Vec3 vec) {
+        this.riderBackDashing = true;
+        this.riderBackDashRecoveryTicks = 0;
+        this.riderSideDodging = false;
+        this.riderSideDodgeVec = Vec3.ZERO;
+        this.riderSideDodgeTicksLeft = 0;
+        this.riderSideDodgeRecoveryTicks = 0;
+        this.riderBackDashVec = vec;
+        this.riderBackDashTicksLeft = Math.max(1, RIDER_BACK_DASH_DURATION_TICKS);
+        this.setDeltaMovement(vec);
+        this.getNavigation().stop();
+        this.hasImpulse = true;
+    }
+
+    private void handleRiderBackDashMovement() {
+        this.setDeltaMovement(riderBackDashVec);
+        this.hasImpulse = true;
+        riderBackDashVec = riderBackDashVec.multiply(
+                RIDER_BACK_DASH_HORIZONTAL_DRAG,
+                RIDER_BACK_DASH_VERTICAL_DRAG,
+                RIDER_BACK_DASH_HORIZONTAL_DRAG
+        );
+        if (--riderBackDashTicksLeft <= 0) {
+            riderBackDashing = false;
+            riderBackDashRecoveryTicks = RIDER_BACK_DASH_RECOVERY_TICKS;
+        }
+    }
+
+    private void handleRiderBackDashRecoveryMovement() {
+        this.setDeltaMovement(riderBackDashVec);
+        this.hasImpulse = true;
+        riderBackDashVec = riderBackDashVec.multiply(
+                RIDER_BACK_DASH_RECOVERY_DRAG,
+                RIDER_BACK_DASH_VERTICAL_DRAG,
+                RIDER_BACK_DASH_RECOVERY_DRAG
+        );
+        if (--riderBackDashRecoveryTicks <= 0) {
+            riderBackDashVec = Vec3.ZERO;
+        }
+    }
+
+    private void beginRiderSideDodge(Vec3 vec) {
+        this.riderSideDodging = true;
+        this.riderBackDashing = false;
+        this.riderBackDashRecoveryTicks = 0;
+        this.riderBackDashVec = Vec3.ZERO;
+        this.riderBackDashTicksLeft = 0;
+        this.riderSideDodgeRecoveryTicks = 0;
+        this.riderSideDodgeVec = vec;
+        this.riderSideDodgeTicksLeft = Math.max(1, RIDER_SIDE_DODGE_DURATION_TICKS);
+        this.setDeltaMovement(vec);
+        this.getNavigation().stop();
+        this.hasImpulse = true;
+    }
+
+    private void handleRiderSideDodgeMovement() {
+        this.setDeltaMovement(riderSideDodgeVec);
+        this.hasImpulse = true;
+        riderSideDodgeVec = riderSideDodgeVec.multiply(
+                RIDER_SIDE_DODGE_HORIZONTAL_DRAG,
+                RIDER_SIDE_DODGE_VERTICAL_DRAG,
+                RIDER_SIDE_DODGE_HORIZONTAL_DRAG
+        );
+        if (--riderSideDodgeTicksLeft <= 0) {
+            riderSideDodging = false;
+            riderSideDodgeRecoveryTicks = RIDER_SIDE_DODGE_RECOVERY_TICKS;
+        }
+    }
+
+    private void handleRiderSideDodgeRecoveryMovement() {
+        this.setDeltaMovement(riderSideDodgeVec);
+        this.hasImpulse = true;
+        riderSideDodgeVec = riderSideDodgeVec.multiply(
+                RIDER_SIDE_DODGE_RECOVERY_DRAG,
+                RIDER_SIDE_DODGE_VERTICAL_DRAG,
+                RIDER_SIDE_DODGE_RECOVERY_DRAG
+        );
+        if (--riderSideDodgeRecoveryTicks <= 0) {
+            riderSideDodgeVec = Vec3.ZERO;
+        }
+    }
+
+    private void fireBackwardDashSpikes() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        Vec3 muzzle = getMouthPosition();
+        Vec3 dir = getDragonHorizontalForwardVector();
+        Vec3 right = dir.cross(new Vec3(0.0D, 1.0D, 0.0D));
+        if (right.lengthSqr() < 1.0E-6D) {
+            float yawRad = getYRot() * Mth.DEG_TO_RAD;
+            right = new Vec3(Mth.cos(yawRad), 0.0D, Mth.sin(yawRad));
+        } else {
+            right = right.normalize();
+        }
+
+        for (int i = 0; i < RIDER_BACK_DASH_SPIKE_COUNT; i++) {
+            double spread = (i - 1) * 0.24D;
+            Vec3 shootDir = dir.add(right.scale(spread)).normalize();
+            Vec3 origin = muzzle.add(shootDir.scale(Math.max(1.2D, getBbWidth() * 0.7D))).add(0.0D, 0.15D, 0.0D);
+            VolitansSpineEntity spine = new VolitansSpineEntity(level(), this);
+            spine.setPos(origin.x, origin.y, origin.z);
+            spine.setImpactEffects(
+                    RIDER_BACK_DASH_SPIKE_DAMAGE,
+                    RIDER_BACK_DASH_SPIKE_POISON_DURATION_TICKS,
+                    RIDER_BACK_DASH_SPIKE_POISON_AMPLIFIER
+            );
+            spine.setNoGravity(true);
+            spine.shoot(shootDir.x, shootDir.y, shootDir.z, RIDER_BACK_DASH_SPIKE_SPEED, RIDER_BACK_DASH_SPIKE_INACCURACY);
+            spine.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
+            level().addFreshEntity(spine);
+        }
+    }
+
+    private Vec3 getDragonHorizontalForwardVector() {
+        float yawRad = getYRot() * Mth.DEG_TO_RAD;
+        return new Vec3(-Mth.sin(yawRad), 0.0D, Mth.cos(yawRad)).normalize();
     }
 
     private void tickPitchingLogic() {
@@ -1039,6 +1433,21 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
     }
 
+    private void tickBurrowRumbleShake() {
+        if (!isBurrowing()) {
+            return;
+        }
+        boolean moving = Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.03F
+                || Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.03F
+                || this.getDeltaMovement().horizontalDistanceSqr() > 0.0016D;
+        float target = moving ? BURROW_MOVE_SHAKE_INTENSITY : 0.0F;
+        this.screenShakeAmount = target;
+        this.prevScreenShakeAmount = target;
+        this.screenShakeHoldTicks = 0;
+        this.screenShakeHoldIntensity = 0.0F;
+        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, target);
+    }
+
     private boolean isRiddenByOwner() {
         if (!isTame() || !isVehicle()) {
             return false;
@@ -1067,6 +1476,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             boolean completedLanding = isLanding() && onGround();
             if ((completedLanding || touchdownFromFlight) && onGround() && !level().isClientSide) {
                 triggerAnim("actions", "landed");
+                getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
                 lockRiderControls(LANDED_CONTROL_LOCK_TICKS);
                 markLandedNow();
             }
@@ -1150,7 +1560,79 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public float maxSitTicks() {
-        return 24.0F;
+        return SIT_DOWN_ANIMATION_TICKS;
+    }
+
+    private int getSitDownAnimationTicks() {
+        return SIT_DOWN_ANIMATION_TICKS;
+    }
+
+    private int getSitUpAnimationTicks() {
+        return SIT_UP_ANIMATION_TICKS;
+    }
+
+    private void updateSittingProgress() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        if (sitTransitionTicks > 0) {
+            sitTransitionTicks--;
+            if (sitTransitionTicks == 0) {
+                isSittingDown = false;
+                isStandingUp = false;
+            }
+        }
+
+        float sitProgress = getSitProgress();
+        if (this.isOrderedToSit()) {
+            if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
+                animationHandler.triggerSitDownAnimation();
+                isSittingDown = true;
+                isStandingUp = false;
+                sitTransitionTicks = getSitDownAnimationTicks();
+            }
+
+            if (sitProgress < maxSitTicks()) {
+                sitProgress++;
+                setSitProgress(sitProgress);
+            }
+        } else {
+            if (isVehicle()) {
+                if (sitProgress != 0f) {
+                    clearSitProgress();
+                }
+            } else if (sitProgress > 0f) {
+                if ((sitProgress >= maxSitTicks() - 1 || isSittingDown) && !isStandingUp) {
+                    animationHandler.triggerSitUpAnimation();
+                    isStandingUp = true;
+                    isSittingDown = false;
+                    sitTransitionTicks = getSitUpAnimationTicks();
+                }
+
+                float decrementRate = maxSitTicks() / (float) getSitUpAnimationTicks();
+                sitProgress -= decrementRate;
+                if (sitProgress < 0f) {
+                    sitProgress = 0f;
+                }
+                setSitProgress(sitProgress);
+            }
+        }
+    }
+
+    @Override
+    public boolean isInSitTransition() {
+        return isSittingDown || isStandingUp;
+    }
+
+    @Override
+    public boolean isSittingDownAnimation() {
+        return isSittingDown;
+    }
+
+    @Override
+    public boolean isStandingUpAnimation() {
+        return isStandingUp;
     }
 
     @Override

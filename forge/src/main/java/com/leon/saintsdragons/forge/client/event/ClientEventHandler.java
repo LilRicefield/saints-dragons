@@ -4,6 +4,8 @@ import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.render.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
+import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
+import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.forge.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
@@ -442,6 +444,8 @@ public class ClientEventHandler {
         DragonSoundRuntime.tick(minecraft);
         RaevyxLightningBeamSoundController.tick(minecraft);
         IgnivorusFireBreathSoundController.tick(minecraft);
+        VolitansBreathSoundController.tick(minecraft);
+        VolitansBurrowSoundController.tick(minecraft);
     }
 }
 

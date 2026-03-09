@@ -37,12 +37,14 @@ public class VolitansWaterBreathRenderer extends EntityRenderer<VolitansWaterBre
     @Override
     public void render(@NotNull VolitansWaterBreathEntity entity, float entityYaw, float partialTicks,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
-        int frame = Math.min(entity.getAge() / 2, TOTAL_FRAMES - 1);
-        ResourceLocation texture = entity.isPoisonMode() ? POISON_TEXTURES[frame] : WATER_TEXTURES[frame];
-
         float age = entity.getAge() + partialTicks;
         float life = Math.max(1.0F, entity.getMaxAge());
         float normalized = Mth.clamp(age / life, 0.0F, 1.0F);
+        int frame = ((int) (age / 3.0F)) % TOTAL_FRAMES;
+        if (frame < 0) {
+            frame += TOTAL_FRAMES;
+        }
+        ResourceLocation texture = entity.isPoisonMode() ? POISON_TEXTURES[frame] : WATER_TEXTURES[frame];
         float alpha = Mth.lerp(normalized, 1.0F, 0.82F);
         float scale = Mth.lerp(normalized, 0.34F, 0.72F);
 

@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
@@ -21,6 +23,9 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
     private static final int LIFETIME_TICKS = 40;
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("volitans_spine");
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
+    private float impactDamage = 0.0F;
+    private int poisonDurationTicks = 0;
+    private int poisonAmplifier = 0;
 
     public VolitansSpineEntity(EntityType<? extends VolitansSpineEntity> type, Level level) {
         super(type, level);
@@ -35,6 +40,13 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
         this.setBaseDamage(0.0D);
     }
 
+    public void setImpactEffects(float damage, int poisonDurationTicks, int poisonAmplifier) {
+        this.impactDamage = Math.max(0.0F, damage);
+        this.poisonDurationTicks = Math.max(0, poisonDurationTicks);
+        this.poisonAmplifier = Math.max(0, poisonAmplifier);
+        this.setBaseDamage(this.impactDamage);
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -45,10 +57,41 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
 
     @Override
     protected void onHitEntity(EntityHitResult result) {
-        // Visual-only projectile; no damage/effects.
         if (!level().isClientSide) {
-            discard();
+            if (impactDamage > 0.0F && result.getEntity() instanceof LivingEntity target) {
+                LivingEntity owner = this.getOwner() instanceof LivingEntity living ? living : null;
+                boolean validTarget = owner == null || (target != owner && !owner.isAlliedTo(target));
+                if (validTarget) {
+                    if (owner != null) {
+                        target.hurt(this.damageSources().mobAttack(owner), impactDamage);
+                    } else {
+                        target.hurt(this.damageSources().magic(), impactDamage);
+                    }
+                    if (poisonDurationTicks > 0) {
+                        target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDurationTicks, poisonAmplifier));
+                    }
+                    discard();
+                }
+            } else {
+                discard();
+            }
         }
+    }
+
+    @Override
+    protected boolean canHitEntity(net.minecraft.world.entity.Entity target) {
+        if (!super.canHitEntity(target)) {
+            return false;
+        }
+        if (target == getOwner()) {
+            return false;
+        }
+        if (target instanceof LivingEntity living && this.getOwner() instanceof LivingEntity owner) {
+            if (owner.isAlliedTo(living)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

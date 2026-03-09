@@ -6671,7 +6671,7 @@
 			}
 		},
 		"animation.ignivorus.take_off": {
-			"animation_length": 1.5,
+			"animation_length": 1.5417,
 			"bones": {
 				"hip": {
 					"rotation": {

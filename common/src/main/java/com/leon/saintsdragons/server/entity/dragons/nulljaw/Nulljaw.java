@@ -2470,9 +2470,9 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
     }
 
     @Override
-    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonEntity.DragonSleepPreferences getSleepPreferences() {
         // Nulljaw are nocturnal sleepers (sleep at night, active during day)
-        return DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
+        return DragonEntity.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override
@@ -2563,7 +2563,7 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
         }
 
         // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
-        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
+        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepComponent
         if (tag.contains("PhaseTwo")) {
             setPhaseTwoActive(tag.getBoolean("PhaseTwo"), false);
         }

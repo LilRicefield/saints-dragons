@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
@@ -177,6 +178,14 @@ public final class ModEntities {
                     .updateInterval(1)
                     .noSummon()
                     .build("volitans_water_breath"));
+
+    public static final Supplier<EntityType<VolitansPoisonBallEntity>> VOLITANS_POISON_BALL =
+            REGISTER.register("volitans_poison_ball", () -> EntityType.Builder.<VolitansPoisonBallEntity>of(VolitansPoisonBallEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 1.0F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("volitans_poison_ball"));
 
     private ModEntities() {
     }

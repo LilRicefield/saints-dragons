@@ -114,6 +114,9 @@ public final class DragonRideInputHandler {
     private static int volitansTertiaryHoldTicks = 0;
     private static boolean volitansBreathActive = false;
     private static final int VOLITANS_TERTIARY_HOLD_TICKS = 5;
+    private static long volitansPrimaryPressStartedAtMs = 0L;
+    private static boolean volitansPoisonBallActive = false;
+    private static final long VOLITANS_PRIMARY_HOLD_MS = 220L;
     private static int raevyxSecondaryHoldTicks = 0;
     private static boolean raevyxGroundRendTriggered = false;
     private static final int RAEVYX_SECONDARY_HOLD_TICKS = 6;
@@ -271,8 +274,9 @@ public final class DragonRideInputHandler {
             sendInput(false, false, DragonRiderAction.TAUNT, null, forward, strafe, yaw);
         }
 
-        // Double-tap dodge detection (only for Raevyx)
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+        // Double-tap dodge detection (Raevyx + Volitans)
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
+                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
             boolean leftDown = mc.options.keyLeft.isDown();
             boolean rightDown = mc.options.keyRight.isDown();
             long currentTime = System.currentTimeMillis();
@@ -314,9 +318,10 @@ public final class DragonRideInputHandler {
             wasForwardKeyDown = forwardDown;
         }
 
-        // Double-tap S detection (Ignivorus = Phase 2 toggle, Raevyx = backward dodge)
+        // Double-tap S detection (Ignivorus = Phase 2 toggle, Raevyx/Volitans = backward dash)
         if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ||
-            dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+            dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx ||
+            dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
             boolean backwardDown = mc.options.keyDown.isDown();
             long currentTime = System.currentTimeMillis();
 
@@ -336,7 +341,11 @@ public final class DragonRideInputHandler {
         } else {
             handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
         }
-        handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
+        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+            handleVolitansDualPrimary(primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
+        } else {
+            handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
+        }
         if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
             handleRaevyxDualSecondary(secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
         } else {
@@ -384,10 +393,10 @@ public final class DragonRideInputHandler {
     }
 
     private static void handleVolitansDualTertiary(boolean currentDown,
-                                                   boolean previousDown,
-                                                   float forward,
-                                                   float strafe,
-                                                   float yaw) {
+                                                    boolean previousDown,
+                                                    float forward,
+                                                    float strafe,
+                                                    float yaw) {
         if (currentDown) {
             if (!previousDown) {
                 volitansTertiaryHoldTicks = 0;
@@ -413,6 +422,50 @@ public final class DragonRideInputHandler {
         }
         volitansTertiaryHoldTicks = 0;
         volitansBreathActive = false;
+    }
+
+    private static void handleVolitansDualPrimary(boolean currentDown,
+                                                  boolean previousDown,
+                                                  float forward,
+                                                  float strafe,
+                                                  float yaw) {
+        long now = System.currentTimeMillis();
+        if (currentDown) {
+            if (!previousDown) {
+                volitansPrimaryPressStartedAtMs = now;
+                volitansPoisonBallActive = false;
+            }
+            if (!volitansPoisonBallActive
+                    && volitansPrimaryPressStartedAtMs > 0L
+                    && now - volitansPrimaryPressStartedAtMs >= VOLITANS_PRIMARY_HOLD_MS) {
+                sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                        VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
+                volitansPoisonBallActive = true;
+            }
+            return;
+        }
+
+        if (previousDown) {
+            if (volitansPoisonBallActive) {
+                sendInput(false, false, DragonRiderAction.ABILITY_STOP,
+                        VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
+            } else {
+                long heldMs = volitansPrimaryPressStartedAtMs > 0L ? now - volitansPrimaryPressStartedAtMs : 0L;
+                if (heldMs >= VOLITANS_PRIMARY_HOLD_MS) {
+                    // Fallback: if a late frame missed arming while held, still treat as hold-release shoot.
+                    sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                            VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
+                    sendInput(false, false, DragonRiderAction.ABILITY_STOP,
+                            VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
+                } else {
+                    sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                            VolitansAbilities.VOLITANS_ROAR_ID, forward, strafe, yaw);
+                }
+            }
+        }
+
+        volitansPrimaryPressStartedAtMs = 0L;
+        volitansPoisonBallActive = false;
     }
 
     private static void handleRaevyxDualSecondary(boolean currentDown,
@@ -456,8 +509,13 @@ public final class DragonRideInputHandler {
             if (volitansBreathActive) {
                 sendInput(false, false, DragonRiderAction.ABILITY_STOP, VolitansAbilities.VOLITANS_BREATH_ID, 0f, 0f, 0f);
             }
+            if (volitansPoisonBallActive) {
+                sendInput(false, false, DragonRiderAction.ABILITY_STOP, VolitansAbilities.VOLITANS_POISON_BALL_ID, 0f, 0f, 0f);
+            }
             volitansTertiaryHoldTicks = 0;
             volitansBreathActive = false;
+            volitansPrimaryPressStartedAtMs = 0L;
+            volitansPoisonBallActive = false;
         } else {
             handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
         }
@@ -523,6 +581,8 @@ public final class DragonRideInputHandler {
         wasToggleMeleeDown = false;
         wasTogglePitchModeDown = false;
         wasTauntDown = false;
+        volitansPrimaryPressStartedAtMs = 0L;
+        volitansPoisonBallActive = false;
         lastForward = 0f;
         lastStrafe = 0f;
         lastYaw = 0f;

@@ -1332,6 +1332,17 @@
       }
     ]
   },
+  "volitans_roar_air_water": {
+    "subtitle": "Volitans roars",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_roar_air_water",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
   "volitans_bite": {
     "subtitle": "Volitans bites",
     "sounds": [
@@ -1354,6 +1365,138 @@
       }
     ]
   },
+  "volitans_claws": {
+    "subtitle": "Volitans claws",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_claws",
+        "volume": 1.7,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "volitans_breath_start": {
+    "subtitle": "Volitans breathes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_breath_start",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_breathing": {
+    "subtitle": "Volitans breathes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_breathing",
+        "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_breath_end": {
+    "subtitle": "Volitans breathes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_breath_end",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_enter_burrow": {
+    "subtitle": "Volitans burrows underground",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_enter_burrow",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_burrow_idle": {
+    "subtitle": "Volitans burrows",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_burrow_idle",
+        "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_burrow_move": {
+    "subtitle": "Volitans burrows",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_burrow_move",
+        "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_burrow_exit": {
+    "subtitle": "Volitans bursts from the ground",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_burrow_exit",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_walk": {
+    "subtitle": "Volitans walks",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_walk",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "volitans_run": {
+    "subtitle": "Volitans runs",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_run",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "volitans_poison_ball_ready": {
+    "subtitle": "Volitans charges a poison ball",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_poison_ball_ready",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_poison_ball_shoot": {
+    "subtitle": "Volitans fires a poison ball",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_poison_ball_shoot",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
   "volitans_hurt": {
     "subtitle": "Volitans hurts",
     "sounds": [
@@ -1371,6 +1514,28 @@
       {
         "name": "saintsdragons:entity/volitans/volitans_die",
         "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_takeoff": {
+    "subtitle": "Volitans launches skyward",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_takeoff",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_landed": {
+    "subtitle": "Volitans lands heavily",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_landed",
+        "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 40
       }

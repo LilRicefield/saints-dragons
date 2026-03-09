@@ -17,6 +17,7 @@ import java.util.EnumSet;
  * Picks random underwater positions and swims directly toward them.
  */
 public class DirectSwimWanderGoal extends Goal {
+    private static final int RANDOM_TARGET_ATTEMPTS = 6;
 
     private final Mob mob;
     private final float turnSpeed;
@@ -202,66 +203,70 @@ public class DirectSwimWanderGoal extends Goal {
                 return shore;
             }
         }
-
-        // Pick random horizontal position (32-96 blocks away)
-        double angle = mob.getRandom().nextDouble() * Math.PI * 2.0;
-        double distance = 32.0 + mob.getRandom().nextDouble() * 64.0;
-        double offsetX = Math.cos(angle) * distance;
-        double offsetZ = Math.sin(angle) * distance;
-
-        double targetX = mob.getX() + offsetX;
-        double targetZ = mob.getZ() + offsetZ;
-
-        // Find water column at target position
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        cursor.set(targetX, mob.getY(), targetZ);
+        for (int attempt = 0; attempt < RANDOM_TARGET_ATTEMPTS; attempt++) {
+            // Pick random horizontal position (32-96 blocks away)
+            double angle = mob.getRandom().nextDouble() * Math.PI * 2.0;
+            double distance = 32.0 + mob.getRandom().nextDouble() * 64.0;
+            double offsetX = Math.cos(angle) * distance;
+            double offsetZ = Math.sin(angle) * distance;
 
-        // Find surface
-        int surfaceY = (int) mob.getY();
-        while (mob.level().getFluidState(cursor).is(FluidTags.WATER) &&
-               cursor.getY() < mob.level().getMaxBuildHeight()) {
-            surfaceY = cursor.getY();
-            cursor.move(0, 1, 0);
+            int targetBlockX = Mth.floor(mob.getX() + offsetX);
+            int targetBlockZ = Mth.floor(mob.getZ() + offsetZ);
+            int startY = Mth.floor(mob.getY());
+            cursor.set(targetBlockX, startY, targetBlockZ);
+
+            // Never trigger synchronous chunk loading from AI goals on server thread.
+            if (!mob.level().hasChunkAt(cursor)) {
+                continue;
+            }
+
+            // Find surface
+            int surfaceY = startY;
+            while (cursor.getY() < mob.level().getMaxBuildHeight()
+                    && mob.level().getFluidState(cursor).is(FluidTags.WATER)) {
+                surfaceY = cursor.getY();
+                cursor.move(0, 1, 0);
+            }
+
+            // Find bottom
+            cursor.setY(startY);
+            int bottomY = startY;
+            while (cursor.getY() > mob.level().getMinBuildHeight()
+                    && mob.level().getFluidState(cursor).is(FluidTags.WATER)) {
+                bottomY = cursor.getY();
+                cursor.move(0, -1, 0);
+            }
+
+            // No water at target
+            if (surfaceY == bottomY) {
+                continue;
+            }
+
+            // Pick random depth (favor mid-depth, avoid very bottom)
+            int minY = bottomY + 3;
+            int maxY = surfaceY - 1;
+            if (minY >= maxY) {
+                continue; // Too shallow
+            }
+
+            // 25% chance to go near surface
+            int targetY;
+            if (mob.getRandom().nextFloat() < 0.25F) {
+                targetY = Math.max(minY, maxY - 2);
+            } else {
+                targetY = minY + mob.getRandom().nextInt(maxY - minY + 1);
+            }
+
+            // Verify it's still water
+            cursor.set(targetBlockX, targetY, targetBlockZ);
+            if (!mob.level().getFluidState(cursor).is(FluidTags.WATER)) {
+                continue;
+            }
+
+            return new Vec3(targetBlockX + 0.5D, targetY, targetBlockZ + 0.5D);
         }
-
-        // Find bottom
-        cursor.setY((int) mob.getY());
-        int bottomY = (int) mob.getY();
-        while (mob.level().getFluidState(cursor).is(FluidTags.WATER) &&
-               cursor.getY() > mob.level().getMinBuildHeight()) {
-            bottomY = cursor.getY();
-            cursor.move(0, -1, 0);
-        }
-
-        // No water at target
-        if (surfaceY == bottomY) {
-            return null;
-        }
-
-        // Pick random depth (favor mid-depth, avoid very bottom)
-        int minY = bottomY + 3;
-        int maxY = surfaceY - 1;
-
-        if (minY >= maxY) {
-            return null; // Too shallow
-        }
-
-        // 25% chance to go near surface
-        int targetY;
-        if (mob.getRandom().nextFloat() < 0.25F) {
-            targetY = Math.max(minY, maxY - 2);
-        } else {
-            // Random depth
-            targetY = minY + mob.getRandom().nextInt(maxY - minY + 1);
-        }
-
-        // Verify it's water
-        cursor.set(targetX, targetY, targetZ);
-        if (!mob.level().getFluidState(cursor).is(FluidTags.WATER)) {
-            return null;
-        }
-
-        return new Vec3(targetX, targetY, targetZ);
+        return null;
     }
 
     private Vec3 findNearbyShoreTarget() {
@@ -273,6 +278,10 @@ public class DirectSwimWanderGoal extends Goal {
                 double rad = Math.toRadians(angle);
                 int x = start.getX() + (int) (Math.cos(rad) * radius);
                 int z = start.getZ() + (int) (Math.sin(rad) * radius);
+                BlockPos probe = new BlockPos(x, start.getY(), z);
+                if (!mob.level().hasChunkAt(probe)) {
+                    continue;
+                }
 
                 int groundY = mob.level().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z);
                 BlockPos ground = new BlockPos(x, groundY, z);

@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonSleepBehavior;
 import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
@@ -1125,9 +1124,9 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
     }
 
     @Override
-    public DragonSleepBehavior.DragonSleepPreferences getSleepPreferences() {
+    public DragonEntity.DragonSleepPreferences getSleepPreferences() {
         // Stegonaut are nocturnal sleepers (sleep at night, active during day)
-        return DragonSleepBehavior.DragonSleepPreferences.NOCTURNAL();
+        return DragonEntity.DragonSleepPreferences.NOCTURNAL();
     }
 
     @Override
@@ -1512,7 +1511,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         this.setOrderedToSit(restoredOrderedSit);
 
         // Don't force wake on chunk reload - let sleep behavior re-evaluate naturally (like Naturalist mod)
-        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepBehavior
+        // Sleep transition states are ephemeral and will be re-evaluated by DragonSleepComponent
     }
 
     @Override
