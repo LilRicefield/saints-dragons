@@ -55,10 +55,13 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
         if (dragon.isFlying() || dragon.isInWaterOrBubble() || dragon.isUnderWater()) {
             return false;
         }
-        if (!(dragon.getControllingPassenger() instanceof Player rider)) {
+        if (dragon.getControllingPassenger() instanceof Player rider) {
+            return dragon.isTame() && dragon.isOwnedBy(rider) && super.tryAbility();
+        }
+        if (dragon.isVehicle()) {
             return false;
         }
-        return dragon.isTame() && dragon.isOwnedBy(rider) && super.tryAbility();
+        return dragon.isTargetValid(dragon.getTarget()) && super.tryAbility();
     }
 
     @Override
@@ -84,14 +87,21 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
             dragon.setBurrowing(false);
             dragon.triggerAnim("actions", "burrow_exit");
             playExitBurrowSound(dragon);
+            dragon.grantTemporaryInvulnerability(EXIT_TICKS);
             dragon.lockRiderControls(EXIT_TICKS);
+            dragon.blockTakeoffAfterBurrowExit(EXIT_TICKS);
+            dragon.setGoingUp(false);
+            dragon.setGoingDown(false);
         }
     }
 
     @Override
     protected void endSection(DragonAbilitySection section) {
         if (section != null && (section.sectionType == ACTIVE || section.sectionType == RECOVERY)) {
-            getUser().setBurrowing(false);
+            Volitans dragon = getUser();
+            dragon.setBurrowing(false);
+            dragon.setGoingUp(false);
+            dragon.setGoingDown(false);
         }
     }
 
@@ -124,8 +134,12 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
 
     @Override
     public void interrupt() {
-        getUser().setBurrowing(false);
-        getUser().clearRiderControlLock();
+        Volitans dragon = getUser();
+        dragon.setBurrowing(false);
+        dragon.setGoingUp(false);
+        dragon.setGoingDown(false);
+        dragon.clearRiderControlLock();
+        dragon.blockTakeoffAfterBurrowExit(8);
         super.interrupt();
     }
 

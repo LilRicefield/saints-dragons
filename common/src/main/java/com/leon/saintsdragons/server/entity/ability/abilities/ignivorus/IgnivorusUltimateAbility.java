@@ -280,9 +280,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             return;
         }
 
-        // ONLY apply health penalty to tamed dragons when owner triggers it (being ridden)
-        // Wild dragons and AI-controlled tamed dragons use it for free
-        if (dragon.isTame() && dragon.isVehicle()) {
+        // Tamed Ignivorus should never lose health from ultimate use.
+        // Wild Ignivorus uses the AI threshold trigger instead of a self-health penalty.
+        if (!dragon.isTame() && dragon.isVehicle()) {
             float current = dragon.getHealth();
             float penaltyHealth = resolvePenaltyHealth();
             if (current > penaltyHealth) {

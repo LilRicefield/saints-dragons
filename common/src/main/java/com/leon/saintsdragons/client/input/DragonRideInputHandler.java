@@ -303,7 +303,8 @@ public final class DragonRideInputHandler {
 
         if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ||
             dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx ||
-            dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw) {
+            dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw ||
+            dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
             boolean forwardDown = mc.options.keyUp.isDown();
             long currentTime = System.currentTimeMillis();
 

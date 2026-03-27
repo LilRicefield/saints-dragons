@@ -32,6 +32,7 @@ import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityP
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
+import com.leon.saintsdragons.server.entity.component.DragonTakeoffComponent;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -234,6 +235,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     /** Entity data accessor for dash alternating state (true = last was right, false = last was left) */
     public static final EntityDataAccessor<Boolean> DATA_LAST_DASH_RIGHT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    /** Entity data accessor for ground rend active state */
+    public static final EntityDataAccessor<Boolean> DATA_GROUND_RENDING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
     /** Entity data accessor for feeding cooldown ticks */
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
@@ -407,6 +411,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // Ground Rend forward movement system (ability-driven)
     private boolean groundRending = false;
     private Vec3 groundRendVec = Vec3.ZERO;
+    private float groundRendTravelSpeed = 0.0F;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -544,7 +549,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public void markLandedNow() {
         setFlying(false);
         setLanding(false);
-        setTakeoff(false);
+        takeoffComponent.clear();
         this.riderTakeoffTicks = 0;
         this.timeFlying = 0;
 
@@ -585,6 +590,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // ===== SPECIALIZED HANDLER SYSTEMS =====
     private final RaevyxRiderController riderController;
     private final DragonRiderFlightComponent riderFlightComponent;
+    private final DragonTakeoffComponent takeoffComponent;
     private final DragonSoundHandler soundHandler;
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
@@ -627,6 +633,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // Initialize specialized handler systems
         this.riderController = new RaevyxRiderController(this);
+        this.takeoffComponent = createTakeoffComponent();
         this.riderFlightComponent = createRiderFlightComponent();
         this.soundHandler = new DragonSoundHandler(this);
 
@@ -682,9 +689,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             public void setFlying(boolean value) { Raevyx.this.setFlying(value); }
 
             @Override
-            public void setTakeoff(boolean value) { Raevyx.this.setTakeoff(value); }
-
-            @Override
             public void setHovering(boolean value) { Raevyx.this.setHovering(value); }
 
             @Override
@@ -701,6 +705,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
             @Override
             public void stopNavigation() { Raevyx.this.getNavigation().stop(); }
+
+            @Override
+            public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+                Raevyx.this.startTakeoffSequence(minUpwardVelocity, animationTicks);
+            }
 
             @Override
             public Vec3 getDeltaMovement() { return Raevyx.this.getDeltaMovement(); }
@@ -737,6 +746,54 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 0.45D,
                 TAKEOFF_ANIMATION_TICKS
         ));
+    }
+
+    private DragonTakeoffComponent createTakeoffComponent() {
+        return new DragonTakeoffComponent(new DragonTakeoffComponent.Host() {
+            @Override
+            public Level level() { return Raevyx.this.level(); }
+
+            @Override
+            public boolean isFlying() { return Raevyx.this.isFlying(); }
+
+            @Override
+            public void setFlying(boolean value) { Raevyx.this.setFlying(value); }
+
+            @Override
+            public void setTakeoff(boolean value) { Raevyx.this.setTakeoff(value); }
+
+            @Override
+            public void setHovering(boolean value) { Raevyx.this.setHovering(value); }
+
+            @Override
+            public void setLanding(boolean value) { Raevyx.this.setLanding(value); }
+
+            @Override
+            public void switchToAirNavigation() { Raevyx.this.switchToAirNavigation(); }
+
+            @Override
+            public Vec3 getDeltaMovement() { return Raevyx.this.getDeltaMovement(); }
+
+            @Override
+            public void setDeltaMovement(Vec3 movement) { Raevyx.this.setDeltaMovement(movement); }
+
+            @Override
+            public void markImpulse() { Raevyx.this.hasImpulse = true; }
+
+            @Override
+            public void onTakeoffStarted() {
+                Raevyx.this.timeFlying = 0;
+                Raevyx.this.landingFlag = false;
+                Raevyx.this.landingTimer = 0;
+            }
+        });
+    }
+
+    private void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+        if (this.isBaby()) {
+            return;
+        }
+        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
     }
 
     @Override
@@ -845,6 +902,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_DASHING, false);
         this.entityData.define(DATA_LAST_DASH_RIGHT, false);
+        this.entityData.define(DATA_GROUND_RENDING, false);
     }
 
     // Implementation of abstract accessor methods
@@ -995,6 +1053,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (isGroundRending()) {
+            return;
+        }
         if (abilityName != null && !abilityName.isEmpty()) {
             useRidingAbility(abilityName);
         }
@@ -1013,7 +1074,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
-        if (locked) {
+        if (locked || isGroundRending()) {
             return false; // Don't handle custom actions when locked
         }
 
@@ -1301,6 +1362,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         boolean wasFlying = isFlying();
+        if (flying && !wasFlying && !isTakeoff() && this.onGround()) {
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
         this.entityData.set(DATA_FLYING, flying);
 
         // Reset acceleration state when transitioning between ground and flight modes
@@ -1314,6 +1379,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 switchToAirNavigation();
                 setRunning(false);
             } else {
+                takeoffComponent.clear();
                 switchToGroundNavigation();
             }
         }
@@ -1323,6 +1389,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (takeoff && this.isBaby()) takeoff = false;
         boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
+        if (!takeoff && takeoffComponent.isActive()) {
+            takeoffComponent.clear();
+            return;
+        }
         if (takeoff && !wasTakeoff && !level().isClientSide) {
             triggerAnim("instant", "takeoff");
             float pitch = 0.94f + getRandom().nextFloat() * 0.12f;
@@ -1547,13 +1617,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private boolean shouldPlayTakeoff() {
-        if (timeFlying < TAKEOFF_ANIMATION_TICKS) {
-            return true;
-        }
-
-        boolean airborne = !onGround();
-        boolean ascending = getDeltaMovement().y > 0.05;
-        return (timeFlying < TAKEOFF_ANIMATION_TICKS) && (airborne || ascending);
+        return isTakeoff();
     }
 
     @Override
@@ -1692,14 +1756,20 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     // Ground Rend system
-    public boolean isGroundRending() { return groundRending; }
+    public boolean isGroundRending() { return this.entityData.get(DATA_GROUND_RENDING); }
     public void setGroundRending(boolean rending) {
         this.groundRending = rending;
+        this.entityData.set(DATA_GROUND_RENDING, rending);
         if (!rending) {
             this.groundRendVec = Vec3.ZERO;
+            this.groundRendTravelSpeed = 0.0F;
         }
     }
     public void setGroundRendVelocity(Vec3 vec) { this.groundRendVec = vec; }
+    public float getGroundRendTravelSpeed() { return groundRendTravelSpeed; }
+    public void setGroundRendTravelSpeed(float speed) {
+        this.groundRendTravelSpeed = Math.max(0.0F, speed);
+    }
     public float getRiderForwardInput() { return this.entityData.get(DATA_RIDER_FORWARD); }
 
     public void beginDodge(Vec3 vec, int ticks) {
@@ -1945,7 +2015,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         });
 
         // Handle collision damage while dashing
-        if (dashing && this.isVehicle()) {
+        if (dashing) {
             // Get mouth position as damage origin
             Vec3 mouthPos = getMouthPosition();
 
@@ -1954,11 +2024,25 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             AABB mouthBox = new AABB(mouthPos, mouthPos).inflate(2.0D);
             AABB combinedBox = dragonBox.minmax(mouthBox);
 
-            java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
-                LivingEntity.class,
-                combinedBox,
-                entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlly(entity)
-            );
+            java.util.List<LivingEntity> entities;
+            if (this.isVehicle()) {
+                entities = this.level().getEntitiesOfClass(
+                    LivingEntity.class,
+                    combinedBox,
+                    entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlly(entity)
+                );
+            } else {
+                LivingEntity currentTarget = this.getTarget();
+                if (currentTarget == null
+                        || !currentTarget.isAlive()
+                        || currentTarget == this
+                        || this.isAlly(currentTarget)
+                        || !combinedBox.intersects(currentTarget.getBoundingBox())) {
+                    entities = java.util.Collections.emptyList();
+                } else {
+                    entities = java.util.List.of(currentTarget);
+                }
+            }
 
             // Damage and knockback each entity
             for (LivingEntity target : entities) {
@@ -2077,6 +2161,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // === SERVER-SIDE: EVERY TICK (lightweight or critical) ===
         tickSittingState();
+        takeoffComponent.tick();
         tickRiderTakeoff();
         tickHurtSoundCooldown();
         spawnBabiesIfNeeded(); // Has internal check, only spawns once
@@ -2194,7 +2279,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
 
         // Handle ground rend movement
-        if (groundRending) {
+        if (isGroundRending()) {
             handleGroundRendMovement();
         }
 
@@ -2223,7 +2308,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (!this.level().isClientSide) {
             // Auto-complete landing once we're actually on ground (like Ignivorus)
             // This check is OUTSIDE isFlying() because FollowOwnerGoal sets flying=false before touchdown
-            if (isLanding() && onGround()) {
+            if (isLanding() && this.onGround() && !this.isInWater()) {
                 handleAiLandingComplete();
             }
 
@@ -2236,11 +2321,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 // Break vegetation blocks during takeoff
                 if (isTakeoff()) {
                     breakBlocksDuringTakeoff();
-                }
-
-                // Clear takeoff flag after animation completes.
-                if (isTakeoff() && timeFlying > TAKEOFF_ANIMATION_TICKS) {
-                    setTakeoff(false);
                 }
 
                 // Auto-land when touching ground (like Cindervane)
@@ -2308,14 +2388,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
      */
     private void tickFlightPhysics() {
         if (level().isClientSide) return;
-
-        // Apply takeoff upward force during the initial takeoff animation window.
-        // This gives the dragon height during takeoff animation
-        if (isTakeoff() && isFlying() && timeFlying < TAKEOFF_ANIMATION_TICKS) {
-            Vec3 motion = getDeltaMovement();
-            double upwardForce = 0.11D;
-            setDeltaMovement(motion.add(0, upwardForce, 0));
-        }
 
         // Reduce falling speed while flying
         if (isFlying() && getDeltaMovement().y < 0 && isAlive()) {
@@ -2784,17 +2856,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // Decrement rider takeoff window (no-op while dying)
         if (!level().isClientSide && riderTakeoffTicks > 0 && !isDying()) {
             riderTakeoffTicks--;
-
-            // Only apply boost if NOT being ridden (rider controller handles takeoff boost instead)
-            if (getControllingPassenger() == null) {
-                // Apply upward boost during takeoff window
-                Vec3 velocity = this.getDeltaMovement();
-                double boost = this.isFlying() ? 0.08D : 0.12D;
-                if (velocity.y < boost) {
-                    this.setDeltaMovement(velocity.x, boost, velocity.z);
-                }
-                this.hasImpulse = true;
-            }
         }
     }
     
@@ -3065,6 +3126,23 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     
     private void tickRiderLandingBlendTimer() {
         trackRiderAirborneForLanding();
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+
+        if (inWater) {
+            riderLandingBlendTicks = 0;
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+                if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+                    setFlying(false);
+                    setTakeoff(false);
+                    setLanding(false);
+                    setHovering(false);
+                    timeFlying = 0;
+                    switchToGroundNavigation();
+                }
+            }
+            return;
+        }
 
         if (!isVehicle() || !isFlying() || onGround()) {
             // If we were actively landing and now touched ground, trigger landed animation
@@ -3310,8 +3388,19 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private void handleDodgeMovement() {
-        // Apply the dodge velocity directly
-        this.setDeltaMovement(dodgeVec);
+        // Apply gravity when not on ground to prevent floating
+        double yVel = this.getDeltaMovement().y;
+        double horizontalX = dodgeVec.x;
+        double horizontalZ = dodgeVec.z;
+        if (!this.onGround()) {
+            yVel = Math.min((yVel - 0.22D) * 0.98D, -0.45D);
+            horizontalX *= 0.88D;
+            horizontalZ *= 0.88D;
+        } else {
+            yVel = Math.max(0.0D, yVel);
+        }
+
+        this.setDeltaMovement(horizontalX, yVel, horizontalZ);
         this.hasImpulse = true;
 
         // Decay for next tick
@@ -3324,8 +3413,19 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private void handleDashMovement() {
-        // Apply the dash velocity directly
-        this.setDeltaMovement(dashVec);
+        // Apply gravity when not on ground to prevent floating
+        double yVel = this.getDeltaMovement().y;
+        double horizontalX = dashVec.x;
+        double horizontalZ = dashVec.z;
+        if (!this.onGround()) {
+            yVel = Math.min((yVel - 0.22D) * 0.98D, -0.45D);
+            horizontalX *= 0.90D;
+            horizontalZ *= 0.90D;
+        } else {
+            yVel = Math.max(0.0D, yVel);
+        }
+
+        this.setDeltaMovement(horizontalX, yVel, horizontalZ);
         this.hasImpulse = true;
 
         // Decay for next tick
@@ -3340,8 +3440,20 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private void handleGroundRendMovement() {
-        // Apply the ground rend velocity directly (no decay - ability controls it)
-        this.setDeltaMovement(groundRendVec);
+        Vec3 horizontal = this.isVehicle() && this.getControllingPassenger() instanceof Player
+                ? this.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D)
+                : new Vec3(groundRendVec.x, 0.0D, groundRendVec.z);
+
+        // Apply gravity when not on ground to prevent floating
+        double yVel = this.getDeltaMovement().y;
+        if (!this.onGround()) {
+            yVel = Math.min((yVel - 0.24D) * 0.98D, -0.5D);
+            horizontal = horizontal.scale(0.9D);
+        } else {
+            yVel = Math.max(0.0D, yVel);
+        }
+
+        this.setDeltaMovement(horizontal.x, yVel, horizontal.z);
         this.hasImpulse = true;
     }
 
@@ -3360,8 +3472,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             return;
         }
 
-        // During ground rend, preserve stored velocity and bypass rider input
-        if (groundRending) {
+        // During ground rend, AI still uses the legacy ability-driven movement path.
+        if (isGroundRending()) {
             super.travel(Vec3.ZERO);
             return;
         }
@@ -3412,14 +3524,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 this.riderController.handleRiderMovement(player, motion);
             } else {
                 // Ground movement - use vanilla system which calls getRiddenInput()
-                this.setSpeed(this.riderController.getRiddenSpeed(player));
+                this.setSpeed(this.getRiddenSpeed(player));
                 super.travel(motion);
             }
         } else {
             // Normal AI movement - use vanilla travel for everything like Cindervane/Ignivorus
             super.travel(motion);
         }
-
     }
 
     /**

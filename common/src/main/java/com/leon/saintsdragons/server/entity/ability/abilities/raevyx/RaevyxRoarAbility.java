@@ -127,6 +127,11 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
         var bolt = net.minecraft.world.entity.EntityType.LIGHTNING_BOLT.create(server);
         if (bolt != null) {
             bolt.moveTo(x, y, z);
+            if (!dragon.isTame()) {
+                // Untamed roar already applies its own stun package below; keep the lightning
+                // visual but prevent vanilla fire/side effects from burning the Raevyx during dash follow-up.
+                bolt.setVisualOnly(true);
+            }
             var owner = dragon.getOwner();
             if (owner instanceof net.minecraft.server.level.ServerPlayer sp) {
                 bolt.setCause(sp);

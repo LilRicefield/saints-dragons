@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.FixedPotionItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
+import com.leon.saintsdragons.common.item.VolitansBinderItem;
 import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
 import com.leon.saintsdragons.common.item.IgnivorusBinderItem;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
@@ -224,6 +225,13 @@ public class ModItems {
     public static final Supplier<Item> IGNIVORUS_BINDER =
             REGISTER.register("ignivorus_binder",
                     () -> new IgnivorusBinderItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(0)
+                    ));
+    public static final Supplier<Item> VOLITANS_BINDER =
+            REGISTER.register("volitans_binder",
+                    () -> new VolitansBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0)

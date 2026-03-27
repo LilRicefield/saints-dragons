@@ -27,13 +27,13 @@ public final class DragonRiderFlightComponent {
         boolean canTakeoff();
 
         void setFlying(boolean value);
-        void setTakeoff(boolean value);
         void setHovering(boolean value);
         void setLanding(boolean value);
         void switchToAirNavigation();
         void setGoingUp(boolean value);
         void setGoingDown(boolean value);
         void stopNavigation();
+        void startTakeoffSequence(double minUpwardVelocity, int animationTicks);
 
         Vec3 getDeltaMovement();
         void setDeltaMovement(Vec3 movement);
@@ -158,16 +158,7 @@ public final class DragonRiderFlightComponent {
     }
 
     private void applyTakeoffState(double minUpwardVelocity, int riderTakeoffTicks) {
-        host.setFlying(true);
-        host.setTakeoff(true);
-        host.setHovering(false);
-        host.setLanding(false);
-        host.switchToAirNavigation();
-
-        Vec3 current = host.getDeltaMovement();
-        double upward = Math.max(current.y, minUpwardVelocity);
-        host.setDeltaMovement(new Vec3(current.x, upward, current.z));
-        host.markImpulse();
+        host.startTakeoffSequence(minUpwardVelocity, riderTakeoffTicks);
 
         if (riderTakeoffTicks > 0) {
             host.setRiderTakeoffTicks(riderTakeoffTicks);

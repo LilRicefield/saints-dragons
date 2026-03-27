@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.item.IgnivorusBinderItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
+import com.leon.saintsdragons.common.item.VolitansBinderItem;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,6 +38,9 @@ public final class BinderComponentUtil {
         }
         if (stack.getItem() instanceof StegonautBinderItem) {
             return StegonautBinderItem.getBoundDrakeUUID(stack);
+        }
+        if (stack.getItem() instanceof VolitansBinderItem) {
+            return VolitansBinderItem.getBoundVolitansUUID(stack);
         }
         return null;
     }

@@ -10,6 +10,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -25,6 +26,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
     private static final int SLAM_MAX_TICKS = 12000; // Failsafe timeout - usually ends on ground impact
     private static final int RECOVERY_TICKS = 20;
     private static final int COOLDOWN_TICKS = 40;
+    private static final int POST_IMPACT_TAKEOFF_BLOCK_TICKS = 8;
 
     private static final double SLAM_INITIAL_SPEED = -1.5D;
     private static final double SLAM_EXTRA_PULL_PER_TICK = 0.15D;
@@ -36,6 +38,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
     private static final int IMPACT_SHAKE_TICKS = 12;
     private static final int POISON_DURATION_TICKS = 20 * 30; // 30 seconds
     private static final int POISON_AMPLIFIER = 1;
+    private static final int STUN_TICKS = 40;
     private static final int SLAMMING_SOUND_TICKS = 90;
     private static final int IMPACT_SPINE_WAVES = 3;
 
@@ -59,14 +62,14 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         if (dragon == null || dragon.isBaby() || dragon.areRiderControlsLocked()) {
             return false;
         }
-        if (!(dragon.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player rider)) {
-            return false;
-        }
         // Only works when flying/airborne
         if (!dragon.isFlying() || dragon.onGround()) {
             return false;
         }
-        return dragon.isTame() && dragon.isOwnedBy(rider) && super.tryAbility();
+        if (dragon.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player rider) {
+            return dragon.isTame() && dragon.isOwnedBy(rider) && super.tryAbility();
+        }
+        return !dragon.isVehicle() && dragon.isTargetValid(dragon.getTarget()) && super.tryAbility();
     }
 
     @Override
@@ -79,6 +82,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
             impactApplied = false;
             wasAirborne = true; // Already airborne (enforced by tryAbility)
             dragon.startUltimateSlamMovement();
+            dragon.lockRiderControls(SLAMMING_ANIM_TICKS + SLAM_MAX_TICKS + RECOVERY_TICKS);
             dragon.setGoingUp(false);
             dragon.setGoingDown(false);
             forcedSlamSpeed = 0.0D;
@@ -158,7 +162,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
             spawnImpactSpines(dragon);
             dragon.triggerScreenShake(IMPACT_SCREEN_SHAKE, IMPACT_SHAKE_TICKS);
             dragon.markLandedNow();
-            dragon.clearRiderControlLock();
+            dragon.blockTakeoffInput(RECOVERY_TICKS + POST_IMPACT_TAKEOFF_BLOCK_TICKS);
             dragon.setGoingUp(false);
             dragon.setGoingDown(false);
             dragon.setDeltaMovement(0.0D, 0.0D, 0.0D);
@@ -225,6 +229,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         for (LivingEntity target : targets) {
             target.hurt(source, damage);
             target.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, POISON_AMPLIFIER));
+            applyStun(target);
             Vec3 push = target.position().subtract(origin);
             if (push.lengthSqr() < 1.0E-4) {
                 push = new Vec3(0.0D, 0.0D, 1.0D);
@@ -233,6 +238,18 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
             target.push(push.x, 0.45D, push.z);
             target.hasImpulse = true;
         }
+    }
+
+    private static void applyStun(LivingEntity target) {
+        if (!(target instanceof Mob mob)) {
+            return;
+        }
+        mob.getNavigation().stop();
+        target.setDeltaMovement(Vec3.ZERO);
+        target.hurtMarked = true;
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, STUN_TICKS, 6, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, STUN_TICKS, 1, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 0, false, true));
     }
 
     private void spawnImpactSpines(Volitans dragon) {

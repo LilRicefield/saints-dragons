@@ -78,21 +78,39 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
         double range = BASE_RANGE + (dragon.getControllingPassenger() != null ? RIDDEN_RANGE_BONUS : 0.0);
         double cosLimit = Math.cos(Math.toRadians(GORE_ANGLE_DEG));
 
+        if (dragon.getControllingPassenger() == null) {
+            LivingEntity target = dragon.getTarget();
+            if (isValidTarget(dragon, target) && isTargetInArc(target, origin, look, range, cosLimit)) {
+                return List.of(target);
+            }
+            return List.of();
+        }
+
         AABB sweep = new AABB(origin, origin.add(look.scale(range))).inflate(SWEEP_HORIZONTAL, SWEEP_VERTICAL, SWEEP_HORIZONTAL);
         List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, sweep,
                 entity -> entity != dragon && entity.isAlive() && entity.attackable() && !dragon.isAlly(entity));
 
         return candidates.stream()
-                .filter(entity -> {
-                    Vec3 toward = entity.getBoundingBox().getCenter().subtract(origin);
-                    double len = toward.length();
-                    if (len <= 1.0e-4) {
-                        return false;
-                    }
-                    double dot = toward.scale(1.0 / len).dot(look);
-                    return dot > 0.0 && (dot >= cosLimit || len < (range * 0.55));
-                })
+                .filter(entity -> isTargetInArc(entity, origin, look, range, cosLimit))
                 .toList();
+    }
+
+    private boolean isValidTarget(Volitans dragon, LivingEntity target) {
+        return target != null
+                && target.isAlive()
+                && target.attackable()
+                && !dragon.isAlly(target)
+                && dragon.isTargetValid(target);
+    }
+
+    private boolean isTargetInArc(LivingEntity entity, Vec3 origin, Vec3 look, double range, double cosLimit) {
+        Vec3 toward = entity.getBoundingBox().getCenter().subtract(origin);
+        double len = toward.length();
+        if (len <= 1.0e-4 || len > range + SWEEP_HORIZONTAL) {
+            return false;
+        }
+        double dot = toward.scale(1.0 / len).dot(look);
+        return dot > 0.0 && (dot >= cosLimit || len < (range * 0.55));
     }
 
     private void applyGore(LivingEntity target) {

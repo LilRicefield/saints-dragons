@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.server;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBinderAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.world.VillageIvySpawner;
@@ -31,8 +32,13 @@ public final class FabricServerEvents {
 
         ServerLifecycleEvents.SERVER_STOPPING.register(FabricServerEvents::handleServerStopping);
 
-        // Tick village Ivy spawner
+        // Tick portable Stegonaut binder buffs and village Ivy spawner
         ServerTickEvents.END_SERVER_TICK.register(server -> {
+            if (server.getTickCount() % 20 == 0) {
+                for (var level : server.getAllLevels()) {
+                    StegonautBinderAbility.updateAllPortableBuffs(level);
+                }
+            }
             for (var level : server.getAllLevels()) {
                 VillageIvySpawner.tick(level);
             }

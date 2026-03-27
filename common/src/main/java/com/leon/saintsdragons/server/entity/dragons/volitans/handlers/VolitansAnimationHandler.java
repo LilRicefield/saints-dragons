@@ -41,6 +41,7 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation POISON_BALL_HOLD = RawAnimation.begin().thenLoop("animation.volitans.poison_ball_hold");
     private static final RawAnimation POISON_BALL_SHOOT = RawAnimation.begin().thenPlay("animation.volitans.poison_ball_shoot");
     private static final RawAnimation DASH_BACKWARDS = RawAnimation.begin().thenPlay("animation.volitans.dash_backwards");
+    private static final RawAnimation DASH_FORWARD = RawAnimation.begin().thenPlay("animation.volitans.dash_forward");
     private static final RawAnimation DODGE_LEFT = RawAnimation.begin().thenPlay("animation.volitans.dodge_left");
     private static final RawAnimation DODGE_RIGHT = RawAnimation.begin().thenPlay("animation.volitans.dodge_right");
     private static final RawAnimation ENTER_BURROW = RawAnimation.begin().thenPlay("animation.volitans.enter_burrow");
@@ -117,7 +118,7 @@ public final class VolitansAnimationHandler {
             }
 
             float pitchDegrees = (float) Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
-            if (pitchDegrees > 10.0f) {
+            if (dragon.isRiddenByOwner() && pitchDegrees > 10.0f) {
                 state.setAndContinue(GLIDE_DOWN);
                 return PlayState.CONTINUE;
             }
@@ -198,6 +199,7 @@ public final class VolitansAnimationHandler {
 
     public void setupInstantActionController(AnimationController<Volitans> controller) {
         controller.triggerableAnim("dash_backwards", DASH_BACKWARDS);
+        controller.triggerableAnim("dash_forward", DASH_FORWARD);
         controller.triggerableAnim("dodge_left", DODGE_LEFT);
         controller.triggerableAnim("dodge_right", DODGE_RIGHT);
         controller.triggerableAnim("enter_burrow", ENTER_BURROW);

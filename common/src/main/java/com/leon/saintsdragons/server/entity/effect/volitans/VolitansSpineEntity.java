@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
@@ -60,7 +61,7 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
         if (!level().isClientSide) {
             if (impactDamage > 0.0F && result.getEntity() instanceof LivingEntity target) {
                 LivingEntity owner = this.getOwner() instanceof LivingEntity living ? living : null;
-                boolean validTarget = owner == null || (target != owner && !owner.isAlliedTo(target));
+                boolean validTarget = owner == null || (target != owner && !isAlliedTarget(owner, target));
                 if (validTarget) {
                     if (owner != null) {
                         target.hurt(this.damageSources().mobAttack(owner), impactDamage);
@@ -87,11 +88,24 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
             return false;
         }
         if (target instanceof LivingEntity living && this.getOwner() instanceof LivingEntity owner) {
-            if (owner.isAlliedTo(living)) {
+            if (isAlliedTarget(owner, living)) {
                 return false;
             }
         }
         return true;
+    }
+
+    private boolean isAlliedTarget(LivingEntity owner, LivingEntity target) {
+        if (owner == null || target == null) {
+            return false;
+        }
+        if (owner.isAlliedTo(target)) {
+            return true;
+        }
+        if (owner instanceof DragonEntity dragon) {
+            return dragon.isAlly(target);
+        }
+        return false;
     }
 
     @Override

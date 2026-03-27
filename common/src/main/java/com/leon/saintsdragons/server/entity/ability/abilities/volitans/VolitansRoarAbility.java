@@ -10,6 +10,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -27,15 +28,24 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
     private static final int RECOVERY_TICKS = 16;
     private static final int ROAR_ANIM_TOTAL_TICKS = STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS; // 70 ticks (3.5s)
     private static final int SOUND_DURATION_TICKS = 100;
-    private static final int AIR_WATER_ROAR_TICKS = 60;
+    private static final int AIR_WATER_ROAR_TICKS = 33; // 1.6667s
+    private static final int AIR_WATER_ROAR_SOUND_TICKS = 60;
+    private static final int GROUNDED_ROAR_TAKEOFF_BLOCK_BUFFER_TICKS = 10;
+    private static final int AIR_WATER_SPINE_START_DELAY_TICKS = 5;
     private static final int ROAR_EFFECT_START_TICK = 23;
     private static final int ROAR_EFFECT_DURATION_TICKS = 40;
     private static final int ROAR_SPINE_PULSE_INTERVAL_TICKS = 6;
-    private static final float ROAR_DAMAGE = 10.0F;
+    private static final float GROUNDED_ROAR_DAMAGE = 10.0F;
+    private static final float AIR_WATER_ROAR_DAMAGE = 7.0F;
     private static final float ROAR_SHAKE_INTENSITY = 0.85F;
-    private static final int POISON_DURATION_TICKS = 1200;
-    private static final int POISON_AMPLIFIER = 3;
-    private static final double HIT_RADIUS = 20.0D;
+    private static final int GROUNDED_POISON_DURATION_TICKS = 1200;
+    private static final int GROUNDED_POISON_AMPLIFIER = 3;
+    private static final int AIR_WATER_POISON_DURATION_TICKS = 200;
+    private static final int AIR_WATER_POISON_AMPLIFIER = 1;
+    private static final int GROUNDED_STUN_TICKS = 40;
+    private static final int AIR_WATER_STUN_TICKS = 20;
+    private static final double GROUNDED_HIT_RADIUS = 20.0D;
+    private static final double AIR_WATER_HIT_RADIUS = 12.0D;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
@@ -46,6 +56,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
     private final Set<Integer> hitTargetIds = new HashSet<>();
     private boolean shakeTriggered;
     private boolean airOrWaterRoar;
+    private boolean groundedRoar;
 
     public VolitansRoarAbility(DragonAbilityType<Volitans, VolitansRoarAbility> type, Volitans user) {
         super(type, user, TRACK, 30);
@@ -59,16 +70,20 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
         if (section.sectionType == STARTUP) {
             Volitans dragon = getUser();
             airOrWaterRoar = dragon.isFlying() || dragon.isInWaterOrBubble();
+            groundedRoar = !airOrWaterRoar;
             dragon.triggerAnim(airOrWaterRoar ? "instant" : "actions", airOrWaterRoar ? "roar_air_water" : "roar");
             if (!airOrWaterRoar) {
                 dragon.lockRiderControls(ROAR_ANIM_TOTAL_TICKS);
+                dragon.blockTakeoffInput(ROAR_ANIM_TOTAL_TICKS + GROUNDED_ROAR_TAKEOFF_BLOCK_BUFFER_TICKS);
+                dragon.setGoingUp(false);
+                dragon.setGoingDown(false);
             }
             hitTargetIds.clear();
             shakeTriggered = false;
 
             if (!dragon.level().isClientSide) {
                 if (airOrWaterRoar) {
-                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_ROAR_AIR_WATER.get(), 1.6f, 1.0f, AIR_WATER_ROAR_TICKS);
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_ROAR_AIR_WATER.get(), 1.6f, 1.0f, AIR_WATER_ROAR_SOUND_TICKS);
                 } else {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_ROAR.get(), 1.6f, 1.0f, SOUND_DURATION_TICKS);
                 }
@@ -89,8 +104,11 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
                 end();
                 return;
             }
-            if (ticksInUse % ROAR_SPINE_PULSE_INTERVAL_TICKS == 0) {
-                spawnRoarSpinesAirWater(ticksInUse / ROAR_SPINE_PULSE_INTERVAL_TICKS);
+            if (ticksInUse >= AIR_WATER_SPINE_START_DELAY_TICKS
+                    && ticksInUse < AIR_WATER_ROAR_TICKS
+                    && ((ticksInUse - AIR_WATER_SPINE_START_DELAY_TICKS) % ROAR_SPINE_PULSE_INTERVAL_TICKS == 0)) {
+                int pulseIndex = (ticksInUse - AIR_WATER_SPINE_START_DELAY_TICKS) / ROAR_SPINE_PULSE_INTERVAL_TICKS;
+                spawnRoarSpinesAirWater(pulseIndex);
             }
             applyRoarPulse();
             return;
@@ -112,16 +130,45 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
         }
     }
 
+    @Override
+    public void interrupt() {
+        Volitans dragon = getUser();
+        if (groundedRoar) {
+            dragon.blockTakeoffInput(GROUNDED_ROAR_TAKEOFF_BLOCK_BUFFER_TICKS);
+            dragon.setGoingUp(false);
+            dragon.setGoingDown(false);
+        }
+        groundedRoar = false;
+        super.interrupt();
+    }
+
+    @Override
+    public void end() {
+        Volitans dragon = getUser();
+        if (groundedRoar) {
+            dragon.blockTakeoffInput(GROUNDED_ROAR_TAKEOFF_BLOCK_BUFFER_TICKS);
+            dragon.setGoingUp(false);
+            dragon.setGoingDown(false);
+        }
+        groundedRoar = false;
+        super.end();
+    }
+
     private void applyRoarPulse() {
         Volitans dragon = getUser();
         Vec3 origin = dragon.position();
+        double hitRadius = airOrWaterRoar ? AIR_WATER_HIT_RADIUS : GROUNDED_HIT_RADIUS;
+        float roarDamage = airOrWaterRoar ? AIR_WATER_ROAR_DAMAGE : GROUNDED_ROAR_DAMAGE;
+        int poisonDuration = airOrWaterRoar ? AIR_WATER_POISON_DURATION_TICKS : GROUNDED_POISON_DURATION_TICKS;
+        int poisonAmplifier = airOrWaterRoar ? AIR_WATER_POISON_AMPLIFIER : GROUNDED_POISON_AMPLIFIER;
+        int stunTicks = airOrWaterRoar ? AIR_WATER_STUN_TICKS : GROUNDED_STUN_TICKS;
         AABB hitBox = new AABB(
-                origin.x - HIT_RADIUS,
-                origin.y - HIT_RADIUS,
-                origin.z - HIT_RADIUS,
-                origin.x + HIT_RADIUS,
-                origin.y + HIT_RADIUS,
-                origin.z + HIT_RADIUS
+                origin.x - hitRadius,
+                origin.y - hitRadius,
+                origin.z - hitRadius,
+                origin.x + hitRadius,
+                origin.y + hitRadius,
+                origin.z + hitRadius
         );
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
 
@@ -130,15 +177,28 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
                         && entity.isAlive()
                         && entity.attackable()
                         && !dragon.isAlly(entity)
-                        && entity.distanceToSqr(dragon) <= (HIT_RADIUS * HIT_RADIUS));
+                        && entity.distanceToSqr(dragon) <= (hitRadius * hitRadius));
 
         for (LivingEntity target : targets) {
             if (!hitTargetIds.add(target.getId())) {
                 continue;
             }
-            target.hurt(source, ROAR_DAMAGE);
-            target.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, POISON_AMPLIFIER));
+            target.hurt(source, roarDamage);
+            target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDuration, poisonAmplifier));
+            applyStun(target, stunTicks);
         }
+    }
+
+    private static void applyStun(LivingEntity target, int durationTicks) {
+        if (!(target instanceof Mob mob)) {
+            return;
+        }
+        mob.getNavigation().stop();
+        target.setDeltaMovement(Vec3.ZERO);
+        target.hurtMarked = true;
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, durationTicks, 6, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, durationTicks, 1, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, Math.min(durationTicks, 20), 0, false, true));
     }
 
     private void spawnRoarSpines(int pulseIndex) {

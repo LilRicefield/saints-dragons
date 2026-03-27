@@ -212,6 +212,10 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
+        if (wyvern.isGroundRending()) {
+            return PlayState.STOP;
+        }
+
         // Check for dashing (movement animation like dodge) - allows action animations to play alongside
         if (wyvern.isDashing()) {
             state.getController().transitionLength(2);

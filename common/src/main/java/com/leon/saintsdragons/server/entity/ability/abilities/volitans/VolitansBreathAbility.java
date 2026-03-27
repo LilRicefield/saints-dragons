@@ -7,7 +7,9 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
@@ -80,8 +82,9 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             return;
         }
 
+        updateAiBreathTracking(dragon);
         Vec3 origin = dragon.getMouthPosition();
-        Vec3 direction = getBreathDirection(dragon);
+        Vec3 direction = getBreathDirection(dragon, origin);
         if (direction.lengthSqr() < 1.0E-6) {
             return;
         }
@@ -118,7 +121,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         return dragon.isAlive() && !dragon.isRemoved();
     }
 
-    private Vec3 getBreathDirection(Volitans dragon) {
+    private Vec3 getBreathDirection(Volitans dragon, Vec3 origin) {
         Entity rider = dragon.getControllingPassenger();
         if (rider instanceof Player player) {
             Vec3 view = player.getViewVector(1.0F);
@@ -127,11 +130,48 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             }
         }
 
+        LivingEntity target = dragon.getTarget();
+        if (dragon.isTargetValid(target)) {
+            Vec3 aimPoint = target.getEyePosition().add(target.getDeltaMovement().scale(0.35D));
+            Vec3 targetDir = aimPoint.subtract(origin);
+            if (targetDir.lengthSqr() > 1.0E-6) {
+                return targetDir.normalize();
+            }
+        }
+
         Vec3 look = dragon.getLookAngle();
         if (look.lengthSqr() > 1.0E-6) {
             return look.normalize();
         }
         return Vec3.ZERO;
+    }
+
+    private void updateAiBreathTracking(Volitans dragon) {
+        if (dragon.getControllingPassenger() instanceof Player) {
+            return;
+        }
+        LivingEntity target = dragon.getTarget();
+        if (!dragon.isTargetValid(target)) {
+            return;
+        }
+
+        Vec3 origin = dragon.getMouthPosition();
+        Vec3 aimPoint = target.getEyePosition().add(target.getDeltaMovement().scale(0.35D));
+        Vec3 toTarget = aimPoint.subtract(origin);
+        if (toTarget.lengthSqr() <= 1.0E-6) {
+            return;
+        }
+
+        dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
+
+        Vec3 horizontal = new Vec3(toTarget.x, 0.0D, toTarget.z);
+        if (horizontal.lengthSqr() > 1.0E-6D) {
+            float targetYaw = (float) (Mth.atan2(horizontal.z, horizontal.x) * (180.0D / Math.PI)) - 90.0F;
+            float newYaw = Mth.approachDegrees(dragon.getYRot(), targetYaw, 8.0F);
+            dragon.setYRot(newYaw);
+            dragon.yBodyRot = Mth.approachDegrees(dragon.yBodyRot, targetYaw, 10.0F);
+            dragon.yHeadRot = Mth.approachDegrees(dragon.yHeadRot, targetYaw, 14.0F);
+        }
     }
 
     @Override

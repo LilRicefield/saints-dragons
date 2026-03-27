@@ -54,22 +54,10 @@ public final class VolitansRiderController {
         dragon.fallDistance = 0.0F;
         dragon.setTarget(null);
 
-        float currentYaw = dragon.getYRot();
-        float targetYaw = rider.getYRot();
-        float yawDelta = Mth.wrapDegrees(targetYaw - currentYaw);
-        float blend = dragon.isFlying() ? 0.30F : 0.25F;
-        float newYaw = currentYaw + yawDelta * blend;
-
-        dragon.setYRot(newYaw);
-        dragon.yBodyRot = newYaw;
-        dragon.yHeadRot = newYaw;
-
         if (dragon.isFlying() || dragon.isInWaterOrBubble()) {
-            float targetPitch = Mth.clamp(rider.getXRot(), -45.0F, 45.0F);
-            float pitchBlend = dragon.isFlying() ? 0.20F : 0.14F;
-            float newPitch = Mth.rotLerp(pitchBlend, dragon.getXRot(), targetPitch);
-            dragon.setXRot(newPitch);
+            dragon.syncRiderLookLock(rider);
         } else {
+            dragon.syncRiderYawLock(rider);
             dragon.setXRot(0.0F);
         }
     }

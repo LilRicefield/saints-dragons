@@ -29,9 +29,8 @@ public class IgnivorusGroundCombatGoal extends Goal {
     private double lastTargetY;
     private double lastTargetZ;
 
-    // Ultimate opener mechanic
-    private boolean hasUsedUltimateOpener = false;
-    private int ultimateOpenerDelay = 0;
+    // One-time low-health ultimate trigger per combat encounter
+    private boolean hasUsedUltimateTrigger = false;
 
     // Fire breath cooldown mechanic (AI only - 3 minute cooldown)
     private int breathCooldown = 0;
@@ -171,9 +170,8 @@ public class IgnivorusGroundCombatGoal extends Goal {
         pathRecalcCooldown = 8;
         pathFailureBackoff = 0;
 
-        // Reset ultimate opener for next combat encounter
-        hasUsedUltimateOpener = false;
-        ultimateOpenerDelay = 0;
+        // Reset one-time ultimate trigger for next combat encounter
+        hasUsedUltimateTrigger = false;
     }
 
     @Override
@@ -188,17 +186,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
         dragon.setLanding(false);
         dragon.setTakeoff(false);
 
-        // Initialize ultimate opener - only for WILD dragons (no owner)
-        // Tamed dragons helping their owner skip the ultimate and go straight to normal combat
-        if (dragon.isTame() && dragon.getOwner() != null) {
-            // Tamed dragon - skip ultimate opener entirely
-            hasUsedUltimateOpener = true; // Mark as "used" so it never triggers
-            ultimateOpenerDelay = 0;
-        } else {
-            // Wild dragon - initialize ultimate opener (wait 5 ticks then use ultimate)
-            hasUsedUltimateOpener = false;
-            ultimateOpenerDelay = 5;
-        }
+        hasUsedUltimateTrigger = false;
 
         LivingEntity target = dragon.getTarget();
         if (target != null) {
@@ -261,21 +249,10 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-        // Handle ultimate opener - use ultimate once at the start of combat
-        if (!hasUsedUltimateOpener) {
-            if (ultimateOpenerDelay > 0) {
-                ultimateOpenerDelay--;
-                // Keep chasing during delay
-                updateChasePath(target);
-                updateGroundMoveState();
-                return; // Don't do normal attacks during opener delay
-            } else {
-                // Delay expired - try to use ultimate ability
-                dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
-                hasUsedUltimateOpener = true;
-
-                // Check if ultimate actually started (may fail due to requirements)
-                // Ultimate should not stall follow-up attacks
+        if (!hasUsedUltimateTrigger && shouldTriggerLowHealthUltimate()) {
+            dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
+            if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE)) {
+                hasUsedUltimateTrigger = true;
                 attackCooldown = 0;
             }
         }
@@ -588,6 +565,23 @@ public class IgnivorusGroundCombatGoal extends Goal {
         int minTicks = getPhase2DecisionMinTicks();
         int maxTicks = Math.max(1, Mth.floor(config.extraDouble("phase2_decision_max_ticks", PHASE2_DECISION_MAX)));
         return Math.max(minTicks, maxTicks);
+    }
+
+    private boolean shouldTriggerLowHealthUltimate() {
+        if (dragon.isTame() && dragon.getOwner() != null) {
+            return false;
+        }
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        double healthFraction = Mth.clamp(
+            config.extraDouble("ultimate_trigger_health_fraction", 0.5D),
+            0.0D,
+            1.0D
+        );
+        if (healthFraction <= 0.0D) {
+            return false;
+        }
+        return dragon.getHealth() <= dragon.getMaxHealth() * healthFraction;
     }
 
     /**

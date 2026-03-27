@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -152,7 +153,7 @@ public class VolitansPoisonBallEntity extends Entity {
             if (!living.isAlive()) {
                 return false;
             }
-            if (resolvedOwner != null && (target == resolvedOwner || resolvedOwner.isAlliedTo(target))) {
+            if (resolvedOwner != null && (target == resolvedOwner || isAlliedTarget(resolvedOwner, living))) {
                 return false;
             }
             return true;
@@ -190,7 +191,7 @@ public class VolitansPoisonBallEntity extends Entity {
         List<LivingEntity> hits = server.getEntitiesOfClass(LivingEntity.class, area, target ->
                 target.isAlive()
                         && target != ownerEntity
-                        && (ownerEntity == null || !ownerEntity.isAlliedTo(target))
+                        && (ownerEntity == null || !isAlliedTarget(ownerEntity, target))
         );
 
         for (LivingEntity target : hits) {
@@ -212,6 +213,19 @@ public class VolitansPoisonBallEntity extends Entity {
         }
 
         discard();
+    }
+
+    private boolean isAlliedTarget(LivingEntity ownerEntity, LivingEntity target) {
+        if (ownerEntity == null || target == null) {
+            return false;
+        }
+        if (ownerEntity.isAlliedTo(target)) {
+            return true;
+        }
+        if (ownerEntity instanceof DragonEntity dragon) {
+            return dragon.isAlly(target);
+        }
+        return false;
     }
 
     @Nullable
@@ -305,4 +319,3 @@ public class VolitansPoisonBallEntity extends Entity {
         return EntityDimensions.fixed(0.98F * scale, 0.98F * scale);
     }
 }
-

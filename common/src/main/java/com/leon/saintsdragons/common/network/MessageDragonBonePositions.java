@@ -111,7 +111,9 @@ public record MessageDragonBonePositions(
             return;
         }
         if (entity instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans volitans) {
-            if (player.getVehicle() != volitans || !volitans.canBeControlledBy(player)) {
+            // Allow nearby clients tracking the dragon to provide breath locator updates
+            // so wild/unridden Volitans still spawn breath from the animated mouth.
+            if (player.distanceToSqr(volitans) > 128.0D * 128.0D) {
                 return;
             }
             for (Map.Entry<String, Vec3> entry : msg.bonePositions().entrySet()) {

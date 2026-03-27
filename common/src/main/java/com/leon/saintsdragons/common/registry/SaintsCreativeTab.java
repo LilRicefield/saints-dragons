@@ -27,6 +27,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAEVYX_BINDER.get());
                                 output.accept(ModItems.NULLJAW_BINDER.get());
                                 output.accept(ModItems.STEGONAUT_BINDER.get());
+                                output.accept(ModItems.VOLITANS_BINDER.get());
                                 output.accept(ModItems.DRACONIC_CODEX.get());
                                 output.accept(ModItems.DRAGON_BRUSH.get());
                                 output.accept(ModItems.GOLDEN_DRAGON_BRUSH.get());

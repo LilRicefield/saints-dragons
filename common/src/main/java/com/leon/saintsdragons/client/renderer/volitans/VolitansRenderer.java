@@ -32,6 +32,7 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
     private static final String BREATH_BONE = "breathBone";
     private static final String MOUTH_LOCATOR_BONE = "mouth_origin";
     private static final int SYNC_INTERVAL_TICKS = 2;
+    private final java.util.Map<Integer, Integer> lastBreathSnapshotHashes = new java.util.HashMap<>();
 
     private BakedGeoModel lastBakedModel;
 
@@ -163,7 +164,7 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
         if (minecraft.player == null || !entity.isAlive()) {
             return;
         }
-        if (minecraft.player.getVehicle() != entity) {
+        if (minecraft.player.distanceToSqr(entity) > 96.0D * 96.0D) {
             return;
         }
         if ((entity.tickCount + entity.getId()) % SYNC_INTERVAL_TICKS != 0) {
@@ -180,8 +181,35 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
             positions.put("mouth_origin", mouth);
         }
 
-        if (!positions.isEmpty()) {
-            NetworkHandler.sendToServer(new MessageDragonBonePositions(entity.getId(), positions));
+        if (positions.isEmpty()) {
+            return;
         }
+
+        int snapshotHash = computeSnapshotHash(positions);
+        Integer previousHash = lastBreathSnapshotHashes.put(entity.getId(), snapshotHash);
+        if (previousHash != null && previousHash == snapshotHash) {
+            return;
+        }
+
+        NetworkHandler.sendToServer(new MessageDragonBonePositions(entity.getId(), positions));
+    }
+
+    private static int computeSnapshotHash(java.util.Map<String, net.minecraft.world.phys.Vec3> positions) {
+        int hash = 1;
+        for (String boneName : new String[] {"breathBoneOrigin", "mouth_origin"}) {
+            net.minecraft.world.phys.Vec3 pos = positions.get(boneName);
+            if (pos == null) {
+                continue;
+            }
+            hash = 31 * hash + boneName.hashCode();
+            hash = 31 * hash + quantize(pos.x);
+            hash = 31 * hash + quantize(pos.y);
+            hash = 31 * hash + quantize(pos.z);
+        }
+        return hash;
+    }
+
+    private static int quantize(double value) {
+        return (int) Math.round(value * 1000.0D);
     }
 }

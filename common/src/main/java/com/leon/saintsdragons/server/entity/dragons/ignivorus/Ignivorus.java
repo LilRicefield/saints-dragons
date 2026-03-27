@@ -28,6 +28,7 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
+import com.leon.saintsdragons.server.entity.component.DragonTakeoffComponent;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
@@ -99,6 +100,7 @@ import java.util.Map;
 
 public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
     public static final int TAKEOFF_ANIMATION_TICKS = 30;
+    private final DragonTakeoffComponent takeoffComponent;
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -395,6 +397,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
 
         this.riderController = new IgnivorusRiderController(this);
+        this.takeoffComponent = createTakeoffComponent();
         this.riderFlightComponent = createRiderFlightComponent();
         resetAmbientSoundTimer();
         if (!level.isClientSide) {
@@ -470,11 +473,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
 
             @Override
-            public void setTakeoff(boolean value) {
-                Ignivorus.this.setTakeoff(value);
-            }
-
-            @Override
             public void setHovering(boolean value) {
                 Ignivorus.this.setHovering(value);
             }
@@ -502,6 +500,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             @Override
             public void stopNavigation() {
                 Ignivorus.this.getNavigation().stop();
+            }
+
+            @Override
+            public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+                Ignivorus.this.startTakeoffSequence(minUpwardVelocity, animationTicks);
             }
 
             @Override
@@ -536,6 +539,47 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 0.45D,
                 0
         ));
+    }
+
+    private DragonTakeoffComponent createTakeoffComponent() {
+        return new DragonTakeoffComponent(new DragonTakeoffComponent.Host() {
+            @Override
+            public Level level() { return Ignivorus.this.level(); }
+
+            @Override
+            public boolean isFlying() { return Ignivorus.this.isFlying(); }
+
+            @Override
+            public void setFlying(boolean value) { Ignivorus.this.setFlying(value); }
+
+            @Override
+            public void setTakeoff(boolean value) { Ignivorus.this.setTakeoff(value); }
+
+            @Override
+            public void setHovering(boolean value) { Ignivorus.this.setHovering(value); }
+
+            @Override
+            public void setLanding(boolean value) { Ignivorus.this.setLanding(value); }
+
+            @Override
+            public void switchToAirNavigation() { Ignivorus.this.switchToAirNavigation(); }
+
+            @Override
+            public Vec3 getDeltaMovement() { return Ignivorus.this.getDeltaMovement(); }
+
+            @Override
+            public void setDeltaMovement(Vec3 movement) { Ignivorus.this.setDeltaMovement(movement); }
+
+            @Override
+            public void markImpulse() { Ignivorus.this.hasImpulse = true; }
+
+            @Override
+            public void onTakeoffStarted() { Ignivorus.this.timeFlying = 0; }
+        });
+    }
+
+    private void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
     }
 
     @Override
@@ -667,6 +711,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             clientAnimInitTicks = ClientAnimationInitHelper.tickClientCounter(true, clientAnimInitTicks);
         }
 
+        takeoffComponent.tick();
+
         // Update air/ground time
         if (isFlying()) {
             airTicks++;
@@ -678,10 +724,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 breakBlocksDuringTakeoff();
             }
 
-            // Clear takeoff flag after animation completes.
-            if (isTakeoff() && timeFlying > TAKEOFF_ANIMATION_TICKS) {
-                setTakeoff(false);
-            }
         } else {
             groundTicks++;
             airTicks = 0;
@@ -1728,6 +1770,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     private void handleWaterSwimming(Vec3 input) {
+        if ((isFlying() || isTakeoff() || isLanding() || isHovering()) && !isGoingUp()) {
+            setFlying(false);
+            setTakeoff(false);
+            setLanding(false);
+            setHovering(false);
+            timeFlying = 0;
+            switchToGroundNavigation();
+        }
+
         Vec3 velocity = this.getDeltaMovement();
 
         double swimSpeed = 0.4D;
@@ -2508,7 +2559,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public void markLandedNow() {
         setFlying(false);
         setLanding(false);
-        setTakeoff(false);
+        takeoffComponent.clear();
         setHovering(false);
         timeFlying = 0;
     }
@@ -2604,6 +2655,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
         boolean wasFlying = isFlying();
+        if (flying && !wasFlying && !isTakeoff() && this.onGround()) {
+            startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
         this.entityData.set(DATA_FLYING, flying);
 
         if (wasFlying != flying) {
@@ -2613,6 +2668,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 switchToAirNavigation();
                 setRunning(false);
             } else {
+                takeoffComponent.clear();
                 switchToGroundNavigation();
             }
         }
@@ -2621,6 +2677,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public void setTakeoff(boolean takeoff) {
         boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
+        if (!takeoff && takeoffComponent.isActive()) {
+            takeoffComponent.clear();
+            return;
+        }
         if (takeoff && !wasTakeoff && !level().isClientSide) {
             triggerAnim("instant", isPhase2Active() ? "phase2_takeoff" : "takeoff");
             getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
@@ -2832,14 +2892,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     private boolean shouldPlayTakeoff() {
-        // Keep takeoff-mode timing in one place, matching Cindervane's flow.
-        if (timeFlying < TAKEOFF_ANIMATION_TICKS) {
-            return true;
-        }
-
-        boolean airborne = !onGround();
-        boolean ascending = getDeltaMovement().y > 0.05;
-        return (timeFlying < TAKEOFF_ANIMATION_TICKS) && (airborne || ascending);
+        return isTakeoff();
     }
 
     private boolean isNearWaterSurface() {
@@ -3519,6 +3572,23 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     private void tickRiderLandingBlendTimer() {
         trackRiderAirborneForLanding();
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+
+        if (inWater) {
+            riderLandingBlendTicks = 0;
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+                if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+                    setFlying(false);
+                    setTakeoff(false);
+                    setLanding(false);
+                    setHovering(false);
+                    timeFlying = 0;
+                    switchToGroundNavigation();
+                }
+            }
+            return;
+        }
 
         if (!isVehicle() || !isFlying() || onGround()) {
             // If we were actively landing and now touched ground, trigger landed animation

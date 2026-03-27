@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -17,16 +18,21 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int STARTUP_TICKS = 20;
-    private static final int ACTIVE_TICKS = 40;
-    private static final int RECOVERY_TICKS = 8;
+    private static final int ACTIVE_TICKS = 29;
+    private static final int RECOVERY_TICKS = 16;
     private static final int COOLDOWN_TICKS = 32;
+    private static final double AI_STEER_BACK_RANGE = 6.0D;
+    private static final float RIDER_SURGE_SPEED = 1.12F;
+    private static final float RIDER_RECOVERY_END_SPEED = 0.18F;
     private static final double FORWARD_SPEED = 2.0D;
+    private static final double AI_FORWARD_SPEED = 1.8D;
     private static final double RECOVERY_DAMPING = 0.84D;
     private static final float HIT_DAMAGE = 5.0F;
     private static final double HIT_KNOCKBACK = 0.55D;
     private static final int HIT_COOLDOWN_TICKS = 5;
 
     private final Map<Integer, Integer> hitCooldowns = new HashMap<>();
+    private Vec3 aiGroundRendDir = Vec3.ZERO;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, STARTUP_TICKS),
@@ -68,6 +74,8 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             getUser().setAccelerating(false);
             // Enable ground rend state to bypass normal travel logic
             getUser().setGroundRending(true);
+            getUser().setGroundRendTravelSpeed(0.0F);
+            aiGroundRendDir = getForwardDir(getUser());
         }
     }
     @Override
@@ -92,31 +100,67 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             return;
         }
 
+        if (section.sectionType == AbilitySectionType.STARTUP && wyvern.isVehicle()) {
+            Vec3 current = wyvern.getDeltaMovement();
+            wyvern.setDeltaMovement(0.0D, current.y, 0.0D);
+            wyvern.setGroundRendTravelSpeed(0.0F);
+            return;
+        }
+
         if (section.sectionType == AbilitySectionType.RECOVERY) {
+            if (wyvern.isVehicle()) {
+                float recoveryProgress = Mth.clamp((float) getTicksInSection() / (float) RECOVERY_TICKS, 0.0F, 1.0F);
+                float speed = Mth.lerp(recoveryProgress, RIDER_SURGE_SPEED, RIDER_RECOVERY_END_SPEED);
+                wyvern.setGroundRendTravelSpeed(speed);
+                Vec3 forward = getForwardDir(wyvern).scale(speed);
+                Vec3 current = wyvern.getDeltaMovement();
+                wyvern.setDeltaMovement(forward.x, current.y, forward.z);
+                wyvern.hasImpulse = true;
+                applyGroundRendHits(wyvern, getForwardDir(wyvern));
+                return;
+            }
             Vec3 current = wyvern.getDeltaMovement();
             wyvern.setGroundRendVelocity(new Vec3(current.x * RECOVERY_DAMPING, current.y, current.z * RECOVERY_DAMPING));
             return;
         }
 
         if (section.sectionType == AbilitySectionType.ACTIVE) {
-            // GroundRend is rider-input driven now: no forward input = no movement.
-            float riderForward = Math.max(0.0F, getUser().getRiderForwardInput());
-            if (riderForward <= 0.01F) {
-                wyvern.setGroundRendVelocity(Vec3.ZERO);
+            if (wyvern.isVehicle()) {
+                wyvern.setGroundRendTravelSpeed(RIDER_SURGE_SPEED);
+                Vec3 current = wyvern.getDeltaMovement();
+                Vec3 forward = getForwardDir(wyvern).scale(RIDER_SURGE_SPEED);
+                wyvern.setDeltaMovement(forward.x, current.y, forward.z);
+                wyvern.hasImpulse = true;
+                applyGroundRendHits(wyvern, getForwardDir(wyvern));
                 return;
             }
 
-            Vec3 look = wyvern.getLookAngle();
-            Vec3 horizontal = new Vec3(look.x, 0.0D, look.z);
+            Vec3 horizontal;
+            double speed;
+            LivingEntity target = wyvern.getTarget();
+            if (wyvern.isTargetValid(target)) {
+                double gap = getEdgeGap(wyvern, target);
+                if (gap > AI_STEER_BACK_RANGE) {
+                    aiGroundRendDir = getDirectionToTarget(wyvern, target);
+                }
+            }
+            horizontal = aiGroundRendDir;
+            if (horizontal.lengthSqr() > 1.0E-6D) {
+                float targetYaw = (float) (Math.atan2(horizontal.z, horizontal.x) * (180.0D / Math.PI)) - 90.0F;
+                wyvern.setYRot(targetYaw);
+                wyvern.yBodyRot = targetYaw;
+                wyvern.yHeadRot = targetYaw;
+            }
+            speed = AI_FORWARD_SPEED;
+
             if (horizontal.lengthSqr() < 1.0E-6) {
                 return;
             }
 
             // Set velocity - entity will apply it in handleGroundRendMovement().
-            // Scale by rider forward intent so pressing less than full forward still works.
-            Vec3 target = horizontal.normalize().scale(FORWARD_SPEED * riderForward);
+            Vec3 targetVelocity = horizontal.normalize().scale(speed);
             Vec3 current = wyvern.getDeltaMovement();
-            wyvern.setGroundRendVelocity(new Vec3(target.x, current.y, target.z));
+            wyvern.setGroundRendVelocity(new Vec3(targetVelocity.x, current.y, targetVelocity.z));
             wyvern.getNavigation().stop();
             applyGroundRendHits(wyvern, horizontal.normalize());
         }
@@ -125,6 +169,8 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     @Override
     public void end() {
         getUser().setGroundRending(false);
+        getUser().setGroundRendTravelSpeed(0.0F);
+        aiGroundRendDir = Vec3.ZERO;
         getUser().clearRiderControlLock();
         hitCooldowns.clear();
         super.end();
@@ -133,9 +179,35 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     @Override
     public void interrupt() {
         getUser().setGroundRending(false);
+        getUser().setGroundRendTravelSpeed(0.0F);
+        aiGroundRendDir = Vec3.ZERO;
         getUser().clearRiderControlLock();
         hitCooldowns.clear();
         super.interrupt();
+    }
+
+    private static Vec3 getForwardDir(Raevyx wyvern) {
+        Vec3 look = wyvern.getLookAngle();
+        Vec3 horizontal = new Vec3(look.x, 0.0D, look.z);
+        if (horizontal.lengthSqr() < 1.0E-6D) {
+            return new Vec3(0.0D, 0.0D, 1.0D);
+        }
+        return horizontal.normalize();
+    }
+
+    private static Vec3 getDirectionToTarget(Raevyx wyvern, LivingEntity target) {
+        Vec3 toTarget = target.position().subtract(wyvern.position());
+        Vec3 horizontal = new Vec3(toTarget.x, 0.0D, toTarget.z);
+        if (horizontal.lengthSqr() < 1.0E-6D) {
+            return getForwardDir(wyvern);
+        }
+        return horizontal.normalize();
+    }
+
+    private static double getEdgeGap(Raevyx wyvern, LivingEntity target) {
+        double centerDistance = wyvern.distanceTo(target);
+        double combinedRadii = (wyvern.getBbWidth() + target.getBbWidth()) * 0.5D;
+        return Math.max(0.0D, centerDistance - combinedRadii);
     }
 
     private void applyGroundRendHits(Raevyx wyvern, Vec3 forwardDir) {
@@ -148,23 +220,71 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         AABB mouthBox = new AABB(mouthPos, mouthPos).inflate(1.35D);
         AABB combinedBox = dragonBox.minmax(mouthBox);
 
-        for (LivingEntity target : wyvern.level().getEntitiesOfClass(
-                LivingEntity.class,
-                combinedBox,
-                entity -> entity != wyvern
-                        && entity != wyvern.getControllingPassenger()
-                        && entity.isAlive()
-                        && entity.attackable()
-                        && !wyvern.isAlly(entity))) {
+        java.util.List<LivingEntity> targets;
+        if (wyvern.isVehicle()) {
+            targets = wyvern.level().getEntitiesOfClass(
+                    LivingEntity.class,
+                    combinedBox,
+                    entity -> entity != wyvern
+                            && entity != wyvern.getControllingPassenger()
+                            && entity.isAlive()
+                            && entity.attackable()
+                            && !wyvern.isAlly(entity));
+        } else {
+            LivingEntity currentTarget = wyvern.getTarget();
+            if (currentTarget == null
+                    || !currentTarget.isAlive()
+                    || currentTarget == wyvern
+                    || wyvern.isAlly(currentTarget)
+                    || !combinedBox.intersects(currentTarget.getBoundingBox())) {
+                targets = java.util.Collections.emptyList();
+            } else {
+                targets = java.util.List.of(currentTarget);
+            }
+        }
+
+        for (LivingEntity target : targets) {
             int entityId = target.getId();
             if (hitCooldowns.containsKey(entityId)) {
                 continue;
             }
 
-            target.hurt(wyvern.damageSources().mobAttack(wyvern), HIT_DAMAGE);
+            float armor = (float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR);
+            float toughness = (float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS);
+            float rawDamage = rawDamageForDesiredPostArmor(HIT_DAMAGE, Math.max(0f, armor), toughness);
+            target.hurt(wyvern.damageSources().mobAttack(wyvern), rawDamage);
             wyvern.noteAggroFrom(target);
             target.knockback((float) HIT_KNOCKBACK, -forwardDir.x, -forwardDir.z);
             hitCooldowns.put(entityId, HIT_COOLDOWN_TICKS);
         }
+    }
+
+    private static float damageAfterArmor(float damage, float armor, float toughness) {
+        float f = 2.0F + toughness / 4.0F;
+        float reduction = Mth.clamp(armor - damage / f, armor * 0.2F, 20.0F);
+        return damage * (1.0F - reduction / 25.0F);
+    }
+
+    private static float rawDamageForDesiredPostArmor(float desiredPostArmor, float armor, float toughness) {
+        if (desiredPostArmor <= 0f) {
+            return 0f;
+        }
+
+        float lo = desiredPostArmor;
+        float hi = Math.max(desiredPostArmor, 1.0f);
+        for (int i = 0; i < 8 && damageAfterArmor(hi, armor, toughness) < desiredPostArmor; i++) {
+            hi *= 2.0f;
+        }
+
+        for (int i = 0; i < 14; i++) {
+            float mid = (lo + hi) * 0.5f;
+            float val = damageAfterArmor(mid, armor, toughness);
+            if (val < desiredPostArmor) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        return hi;
     }
 }

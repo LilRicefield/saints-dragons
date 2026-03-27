@@ -163,6 +163,9 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> VOLITANS_RUN = registerSound("volitans_run");
     public static final Supplier<SoundEvent> VOLITANS_POISON_BALL_READY = registerSound("volitans_poison_ball_ready");
     public static final Supplier<SoundEvent> VOLITANS_POISON_BALL_SHOOT = registerSound("volitans_poison_ball_shoot");
+    public static final Supplier<SoundEvent> VOLITANS_DASH_FORWARD = registerSound("volitans_dash_forward");
+    public static final Supplier<SoundEvent> VOLITANS_DASH_BACKWARDS = registerSound("volitans_dash_backwards");
+    public static final Supplier<SoundEvent> VOLITANS_DODGE = registerSound("volitans_dodge");
     public static final Supplier<SoundEvent> VOLITANS_HURT = registerSound("volitans_hurt");
     public static final Supplier<SoundEvent> VOLITANS_DIE = registerSound("volitans_die");
     public static final Supplier<SoundEvent> VOLITANS_TAKEOFF = registerSound("volitans_takeoff");

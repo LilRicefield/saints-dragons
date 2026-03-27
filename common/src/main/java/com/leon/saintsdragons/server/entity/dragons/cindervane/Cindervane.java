@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
 import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
+import com.leon.saintsdragons.server.entity.component.DragonTakeoffComponent;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
@@ -190,6 +191,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private float prevScreenShakeAmount = 0f;
     private float screenShakeAmount = 0f;
+    private final DragonTakeoffComponent takeoffComponent;
 
     private static final double MODEL_SCALE = 1.0D;
 
@@ -312,6 +314,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.moveControl = new MoveControl(this);
         this.usingAirNav = false;
         this.riderController = new CindervaneRiderController(this);
+        this.takeoffComponent = createTakeoffComponent();
         this.riderFlightComponent = createRiderFlightComponent();
 
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
@@ -370,9 +373,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             public void setFlying(boolean value) { Cindervane.this.setFlying(value); }
 
             @Override
-            public void setTakeoff(boolean value) { Cindervane.this.setTakeoff(value); }
-
-            @Override
             public void setHovering(boolean value) { Cindervane.this.setHovering(value); }
 
             @Override
@@ -389,6 +389,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
             @Override
             public void stopNavigation() { Cindervane.this.getNavigation().stop(); }
+
+            @Override
+            public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+                Cindervane.this.startTakeoffSequence(minUpwardVelocity, animationTicks);
+            }
 
             @Override
             public Vec3 getDeltaMovement() { return Cindervane.this.getDeltaMovement(); }
@@ -412,6 +417,47 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 0.45D,
                 TAKEOFF_ANIMATION_TICKS
         ));
+    }
+
+    private DragonTakeoffComponent createTakeoffComponent() {
+        return new DragonTakeoffComponent(new DragonTakeoffComponent.Host() {
+            @Override
+            public Level level() { return Cindervane.this.level(); }
+
+            @Override
+            public boolean isFlying() { return Cindervane.this.isFlying(); }
+
+            @Override
+            public void setFlying(boolean value) { Cindervane.this.setFlying(value); }
+
+            @Override
+            public void setTakeoff(boolean value) { Cindervane.this.setTakeoff(value); }
+
+            @Override
+            public void setHovering(boolean value) { Cindervane.this.setHovering(value); }
+
+            @Override
+            public void setLanding(boolean value) { Cindervane.this.setLanding(value); }
+
+            @Override
+            public void switchToAirNavigation() { Cindervane.this.switchToAirNavigation(); }
+
+            @Override
+            public Vec3 getDeltaMovement() { return Cindervane.this.getDeltaMovement(); }
+
+            @Override
+            public void setDeltaMovement(Vec3 movement) { Cindervane.this.setDeltaMovement(movement); }
+
+            @Override
+            public void markImpulse() { Cindervane.this.hasImpulse = true; }
+
+            @Override
+            public void onTakeoffStarted() { Cindervane.this.timeFlying = 0; }
+        });
+    }
+
+    private void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
     }
 
     @Override
@@ -696,7 +742,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
             // Auto-complete landing once we're actually on ground (like Ignivorus)
             // This check is OUTSIDE isFlying() because FollowOwnerGoal sets flying=false before touchdown
-            if (isLanding() && onGround()) {
+            if (isLanding() && onGroundNow) {
                 handleAiLandingComplete();
             }
 
@@ -708,11 +754,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 // Break vegetation blocks during takeoff
                 if (isTakeoff()) {
                     breakBlocksDuringTakeoff();
-                }
-
-                // Clear takeoff flag after animation completes (5 ticks in air)
-                if (isTakeoff() && !onGroundNow && airTicks > 5) {
-                    setTakeoff(false);
                 }
 
                 if (onGroundNow && !isTakeoff()) {
@@ -767,6 +808,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         // === SERVER-SIDE: EVERY TICK (lightweight or critical) ===
+        takeoffComponent.tick();
         tickSittingState();
         tickRiderTakeoff();
         tickMountedState();
@@ -1109,15 +1151,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private void tickRiderTakeoff() {
         if (!level().isClientSide && riderTakeoffTicks > 0) {
             riderTakeoffTicks--;
-            // Only apply boost if NOT being ridden (rider controller handles takeoff boost instead)
-            if (getControllingPassenger() == null) {
-                Vec3 velocity = this.getDeltaMovement();
-                double boost = this.isFlying() ? 0.08D : 0.12D;
-                if (velocity.y < boost) {
-                    this.setDeltaMovement(velocity.x, boost, velocity.z);
-                }
-                this.hasImpulse = true;
-            }
         }
     }
 
@@ -1162,6 +1195,23 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private void tickRiderLandingBlendTimer() {
         trackRiderAirborneForLanding();
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+
+        if (inWater) {
+            riderLandingBlendTicks = 0;
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+                if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+                    setFlying(false);
+                    setTakeoff(false);
+                    setLanding(false);
+                    setHovering(false);
+                    timeFlying = 0;
+                    switchToGroundNavigation();
+                }
+            }
+            return;
+        }
 
         if (!isVehicle() || !isFlying() || onGround()) {
             // If we were actively landing and now touched ground, trigger landed animation
@@ -1592,17 +1642,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     private boolean shouldPlayTakeoff() {
-        // Get timeFlying from entity
-        int timeFlying = getTimeFlying();
-
-        // Play takeoff at the very start of flight
-        if (timeFlying < TAKEOFF_ANIMATION_TICKS) return true; // 1.25s
-
-        // Continue playing if still within max ticks AND conditions are met
-        boolean airborne = !onGround();
-        boolean ascending = getDeltaMovement().y > 0.05;
-
-        return (timeFlying < TAKEOFF_ANIMATION_TICKS) && (airborne || ascending); // 1.25s
+        return isTakeoff();
     }
 
     private boolean isRiddenByOwner() {
@@ -2702,16 +2742,19 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (flying == isFlying()) {
             return;
         }
+        if (flying && !isTakeoff() && this.onGround()) {
+            startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
         this.entityData.set(DATA_FLYING, flying);
         if (flying) {
             switchToAirNavigation();
             setLanding(false);
-            setTakeoff(true);
             this.getNavigation().stop();
         } else {
+            takeoffComponent.clear();
             switchToGroundNavigation();
             setHovering(false);
-            setTakeoff(false);
         }
     }
 
@@ -2724,6 +2767,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public void setTakeoff(boolean takeoff) {
         boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
+        if (!takeoff && takeoffComponent.isActive()) {
+            takeoffComponent.clear();
+            return;
+        }
         if (takeoff && !wasTakeoff && !level().isClientSide) {
             triggerAnim("instant", "takeoff");
             getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, 1.0f, 55);
@@ -2842,7 +2889,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public void markLandedNow() {
         setFlying(false);
         setLanding(false);
-        setTakeoff(false);
+        takeoffComponent.clear();
         this.riderTakeoffTicks = 0;
         this.timeFlying = 0;
     }

@@ -62,28 +62,6 @@ public class DragonAllyManager {
             return AllyResult.INVALID_USERNAME;
         }
         
-        // Check for inappropriate content
-        if (containsInappropriateContent(username)) {
-            return AllyResult.INAPPROPRIATE_CONTENT;
-        }
-        
-        // Easter egg: Check for famous names first
-        if (username.equalsIgnoreCase("Notch")) {
-            return AllyResult.EASTER_EGG;
-        }
-        if (username.equalsIgnoreCase("jeb_")) {
-            return AllyResult.EASTER_EGG;
-        }
-        if (username.equalsIgnoreCase("Dinnerbone")) {
-            return AllyResult.EASTER_EGG;
-        }
-        if (username.equalsIgnoreCase("Grumm")) {
-            return AllyResult.EASTER_EGG;
-        }
-        if (username.equalsIgnoreCase("Herobrine")) {
-            return AllyResult.EASTER_EGG;
-        }
-        
         // Check if trying to add the wyvern owner as an ally (they're already the owner!)
         String ownerName = owner.getName().getString();
         if (username.equalsIgnoreCase(ownerName)) {
@@ -320,49 +298,6 @@ public class DragonAllyManager {
     public void loadFromNBT(CompoundTag tag) {
     }
     
-    /**
-     * Check if username contains inappropriate content
-     * Uses pattern matching to catch common profanity and variations
-     */
-    private static boolean containsInappropriateContent(String username) {
-        String lowerUsername = username.toLowerCase();
-        
-        // Common profanity patterns (using regex to catch variations)
-        String[] inappropriatePatterns = {
-            // Common profanity with character substitutions
-            "f[uv]ck", "sh[i1]t", "b[i1]tch", "d[i1]ck", "p[i1]ss", "c[o0]ck",
-            "a[s$][s$]", "f[a@]g", "n[i1]gg[a@]", "r[e3]t[a@]rd", "wh[o0]r[e3]",
-            // Common variations
-            "f[u]ck", "sh[i]t", "b[i]tch", "d[i]ck", "p[i]ss", "c[o]ck",
-            "a[s]s", "f[a]g", "n[i]gg[a]", "r[e]t[a]rd", "wh[o]r[e]",
-            // Leetspeak variations
-            "f[u]ck", "sh[i]t", "b[i]tch", "d[i]ck", "p[i]ss", "c[o]ck",
-            // Common misspellings
-            "fuk", "shyt", "bich", "dik", "pis", "cok",
-            // Other inappropriate terms
-            "h[e3]ll", "d[a@]mn", "cr[a@]p", "p[o0]rn", "s[e3]x"
-        };
-        
-        for (String pattern : inappropriatePatterns) {
-            if (lowerUsername.matches(".*" + pattern + ".*")) {
-                return true;
-            }
-        }
-        
-        // Check for repeated characters (common way to bypass filters)
-        if (lowerUsername.matches(".*(.)\\1{2,}.*")) {
-            return true;
-        }
-        
-        // Check for excessive numbers (another bypass method)
-        long numberCount = lowerUsername.chars().filter(Character::isDigit).count();
-        if (numberCount > username.length() / 2) {
-            return true;
-        }
-        
-        return false;
-    }
-
     private ServerPlayer getOwnerPlayer() {
         if (!dragon.isTame()) {
             return null;
@@ -408,9 +343,7 @@ public class DragonAllyManager {
         ALREADY_ALLY("Player is already an ally"),
         NOT_ALLY("Player is not an ally"),
         ALLY_LIMIT_REACHED("Maximum ally limit reached"),
-        EASTER_EGG("Easter egg message"),
-        IS_OWNER("You are already the owner of this wyvern!"),
-        INAPPROPRIATE_CONTENT("Inappropriate content detected");
+        IS_OWNER("You are already the owner of this wyvern!");
         
         private final String message;
         

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -97,7 +98,7 @@ public class VolitansWaterBreathEntity extends Entity {
             if (ownerUUID != null && ownerUUID.equals(target.getUUID())) {
                 continue;
             }
-            if (attacker != null && attacker.isAlliedTo(target)) {
+            if (isAlliedTarget(attacker, target)) {
                 continue;
             }
 
@@ -119,6 +120,19 @@ public class VolitansWaterBreathEntity extends Entity {
                 target.hasImpulse = true;
             }
             return true;
+        }
+        return false;
+    }
+
+    private boolean isAlliedTarget(LivingEntity attacker, LivingEntity target) {
+        if (attacker == null || target == null) {
+            return false;
+        }
+        if (attacker.isAlliedTo(target)) {
+            return true;
+        }
+        if (attacker instanceof DragonEntity dragon) {
+            return dragon.isAlly(target);
         }
         return false;
     }

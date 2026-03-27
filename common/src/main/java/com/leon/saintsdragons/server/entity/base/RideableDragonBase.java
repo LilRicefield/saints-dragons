@@ -35,6 +35,7 @@ import java.util.Set;
  */
 public abstract class RideableDragonBase extends DragonEntity implements RideableDragon, FlyingAnimal {
     private static final Logger LOGGER = LoggerFactory.getLogger(RideableDragonBase.class);
+    private static final int MAX_PERSISTED_FLIGHT_MODE = 5;
     private final Set<String> warnedMissingActions = new HashSet<>();
 
     /** Entity data accessor for melee mode (0=primary melee, 1=secondary melee) */
@@ -854,6 +855,13 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         boolean savedTakeoff = tag.getBoolean("Takeoff");
         boolean savedHovering = tag.getBoolean("Hovering");
         boolean savedLanding = tag.getBoolean("Landing");
+
+        // Trigger-only transient states do not replay cleanly across save/load.
+        // Persist the broader flying/hovering posture, but drop mid-transition flags.
+        if (savedTakeoff || savedLanding) {
+            savedTakeoff = false;
+            savedLanding = false;
+        }
         applyLoadedFlightState(savedFlying, savedTakeoff, savedHovering, savedLanding);
 
         this.setRunning(tag.getBoolean("Running"));
@@ -865,7 +873,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.entityData.set(getGroundMoveStateAccessor(), Mth.clamp(groundState, 0, 2));
 
         int flightMode = tag.contains("FlightMode") ? tag.getInt("FlightMode") : -1;
-        this.entityData.set(getFlightModeAccessor(), savedFlying ? Mth.clamp(flightMode, -1, 3) : -1);
+        this.entityData.set(getFlightModeAccessor(), savedFlying ? Mth.clamp(flightMode, -1, MAX_PERSISTED_FLIGHT_MODE) : -1);
 
         float riderForward = tag.contains("RiderForward") ? tag.getFloat("RiderForward") : 0f;
         float riderStrafe = tag.contains("RiderStrafe") ? tag.getFloat("RiderStrafe") : 0f;
@@ -879,6 +887,16 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         if (!level().isClientSide) {
             this.syncAnimState(this.entityData.get(getGroundMoveStateAccessor()),
                     this.entityData.get(getFlightModeAccessor()));
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        if (!level().isClientSide && this.tickCount == 1) {
+            initializeAnimationState();
+            resetAnimationState();
         }
     }
 

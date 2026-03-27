@@ -63,19 +63,7 @@ public class MessageDragonAllyManagement {
             default -> result = DragonAllyManager.AllyResult.INVALID_USERNAME;
         }
 
-        Component resultMessage;
-        if (result == DragonAllyManager.AllyResult.EASTER_EGG) {
-            resultMessage = switch (message.username.toLowerCase()) {
-                case "notch" -> Component.translatable("saintsdragons.message.easter_egg.notch");
-                case "jeb_" -> Component.translatable("saintsdragons.message.easter_egg.jeb_");
-                case "dinnerbone" -> Component.translatable("saintsdragons.message.easter_egg.dinnerbone");
-                case "grumm" -> Component.translatable("saintsdragons.message.easter_egg.grumm");
-                case "herobrine" -> Component.translatable("saintsdragons.message.easter_egg.herobrine");
-                default -> Component.translatable("saintsdragons.message.ally.easter_egg");
-            };
-        } else {
-            resultMessage = Component.translatable("saintsdragons.message.ally." + result.name().toLowerCase(), message.username);
-        }
+        Component resultMessage = Component.translatable("saintsdragons.message.ally." + result.name().toLowerCase(), message.username);
         player.sendSystemMessage(resultMessage);
 
         if (result == DragonAllyManager.AllyResult.SUCCESS) {

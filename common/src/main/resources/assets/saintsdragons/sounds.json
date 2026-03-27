@@ -1497,6 +1497,39 @@
       }
     ]
   },
+  "volitans_dash_forward": {
+    "subtitle": "Volitans dashes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_dash_forward",
+        "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_dash_backwards": {
+    "subtitle": "Volitans dashes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_dash_backwards",
+        "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_dodge": {
+    "subtitle": "Volitans dodges",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_dodge",
+        "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
   "volitans_hurt": {
     "subtitle": "Volitans hurts",
     "sounds": [

@@ -1,9 +1,11 @@
 package com.leon.saintsdragons.server.entity.handler;
 
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
@@ -148,6 +150,11 @@ public class DragonCombatHandler {
 
     public void tryUseAbility(DragonAbilityType<?, ?> abilityType) {
         if (abilityType == null || dragon.level().isClientSide) {
+            return;
+        }
+        if (dragon instanceof Volitans volitans
+                && (volitans.isAiSpecialCombatActive() || volitans.isAiSpecialCombatReserved())
+                && abilityType != VolitansAbilities.VOLITANS_ULTIMATE) {
             return;
         }
         if (dragon.areRiderControlsLocked()) {

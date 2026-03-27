@@ -329,6 +329,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double bulldozeDamage = 10.0D;
         double ultimateDamage = 200.0D;
         double ultimatePenaltyHealth = 50.0D;
+        double ultimateTriggerHealthFraction = 0.5D;
         double tamingChanceBase = 7.0D;
         double tamingChanceBeef = 5.0D;
         double tamingChanceHearty = 4.0D;
@@ -372,6 +373,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 bulldozeDamage = (double) configClass.getField("IGNIVORUS_BULLDOZE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_BULLDOZE_DAMAGE").get(null));
                 ultimateDamage = (double) configClass.getField("IGNIVORUS_ULTIMATE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ULTIMATE_DAMAGE").get(null));
                 ultimatePenaltyHealth = (double) configClass.getField("IGNIVORUS_ULTIMATE_PENALTY_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ULTIMATE_PENALTY_HEALTH").get(null));
+                ultimateTriggerHealthFraction = (double) configClass.getField("IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION").get(null));
                 tamingChanceBase = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_BASE").get(null));
                 tamingChanceBeef = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_BEEF").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_BEEF").get(null));
                 tamingChanceHearty = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_HEARTY").get(null));
@@ -403,6 +405,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
         Map<String, Double> extras = new HashMap<>();
         extras.put("ultimate_penalty_health", ultimatePenaltyHealth);
+        extras.put("ultimate_trigger_health_fraction", ultimateTriggerHealthFraction);
         extras.put("fire_breath_drain_per_tick", fireBreathDrainPerTick);
         extras.put("fire_breath_regen_per_tick", fireBreathRegenPerTick);
         extras.put("fire_breath_flame_spawn_multiplier", fireBreathFlameSpawnMultiplier);
@@ -863,6 +866,11 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                             mergedConfig.extraDouble("fire_breath_ignite_block_chance", 1.0D));
                     updated = true;
                 }
+                if (!extra.has("ultimate_trigger_health_fraction")) {
+                    extra.addProperty("ultimate_trigger_health_fraction",
+                            mergedConfig.extraDouble("ultimate_trigger_health_fraction", 0.5D));
+                    updated = true;
+                }
                 if (!extra.has("phase2_toggle_on_chance")) {
                     extra.addProperty("phase2_toggle_on_chance",
                             mergedConfig.extraDouble("phase2_toggle_on_chance", 0.85D));
@@ -1054,6 +1062,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             hints.addProperty("fire_body_self_damage_on_crash", "Self-damage applied to Cindervane after Fire Body crash impact");
         } else if (id.equals(IGNIVORUS_ID)) {
             hints.addProperty("ultimate_penalty_health", "Typical 1-10000");
+            hints.addProperty("ultimate_trigger_health_fraction", "Health fraction (0-1). 0.5 = trigger at 50% max health");
             hints.addProperty("fire_breath_flame_spawn_multiplier", "0 = disable flame entities, 1 = default");
             hints.addProperty("fire_breath_flame_speed_multiplier", "Scales flame projectile speed (1 = default)");
             hints.addProperty("fire_breath_flame_lifetime_multiplier", "Scales flame lifetime ticks (1 = default)");

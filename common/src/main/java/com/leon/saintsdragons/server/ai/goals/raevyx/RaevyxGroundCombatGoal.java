@@ -18,6 +18,8 @@ public class RaevyxGroundCombatGoal extends Goal {
     private final Raevyx wyvern;
     private final double biteRange = 3.0;
     private final double goreRange = 4.5;
+    private final double groundRendRange = 8.5;
+    private final double groundRendMinRange = 3.4;
     private final double chaseSpeed = 1.75D;
     private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
@@ -32,7 +34,10 @@ public class RaevyxGroundCombatGoal extends Goal {
     // Beam cooldown mechanic (AI only - 3 minute cooldown)
     private int beamCooldown = 0;
     private static final int BEAM_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
+    private int groundRendCooldown = 0;
+    private static final int GROUND_REND_COOLDOWN_TICKS = 400;
     private final RaevyxCombatDirector combatDirector = new RaevyxCombatDirector();
+    private int postRoarGroundRendTicks = 0;
 
     public RaevyxGroundCombatGoal(Raevyx wyvern) {
         this.wyvern = wyvern;
@@ -147,9 +152,21 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (beamCooldown > 0) {
             beamCooldown--;
         }
+        if (groundRendCooldown > 0) {
+            groundRendCooldown--;
+        }
+        if (postRoarGroundRendTicks > 0) {
+            postRoarGroundRendTicks--;
+        }
 
         LivingEntity target = wyvern.getTarget();
         if (target != null) {
+            if (wyvern.isGroundRending()) {
+                wyvern.getNavigation().stop();
+                pathRecalcCooldown = 0;
+                return;
+            }
+
             wyvern.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
             // In water, use direct swim steering instead of land path navigation to avoid sinking/stalling.
@@ -174,6 +191,7 @@ public class RaevyxGroundCombatGoal extends Goal {
                     wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_ROAR);
                     hasUsedRoarOpener = true;
                     attackCooldown = 40; // Brief cooldown after roar
+                    postRoarGroundRendTicks = 40;
                     wyvern.tryAIGroundDodge(target); // sidestep to avoid bolt flames
                 }
                 return; // Don't do normal attacks during roar opener phase
@@ -184,6 +202,10 @@ public class RaevyxGroundCombatGoal extends Goal {
             boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
             boolean beamReady = beamCooldown <= 0;
             combatDirector.tick(wyvern, target, gap, hasLineOfSight, beamReady);
+
+            if (tryGroundRendPressure(target, gap, hasLineOfSight)) {
+                return;
+            }
 
             if (combatDirector.shouldTryDodge(wyvern, target, gap, isCurrentlyAttacking())) {
                 if (wyvern.tryAIGroundDodge(target)) {
@@ -197,6 +219,10 @@ public class RaevyxGroundCombatGoal extends Goal {
                     attackCooldown = Math.max(attackCooldown, 12);
                     return;
                 }
+            }
+
+            if (tryPostRoarGroundRend(target, gap, hasLineOfSight)) {
+                return;
             }
 
             if (tryDirectedBeam(target, hasLineOfSight, beamReady)) {
@@ -221,6 +247,7 @@ public class RaevyxGroundCombatGoal extends Goal {
     private boolean isCurrentlyAttacking() {
         return wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_BITE)
             || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_HORN_GORE)
+            || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_GROUND_REND)
             || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM)
             || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_ROAR);
     }
@@ -238,6 +265,14 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
 
         double gap = getGapToTarget(target);
+
+        if (gap <= groundRendRange && gap > groundRendMinRange && groundRendCooldown <= 0) {
+            if (startGroundRend()) {
+                attackCooldown = 26;
+                groundRendCooldown = GROUND_REND_COOLDOWN_TICKS;
+            }
+            return;
+        }
 
         // Choose attack based on distance - fire immediately
         if (gap <= biteRange) {
@@ -262,6 +297,52 @@ public class RaevyxGroundCombatGoal extends Goal {
         attackCooldown = 60;
         beamCooldown = BEAM_COOLDOWN_TICKS;
         return true;
+    }
+
+    private boolean tryPostRoarGroundRend(LivingEntity target, double gap, boolean hasLineOfSight) {
+        if (postRoarGroundRendTicks <= 0 || attackCooldown > 0 || isCurrentlyAttacking() || groundRendCooldown > 0) {
+            return false;
+        }
+        if (!hasLineOfSight || gap > groundRendRange || gap < groundRendMinRange) {
+            return false;
+        }
+        wyvern.getNavigation().stop();
+        pathRecalcCooldown = 0;
+        if (!startGroundRend()) {
+            return false;
+        }
+        attackCooldown = 26;
+        groundRendCooldown = GROUND_REND_COOLDOWN_TICKS;
+        postRoarGroundRendTicks = 0;
+        return true;
+    }
+
+    private boolean tryGroundRendPressure(LivingEntity target, double gap, boolean hasLineOfSight) {
+        if (attackCooldown > 0 || isCurrentlyAttacking() || groundRendCooldown > 0) {
+            return false;
+        }
+        if (!hasLineOfSight || gap < groundRendMinRange || gap > groundRendRange) {
+            return false;
+        }
+        if (gap <= goreRange && combatDirector.shouldTryDodge(wyvern, target, gap, false)) {
+            return false;
+        }
+        wyvern.getNavigation().stop();
+        pathRecalcCooldown = 0;
+        if (!startGroundRend()) {
+            return false;
+        }
+        attackCooldown = 26;
+        groundRendCooldown = GROUND_REND_COOLDOWN_TICKS;
+        return true;
+    }
+
+    private boolean startGroundRend() {
+        if (!wyvern.combatManager.canStart(RaevyxAbilities.RAEVYX_GROUND_REND)) {
+            return false;
+        }
+        wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_GROUND_REND);
+        return wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_GROUND_REND);
     }
 
     /**

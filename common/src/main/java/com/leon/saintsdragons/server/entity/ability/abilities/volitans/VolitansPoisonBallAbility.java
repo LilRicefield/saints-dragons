@@ -26,6 +26,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
     private static final int COOLDOWN_TICKS = 20;
     private static final int READY_TICKS = 13; // 0.625s
     private static final int SHOOT_RELEASE_TICKS = 8; // 0.4167s
+    private static final int RELEASE_TAKEOFF_BLOCK_TICKS = 16;
     private static final int READY_SOUND_TICKS = 25; // 1.25s
     private static final int SHOOT_SOUND_TICKS = 52; // 2.60s
 
@@ -121,12 +122,20 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
 
     @Override
     public void interrupt() {
+        Volitans dragon = getUser();
+        dragon.blockTakeoffInput(RELEASE_TAKEOFF_BLOCK_TICKS);
+        dragon.setGoingUp(false);
+        dragon.setGoingDown(false);
         resetState();
         super.interrupt();
     }
 
     @Override
     public void end() {
+        Volitans dragon = getUser();
+        dragon.blockTakeoffInput(RELEASE_TAKEOFF_BLOCK_TICKS);
+        dragon.setGoingUp(false);
+        dragon.setGoingDown(false);
         resetState();
         super.end();
     }
@@ -137,6 +146,10 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
         }
         releaseRequested = true;
         releaseTicks = 0;
+        Volitans dragon = getUser();
+        dragon.blockTakeoffInput(SHOOT_RELEASE_TICKS + RELEASE_TAKEOFF_BLOCK_TICKS);
+        dragon.setGoingUp(false);
+        dragon.setGoingDown(false);
     }
 
     private void firePoisonBall() {

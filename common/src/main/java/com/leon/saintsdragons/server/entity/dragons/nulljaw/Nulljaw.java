@@ -484,7 +484,17 @@ public class Nulljaw extends RideableDragonBase implements SemiAquaticDragon, Sh
      */
     private void handleLeapMovement() {
         // Apply the leap velocity via delta movement so vanilla travel handles motion.
-        this.setDeltaMovement(leapVec);
+        double yVel = this.getDeltaMovement().y;
+        double horizontalX = leapVec.x;
+        double horizontalZ = leapVec.z;
+        if (!this.onGround()) {
+            yVel = Math.min((yVel - 0.22D) * 0.98D, -0.45D);
+            horizontalX *= 0.90D;
+            horizontalZ *= 0.90D;
+        } else {
+            yVel = Math.max(0.0D, yVel);
+        }
+        this.setDeltaMovement(horizontalX, yVel, horizontalZ);
         this.hasImpulse = true;
 
         // Decay for next tick
