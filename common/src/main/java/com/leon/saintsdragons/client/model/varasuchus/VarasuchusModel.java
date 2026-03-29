@@ -55,23 +55,21 @@ public class VarasuchusModel extends DefaultedEntityGeoModel<Varasuchus> {
             return;
         }
 
-        // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) return;
-
         float partialTick = animationState.getPartialTick();
-
-
         if (entity.isAlive()){
             if (entity.isDeadOrDying()){
                 return;
+            }
+            if (!entity.isVehicle()) {
+                applyNeckFollow(entity, modelData, animationState.getPartialTick());
             }
             applyBodyRotationDeviation(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
             applySwimPitch(entity, partialTick);
             applySwimRoll(entity, partialTick);
-            applyNeckFollow(entity, modelData, partialTick);
         }
     }
 
@@ -109,8 +107,6 @@ public class VarasuchusModel extends DefaultedEntityGeoModel<Varasuchus> {
     }
 
     private void applyNeckFollow(Varasuchus entity, EntityModelData modelData, float partialTick) {
-
-        // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
 

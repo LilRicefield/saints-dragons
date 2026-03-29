@@ -34,26 +34,23 @@ public CindervaneModel() {
     public void setCustomAnimations(Cindervane entity, long instanceId, AnimationState<Cindervane> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        // Skip custom animations when rendering in GUI (like the Draconic Codex)
         if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
             return;
         }
-
-        // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) return;
-
         float partialTick = animationState.getPartialTick();
 
         if (entity.isAlive()) {
-
             if (entity.isDeadOrDying()){
                 return;
+            }
+            if (!entity.isVehicle()) {
+                applyNeckFollow(entity, modelData, animationState.getPartialTick());
             }
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
             applyFlightPitch(entity, animationState);
-            applyNeckFollow(entity, modelData, partialTick);
             applyNeckBankingLean(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);

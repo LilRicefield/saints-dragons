@@ -37,70 +37,84 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     @Override
     public void setCustomAnimations(Volitans entity, long instanceId, AnimationState<Volitans> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
-        if (!entity.isAlive() || entity.isDeadOrDying()) {
+
+        EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
+        if (modelData == null) return;
+        if (entity.isAlive()){
+            if (entity.isDeadOrDying()){
+                return;
+            }
+            if (!entity.isVehicle()) {
+                applyNeckFollow(entity, modelData, animationState.getPartialTick());
+            }
+            applyBodyRotationDeviation(entity, animationState.getPartialTick());
+            applyBankingRoll(entity, animationState);
+            applyFlightPitch(entity, animationState);
+            applyNeckBankingLean(entity, animationState.getPartialTick());
+            applyGroundNeckTurn(entity, animationState.getPartialTick());
+            applySwimPitch(entity, animationState.getPartialTick());
+            applySwimRoll(entity, animationState.getPartialTick());
+            applyTailDrag(entity, animationState.getPartialTick());
+
+        }
+    }
+
+    private void applyBodyRotationDeviation(Volitans entity, float partialTick) {
+        var rootOpt = getBone("body");
+        if (rootOpt.isEmpty()) {
             return;
         }
-        EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
-        applyBankingRoll(entity, animationState);
-        applyFlightPitch(entity, animationState);
-        applyNeckBankingLean(entity, animationState.getPartialTick());
-        applyGroundNeckTurn(entity, animationState.getPartialTick());
-        applySwimPitch(entity, animationState.getPartialTick());
-        applySwimRoll(entity, animationState.getPartialTick());
-        if (modelData != null) {
-            applyHeadLookFollow(entity, modelData, animationState.getPartialTick());
-        }
-        applyTailDrag(entity, animationState.getPartialTick());
+
+        GeoBone root = rootOpt.get();
+        var snap = root.getInitialSnapshot();
+        double deviation = entity.getBodyRotDeviation().get(partialTick);
+        float deviationRad = (float)(deviation * net.minecraft.util.Mth.DEG_TO_RAD);
+
+        root.setRotY(snap.getRotY() - deviationRad);
     }
 
     private void applyBankingRoll(Volitans entity, AnimationState<Volitans> state) {
+        var bodyOpt = getBone("body");
+        if (bodyOpt.isEmpty()) {
+            return;
+        }
+        GeoBone body = bodyOpt.get();
+        var snap = body.getInitialSnapshot();
         float partialTick = state.getPartialTick();
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
-        applyBoneRoll("body", bankAngleRad);
+        body.setRotZ(snap.getRotZ() + bankAngleRad);
     }
 
     private void applyFlightPitch(Volitans entity, AnimationState<Volitans> state) {
+        var bodyOpt = getBone("body");
+        if (bodyOpt.isEmpty()) {
+            return;
+        }
+
+        GeoBone body = bodyOpt.get();
+        var snap = body.getInitialSnapshot();
+
         float partialTick = state.getPartialTick();
         float pitchRad = entity.getFlightPitchRadians(partialTick);
         pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-        applyBonePitch("body", -pitchRad);
+
+        body.setRotX(snap.getRotX() - pitchRad);
     }
 
-    private void applyBoneRoll(String boneName, float rollRad) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
-        GeoBone bone = boneOpt.get();
-        var snap = bone.getInitialSnapshot();
-        bone.setRotZ(snap.getRotZ() + rollRad);
-    }
-
-    private void applyBonePitch(String boneName, float pitchRad) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
-        GeoBone bone = boneOpt.get();
-        var snap = bone.getInitialSnapshot();
-        bone.setRotX(snap.getRotX() + pitchRad);
-    }
-
-    private void applyHeadLookFollow(Volitans entity, EntityModelData modelData, float partialTick) {
+    private void applyNeckFollow(Volitans entity, EntityModelData modelData, float partialTick) {
+        double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
+        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
+        float totalYawRad = lookYawRad + structuralYawRad;
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
         if (entity.isFlying()) {
             lookPitchRad *= 0.5f;
         }
 
-        double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
-        float structuralYawRad = (float) (bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
-        float totalYawRad = lookYawRad + structuralYawRad;
-
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.25f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.50f);
-        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.75f);
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 1.0f);
     }
 
     private void applyNeckBankingLean(Volitans entity, float partialTick) {
@@ -110,9 +124,9 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 30.0f * Mth.DEG_TO_RAD;
 
-        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.15f);
-        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.30f);
-        applyNeckBoneRotation("headController", neckLeanRad * 0.75f);
+        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.25f);
+        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.50f);
+        applyNeckBoneRotation("headController", neckLeanRad * 1.0f);
     }
 
     private void applyGroundNeckTurn(Volitans entity, float partialTick) {
@@ -124,9 +138,9 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
         velocity = Mth.clamp(velocity, -25.0, 25.0);
         float turnRad = (float) (-velocity * Mth.DEG_TO_RAD);
 
-        applyNeckBoneRotation("neck1Controller", turnRad * 0.15f);
-        applyNeckBoneRotation("neck2Controller", turnRad * 0.30f);
-        applyNeckBoneRotation("headController", turnRad * 0.75f);
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.25f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 0.50f);
+        applyNeckBoneRotation("headController", turnRad * 1.0f);
     }
 
     private void applyNeckBoneRotation(String boneName, float rotationY) {
@@ -140,13 +154,14 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
         var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
+        if (boneOpt.isEmpty()) return;
 
         GeoBone bone = boneOpt.get();
-        bone.setRotX(bone.getRotX() + headDeltaX * weight);
-        bone.setRotY(bone.getRotY() + headDeltaY * weight);
+        float addX = headDeltaX * weight;
+        float addY = headDeltaY * weight;
+
+        bone.setRotX(bone.getRotX() + addX);
+        bone.setRotY(bone.getRotY() + addY);
     }
 
     private void applySwimPitch(Volitans entity, float partialTick) {

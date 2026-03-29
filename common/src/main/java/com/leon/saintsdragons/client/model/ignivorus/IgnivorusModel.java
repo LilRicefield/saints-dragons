@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.model.ignivorus;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -61,31 +62,27 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     public void setCustomAnimations(Ignivorus entity, long instanceId, AnimationState<Ignivorus> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        // Skip custom animations when rendering in GUI (like the Draconic Codex)
         if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
             return;
         }
-
-        // Fetch EntityModelData ONCE (best practice - avoid repeated HashMap lookups)
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) return;
 
         float partialTick = animationState.getPartialTick();
 
         if (entity.isAlive()) {
-            // Skip all procedural overlays while taming stunned so the raw stun animation isn't
-            // contaminated by head-look or banking offsets.
             if (entity.isTamingStunned()) {
                 return;
             }
-
             if (entity.isDeadOrDying()){
                 return;
+            }
+            if (!entity.isVehicle()) {
+                applyNeckFollow(entity, modelData, animationState.getPartialTick());
             }
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
             applyFlightPitch(entity, animationState);
-            applyNeckFollow(entity, modelData, partialTick);
             applyNeckBankingLean(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
@@ -166,31 +163,20 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     }
 
     private void applyNeckFollow(Ignivorus entity, EntityModelData modelData, float partialTick) {
-
-        // Get body deviation (how much head leads body)
         double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
-
-        // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
-
-        float lookPitchRad;
-        if (entity.isVehicle() && entity.isFlying()) {
-            // Use synced flight pitch for rider look so other clients see the same smoothed motion.
-            lookPitchRad = entity.getFlightPitchRadians(partialTick);
-            float maxPitchRad = 25.0f * Mth.DEG_TO_RAD;
-            lookPitchRad = Mth.clamp(lookPitchRad, -maxPitchRad, maxPitchRad);
-        } else {
-            lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
+        if (entity.isFlying()) {
+            lookPitchRad *= 0.5f;
         }
 
-        // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
-        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.30f);  // Base
-        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.35f);  // Lower-mid
-        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.40f);  // Upper-mid
-        applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.42f);  // Tip
-        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.45f);  // Tip
+        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.30f);
+        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.35f);
+        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.40f);
+        applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.42f);
+        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.45f);
     }
 
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {

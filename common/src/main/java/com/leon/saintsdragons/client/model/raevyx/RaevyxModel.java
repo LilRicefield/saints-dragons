@@ -83,14 +83,15 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
             if (entity.isTamingStunned()) {
                 return;
             }
-
             if (entity.isDeadOrDying()){
                 return;
+            }
+            if (!entity.isVehicle()) {
+                applyNeckFollow(entity, modelData, animationState.getPartialTick());
             }
             applyBodyRotationDeviation(entity, partialTick);  // Same as Varasuchus/Stegonaut
             applyBankingRoll(entity, animationState);
             applyFlightPitch(entity, animationState);
-            applyNeckFollow(entity, modelData, partialTick);   // Base head tracking first (uses animation snapshot)
             applyNeckBankingLean(entity, partialTick); // Then layer procedural leans so they add on top
             applyGroundNeckTurn(entity, partialTick);  // Same for ground turning
             applyTailDrag(entity, partialTick);
@@ -180,10 +181,10 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 35.0f * Mth.DEG_TO_RAD;
 
         // Apply with increasing intensity toward the head (4 neck segments)
-        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.15f);  // Base - subtle
-        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.20f);  // Lower-mid
-        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.25f);  // Upper-midNear head
-        applyNeckBoneRotation("headController", neckLeanRad * 0.30f);   // Head - most pronounced
+        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.20f);  // Base - subtle
+        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.25f);  // Lower-mid
+        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.30f);  // Upper-midNear head
+        applyNeckBoneRotation("headController", neckLeanRad * 0.35f);   // Head - most pronounced
     }
 
     /**
@@ -207,9 +208,9 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
 
         // Apply with same values as banking lean (4 neck segments)
-        applyNeckBoneRotation("neck1Controller", turnRad * 0.3f);
-        applyNeckBoneRotation("neck2Controller", turnRad * 0.5f);
-        applyNeckBoneRotation("neck3Controller", turnRad * 0.7f);
+        applyNeckBoneRotation("neck1Controller", turnRad * 0.20f);
+        applyNeckBoneRotation("neck2Controller", turnRad * 0.25f);
+        applyNeckBoneRotation("neck3Controller", turnRad * 0.30f);
         applyNeckBoneRotation("headController", turnRad * 0.35f);
     }
 
