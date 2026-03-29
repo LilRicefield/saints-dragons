@@ -44,6 +44,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.OwnableEntity;
@@ -61,6 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Base class for all wyvern entities in the mod.
@@ -162,6 +165,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private BodyControl dragonBodyControl;
     // Safety flag for binder storage; when true, survival stats are paused.
     private boolean boundInBinder = false;
+    @Nullable
+    private UUID assignedParentUuid;
 
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -413,6 +418,45 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     public boolean hasGender() {
         return genderComponent != null && genderComponent.hasGender();
+    }
+
+    @Nullable
+    public UUID getAssignedParentUuid() {
+        return assignedParentUuid;
+    }
+
+    public void setAssignedParentUuid(@Nullable UUID assignedParentUuid) {
+        this.assignedParentUuid = assignedParentUuid;
+    }
+
+    public void clearAssignedParentUuid() {
+        this.assignedParentUuid = null;
+    }
+
+    public <T extends DragonEntity> List<T> getNearbyAssignedBabies(Class<T> dragonClass) {
+        return this.level().getEntitiesOfClass(
+                dragonClass,
+                this.getBoundingBox().inflate(16.0D),
+                baby -> baby != null
+                        && baby.isBaby()
+                        && baby.isAlive()
+                        && this.getUUID().equals(baby.getAssignedParentUuid())
+        );
+    }
+
+    public <T extends DragonEntity> boolean hasNearbyAssignedBabies(Class<T> dragonClass) {
+        return !getNearbyAssignedBabies(dragonClass).isEmpty();
+    }
+
+    protected void assignMotherToBaby(DragonEntity baby, @Nullable AgeableMob otherParent) {
+        DragonEntity mother = this.isFemale()
+                ? this
+                : (otherParent instanceof DragonEntity otherDragon && otherDragon.isFemale() ? otherDragon : null);
+        if (mother != null) {
+            baby.setAssignedParentUuid(mother.getUUID());
+        } else {
+            baby.clearAssignedParentUuid();
+        }
     }
 
     // ===== TEXTURE VARIANT SYSTEM =====
@@ -1913,6 +1957,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         tag.putInt("TextureVariant", getTextureVariant());
         tag.putBoolean("BoundInBinder", this.boundInBinder);
+        if (assignedParentUuid != null) {
+            tag.putUUID("AssignedParentUuid", assignedParentUuid);
+        }
 
         allyManager.saveToNBT(tag);
     }
@@ -1950,6 +1997,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         if (tag.contains("TextureVariant")) {
             setTextureVariant(tag.getInt("TextureVariant"));
         }
+        this.assignedParentUuid = tag.hasUUID("AssignedParentUuid") ? tag.getUUID("AssignedParentUuid") : null;
         this.boundInBinder = tag.getBoolean("BoundInBinder");
         allyManager.loadFromNBT(tag);
     }

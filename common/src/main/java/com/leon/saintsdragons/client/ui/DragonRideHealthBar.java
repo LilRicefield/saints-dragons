@@ -4,7 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -24,8 +24,8 @@ public class DragonRideHealthBar {
     private static final ResourceLocation IGNIVORUS_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/ignivorus/ignivorus_overlay.png");
     private static final ResourceLocation CINDERVANE_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/cindervane/cindervane_base.png");
     private static final ResourceLocation CINDERVANE_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/cindervane/cindervane_overlay.png");
-    private static final ResourceLocation NULLJAW_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/nulljaw/nulljaw_base.png");
-    private static final ResourceLocation NULLJAW_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/nulljaw/nulljaw_overlay.png");
+    private static final ResourceLocation VARASUCHUS_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/varasuchus/varasuchus_base.png");
+    private static final ResourceLocation VARASUCHUS_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/varasuchus/varasuchus_overlay.png");
     private static final ResourceLocation STEGONAUT_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/stegonaut/stegonaut_base.png");
     private static final ResourceLocation STEGONAUT_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/stegonaut/stegonaut_overlay.png");
 
@@ -72,7 +72,7 @@ public class DragonRideHealthBar {
         // Position: centered horizontally, above hotbar (same Y as beam meter)
         int x = (screenWidth - BAR_WIDTH) / 2;
         int y = screenHeight - 57; // Above hotbar
-        if (dragon instanceof Cindervane || dragon instanceof Nulljaw) {
+        if (dragon instanceof Cindervane || dragon instanceof Varasuchus) {
             y += 6;
         }
 
@@ -86,8 +86,8 @@ public class DragonRideHealthBar {
             renderTexturedHealthBar(guiGraphics, x, y, IGNIVORUS_BASE, IGNIVORUS_OVERLAY);
         } else if (dragon instanceof Cindervane) {
             renderTexturedHealthBar(guiGraphics, x, y, CINDERVANE_BASE, CINDERVANE_OVERLAY);
-        } else if (dragon instanceof Nulljaw) {
-            renderTexturedHealthBar(guiGraphics, x, y, NULLJAW_BASE, NULLJAW_OVERLAY);
+        } else if (dragon instanceof Varasuchus) {
+            renderTexturedHealthBar(guiGraphics, x, y, VARASUCHUS_BASE, VARASUCHUS_OVERLAY);
         } else if (dragon instanceof Stegonaut) {
             renderTexturedHealthBar(guiGraphics, x, y, STEGONAUT_BASE, STEGONAUT_OVERLAY);
         } else {

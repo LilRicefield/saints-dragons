@@ -5,7 +5,7 @@ import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.client.gui.screens.Screen;
@@ -23,7 +23,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         CINDERVANE,
         STEGONAUT,
         RAEVYX,
-        NULLJAW,
+        VARASUCHUS,
         IGNIVORUS
     }
 
@@ -39,7 +39,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case CINDERVANE -> addCindervaneEntries(entries);
             case STEGONAUT -> addStegonautEntries(entries);
             case RAEVYX -> addRaevyxEntries(entries);
-            case NULLJAW -> addNulljawEntries(entries);
+            case VARASUCHUS -> addVarasuchusEntries(entries);
             case IGNIVORUS -> addIgnivorusEntries(entries);
         }
     }
@@ -73,9 +73,9 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startX + (buttonWidth + spacing) * 2, y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.nulljaw"), button -> {
-            if (section != Section.NULLJAW) {
-                section = Section.NULLJAW;
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.varasuchus"), button -> {
+            if (section != Section.VARASUCHUS) {
+                section = Section.VARASUCHUS;
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing) * 3, y, buttonWidth, 20).build());
@@ -128,8 +128,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                     stegonaut.applyConfiguredAttributes();
                 } else if (dragon instanceof Raevyx raevyx) {
                     raevyx.applyConfiguredAttributes();
-                } else if (dragon instanceof Nulljaw nulljaw) {
-                    nulljaw.applyConfiguredAttributes();
+                } else if (dragon instanceof Varasuchus varasuchus) {
+                    varasuchus.applyConfiguredAttributes();
                 } else if (dragon instanceof Ignivorus ignivorus) {
                     ignivorus.applyConfiguredAttributes();
                 }
@@ -389,83 +389,83 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 null));
     }
 
-    private void addNulljawEntries(List<ConfigEntry> entries) {
-        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.nulljaw")));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.max_health"),
-                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH::get,
-                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH::set,
+    private void addVarasuchusEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.varasuchus")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.max_health"),
+                ForgeDragonAttributesConfig.VARASUCHUS_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_MAX_HEALTH::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.armor"),
-                ForgeDragonAttributesConfig.NULLJAW_ARMOR::get,
-                ForgeDragonAttributesConfig.NULLJAW_ARMOR::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.armor"),
+                ForgeDragonAttributesConfig.VARASUCHUS_ARMOR::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_ARMOR::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.swim_speed"),
-                ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED::get,
-                ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.swim_speed"),
+                ForgeDragonAttributesConfig.VARASUCHUS_SWIM_SPEED::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_SWIM_SPEED::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_phase1"),
-                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE::get,
-                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.bite_phase1"),
+                ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE1_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE1_DAMAGE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_phase2"),
-                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE::get,
-                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.bite_phase2"),
+                ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE2_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE2_DAMAGE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.tail_attack"),
-                ForgeDragonAttributesConfig.NULLJAW_TAIL_ATTACK_DAMAGE::get,
-                ForgeDragonAttributesConfig.NULLJAW_TAIL_ATTACK_DAMAGE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.tail_attack"),
+                ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.dash_tail_swipe"),
-                ForgeDragonAttributesConfig.NULLJAW_DASH_TAIL_SWIPE_DAMAGE::get,
-                ForgeDragonAttributesConfig.NULLJAW_DASH_TAIL_SWIPE_DAMAGE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_tail_swipe"),
+                ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.dash_claw"),
-                ForgeDragonAttributesConfig.NULLJAW_DASH_CLAW_DAMAGE::get,
-                ForgeDragonAttributesConfig.NULLJAW_DASH_CLAW_DAMAGE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_claw"),
+                ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase1"),
-                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE::get,
-                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase1"),
+                ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase2"),
-                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE::get,
-                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase2"),
+                ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE2_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE2_DAMAGE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.taming_chance"),
-                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE::get,
-                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_chance"),
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.taming_tropical"),
-                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE_TROPICAL::get,
-                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE_TROPICAL::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_tropical"),
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.legacy_taming"),
-                () -> ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.get(),
-                ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING::set,
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.legacy_taming"),
+                () -> ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.get(),
+                ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.egg_hatch_chance_normal"),
-                ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL::get,
-                ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_hatch_chance_normal"),
+                ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.egg_drop_chance"),
-                ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_drop_chance"),
+                ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.aggressive_wild"),
-                () -> ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.get(),
-                ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD::set,
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.aggressive_wild"),
+                () -> ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.get(),
+                ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.griefing_enabled"),
-                () -> ForgeDragonAttributesConfig.NULLJAW_GRIEFING_ENABLED.get(),
-                ForgeDragonAttributesConfig.NULLJAW_GRIEFING_ENABLED::set,
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.griefing_enabled"),
+                () -> ForgeDragonAttributesConfig.VARASUCHUS_GRIEFING_ENABLED.get(),
+                ForgeDragonAttributesConfig.VARASUCHUS_GRIEFING_ENABLED::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
-                () -> ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
-                ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
+                () -> ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
+                ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"),
-                () -> ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.get(),
-                ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED::set,
+                () -> ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.get(),
+                ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED::set,
                 null));
     }
 
@@ -696,26 +696,26 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
-            case NULLJAW -> {
-                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.set(ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_ARMOR.set(ForgeDragonAttributesConfig.NULLJAW_ARMOR.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED.set(ForgeDragonAttributesConfig.NULLJAW_SWIM_SPEED.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE1_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_BITE_PHASE2_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_TAIL_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_TAIL_ATTACK_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_DASH_TAIL_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_DASH_TAIL_SWIPE_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_DASH_CLAW_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_DASH_CLAW_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE1_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_HORN_GORE_PHASE2_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE.set(ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE_TROPICAL.set(ForgeDragonAttributesConfig.NULLJAW_TAMING_CHANCE_TROPICAL.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.set(ForgeDragonAttributesConfig.NULLJAW_LEGACY_TAMING.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.NULLJAW_EGG_HATCH_CHANCE_NORMAL.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.NULLJAW_EGG_DROP_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.NULLJAW_AGGRESSIVE_WILD.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_GRIEFING_ENABLED.set(ForgeDragonAttributesConfig.NULLJAW_GRIEFING_ENABLED.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
+            case VARASUCHUS -> {
+                ForgeDragonAttributesConfig.VARASUCHUS_MAX_HEALTH.set(ForgeDragonAttributesConfig.VARASUCHUS_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_ARMOR.set(ForgeDragonAttributesConfig.VARASUCHUS_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_SWIM_SPEED.set(ForgeDragonAttributesConfig.VARASUCHUS_SWIM_SPEED.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE1_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE2_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE2_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE.set(ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL.set(ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_GRIEFING_ENABLED.set(ForgeDragonAttributesConfig.VARASUCHUS_GRIEFING_ENABLED.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
             case IGNIVORUS -> {
                 ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH.getDefault());

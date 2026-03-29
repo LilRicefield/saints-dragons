@@ -89,6 +89,11 @@ public class CindervaneFlightGoal extends Goal {
             return false;
         }
 
+        // Parents should stay grounded with nearby babies unless they are over danger.
+        if (hasNearbyBabies() && !isOverDanger()) {
+            return false;
+        }
+
         // In Wander command, tamed flyers should stay grounded and roam on foot.
         if (amphithere.isTame() && amphithere.getCommand() == 2) {
             return false;
@@ -208,6 +213,15 @@ public class CindervaneFlightGoal extends Goal {
 
         // In Wander command, tamed flyers should not remain in autonomous flight.
         if (amphithere.isTame() && amphithere.getCommand() == 2) {
+            if (amphithere.isFlying()) {
+                beginLandingApproach();
+                return true;
+            }
+            return false;
+        }
+
+        // If a baby comes nearby while airborne, abort the patrol and land.
+        if (hasNearbyBabies() && !isOverDanger()) {
             if (amphithere.isFlying()) {
                 beginLandingApproach();
                 return true;
@@ -672,6 +686,10 @@ public class CindervaneFlightGoal extends Goal {
                block instanceof net.minecraft.world.level.block.TallGrassBlock ||
                block instanceof net.minecraft.world.level.block.FlowerBlock ||
                block instanceof net.minecraft.world.level.block.DoublePlantBlock;
+    }
+
+    private boolean hasNearbyBabies() {
+        return amphithere.hasNearbyAssignedBabies(Cindervane.class);
     }
 
     private boolean isOverDanger() {

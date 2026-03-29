@@ -1,0 +1,9 @@
+{
+  "type": "saintsdragons:add_conditional_features",
+  "biomes": "#saintsdragons:has_varasuchus_eggs",
+  "features": [
+    "saintsdragons:varasuchus_egg_patch"
+  ],
+  "step": "vegetal_decoration",
+  "config_key": "varasuchusEggBlockWorldgen"
+}

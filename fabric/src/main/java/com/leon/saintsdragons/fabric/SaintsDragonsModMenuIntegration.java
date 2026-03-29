@@ -119,26 +119,26 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxBuffer.reactiveTerrainClearingOnDamage = raevyxCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
         raevyxBuffer.reactiveTerrainClearingOnDamageTamed = raevyxCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
-        DragonAttributeConfig nulljawCurrent = loader.getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
-        DragonAttributeConfig nulljawDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.NULLJAW_ID);
-        NulljawAttributeBuffer nulljawBuffer = new NulljawAttributeBuffer();
-        nulljawBuffer.maxHealth = nulljawCurrent.maxHealth();
-        nulljawBuffer.armor = nulljawCurrent.armor();
-        nulljawBuffer.swimSpeed = nulljawCurrent.extraDouble("swim_speed", 1.45D);
-        nulljawBuffer.bitePhase1 = nulljawCurrent.abilityDamage("bite_phase1", 40.0D);
-        nulljawBuffer.bitePhase2 = nulljawCurrent.abilityDamage("bite_phase2", 50.0D);
-        nulljawBuffer.tailAttack = nulljawCurrent.abilityDamage("tail_attack", 8.0D);
-        nulljawBuffer.dashTailSwipe = nulljawCurrent.abilityDamage("dash_tail_swipe", 14.0D);
-        nulljawBuffer.dashClaw = nulljawCurrent.abilityDamage("dash_claw", 16.0D);
-        nulljawBuffer.hornPhase1 = nulljawCurrent.abilityDamage("horn_gore_phase1", 16.0D);
-        nulljawBuffer.hornPhase2 = nulljawCurrent.abilityDamage("horn_gore_phase2", 20.8D);
-        nulljawBuffer.tamingChance = nulljawCurrent.extraDouble("taming_chance", 6.0);
-        nulljawBuffer.legacyTaming = nulljawCurrent.extraBoolean("legacy_taming", false);
-        nulljawBuffer.eggHatchChanceNormal = nulljawCurrent.extraDouble("egg_hatch_chance_normal", 3.0D);
-        nulljawBuffer.eggDropChance = nulljawCurrent.extraDouble("egg_drop_chance", 0.12D);
-        nulljawBuffer.aggressiveWild = nulljawCurrent.extraBoolean("aggressive_wild", false);
-        nulljawBuffer.reactiveTerrainClearingOnDamage = nulljawCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
-        nulljawBuffer.reactiveTerrainClearingOnDamageTamed = nulljawCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
+        DragonAttributeConfig varasuchusCurrent = loader.getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
+        DragonAttributeConfig varasuchusDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
+        VarasuchusAttributeBuffer varasuchusBuffer = new VarasuchusAttributeBuffer();
+        varasuchusBuffer.maxHealth = varasuchusCurrent.maxHealth();
+        varasuchusBuffer.armor = varasuchusCurrent.armor();
+        varasuchusBuffer.swimSpeed = varasuchusCurrent.extraDouble("swim_speed", 1.45D);
+        varasuchusBuffer.bitePhase1 = varasuchusCurrent.abilityDamage("bite_phase1", 40.0D);
+        varasuchusBuffer.bitePhase2 = varasuchusCurrent.abilityDamage("bite_phase2", 50.0D);
+        varasuchusBuffer.tailAttack = varasuchusCurrent.abilityDamage("tail_attack", 8.0D);
+        varasuchusBuffer.dashTailSwipe = varasuchusCurrent.abilityDamage("dash_tail_swipe", 14.0D);
+        varasuchusBuffer.dashClaw = varasuchusCurrent.abilityDamage("dash_claw", 16.0D);
+        varasuchusBuffer.hornPhase1 = varasuchusCurrent.abilityDamage("horn_gore_phase1", 16.0D);
+        varasuchusBuffer.hornPhase2 = varasuchusCurrent.abilityDamage("horn_gore_phase2", 20.8D);
+        varasuchusBuffer.tamingChance = varasuchusCurrent.extraDouble("taming_chance", 6.0);
+        varasuchusBuffer.legacyTaming = varasuchusCurrent.extraBoolean("legacy_taming", false);
+        varasuchusBuffer.eggHatchChanceNormal = varasuchusCurrent.extraDouble("egg_hatch_chance_normal", 3.0D);
+        varasuchusBuffer.eggDropChance = varasuchusCurrent.extraDouble("egg_drop_chance", 0.12D);
+        varasuchusBuffer.aggressiveWild = varasuchusCurrent.extraBoolean("aggressive_wild", false);
+        varasuchusBuffer.reactiveTerrainClearingOnDamage = varasuchusCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
+        varasuchusBuffer.reactiveTerrainClearingOnDamageTamed = varasuchusCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
         DragonAttributeConfig stegonautCurrent = loader.getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
         DragonAttributeConfig stegonautDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
@@ -229,7 +229,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         builder.setTransparentBackground(true);
         builder.setSavingRunnable(() -> {
             holder.save();
-            persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, nulljawBuffer, ignivorusBuffer);
+            persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer);
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
@@ -280,19 +280,19 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.cindervaneEggBlockWorldgen, value -> config.cindervaneEggBlockWorldgen = value, true,
                 3, 1, 3);
 
-        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.nulljaw"),
-                () -> config.nulljawSpawnWeight, value -> config.nulljawSpawnWeight = value,
-                () -> config.nulljawMinGroupSize, value -> config.nulljawMinGroupSize = value,
-                () -> config.nulljawMaxGroupSize, value -> config.nulljawMaxGroupSize = value,
-                () -> config.nulljawAdditionalBiomes, list -> {
-                    config.nulljawAdditionalBiomes.clear();
-                    config.nulljawAdditionalBiomes.addAll(list);
+        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.varasuchus"),
+                () -> config.varasuchusSpawnWeight, value -> config.varasuchusSpawnWeight = value,
+                () -> config.varasuchusMinGroupSize, value -> config.varasuchusMinGroupSize = value,
+                () -> config.varasuchusMaxGroupSize, value -> config.varasuchusMaxGroupSize = value,
+                () -> config.varasuchusAdditionalBiomes, list -> {
+                    config.varasuchusAdditionalBiomes.clear();
+                    config.varasuchusAdditionalBiomes.addAll(list);
                 },
-                () -> config.nulljawExcludedBiomes, list -> {
-                    config.nulljawExcludedBiomes.clear();
-                    config.nulljawExcludedBiomes.addAll(list);
+                () -> config.varasuchusExcludedBiomes, list -> {
+                    config.varasuchusExcludedBiomes.clear();
+                    config.varasuchusExcludedBiomes.addAll(list);
                 },
-                () -> config.nulljawEggBlockWorldgen, value -> config.nulljawEggBlockWorldgen = value, true,
+                () -> config.varasuchusEggBlockWorldgen, value -> config.varasuchusEggBlockWorldgen = value, true,
                 2, 1, 2);
 
         addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.ignivorus"),
@@ -314,7 +314,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
         addStegonautAttributes(attributes, entryBuilder, stegonautBuffer, stegonautDefaults);
         addRaevyxAttributes(attributes, entryBuilder, raevyxBuffer, raevyxDefaults);
-        addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
+        addVarasuchusAttributes(attributes, entryBuilder, varasuchusBuffer, varasuchusDefaults);
         addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
 
         ConfigCategory others = builder.getOrCreateCategory(OTHERS_CATEGORY);
@@ -759,95 +759,95 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .build());
     }
 
-    private void addNulljawAttributes(ConfigCategory category,
+    private void addVarasuchusAttributes(ConfigCategory category,
                                      ConfigEntryBuilder entryBuilder,
-                                     NulljawAttributeBuffer buffer,
+                                     VarasuchusAttributeBuffer buffer,
                                      DragonAttributeConfig defaults) {
         List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.max_health"), buffer.maxHealth)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.max_health"), buffer.maxHealth)
                 .setDefaultValue(defaults.maxHealth())
                 .setMin(1.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.maxHealth = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.armor"), buffer.armor)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.swim_speed"), buffer.swimSpeed)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.swim_speed"), buffer.swimSpeed)
                 .setDefaultValue(defaults.extraDouble("swim_speed", 1.45D))
                 .setMin(0.1D)
                 .setMax(5.0D)
                 .setSaveConsumer(value -> buffer.swimSpeed = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_phase1"), buffer.bitePhase1)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.bite_phase1"), buffer.bitePhase1)
                 .setDefaultValue(defaults.abilityDamage("bite_phase1", 40.0D))
                 .setMin(0.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.bitePhase1 = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_phase2"), buffer.bitePhase2)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.bite_phase2"), buffer.bitePhase2)
                 .setDefaultValue(defaults.abilityDamage("bite_phase2", 50.0D))
                 .setMin(0.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.bitePhase2 = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.tail_attack"), buffer.tailAttack)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.tail_attack"), buffer.tailAttack)
                 .setDefaultValue(defaults.abilityDamage("tail_attack", 8.0D))
                 .setMin(0.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.tailAttack = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.dash_tail_swipe"), buffer.dashTailSwipe)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_tail_swipe"), buffer.dashTailSwipe)
                 .setDefaultValue(defaults.abilityDamage("dash_tail_swipe", 14.0D))
                 .setMin(0.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.dashTailSwipe = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.dash_claw"), buffer.dashClaw)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_claw"), buffer.dashClaw)
                 .setDefaultValue(defaults.abilityDamage("dash_claw", 16.0D))
                 .setMin(0.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.dashClaw = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase1"), buffer.hornPhase1)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase1"), buffer.hornPhase1)
                 .setDefaultValue(defaults.abilityDamage("horn_gore_phase1", 16.0D))
                 .setMin(0.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.hornPhase1 = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.horn_phase2"), buffer.hornPhase2)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase2"), buffer.hornPhase2)
                 .setDefaultValue(defaults.abilityDamage("horn_gore_phase2", 20.8D))
                 .setMin(0.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.hornPhase2 = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.taming_chance"), buffer.tamingChance)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_chance"), buffer.tamingChance)
                 .setDefaultValue(defaults.extraDouble("taming_chance", 6.0))
                 .setMin(1.0D)
                 .setMax(20.0D)
                 .setSaveConsumer(value -> buffer.tamingChance = value)
                 .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.nulljaw.legacy_taming"), buffer.legacyTaming)
+        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.varasuchus.legacy_taming"), buffer.legacyTaming)
                 .setDefaultValue(defaults.extraBoolean("legacy_taming", false))
                 .setTooltip(Component.translatable("config.saintsdragons.attributes.legacy_taming.tooltip"))
                 .setSaveConsumer(value -> buffer.legacyTaming = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.egg_hatch_chance_normal"), buffer.eggHatchChanceNormal)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_hatch_chance_normal"), buffer.eggHatchChanceNormal)
                 .setDefaultValue(defaults.extraDouble("egg_hatch_chance_normal", 3.0D))
                 .setMin(1.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.egg_drop_chance"), buffer.eggDropChance)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_drop_chance"), buffer.eggDropChance)
                 .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
                 .setMin(0.0D)
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.eggDropChance = value)
                 .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.nulljaw.aggressive_wild"), buffer.aggressiveWild)
+        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.varasuchus.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
                 .build());
@@ -862,7 +862,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
-        category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.nulljaw"), rawEntries)
+        category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.varasuchus"), rawEntries)
                 .setExpanded(false)
                 .build());
     }
@@ -1097,7 +1097,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private void persistDragonAttributes(CindervaneAttributeBuffer cindervaneBuffer,
                                          StegonautAttributeBuffer stegonautBuffer,
                                          RaevyxAttributeBuffer raevyxBuffer,
-                                         NulljawAttributeBuffer nulljawBuffer,
+                                         VarasuchusAttributeBuffer varasuchusBuffer,
                                          IgnivorusAttributeBuffer ignivorusBuffer) {
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
@@ -1174,33 +1174,33 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.RAEVYX_ID, updatedRaevyx);
 
-        Map<String, DragonAbilityOverride> nulljawAbilities = new HashMap<>();
-        nulljawAbilities.put("bite_phase1", DragonAbilityOverride.ofDamage(nulljawBuffer.bitePhase1));
-        nulljawAbilities.put("bite_phase2", DragonAbilityOverride.ofDamage(nulljawBuffer.bitePhase2));
-        nulljawAbilities.put("tail_attack", DragonAbilityOverride.ofDamage(nulljawBuffer.tailAttack));
-        nulljawAbilities.put("dash_tail_swipe", DragonAbilityOverride.ofDamage(nulljawBuffer.dashTailSwipe));
-        nulljawAbilities.put("dash_claw", DragonAbilityOverride.ofDamage(nulljawBuffer.dashClaw));
-        nulljawAbilities.put("horn_gore_phase1", DragonAbilityOverride.ofDamage(nulljawBuffer.hornPhase1));
-        nulljawAbilities.put("horn_gore_phase2", DragonAbilityOverride.ofDamage(nulljawBuffer.hornPhase2));
-        DragonAttributeConfig updatedNulljaw = new DragonAttributeConfig(
-                nulljawBuffer.maxHealth,
-                nulljawBuffer.armor,
+        Map<String, DragonAbilityOverride> varasuchusAbilities = new HashMap<>();
+        varasuchusAbilities.put("bite_phase1", DragonAbilityOverride.ofDamage(varasuchusBuffer.bitePhase1));
+        varasuchusAbilities.put("bite_phase2", DragonAbilityOverride.ofDamage(varasuchusBuffer.bitePhase2));
+        varasuchusAbilities.put("tail_attack", DragonAbilityOverride.ofDamage(varasuchusBuffer.tailAttack));
+        varasuchusAbilities.put("dash_tail_swipe", DragonAbilityOverride.ofDamage(varasuchusBuffer.dashTailSwipe));
+        varasuchusAbilities.put("dash_claw", DragonAbilityOverride.ofDamage(varasuchusBuffer.dashClaw));
+        varasuchusAbilities.put("horn_gore_phase1", DragonAbilityOverride.ofDamage(varasuchusBuffer.hornPhase1));
+        varasuchusAbilities.put("horn_gore_phase2", DragonAbilityOverride.ofDamage(varasuchusBuffer.hornPhase2));
+        DragonAttributeConfig updatedVarasuchus = new DragonAttributeConfig(
+                varasuchusBuffer.maxHealth,
+                varasuchusBuffer.armor,
                 0.0D,
-                nulljawAbilities,
+                varasuchusAbilities,
                 Map.of(
-                        "swim_speed", nulljawBuffer.swimSpeed,
-                        "taming_chance", nulljawBuffer.tamingChance,
-                        "egg_hatch_chance_normal", nulljawBuffer.eggHatchChanceNormal,
-                        "egg_drop_chance", nulljawBuffer.eggDropChance
+                        "swim_speed", varasuchusBuffer.swimSpeed,
+                        "taming_chance", varasuchusBuffer.tamingChance,
+                        "egg_hatch_chance_normal", varasuchusBuffer.eggHatchChanceNormal,
+                        "egg_drop_chance", varasuchusBuffer.eggDropChance
                 ),
                 Map.of(
-                        "legacy_taming", nulljawBuffer.legacyTaming,
-                        "aggressive_wild", nulljawBuffer.aggressiveWild,
-                        "reactive_terrain_clearing_on_damage", nulljawBuffer.reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", nulljawBuffer.reactiveTerrainClearingOnDamageTamed
+                        "legacy_taming", varasuchusBuffer.legacyTaming,
+                        "aggressive_wild", varasuchusBuffer.aggressiveWild,
+                        "reactive_terrain_clearing_on_damage", varasuchusBuffer.reactiveTerrainClearingOnDamage,
+                        "reactive_terrain_clearing_on_damage_tamed", varasuchusBuffer.reactiveTerrainClearingOnDamageTamed
                 )
         );
-        loader.overwriteConfig(DragonAttributeConfigLoader.NULLJAW_ID, updatedNulljaw);
+        loader.overwriteConfig(DragonAttributeConfigLoader.VARASUCHUS_ID, updatedVarasuchus);
 
         DragonAttributeConfig ignivorusCurrent = loader.getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         Map<String, DragonAbilityOverride> ignivorusAbilities = new HashMap<>(ignivorusCurrent.abilities());
@@ -1297,7 +1297,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         boolean reactiveTerrainClearingOnDamageTamed;
     }
 
-    private static final class NulljawAttributeBuffer {
+    private static final class VarasuchusAttributeBuffer {
         double maxHealth;
         double armor;
         double swimSpeed;

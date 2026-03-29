@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "  L",
+    " LS",
+    "LSN"
+  ],
+  "key": {
+    "N": {
+      "item": "saintsdragons:varasuchus_scale"
+    },
+    "S": {
+      "item": "minecraft:nautilus_shell"
+    },
+    "L": {
+      "item": "minecraft:lapis_lazuli"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:varasuchus_binder",
+    "count": 1
+  }
+}

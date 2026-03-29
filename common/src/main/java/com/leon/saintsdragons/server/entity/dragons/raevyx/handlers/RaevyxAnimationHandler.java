@@ -32,6 +32,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     /** Flying glide animation */
     private static final RawAnimation FLY_GLIDE = RawAnimation.begin().thenLoop("animation.raevyx.fly_glide");
 
+    /** Falling animation */
+    private static final RawAnimation FALLING = RawAnimation.begin().thenLoop("animation.raevyx.falling");
+
     /** Flying glide down animation (for tamed dragons pitching down) */
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.raevyx.glide_down");
 
@@ -230,6 +233,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
 
         if (wyvern.isLanding()) {
             state.setAndContinue(LANDING);
+            return PlayState.CONTINUE;
+        }
+
+        if (wyvern.isFallingForAnimation()) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(FALLING);
             return PlayState.CONTINUE;
         }
 

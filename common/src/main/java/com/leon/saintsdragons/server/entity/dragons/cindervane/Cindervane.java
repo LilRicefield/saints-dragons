@@ -469,6 +469,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             if (!(data instanceof CindervaneFamilyData)) {
                 if (this.random.nextFloat() < 0.05F) {
                     data = new CindervaneFamilyData(false);
+                    this.setGender(DragonGender.FEMALE);
                     this.shouldSpawnBabies = true;
                     this.babiesToSpawn = 1; // 1 baby
                 }
@@ -932,6 +933,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 Cindervane baby = ModEntities.CINDERVANE.get().create(serverLevel);
                 if (baby != null) {
                     baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+                    assignMotherToBaby(baby, null);
 
                     baby.skipRespawnTicks = 5;
                     baby.setBaby(true);
@@ -2615,6 +2617,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         Cindervane baby = ModEntities.CINDERVANE.get().create(level);
         if (baby != null) {
             baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+            assignMotherToBaby(baby, partner);
             java.util.UUID ownerId = this.getOwnerUUID();
             if (ownerId != null) {
                 baby.setOwnerUUID(ownerId);
@@ -2666,7 +2669,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             this.shouldSpawnBabies = tag.getBoolean("FamilySpawnPending");
             this.babiesToSpawn = tag.getInt("FamilySpawnCount");
         }
-
         // Reset all tick counters to prevent state inconsistencies
         // Reset ground ticks when flying
         if (!savedFlying) {

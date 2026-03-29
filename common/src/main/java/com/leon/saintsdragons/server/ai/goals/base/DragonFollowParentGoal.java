@@ -5,6 +5,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Generic follow-parent behavior for untamed baby dragons.
@@ -44,21 +45,7 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
             return false;
         }
 
-        List<T> nearby = baby.level().getEntitiesOfClass(
-                dragonClass,
-                baby.getBoundingBox().inflate(12.0D, 6.0D, 12.0D),
-                adult -> adult != null && !adult.isBaby() && adult.isAlive()
-        );
-
-        double closestDistance = Double.MAX_VALUE;
-        T closestAdult = null;
-        for (T adult : nearby) {
-            double dist = baby.distanceToSqr(adult);
-            if (dist < closestDistance) {
-                closestDistance = dist;
-                closestAdult = adult;
-            }
-        }
+        T closestAdult = resolveParentCandidate();
 
         if (closestAdult == null) {
             return false;
@@ -68,6 +55,7 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
 
         // Calculate dynamic minimum distance based on entity sizes
         double minDist = calculateMinimumDistance(closestAdult);
+        double closestDistance = baby.distanceToSqr(closestAdult);
 
         // Only follow if too far away (beyond minimum comfortable distance)
         if (closestDistance < minDist * minDist) {
@@ -84,6 +72,10 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
             return false;
         }
         if (parent == null || !parent.isAlive() || parent.isBaby()) {
+            return false;
+        }
+        UUID assignedParentUuid = baby.getAssignedParentUuid();
+        if (assignedParentUuid == null || !assignedParentUuid.equals(parent.getUUID())) {
             return false;
         }
 
@@ -174,5 +166,41 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
                 wanderCooldown = 20 + baby.getRandom().nextInt(20); // 1-2 seconds of wandering
             }
         }
+    }
+
+    private T resolveParentCandidate() {
+        UUID assignedParentUuid = baby.getAssignedParentUuid();
+        List<T> nearby = baby.level().getEntitiesOfClass(
+                dragonClass,
+                baby.getBoundingBox().inflate(12.0D, 6.0D, 12.0D),
+                adult -> adult != null && !adult.isBaby() && adult.isAlive()
+        );
+
+        if (assignedParentUuid != null) {
+            for (T adult : nearby) {
+                if (assignedParentUuid.equals(adult.getUUID()) && adult.isFemale()) {
+                    return adult;
+                }
+            }
+        }
+
+        double closestDistance = Double.MAX_VALUE;
+        T closestAdult = null;
+        for (T adult : nearby) {
+            if (!adult.isFemale()) {
+                continue;
+            }
+            double dist = baby.distanceToSqr(adult);
+            if (dist < closestDistance) {
+                closestDistance = dist;
+                closestAdult = adult;
+            }
+        }
+
+        if (closestAdult != null) {
+            baby.setAssignedParentUuid(closestAdult.getUUID());
+        }
+
+        return closestAdult;
     }
 }

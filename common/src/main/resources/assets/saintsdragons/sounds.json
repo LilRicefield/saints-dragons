@@ -556,242 +556,286 @@
       }
     ]
   },
-  "nulljaw_grumble1": {
-    "subtitle": "Nulljaw grumbles",
+  "varasuchus_grumble1": {
+    "subtitle": "Varasuchus grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble1",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_grumble1",
         "volume": 1.5,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_grumble2": {
-    "subtitle": "Nulljaw grumbles",
+  "varasuchus_grumble2": {
+    "subtitle": "Varasuchus grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble2",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_grumble2",
         "volume": 1.5,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_grumble3": {
-    "subtitle": "Nulljaw grumbles",
+  "varasuchus_grumble3": {
+    "subtitle": "Varasuchus grumbles",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble3",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_grumble3",
         "volume": 1.5,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_phase1": {
-    "subtitle": "Nulljaw reverts phase",
+  "varasuchus_phase1": {
+    "subtitle": "Varasuchus reverts phase",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_phase1",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_phase1",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_phase2_start": {
-    "subtitle": "Nulljaw prepares to switch phase",
+  "varasuchus_phase2_start": {
+    "subtitle": "Varasuchus prepares to switch phase",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2_start",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_phase2_start",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 32
       }
     ]
   },
-  "nulljaw_phase2": {
-    "subtitle": "Nulljaw switches phase",
+  "varasuchus_phase2": {
+    "subtitle": "Varasuchus switches phase",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_phase2",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_phase2_end": {
-    "subtitle": "Nulljaw finishes phase switch",
+  "varasuchus_phase2_end": {
+    "subtitle": "Varasuchus finishes phase switch",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2_end",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_phase2_end",
         "volume": 1.8,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_roar": {
-    "subtitle": "Nulljaw roars",
+  "varasuchus_roar": {
+    "subtitle": "Varasuchus roars",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_roar",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_roar",
         "volume": 2.5,
         "pitch": 1.0,
         "attenuation_distance": 48
       }
     ]
   },
-  "nulljaw_roar2": {
-    "subtitle": "Nulljaw roars aggressively",
+  "varasuchus_roar2": {
+    "subtitle": "Varasuchus roars aggressively",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_roar2",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_roar2",
         "volume": 2.5,
         "pitch": 1.0,
         "attenuation_distance": 48
       }
     ]
   },
-  "nulljaw_walk": {
-    "subtitle": "Nulljaw walks",
+  "varasuchus_walk": {
+    "subtitle": "Varasuchus walks",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_walk",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_walk",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_run": {
-    "subtitle": "Nulljaw runs",
+  "varasuchus_run": {
+    "subtitle": "Varasuchus runs",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_run",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_run",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_walk2": {
-    "subtitle": "Nulljaw walks (Phase 2)",
+  "varasuchus_walk2": {
+    "subtitle": "Varasuchus walks (Phase 2)",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_walk2",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_walk2",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_run2": {
-    "subtitle": "Nulljaw runs (Phase 2)",
+  "varasuchus_run2": {
+    "subtitle": "Varasuchus runs (Phase 2)",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_run2",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_run2",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_claw": {
-    "subtitle": "Nulljaw slashes",
+  "varasuchus_claw": {
+    "subtitle": "Varasuchus slashes",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_claw",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_claw",
         "volume": 2.5,
         "pitch": 1.0,
         "attenuation_distance": 12
       }
     ]
   },
-  "nulljaw_tail_swipe": {
-    "subtitle": "Nulljaw swipes its tail",
+  "varasuchus_tail_swipe": {
+    "subtitle": "Varasuchus swipes its tail",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_tail_swipe",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_tail_swipe",
         "volume": 2.5,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_tail_attack": {
-    "subtitle": "Nulljaw swipes its tail",
+  "varasuchus_tail_attack": {
+    "subtitle": "Varasuchus swipes its tail",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_tail_attack",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_tail_attack",
         "volume": 1.5,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_phase2_dash": {
-    "subtitle": "Nulljaw dashes and claws",
+  "varasuchus_phase2_dash": {
+    "subtitle": "Varasuchus dashes and claws",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_phase2_dash",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_phase2_dash",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 32
       }
     ]
   },
-  "nulljaw_bite": {
-    "subtitle": "Nulljaw bites",
+  "varasuchus_bite1": {
+    "subtitle": "Varasuchus bites",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_bite",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_bite1",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_horngore": {
-    "subtitle": "Nulljaw gores with horn",
+  "varasuchus_bite2": {
+    "subtitle": "Varasuchus bites",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_horngore",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_bite2",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
       }
     ]
   },
-  "nulljaw_hurt": {
-    "subtitle": "Nulljaw gets hurt",
+  "varasuchus_slash_barrage": {
+    "subtitle": "Varasuchus unleashes a slash barrage",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_hurt",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "nulljaw_die": {
-    "subtitle": "Nulljaw dying",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_die",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_slash_barrage",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 32
       }
     ]
   },
-  "nulljaw_eat": {
-    "subtitle": "Nulljaw eats",
+  "varasuchus_phase1_underwater": {
+    "subtitle": "Varasuchus reverts underwater",
     "sounds": [
       {
-        "name": "saintsdragons:entity/nulljaw/nulljaw_eat",
+        "name": "saintsdragons:entity/varasuchus/varasuchus_phase1_underwater",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "varasuchus_phase2_underwater": {
+    "subtitle": "Varasuchus phases underwater",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/varasuchus/varasuchus_phase2_underwater",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "varasuchus_horngore": {
+    "subtitle": "Varasuchus gores with horn",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/varasuchus/varasuchus_horngore",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "varasuchus_hurt": {
+    "subtitle": "Varasuchus gets hurt",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/varasuchus/varasuchus_hurt",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "varasuchus_die": {
+    "subtitle": "Varasuchus dying",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/varasuchus/varasuchus_die",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "varasuchus_eat": {
+    "subtitle": "Varasuchus eats",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/varasuchus/varasuchus_eat",
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16

@@ -1,8 +1,8 @@
 package com.leon.saintsdragons.client.renderer.volitans;
 
 import com.leon.saintsdragons.client.model.volitans.VolitansModel;
-import com.leon.saintsdragons.client.render.RiderBullcrap;
-import com.leon.saintsdragons.client.render.RiderConfig;
+import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;

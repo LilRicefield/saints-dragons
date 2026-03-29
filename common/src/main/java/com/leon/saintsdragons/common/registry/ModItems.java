@@ -4,7 +4,7 @@ import com.leon.saintsdragons.common.item.CindervaneBinderItem;
 import com.leon.saintsdragons.common.item.DragonBrushItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.FixedPotionItem;
-import com.leon.saintsdragons.common.item.NulljawBinderItem;
+import com.leon.saintsdragons.common.item.VarasuchusBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.VolitansBinderItem;
 import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
@@ -53,10 +53,10 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
-    public static final Supplier<Item> NULLJAW_SPAWN_EGG =
-            REGISTER.register("nulljaw_spawn_egg",
+    public static final Supplier<Item> VARASUCHUS_SPAWN_EGG =
+            REGISTER.register("varasuchus_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(
-                            ModEntities.NULLJAW,
+                            ModEntities.VARASUCHUS,
                             0x2C3E50, 0x16A085,
                             new Item.Properties()
                     ));
@@ -101,9 +101,9 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.CINDERVANE_EGG.get(),
                             new Item.Properties()));
 
-    public static final Supplier<Item> NULLJAW_EGG =
-            REGISTER.register("nulljaw_egg",
-                    () -> new BlockItem(ModBlocks.NULLJAW_EGG.get(),
+    public static final Supplier<Item> VARASUCHUS_EGG =
+            REGISTER.register("varasuchus_egg",
+                    () -> new BlockItem(ModBlocks.VARASUCHUS_EGG.get(),
                             new Item.Properties()));
 
     public static final Supplier<Item> STEGONAUT_EGG =
@@ -165,8 +165,8 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
-    public static final Supplier<Item> NULLJAW_SCALE =
-            REGISTER.register("nulljaw_scale",
+    public static final Supplier<Item> VARASUCHUS_SCALE =
+            REGISTER.register("varasuchus_scale",
                     () -> new Item(
                             new Item.Properties()
                     ));
@@ -181,7 +181,7 @@ public class ModItems {
             REGISTER.register("potion_of_tideguard",
                     () -> new FixedPotionItem(
                             new Item.Properties().stacksTo(1),
-                            ModPotions.NULLJAW_TIDEGUARD
+                            ModPotions.VARASUCHUS_TIDEGUARD
                     ));
 
     public static final Supplier<Item> POTION_OF_SEARING =
@@ -215,9 +215,9 @@ public class ModItems {
                                     .durability(0)
                     ));
 
-    public static final Supplier<Item> NULLJAW_BINDER =
-            REGISTER.register("nulljaw_binder",
-                    () -> new NulljawBinderItem(
+    public static final Supplier<Item> VARASUCHUS_BINDER =
+            REGISTER.register("varasuchus_binder",
+                    () -> new VarasuchusBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0)

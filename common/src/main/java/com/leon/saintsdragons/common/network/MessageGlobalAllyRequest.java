@@ -8,11 +8,16 @@ import net.minecraft.server.level.ServerPlayer;
  * Request the global ally list for the Draconic Codex.
  */
 public class MessageGlobalAllyRequest {
+    public static final MessageGlobalAllyRequest INSTANCE = new MessageGlobalAllyRequest();
+
+    private MessageGlobalAllyRequest() {
+    }
+
     public static void encode(MessageGlobalAllyRequest message, FriendlyByteBuf buffer) {
     }
 
     public static MessageGlobalAllyRequest decode(FriendlyByteBuf buffer) {
-        return new MessageGlobalAllyRequest();
+        return INSTANCE;
     }
 
     public static void handle(MessageGlobalAllyRequest message, ServerPlayer player) {

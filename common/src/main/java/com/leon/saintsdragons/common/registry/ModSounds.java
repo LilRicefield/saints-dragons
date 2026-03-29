@@ -78,29 +78,31 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> CINDERVANE_EAT = registerSound("cindervane_eat");
     public static final Supplier<SoundEvent> CINDERVANE_MAGMA_BLAST = registerSound("cindervane_magma_blast");
 
-    // Nulljaw
-    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_1 = registerSound("nulljaw_grumble1");
-    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_2 = registerSound("nulljaw_grumble2");
-    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_3 = registerSound("nulljaw_grumble3");
-    public static final Supplier<SoundEvent> NULLJAW_PHASE1 = registerSound("nulljaw_phase1");
-    public static final Supplier<SoundEvent> NULLJAW_PHASE2_START = registerSound("nulljaw_phase2_start");
-    public static final Supplier<SoundEvent> NULLJAW_PHASE2 = registerSound("nulljaw_phase2");
-    public static final Supplier<SoundEvent> NULLJAW_PHASE2_END = registerSound("nulljaw_phase2_end");
-    public static final Supplier<SoundEvent> NULLJAW_ROAR = registerSound("nulljaw_roar");
-    public static final Supplier<SoundEvent> NULLJAW_ROAR2 = registerSound("nulljaw_roar2");
-    public static final Supplier<SoundEvent> NULLJAW_WALK = registerSound("nulljaw_walk");
-    public static final Supplier<SoundEvent> NULLJAW_RUN = registerSound("nulljaw_run");
-    public static final Supplier<SoundEvent> NULLJAW_WALK2 = registerSound("nulljaw_walk2");
-    public static final Supplier<SoundEvent> NULLJAW_RUN2 = registerSound("nulljaw_run2");
-    public static final Supplier<SoundEvent> NULLJAW_CLAW = registerSound("nulljaw_claw");
-    public static final Supplier<SoundEvent> NULLJAW_TAIL_SWIPE = registerSound("nulljaw_tail_swipe");
-    public static final Supplier<SoundEvent> NULLJAW_TAIL_ATTACK = registerSound("nulljaw_tail_attack");
-    public static final Supplier<SoundEvent> NULLJAW_PHASE2_DASH = registerSound("nulljaw_phase2_dash");
-    public static final Supplier<SoundEvent> NULLJAW_BITE = registerSound("nulljaw_bite");
-    public static final Supplier<SoundEvent> NULLJAW_HORNGORE = registerSound("nulljaw_horngore");
-    public static final Supplier<SoundEvent> NULLJAW_HURT = registerSound("nulljaw_hurt");
-    public static final Supplier<SoundEvent> NULLJAW_DIE = registerSound("nulljaw_die");
-    public static final Supplier<SoundEvent> NULLJAW_EAT = registerSound("nulljaw_eat");
+    // Varasuchus
+    public static final Supplier<SoundEvent> VARASUCHUS_GRUMBLE_1 = registerSound("varasuchus_grumble1");
+    public static final Supplier<SoundEvent> VARASUCHUS_GRUMBLE_2 = registerSound("varasuchus_grumble2");
+    public static final Supplier<SoundEvent> VARASUCHUS_GRUMBLE_3 = registerSound("varasuchus_grumble3");
+    public static final Supplier<SoundEvent> VARASUCHUS_PHASE1 = registerSound("varasuchus_phase1");
+    public static final Supplier<SoundEvent> VARASUCHUS_PHASE1_UNDERWATER = registerSound("varasuchus_phase1_underwater");
+    public static final Supplier<SoundEvent> VARASUCHUS_PHASE2 = registerSound("varasuchus_phase2");
+    public static final Supplier<SoundEvent> VARASUCHUS_PHASE2_UNDERWATER = registerSound("varasuchus_phase2_underwater");
+    public static final Supplier<SoundEvent> VARASUCHUS_ROAR = registerSound("varasuchus_roar");
+    public static final Supplier<SoundEvent> VARASUCHUS_ROAR2 = registerSound("varasuchus_roar2");
+    public static final Supplier<SoundEvent> VARASUCHUS_WALK = registerSound("varasuchus_walk");
+    public static final Supplier<SoundEvent> VARASUCHUS_RUN = registerSound("varasuchus_run");
+    public static final Supplier<SoundEvent> VARASUCHUS_WALK2 = registerSound("varasuchus_walk2");
+    public static final Supplier<SoundEvent> VARASUCHUS_RUN2 = registerSound("varasuchus_run2");
+    public static final Supplier<SoundEvent> VARASUCHUSCLAW = registerSound("varasuchus_claw");
+    public static final Supplier<SoundEvent> VARASUCHUS_TAIL_SWIPE = registerSound("varasuchus_tail_swipe");
+    public static final Supplier<SoundEvent> VARASUCHUS_TAIL_ATTACK = registerSound("varasuchus_tail_attack");
+    public static final Supplier<SoundEvent> VARASUCHUS_PHASE2_DASH = registerSound("varasuchus_phase2_dash");
+    public static final Supplier<SoundEvent> VARASUCHUS_SLASH_BARRAGE = registerSound("varasuchus_slash_barrage");
+    public static final Supplier<SoundEvent> VARASUCHUS_BITE1 = registerSound("varasuchus_bite1");
+    public static final Supplier<SoundEvent> VARASUCHUS_BITE2 = registerSound("varasuchus_bite2");
+    public static final Supplier<SoundEvent> VARASUCHUS_HORNGORE = registerSound("varasuchus_horngore");
+    public static final Supplier<SoundEvent> VARASUCHUS_HURT = registerSound("varasuchus_hurt");
+    public static final Supplier<SoundEvent> VARASUCHUS_DIE = registerSound("varasuchus_die");
+    public static final Supplier<SoundEvent> VARASUCHUS_EAT = registerSound("varasuchus_eat");
 
     // Ignivorus
     public static final Supplier<SoundEvent> IGNIVORUS_ROAR = registerSound("ignivorus_roar");

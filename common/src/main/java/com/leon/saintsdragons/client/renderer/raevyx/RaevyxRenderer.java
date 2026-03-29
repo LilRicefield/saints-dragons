@@ -1,8 +1,8 @@
 package com.leon.saintsdragons.client.renderer.raevyx;
 
 import com.leon.saintsdragons.client.model.raevyx.RaevyxModel;
-import com.leon.saintsdragons.client.render.RiderConfig;
-import com.leon.saintsdragons.client.render.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.RiderConfig;
+import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 

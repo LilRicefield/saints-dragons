@@ -4,7 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlockEntity;
 import com.leon.saintsdragons.common.block.CindervaneEggBlockEntity;
-import com.leon.saintsdragons.common.block.NulljawEggBlockEntity;
+import com.leon.saintsdragons.common.block.VarasuchusEggBlockEntity;
 import com.leon.saintsdragons.common.block.StegonautEggBlockEntity;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
@@ -40,10 +40,10 @@ public final class ModBlockEntities {
                     ModBlocks.CINDERVANE_EGG.get()
             ).build(null));
 
-    public static final Supplier<BlockEntityType<NulljawEggBlockEntity>> NULLJAW_EGG =
-            REGISTER.register("nulljaw_egg", () -> BlockEntityType.Builder.of(
-                    NulljawEggBlockEntity::new,
-                    ModBlocks.NULLJAW_EGG.get()
+    public static final Supplier<BlockEntityType<VarasuchusEggBlockEntity>> VARASUCHUS_EGG =
+            REGISTER.register("varasuchus_egg", () -> BlockEntityType.Builder.of(
+                    VarasuchusEggBlockEntity::new,
+                    ModBlocks.VARASUCHUS_EGG.get()
             ).build(null));
 
     public static final Supplier<BlockEntityType<StegonautEggBlockEntity>> STEGONAUT_EGG =

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(PotionBrewing.class)
 public final class PotionBrewingMixin {
     private static boolean isCustomRecipeIngredient(ItemStack ingredient) {
-        return ingredient.is(ModItems.NULLJAW_SCALE.get()) || ingredient.is(ModItems.IGNIVORUS_TOOTH.get());
+        return ingredient.is(ModItems.VARASUCHUS_SCALE.get()) || ingredient.is(ModItems.IGNIVORUS_TOOTH.get());
     }
 
     @Inject(method = "hasMix", at = @At("HEAD"), cancellable = true)
@@ -47,9 +47,9 @@ public final class PotionBrewingMixin {
             return;
         }
 
-        if (ingredient.is(ModItems.NULLJAW_SCALE.get())) {
+        if (ingredient.is(ModItems.VARASUCHUS_SCALE.get())) {
             ItemStack output = new ItemStack(ModItems.POTION_OF_TIDEGUARD.get());
-            PotionUtils.setPotion(output, ModPotions.NULLJAW_TIDEGUARD.get());
+            PotionUtils.setPotion(output, ModPotions.VARASUCHUS_TIDEGUARD.get());
             cir.setReturnValue(output);
             return;
         }

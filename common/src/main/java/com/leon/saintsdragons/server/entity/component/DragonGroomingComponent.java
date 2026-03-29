@@ -4,7 +4,7 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.nbt.CompoundTag;
@@ -79,8 +79,8 @@ public final class DragonGroomingComponent {
         if (dragon instanceof Raevyx) {
             return new GroomingProfile(0.35F, ModItems.RAEVYX_SCALE.get(), 1, 2);
         }
-        if (dragon instanceof Nulljaw) {
-            return new GroomingProfile(0.30F, ModItems.NULLJAW_SCALE.get(), 1, 2);
+        if (dragon instanceof Varasuchus) {
+            return new GroomingProfile(0.30F, ModItems.VARASUCHUS_SCALE.get(), 1, 2);
         }
         if (dragon instanceof Cindervane) {
             return new GroomingProfile(0.30F, ModItems.CINDERVANE_SCALE.get(), 1, 1);

@@ -4094,6 +4094,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         Ignivorus baby = com.leon.saintsdragons.common.registry.ModEntities.IGNIVORUS.get().create(level);
         if (baby != null) {
             baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+            assignMotherToBaby(baby, otherParent);
             java.util.UUID ownerId = this.getOwnerUUID();
             if (ownerId != null) {
                 baby.setOwnerUUID(ownerId);

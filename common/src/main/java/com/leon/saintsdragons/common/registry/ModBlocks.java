@@ -4,7 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.block.RaevyxEggBlock;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlock;
 import com.leon.saintsdragons.common.block.CindervaneEggBlock;
-import com.leon.saintsdragons.common.block.NulljawEggBlock;
+import com.leon.saintsdragons.common.block.VarasuchusEggBlock;
 import com.leon.saintsdragons.common.block.StegonautEggBlock;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
@@ -49,9 +49,9 @@ public class ModBlocks {
                             .noOcclusion()
                             .randomTicks()));
 
-    public static final Supplier<Block> NULLJAW_EGG =
-            REGISTER.register("nulljaw_egg",
-                    () -> new NulljawEggBlock(BlockBehaviour.Properties.of()
+    public static final Supplier<Block> VARASUCHUS_EGG =
+            REGISTER.register("varasuchus_egg",
+                    () -> new VarasuchusEggBlock(BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_BLACK)
                             .strength(0.5F)
                             .sound(SoundType.METAL)

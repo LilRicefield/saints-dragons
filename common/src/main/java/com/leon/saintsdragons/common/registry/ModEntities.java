@@ -5,7 +5,7 @@ import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -58,12 +58,12 @@ public final class ModEntities {
                     .updateInterval(1)
                     .build("cindervane"));
 
-    public static final Supplier<EntityType<Nulljaw>> NULLJAW =
-            REGISTER.register("nulljaw", () -> EntityType.Builder.of(Nulljaw::new, MobCategory.CREATURE)
+    public static final Supplier<EntityType<Varasuchus>> VARASUCHUS =
+            REGISTER.register("varasuchus", () -> EntityType.Builder.of(Varasuchus::new, MobCategory.CREATURE)
                     .sized(4.5F, 3.5F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
-                    .build("nulljaw"));
+                    .build("varasuchus"));
 
     public static final Supplier<EntityType<Ignivorus>> IGNIVORUS =
             REGISTER.register("ignivorus", () -> EntityType.Builder.of(Ignivorus::new, MobCategory.CREATURE)

@@ -17,7 +17,6 @@ public class CodexEcologyPanel {
     private static final int VISIBLE_LINKS = 3;
     private static final int SCROLLBAR_WIDTH = 4;
     private static final int SCROLLBAR_GAP = 25;
-    private final ResourceLocation ignivorusEggTexture;
     private final List<CodexPageLink> ecologyPageLinks = new ArrayList<>();
     private static final List<ResourceLocation> IGNIVORUS_FAVORITE_FOODS = List.of(
             new ResourceLocation("minecraft", "salmon"),
@@ -39,15 +38,15 @@ public class CodexEcologyPanel {
             new ResourceLocation("saintsdragons", "raevyx_scale"),
             new ResourceLocation("saintsdragons", "raevyx_egg")
     );
-    private static final List<ResourceLocation> NULLJAW_FAVORITE_FOODS = List.of(
+    private static final List<ResourceLocation> VARASUCHUS_FAVORITE_FOODS = List.of(
             new ResourceLocation("minecraft", "salmon"),
             new ResourceLocation("minecraft", "tropical_fish"),
             new ResourceLocation("minecraft", "cod"),
             new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
-    private static final List<ResourceLocation> NULLJAW_DROPS = List.of(
-            new ResourceLocation("saintsdragons", "nulljaw_scale"),
-            new ResourceLocation("saintsdragons", "nulljaw_egg")
+    private static final List<ResourceLocation> VARASUCHUS_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "varasuchus_scale"),
+            new ResourceLocation("saintsdragons", "varasuchus_egg")
     );
     private static final List<ResourceLocation> CINDERVANE_FAVORITE_FOODS = List.of(
             new ResourceLocation("saintsdragons", "hearty_dragon_meal"),
@@ -79,9 +78,6 @@ public class CodexEcologyPanel {
     private int lastLinkCount;
     private boolean linkAreaValid = false;
 
-    public CodexEcologyPanel(ResourceLocation ignivorusEggTexture) {
-        this.ignivorusEggTexture = ignivorusEggTexture;
-    }
 
     public void initWidgets(java.util.function.Consumer<net.minecraft.client.gui.components.AbstractWidget> addWidget,
                             Font font, int leftPos, int topPos, IntSupplier pageSupplier, IntConsumer pageSetter,
@@ -236,12 +232,12 @@ public class CodexEcologyPanel {
                     drawDrops(guiGraphics, font, contentX, startY, RAEVYX_DROPS);
                 }
             }
-            case "nulljaw" -> {
+            case "varasuchus" -> {
                 if (ecologyPage == 6) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, NULLJAW_FAVORITE_FOODS);
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, VARASUCHUS_FAVORITE_FOODS);
                 }
                 if (ecologyPage == 7) {
-                    drawDrops(guiGraphics, font, contentX, startY, NULLJAW_DROPS);
+                    drawDrops(guiGraphics, font, contentX, startY, VARASUCHUS_DROPS);
                 }
             }
             case "cindervane" -> {
@@ -367,7 +363,7 @@ public class CodexEcologyPanel {
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
-            case "nulljaw" -> {
+            case "varasuchus" -> {
                 List<SectionLink> sections = List.of(
                         new SectionLink("1. Overview", 1, ecologyPage == 1),
                         new SectionLink("2. Egg Information", 4, ecologyPage == 4),

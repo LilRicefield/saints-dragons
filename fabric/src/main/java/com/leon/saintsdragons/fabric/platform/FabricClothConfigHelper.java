@@ -97,9 +97,9 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "cindervaneSpawnWeight" -> () -> holder().getConfig().cindervaneSpawnWeight;
             case "cindervaneMinGroupSize" -> () -> holder().getConfig().cindervaneMinGroupSize;
             case "cindervaneMaxGroupSize" -> () -> holder().getConfig().cindervaneMaxGroupSize;
-            case "nulljawSpawnWeight" -> () -> holder().getConfig().nulljawSpawnWeight;
-            case "nulljawMinGroupSize" -> () -> holder().getConfig().nulljawMinGroupSize;
-            case "nulljawMaxGroupSize" -> () -> holder().getConfig().nulljawMaxGroupSize;
+            case "varasuchusSpawnWeight" -> () -> holder().getConfig().varasuchusSpawnWeight;
+            case "varasuchusMinGroupSize" -> () -> holder().getConfig().varasuchusMinGroupSize;
+            case "varasuchusMaxGroupSize" -> () -> holder().getConfig().varasuchusMaxGroupSize;
             case "ignivorusSpawnWeight" -> () -> holder().getConfig().ignivorusSpawnWeight;
             case "ignivorusMinGroupSize" -> () -> holder().getConfig().ignivorusMinGroupSize;
             case "ignivorusMaxGroupSize" -> () -> holder().getConfig().ignivorusMaxGroupSize;
@@ -113,7 +113,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
     private static BooleanSupplier booleanSupplierForKey(String key, boolean defaultValue) {
         return switch (key) {
             case "cindervaneEggBlockWorldgen" -> () -> holder().getConfig().cindervaneEggBlockWorldgen;
-            case "nulljawEggBlockWorldgen" -> () -> holder().getConfig().nulljawEggBlockWorldgen;
+            case "varasuchusEggBlockWorldgen" -> () -> holder().getConfig().varasuchusEggBlockWorldgen;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -124,7 +124,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
     private static Consumer<Boolean> booleanSetterForKey(String key) {
         return switch (key) {
             case "cindervaneEggBlockWorldgen" -> value -> holder().getConfig().cindervaneEggBlockWorldgen = value;
-            case "nulljawEggBlockWorldgen" -> value -> holder().getConfig().nulljawEggBlockWorldgen = value;
+            case "varasuchusEggBlockWorldgen" -> value -> holder().getConfig().varasuchusEggBlockWorldgen = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
         };
     }
@@ -137,8 +137,8 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "stegonautExcludedBiomes" -> () -> holder().getConfig().stegonautExcludedBiomes;
             case "cindervaneAdditionalBiomes" -> () -> holder().getConfig().cindervaneAdditionalBiomes;
             case "cindervaneExcludedBiomes" -> () -> holder().getConfig().cindervaneExcludedBiomes;
-            case "nulljawAdditionalBiomes" -> () -> holder().getConfig().nulljawAdditionalBiomes;
-            case "nulljawExcludedBiomes" -> () -> holder().getConfig().nulljawExcludedBiomes;
+            case "varasuchusAdditionalBiomes" -> () -> holder().getConfig().varasuchusAdditionalBiomes;
+            case "varasuchusExcludedBiomes" -> () -> holder().getConfig().varasuchusExcludedBiomes;
             case "ignivorusAdditionalBiomes" -> () -> holder().getConfig().ignivorusAdditionalBiomes;
             case "ignivorusExcludedBiomes" -> () -> holder().getConfig().ignivorusExcludedBiomes;
             default -> {

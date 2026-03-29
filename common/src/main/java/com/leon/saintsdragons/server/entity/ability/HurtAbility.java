@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 
 /**
  * Generic hurt ability for all dragons.
@@ -33,7 +34,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
         return switch (abilityId) {
             case "cindervane_hurt" -> "cindervane_hurt";
             case "raevyx_hurt" -> "raevyx_hurt";
-            case "nulljaw_hurt" -> "nulljaw_hurt";
+            case "varasuchus_hurt" -> "varasuchus_hurt";
             case "ignivorus_hurt" -> "ignivorus_hurt";
             case "stegonaut_hurt" -> "stegonaut_hurt";
             case "volitans_hurt" -> "volitans_hurt";
@@ -43,7 +44,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     private static String resolveControllerId(String abilityId) {
         return switch (abilityId) {
-            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "nulljaw_hurt", "stegonaut_hurt", "volitans_hurt" -> "instant";
+            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "varasuchus_hurt", "stegonaut_hurt", "volitans_hurt" -> "instant";
             default -> DEFAULT_CONTROLLER;
         };
     }
@@ -74,10 +75,10 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             float pitch = 0.95f + cindervane.getRandom().nextFloat() * 0.1f;
             cindervane.getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_HURT.get(), 1.2f, pitch, 52);
         }
-        if ("nulljaw_hurt".equals(animationTrigger) && !getUser().level().isClientSide
-                && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw nulljaw) {
-            float pitch = 0.95f + nulljaw.getRandom().nextFloat() * 0.1f;
-            nulljaw.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_HURT.get(), 1.2f, pitch, 34);
+        if ("varasuchus_hurt".equals(animationTrigger) && !getUser().level().isClientSide
+                && getUser() instanceof Varasuchus varasuchus) {
+            float pitch = 0.95f + varasuchus.getRandom().nextFloat() * 0.1f;
+            varasuchus.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_HURT.get(), 1.2f, pitch, 34);
         }
         if ("stegonaut_hurt".equals(animationTrigger) && !getUser().level().isClientSide
                 && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut stegonaut) {

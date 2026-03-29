@@ -26,8 +26,8 @@ public final class DragonGriefingRules {
         return canDragonGriefing(DragonAttributeConfigLoader.IGNIVORUS_ID);
     }
 
-    public static boolean canNulljawGriefing() {
-        return canDragonGriefing(DragonAttributeConfigLoader.NULLJAW_ID);
+    public static boolean canVarasuchusGriefing() {
+        return canDragonGriefing(DragonAttributeConfigLoader.VARASUCHUS_ID);
     }
 
     private static boolean canDragonGriefing(ResourceLocation dragonId) {

@@ -160,7 +160,7 @@ public final class DragonTameCommand {
         String className = dragon.getClass().getSimpleName().toLowerCase();
         // Map class names to advancement names
         // e.g., "Raevyx" -> "raevyx", "Cindervane" -> "cindervane"
-        // This works for current dragons: Raevyx, Cindervane, Nulljaw, Stegonaut, Ignivorus
+        // This works for current dragons: Raevyx, Cindervane, Varasuchus, Stegonaut, Ignivorus
         return className;
     }
 

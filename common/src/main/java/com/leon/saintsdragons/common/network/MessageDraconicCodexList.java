@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.network;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.ArrayList;
@@ -81,8 +82,8 @@ public class MessageDraconicCodexList {
             return "ignivorus";
         } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
             return "raevyx";
-        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw) {
-            return "nulljaw";
+        } else if (dragon instanceof Varasuchus) {
+            return "varasuchus";
         } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane) {
             return "cindervane";
         } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut) {

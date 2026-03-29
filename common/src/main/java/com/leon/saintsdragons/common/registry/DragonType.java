@@ -2,7 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -28,9 +28,9 @@ public enum DragonType {
             // This allows magical fire from mods to deal damage
             .build()),
 
-    NULLJAW("nulljaw", ElementalClass.NON_ELEMENTAL,
-        DragonAttributeConfigLoader.NULLJAW_ID,
-        Nulljaw.class, ModEntities.NULLJAW,
+    VARASUCHUS("varasuchus", ElementalClass.NON_ELEMENTAL,
+        DragonAttributeConfigLoader.VARASUCHUS_ID,
+        Varasuchus.class, ModEntities.VARASUCHUS,
         ElementalProfile.builder()
             .resistantTo(DamageTypeTags.IS_DROWNING, 0.5f)  // Semi-aquatic, less drowning damage
             .build()),

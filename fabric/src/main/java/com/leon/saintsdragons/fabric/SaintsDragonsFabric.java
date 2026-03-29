@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.fabric;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonBrewingRecipes;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.common.registry.ModPotions;
@@ -19,7 +18,6 @@ import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -28,7 +26,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionUtils;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class SaintsDragonsFabric implements ModInitializer {
     private static final double ATTRIBUTE_CAP = 100000.0D;
@@ -99,6 +96,6 @@ public final class SaintsDragonsFabric implements ModInitializer {
         }
 
         Potion potion = PotionUtils.getPotion(stack);
-        return potion == ModPotions.NULLJAW_TIDEGUARD.get() || potion == ModPotions.SEARING.get();
+        return potion == ModPotions.VARASUCHUS_TIDEGUARD.get() || potion == ModPotions.SEARING.get();
     }
 }

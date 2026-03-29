@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
-import com.leon.saintsdragons.client.render.DragonRiderCameraSync;
+import com.leon.saintsdragons.client.renderer.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
@@ -12,7 +12,7 @@ import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
@@ -64,7 +64,7 @@ public class ClientEventHandler {
     private static float beamCameraUp = 0.0f;
     private static float cindervaneCameraPitch = 0.0f;
     private static float ignivorusCameraPitch = 0.0f;
-    private static float nulljawCameraPitch = 0.0f;
+    private static float varasuchusCameraPitch = 0.0f;
 
     // Stegonaut camera zoom transition
     private static float stegonautCameraZoom = DragonRideCameraTuning.STEGONAUT.grounded();
@@ -302,18 +302,18 @@ public class ClientEventHandler {
             ignivorusCameraPitch = 0.0f;
         }
 
-        if (player.isPassenger() && player.getVehicle() instanceof Nulljaw nulljaw && event.getCamera().isDetached()) {
-            boolean isSwimming = nulljaw.isInWaterOrBubble();
-            raevyxCameraZoomTarget = DragonRideCameraTuning.getTargetZoom(nulljaw);
+        if (player.isPassenger() && player.getVehicle() instanceof Varasuchus varasuchus && event.getCamera().isDetached()) {
+            boolean isSwimming = varasuchus.isInWaterOrBubble();
+            raevyxCameraZoomTarget = DragonRideCameraTuning.getTargetZoom(varasuchus);
             if (isSwimming) {
                 float blendRate = 0.05F;
                 raevyxCameraZoom += (raevyxCameraZoomTarget - raevyxCameraZoom) * blendRate;
 
                 double targetCameraShift = 0.0;
-                float bankAngle = nulljaw.getSwimRollAngleDegrees((float) event.getPartialTick());
-                double velocity = nulljaw.getDeltaMovement().horizontalDistance();
+                float bankAngle = varasuchus.getSwimRollAngleDegrees((float) event.getPartialTick());
+                double velocity = varasuchus.getDeltaMovement().horizontalDistance();
                 double velocityFactor = Math.min(velocity * 2.0, 1.5);
-                targetCameraShift = -(bankAngle / 45.0) * DragonRideCameraTuning.getBankShiftMax(nulljaw) * velocityFactor;
+                targetCameraShift = -(bankAngle / 45.0) * DragonRideCameraTuning.getBankShiftMax(varasuchus) * velocityFactor;
 
                 double shiftBlendRate = 0.15;
                 raevyxCameraShift += (targetCameraShift - raevyxCameraShift) * shiftBlendRate;
@@ -325,15 +325,15 @@ public class ClientEventHandler {
                 event.getCamera().move(-event.getCamera().getMaxZoom(raevyxCameraZoom), 0, 0);
                 event.getCamera().move(0, verticalCameraShift, raevyxCameraShift);
 
-                float nulljawTargetPitch = 15.0f;
+                float varasuchusTargetPitch = 15.0f;
                 float pitchBlendRate = 0.15f;
-                nulljawCameraPitch += (nulljawTargetPitch - nulljawCameraPitch) * pitchBlendRate;
-                event.setPitch(Mth.clamp(event.getPitch() + nulljawCameraPitch, -90.0f, 90.0f));
+                varasuchusCameraPitch += (varasuchusTargetPitch - varasuchusCameraPitch) * pitchBlendRate;
+                event.setPitch(Mth.clamp(event.getPitch() + varasuchusCameraPitch, -90.0f, 90.0f));
             } else {
                 event.getCamera().move(-event.getCamera().getMaxZoom(raevyxCameraZoomTarget), 0, 0);
                 raevyxCameraShift = 0.0;
                 verticalCameraShift = 0.0;
-                nulljawCameraPitch = 0.0f;
+                varasuchusCameraPitch = 0.0f;
             }
         }
 

@@ -8,6 +8,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public final class VolitansRiderController {
+    private static final float RIDER_KEY_PITCH_DEG = 25.0F;
     private static final double CRUISE_SPEED_MULT = 7.55;
     private static final double SPRINT_SPEED_MULT = 8.75;
     private static final double DIVE_START_ANGLE = 25.0;
@@ -54,7 +55,7 @@ public final class VolitansRiderController {
         dragon.fallDistance = 0.0F;
         dragon.setTarget(null);
 
-        if (dragon.isFlying() || dragon.isInWaterOrBubble()) {
+        if ((dragon.isFlying() || dragon.isInWaterOrBubble()) && !dragon.isRiderPitchKeyMode()) {
             dragon.syncRiderLookLock(rider);
         } else {
             dragon.syncRiderYawLock(rider);
@@ -87,7 +88,7 @@ public final class VolitansRiderController {
         boolean hasInput = Math.abs(forwardInput) > 0.01D || Math.abs(strafeInput) > 0.01D;
 
         float yawRad = (float) Math.toRadians(dragon.getYRot());
-        float pitchRad = (float) Math.toRadians(rider.getXRot());
+        float pitchRad = resolveRiderPitchRad(rider);
         double forwardXZ = Math.cos(pitchRad);
         double forwardX = -Math.sin(yawRad) * forwardXZ;
         double forwardY = -Math.sin(pitchRad);
@@ -131,9 +132,9 @@ public final class VolitansRiderController {
         double baseSpeed = dragon.getFlightSpeed();
         double targetSpeed = (dragon.isAccelerating() ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
 
-        float pitchDeg = rider.getXRot();
+        float pitchDeg = resolveRiderPitchDeg(rider);
         double diveIntensity = 0.0;
-        if (pitchDeg >= DIVE_START_ANGLE) {
+        if (!dragon.isRiderPitchKeyMode() && pitchDeg >= DIVE_START_ANGLE) {
             double normalized = (pitchDeg - DIVE_START_ANGLE) / (DIVE_MAX_ANGLE - DIVE_START_ANGLE);
             normalized = Mth.clamp(normalized, 0.0, 1.0);
             diveIntensity = Math.pow(normalized, DIVE_CURVE_POWER);
@@ -144,7 +145,7 @@ public final class VolitansRiderController {
         double forwardInput = motion.z;
         double strafeInput = motion.x;
         float yawRad = (float) Math.toRadians(dragon.getYRot());
-        float pitchRad = (float) Math.toRadians(rider.getXRot());
+        float pitchRad = resolveRiderPitchRad(rider);
 
         double forwardXZ = Math.cos(pitchRad);
         double forwardX = -Math.sin(yawRad) * forwardXZ;
@@ -184,5 +185,22 @@ public final class VolitansRiderController {
         dragon.move(MoverType.SELF, blended);
         dragon.setDeltaMovement(blended);
         dragon.calculateEntityAnimation(true);
+    }
+
+    private float resolveRiderPitchDeg(Player rider) {
+        if (!dragon.isRiderPitchKeyMode()) {
+            return rider.getXRot();
+        }
+        if (dragon.isGoingUp()) {
+            return -RIDER_KEY_PITCH_DEG;
+        }
+        if (dragon.isGoingDown()) {
+            return RIDER_KEY_PITCH_DEG;
+        }
+        return 0.0F;
+    }
+
+    private float resolveRiderPitchRad(Player rider) {
+        return (float) Math.toRadians(resolveRiderPitchDeg(rider));
     }
 }

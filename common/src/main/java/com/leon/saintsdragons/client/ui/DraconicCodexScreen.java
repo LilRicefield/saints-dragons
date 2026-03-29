@@ -14,6 +14,8 @@ import com.leon.saintsdragons.client.ui.codex.CodexLayout;
 import com.leon.saintsdragons.client.ui.codex.CodexTab;
 import com.leon.saintsdragons.client.ui.codex.CodexTabPanel;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
@@ -29,7 +31,6 @@ import java.util.Objects;
 
 @Environment(EnvType.CLIENT)
 public class DraconicCodexScreen extends Screen {
-    // Flag to disable custom animations during GUI rendering
     public static final ThreadLocal<Boolean> RENDERING_IN_GUI = ThreadLocal.withInitial(() -> false);
 
     private static final ResourceLocation BOOK_TEXTURE =
@@ -64,13 +65,20 @@ public class DraconicCodexScreen extends Screen {
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/add_icon.png");
     private static final ResourceLocation REMOVE_ICON =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/remove_icon.png");
-    private static final ResourceLocation IGNIVORUS_EGG_TEXTURE =
-            SaintsDragonsCommon.rl("textures/item/ignivorus_egg_item.png");
+    private static final ResourceLocation REFRESH_ICON =
+            SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/refresh_icon.png");
+
+    private static final int REFRESH_ICON_OFFSET_X = 72;
+    private static final int REFRESH_ICON_OFFSET_Y = 46;
+    private static final int REFRESH_ICON_WIDTH = 8;
+    private static final int REFRESH_ICON_HEIGHT = 9;
+    private static final int REFRESH_ICON_TEXTURE_WIDTH = 8;
+    private static final int REFRESH_ICON_TEXTURE_HEIGHT = 9;
 
     private final CodexTabPanel tabPanel = new CodexTabPanel();
     private final CodexDragonListPanel dragonListPanel = new CodexDragonListPanel();
     private final CodexDragonRenderer dragonRenderer = new CodexDragonRenderer();
-    private final CodexEcologyPanel ecologyPanel = new CodexEcologyPanel(IGNIVORUS_EGG_TEXTURE);
+    private final CodexEcologyPanel ecologyPanel = new CodexEcologyPanel();
     private final CodexAllyPanel allyPanel = new CodexAllyPanel(CODEX_EDIT_BOX, ADD_ICON, REMOVE_ICON);
     private final CodexPhysiologyPanel detailPanel = new CodexPhysiologyPanel(
             HEALTH_ICON, ARMOR_ICON, GENDER_ICON, HUNGER_ICON, HAPPINESS_ICON, VARIANT_ICON
@@ -79,7 +87,7 @@ public class DraconicCodexScreen extends Screen {
     private int leftPos;
     private int topPos;
     private int listScrollOffset = 0;
-    private CodexTab activeTab = CodexTab.PHYSIOLOGY;
+    private CodexTab activeTab;
     private final List<CodexDragonEntry> dragonEntries = new ArrayList<>();
     private java.util.UUID selectedDragonId;
     private java.util.UUID pendingSelectionId;
@@ -88,14 +96,6 @@ public class DraconicCodexScreen extends Screen {
     private int ecologyPage = 1;
     @Nullable
     private Button refreshEntryButton;
-    public DraconicCodexScreen() {
-        this(null, CodexTab.PHYSIOLOGY);
-    }
-
-    public DraconicCodexScreen(@Nullable java.util.UUID preselectedDragonId) {
-        this(preselectedDragonId, CodexTab.PHYSIOLOGY);
-    }
-
     public DraconicCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
         super(Component.translatable("saintsdragons.gui.draconic_codex.title"));
         this.pendingSelectionId = preselectedDragonId;
@@ -113,14 +113,23 @@ public class DraconicCodexScreen extends Screen {
 
         // Request current tamed dragon list from server (safe path: no prune)
         requestCodexRefresh(false);
-        NetworkHandler.sendToServer(new com.leon.saintsdragons.common.network.MessageGlobalAllyRequest());
+        NetworkHandler.sendToServer(com.leon.saintsdragons.common.network.MessageGlobalAllyRequest.INSTANCE);
 
-        refreshEntryButton = addRenderableWidget(Button.builder(
-                        Component.translatable("saintsdragons.gui.draconic_codex.refresh_entry"),
-                        button -> requestCodexRefresh(true))
-                .pos(leftPos + 7, topPos + 25)
-                .size(120, 18)
-                .build());
+        refreshEntryButton = addRenderableWidget(new ImageButton(
+                leftPos + REFRESH_ICON_OFFSET_X,
+                topPos + REFRESH_ICON_OFFSET_Y,
+                REFRESH_ICON_WIDTH,
+                REFRESH_ICON_HEIGHT,
+                0,
+                0,
+                0,
+                REFRESH_ICON,
+                REFRESH_ICON_TEXTURE_WIDTH,
+                REFRESH_ICON_TEXTURE_HEIGHT,
+                button -> requestCodexRefresh(true),
+                Component.translatable("saintsdragons.gui.draconic_codex.refresh_entry")
+        ));
+        refreshEntryButton.setTooltip(Tooltip.create(Component.translatable("saintsdragons.gui.draconic_codex.refresh_entry")));
         refreshEntryButton.active = true;
 
         allyPanel.initWidgets(this::addRenderableWidget, this.font, leftPos, topPos,
@@ -177,7 +186,7 @@ public class DraconicCodexScreen extends Screen {
             int listLeft = CodexLayout.getListLeft(leftPos);
             int listTop = CodexLayout.getListTop(topPos);
             int listRight = listLeft + CodexLayout.LIST_WIDTH;
-            java.util.UUID clickedId = dragonListPanel.handleClick(mouseX, mouseY, listLeft, listTop, listRight,
+            java.util.UUID clickedId = dragonListPanel.handleClick(mouseX, mouseY, this.font, listLeft, listTop, listRight,
                     dragonEntries, listScrollOffset);
             if (clickedId != null) {
                 CodexDragonEntry clickedEntry = dragonEntries.stream()
@@ -338,7 +347,7 @@ public class DraconicCodexScreen extends Screen {
             case "raevyx" -> ModSounds.RAEVYX_GRUMBLE_1.get();
             case "ignivorus" -> ModSounds.IGNIVORUS_GRUMBLE_1.get();
             case "cindervane" -> ModSounds.CINDERVANE_GRUMBLE_1.get();
-            case "nulljaw" -> ModSounds.NULLJAW_GRUMBLE_1.get();
+            case "varasuchus" -> ModSounds.VARASUCHUS_GRUMBLE_1.get();
             case "stegonaut" -> ModSounds.STEGONAUT_GRUMBLE_1.get();
             default -> null;
         };

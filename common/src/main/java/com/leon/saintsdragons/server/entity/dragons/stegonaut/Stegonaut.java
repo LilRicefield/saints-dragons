@@ -511,6 +511,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         if (baby != null) {
             // Set gender randomly
             baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+            assignMotherToBaby(baby, other);
 
             // Inherit owner from parent
             java.util.UUID ownerId = this.getOwnerUUID();

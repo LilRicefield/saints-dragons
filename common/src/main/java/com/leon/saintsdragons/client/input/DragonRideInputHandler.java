@@ -9,6 +9,7 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding.Activation;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -239,7 +240,14 @@ public final class DragonRideInputHandler {
                     && dragon.isInWaterOrBubble()
                     && !dragon.isUnderWater()
                     && !alreadyFlying;
-            if ((!alreadyFlying && canTakeoffNow) || breachWaterBypass) {
+            boolean raevyxFallRecoveryBypass =
+                    dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
+                    && !alreadyFlying
+                    && !dragon.onGround()
+                    && !dragon.isInWaterOrBubble()
+                    && !dragon.isInLava()
+                    && (dragon.fallDistance >= 1.0F || dragon.getDeltaMovement().y <= -0.02D);
+            if ((!alreadyFlying && canTakeoffNow) || breachWaterBypass || raevyxFallRecoveryBypass) {
                 // Preserve the current ascend/descend state so the server keeps Space latched on takeoff
                 sendInput(ascendDown, descendDown, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
             }
@@ -267,7 +275,8 @@ public final class DragonRideInputHandler {
                 && (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
                 || dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane
                 || dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus
-                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw)) {
+                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans
+                || dragon instanceof Varasuchus)) {
             sendInput(false, false, DragonRiderAction.TOGGLE_PITCH_MODE, null, forward, strafe, yaw);
         }
         if (tauntDown && !wasTauntDown) {
@@ -303,7 +312,7 @@ public final class DragonRideInputHandler {
 
         if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ||
             dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx ||
-            dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw ||
+            dragon instanceof Varasuchus ||
             dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
             boolean forwardDown = mc.options.keyUp.isDown();
             long currentTime = System.currentTimeMillis();

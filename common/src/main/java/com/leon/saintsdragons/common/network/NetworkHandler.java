@@ -139,6 +139,14 @@ public final class NetworkHandler {
                 MessageDragonMovingSound::decode,
                 MessageDragonMovingSound::handle
         );
+
+        NETWORK.registerClientbound(
+                MessageDragonAbilityDebugBox.class,
+                id("dragon_ability_debug_box"),
+                MessageDragonAbilityDebugBox::encode,
+                MessageDragonAbilityDebugBox::decode,
+                MessageDragonAbilityDebugBox::handle
+        );
     }
 
     public static void sendToServer(Object message) {

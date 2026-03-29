@@ -272,6 +272,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
     private static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     private static final int RIDER_WATER_SCAN_RADIUS = 2;
+    private static final float FALL_ANIMATION_MIN_BLOCKS = 1.0F;
+    private static final float FALL_RECOVERY_MIN_BLOCKS = 1.0F;
+    private static final double FALL_ANIMATION_MIN_DESCENT = -0.12D;
+    private static final double FALL_RECOVERY_MIN_DESCENT = -0.08D;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private boolean inHighAltitudeGlide = false; // Track glide state for smooth transitions
@@ -1003,6 +1007,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        boolean canRecover = canRecoverTakeoffFromFall();
 
         // WATER OVERRIDES LOCK - must always allow vertical input in water!
         if (inWater) {
@@ -1017,8 +1022,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             return;
         }
 
-        // Allow vertical input when flying
-        if (this.isFlying()) {
+        // Falling recovery should respond to held ascend input, not only the
+        // one-shot TAKEOFF_REQUEST edge packet. This keeps recovery reliable if
+        // the rider is already holding Space as the fall begins.
+        if (goingUp && canRecover) {
+            setGoingUp(true);
+            setGoingDown(false);
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
+
+        // Allow vertical input when flying or when a rider can recover from a fall.
+        if (this.isFlying() || canRecover) {
             setGoingUp(goingUp);
             setGoingDown(goingDown);
         } else {
@@ -1048,6 +1063,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void onRiderTakeoffRequest(Player player) {
+        boolean canRecover = canRecoverTakeoffFromFall();
+        if (canRecover) {
+            setGoingUp(true);
+            setGoingDown(false);
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
         requestRiderTakeoff();
     }
 
@@ -1618,6 +1640,31 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     private boolean shouldPlayTakeoff() {
         return isTakeoff();
+    }
+
+    public boolean isFallingForAnimation() {
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return false;
+        }
+        if (onGround() || isInWaterOrBubble() || isInLava()) {
+            return false;
+        }
+        return this.fallDistance >= FALL_ANIMATION_MIN_BLOCKS
+                && getDeltaMovement().y <= FALL_ANIMATION_MIN_DESCENT;
+    }
+
+    private boolean canRecoverTakeoffFromFall() {
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+            return false;
+        }
+        if (!isTame() || !isVehicle() || !isAlive() || isBaby()) {
+            return false;
+        }
+        if (onGround() || isInWaterOrBubble() || isInLava() || isGroundRending()) {
+            return false;
+        }
+        return this.fallDistance >= FALL_RECOVERY_MIN_BLOCKS
+                || getDeltaMovement().y <= FALL_RECOVERY_MIN_DESCENT;
     }
 
     @Override
@@ -3542,7 +3589,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private void handleWaterSwimming(Vec3 input) {
         Vec3 velocity = this.getDeltaMovement();
 
-        // Raevyx swims much slower than Nulljaw (not aquatic)
+        // Raevyx swims much slower than Varasuchus (not aquatic)
         double swimSpeed = 0.4D; // Slow base speed
         if (isAccelerating()) {
             swimSpeed *= 1.3D; // Slight boost when sprinting
@@ -3664,6 +3711,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 if (this.random.nextFloat() < 0.05F) {
                     // Mark this as a family spawn (false = don't spawn baby via vanilla logic)
                     spawnData = new RaevyxFamilyData(false);
+                    this.setGender(DragonGender.FEMALE);
                     
                     // Schedule baby spawning for first tick (when parent is positioned)
                     this.shouldSpawnBabies = true;
@@ -3726,6 +3774,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 if (baby != null) {
                     // Set baby properties BEFORE adding to world to ensure they persist
                     baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+                    assignMotherToBaby(baby, null);
 
                     // Set skip flag BEFORE setAge to prevent respawn logic
                     baby.skipRespawnTicks = 5;
@@ -4718,6 +4767,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         Raevyx baby = ModEntities.RAEVYX.get().create(level);
         if (baby != null) {
             baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+            assignMotherToBaby(baby, otherParent);
             java.util.UUID ownerId = this.getOwnerUUID();
             if (ownerId != null) {
                 baby.setOwnerUUID(ownerId);

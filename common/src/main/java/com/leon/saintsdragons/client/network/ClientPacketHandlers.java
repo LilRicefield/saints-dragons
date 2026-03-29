@@ -10,8 +10,10 @@ import com.leon.saintsdragons.common.network.MessageGlobalAllyDelta;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAllyDelta;
 import com.leon.saintsdragons.common.network.MessageDragonAllyList;
+import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
+import com.leon.saintsdragons.client.debug.DragonAbilityDebugClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -102,5 +104,9 @@ public final class ClientPacketHandlers {
                 message.pitch(),
                 message.durationTicks()
         );
+    }
+
+    public static void handleAbilityDebugBox(MessageDragonAbilityDebugBox message) {
+        DragonAbilityDebugClient.addBox(message.box(), message.colorRgb(), message.lifetimeTicks());
     }
 }

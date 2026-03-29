@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.debug.DragonAbilityDebug;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import com.leon.saintsdragons.util.DragonMathUtil;
 import net.minecraft.server.level.ServerLevel;
@@ -119,6 +120,9 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
         double horizontalInflate = ridden ? BITE_SWIPE_HORIZONTAL_RIDDEN : BITE_SWIPE_HORIZONTAL;
         AABB forwardSweep = new AABB(mouth, mouth.add(look.scale(effectiveRange)))
                 .inflate(horizontalInflate, BITE_SWIPE_VERTICAL, horizontalInflate);
+        if (!wyvern.level().isClientSide) {
+            DragonAbilityDebug.sendBox(wyvern, forwardSweep, 0x33D1FF, 20);
+        }
         List<LivingEntity> candidates = wyvern.level().getEntitiesOfClass(LivingEntity.class, forwardSweep,
                 e -> e != wyvern && e.isAlive() && e.attackable() && !isAllied(wyvern, e));
 

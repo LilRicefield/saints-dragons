@@ -25,7 +25,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.CINDERVANE_BINDER.get());
                                 output.accept(ModItems.IGNIVORUS_BINDER.get());
                                 output.accept(ModItems.RAEVYX_BINDER.get());
-                                output.accept(ModItems.NULLJAW_BINDER.get());
+                                output.accept(ModItems.VARASUCHUS_BINDER.get());
                                 output.accept(ModItems.STEGONAUT_BINDER.get());
                                 output.accept(ModItems.VOLITANS_BINDER.get());
                                 output.accept(ModItems.DRACONIC_CODEX.get());
@@ -36,7 +36,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_HEART.get());
                                 output.accept(ModItems.IGNIVORUS_TOOTH.get());
-                                output.accept(ModItems.NULLJAW_SCALE.get());
+                                output.accept(ModItems.VARASUCHUS_SCALE.get());
                                 output.accept(ModItems.STEGONAUT_SCALE.get());
                                 output.accept(ModItems.POTION_OF_TIDEGUARD.get());
                                 output.accept(ModItems.POTION_OF_SEARING.get());
@@ -45,12 +45,12 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAEVYX_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_EGG.get());
                                 output.accept(ModItems.CINDERVANE_EGG.get());
-                                output.accept(ModItems.NULLJAW_EGG.get());
+                                output.accept(ModItems.VARASUCHUS_EGG.get());
                                 output.accept(ModItems.STEGONAUT_EGG.get());
                                 output.accept(ModItems.CINDERVANE_SPAWN_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_SPAWN_EGG.get());
                                 output.accept(ModItems.RAEVYX_SPAWN_EGG.get());
-                                output.accept(ModItems.NULLJAW_SPAWN_EGG.get());
+                                output.accept(ModItems.VARASUCHUS_SPAWN_EGG.get());
                                 output.accept(ModItems.STEGONAUT_SPAWN_EGG.get());
                                 output.accept(ModItems.VOLITANS_SPAWN_EGG.get());
                                 output.accept(ModItems.IVY_THE_MERCHANT_SPAWN_EGG.get());

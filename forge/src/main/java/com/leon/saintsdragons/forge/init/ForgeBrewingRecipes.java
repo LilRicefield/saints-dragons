@@ -18,7 +18,7 @@ public final class ForgeBrewingRecipes {
         ItemStack awkwardPotion = PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.AWKWARD);
         ItemStack tideguardPotion = PotionUtils.setPotion(
                 new ItemStack(ModItems.POTION_OF_TIDEGUARD.get()),
-                ModPotions.NULLJAW_TIDEGUARD.get()
+                ModPotions.VARASUCHUS_TIDEGUARD.get()
         );
         ItemStack searingPotion = PotionUtils.setPotion(
                 new ItemStack(ModItems.POTION_OF_SEARING.get()),
@@ -27,7 +27,7 @@ public final class ForgeBrewingRecipes {
 
         BrewingRecipeRegistry.addRecipe(
                 StrictNBTIngredient.of(awkwardPotion),
-                Ingredient.of(ModItems.NULLJAW_SCALE.get()),
+                Ingredient.of(ModItems.VARASUCHUS_SCALE.get()),
                 tideguardPotion
         );
         BrewingRecipeRegistry.addRecipe(

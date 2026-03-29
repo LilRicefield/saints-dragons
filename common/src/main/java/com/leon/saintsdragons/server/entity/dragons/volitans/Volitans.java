@@ -1354,7 +1354,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public AgeableMob getBreedOffspring(net.minecraft.server.level.ServerLevel level, AgeableMob otherParent) {
-        return com.leon.saintsdragons.common.registry.ModEntities.VOLITANS.get().create(level);
+        Volitans baby = com.leon.saintsdragons.common.registry.ModEntities.VOLITANS.get().create(level);
+        if (baby != null) {
+            assignMotherToBaby(baby, otherParent);
+        }
+        return baby;
     }
 
     @Override
@@ -2141,18 +2145,30 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
         float targetPitchRad = 0f;
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
-            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
-            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
-            boolean hasMovementInput = Math.abs(riderForward) > 0.01f
-                    || Math.abs(riderStrafe) > 0.01f
-                    || Math.abs(player.zza) > 0.01f
-                    || Math.abs(player.xxa) > 0.01f;
-            if (hasMovementInput) {
-                float rawPlayerPitchRad = (float) Math.toRadians(player.getXRot());
-                smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
+            boolean useKeyPitch = isRiderPitchKeyMode();
+            if (useKeyPitch) {
+                float rawKeyPitchRad = 0f;
+                if (isGoingUp()) {
+                    rawKeyPitchRad = (float) Math.toRadians(25.0F);
+                } else if (isGoingDown()) {
+                    rawKeyPitchRad = (float) -Math.toRadians(25.0F);
+                }
+                smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
                 targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
             } else {
-                smoothedPlayerPitchRad = 0f;
+                float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+                float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+                boolean hasMovementInput = Math.abs(riderForward) > 0.01f
+                        || Math.abs(riderStrafe) > 0.01f
+                        || Math.abs(player.zza) > 0.01f
+                        || Math.abs(player.xxa) > 0.01f;
+                if (hasMovementInput) {
+                    float rawPlayerPitchRad = (float) Math.toRadians(player.getXRot());
+                    smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
+                    targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+                } else {
+                    smoothedPlayerPitchRad = 0f;
+                }
             }
         } else {
             Vec3 velocity = getDeltaMovement();

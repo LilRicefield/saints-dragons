@@ -46,8 +46,8 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         String animationTrigger = "die";
         if (abilityId.startsWith("baby_")) {
             animationTrigger = "baby_die";
-        } else if ("nulljaw_die".equals(abilityId)) {
-            animationTrigger = "nulljaw_die";
+        } else if ("varasuchus_die".equals(abilityId)) {
+            animationTrigger = "varasuchus_die";
         } else if ("volitans_die".equals(abilityId)) {
             animationTrigger = "volitans_die";
             controllerId = "instant";
@@ -59,8 +59,6 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
     public void tickUsing() {
         super.tickUsing();
 
-        // Manually trigger death sound at tick 1 (like Mowzie's Mobs)
-        // Must play directly via playSound() - playVocal() is blocked by isDeadOrDying() check!
         if (getTicksInSection() == 1 && !getLevel().isClientSide) {
             T dragon = getUser();
             String abilityId = this.getAbilityType().getName();

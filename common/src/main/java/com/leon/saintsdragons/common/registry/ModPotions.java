@@ -16,8 +16,8 @@ public final class ModPotions {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.POTION, () -> BuiltInRegistries.POTION, SaintsDragonsCommon.MOD_ID);
 
-    public static final Supplier<Potion> NULLJAW_TIDEGUARD =
-            REGISTER.register("nulljaw_tideguard", () -> new Potion(
+    public static final Supplier<Potion> VARASUCHUS_TIDEGUARD =
+            REGISTER.register("varasuchus_tideguard", () -> new Potion(
                     new MobEffectInstance(MobEffects.WATER_BREATHING, 20 * 60),
                     new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 20 * 60)
             ));

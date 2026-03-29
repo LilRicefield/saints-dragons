@@ -559,11 +559,7 @@ public class RaevyxFlightGoal extends Goal {
      * Check if there are baby Raevyx nearby that this parent should protect
      */
     private boolean hasNearbyBabies() {
-        return !wyvern.level().getEntitiesOfClass(
-                Raevyx.class,
-                wyvern.getBoundingBox().inflate(16.0D),  // Check 16 block radius
-                baby -> baby != null && baby.isBaby() && baby.isAlive()
-        ).isEmpty();
+        return wyvern.hasNearbyAssignedBabies(Raevyx.class);
     }
 
     private boolean isOverDanger() {

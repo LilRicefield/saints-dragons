@@ -33,7 +33,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             .create();
     public static final ResourceLocation CINDERVANE_ID = SaintsDragonsCommon.rl("cindervane");
     public static final ResourceLocation RAEVYX_ID = SaintsDragonsCommon.rl("raevyx");
-    public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
+    public static final ResourceLocation VARASUCHUS_ID = SaintsDragonsCommon.rl("varasuchus");
     public static final ResourceLocation IGNIVORUS_ID = SaintsDragonsCommon.rl("ignivorus");
     public static final ResourceLocation STEGONAUT_ID = SaintsDragonsCommon.rl("stegonaut");
 
@@ -237,7 +237,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         );
     }
 
-    private static DragonAttributeConfig nulljawDefaults() {
+    private static DragonAttributeConfig varasuchusDefaults() {
         double maxHealth = 250.0D;
         double armor = 8.0D;
         double bitePhase1Damage = 40.0D;
@@ -261,25 +261,25 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         if (IS_FORGE) {
             try {
                 Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
-                maxHealth = (double) configClass.getField("NULLJAW_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_MAX_HEALTH").get(null));
-                armor = (double) configClass.getField("NULLJAW_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_ARMOR").get(null));
-                bitePhase1Damage = (double) configClass.getField("NULLJAW_BITE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_BITE_PHASE1_DAMAGE").get(null));
-                bitePhase2Damage = (double) configClass.getField("NULLJAW_BITE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_BITE_PHASE2_DAMAGE").get(null));
-                tailAttackDamage = (double) configClass.getField("NULLJAW_TAIL_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_TAIL_ATTACK_DAMAGE").get(null));
-                dashTailSwipeDamage = (double) configClass.getField("NULLJAW_DASH_TAIL_SWIPE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_DASH_TAIL_SWIPE_DAMAGE").get(null));
-                dashClawDamage = (double) configClass.getField("NULLJAW_DASH_CLAW_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_DASH_CLAW_DAMAGE").get(null));
-                hornPhase1Damage = (double) configClass.getField("NULLJAW_HORN_GORE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_HORN_GORE_PHASE1_DAMAGE").get(null));
-                hornPhase2Damage = (double) configClass.getField("NULLJAW_HORN_GORE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_HORN_GORE_PHASE2_DAMAGE").get(null));
-                swimSpeed = (double) configClass.getField("NULLJAW_SWIM_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_SWIM_SPEED").get(null));
-                tamingChance = (double) configClass.getField("NULLJAW_TAMING_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_TAMING_CHANCE").get(null));
-                tamingChanceTropical = (double) configClass.getField("NULLJAW_TAMING_CHANCE_TROPICAL").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_TAMING_CHANCE_TROPICAL").get(null));
-                legacyTaming = (boolean) configClass.getField("NULLJAW_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_LEGACY_TAMING").get(null));
-                eggHatchChanceNormal = (double) configClass.getField("NULLJAW_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_EGG_HATCH_CHANCE_NORMAL").get(null));
-                eggDropChance = (double) configClass.getField("NULLJAW_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_EGG_DROP_CHANCE").get(null));
-                aggressiveWild = (boolean) configClass.getField("NULLJAW_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_AGGRESSIVE_WILD").get(null));
-                griefingEnabled = (boolean) configClass.getField("NULLJAW_GRIEFING_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_GRIEFING_ENABLED").get(null));
-                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
-                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
+                maxHealth = (double) configClass.getField("VARASUCHUS_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_MAX_HEALTH").get(null));
+                armor = (double) configClass.getField("VARASUCHUS_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_ARMOR").get(null));
+                bitePhase1Damage = (double) configClass.getField("VARASUCHUS_BITE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_BITE_PHASE1_DAMAGE").get(null));
+                bitePhase2Damage = (double) configClass.getField("VARASUCHUS_BITE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_BITE_PHASE2_DAMAGE").get(null));
+                tailAttackDamage = (double) configClass.getField("VARASUCHUS_TAIL_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAIL_ATTACK_DAMAGE").get(null));
+                dashTailSwipeDamage = (double) configClass.getField("VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE").get(null));
+                dashClawDamage = (double) configClass.getField("VARASUCHUS_DASH_CLAW_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_DASH_CLAW_DAMAGE").get(null));
+                hornPhase1Damage = (double) configClass.getField("VARASUCHUS_HORN_GORE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_HORN_GORE_PHASE1_DAMAGE").get(null));
+                hornPhase2Damage = (double) configClass.getField("VARASUCHUS_HORN_GORE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_HORN_GORE_PHASE2_DAMAGE").get(null));
+                swimSpeed = (double) configClass.getField("VARASUCHUS_SWIM_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_SWIM_SPEED").get(null));
+                tamingChance = (double) configClass.getField("VARASUCHUS_TAMING_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAMING_CHANCE").get(null));
+                tamingChanceTropical = (double) configClass.getField("VARASUCHUS_TAMING_CHANCE_TROPICAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAMING_CHANCE_TROPICAL").get(null));
+                legacyTaming = (boolean) configClass.getField("VARASUCHUS_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_LEGACY_TAMING").get(null));
+                eggHatchChanceNormal = (double) configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null));
+                eggDropChance = (double) configClass.getField("VARASUCHUS_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_EGG_DROP_CHANCE").get(null));
+                aggressiveWild = (boolean) configClass.getField("VARASUCHUS_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_AGGRESSIVE_WILD").get(null));
+                griefingEnabled = (boolean) configClass.getField("VARASUCHUS_GRIEFING_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_GRIEFING_ENABLED").get(null));
+                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
+                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -1012,14 +1012,14 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static boolean requiresLegacyTamingFlag(ResourceLocation id) {
-        return id.equals(NULLJAW_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID);
+        return id.equals(VARASUCHUS_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID);
     }
 
     private static Map<ResourceLocation, DragonAttributeConfig> buildDefaultConfigs() {
         Map<ResourceLocation, DragonAttributeConfig> base = new HashMap<>();
         base.put(CINDERVANE_ID, cindervaneDefaults());
         base.put(RAEVYX_ID, raevyxDefaults());
-        base.put(NULLJAW_ID, nulljawDefaults());
+        base.put(VARASUCHUS_ID, varasuchusDefaults());
         base.put(IGNIVORUS_ID, ignivorusDefaults());
         base.put(STEGONAUT_ID, stegonautDefaults());
         return base;
@@ -1055,7 +1055,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         hints.addProperty("summon_storm_supercharge_damage_multiplier", "Damage multiplier applied while supercharged (1 = normal damage)");
         hints.addProperty("summon_storm_duration_ticks", "How long thunderstorm weather is enforced (20 ticks = 1 second)");
 
-        if (id.equals(NULLJAW_ID)) {
+        if (id.equals(VARASUCHUS_ID)) {
             hints.addProperty("swim_speed", "Min 0.1, Max 5.0");
         } else if (id.equals(CINDERVANE_ID)) {
             hints.addProperty("fire_body_explosion_damage", "Direct blast damage on Fire Body crash impact");

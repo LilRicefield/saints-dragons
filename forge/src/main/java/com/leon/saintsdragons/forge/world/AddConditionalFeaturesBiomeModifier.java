@@ -53,7 +53,7 @@ public final class AddConditionalFeaturesBiomeModifier implements BiomeModifier 
     private static boolean isEnabled(String configKey) {
         return switch (configKey) {
             case "cindervaneEggBlockWorldgen" -> SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.get();
-            case "nulljawEggBlockWorldgen" -> SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN.get();
+            case "varasuchusEggBlockWorldgen" -> SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN.get();
             default -> true;
         };
     }

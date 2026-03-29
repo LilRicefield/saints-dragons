@@ -8,6 +8,7 @@ import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Makes adult dragons protect nearby babies of the same species.
@@ -43,6 +44,9 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
         if (this.dragon.isBaby()) {
             return false;
         }
+        if (!this.dragon.isFemale()) {
+            return false;
+        }
 
         // Don't interfere if sitting or being ridden
         if (this.dragon.isOrderedToSit() || this.dragon.isVehicle()) {
@@ -50,11 +54,7 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
         }
 
         // Look for nearby babies
-        List<T> nearbyBabies = this.dragon.level().getEntitiesOfClass(
-                dragonClass,
-                this.dragon.getBoundingBox().inflate(16.0D),
-                baby -> baby != null && baby.isBaby() && baby.isAlive()
-        );
+        List<T> nearbyBabies = getProtectableBabies();
 
         if (nearbyBabies.isEmpty()) {
             this.babiesNearby = false;
@@ -103,11 +103,7 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
         }
 
         // Check if any babies are still nearby
-        List<T> nearbyBabies = this.dragon.level().getEntitiesOfClass(
-                dragonClass,
-                this.dragon.getBoundingBox().inflate(16.0D),
-                baby -> baby != null && baby.isBaby() && baby.isAlive()
-        );
+        List<T> nearbyBabies = getProtectableBabies();
 
         if (nearbyBabies.isEmpty()) {
             this.babiesNearby = false;
@@ -164,11 +160,7 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
      */
     private void checkForThreats() {
         // Look for nearby babies
-        List<T> nearbyBabies = this.dragon.level().getEntitiesOfClass(
-                dragonClass,
-                this.dragon.getBoundingBox().inflate(16.0D),
-                baby -> baby != null && baby.isBaby() && baby.isAlive()
-        );
+        List<T> nearbyBabies = getProtectableBabies();
 
         if (nearbyBabies.isEmpty()) {
             return;
@@ -216,5 +208,43 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
                 flightCapable.setFlying(false);
             }
         }
+    }
+
+    private List<T> getProtectableBabies() {
+        return this.dragon.level().getEntitiesOfClass(
+                dragonClass,
+                this.dragon.getBoundingBox().inflate(16.0D),
+                baby -> baby != null && baby.isBaby() && baby.isAlive() && isAssignedToThisParent(baby)
+        );
+    }
+
+    private boolean isAssignedToThisParent(T baby) {
+        UUID assignedParentUuid = baby.getAssignedParentUuid();
+        if (assignedParentUuid != null) {
+            return this.dragon.getUUID().equals(assignedParentUuid);
+        }
+
+        List<T> nearbyAdults = baby.level().getEntitiesOfClass(
+                dragonClass,
+                baby.getBoundingBox().inflate(12.0D, 6.0D, 12.0D),
+                adult -> adult != null && !adult.isBaby() && adult.isAlive() && adult.isFemale()
+        );
+
+        double closestDistance = Double.MAX_VALUE;
+        T closestFemale = null;
+        for (T adult : nearbyAdults) {
+            double distance = baby.distanceToSqr(adult);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestFemale = adult;
+            }
+        }
+
+        if (closestFemale != null) {
+            baby.setAssignedParentUuid(closestFemale.getUUID());
+            return this.dragon.getUUID().equals(closestFemale.getUUID());
+        }
+
+        return false;
     }
 }

@@ -2,7 +2,7 @@ package com.leon.saintsdragons.common.item.util;
 
 import com.leon.saintsdragons.common.item.CindervaneBinderItem;
 import com.leon.saintsdragons.common.item.IgnivorusBinderItem;
-import com.leon.saintsdragons.common.item.NulljawBinderItem;
+import com.leon.saintsdragons.common.item.VarasuchusBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.common.item.VolitansBinderItem;
@@ -30,8 +30,8 @@ public final class BinderComponentUtil {
         if (stack.getItem() instanceof CindervaneBinderItem) {
             return CindervaneBinderItem.getBoundAmphithereUUID(stack);
         }
-        if (stack.getItem() instanceof NulljawBinderItem) {
-            return NulljawBinderItem.getBoundRiftDrakeUUID(stack);
+        if (stack.getItem() instanceof VarasuchusBinderItem) {
+            return VarasuchusBinderItem.getBoundRiftDrakeUUID(stack);
         }
         if (stack.getItem() instanceof IgnivorusBinderItem) {
             return IgnivorusBinderItem.getBoundIgnivorusUUID(stack);

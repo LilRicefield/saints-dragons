@@ -63,15 +63,15 @@ public final class DragonSpawnRegistry {
                 () -> SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES);
 
         add(entries,
-                SaintsDragonsCommon.rl("nulljaw"),
-                ModEntities.NULLJAW,
-                "has_nulljaw",
+                SaintsDragonsCommon.rl("varasuchus"),
+                ModEntities.VARASUCHUS,
+                "has_varasuchus",
                 MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
-                () -> SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES,
-                () -> SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES);
+                () -> SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE.get(),
+                () -> SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE.get(),
+                () -> SaintsDragonsConfig.VARASUCHUS_ADDITIONAL_BIOMES,
+                () -> SaintsDragonsConfig.VARASUCHUS_EXCLUDED_BIOMES);
 
         add(entries,
                 SaintsDragonsCommon.rl("ignivorus"),

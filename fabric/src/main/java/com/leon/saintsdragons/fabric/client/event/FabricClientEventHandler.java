@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
-import com.leon.saintsdragons.client.render.DragonRiderCameraSync;
+import com.leon.saintsdragons.client.renderer.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
@@ -10,7 +10,7 @@ import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -57,7 +57,7 @@ public class FabricClientEventHandler {
     private static float raevyxCameraPitch = 0.0f;
     private static float cindervaneCameraPitch = 0.0f;
     private static float ignivorusCameraPitch = 0.0f;
-    private static float nulljawCameraPitch = 0.0f;
+    private static float varasuchusCameraPitch = 0.0f;
 
     // Stegonaut camera zoom transition
     private static float stegonautCameraZoom = DragonRideCameraTuning.STEGONAUT.grounded();
@@ -341,20 +341,20 @@ public class FabricClientEventHandler {
             ignivorusCameraPitch = 0.0f;
         }
 
-        // Nulljaw camera zoom
-        if (player.isPassenger() && player.getVehicle() instanceof Nulljaw nulljaw && camera.isDetached()) {
+        // Varasuchus camera zoom
+        if (player.isPassenger() && player.getVehicle() instanceof Varasuchus varasuchus && camera.isDetached()) {
             CameraAccessor cameraAccessor = (CameraAccessor) camera;
-            boolean isSwimming = nulljaw.isInWaterOrBubble();
-            raevyxCameraZoomTarget = DragonRideCameraTuning.getTargetZoom(nulljaw);
+            boolean isSwimming = varasuchus.isInWaterOrBubble();
+            raevyxCameraZoomTarget = DragonRideCameraTuning.getTargetZoom(varasuchus);
             if (isSwimming) {
                 float blendRate = 0.05F;
                 raevyxCameraZoom += (raevyxCameraZoomTarget - raevyxCameraZoom) * blendRate;
 
                 double targetCameraShift = 0.0;
-                float bankAngle = nulljaw.getSwimRollAngleDegrees(partialTicks);
-                double velocity = nulljaw.getDeltaMovement().horizontalDistance();
+                float bankAngle = varasuchus.getSwimRollAngleDegrees(partialTicks);
+                double velocity = varasuchus.getDeltaMovement().horizontalDistance();
                 double velocityFactor = Math.min(velocity * 2.0, 1.5);
-                targetCameraShift = -(bankAngle / 45.0) * DragonRideCameraTuning.getBankShiftMax(nulljaw) * velocityFactor;
+                targetCameraShift = -(bankAngle / 45.0) * DragonRideCameraTuning.getBankShiftMax(varasuchus) * velocityFactor;
 
                 double shiftBlendRate = 0.15;
                 raevyxCameraShift += (targetCameraShift - raevyxCameraShift) * shiftBlendRate;
@@ -367,19 +367,19 @@ public class FabricClientEventHandler {
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
                 cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, raevyxCameraShift);
 
-                float nulljawTargetPitch = 6.0f;
+                float varasuchusTargetPitch = 6.0f;
                 float pitchBlendRate = 0.15f;
-                nulljawCameraPitch += (nulljawTargetPitch - nulljawCameraPitch) * pitchBlendRate;
+                varasuchusCameraPitch += (varasuchusTargetPitch - varasuchusCameraPitch) * pitchBlendRate;
                 float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
                 float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
-                float clampedPitch = Mth.clamp(currentPitch + nulljawCameraPitch, -90.0f, 90.0f);
+                float clampedPitch = Mth.clamp(currentPitch + varasuchusCameraPitch, -90.0f, 90.0f);
                 cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
             } else {
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(raevyxCameraZoomTarget);
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
                 raevyxCameraShift = 0.0;
                 verticalCameraShift = 0.0;
-                nulljawCameraPitch = 0.0f;
+                varasuchusCameraPitch = 0.0f;
             }
         }
 

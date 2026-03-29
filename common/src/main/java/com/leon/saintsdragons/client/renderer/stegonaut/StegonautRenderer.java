@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.renderer.stegonaut;
 
-import com.leon.saintsdragons.client.render.RiderBullcrap;
-import com.leon.saintsdragons.client.render.RiderConfig;
+import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.model.stegonaut.StegonautModel;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.fabricmc.api.EnvType;

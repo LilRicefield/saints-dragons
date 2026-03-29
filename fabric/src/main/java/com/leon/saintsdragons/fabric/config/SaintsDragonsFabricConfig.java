@@ -82,28 +82,28 @@ public final class SaintsDragonsFabricConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
-    public int nulljawSpawnWeight = 2;
+    public int varasuchusSpawnWeight = 2;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int nulljawMinGroupSize = 1;
+    public int varasuchusMinGroupSize = 1;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int nulljawMaxGroupSize = 2;
+    public int varasuchusMaxGroupSize = 2;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> nulljawAdditionalBiomes = new ArrayList<>();
+    public List<String> varasuchusAdditionalBiomes = new ArrayList<>();
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> nulljawExcludedBiomes = new ArrayList<>();
+    public List<String> varasuchusExcludedBiomes = new ArrayList<>();
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
-    public boolean nulljawEggBlockWorldgen = true;
+    public boolean varasuchusEggBlockWorldgen = true;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip

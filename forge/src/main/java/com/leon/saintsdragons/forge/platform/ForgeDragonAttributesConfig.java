@@ -61,26 +61,26 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.BooleanValue RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
     public static ForgeConfigSpec.BooleanValue RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
-    // Nulljaw
-    public static ForgeConfigSpec.DoubleValue NULLJAW_MAX_HEALTH;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_ARMOR;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_BITE_PHASE1_DAMAGE;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_BITE_PHASE2_DAMAGE;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_TAIL_ATTACK_DAMAGE;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_DASH_TAIL_SWIPE_DAMAGE;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_DASH_CLAW_DAMAGE;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_HORN_GORE_PHASE1_DAMAGE;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_HORN_GORE_PHASE2_DAMAGE;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_SWIM_SPEED;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_TAMING_CHANCE;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_TAMING_CHANCE_TROPICAL;
-    public static ForgeConfigSpec.BooleanValue NULLJAW_LEGACY_TAMING;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_EGG_HATCH_CHANCE_NORMAL;
-    public static ForgeConfigSpec.DoubleValue NULLJAW_EGG_DROP_CHANCE;
-    public static ForgeConfigSpec.BooleanValue NULLJAW_AGGRESSIVE_WILD;
-    public static ForgeConfigSpec.BooleanValue NULLJAW_GRIEFING_ENABLED;
-    public static ForgeConfigSpec.BooleanValue NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
-    public static ForgeConfigSpec.BooleanValue NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
+    // Varasuchus
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_MAX_HEALTH;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_ARMOR;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_BITE_PHASE1_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_BITE_PHASE2_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAIL_ATTACK_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_DASH_CLAW_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_HORN_GORE_PHASE1_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_HORN_GORE_PHASE2_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_SWIM_SPEED;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAMING_CHANCE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAMING_CHANCE_TROPICAL;
+    public static ForgeConfigSpec.BooleanValue VARASUCHUS_LEGACY_TAMING;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_EGG_HATCH_CHANCE_NORMAL;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_EGG_DROP_CHANCE;
+    public static ForgeConfigSpec.BooleanValue VARASUCHUS_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue VARASUCHUS_GRIEFING_ENABLED;
+    public static ForgeConfigSpec.BooleanValue VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
+    public static ForgeConfigSpec.BooleanValue VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Ignivorus
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_MAX_HEALTH;
@@ -222,36 +222,36 @@ public final class ForgeDragonAttributesConfig {
         RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
-        // Nulljaw Configuration
-        builder.comment("Nulljaw Dragon Attributes").push("nulljaw");
+        // Varasuchus Configuration
+        builder.comment("Varasuchus Dragon Attributes").push("varasuchus");
         builder.comment("Core Attributes");
-        NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 250.0, 1.0, 100000.0);
-        NULLJAW_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 100000.0);
-        NULLJAW_SWIM_SPEED = builder.defineInRange("swim_speed", 1.45, 0.1, 5.0);
+        VARASUCHUS_MAX_HEALTH = builder.defineInRange("max_health", 250.0, 1.0, 100000.0);
+        VARASUCHUS_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 100000.0);
+        VARASUCHUS_SWIM_SPEED = builder.defineInRange("swim_speed", 1.45, 0.1, 5.0);
         builder.comment("Ability Damage");
-        NULLJAW_BITE_PHASE1_DAMAGE = builder.defineInRange("bite_phase1_damage", 40.0, 0.0, 200.0);
-        NULLJAW_BITE_PHASE2_DAMAGE = builder.defineInRange("bite_phase2_damage", 50.0, 0.0, 200.0);
-        NULLJAW_TAIL_ATTACK_DAMAGE = builder.defineInRange("tail_attack_damage", 8.0, 0.0, 200.0);
-        NULLJAW_DASH_TAIL_SWIPE_DAMAGE = builder.defineInRange("dash_tail_swipe_damage", 14.0, 0.0, 200.0);
-        NULLJAW_DASH_CLAW_DAMAGE = builder.defineInRange("dash_claw_damage", 16.0, 0.0, 200.0);
-        NULLJAW_HORN_GORE_PHASE1_DAMAGE = builder.defineInRange("horn_gore_phase1_damage", 16.0, 0.0, 200.0);
-        NULLJAW_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", 20.8, 0.0, 200.0);
+        VARASUCHUS_BITE_PHASE1_DAMAGE = builder.defineInRange("bite_phase1_damage", 40.0, 0.0, 200.0);
+        VARASUCHUS_BITE_PHASE2_DAMAGE = builder.defineInRange("bite_phase2_damage", 50.0, 0.0, 200.0);
+        VARASUCHUS_TAIL_ATTACK_DAMAGE = builder.defineInRange("tail_attack_damage", 8.0, 0.0, 200.0);
+        VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE = builder.defineInRange("dash_tail_swipe_damage", 14.0, 0.0, 200.0);
+        VARASUCHUS_DASH_CLAW_DAMAGE = builder.defineInRange("dash_claw_damage", 16.0, 0.0, 200.0);
+        VARASUCHUS_HORN_GORE_PHASE1_DAMAGE = builder.defineInRange("horn_gore_phase1_damage", 16.0, 0.0, 200.0);
+        VARASUCHUS_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", 20.8, 0.0, 200.0);
         builder.comment("Taming Chance (lower = easier)");
-        NULLJAW_TAMING_CHANCE = builder.defineInRange("taming_chance", 6.0, 1.0, 20.0);
-        NULLJAW_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", 4.0, 1.0, 20.0);
+        VARASUCHUS_TAMING_CHANCE = builder.defineInRange("taming_chance", 6.0, 1.0, 20.0);
+        VARASUCHUS_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", 4.0, 1.0, 20.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
-        NULLJAW_LEGACY_TAMING = builder.define("legacy_taming", false);
+        VARASUCHUS_LEGACY_TAMING = builder.define("legacy_taming", false);
         builder.comment("Eggs (1 in N chance per random tick)");
-        NULLJAW_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 3.0, 1.0, 200.0);
+        VARASUCHUS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 3.0, 1.0, 200.0);
         builder.comment("Egg drop chance (0-1)");
-        NULLJAW_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
+        VARASUCHUS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
-        NULLJAW_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        VARASUCHUS_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
         builder.comment("Allow this dragon to damage/destroy blocks with abilities and movement");
-        NULLJAW_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
+        VARASUCHUS_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
         builder.comment("Reactive terrain clearing (requires mobGriefing)");
-        NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
-        NULLJAW_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
+        VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
+        VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Ignivorus Configuration

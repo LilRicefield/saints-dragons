@@ -26,12 +26,12 @@ import java.util.function.Supplier;
 public final class FabricDragonSpawns {
     private static final TagKey<Biome> HAS_CINDERVANE =
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_cindervane"));
-    private static final TagKey<Biome> HAS_NULLJAW_EGGS =
-            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_nulljaw_eggs"));
+    private static final TagKey<Biome> HAS_VARASUCHUS_EGGS =
+            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_varasuchus_eggs"));
     private static final ResourceKey<PlacedFeature> CINDERVANE_EGG_PATCH =
             ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("cindervane_egg_patch"));
-    private static final ResourceKey<PlacedFeature> NULLJAW_EGG_PATCH =
-            ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("nulljaw_egg_patch"));
+    private static final ResourceKey<PlacedFeature> VARASUCHUS_EGG_PATCH =
+            ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("varasuchus_egg_patch"));
 
     private FabricDragonSpawns() {
     }
@@ -70,7 +70,7 @@ public final class FabricDragonSpawns {
         }
 
         registerCindervaneEggs();
-        registerNulljawEggs();
+        registerVarasuchusEggs();
     }
 
     private static void registerCindervaneEggs() {
@@ -86,14 +86,14 @@ public final class FabricDragonSpawns {
         registerAdditionalFeatures(SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES, CINDERVANE_EGG_PATCH);
     }
 
-    private static void registerNulljawEggs() {
-        if (!SaintsDragonsConfig.NULLJAW_EGG_BLOCK_WORLDGEN.get()) {
+    private static void registerVarasuchusEggs() {
+        if (!SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN.get()) {
             return;
         }
         BiomeModifications.addFeature(
-                BiomeSelectors.tag(HAS_NULLJAW_EGGS),
+                BiomeSelectors.tag(HAS_VARASUCHUS_EGGS),
                 GenerationStep.Decoration.VEGETAL_DECORATION,
-                NULLJAW_EGG_PATCH
+                VARASUCHUS_EGG_PATCH
         );
     }
 

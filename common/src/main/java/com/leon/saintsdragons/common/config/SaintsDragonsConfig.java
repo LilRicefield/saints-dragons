@@ -19,16 +19,16 @@ public final class SaintsDragonsConfig {
     public static final int CINDERVANE_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int CINDERVANE_MAX_GROUP_SIZE_DEFAULT = 3;
 
-    public static final int NULLJAW_SPAWN_WEIGHT_DEFAULT = 2;
-    public static final int NULLJAW_MIN_GROUP_SIZE_DEFAULT = 1;
-    public static final int NULLJAW_MAX_GROUP_SIZE_DEFAULT = 2;
+    public static final int VARASUCHUS_SPAWN_WEIGHT_DEFAULT = 2;
+    public static final int VARASUCHUS_MIN_GROUP_SIZE_DEFAULT = 1;
+    public static final int VARASUCHUS_MAX_GROUP_SIZE_DEFAULT = 2;
 
     public static final int IGNIVORUS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int IGNIVORUS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 2;
     public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
     public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
-    public static final boolean NULLJAW_EGG_BLOCK_WORLDGEN_DEFAULT = true;
+    public static final boolean VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT = true;
 
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
@@ -49,12 +49,12 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.ListValue CINDERVANE_EXCLUDED_BIOMES;
     public static ConfigHelper.BooleanValue CINDERVANE_EGG_BLOCK_WORLDGEN;
 
-    public static ConfigHelper.IntValue NULLJAW_SPAWN_WEIGHT;
-    public static ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
-    public static ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
-    public static ConfigHelper.ListValue NULLJAW_ADDITIONAL_BIOMES;
-    public static ConfigHelper.ListValue NULLJAW_EXCLUDED_BIOMES;
-    public static ConfigHelper.BooleanValue NULLJAW_EGG_BLOCK_WORLDGEN;
+    public static ConfigHelper.IntValue VARASUCHUS_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue VARASUCHUS_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue VARASUCHUS_MAX_GROUP_SIZE;
+    public static ConfigHelper.ListValue VARASUCHUS_ADDITIONAL_BIOMES;
+    public static ConfigHelper.ListValue VARASUCHUS_EXCLUDED_BIOMES;
+    public static ConfigHelper.BooleanValue VARASUCHUS_EGG_BLOCK_WORLDGEN;
 
     public static ConfigHelper.IntValue IGNIVORUS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue IGNIVORUS_MIN_GROUP_SIZE;
@@ -115,16 +115,16 @@ public final class SaintsDragonsConfig {
         builder.comment("Whether Cindervane egg blocks generate in worldgen feature patches");
         CINDERVANE_EGG_BLOCK_WORLDGEN = builder.defineBoolean("cindervaneEggBlockWorldgen", CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT);
 
-        builder.comment("Nulljaw spawn settings (semi-aquatic; biome tags can massively expand coverage)");
-        NULLJAW_SPAWN_WEIGHT = builder.defineInt("nulljawSpawnWeight", NULLJAW_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
-        NULLJAW_MIN_GROUP_SIZE = builder.defineInt("nulljawMinGroupSize", NULLJAW_MIN_GROUP_SIZE_DEFAULT, 1, 10);
-        NULLJAW_MAX_GROUP_SIZE = builder.defineInt("nulljawMaxGroupSize", NULLJAW_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Nulljaw can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\", \"#c:is_overworld\")");
-        NULLJAW_ADDITIONAL_BIOMES = builder.defineList("nulljawAdditionalBiomes", Collections.emptyList());
-        builder.comment("Biome IDs or biome tags to exclude from default Nulljaw spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
-        NULLJAW_EXCLUDED_BIOMES = builder.defineList("nulljawExcludedBiomes", Collections.emptyList());
-        builder.comment("Whether Nulljaw egg blocks generate in worldgen feature patches");
-        NULLJAW_EGG_BLOCK_WORLDGEN = builder.defineBoolean("nulljawEggBlockWorldgen", NULLJAW_EGG_BLOCK_WORLDGEN_DEFAULT);
+        builder.comment("Varasuchus spawn settings (semi-aquatic; biome tags can massively expand coverage)");
+        VARASUCHUS_SPAWN_WEIGHT = builder.defineInt("varasuchusSpawnWeight", VARASUCHUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
+        VARASUCHUS_MIN_GROUP_SIZE = builder.defineInt("varasuchusMinGroupSize", VARASUCHUS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
+        VARASUCHUS_MAX_GROUP_SIZE = builder.defineInt("varasuchusMaxGroupSize", VARASUCHUS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
+        builder.comment("Additional biome IDs or biome tags where Varasuchus can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\", \"#c:is_overworld\")");
+        VARASUCHUS_ADDITIONAL_BIOMES = builder.defineList("varasuchusAdditionalBiomes", Collections.emptyList());
+        builder.comment("Biome IDs or biome tags to exclude from default Varasuchus spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
+        VARASUCHUS_EXCLUDED_BIOMES = builder.defineList("varasuchusExcludedBiomes", Collections.emptyList());
+        builder.comment("Whether Varasuchus egg blocks generate in worldgen feature patches");
+        VARASUCHUS_EGG_BLOCK_WORLDGEN = builder.defineBoolean("varasuchusEggBlockWorldgen", VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT);
 
         builder.comment("Ignivorus spawn settings");
         IGNIVORUS_SPAWN_WEIGHT = builder.defineInt("ignivorusSpawnWeight", IGNIVORUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);

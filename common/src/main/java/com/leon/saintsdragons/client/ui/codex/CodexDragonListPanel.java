@@ -63,7 +63,7 @@ public class CodexDragonListPanel {
         }
     }
 
-    public java.util.UUID handleClick(double mouseX, double mouseY, int left, int top, int right,
+    public java.util.UUID handleClick(double mouseX, double mouseY, Font font, int left, int top, int right,
                                       List<CodexDragonEntry> dragonEntries, int listScrollOffset) {
         int visibleCount = Math.min(CodexLayout.MAX_VISIBLE_DRAGONS, dragonEntries.size() - listScrollOffset);
         for (int i = 0; i < visibleCount; i++) {
@@ -71,10 +71,11 @@ public class CodexDragonListPanel {
             if (index >= dragonEntries.size()) {
                 break;
             }
+            CodexDragonEntry entry = dragonEntries.get(index);
             int y = top + (i * 13);
-            if (mouseX >= left && mouseX <= right && mouseY >= y && mouseY < y + 12) {
-                CodexDragonEntry clickedEntry = dragonEntries.get(index);
-                return clickedEntry.entityId();
+            int clickableRight = Math.min(right, left + font.width(entry.displayName()));
+            if (mouseX >= left && mouseX <= clickableRight && mouseY >= y && mouseY < y + 12) {
+                return entry.entityId();
             }
         }
         return null;

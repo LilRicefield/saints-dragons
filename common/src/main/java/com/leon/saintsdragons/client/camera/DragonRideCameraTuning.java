@@ -2,7 +2,7 @@ package com.leon.saintsdragons.client.camera;
 
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -12,7 +12,7 @@ public final class DragonRideCameraTuning {
     public static final ZoomProfile RAEVYX = new ZoomProfile(15.0f, 13.0f, 5.5f);
     public static final ZoomProfile CINDERVANE = new ZoomProfile(5.0f, 15.0f, 5.5f);
     public static final ZoomProfile IGNIVORUS = new ZoomProfile(15.0f, 30.0f, 6.5f);
-    public static final ZoomProfile NULLJAW = new ZoomProfile(15.0f, 18.0f, 5.5f);
+    public static final ZoomProfile VARASUCHUS = new ZoomProfile(15.0f, 18.0f, 5.5f);
     public static final ZoomProfile STEGONAUT = new ZoomProfile(8.0f, 8.0f, 0.0f);
     public static final ZoomProfile VOLITANS = new ZoomProfile(15.0f, 20.0f, 5.5f);
     public static final ZoomProfile DEFAULT = new ZoomProfile(15.0f, 15.0f, 5.5f);
@@ -21,8 +21,8 @@ public final class DragonRideCameraTuning {
     }
 
     public static boolean isAirOrWaterMode(Entity vehicle) {
-        if (vehicle instanceof Nulljaw nulljaw) {
-            return nulljaw.isInWaterOrBubble();
+        if (vehicle instanceof Varasuchus varasuchus) {
+            return varasuchus.isInWaterOrBubble();
         }
         if (vehicle instanceof Raevyx raevyx) {
             return raevyx.isFlying() || raevyx.isInWaterOrBubble();
@@ -69,8 +69,8 @@ public final class DragonRideCameraTuning {
         if (vehicle instanceof Ignivorus) {
             return IGNIVORUS;
         }
-        if (vehicle instanceof Nulljaw) {
-            return NULLJAW;
+        if (vehicle instanceof Varasuchus) {
+            return VARASUCHUS;
         }
         if (vehicle instanceof Stegonaut) {
             return STEGONAUT;

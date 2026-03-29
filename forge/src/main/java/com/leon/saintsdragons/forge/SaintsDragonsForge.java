@@ -10,6 +10,7 @@ import com.leon.saintsdragons.forge.mixin.RangedAttributeAccessor;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.forge.world.AddConditionalFeaturesBiomeModifier;
 import com.leon.saintsdragons.forge.world.AddDragonsBiomeModifier;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.mojang.serialization.Codec;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -146,7 +147,7 @@ public final class SaintsDragonsForge {
         }
 
         Potion potion = PotionUtils.getPotion(stack);
-        return potion == ModPotions.NULLJAW_TIDEGUARD.get() || potion == ModPotions.SEARING.get();
+        return potion == ModPotions.VARASUCHUS_TIDEGUARD.get() || potion == ModPotions.SEARING.get();
     }
 
     private void onRegisterSpawnPlacements(SpawnPlacementRegisterEvent event) {
@@ -212,8 +213,8 @@ public final class SaintsDragonsForge {
                     cindervane.applyConfiguredAttributes();
                 } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx raevyx) {
                     raevyx.applyConfiguredAttributes();
-                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw nulljaw) {
-                    nulljaw.applyConfiguredAttributes();
+                } else if (dragon instanceof Varasuchus varasuchus) {
+                    varasuchus.applyConfiguredAttributes();
                 } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
                     ignivorus.applyConfiguredAttributes();
                 }

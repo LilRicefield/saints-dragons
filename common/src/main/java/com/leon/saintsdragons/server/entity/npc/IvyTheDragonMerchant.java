@@ -63,7 +63,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final VillagerTrades.ItemListing[] TRADES = new VillagerTrades.ItemListing[]{
             (trader, random) -> createIgnivorusEggTrade(random),
             (trader, random) -> createRaevyxEggTrade(random),
-            (trader, random) -> createNulljawEggTrade(random),
+            (trader, random) -> createVarasuchusEggTrade(random),
             (trader, random) -> createCindervaneEggTrade(random),
             (trader, random) -> createStegonautEggTrade(random)
     };
@@ -756,12 +756,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         return stack;
     }
 
-    private static MerchantOffer createNulljawEggTrade(RandomSource random) {
-        ItemStack result = createNulljawReward(random);
-        return new MerchantOffer(new ItemStack(ModItems.NULLJAW_EGG.get()), result, 6, 5, 0.05f);
+    private static MerchantOffer createVarasuchusEggTrade(RandomSource random) {
+        ItemStack result = createVarasuchusReward(random);
+        return new MerchantOffer(new ItemStack(ModItems.VARASUCHUS_EGG.get()), result, 6, 5, 0.05f);
     }
 
-    private static ItemStack createNulljawReward(RandomSource random) {
+    private static ItemStack createVarasuchusReward(RandomSource random) {
         int roll = random.nextInt(11);
         return switch (roll) {
             case 0 -> new ItemStack(Items.DIAMOND_SWORD);

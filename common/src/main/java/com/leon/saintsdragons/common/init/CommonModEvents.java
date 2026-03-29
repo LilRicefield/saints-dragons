@@ -7,7 +7,7 @@ import com.leon.saintsdragons.server.command.DragonSetVariantCommand;
 import com.leon.saintsdragons.server.command.DragonTameCommand;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -41,7 +41,7 @@ public final class CommonModEvents {
         registrar.accept(ModEntities.RAEVYX.get(), Raevyx.createAttributes());
         registrar.accept(ModEntities.STEGONAUT.get(), Stegonaut.createAttributes());
         registrar.accept(ModEntities.CINDERVANE.get(), Cindervane.createAttributes());
-        registrar.accept(ModEntities.NULLJAW.get(), Nulljaw.createAttributes());
+        registrar.accept(ModEntities.VARASUCHUS.get(), Varasuchus.createAttributes());
         registrar.accept(ModEntities.IGNIVORUS.get(), Ignivorus.createAttributes());
         registrar.accept(ModEntities.VOLITANS.get(), Volitans.createAttributes());
         registrar.accept(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchant.createAttributes());
@@ -72,10 +72,10 @@ public final class CommonModEvents {
                 Cindervane::canSpawnHere
         );
         registrar.register(
-                ModEntities.NULLJAW.get(),
+                ModEntities.VARASUCHUS.get(),
                 SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Nulljaw::canSpawnHere
+                Varasuchus::canSpawnHere
         );
         registrar.register(
                 ModEntities.IGNIVORUS.get(),

@@ -7,7 +7,7 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.*;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
-import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
+import com.leon.saintsdragons.common.registry.varasuchus.VarasuchusAbilities;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
@@ -47,7 +47,7 @@ public final class SaintsDragonsCommon {
 
         // Ensure ability registries are loaded on both logical sides.
         RaevyxAbilities.init();
-        NulljawAbilities.init();
+        VarasuchusAbilities.init();
         IgnivorusAbilities.init();
         CindervaneAbilities.init();
         StegonautAbilities.init();
