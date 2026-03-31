@@ -783,17 +783,32 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             wakeUpImmediately();
             suppressSleep(200);
         }
-        boolean hurt = super.hurt(damageSource, amount);
-        if (hurt
-                && !level().isClientSide
-                && amount > 0.0F
-                && damageSource.getEntity() != null
-                && teethChipDropCooldownTicks <= 0
-                && this.random.nextFloat() < 0.12F) {
-            this.spawnAtLocation(ModItems.IGNIVORUS_TOOTH.get());
-            teethChipDropCooldownTicks = 30;
-        }
-        return hurt;
+boolean hurt = super.hurt(damageSource, amount);
+
+//This code may be called from a network thread
+//Minecraft requires world logic + random to run on the server thread
+if (hurt && !level().isClientSide) {
+    var server = level().getServer();
+    if (server != null) {
+        var attacker = damageSource.getEntity(); // capture values safely
+        float dmg = amount;
+
+        //schedule work on the main server thread 
+        server.execute(() -> {
+            // Before: random + item spawning ran off-thread → crash (UWRAD)
+            if (dmg > 0.0F
+                    && attacker != null
+                    && teethChipDropCooldownTicks <= 0
+                    && this.random.nextFloat() < 0.12F) { // must be on server thread
+
+                this.spawnAtLocation(ModItems.IGNIVORUS_TOOTH.get());
+                teethChipDropCooldownTicks = 30;
+            }
+        });
+    }
+}
+
+return hurt;
     }
 
     /**
