@@ -1,25 +1,16 @@
 {
   "replace": false,
   "values": [
-    {"id": "#minecraft:is_mountain", "required": false},
-    {"id": "#minecraft:is_hill", "required": false},
-    {"id": "#c:is_mountain", "required": false},
     {"id": "#c:is_plains", "required": false},
-    {"id": "#c:is_temperate/overworld", "required": false},
+    {"id": "#minecraft:is_river", "required": false},
+    {"id": "#c:is_river", "required": false},
+    {"id": "#forge:is_river", "required": false},
     "minecraft:plains",
-    "minecraft:meadow",
     "minecraft:sunflower_plains",
-    "minecraft:savanna_plateau",
-    "minecraft:beach",
+    "minecraft:river",
     "minecraft:stony_shore",
-    {"id": "biomeswevegone:lush_stacks", "required":  false},
     {"id": "biomesoplenty:floodplain", "required":  false},
     {"id": "biomesoplenty:marsh", "required":  false},
-    {"id": "biomesoplenty:mediterranean_forest", "required":  false},
-    {"id": "terralith:temperate_highlands", "required":  false},
-    {"id": "terralith:orchid_swamp", "required":  false},
-    {"id": "terralith:haze_mountain", "required":  false},
-    {"id": "terralith:tropical_jungle", "required":  false},
     {"id": "terralith:brushland", "required":  false}
   ]
 }

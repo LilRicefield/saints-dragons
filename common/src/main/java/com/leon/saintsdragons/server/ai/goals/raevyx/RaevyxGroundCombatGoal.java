@@ -188,7 +188,12 @@ public class RaevyxGroundCombatGoal extends Goal {
                     updateChasePath(target);
                 } else {
                     // Delay expired - use roar ability
+                    if (!canUseAiAbility(RaevyxAbilities.RAEVYX_ROAR, true)) {
+                        updateChasePath(target);
+                        return;
+                    }
                     wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_ROAR);
+                    wyvern.getAiCombatPacing().recordUse(RaevyxAbilities.RAEVYX_ROAR, 40, 80, true, 120, 40);
                     hasUsedRoarOpener = true;
                     attackCooldown = 40; // Brief cooldown after roar
                     postRoarGroundRendTicks = 40;
@@ -277,11 +282,19 @@ public class RaevyxGroundCombatGoal extends Goal {
         // Choose attack based on distance - fire immediately
         if (gap <= biteRange) {
             // Close range - bite attack
+            if (!canUseAiAbility(RaevyxAbilities.RAEVYX_BITE, false)) {
+                return;
+            }
             wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_BITE);
+            wyvern.getAiCombatPacing().recordUse(RaevyxAbilities.RAEVYX_BITE, 20, 20, false, 0, 18);
             attackCooldown = 20;
         } else if (gap <= goreRange) {
             // Medium range - horn gore
+            if (!canUseAiAbility(RaevyxAbilities.RAEVYX_HORN_GORE, false)) {
+                return;
+            }
             wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_HORN_GORE);
+            wyvern.getAiCombatPacing().recordUse(RaevyxAbilities.RAEVYX_HORN_GORE, 20, 22, false, 0, 22);
             attackCooldown = 20;
         }
         // Note: 4.5-32 block range has no attack - wyvern will chase to get closer
@@ -291,9 +304,13 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (!combatDirector.shouldTryBeam(wyvern, getGapToTarget(target), hasLineOfSight, beamReady, isCurrentlyAttacking(), attackCooldown)) {
             return false;
         }
+        if (!canUseAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
+            return false;
+        }
         wyvern.getNavigation().stop();
         pathRecalcCooldown = 0;
         wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM);
+        wyvern.getAiCombatPacing().recordUse(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, 60, BEAM_COOLDOWN_TICKS, true, 160, 80);
         attackCooldown = 60;
         beamCooldown = BEAM_COOLDOWN_TICKS;
         return true;
@@ -338,10 +355,11 @@ public class RaevyxGroundCombatGoal extends Goal {
     }
 
     private boolean startGroundRend() {
-        if (!wyvern.combatManager.canStart(RaevyxAbilities.RAEVYX_GROUND_REND)) {
+        if (!canUseAiAbility(RaevyxAbilities.RAEVYX_GROUND_REND, true)) {
             return false;
         }
         wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_GROUND_REND);
+        wyvern.getAiCombatPacing().recordUse(RaevyxAbilities.RAEVYX_GROUND_REND, 26, GROUND_REND_COOLDOWN_TICKS, true, 100, 34);
         return wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_GROUND_REND);
     }
 
@@ -385,7 +403,11 @@ public class RaevyxGroundCombatGoal extends Goal {
             } else if (roarOpenerDelay > 0) {
                 roarOpenerDelay--;
             } else {
+                if (!canUseAiAbility(RaevyxAbilities.RAEVYX_ROAR, true)) {
+                    return;
+                }
                 wyvern.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_ROAR);
+                wyvern.getAiCombatPacing().recordUse(RaevyxAbilities.RAEVYX_ROAR, 40, 80, true, 120, 40);
                 hasUsedRoarOpener = true;
                 attackCooldown = 40;
             }
@@ -460,5 +482,9 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
 
         return false;
+    }
+
+    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+        return wyvern.combatManager.canStart(abilityType) && wyvern.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 }

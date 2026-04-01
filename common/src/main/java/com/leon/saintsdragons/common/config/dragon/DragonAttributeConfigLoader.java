@@ -70,7 +70,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double fireBodyExplosionDamage = 200.0D;
         double fireBodySelfDamageOnCrash = 40.0D;
         double wildFlyingSpeedMultiplier = 1.0D;
-        boolean aggressiveWild = false;
+        boolean aggressiveWild = true;
         boolean griefingEnabled = true;
         boolean reactiveTerrainClearingOnDamage = true;
         boolean reactiveTerrainClearingOnDamageTamed = false;
@@ -135,7 +135,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     private static DragonAttributeConfig raevyxDefaults() {
         double maxHealth = 180.0D;
         double armor = 8.0D;
-        double flyingSpeed = 1.0D;
+        double flyingSpeed = 0.5D;
         double biteDamage = 15.0D;
         double lightningBeamDamage = 35.0D;
         double hornGoreDamage = 15.0D;
@@ -317,7 +317,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     private static DragonAttributeConfig ignivorusDefaults() {
         double maxHealth = 300.0D;
         double armor = 4.0D;
-        double flyingSpeed = 0.40D;
+        double flyingSpeed = 0.35D;
         double biteDamage = 50.0D;
         double bodySlamDamage = 40.0D;
         double leapSlamDamage = 50.0D;

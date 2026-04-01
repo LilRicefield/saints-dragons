@@ -250,7 +250,10 @@ public class IgnivorusGroundCombatGoal extends Goal {
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
         if (!hasUsedUltimateTrigger && shouldTriggerLowHealthUltimate()) {
-            dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
+            if (canUseAiAbility(IgnivorusAbilities.IGNIVORUS_ULTIMATE, true)) {
+                dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
+                dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_ULTIMATE, 20, 140, true, 180, 100);
+            }
             if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE)) {
                 hasUsedUltimateTrigger = true;
                 attackCooldown = 0;
@@ -352,19 +355,35 @@ public class IgnivorusGroundCombatGoal extends Goal {
             // Phase 2 swaps to wing swipe / stomp instead of bite / body slam
             if (dragon.isPhase2Active()) {
                 if (dragon.getRandom().nextBoolean()) {
+                    if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_STOMP, false)) {
+                        return;
+                    }
                     dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_STOMP);
+                    dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_STOMP, 35, 35, false, 0, 28);
                     attackCooldown = 35;
                 } else {
+                    if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_WING_SWIPE, false)) {
+                        return;
+                    }
                     dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_WING_SWIPE);
+                    dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_WING_SWIPE, 30, 30, false, 0, 24);
                     attackCooldown = 30;
                 }
             } else {
                 // Randomly choose between bite and body slam for unpredictability
                 if (dragon.getRandom().nextBoolean()) {
+                    if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_BODY_SLAM, false)) {
+                        return;
+                    }
                     dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BODY_SLAM);
+                    dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_BODY_SLAM, 35, 35, false, 0, 28);
                     attackCooldown = 35; // Moderate cooldown for body slam
                 } else {
+                    if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_BITE, false)) {
+                        return;
+                    }
                     dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BITE);
+                    dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_BITE, 30, 30, false, 0, 24);
                     attackCooldown = 30; // Slightly faster cooldown for bite
                 }
             }
@@ -385,7 +404,11 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         dragon.getNavigation().stop();
         pathRecalcCooldown = 8;
+        if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH, true)) {
+            return false;
+        }
         dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
+        dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH, 60, BREATH_COOLDOWN_TICKS, true, 180, 80);
         attackCooldown = 60;
         breathCooldown = BREATH_COOLDOWN_TICKS;
         return true;
@@ -439,8 +462,9 @@ public class IgnivorusGroundCombatGoal extends Goal {
         float roll = dragon.getRandom().nextFloat();
 
         if (!dragon.getNavigation().isInProgress() && roll < FIREBALL_STATIONARY_CHANCE) {
-            if (dragon.combatManager.canStart(IgnivorusAbilities.IGNIVORUS_FIREBALL)) {
+            if (canUseAiAbility(IgnivorusAbilities.IGNIVORUS_FIREBALL, true)) {
                 dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIREBALL);
+                dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_FIREBALL, 24, 120, true, 120, 50);
                 fireballMode = FireballMode.STATIONARY;
                 fireballDesiredLevel = 3;
                 fireballDecisionCooldown = nextFireballDecisionCooldown();
@@ -449,8 +473,9 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         if (roll < FIREBALL_STATIONARY_CHANCE + FIREBALL_MOVING_L2_CHANCE) {
-            if (dragon.combatManager.canStart(IgnivorusAbilities.IGNIVORUS_FIREBALL)) {
+            if (canUseAiAbility(IgnivorusAbilities.IGNIVORUS_FIREBALL, true)) {
                 dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIREBALL);
+                dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_FIREBALL, 24, 120, true, 120, 50);
                 fireballMode = FireballMode.MOVING;
                 fireballDesiredLevel = 2;
                 fireballDecisionCooldown = nextFireballDecisionCooldown();
@@ -459,8 +484,9 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         if (roll < FIREBALL_STATIONARY_CHANCE + FIREBALL_MOVING_L2_CHANCE + FIREBALL_MOVING_L1_CHANCE) {
-            if (dragon.combatManager.canStart(IgnivorusAbilities.IGNIVORUS_FIREBALL)) {
+            if (canUseAiAbility(IgnivorusAbilities.IGNIVORUS_FIREBALL, true)) {
                 dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIREBALL);
+                dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_FIREBALL, 24, 120, true, 120, 50);
                 fireballMode = FireballMode.MOVING;
                 fireballDesiredLevel = 1;
                 fireballDecisionCooldown = nextFireballDecisionCooldown();
@@ -494,7 +520,11 @@ public class IgnivorusGroundCombatGoal extends Goal {
         if (!dragon.getSensing().hasLineOfSight(target)) {
             return false;
         }
+        if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0) {
+            return false;
+        }
         if (dragon.tryStartLeapSlamForAI(target)) {
+            dragon.getAiCombatPacing().setCadenceCooldownMin(AI_PHASE2_LEAP_POST_COOLDOWN);
             attackCooldown = AI_PHASE2_LEAP_POST_COOLDOWN;
             return true;
         }
@@ -723,6 +753,10 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         return false;
+    }
+
+    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+        return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 
 }

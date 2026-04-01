@@ -91,8 +91,7 @@ public final class VolitansAnimationHandler {
         }
 
         if (dragon.isTakeoff()) {
-            state.setAndContinue(TAKEOFF);
-            return PlayState.CONTINUE;
+            return PlayState.STOP;
         }
 
         if (dragon.isLanding()) {
@@ -111,11 +110,6 @@ public final class VolitansAnimationHandler {
 
         if (dragon.isFlying()) {
             int mode = dragon.getSyncedFlightMode();
-
-            if (mode == 3) {
-                state.setAndContinue(TAKEOFF);
-                return PlayState.CONTINUE;
-            }
 
             float pitchDegrees = (float) Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
             if (dragon.isRiddenByOwner() && pitchDegrees > 10.0f) {
@@ -178,13 +172,11 @@ public final class VolitansAnimationHandler {
     }
 
     public void setupActionController(AnimationController<Volitans> controller) {
-        controller.triggerableAnim("bite", BITE);
         controller.triggerableAnim("horn_gore", HORN_GORE);
         controller.triggerableAnim("swipe_left", SWIPE_LEFT);
         controller.triggerableAnim("swipe_right", SWIPE_RIGHT);
         controller.triggerableAnim("sit_down", SIT_DOWN);
         controller.triggerableAnim("sit_up", SIT_UP);
-        controller.triggerableAnim("roar", ROAR);
         controller.triggerableAnim("breathing", BREATHING);
         controller.triggerableAnim("breath_start", BREATH_START);
         controller.triggerableAnim("breath_end", BREATH_END);
@@ -198,11 +190,14 @@ public final class VolitansAnimationHandler {
     }
 
     public void setupInstantActionController(AnimationController<Volitans> controller) {
+        controller.triggerableAnim("takeoff", TAKEOFF);
+        controller.triggerableAnim("bite", BITE);
         controller.triggerableAnim("dash_backwards", DASH_BACKWARDS);
         controller.triggerableAnim("dash_forward", DASH_FORWARD);
         controller.triggerableAnim("dodge_left", DODGE_LEFT);
         controller.triggerableAnim("dodge_right", DODGE_RIGHT);
         controller.triggerableAnim("enter_burrow", ENTER_BURROW);
+        controller.triggerableAnim("roar", ROAR);
         controller.triggerableAnim("roar_air_water", ROAR_AIR_WATER);
         controller.triggerableAnim("slamming", SLAMMING);
         controller.triggerableAnim("slammed", SLAMMED);

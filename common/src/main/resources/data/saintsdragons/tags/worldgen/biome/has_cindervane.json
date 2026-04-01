@@ -2,14 +2,8 @@
   "replace": false,
   "values": [
     {"id": "#minecraft:is_mountain", "required": false},
-    {"id": "#minecraft:is_hill", "required": false},
     {"id": "#c:is_mountain", "required": false},
     {"id": "#c:is_mountain/peak", "required": false},
-    {"id": "#c:is_hot/overworld", "required": false},
-    "minecraft:plains",
-    "minecraft:sunflower_plains",
-    "minecraft:windswept_hills",
-    "minecraft:windswept_gravelly_hills",
     "minecraft:stony_peaks",
     "minecraft:jagged_peaks",
     "minecraft:frozen_peaks",
@@ -18,17 +12,9 @@
     "minecraft:meadow",
     {"id": "biomesoplenty:highland", "required":  false},
     {"id": "biomesoplenty:crag", "required":  false},
-    {"id": "biomesoplenty:prairie", "required":  false},
     {"id": "biomeswevegone:lush_stacks", "required":  false},
-    {"id": "biomeswevegone:ironwood_gour", "required":  false},
-    {"id": "biomesoplenty:grassland", "required":  false},
-    {"id": "biomesoplenty:clover_patch", "required":  false},
-    {"id": "biomesoplenty:volcanic_plains", "required":  false},
-    {"id": "biomesoplenty:scrubland", "required":  false},
-    {"id": "biomesoplenty:shrubland", "required":  false},
     {"id": "biomesoplenty:tundra", "required":  false},
     {"id": "terralith:skylands", "required":  false},
-    {"id": "terralith:volcanic_peaks", "required":  false},
-    {"id": "terralith:brushland", "required":  false}
+    {"id": "terralith:volcanic_peaks", "required":  false}
   ]
 }

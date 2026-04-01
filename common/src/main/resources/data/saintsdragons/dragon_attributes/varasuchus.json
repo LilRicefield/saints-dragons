@@ -31,6 +31,6 @@
     "egg_hatch_chance_normal": 3.0,
     "egg_drop_chance": 0.12,
     "griefing_enabled": true,
-    "aggressive_wild": false
+    "aggressive_wild": true
   }
 }

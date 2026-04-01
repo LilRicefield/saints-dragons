@@ -1,24 +1,30 @@
 package com.leon.saintsdragons.server.entity.controller.volitans;
 
+import com.leon.saintsdragons.server.flight.DragonRiderFlightPhysics;
+import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class VolitansRiderController {
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
-    private static final double CRUISE_SPEED_MULT = 7.55;
-    private static final double SPRINT_SPEED_MULT = 8.75;
-    private static final double DIVE_START_ANGLE = 25.0;
-    private static final double DIVE_MAX_ANGLE = 90.0;
-    private static final double DIVE_MIN_SPEED_MULT = 1.0;
-    private static final double DIVE_MAX_SPEED_MULT = 2.0;
-    private static final double DIVE_CURVE_POWER = 2.0;
-    private static final double FLIGHT_ACCEL = 0.12;
-    private static final double FLIGHT_DRAG = 0.94;
+    private static final double SEAT_BASE_FACTOR = 0.45D;
+    private static final double CRUISE_SPEED_MULT = 4.0;
+    private static final double SPRINT_SPEED_MULT = 5.0;
     private static final double STRAFE_POWER = 0.4;
+    private static final double ASCEND_THRUST = 0.45D;
+    private static final double DESCEND_THRUST = 0.85D;
+    private static final double TERMINAL_VELOCITY = 1.5D;
+    private static final double SWIM_ASCEND_THRUST = 0.18D;
+    private static final double SWIM_DESCEND_THRUST = 0.20D;
+    private static final double SWIM_VERTICAL_LIMIT = 0.55D;
+    private static final double SWIM_PITCH_VERTICAL_SCALE = 0.65D;
 
     private final Volitans dragon;
 
@@ -63,6 +69,31 @@ public final class VolitansRiderController {
         }
     }
 
+    public double getPassengersRidingOffset() {
+        return dragon.getBbHeight() * SEAT_BASE_FACTOR;
+    }
+
+    public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
+        DragonRiderSeat.positionLocatorRider(
+                dragon,
+                passenger,
+                moveFunction,
+                getPassengersRidingOffset(),
+                dragon.getClientLocatorPosition("passengerLocator")
+        );
+    }
+
+    public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
+        return DragonRiderSeat.findRadialGroundDismount(
+                passenger,
+                dragon,
+                new double[] { 2.5D, 3.5D, 1.8D },
+                new int[] { 0, 30, -30, 60, -60, 90, -90, 150, -150, 180 },
+                6,
+                2.0D
+        );
+    }
+
     public void handleGroundTravel(Player rider, Vec3 motion) {
         float speed = (float) (dragon.isAccelerating() ? 0.34D : 0.24D);
         dragon.setRunning(dragon.isAccelerating() && rider.zza > 0.05F);
@@ -95,9 +126,10 @@ public final class VolitansRiderController {
         double forwardZ = Math.cos(yawRad) * forwardXZ;
         double rightX = Math.cos(yawRad);
         double rightZ = Math.sin(yawRad);
+        boolean verticalInputActive = dragon.isGoingUp() || dragon.isGoingDown();
 
         double targetDirX = forwardX * forwardInput + rightX * strafeInput * 0.5D;
-        double targetDirY = forwardY * forwardInput * 1.2D;
+        double targetDirY = verticalInputActive ? 0.0D : forwardY * forwardInput * SWIM_PITCH_VERTICAL_SCALE;
         double targetDirZ = forwardZ * forwardInput + rightZ * strafeInput * 0.5D;
         double dirLength = Math.sqrt(targetDirX * targetDirX + targetDirY * targetDirY + targetDirZ * targetDirZ);
 
@@ -116,9 +148,9 @@ public final class VolitansRiderController {
 
         double verticalVel = blended.y;
         if (dragon.isGoingUp()) {
-            verticalVel = Math.min(swimSpeed * 0.8D, verticalVel + 0.12D * swimSpeed);
+            verticalVel = Math.min(SWIM_VERTICAL_LIMIT, verticalVel + SWIM_ASCEND_THRUST);
         } else if (dragon.isGoingDown()) {
-            verticalVel = Math.max(-swimSpeed * 0.8D, verticalVel - 0.12D * swimSpeed);
+            verticalVel = Math.max(-SWIM_VERTICAL_LIMIT, verticalVel - SWIM_DESCEND_THRUST);
         }
 
         blended = new Vec3(blended.x, verticalVel, blended.z);
@@ -133,14 +165,11 @@ public final class VolitansRiderController {
         double targetSpeed = (dragon.isAccelerating() ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
 
         float pitchDeg = resolveRiderPitchDeg(rider);
-        double diveIntensity = 0.0;
-        if (!dragon.isRiderPitchKeyMode() && pitchDeg >= DIVE_START_ANGLE) {
-            double normalized = (pitchDeg - DIVE_START_ANGLE) / (DIVE_MAX_ANGLE - DIVE_START_ANGLE);
-            normalized = Mth.clamp(normalized, 0.0, 1.0);
-            diveIntensity = Math.pow(normalized, DIVE_CURVE_POWER);
-        }
-        double diveSpeedMult = Mth.lerp((float) diveIntensity, (float) DIVE_MIN_SPEED_MULT, (float) DIVE_MAX_SPEED_MULT);
-        targetSpeed *= diveSpeedMult;
+        DragonRiderFlightPhysics.DiveResponse diveResponse =
+                DragonRiderFlightPhysics.computeDiveResponse(pitchDeg, dragon.isRiderPitchKeyMode());
+        double diveAcceleration = diveResponse.acceleration();
+        double diveDrag = diveResponse.drag();
+        targetSpeed *= diveResponse.speedMultiplier();
 
         double forwardInput = motion.z;
         double strafeInput = motion.x;
@@ -166,21 +195,29 @@ public final class VolitansRiderController {
         Vec3 current = dragon.getDeltaMovement();
         Vec3 targetVel = targetDir.scale(targetSpeed);
         Vec3 blended = new Vec3(
-                Mth.lerp((float) FLIGHT_ACCEL, current.x, targetVel.x),
-                Mth.lerp((float) FLIGHT_ACCEL, current.y, targetVel.y),
-                Mth.lerp((float) FLIGHT_ACCEL, current.z, targetVel.z)
-        ).scale(FLIGHT_DRAG);
+                Mth.lerp((float) diveAcceleration, current.x, targetVel.x),
+                Mth.lerp((float) diveAcceleration, current.y, targetVel.y),
+                Mth.lerp((float) diveAcceleration, current.z, targetVel.z)
+        ).scale(1.0D - diveDrag);
 
-        if (dragon.isGoingUp()) {
-            blended = blended.add(0.0D, 0.08D, 0.0D);
-        } else if (dragon.isGoingDown()) {
-            blended = blended.add(0.0D, -0.10D, 0.0D);
+        double verticalVel = blended.y;
+        boolean hasInput = Math.abs(motion.z) > 0.01D || Math.abs(motion.x) > 0.01D;
+        boolean isDiving = !dragon.isRiderPitchKeyMode() && pitchDeg >= 45.0F && hasInput;
+
+        if (!isDiving) {
+            if (dragon.isGoingUp()) {
+                verticalVel += ASCEND_THRUST;
+            } else if (dragon.isGoingDown()) {
+                verticalVel -= DESCEND_THRUST;
+            }
         }
+        verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
 
         if (blended.length() > targetSpeed) {
             blended = blended.normalize().scale(targetSpeed);
         }
 
+        blended = new Vec3(blended.x, verticalVel, blended.z);
         dragon.setSpeed((float) targetSpeed);
         dragon.move(MoverType.SELF, blended);
         dragon.setDeltaMovement(blended);

@@ -44,7 +44,11 @@ public abstract class MultipartInteractionBridgeMixin {
 
                 @Override
                 public void onAttack() {
-                    player.attack(directPart);
+                    player.server.execute(() -> {
+                        if (!player.isRemoved() && directPart.isAlive() && directPart.level() == player.level()) {
+                            player.attack(directPart);
+                        }
+                    });
                 }
             });
             ci.cancel();
@@ -65,7 +69,11 @@ public abstract class MultipartInteractionBridgeMixin {
                     }
                     @Override
                     public void onAttack() {
-                        player.attack(hitPart);
+                        player.server.execute(() -> {
+                            if (!player.isRemoved() && hitPart.isAlive() && hitPart.level() == player.level()) {
+                                player.attack(hitPart);
+                            }
+                        });
                     }
                 });
 

@@ -268,7 +268,7 @@ public class CindervaneFlightGoal extends Goal {
         amphithere.setHovering(false);
         landingController.reset();
         if (targetPosition != null) {
-            amphithere.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, amphithere.getFlightSpeed());
+            amphithere.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0D);
         }
     }
 
@@ -345,7 +345,7 @@ public class CindervaneFlightGoal extends Goal {
         if (needNewTarget) {
             targetPosition = findFlightTarget();
             timeSinceTargetChange = 0;
-            amphithere.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, amphithere.getFlightSpeed());
+            amphithere.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0D);
         }
     }
 

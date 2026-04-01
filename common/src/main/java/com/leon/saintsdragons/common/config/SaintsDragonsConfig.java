@@ -85,6 +85,8 @@ public final class SaintsDragonsConfig {
         builder.comment("Dragon spawn configuration - control where and how often dragons spawn");
         builder.comment("Note: spawn weights are relative per biome/category roll.");
         builder.comment("Final spawn frequency also depends on each dragon's spawn predicate and placement checks.");
+        builder.comment("Natural wild spawns are also filtered by shared density rules to stop creature-category dragons from piling up.");
+        builder.comment("Raevyx additionally requires a thunderstorm for natural/chunk-generation spawning.");
 
         builder.comment("Raevyx spawn settings");
         RAEVYX_SPAWN_WEIGHT = builder.defineInt("raevyxSpawnWeight", RAEVYX_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);

@@ -175,8 +175,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
         }
 
         GeoBone body = bodyOpt.get();
-        float pitchDeg = Mth.rotLerp(partialTick, entity.xRotO, entity.getXRot());
-        float swimPitchRad = (float) Math.toRadians(Mth.clamp(pitchDeg, -45.0f, 45.0f));
+        float swimPitchRad = Mth.clamp(entity.getFlightPitchRadians(partialTick), -Mth.HALF_PI, Mth.HALF_PI);
         body.setRotX(body.getRotX() - swimPitchRad * 0.75f);
     }
 

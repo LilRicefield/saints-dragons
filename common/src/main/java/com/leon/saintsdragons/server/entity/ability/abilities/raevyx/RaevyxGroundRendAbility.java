@@ -18,15 +18,17 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int STARTUP_TICKS = 20;
-    private static final int ACTIVE_TICKS = 29;
-    private static final int RECOVERY_TICKS = 16;
+    private static final int ACTIVE_TICKS = 30;
+    private static final int RECOVERY_TICKS = 20;
     private static final int COOLDOWN_TICKS = 32;
+    private static final int GROUND_REND_SOUND_TICKS = 100;
+    private static final int SLOWDOWN_START_TICKS = 25;
+    private static final int STOP_TICKS = 55;
     private static final double AI_STEER_BACK_RANGE = 6.0D;
-    private static final float RIDER_SURGE_SPEED = 1.12F;
+    private static final float RIDER_SURGE_SPEED = 1.8F;
     private static final float RIDER_RECOVERY_END_SPEED = 0.18F;
-    private static final double FORWARD_SPEED = 2.0D;
-    private static final double AI_FORWARD_SPEED = 1.8D;
-    private static final double RECOVERY_DAMPING = 0.84D;
+    private static final double AI_FORWARD_SPEED = 1.6D;
+    private static final double AI_RECOVERY_END_SPEED = AI_FORWARD_SPEED * (RIDER_RECOVERY_END_SPEED / RIDER_SURGE_SPEED);
     private static final float HIT_DAMAGE = 5.0F;
     private static final double HIT_KNOCKBACK = 0.55D;
     private static final int HIT_COOLDOWN_TICKS = 5;
@@ -68,7 +70,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                         ModSounds.RAEVYX_GROUND_REND.get(),
                         1.4f,
                         1.0f,
-                        100
+                        GROUND_REND_SOUND_TICKS
                 );
             }
             getUser().setAccelerating(false);
@@ -109,26 +111,43 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
 
         if (section.sectionType == AbilitySectionType.RECOVERY) {
             if (wyvern.isVehicle()) {
-                float recoveryProgress = Mth.clamp((float) getTicksInSection() / (float) RECOVERY_TICKS, 0.0F, 1.0F);
-                float speed = Mth.lerp(recoveryProgress, RIDER_SURGE_SPEED, RIDER_RECOVERY_END_SPEED);
+                float speed = getRiddenTravelSpeed();
                 wyvern.setGroundRendTravelSpeed(speed);
-                Vec3 forward = getForwardDir(wyvern).scale(speed);
                 Vec3 current = wyvern.getDeltaMovement();
+                if (speed <= 0.0F) {
+                    wyvern.setDeltaMovement(0.0D, current.y, 0.0D);
+                    return;
+                }
+                Vec3 forward = getForwardDir(wyvern).scale(speed);
                 wyvern.setDeltaMovement(forward.x, current.y, forward.z);
                 wyvern.hasImpulse = true;
                 applyGroundRendHits(wyvern, getForwardDir(wyvern));
                 return;
             }
-            Vec3 current = wyvern.getDeltaMovement();
-            wyvern.setGroundRendVelocity(new Vec3(current.x * RECOVERY_DAMPING, current.y, current.z * RECOVERY_DAMPING));
+            double speed = getAiTravelSpeed();
+            if (speed <= 0.0D) {
+                Vec3 current = wyvern.getDeltaMovement();
+                wyvern.setGroundRendVelocity(new Vec3(0.0D, current.y, 0.0D));
+                return;
+            }
+            if (aiGroundRendDir.lengthSqr() > 1.0E-6D) {
+                Vec3 current = wyvern.getDeltaMovement();
+                Vec3 targetVelocity = aiGroundRendDir.normalize().scale(speed);
+                wyvern.setGroundRendVelocity(new Vec3(targetVelocity.x, current.y, targetVelocity.z));
+            }
             return;
         }
 
         if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (wyvern.isVehicle()) {
-                wyvern.setGroundRendTravelSpeed(RIDER_SURGE_SPEED);
+                float speed = getRiddenTravelSpeed();
+                wyvern.setGroundRendTravelSpeed(speed);
                 Vec3 current = wyvern.getDeltaMovement();
-                Vec3 forward = getForwardDir(wyvern).scale(RIDER_SURGE_SPEED);
+                if (speed <= 0.0F) {
+                    wyvern.setDeltaMovement(0.0D, current.y, 0.0D);
+                    return;
+                }
+                Vec3 forward = getForwardDir(wyvern).scale(speed);
                 wyvern.setDeltaMovement(forward.x, current.y, forward.z);
                 wyvern.hasImpulse = true;
                 applyGroundRendHits(wyvern, getForwardDir(wyvern));
@@ -151,9 +170,14 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 wyvern.yBodyRot = targetYaw;
                 wyvern.yHeadRot = targetYaw;
             }
-            speed = AI_FORWARD_SPEED;
+            speed = getAiTravelSpeed();
 
             if (horizontal.lengthSqr() < 1.0E-6) {
+                return;
+            }
+            if (speed <= 0.0D) {
+                Vec3 current = wyvern.getDeltaMovement();
+                wyvern.setGroundRendVelocity(new Vec3(0.0D, current.y, 0.0D));
                 return;
             }
 
@@ -193,6 +217,41 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             return new Vec3(0.0D, 0.0D, 1.0D);
         }
         return horizontal.normalize();
+    }
+
+    private int getOverallTrackTick() {
+        DragonAbilitySection section = getCurrentSection();
+        if (section == null) {
+            return 0;
+        }
+        return switch (section.sectionType) {
+            case STARTUP -> getTicksInSection();
+            case ACTIVE -> STARTUP_TICKS + getTicksInSection();
+            case RECOVERY -> STARTUP_TICKS + ACTIVE_TICKS + getTicksInSection();
+            default -> getTicksInSection();
+        };
+    }
+
+    private float getRiddenTravelSpeed() {
+        if (getOverallTrackTick() >= STOP_TICKS) {
+            return 0.0F;
+        }
+        return Mth.lerp(getSlowdownProgress(), RIDER_SURGE_SPEED, RIDER_RECOVERY_END_SPEED);
+    }
+
+    private double getAiTravelSpeed() {
+        if (getOverallTrackTick() >= STOP_TICKS) {
+            return 0.0D;
+        }
+        return Mth.lerp(getSlowdownProgress(), AI_FORWARD_SPEED, AI_RECOVERY_END_SPEED);
+    }
+
+    private float getSlowdownProgress() {
+        return Mth.clamp(
+                (float) (getOverallTrackTick() - SLOWDOWN_START_TICKS) / (float) Math.max(1, STOP_TICKS - SLOWDOWN_START_TICKS),
+                0.0F,
+                1.0F
+        );
     }
 
     private static Vec3 getDirectionToTarget(Raevyx wyvern, LivingEntity target) {

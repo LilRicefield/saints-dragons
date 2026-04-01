@@ -182,7 +182,7 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Core Attributes");
         RAEVYX_MAX_HEALTH = builder.defineInRange("max_health", 180.0, 1.0, 100000.0);
         RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 100000.0);
-        RAEVYX_FLYING_SPEED = builder.defineInRange("flying_speed", 1.0, 0.0, 2.0);
+        RAEVYX_FLYING_SPEED = builder.defineInRange("flying_speed", 0.5, 0.0, 2.0);
         RAEVYX_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         RAEVYX_BITE_DAMAGE = builder.defineInRange("bite_damage", 15.0, 0.0, 100.0);
@@ -246,7 +246,7 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Egg drop chance (0-1)");
         VARASUCHUS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
-        VARASUCHUS_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
+        VARASUCHUS_AGGRESSIVE_WILD = builder.define("aggressive_wild", true);
         builder.comment("Allow this dragon to damage/destroy blocks with abilities and movement");
         VARASUCHUS_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
         builder.comment("Reactive terrain clearing (requires mobGriefing)");
@@ -259,7 +259,7 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Core Attributes");
         IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 100000.0);
         IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
-        IGNIVORUS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.40, 0.0, 2.0);
+        IGNIVORUS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.35, 0.0, 2.0);
         IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         IGNIVORUS_BITE_DAMAGE = builder.defineInRange("bite_damage", 50.0, 0.0, 200.0);

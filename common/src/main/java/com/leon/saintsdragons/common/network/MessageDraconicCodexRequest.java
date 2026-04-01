@@ -65,9 +65,6 @@ public class MessageDraconicCodexRequest {
         entries = data.getEntriesFor(player);
 
         if (!entries.isEmpty()) {
-            List<UUID> staleBoundDragonIds = message.pruneMissingBoundEntries
-                    ? new java.util.ArrayList<>()
-                    : java.util.Collections.emptyList();
             for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
                 UUID dragonId = entry.dragonId();
                 DragonEntity dragon = findDragon(serverLevel, dragonId);
@@ -82,15 +79,7 @@ public class MessageDraconicCodexRequest {
                     boolean binderExists = BinderComponentUtil.isDragonBoundInLoadedWorld(serverLevel, dragonId);
                     if (binderExists) {
                         data.updateDragonBoundState(player.getUUID(), dragonId, true);
-                    } else if (message.pruneMissingBoundEntries) {
-                        staleBoundDragonIds.add(dragonId);
                     }
-                }
-            }
-
-            if (message.pruneMissingBoundEntries && !staleBoundDragonIds.isEmpty()) {
-                for (UUID staleDragonId : staleBoundDragonIds) {
-                    data.removeDragon(player.getUUID(), staleDragonId);
                 }
             }
             entries = data.getEntriesFor(player);

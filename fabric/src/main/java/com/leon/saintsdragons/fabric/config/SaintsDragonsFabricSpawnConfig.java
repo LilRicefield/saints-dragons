@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Config(name = "saintsdragonsspawning")
-public final class SaintsDragonsFabricConfig implements ConfigData {
+public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)

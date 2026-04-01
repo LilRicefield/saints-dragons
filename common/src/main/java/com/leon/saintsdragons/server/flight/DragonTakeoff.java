@@ -1,14 +1,10 @@
-package com.leon.saintsdragons.server.entity.component;
+package com.leon.saintsdragons.server.flight;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Shared transient takeoff sequencer for rideable flying dragons.
- * Owns the short-lived animation window and lift assist without persisting
- * dragon-specific takeoff timers to NBT.
- */
-public final class DragonTakeoffComponent {
+
+public final class DragonTakeoff {
 
     public interface Host {
         Level level();
@@ -36,13 +32,19 @@ public final class DragonTakeoffComponent {
 
         default void onTakeoffEnded() {
         }
+
+        default int getTakeoffLiftDelayTicks() {
+            return 0;
+        }
     }
 
     private final Host host;
     private int ticksRemaining;
+    private int liftDelayTicksRemaining;
     private double sustainUpwardVelocity;
+    private boolean launched;
 
-    public DragonTakeoffComponent(Host host) {
+    public DragonTakeoff(Host host) {
         this.host = host;
     }
 
@@ -56,16 +58,20 @@ public final class DragonTakeoffComponent {
 
     public void startTakeoff(int animationTicks, double minUpwardVelocity) {
         int clampedTicks = Math.max(0, animationTicks);
+        int requestedLiftDelay = Math.max(0, host.getTakeoffLiftDelayTicks());
         this.ticksRemaining = clampedTicks;
+        this.liftDelayTicksRemaining = Math.min(requestedLiftDelay, Math.max(0, clampedTicks - 1));
         this.sustainUpwardVelocity = Math.max(0.0D, minUpwardVelocity);
+        this.launched = false;
 
         host.setTakeoff(clampedTicks > 0);
-        host.setFlying(true);
         host.setHovering(false);
         host.setLanding(false);
-        host.switchToAirNavigation();
         host.onTakeoffStarted();
-        applyLiftFloor(this.sustainUpwardVelocity);
+
+        if (this.liftDelayTicksRemaining <= 0) {
+            launch();
+        }
 
         if (clampedTicks == 0) {
             clear();
@@ -76,6 +82,19 @@ public final class DragonTakeoffComponent {
         if (host.level().isClientSide || ticksRemaining <= 0) {
             return;
         }
+        if (!launched) {
+            ticksRemaining--;
+            liftDelayTicksRemaining--;
+            if (ticksRemaining <= 0) {
+                clear();
+                return;
+            }
+            if (liftDelayTicksRemaining <= 0) {
+                launch();
+            }
+            return;
+        }
+
         if (!host.isFlying()) {
             clear();
             return;
@@ -91,11 +110,20 @@ public final class DragonTakeoffComponent {
     public void clear() {
         boolean wasActive = ticksRemaining > 0 || host.isFlying();
         ticksRemaining = 0;
+        liftDelayTicksRemaining = 0;
         sustainUpwardVelocity = 0.0D;
+        launched = false;
         host.setTakeoff(false);
         if (wasActive) {
             host.onTakeoffEnded();
         }
+    }
+
+    private void launch() {
+        launched = true;
+        host.setFlying(true);
+        host.switchToAirNavigation();
+        applyLiftFloor(this.sustainUpwardVelocity);
     }
 
     private void applyLiftFloor(double minUpwardVelocity) {

@@ -47,7 +47,7 @@ public class VolitansBiteAbility extends DragonAbility<Volitans> {
             return;
         }
         if (section.sectionType == STARTUP) {
-            getUser().triggerAnim("actions", "bite");
+            getUser().triggerAnim("instant", "bite");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(
                         ModSounds.VOLITANS_BITE.get(),

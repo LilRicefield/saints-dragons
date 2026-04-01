@@ -3,7 +3,7 @@ package com.leon.saintsdragons.fabric;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricConfig;
+import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricSpawnConfig;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -43,8 +43,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     }
 
     private Screen createScreen(Screen parent) {
-        ConfigHolder<SaintsDragonsFabricConfig> holder = AutoConfig.getConfigHolder(SaintsDragonsFabricConfig.class);
-        SaintsDragonsFabricConfig config = holder.getConfig();
+        ConfigHolder<SaintsDragonsFabricSpawnConfig> holder = AutoConfig.getConfigHolder(SaintsDragonsFabricSpawnConfig.class);
+        SaintsDragonsFabricSpawnConfig config = holder.getConfig();
 
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig cindervaneCurrent = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
@@ -355,28 +355,33 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setDefaultValue(defaultWeight)
                 .setMin(0)
                 .setMax(5000)
+                .setTooltip(Component.translatable("config.saintsdragons.spawn.weight.tooltip"))
                 .setSaveConsumer(weightSetter::accept)
                 .build());
         entries.add(entryBuilder.startIntField(Component.translatable("config.saintsdragons.spawn.min_group"), minGetter.getAsInt())
                 .setDefaultValue(defaultMin)
                 .setMin(1)
                 .setMax(10)
+                .setTooltip(Component.translatable("config.saintsdragons.spawn.min_group.tooltip"))
                 .setSaveConsumer(minSetter::accept)
                 .build());
         entries.add(entryBuilder.startIntField(Component.translatable("config.saintsdragons.spawn.max_group"), maxGetter.getAsInt())
                 .setDefaultValue(defaultMax)
                 .setMin(1)
                 .setMax(10)
+                .setTooltip(Component.translatable("config.saintsdragons.spawn.max_group.tooltip"))
                 .setSaveConsumer(maxSetter::accept)
                 .build());
         List<String> listCopy = new ArrayList<>(biomesGetter.get());
         entries.add(entryBuilder.startStrList(Component.translatable("config.saintsdragons.spawn.additional_biomes"), listCopy)
                 .setDefaultValue(List.of())
+                .setTooltip(Component.translatable("config.saintsdragons.spawn.additional_biomes.tooltip"))
                 .setSaveConsumer(values -> biomesSetter.accept(new ArrayList<>(values)))
                 .build());
         List<String> excludedListCopy = new ArrayList<>(excludedBiomesGetter.get());
         entries.add(entryBuilder.startStrList(Component.translatable("config.saintsdragons.spawn.excluded_biomes"), excludedListCopy)
                 .setDefaultValue(List.of())
+                .setTooltip(Component.translatable("config.saintsdragons.spawn.excluded_biomes.tooltip"))
                 .setSaveConsumer(values -> excludedBiomesSetter.accept(new ArrayList<>(values)))
                 .build());
         if (eggBlockWorldgenGetter != null && eggBlockWorldgenSetter != null) {
@@ -384,6 +389,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                             Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
                             eggBlockWorldgenGetter.getAsBoolean())
                     .setDefaultValue(defaultEggBlockWorldgen)
+                    .setTooltip(Component.translatable("config.saintsdragons.spawn.egg_block_worldgen.tooltip"))
                     .setSaveConsumer(eggBlockWorldgenSetter::accept)
                     .build());
         }

@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.fabric.platform;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricConfig;
+import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricSpawnConfig;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
@@ -17,21 +17,21 @@ import java.util.function.Supplier;
  * Cloth Config-backed implementation. Only loaded if Cloth Config is present.
  */
 final class FabricClothConfigHelper implements ConfigHelper {
-    private static volatile ConfigHolder<SaintsDragonsFabricConfig> holder;
+    private static volatile ConfigHolder<SaintsDragonsFabricSpawnConfig> holder;
 
     static FabricClothConfigHelper create() {
         return new FabricClothConfigHelper();
     }
 
-    private static ConfigHolder<SaintsDragonsFabricConfig> holder() {
-        ConfigHolder<SaintsDragonsFabricConfig> current = holder;
+    private static ConfigHolder<SaintsDragonsFabricSpawnConfig> holder() {
+        ConfigHolder<SaintsDragonsFabricSpawnConfig> current = holder;
         if (current == null) {
             synchronized (FabricClothConfigHelper.class) {
                 current = holder;
                 if (current == null) {
                     SaintsDragonsCommon.LOGGER.info("[Fabric] Detected Cloth Config; enabling editable spawn config");
-                    AutoConfig.register(SaintsDragonsFabricConfig.class, Toml4jConfigSerializer::new);
-                    current = AutoConfig.getConfigHolder(SaintsDragonsFabricConfig.class);
+                    AutoConfig.register(SaintsDragonsFabricSpawnConfig.class, Toml4jConfigSerializer::new);
+                    current = AutoConfig.getConfigHolder(SaintsDragonsFabricSpawnConfig.class);
                     holder = current;
                 }
             }

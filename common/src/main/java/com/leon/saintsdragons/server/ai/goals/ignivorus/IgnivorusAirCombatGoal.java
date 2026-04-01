@@ -280,11 +280,19 @@ public class IgnivorusAirCombatGoal extends Goal {
 
         if (distance <= biteRange) {
             // Close range - bite attack
+            if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_BITE, false)) {
+                return;
+            }
             dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BITE);
+            dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_BITE, 30, 30, false, 0, 24);
             attackCooldown = 30;
         } else if (distance >= fireBreathMinRange && distance <= fireBreathMaxRange && breathCooldown <= 0) {
             // Medium-long range - fire breath
+            if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH, true)) {
+                return;
+            }
             dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
+            dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH, 60, BREATH_COOLDOWN_TICKS, true, 180, 80);
             attackCooldown = 60; // Longer cooldown after breath
             breathCooldown = BREATH_COOLDOWN_TICKS; // 2 minute cooldown for AI breath in air
         }
@@ -434,6 +442,10 @@ public class IgnivorusAirCombatGoal extends Goal {
                 dragon.getPassengers().isEmpty() &&
                 dragon.getControllingPassenger() == null &&
                 dragon.getActiveAbility() == null; // Don't interrupt abilities
+    }
+
+    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+        return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 
 }

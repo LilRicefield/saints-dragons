@@ -25,6 +25,7 @@
     "taming_chance_hearty": 2.0,
     "egg_hatch_chance_normal": 2.0,
     "egg_drop_chance": 0.12,
+    "wild_flying_speed_multiplier": 1.0,
     "slash_grab_mount_tick": 12.0,
     "slash_grab_hit_tick": 22.0,
     "slash_grab_dismount_tick": 32.0,

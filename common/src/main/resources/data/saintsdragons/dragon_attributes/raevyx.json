@@ -1,7 +1,7 @@
 {
   "max_health": 180.0,
   "armor": 8.0,
-  "flying_speed": 1.0,
+  "flying_speed": 0.5,
   "abilities": {
     "bite": {
       "damage": 15.0
@@ -33,6 +33,7 @@
     "egg_loot_ancient_city": 0.15,
     "egg_drop_chance": 0.12,
     "taming_stun_health": 60.0,
+    "wild_flying_speed_multiplier": 1.0,
     "aggressive_wild": false
   }
 }

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.stegonaut;
 
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -14,10 +15,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Simple ground riding controller for Stegonaut.
- * Handles basic walking/running input without abilities.
- */
+
 public record StegonautRiderController(Stegonaut drake) {
     private static final double SEAT_BASE_FACTOR = 0.0D;
 
@@ -64,38 +62,13 @@ public record StegonautRiderController(Stegonaut drake) {
         if (passenger == null) {
             return;
         }
-
-        Vec3 passengerLoc = drake.level().isClientSide ? drake.getClientLocatorPosition("passengerLocator") : null;
-
-        if (passengerLoc != null) {
-            Vec3 drakeOldPos = new Vec3(drake.xo, drake.yo, drake.zo);
-            float oldYaw = drake.yRotO;
-            Vec3 worldOffset = passengerLoc.subtract(drakeOldPos);
-
-            double oldYawRad = Math.toRadians(-oldYaw);
-            double cosOld = Math.cos(oldYawRad);
-            double sinOld = Math.sin(oldYawRad);
-            double localX = worldOffset.x * cosOld - worldOffset.z * sinOld;
-            double localY = worldOffset.y;
-            double localZ = worldOffset.x * sinOld + worldOffset.z * cosOld;
-
-            float currentYaw = drake.getYRot();
-            double currentYawRad = Math.toRadians(-currentYaw);
-            double cosCurrent = Math.cos(currentYawRad);
-            double sinCurrent = Math.sin(currentYawRad);
-            double currentWorldX = localX * cosCurrent + localZ * sinCurrent;
-            double currentWorldZ = -localX * sinCurrent + localZ * cosCurrent;
-
-            Vec3 drakeCurrentPos = drake.position();
-            Vec3 passengerCurrentPos = drakeCurrentPos.add(currentWorldX, localY, currentWorldZ);
-
-            moveFunction.accept(passenger, passengerCurrentPos.x, passengerCurrentPos.y, passengerCurrentPos.z);
-        } else {
-            double x = drake.getX();
-            double y = drake.getY() + getPassengersRidingOffset() + passenger.getMyRidingOffset();
-            double z = drake.getZ();
-            moveFunction.accept(passenger, x, y, z);
-        }
+        DragonRiderSeat.positionLocatorRider(
+                drake,
+                passenger,
+                moveFunction,
+                getPassengersRidingOffset(),
+                drake.level().isClientSide ? drake.getClientLocatorPosition("passengerLocator") : null
+        );
     }
 
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {

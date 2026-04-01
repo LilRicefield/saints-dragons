@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonTamingStunComponent;
+import com.leon.saintsdragons.server.entity.component.DragonTamingStunComponent;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
 /**

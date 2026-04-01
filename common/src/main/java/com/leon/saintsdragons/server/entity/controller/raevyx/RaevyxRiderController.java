@@ -2,6 +2,8 @@ package com.leon.saintsdragons.server.entity.controller.raevyx;
 
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightPhysics;
+import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -13,42 +15,16 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Handles all riding mechanics for the Lightning Dragon
- */
 public record RaevyxRiderController(Raevyx wyvern) {
-    // ===== SEAT TUNING CONSTANTS =====
-    // Baseline vertical offset relative to wyvern height
     private static final double SEAT_BASE_FACTOR = 0.50D; // 0.0..1.0 of bbHeight
     private static final double SEAT_HEIGHT_ADJUST = 0.00D;
-
-    // No head-follow offsets; keep static body seat
-
-    // ===== SIMPLIFIED FLIGHT PHYSICS =====
-    // Clean, responsive arcade-style flight controls
-    private static final double CRUISE_SPEED_MULT = 3.75;     // Normal flight speed multiplier
-    private static final double SPRINT_SPEED_MULT = 7.85;     // Sprint speed multiplier (80% faster)
-    private static final double ACCELERATION = 0.15;         // How quickly dragon reaches target speed
-    private static final double DRAG_WITH_INPUT = 0.08;      // Gentle drag when player is actively flying
+    private static final double CRUISE_SPEED_MULT = 4.95;      // Use configured flight speed directly
+    private static final double SPRINT_SPEED_MULT = 5.75;      // No hidden rider speed boost     // Gentle drag when player is actively flying
     private static final double DRAG_NO_INPUT = 0.5;         // Strong braking when player releases controls
-    private static final double STRAFE_POWER = 0.5;          // Strafe input strength (constant)
-
-    // ===== VERTICAL PHYSICS (dive acceleration only) =====
+    private static final double STRAFE_POWER = 0.5;
     private static final double ASCEND_THRUST = 1.2D;       // Upward thrust when climbing
     private static final double DESCEND_THRUST = 1.0D;       // Downward thrust when diving (accelerates)
     private static final double TERMINAL_VELOCITY = 1.5D;    // Max falling speed
-    private static final double VERTICAL_DRAG = 0.02D;       // Damping when no vertical input (air resistance)
-
-    // ===== DIVE BOOST CURVE =====
-    private static final float DIVE_START_ANGLE = 25.0f;
-    private static final float DIVE_MAX_ANGLE = 90.0f;
-    private static final double DIVE_MIN_SPEED_MULT = 1.0;
-    private static final double DIVE_MAX_SPEED_MULT = 2.0;
-    private static final double DIVE_MIN_ACCEL = 0.35;
-    private static final double DIVE_MAX_ACCEL = 0.40;
-    private static final double DIVE_MIN_DRAG = 0.08;
-    private static final double DIVE_MAX_DRAG = 0.03;
-    private static final float DIVE_CURVE_POWER = 2.0f;
 
     // ===== RIDING UTILITIES =====
 
@@ -167,22 +143,11 @@ public record RaevyxRiderController(Raevyx wyvern) {
             }
             float pitchDegrees = (float) Math.toDegrees(pitchRad);
 
-            // Calculate smooth dive intensity from 0.0 (shallow) to 1.0 (straight down)
-            float diveIntensity = 0.0f;
-            if (pitchDegrees >= DIVE_START_ANGLE) {
-                // Normalize pitch to 0..1 range between start and max angle
-                float normalizedPitch = (pitchDegrees - DIVE_START_ANGLE) / (DIVE_MAX_ANGLE - DIVE_START_ANGLE);
-                normalizedPitch = Mth.clamp(normalizedPitch, 0.0f, 1.0f);
-
-                // Apply curve: quadratic (2.0) makes it ramp up faster as you dive steeper
-                // linear (1.0) = constant rate, cubic (3.0) = very aggressive late ramp
-                diveIntensity = (float) Math.pow(normalizedPitch, DIVE_CURVE_POWER);
-            }
-
-            // Smoothly interpolate all dive parameters based on intensity
-            double diveMultiplier = Mth.lerp(diveIntensity, DIVE_MIN_SPEED_MULT, DIVE_MAX_SPEED_MULT);
-            double diveAcceleration = Mth.lerp(diveIntensity, DIVE_MIN_ACCEL, DIVE_MAX_ACCEL);
-            double diveDrag = Mth.lerp(diveIntensity, DIVE_MIN_DRAG, DIVE_MAX_DRAG);
+            DragonRiderFlightPhysics.DiveResponse diveResponse =
+                    DragonRiderFlightPhysics.computeDiveResponse(pitchDegrees, keyPitchMode);
+            double diveMultiplier = diveResponse.speedMultiplier();
+            double diveAcceleration = diveResponse.acceleration();
+            double diveDrag = diveResponse.drag();
 
             targetSpeed *= diveMultiplier;
 
@@ -313,50 +278,24 @@ public record RaevyxRiderController(Raevyx wyvern) {
     }
     
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
-        if (!wyvern.hasPassenger(passenger)) return;
-        double x = wyvern.getX();
-        double y = wyvern.getY() + getPassengersRidingOffset() + SEAT_HEIGHT_ADJUST + passenger.getMyRidingOffset();
-        double z = wyvern.getZ();
-        moveFunction.accept(passenger, x, y, z);
+        DragonRiderSeat.positionLocatorRider(
+                wyvern,
+                passenger,
+                moveFunction,
+                getPassengersRidingOffset() + SEAT_HEIGHT_ADJUST,
+                wyvern.getClientLocatorPosition("passengerLocator")
+        );
     }
     
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
-        passenger.fallDistance = 0.0F;
-        var level = wyvern.level();
-        Vec3 base = wyvern.position();
-
-        // Sample radial candidates around the wyvern for a safe dismount
-        double[] radii = new double[] { 2.5, 3.5, 1.8 };
-        int[] angles = new int[] { 0, 30, -30, 60, -60, 90, -90, 150, -150, 180 };
-
-        for (double r : radii) {
-            for (int a : angles) {
-                double rad = Math.toRadians(wyvern.getYRot() + a);
-                double cx = base.x + Math.cos(rad) * r;
-                double cz = base.z + Math.sin(rad) * r;
-
-                // Project down to find ground up to 6 blocks below current Y
-                int startY = (int) Math.floor(base.y + 1.0);
-                for (int dy = 0; dy <= 6; dy++) {
-                    int y = startY - dy;
-                    var pos = new net.minecraft.core.BlockPos((int) Math.floor(cx), y, (int) Math.floor(cz));
-                    var below = pos.below();
-                    var bsBelow = level.getBlockState(below);
-                    var bsAt = level.getBlockState(pos);
-                    boolean solidBelow = !bsBelow.isAir() && !bsBelow.getCollisionShape(level, below).isEmpty();
-                    boolean spaceFree = bsAt.getCollisionShape(level, pos).isEmpty();
-                    boolean fluidOk = bsAt.getFluidState().isEmpty();
-                    if (solidBelow && spaceFree && fluidOk) {
-                        // Found a safe spot; return precise center with a slight lift
-                        return new Vec3(pos.getX() + 0.5, pos.getY() + 0.05, pos.getZ() + 0.5);
-                    }
-                }
-            }
-        }
-
-        // Fallback: ahead of wyvern
-        Vec3 direction = wyvern.getViewVector(1.0F);
-        return base.add(direction.scale(2.0));
+        return DragonRiderSeat.findRadialGroundDismount(
+                passenger,
+                wyvern,
+                new double[] { 2.5D, 3.5D, 1.8D },
+                new int[] { 0, 30, -30, 60, -60, 90, -90, 150, -150, 180 },
+                6,
+                2.0D
+        );
     }
     
     @Nullable 

@@ -26,7 +26,9 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
 
     // Comfortable following distance - babies stay 5-7 blocks away
     private static final double MIN_DISTANCE_SQ = 25.0D; // 5 blocks
-    private static final double MAX_DISTANCE_SQ = 256.0D; // 16 blocks
+    private static final double MAX_DISTANCE_SQ = 576.0D; // 24 blocks
+    private static final double SEARCH_HORIZONTAL_RANGE = 20.0D;
+    private static final double SEARCH_VERTICAL_RANGE = 8.0D;
 
     // Wandering behavior - don't constantly path to parent
     private int wanderCooldown = 0;
@@ -76,7 +78,11 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
         }
         UUID assignedParentUuid = baby.getAssignedParentUuid();
         if (assignedParentUuid == null || !assignedParentUuid.equals(parent.getUUID())) {
-            return false;
+            T resolvedParent = resolveParentCandidate();
+            if (resolvedParent == null) {
+                return false;
+            }
+            this.parent = resolvedParent;
         }
 
         double dist = baby.distanceToSqr(parent);
@@ -116,10 +122,9 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
         // Combined radii (where entities would just touch)
         double combinedRadii = parentRadius + babyRadius;
 
-        // Add a comfortable buffer (3 blocks) so baby doesn't crowd parent
-        double safeBuffer = 3.0;
-
-        return combinedRadii + safeBuffer;
+        // Keep babies close enough to visibly follow without crowding.
+        double safeBuffer = 1.5D;
+        return Math.max(2.75D, combinedRadii + safeBuffer);
     }
 
     @Override
@@ -155,7 +160,7 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
 
         // Recalculate path periodically
         if (--timeToRecalcPath <= 0) {
-            timeToRecalcPath = this.adjustedTickDelay(12); // Balanced recalc speed
+            timeToRecalcPath = this.adjustedTickDelay(8);
 
             // Only path if far enough away (beyond comfortable distance)
             if (distToParent >= comfortableDistSq) {
@@ -172,16 +177,17 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
         UUID assignedParentUuid = baby.getAssignedParentUuid();
         List<T> nearby = baby.level().getEntitiesOfClass(
                 dragonClass,
-                baby.getBoundingBox().inflate(12.0D, 6.0D, 12.0D),
+                baby.getBoundingBox().inflate(SEARCH_HORIZONTAL_RANGE, SEARCH_VERTICAL_RANGE, SEARCH_HORIZONTAL_RANGE),
                 adult -> adult != null && !adult.isBaby() && adult.isAlive()
         );
 
         if (assignedParentUuid != null) {
             for (T adult : nearby) {
-                if (assignedParentUuid.equals(adult.getUUID()) && adult.isFemale()) {
+                if (assignedParentUuid.equals(adult.getUUID())) {
                     return adult;
                 }
             }
+            baby.clearAssignedParentUuid();
         }
 
         double closestDistance = Double.MAX_VALUE;

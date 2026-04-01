@@ -101,6 +101,8 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
 
     private void addRaevyxEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.raevyx")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.raevyx")));
         entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
                 SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT::get,
                 SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT::set,
@@ -125,6 +127,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
 
     private void addStegonautEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.stegonaut")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
         entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
                 SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT::get,
                 SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT::set,
@@ -149,6 +152,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
 
     private void addCindervaneEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.cindervane")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
         entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
                 SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT::get,
                 SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT::set,
@@ -177,6 +181,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
 
     private void addVarasuchusEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.varasuchus")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
         entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
                 SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT::get,
                 SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT::set,
@@ -205,6 +210,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
 
     private void addIgnivorusEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.ignivorus")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
         entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
                 SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT::get,
                 SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT::set,

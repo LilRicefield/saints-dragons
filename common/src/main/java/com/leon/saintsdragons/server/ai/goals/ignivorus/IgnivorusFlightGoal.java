@@ -202,7 +202,7 @@ public class IgnivorusFlightGoal extends Goal {
         dragon.setHovering(false);
         landingController.reset();
         if (targetPosition != null) {
-            dragon.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, dragon.getFlightSpeed());
+            dragon.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0D);
         }
     }
 
@@ -274,7 +274,7 @@ public class IgnivorusFlightGoal extends Goal {
         if (needNewTarget) {
             targetPosition = findFlightTarget();
             timeSinceTargetChange = 0;
-            dragon.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, dragon.getFlightSpeed());
+            dragon.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0D);
         }
     }
 

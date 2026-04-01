@@ -11,8 +11,6 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlockEntity;
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
@@ -27,8 +25,8 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
-import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
-import com.leon.saintsdragons.server.entity.component.DragonTakeoffComponent;
+import com.leon.saintsdragons.server.flight.DragonRiderFlight;
+import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
@@ -100,7 +98,7 @@ import java.util.Map;
 
 public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
     public static final int TAKEOFF_ANIMATION_TICKS = 30;
-    private final DragonTakeoffComponent takeoffComponent;
+    private final DragonTakeoff takeoffComponent;
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -251,7 +249,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     // Flight mode state (moved from physics controller for performance)
     private boolean riderHighAltitudeGlide = false;
     private final IgnivorusRiderController riderController;
-    private final DragonRiderFlightComponent riderFlightComponent;
+    private final DragonRiderFlight riderFlightComponent;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
     private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
 
@@ -405,8 +403,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
-    private DragonRiderFlightComponent createRiderFlightComponent() {
-        return new DragonRiderFlightComponent(new DragonRiderFlightComponent.Host() {
+    private DragonRiderFlight createRiderFlightComponent() {
+        return new DragonRiderFlight(new DragonRiderFlight.Host() {
             @Override
             public Entity asEntity() {
                 return Ignivorus.this;
@@ -531,7 +529,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             public void onManualTakeoffStart() {
                 Ignivorus.this.timeFlying = 0;
             }
-        }, new DragonRiderFlightComponent.Config(
+        }, new DragonRiderFlight.Config(
                 true,
                 0,
                 0.25D,
@@ -541,8 +539,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         ));
     }
 
-    private DragonTakeoffComponent createTakeoffComponent() {
-        return new DragonTakeoffComponent(new DragonTakeoffComponent.Host() {
+    private DragonTakeoff createTakeoffComponent() {
+        return new DragonTakeoff(new DragonTakeoff.Host() {
             @Override
             public Level level() { return Ignivorus.this.level(); }
 
@@ -4256,17 +4254,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                                        MobSpawnType reason,
                                        BlockPos pos,
                                        net.minecraft.util.RandomSource random) {
-        BlockPos below = pos.below();
-        if (!level.getFluidState(pos).isEmpty()) {
-            return false;
-        }
-        if (!level.getFluidState(below).isEmpty()) {
-            return false;
-        }
-        boolean solidGround = level.getBlockState(below).isFaceSturdy(level, below, net.minecraft.core.Direction.UP);
-        boolean feetFree = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
-        boolean headFree = level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
-        return solidGround && feetFree && headFree;
+        return com.leon.saintsdragons.server.world.DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+                && com.leon.saintsdragons.server.world.DragonSpawnRules.passesNearbyDragonDensityCheck(level, reason, pos, Ignivorus.class);
     }
 
     // ===== SCREEN SHAKE SYSTEM =====

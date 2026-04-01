@@ -16,8 +16,8 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
-import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
-import com.leon.saintsdragons.server.entity.component.DragonTakeoffComponent;
+import com.leon.saintsdragons.server.flight.DragonRiderFlight;
+import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
@@ -32,7 +32,6 @@ import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.core.Direction;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.animal.Animal;
@@ -95,7 +94,6 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
@@ -144,7 +142,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
-    private final DragonRiderFlightComponent riderFlightComponent;
+    private final DragonRiderFlight riderFlightComponent;
 
     private final DragonPathNavigateGround groundNav;
     private final FlyingPathNavigation airNav;
@@ -191,7 +189,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private float prevScreenShakeAmount = 0f;
     private float screenShakeAmount = 0f;
-    private final DragonTakeoffComponent takeoffComponent;
+    private final DragonTakeoff takeoffComponent;
 
     private static final double MODEL_SCALE = 1.0D;
 
@@ -331,8 +329,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
-    private DragonRiderFlightComponent createRiderFlightComponent() {
-        return new DragonRiderFlightComponent(new DragonRiderFlightComponent.Host() {
+    private DragonRiderFlight createRiderFlightComponent() {
+        return new DragonRiderFlight(new DragonRiderFlight.Host() {
             @Override
             public Entity asEntity() { return Cindervane.this; }
 
@@ -409,7 +407,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
             @Override
             public void setRiderTakeoffTicks(int ticks) { Cindervane.this.setRiderTakeoffTicks(ticks); }
-        }, new DragonRiderFlightComponent.Config(
+        }, new DragonRiderFlight.Config(
                 true,
                 0,
                 0.55D,
@@ -419,8 +417,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         ));
     }
 
-    private DragonTakeoffComponent createTakeoffComponent() {
-        return new DragonTakeoffComponent(new DragonTakeoffComponent.Host() {
+    private DragonTakeoff createTakeoffComponent() {
+        return new DragonTakeoff(new DragonTakeoff.Host() {
             @Override
             public Level level() { return Cindervane.this.level(); }
 
@@ -548,17 +546,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (!Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random)) {
             return false;
         }
-
-        // Reject waterlogged blocks or fluid directly around the spawn
-        if (!level.getFluidState(pos).isEmpty()) {
-            return false;
-        }
-        if (!level.getFluidState(pos.below()).isEmpty()) {
-            return false;
-        }
-
-        // Optional: enforce a sturdy block underneath
-        return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
+        return com.leon.saintsdragons.server.world.DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+                && com.leon.saintsdragons.server.world.DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Cindervane.class);
     }
 
     // Amphithere-specific entity data accessors
@@ -2860,7 +2849,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public float getFlightSpeed() {
-        return 0.5F;
+        return (float) this.getAttributeValue(Attributes.FLYING_SPEED);
     }
 
     @Override

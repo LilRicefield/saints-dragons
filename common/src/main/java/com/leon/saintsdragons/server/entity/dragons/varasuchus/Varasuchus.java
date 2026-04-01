@@ -67,6 +67,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon, ShakesScreen, SoundHandledDragon {
@@ -178,6 +179,8 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     private int nextBuckAttemptTick = 0;
     private int cumulativeWildRideProgress = 0;
     private int groundStepSoundCooldownTicks = 0;
+    @Nullable
+    private UUID babyProtectionAggroTargetUuid;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -681,10 +684,32 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         if (!this.isBaby()) {
             this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
             this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-            this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Varasuchus.class));
+            this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Varasuchus.class) {
+                @Override
+                public boolean canUse() {
+                    return isWildAggressionEnabled() && super.canUse();
+                }
+
+                @Override
+                public boolean canContinueToUse() {
+                    return isWildAggressionEnabled() && super.canContinueToUse();
+                }
+            });
             this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
             this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                    target -> shouldAggroOnSight()));
+                    this::shouldAggroNearBabies) {
+                @Override
+                public void start() {
+                    super.start();
+                    markBabyProtectionAggroTarget(Varasuchus.this.getTarget());
+                }
+
+                @Override
+                public void stop() {
+                    super.stop();
+                    clearBabyProtectionAggroTarget();
+                }
+            });
         }
     }
 
@@ -1254,16 +1279,75 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
             super.setTarget(null);
             return;
         }
+        if (target == null || !isBabyProtectionAggroTarget(target)) {
+            clearBabyProtectionAggroTarget();
+        }
         super.setTarget(target);
     }
 
-    private boolean shouldAggroOnSight() {
+    @Override
+    public boolean isTargetValid(@Nullable LivingEntity target) {
+        if (!super.isTargetValid(target)) {
+            return false;
+        }
+        if (target instanceof Player && isBabyProtectionAggroTarget(target)) {
+            return hasNearbyWildBaby();
+        }
+        return true;
+    }
+
+    private boolean shouldAggroNearBabies(@Nullable LivingEntity target) {
+        if (!isWildAggressionEnabled() || target == null || !target.isAlive()) {
+            return false;
+        }
+        return hasNearbyWildBaby();
+    }
+
+    private boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
         }
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
-        return config.extraBoolean("aggressive_wild", false);
+        return config.extraBoolean("aggressive_wild", true);
+    }
+
+    private boolean hasNearbyWildBaby() {
+        return !this.level().getEntitiesOfClass(
+                Varasuchus.class,
+                this.getBoundingBox().inflate(16.0D),
+                baby -> baby != null
+                        && baby != this
+                        && baby.isBaby()
+                        && baby.isAlive()
+                        && !baby.isTame()
+        ).isEmpty();
+    }
+
+    private void triggerFailedTamingAggro(@Nullable Player rider) {
+        if (!isWildAggressionEnabled() || rider == null || !rider.isAlive()) {
+            return;
+        }
+        clearBabyProtectionAggroTarget();
+        this.setTarget(rider);
+    }
+
+    private void markBabyProtectionAggroTarget(@Nullable LivingEntity target) {
+        if (target instanceof Player player) {
+            this.babyProtectionAggroTargetUuid = player.getUUID();
+        } else {
+            this.babyProtectionAggroTargetUuid = null;
+        }
+    }
+
+    private void clearBabyProtectionAggroTarget() {
+        this.babyProtectionAggroTargetUuid = null;
+    }
+
+    private boolean isBabyProtectionAggroTarget(@Nullable LivingEntity target) {
+        return target != null
+                && this.babyProtectionAggroTargetUuid != null
+                && this.babyProtectionAggroTargetUuid.equals(target.getUUID());
     }
 
     @Override
@@ -1369,10 +1453,9 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
                                        BlockPos pos,
                                        RandomSource random) {
         boolean mobRules = Mob.checkMobSpawnRules(type, level, spawnType, pos, random);
-        boolean feetDry = level.getFluidState(pos).isEmpty();
-        boolean belowDry = level.getFluidState(pos.below()).isEmpty();
-        boolean sturdyBelow = level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
-        return mobRules && feetDry && belowDry && sturdyBelow;
+        return mobRules
+                && com.leon.saintsdragons.server.world.DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+                && com.leon.saintsdragons.server.world.DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Varasuchus.class);
     }
 
     private void enterSwimState() {
@@ -2020,6 +2103,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         // Time to buck!
         if (wildRideTicks >= nextBuckAttemptTick) {
             buckWildRider(rider);
+            triggerFailedTamingAggro(rider);
             endWildRide(true);
             return;
         }
@@ -2110,9 +2194,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
 
         // Broadcast event for particles/sounds
         this.level().broadcastEntityEvent(this, (byte) 6);
-
-        // Triumphant screen shake when successfully bucking player off
-        this.triggerScreenShake(1.2F);
     }
 
     private void endWildRide(boolean bucked) {

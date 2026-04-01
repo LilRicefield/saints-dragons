@@ -625,17 +625,8 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         if (!Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random)) {
             return false;
         }
-
-        // Reject waterlogged blocks or fluid directly around the spawn
-        if (!level.getFluidState(pos).isEmpty()) {
-            return false;
-        }
-        if (!level.getFluidState(pos.below()).isEmpty()) {
-            return false;
-        }
-
-        // Optional: enforce a sturdy block underneath
-        return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
+        return com.leon.saintsdragons.server.world.DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+                && com.leon.saintsdragons.server.world.DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Stegonaut.class);
     }
 
     // ===== INTERACTION HANDLING =====

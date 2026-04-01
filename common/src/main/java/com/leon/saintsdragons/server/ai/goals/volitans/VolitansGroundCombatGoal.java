@@ -11,7 +11,6 @@ import net.minecraft.world.entity.player.Player;
 import java.util.EnumSet;
 
 public class VolitansGroundCombatGoal extends Goal {
-    private static final int ROAR_COOLDOWN_TICKS = 200; // 10 seconds
     private static final double BITE_RANGE = 4.1D;
     private static final double CLAW_RANGE = 5.1D;
     private static final double GORE_RANGE = 6.2D;
@@ -26,17 +25,14 @@ public class VolitansGroundCombatGoal extends Goal {
     private static final double BURROW_CHASE_SPEED = 1.55D;
 
     private final Volitans dragon;
-    private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
-    private int roarCooldown = 0;
-    private int poisonBallCooldown = 0;
-    private int breathCooldown = 0;
     private int burrowCooldown = 0;
     private int poisonBallHoldTicks = 0;
     private int breathHoldTicks = 0;
     private boolean usedRoarOpener = false;
     private int roarOpenerDelay = 0;
     private boolean wasAbilityHoldingLastTick = false;
+    private boolean wasBurrowAbilityHoldingLastTick = false;
     private double lastTargetX;
     private double lastTargetY;
     private double lastTargetZ;
@@ -87,6 +83,7 @@ public class VolitansGroundCombatGoal extends Goal {
         usedRoarOpener = false;
         roarOpenerDelay = 8;
         wasAbilityHoldingLastTick = false;
+        wasBurrowAbilityHoldingLastTick = false;
         LivingEntity target = dragon.getTarget();
         if (target != null) {
             dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
@@ -103,6 +100,7 @@ public class VolitansGroundCombatGoal extends Goal {
         poisonBallHoldTicks = 0;
         breathHoldTicks = 0;
         wasAbilityHoldingLastTick = false;
+        wasBurrowAbilityHoldingLastTick = false;
         if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)) {
             dragon.requestPoisonBallRelease();
         }
@@ -116,10 +114,6 @@ public class VolitansGroundCombatGoal extends Goal {
 
     @Override
     public void tick() {
-        if (attackCooldown > 0) attackCooldown--;
-        if (roarCooldown > 0) roarCooldown--;
-        if (poisonBallCooldown > 0) poisonBallCooldown--;
-        if (breathCooldown > 0) breathCooldown--;
         if (burrowCooldown > 0) burrowCooldown--;
 
         LivingEntity target = dragon.getTarget();
@@ -141,20 +135,22 @@ public class VolitansGroundCombatGoal extends Goal {
             // waiting on a stale path refresh or long post-ability attack cooldown.
             wasAbilityHoldingLastTick = false;
             pathRecalcCooldown = 0;
-            attackCooldown = Math.min(attackCooldown, 4);
+            if (wasBurrowAbilityHoldingLastTick) {
+                dragon.getAiCombatPacing().setGlobalActionLock(10);
+                wasBurrowAbilityHoldingLastTick = false;
+            }
             updateChasePath(target);
         }
 
-        if (!usedRoarOpener && hasLineOfSight && gap >= 5.0D && gap <= ROAR_OPEN_RANGE && roarCooldown <= 0) {
+        if (!usedRoarOpener && hasLineOfSight && gap >= 5.0D && gap <= ROAR_OPEN_RANGE && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
             if (roarOpenerDelay > 0) {
                 roarOpenerDelay--;
                 updateChasePath(target);
             } else {
                 dragon.getNavigation().stop();
                 dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_ROAR);
+                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_ROAR, 24, 200, true, 120, 48);
                 usedRoarOpener = true;
-                roarCooldown = ROAR_COOLDOWN_TICKS;
-                attackCooldown = 24;
             }
             return;
         }
@@ -172,12 +168,12 @@ public class VolitansGroundCombatGoal extends Goal {
             } else {
                 updateChasePath(target);
             }
-            if (attackCooldown <= 0 && !dragon.isGroundCombatAbilityActive()) {
+            if (dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0 && !dragon.isGroundCombatAbilityActive()) {
                 tryMelee(gap);
                 return;
             }
             if (tryReactiveMobility(target, gap)) {
-                attackCooldown = Math.max(attackCooldown, 8);
+                dragon.getAiCombatPacing().setCadenceCooldownMin(8);
                 return;
             }
             if (gap > BITE_RANGE) {
@@ -187,7 +183,7 @@ public class VolitansGroundCombatGoal extends Goal {
         }
 
         if (tryReactiveMobility(target, gap)) {
-            attackCooldown = Math.max(attackCooldown, 10);
+            dragon.getAiCombatPacing().setCadenceCooldownMin(10);
             return;
         }
 
@@ -245,6 +241,7 @@ public class VolitansGroundCombatGoal extends Goal {
             return true;
         }
         if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BURROW)) {
+            wasBurrowAbilityHoldingLastTick = true;
             if (!dragon.isTargetValid(target) || dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
                 dragon.requestBurrowExit(false);
                 return true;
@@ -276,7 +273,7 @@ public class VolitansGroundCombatGoal extends Goal {
         if (dragon.hurtTime > 0 && gap <= 10.0D) {
             chance += 0.12F;
         }
-        if (gap <= 4.0D && attackCooldown > 0) {
+        if (gap <= 4.0D && dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0) {
             chance += 0.08F;
         }
         if (target.swingTime > 0 && gap <= 6.0D) {
@@ -294,7 +291,7 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean tryRoarPunish(double gap) {
-        if (attackCooldown > 0 || roarCooldown > 0 || dragon.isGroundCombatAbilityActive()) {
+        if (!canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < 4.5D || gap > 10.0D) {
@@ -302,13 +299,12 @@ public class VolitansGroundCombatGoal extends Goal {
         }
         dragon.getNavigation().stop();
         dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_ROAR);
-        roarCooldown = ROAR_COOLDOWN_TICKS;
-        attackCooldown = 24;
+        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_ROAR, 24, 200, true, 120, 48);
         return true;
     }
 
     private boolean tryPoisonBall(double gap) {
-        if (attackCooldown > 0 || poisonBallCooldown > 0 || dragon.isGroundCombatAbilityActive()) {
+        if (!canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < POISON_BALL_MIN_RANGE || gap > POISON_BALL_MAX_RANGE) {
@@ -317,13 +313,12 @@ public class VolitansGroundCombatGoal extends Goal {
         dragon.getNavigation().stop();
         dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_POISON_BALL);
         poisonBallHoldTicks = 18 + dragon.getRandom().nextInt(8);
-        poisonBallCooldown = 90;
-        attackCooldown = 16;
+        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_POISON_BALL, 16, 110, true, 90, 36);
         return true;
     }
 
     private boolean tryBurrowApproach(LivingEntity target, double gap, boolean hasLineOfSight) {
-        if (attackCooldown > 0 || burrowCooldown > 0 || dragon.isGroundCombatAbilityActive() || dragon.isGroundMobilityActive()) {
+        if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || burrowCooldown > 0 || dragon.isGroundCombatAbilityActive() || dragon.isGroundMobilityActive()) {
             return false;
         }
         if (gap < BURROW_MIN_RANGE || gap > BURROW_MAX_RANGE) {
@@ -335,12 +330,12 @@ public class VolitansGroundCombatGoal extends Goal {
         dragon.getNavigation().stop();
         dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BURROW);
         burrowCooldown = 220;
-        attackCooldown = 14;
+        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BURROW, 14, 0, true, 80, 28);
         return true;
     }
 
     private boolean tryBreath(double gap) {
-        if (attackCooldown > 0 || breathCooldown > 0 || dragon.isGroundCombatAbilityActive()) {
+        if (!canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < BREATH_MIN_RANGE || gap > BREATH_MAX_RANGE) {
@@ -353,46 +348,49 @@ public class VolitansGroundCombatGoal extends Goal {
         dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
         dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BREATH);
         breathHoldTicks = 60 + dragon.getRandom().nextInt(35);
-        breathCooldown = 150;
-        attackCooldown = 18;
+        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BREATH, 18, 150, true, 110, 42);
         return true;
     }
 
     private void tryMelee(double gap) {
-        if (attackCooldown > 0 || dragon.isGroundCombatAbilityActive()) {
+        if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || dragon.isGroundCombatAbilityActive()) {
             return;
         }
 
         if (gap <= BITE_RANGE) {
             float roll = dragon.getRandom().nextFloat();
-            if (roll < 0.42F) {
+            if (roll < 0.42F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
                 dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_CLAW);
-                attackCooldown = 14;
-            } else if (roll < 0.72F) {
+                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_CLAW, 14, 18, false, 0, 20);
+            } else if (roll < 0.72F && canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
                 dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BITE);
-                attackCooldown = 12;
-            } else {
+                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BITE, 12, 16, false, 0, 18);
+            } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
                 dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-                attackCooldown = 16;
+                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
             }
             return;
         }
 
         if (gap <= CLAW_RANGE) {
-            if (dragon.getRandom().nextFloat() < 0.58F) {
+            if (dragon.getRandom().nextFloat() < 0.58F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
                 dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_CLAW);
-                attackCooldown = 14;
-            } else {
+                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_CLAW, 14, 18, false, 0, 20);
+            } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
                 dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-                attackCooldown = 16;
+                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
             }
             return;
         }
 
-        if (gap <= GORE_RANGE) {
+        if (gap <= GORE_RANGE && canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
             dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-            attackCooldown = 16;
+            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
         }
+    }
+
+    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+        return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 
     private double getGapToTarget(LivingEntity target) {

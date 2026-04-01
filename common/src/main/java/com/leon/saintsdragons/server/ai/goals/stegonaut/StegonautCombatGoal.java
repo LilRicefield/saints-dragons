@@ -19,7 +19,6 @@ public class StegonautCombatGoal extends Goal {
     private final double attackRangeGround = 3.4D;
     private final double attackRangeWater = 6.0D;
     private final double chaseSpeed = 0.75D;
-    private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
     private double lastTargetX;
     private double lastTargetY;
@@ -73,10 +72,6 @@ public class StegonautCombatGoal extends Goal {
 
     @Override
     public void tick() {
-        if (attackCooldown > 0) {
-            attackCooldown--;
-        }
-
         LivingEntity target = dragon.getTarget();
         if (target == null) {
             return;
@@ -101,7 +96,7 @@ public class StegonautCombatGoal extends Goal {
         }
 
         // Keep closing distance while waiting for cooldown so we don't stall out at edge range.
-        if (attackCooldown > 0) {
+        if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0) {
             updateChasePath(target);
             return;
         }
@@ -112,15 +107,18 @@ public class StegonautCombatGoal extends Goal {
     }
 
     private void tryPerformMelee(LivingEntity target) {
-        if (attackCooldown > 0 || isCurrentlyAttacking()) {
+        if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || isCurrentlyAttacking()) {
             return;
         }
         if (!dragon.getSensing().hasLineOfSight(target)) {
             return;
         }
-
-        dragon.combatManager.tryUseAbility(dragon.getRandomAiAttackAbility());
-        attackCooldown = 26;
+        var ability = dragon.getRandomAiAttackAbility();
+        if (!dragon.combatManager.canStart(ability) || !dragon.getAiCombatPacing().canUse(ability, false)) {
+            return;
+        }
+        dragon.combatManager.tryUseAbility(ability);
+        dragon.getAiCombatPacing().recordUse(ability, 26, 26, false, 0, 22);
     }
 
     private boolean isCurrentlyAttacking() {

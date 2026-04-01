@@ -31,8 +31,8 @@ import com.leon.saintsdragons.server.entity.interfaces.ElectricalConductivityCap
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
 import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
-import com.leon.saintsdragons.server.entity.component.DragonRiderFlightComponent;
-import com.leon.saintsdragons.server.entity.component.DragonTakeoffComponent;
+import com.leon.saintsdragons.server.flight.DragonRiderFlight;
+import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -437,6 +437,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
+        if (isGroundRending()) {
+            return false;
+        }
         return switch (action) {
             case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
                  TAUNT, TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
@@ -593,8 +596,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     // ===== SPECIALIZED HANDLER SYSTEMS =====
     private final RaevyxRiderController riderController;
-    private final DragonRiderFlightComponent riderFlightComponent;
-    private final DragonTakeoffComponent takeoffComponent;
+    private final DragonRiderFlight riderFlightComponent;
+    private final DragonTakeoff takeoffComponent;
     private final DragonSoundHandler soundHandler;
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
@@ -651,8 +654,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
     }
 
-    private DragonRiderFlightComponent createRiderFlightComponent() {
-        return new DragonRiderFlightComponent(new DragonRiderFlightComponent.Host() {
+    private DragonRiderFlight createRiderFlightComponent() {
+        return new DragonRiderFlight(new DragonRiderFlight.Host() {
             @Override
             public Entity asEntity() { return Raevyx.this; }
 
@@ -742,7 +745,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
             @Override
             public void setRiderTakeoffTicks(int ticks) { Raevyx.this.setRiderTakeoffTicks(ticks); }
-        }, new DragonRiderFlightComponent.Config(
+        }, new DragonRiderFlight.Config(
                 true,
                 5,
                 0.55D,
@@ -752,8 +755,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         ));
     }
 
-    private DragonTakeoffComponent createTakeoffComponent() {
-        return new DragonTakeoffComponent(new DragonTakeoffComponent.Host() {
+    private DragonTakeoff createTakeoffComponent() {
+        return new DragonTakeoff(new DragonTakeoff.Host() {
             @Override
             public Level level() { return Raevyx.this.level(); }
 
@@ -964,7 +967,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     public boolean canUseAbility() {
-        return !isBaby() && combatManager.canUseAbility();
+        return !isBaby() && !isGroundRending() && !areRiderControlsLocked() && combatManager.canUseAbility();
     }
     public void useRidingAbility(String abilityName) {
         if (isBaby()) {
@@ -1830,6 +1833,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void onRiderDodge(net.minecraft.world.entity.player.Player player, boolean isLeft) {
+        if (isGroundRending() || areRiderControlsLocked()) {
+            return;
+        }
         // Only allow dodge on ground - dragon is fast enough in air with strafe
         if (isFlying() || isInWaterOrBubble()) {
             return;
@@ -1889,6 +1895,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void onRiderBackwardDodge(net.minecraft.world.entity.player.Player player) {
+        if (isGroundRending() || areRiderControlsLocked()) {
+            return;
+        }
         // Only allow dodge on ground - dragon is fast enough in air with strafe
         if (isFlying() || isInWaterOrBubble()) {
             return;
@@ -2124,6 +2133,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void onRiderDash(Player player) {
+        if (isGroundRending() || areRiderControlsLocked()) {
+            return;
+        }
         // Only allow dash on ground
         if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble()) {
             return;
@@ -3673,17 +3685,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                                        MobSpawnType reason,
                                        BlockPos pos,
                                        net.minecraft.util.RandomSource random) {
-        BlockPos below = pos.below();
-        if (!level.getFluidState(pos).isEmpty()) {
+        if (com.leon.saintsdragons.server.world.DragonSpawnRules.isNaturalWildSpawn(reason)
+                && !com.leon.saintsdragons.server.world.DragonSpawnRules.isThundering(level)) {
             return false;
         }
-        if (!level.getFluidState(below).isEmpty()) {
-            return false;
-        }
-        boolean solidGround = level.getBlockState(below).isFaceSturdy(level, below, net.minecraft.core.Direction.UP);
-        boolean feetFree = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
-        boolean headFree = level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
-        return solidGround && feetFree && headFree;
+        return com.leon.saintsdragons.server.world.DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+                && com.leon.saintsdragons.server.world.DragonSpawnRules.passesNearbyDragonDensityCheck(level, reason, pos, Raevyx.class);
     }
 
     /**
@@ -4895,7 +4902,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // ===== DRAGON FLIGHT CAPABLE INTERFACE =====
     @Override
     public float getFlightSpeed() {
-        return 1.0f; // Base flight speed
+        return (float) this.getAttributeValue(Attributes.FLYING_SPEED);
     }
 
     @Override

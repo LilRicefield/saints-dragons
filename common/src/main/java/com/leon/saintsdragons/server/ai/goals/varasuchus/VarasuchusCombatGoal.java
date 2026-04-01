@@ -16,16 +16,17 @@ import java.util.EnumSet;
  */
 public class VarasuchusCombatGoal extends Goal {
     private static final double CHASE_SPEED = 1.5D;
+    private static final double WATER_CHASE_START_MULTIPLIER = 0.72D;
+    private static final double WATER_CHASE_RECALC_MULTIPLIER = 0.66D;
+    private static final double WATER_CHASE_FAR_BOOST = 1.12D;
     private static final double BITE_RANGE = 5.0D;   // Matched to bite ability (5.5) - slightly conservative for AI
     private static final double HORN_RANGE = 5.0D;   // Matched to horn gore ability (7.0) - slightly conservative for AI
     private static final double CLAW_RANGE = 3.5D;   // Claw requires closer range - it's a swipe attack, not a lunge
     private static final double DASH_MIN_GAP = 9.0D; // Dash only when clearly out of melee range
-    private static final int MIN_ATTACK_COOLDOWN_TICKS = 20;
     private static final int AI_DASH_COOLDOWN_TICKS = 8 * 20; // 8 seconds
     private static final float PHASE_TWO_HEALTH_THRESHOLD = 0.5F;
 
     private final Varasuchus drake;
-    private int attackCooldown;
     private int aiDashCooldown;
     private int pathRecalcCooldown = 0;
     private double lastTargetX;
@@ -69,14 +70,13 @@ public class VarasuchusCombatGoal extends Goal {
 
     @Override
     public void start() {
-        this.attackCooldown = 0;
         drake.setAggressive(true);
 
         LivingEntity target = drake.getTarget();
         if (target != null) {
             drake.getLookControl().setLookAt(target, 30.0F, 30.0F);
             if (drake.isInWaterOrBubble()) {
-                updateWaterChase(target, 1.0D);
+                updateWaterChase(target, WATER_CHASE_START_MULTIPLIER);
             } else {
                 drake.getNavigation().moveTo(target, CHASE_SPEED);
                 rememberTargetPosition(target);
@@ -98,9 +98,6 @@ public class VarasuchusCombatGoal extends Goal {
 
     @Override
     public void tick() {
-        if (attackCooldown > 0) {
-            attackCooldown--;
-        }
         if (aiDashCooldown > 0) {
             aiDashCooldown--;
         }
@@ -130,7 +127,7 @@ public class VarasuchusCombatGoal extends Goal {
         if (shouldUseAIDash(gap, hasLineOfSight, target)) {
             if (drake.tryAIGroundDash(target)) {
                 aiDashCooldown = AI_DASH_COOLDOWN_TICKS;
-                attackCooldown = Math.max(attackCooldown, 12);
+                drake.getAiCombatPacing().setCadenceCooldownMin(12);
                 return;
             }
         }
@@ -159,7 +156,7 @@ public class VarasuchusCombatGoal extends Goal {
     }
 
     private void tryPerformAttacks(LivingEntity target) {
-        if (attackCooldown > 0 || isPerformingAttack()) {
+        if (drake.getAiCombatPacing().getCadenceCooldownTicks() > 0 || isPerformingAttack()) {
             return;
         }
 
@@ -168,9 +165,9 @@ public class VarasuchusCombatGoal extends Goal {
         }
 
         DragonAbilityType<Varasuchus, ?> ability = choosePrimaryAttack(target);
-        if (ability != null && drake.combatManager.canStart(ability)) {
+        if (ability != null && drake.combatManager.canStart(ability) && drake.getAiCombatPacing().canUse(ability, false)) {
             drake.combatManager.tryUseAbility(ability);
-            attackCooldown = MIN_ATTACK_COOLDOWN_TICKS;
+            drake.getAiCombatPacing().recordUse(ability, 20, 20, false, 0, 18);
         }
     }
 
@@ -230,6 +227,7 @@ public class VarasuchusCombatGoal extends Goal {
         if (aiDashCooldown > 0) return false;
         if (!hasLineOfSight) return false;
         if (gap < DASH_MIN_GAP) return false;
+        if (drake.getAiCombatPacing().getCadenceCooldownTicks() > 0) return false;
         if (isPerformingAttack()) return false;
         if (drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT)) return false;
         return isWithinAggroRange(target);
@@ -269,7 +267,7 @@ public class VarasuchusCombatGoal extends Goal {
      */
     private void updateChasePath(LivingEntity target) {
         if (drake.isInWaterOrBubble()) {
-            updateWaterChase(target, 0.9D);
+            updateWaterChase(target, WATER_CHASE_RECALC_MULTIPLIER);
             return;
         }
 
@@ -304,7 +302,7 @@ public class VarasuchusCombatGoal extends Goal {
 
         double speed = drake.getSwimSpeed() * multiplier;
         if (horizontalDist > 15.0D) {
-            speed *= 1.3D;
+            speed *= WATER_CHASE_FAR_BOOST;
         }
 
         double yawRad = drake.getYRot() * Mth.DEG_TO_RAD;

@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonTamingStunComponent;
+import com.leon.saintsdragons.server.entity.component.DragonTamingStunComponent;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 
 /**

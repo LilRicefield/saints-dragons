@@ -24,15 +24,11 @@ public class VolitansAirCombatGoal extends Goal {
     private static final double CHASE_HEIGHT_OFFSET = 2.0D;
     private static final double FLIGHT_ACCEL = 0.12D;
     private static final double FLIGHT_DRAG = 0.94D;
-    private static final double CHASE_SPEED = 6.9D;
-    private static final double POSITION_SPEED = 5.8D;
+    private static final double CHASE_SPEED = 2.0D;
+    private static final double POSITION_SPEED = 0.85D;
     private static final double BITE_APPROACH_DISTANCE = 3.75D;
 
     private final Volitans dragon;
-    private int attackCooldown = 0;
-    private int breathCooldown = 0;
-    private int poisonCooldown = 0;
-    private int roarCooldown = 0;
     private int breathHoldTicks = 0;
     private int poisonHoldTicks = 0;
 
@@ -120,11 +116,6 @@ public class VolitansAirCombatGoal extends Goal {
 
     @Override
     public void tick() {
-        if (attackCooldown > 0) attackCooldown--;
-        if (breathCooldown > 0) breathCooldown--;
-        if (poisonCooldown > 0) poisonCooldown--;
-        if (roarCooldown > 0) roarCooldown--;
-
         LivingEntity target = dragon.getTarget();
         if (!isValidTarget(target)) {
             return;
@@ -161,36 +152,33 @@ public class VolitansAirCombatGoal extends Goal {
         }
 
         if (distance <= MELEE_RANGE && hasLineOfSight) {
-            if (attackCooldown <= 0) {
+            if (dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0) {
                 tryMelee();
             }
             maintainMeleePosition(target);
             return;
         }
 
-        if (distance >= POISON_MIN_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && poisonCooldown <= 0 && attackCooldown <= 0) {
+        if (distance >= POISON_MIN_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true)) {
             dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_POISON_BALL);
             poisonHoldTicks = 20 + dragon.getRandom().nextInt(8);
-            poisonCooldown = 120;
-            attackCooldown = 14;
+            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_POISON_BALL, 14, 120, true, 90, 36);
             flyTowardTarget(target, POSITION_SPEED * 0.8D, CHASE_HEIGHT_OFFSET);
             return;
         }
 
-        if (distance >= BREATH_MIN_RANGE && distance <= BREATH_MAX_RANGE && hasLineOfSight && breathCooldown <= 0 && attackCooldown <= 0) {
+        if (distance >= BREATH_MIN_RANGE && distance <= BREATH_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true)) {
             dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
             dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BREATH);
             breathHoldTicks = 50 + dragon.getRandom().nextInt(30);
-            breathCooldown = 120;
-            attackCooldown = 16;
+            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BREATH, 16, 140, true, 110, 42);
             flyTowardTarget(target, POSITION_SPEED * 0.7D, CHASE_HEIGHT_OFFSET);
             return;
         }
 
-        if (distance >= ROAR_MIN_RANGE && distance <= ROAR_MAX_RANGE && hasLineOfSight && roarCooldown <= 0 && attackCooldown <= 0) {
+        if (distance >= ROAR_MIN_RANGE && distance <= ROAR_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
             dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_ROAR);
-            roarCooldown = 110;
-            attackCooldown = 12;
+            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_ROAR, 12, 140, true, 120, 48);
             flyTowardTarget(target, POSITION_SPEED * 0.9D, CHASE_HEIGHT_OFFSET);
             return;
         }
@@ -200,16 +188,20 @@ public class VolitansAirCombatGoal extends Goal {
 
     private void tryMelee() {
         float roll = dragon.getRandom().nextFloat();
-        if (roll < 0.40F) {
+        if (roll < 0.40F && canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
             dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BITE);
-            attackCooldown = 12;
-        } else if (roll < 0.72F) {
+            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BITE, 12, 16, false, 0, 18);
+        } else if (roll < 0.72F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
             dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_CLAW);
-            attackCooldown = 14;
-        } else {
+            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_CLAW, 14, 18, false, 0, 20);
+        } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
             dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-            attackCooldown = 16;
+            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
         }
+    }
+
+    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+        return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 
     private void maintainMeleePosition(LivingEntity target) {

@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.dragons.handlers;
+package com.leon.saintsdragons.server.entity.component;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;

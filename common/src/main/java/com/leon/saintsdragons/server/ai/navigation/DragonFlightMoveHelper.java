@@ -14,11 +14,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 
-/**
- * Generic flight movement controller - handles AI flight pathfinding for any type
- * Banking is handled elsewhere; MoveHelper focuses on movement only
- * Works with any entity that implements DragonFlightCapable interface
- */
 public class DragonFlightMoveHelper extends MoveControl {
     private static final String WILD_FLYING_SPEED_MULTIPLIER_KEY = "wild_flying_speed_multiplier";
     private static final float COLLISION_AVOID_YAW_STEP = 42.0F;
@@ -264,8 +259,6 @@ public class DragonFlightMoveHelper extends MoveControl {
         // Distance-based speed scaling (IaF-inspired): keep speed up at range, ease gently near goal
         float distScale = Mth.clamp((float) (totalDist / 45.0) + 0.35f, 0.35f, 1.0f);
         targetSpeedFactor *= distScale;
-        targetSpeedFactor *= getWildFlyingSpeedMultiplier();
-
         // Combat bias: fly a bit faster when we have a live target and are airborne
         var target = mob.getTarget();
         boolean isFlying = (dragon instanceof com.leon.saintsdragons.server.entity.base.DragonEntity baseDragon)
@@ -288,7 +281,10 @@ public class DragonFlightMoveHelper extends MoveControl {
         // === 3D MOVEMENT APPLICATION (robust, normalized toward target) ===
         Vec3 dir = new Vec3(distX, distY, distZ).scale(1.0 / totalDist); // normalized
         Vec3 motion = mob.getDeltaMovement();
-        Vec3 targetVel = dir.scale(this.speedFactor);
+        double baseFlightSpeed = Math.max(0.0D, dragon.getFlightSpeed());
+        double wantedSpeedMultiplier = Math.max(0.0D, this.speedModifier);
+        double wildFlightMultiplier = getWildFlyingSpeedMultiplier();
+        Vec3 targetVel = dir.scale(baseFlightSpeed * wantedSpeedMultiplier * wildFlightMultiplier * this.speedFactor);
         // Blend toward target velocity with per-axis acceleration cap to reduce twitch/overshoot
         Vec3 delta = targetVel.subtract(motion).scale(velocityBlendRate); // wyvern-specific blend rate
         double accelCap = accelerationCap;

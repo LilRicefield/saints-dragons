@@ -25,8 +25,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class VolitansRoarAbility extends DragonAbility<Volitans> {
     private static final int STARTUP_TICKS = 8;
     private static final int ACTIVE_TICKS = 46;
-    private static final int RECOVERY_TICKS = 16;
-    private static final int ROAR_ANIM_TOTAL_TICKS = STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS; // 70 ticks (3.5s)
+    private static final int RECOVERY_TICKS = 10;
+    private static final int ROAR_ANIM_TOTAL_TICKS = STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS; // 64 ticks (~3.2083s)
     private static final int SOUND_DURATION_TICKS = 100;
     private static final int AIR_WATER_ROAR_TICKS = 33; // 1.6667s
     private static final int AIR_WATER_ROAR_SOUND_TICKS = 60;
@@ -39,7 +39,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
     private static final float AIR_WATER_ROAR_DAMAGE = 7.0F;
     private static final float ROAR_SHAKE_INTENSITY = 0.85F;
     private static final int GROUNDED_POISON_DURATION_TICKS = 1200;
-    private static final int GROUNDED_POISON_AMPLIFIER = 3;
+    private static final int GROUNDED_POISON_AMPLIFIER = 2;
     private static final int AIR_WATER_POISON_DURATION_TICKS = 200;
     private static final int AIR_WATER_POISON_AMPLIFIER = 1;
     private static final int GROUNDED_STUN_TICKS = 40;
@@ -71,7 +71,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
             Volitans dragon = getUser();
             airOrWaterRoar = dragon.isFlying() || dragon.isInWaterOrBubble();
             groundedRoar = !airOrWaterRoar;
-            dragon.triggerAnim(airOrWaterRoar ? "instant" : "actions", airOrWaterRoar ? "roar_air_water" : "roar");
+            dragon.triggerAnim("instant", airOrWaterRoar ? "roar_air_water" : "roar");
             if (!airOrWaterRoar) {
                 dragon.lockRiderControls(ROAR_ANIM_TOTAL_TICKS);
                 dragon.blockTakeoffInput(ROAR_ANIM_TOTAL_TICKS + GROUNDED_ROAR_TAKEOFF_BLOCK_BUFFER_TICKS);

@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.component;
+package com.leon.saintsdragons.server.flight;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -9,7 +9,7 @@ import net.minecraft.world.phys.Vec3;
  * Shared rider-flight helpers for rideable dragons.
  * Keeps breach takeoff and in-water flight-state preservation logic in one place.
  */
-public final class DragonRiderFlightComponent {
+public final class DragonRiderFlight {
 
     public interface Host {
         Entity asEntity();
@@ -84,7 +84,7 @@ public final class DragonRiderFlightComponent {
     private final Host host;
     private final Config config;
 
-    public DragonRiderFlightComponent(Host host, Config config) {
+    public DragonRiderFlight(Host host, Config config) {
         this.host = host;
         this.config = config;
     }

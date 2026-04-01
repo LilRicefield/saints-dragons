@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAnimationSyncComponent;
+import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
 import com.leon.saintsdragons.server.entity.component.DragonBabyComponent;
 import com.leon.saintsdragons.server.entity.component.DragonCommandComponent;
 import com.leon.saintsdragons.server.entity.component.DragonGenderComponent;
@@ -56,7 +57,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -134,6 +134,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private final DragonRecoveryComponent recoveryComponent;
     @Nullable
     private final DragonBabyComponent babyComponent;
+    private final DragonAiCombatPacingComponent aiCombatPacing = new DragonAiCombatPacingComponent();
 
     private final com.leon.saintsdragons.util.math.SmoothValue fallbackBodyRotDeviation =
             com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
@@ -238,6 +239,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     protected DragonBabyComponent createBabyComponent() {
         return new DragonBabyComponent(this);
+    }
+
+    public DragonAiCombatPacingComponent getAiCombatPacing() {
+        return aiCombatPacing;
     }
 
     @Override
@@ -1672,6 +1677,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
         // Tick sleep behavior (server-side only)
         if (!level().isClientSide) {
+            aiCombatPacing.tick();
             if (sleepComponent != null) {
                 sleepComponent.tick();
             }
