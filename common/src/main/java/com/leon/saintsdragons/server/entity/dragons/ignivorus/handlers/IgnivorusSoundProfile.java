@@ -58,6 +58,9 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         if (entry == null || entry.soundSupplier() == null) {
             return null;
         }
+        if (dragon.isBaby()) {
+            return null;
+        }
         int duration = switch (key) {
             case "ignivorus_grumble1", "grumble1" -> 56;
             case "ignivorus_grumble2", "grumble2" -> 61;

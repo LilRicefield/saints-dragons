@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
@@ -120,8 +121,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 : beef
                     ? config.extraDoubles().getOrDefault("taming_chance_beef", 5.0)
                     : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
-            int tameRoll = (int) Math.round(tameChance);
-            boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
+            boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
 
             if (success) {
                 dragon.tame(player);
@@ -234,6 +234,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         boolean client = dragon.level().isClientSide;
+        var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
         boolean cod = itemstack.is(net.minecraft.world.item.Items.COD);
         boolean salmon = itemstack.is(net.minecraft.world.item.Items.SALMON);
@@ -242,51 +243,35 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             return InteractionResult.PASS;
         }
 
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.ignivorus.still_eating", dragon.getName()),
-                    true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.ignivorus", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
-        if (!client) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
-
-            // Trigger eat animation
-            dragon.triggerAnim("action", "eat");
-            playEatSound();
-
-            // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
-            dragon.setFeedingCooldown(61);
-
-            if (hearty) {
-                dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
-            }
-            dragon.applyFeedingHunger(hearty);
-
+        if (!client && baby != null) {
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 4.0)
                 : beef
                     ? config.extraDoubles().getOrDefault("taming_chance_beef", 5.0)
                     : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
-            int tameRoll = (int) Math.round(tameChance);
-            boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
-
-            if (success) {
-                dragon.tame(player);
-                dragon.setOrderedToSit(true);
-                dragon.setCommandManual(1);
-                dragon.combatManager.clearAbilityCooldown(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
-                triggerTamingAdvancement(player);
-            } else {
-                dragon.level().broadcastEntityEvent(dragon, (byte) 6);
-            }
+            baby.handleBabyFoodTaming(
+                    player,
+                    itemstack,
+                    61,
+                    hearty,
+                    () -> {
+                        dragon.triggerAnim("action", "eat");
+                        playEatSound();
+                    },
+                    dragon::setFeedingCooldown,
+                    tameChance,
+                    () -> {
+                        dragon.tame(player);
+                        dragon.setOrderedToSit(true);
+                        dragon.setCommandManual(1);
+                        dragon.combatManager.clearAbilityCooldown(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
+                        triggerTamingAdvancement(player);
+                    }
+            );
         }
 
         return InteractionResult.sidedSuccess(client);
@@ -296,14 +281,9 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
      * Handle feeding tamed dragons for healing.
      */
     private InteractionResult handleFeeding(Player player, ItemStack itemstack) {
+        var baby = dragon.getBabyComponent();
         // Check feeding cooldown to prevent spam-feeding
-        if (!dragon.canFeed()) {
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.ignivorus.still_eating", dragon.getName()),
-                    true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.ignivorus", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
@@ -323,22 +303,9 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
             boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
-                int growthTicks = hearty ? 4800 : 2400;
-                int currentAge = dragon.getAge();
-                int newAge = Math.min(0, currentAge + growthTicks);
-                dragon.setAge(newAge);
-
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7); // Hearts
-                if (player instanceof ServerPlayer serverPlayer) {
-                    String messageKey = (newAge == 0)
-                        ? "entity.saintsdragons.ignivorus.baby_grown"
-                        : "entity.saintsdragons.ignivorus.baby_fed";
-                    serverPlayer.displayClientMessage(
-                        Component.translatable(messageKey, dragon.getName()),
-                        true
-                    );
+                if (baby != null) {
+                    baby.applyBabyGrowth(player, hearty, "entity.saintsdragons.ignivorus", 2400, 4800);
                 }
-                dragon.applyFeedingHunger(hearty);
             } else {
                 float currentHealth = dragon.getHealth();
                 float healAmount = hearty ? 30.0F : (beef ? 16.0F : 10.0F);

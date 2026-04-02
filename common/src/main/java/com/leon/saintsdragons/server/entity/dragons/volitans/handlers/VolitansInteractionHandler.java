@@ -192,7 +192,8 @@ public final class VolitansInteractionHandler {
     }
 
     private void playEatFeedback(ItemStack food) {
-        dragon.triggerAnim("action", "eat");
+        dragon.triggerAnim("actions", "eat");
+        dragon.playEatMovingSound();
         dragon.level().broadcastEntityEvent(dragon, (byte) 6);
         if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
             dragon.level().broadcastEntityEvent(dragon, (byte) 7);
@@ -219,7 +220,16 @@ public final class VolitansInteractionHandler {
         switch (command) {
             case 0 -> dragon.setOrderedToSit(false);
             case 1 -> dragon.setOrderedToSit(true);
-            case 2 -> dragon.setOrderedToSit(false);
+            case 2 -> {
+                dragon.setOrderedToSit(false);
+                dragon.setTarget(null);
+                dragon.getNavigation().stop();
+                if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
+                    dragon.setTakeoff(false);
+                    dragon.setHovering(false);
+                    dragon.setLanding(true);
+                }
+            }
             default -> {
             }
         }

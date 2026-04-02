@@ -22,6 +22,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
+import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
@@ -622,10 +623,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
                                        MobSpawnType spawnType,
                                        BlockPos pos,
                                        RandomSource random) {
-        if (!Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random)) {
-            return false;
-        }
-        return com.leon.saintsdragons.server.world.DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+        return com.leon.saintsdragons.server.world.DragonSpawnRules.hasCaveGroundSpawnSpace(level, pos)
                 && com.leon.saintsdragons.server.world.DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Stegonaut.class);
     }
 
@@ -676,9 +674,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
             double tamingChance = hearty
                     ? config.extraDoubles().getOrDefault("taming_chance_hearty", 1.0)
                     : config.extraDoubles().getOrDefault("taming_chance_base", 1.0);
-            int tameRoll = (int) Math.round(tamingChance);
-
-            if (this.getRandom().nextInt(Math.max(1, tameRoll)) == 0) {
+            if (DragonTamingChance.rollPercent(this.getRandom(), tamingChance)) {
                 this.tame(player);
                 this.setPackLeaderUuid(null); // Tamed Stegonauts leave wild packs immediately.
                 this.setOrderedToSit(true);

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.fabric;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -63,8 +64,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 cindervaneDefaults.abilityDamage("magma_volley", 20.0D));
         cindervaneBuffer.fireBodyDamage = cindervaneCurrent.abilityDamage("fire_body",
                 cindervaneDefaults.abilityDamage("fire_body", 3.0D));
-        cindervaneBuffer.tamingChanceBase = cindervaneCurrent.extraDouble("taming_chance_base", 4.0);
-        cindervaneBuffer.tamingChanceHearty = cindervaneCurrent.extraDouble("taming_chance_hearty", 2.0);
+        cindervaneBuffer.tamingChanceBase = cindervaneCurrent.extraDouble("taming_chance_base", 25.0);
+        cindervaneBuffer.tamingChanceChicken = cindervaneCurrent.extraDouble("taming_chance_chicken", 33.3333D);
+        cindervaneBuffer.tamingChanceHearty = cindervaneCurrent.extraDouble("taming_chance_hearty", 50.0);
         cindervaneBuffer.eggHatchChanceNormal = cindervaneCurrent.extraDouble("egg_hatch_chance_normal", 2.0);
         cindervaneBuffer.eggDropChance = cindervaneCurrent.extraDouble("egg_drop_chance", 0.12D);
         cindervaneBuffer.fireBodyExplosionDamage = cindervaneCurrent.extraDouble("fire_body_explosion_damage", 200.0D);
@@ -72,8 +74,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         cindervaneBuffer.wildFlyingSpeedMultiplier = cindervaneCurrent.extraDouble("wild_flying_speed_multiplier",
                 cindervaneDefaults.extraDouble("wild_flying_speed_multiplier", 1.0D));
         cindervaneBuffer.aggressiveWild = cindervaneCurrent.extraBoolean("aggressive_wild", false);
-        cindervaneBuffer.reactiveTerrainClearingOnDamage = cindervaneCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
-        cindervaneBuffer.reactiveTerrainClearingOnDamageTamed = cindervaneCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
         DragonAttributeConfig raevyxCurrent = loader.getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         DragonAttributeConfig raevyxDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.RAEVYX_ID);
@@ -89,8 +89,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 raevyxDefaults.abilityDamage("horn_gore", 15.0D));
         raevyxBuffer.dashDamage = raevyxCurrent.abilityDamage("dash",
                 raevyxDefaults.abilityDamage("dash", 10.0D));
-        raevyxBuffer.tamingChanceBase = raevyxCurrent.extraDouble("taming_chance_base", 5.0);
-        raevyxBuffer.tamingChanceHearty = raevyxCurrent.extraDouble("taming_chance_hearty", 3.0);
+        raevyxBuffer.tamingChanceBase = raevyxCurrent.extraDouble("taming_chance_base", 20.0);
+        raevyxBuffer.tamingChanceHearty = raevyxCurrent.extraDouble("taming_chance_hearty", 33.3333D);
         raevyxBuffer.tamingStunHealth = raevyxCurrent.extraDouble("taming_stun_health",
                 raevyxDefaults.extraDouble("taming_stun_health", 60.0D));
         raevyxBuffer.wildFlyingSpeedMultiplier = raevyxCurrent.extraDouble("wild_flying_speed_multiplier",
@@ -116,8 +116,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxBuffer.eggLootAncientCity = raevyxCurrent.extraDouble("egg_loot_ancient_city", 0.15D);
         raevyxBuffer.eggDropChance = raevyxCurrent.extraDouble("egg_drop_chance", 0.12D);
         raevyxBuffer.aggressiveWild = raevyxCurrent.extraBoolean("aggressive_wild", false);
-        raevyxBuffer.reactiveTerrainClearingOnDamage = raevyxCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
-        raevyxBuffer.reactiveTerrainClearingOnDamageTamed = raevyxCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
         DragonAttributeConfig varasuchusCurrent = loader.getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
         DragonAttributeConfig varasuchusDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
@@ -132,13 +130,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         varasuchusBuffer.dashClaw = varasuchusCurrent.abilityDamage("dash_claw", 16.0D);
         varasuchusBuffer.hornPhase1 = varasuchusCurrent.abilityDamage("horn_gore_phase1", 16.0D);
         varasuchusBuffer.hornPhase2 = varasuchusCurrent.abilityDamage("horn_gore_phase2", 20.8D);
-        varasuchusBuffer.tamingChance = varasuchusCurrent.extraDouble("taming_chance", 6.0);
+        varasuchusBuffer.tamingChance = varasuchusCurrent.extraDouble("taming_chance", 16.6667D);
+        varasuchusBuffer.tamingChanceTropical = varasuchusCurrent.extraDouble("taming_chance_tropical", 25.0D);
         varasuchusBuffer.legacyTaming = varasuchusCurrent.extraBoolean("legacy_taming", false);
         varasuchusBuffer.eggHatchChanceNormal = varasuchusCurrent.extraDouble("egg_hatch_chance_normal", 3.0D);
         varasuchusBuffer.eggDropChance = varasuchusCurrent.extraDouble("egg_drop_chance", 0.12D);
         varasuchusBuffer.aggressiveWild = varasuchusCurrent.extraBoolean("aggressive_wild", false);
-        varasuchusBuffer.reactiveTerrainClearingOnDamage = varasuchusCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
-        varasuchusBuffer.reactiveTerrainClearingOnDamageTamed = varasuchusCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
         DragonAttributeConfig stegonautCurrent = loader.getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
         DragonAttributeConfig stegonautDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
@@ -151,13 +148,11 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 stegonautDefaults.abilityDamage("chin_slam", 8.0D));
         stegonautBuffer.groundEatingDamage = stegonautCurrent.abilityDamage("ground_eating",
                 stegonautDefaults.abilityDamage("ground_eating", 10.0D));
-        stegonautBuffer.tamingChanceBase = stegonautCurrent.extraDouble("taming_chance_base", 1.0);
-        stegonautBuffer.tamingChanceHearty = stegonautCurrent.extraDouble("taming_chance_hearty", 1.0);
+        stegonautBuffer.tamingChanceBase = stegonautCurrent.extraDouble("taming_chance_base", 100.0);
+        stegonautBuffer.tamingChanceHearty = stegonautCurrent.extraDouble("taming_chance_hearty", 100.0);
         stegonautBuffer.eggHatchChanceNormal = stegonautCurrent.extraDouble("egg_hatch_chance_normal", 2.0D);
         stegonautBuffer.eggDropChance = stegonautCurrent.extraDouble("egg_drop_chance", 0.12D);
         stegonautBuffer.aggressiveWild = stegonautCurrent.extraBoolean("aggressive_wild", false);
-        stegonautBuffer.reactiveTerrainClearingOnDamage = stegonautCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
-        stegonautBuffer.reactiveTerrainClearingOnDamageTamed = stegonautCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
         DragonAttributeConfig ignivorusCurrent = loader.getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         DragonAttributeConfig ignivorusDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
@@ -187,8 +182,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.abilityDamage("ultimate", 200.0D));
         ignivorusBuffer.ultimatePenalty = ignivorusCurrent.extraDouble("ultimate_penalty_health",
                 ignivorusDefaults.extraDouble("ultimate_penalty_health", 50.0D));
-        ignivorusBuffer.tamingChanceBase = ignivorusCurrent.extraDouble("taming_chance_base", 7.0);
-        ignivorusBuffer.tamingChanceHearty = ignivorusCurrent.extraDouble("taming_chance_hearty", 4.0);
+        ignivorusBuffer.tamingChanceBase = ignivorusCurrent.extraDouble("taming_chance_base", 14.2857D);
+        ignivorusBuffer.tamingChanceBeef = ignivorusCurrent.extraDouble("taming_chance_beef", 20.0D);
+        ignivorusBuffer.tamingChanceHearty = ignivorusCurrent.extraDouble("taming_chance_hearty", 25.0);
         ignivorusBuffer.tamingStunHealth = ignivorusCurrent.extraDouble("taming_stun_health",
                 ignivorusDefaults.extraDouble("taming_stun_health", 100.0D));
         ignivorusBuffer.wildFlyingSpeedMultiplier = ignivorusCurrent.extraDouble("wild_flying_speed_multiplier",
@@ -220,8 +216,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ignivorusBuffer.eggLootAncientCity = ignivorusCurrent.extraDouble("egg_loot_ancient_city", 0.10D);
         ignivorusBuffer.eggDropChance = ignivorusCurrent.extraDouble("egg_drop_chance", 0.12D);
         ignivorusBuffer.aggressiveWild = ignivorusCurrent.extraBoolean("aggressive_wild", false);
-        ignivorusBuffer.reactiveTerrainClearingOnDamage = ignivorusCurrent.extraBoolean("reactive_terrain_clearing_on_damage", true);
-        ignivorusBuffer.reactiveTerrainClearingOnDamageTamed = ignivorusCurrent.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false);
 
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
@@ -318,6 +312,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
 
         ConfigCategory others = builder.getOrCreateCategory(OTHERS_CATEGORY);
+        others.addEntry(entryBuilder.startBooleanToggle(
+                Component.translatable("saintsdragons.config_screen.others.dragon_griefing"),
+                SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get()
+        ).setDefaultValue(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED_DEFAULT)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.tooltip"))
+         .setSaveConsumer(value -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(value))
+         .build());
         others.addEntry(entryBuilder.startIntSlider(
                 Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
                 config.ivyRestockInterval,
@@ -458,15 +459,21 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.fireBodyDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.taming_base"), buffer.tamingChanceBase)
-                .setDefaultValue(defaults.extraDouble("taming_chance_base", 4.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 25.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceBase = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.taming_chicken"), buffer.tamingChanceChicken)
+                .setDefaultValue(defaults.extraDouble("taming_chance_chicken", 33.3333D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceChicken = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.taming_hearty"), buffer.tamingChanceHearty)
-                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 2.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 50.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.egg_hatch_chance_normal"), buffer.eggHatchChanceNormal)
@@ -496,14 +503,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.cindervane.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
-                .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"), buffer.reactiveTerrainClearingOnDamage)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage", true))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamage = value)
-                .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"), buffer.reactiveTerrainClearingOnDamageTamed)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamageTamed = value)
                 .build());
 
         @SuppressWarnings({"rawtypes", "unchecked"})
@@ -549,15 +548,15 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.groundEatingDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"), buffer.tamingChanceBase)
-                .setDefaultValue(defaults.extraDouble("taming_chance_base", 1.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 100.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceBase = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_hearty"), buffer.tamingChanceHearty)
-                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 1.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 100.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_hatch_chance_normal"), buffer.eggHatchChanceNormal)
@@ -575,14 +574,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
-                .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"), buffer.reactiveTerrainClearingOnDamage)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage", true))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamage = value)
-                .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"), buffer.reactiveTerrainClearingOnDamageTamed)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamageTamed = value)
                 .build());
 
         @SuppressWarnings({"rawtypes", "unchecked"})
@@ -646,15 +637,15 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.dashDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_base"), buffer.tamingChanceBase)
-                .setDefaultValue(defaults.extraDouble("taming_chance_base", 5.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 20.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceBase = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_hearty"), buffer.tamingChanceHearty)
-                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 3.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 33.3333D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_stun_health"), buffer.tamingStunHealth)
@@ -750,14 +741,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
                 .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"), buffer.reactiveTerrainClearingOnDamage)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage", true))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamage = value)
-                .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"), buffer.reactiveTerrainClearingOnDamageTamed)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamageTamed = value)
-                .build());
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.raevyx"), rawEntries)
@@ -831,10 +814,16 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.hornPhase2 = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_chance"), buffer.tamingChance)
-                .setDefaultValue(defaults.extraDouble("taming_chance", 6.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance", 16.6667D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChance = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_tropical"), buffer.tamingChanceTropical)
+                .setDefaultValue(defaults.extraDouble("taming_chance_tropical", 25.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceTropical = value)
                 .build());
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.varasuchus.legacy_taming"), buffer.legacyTaming)
                 .setDefaultValue(defaults.extraBoolean("legacy_taming", false))
@@ -856,14 +845,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.varasuchus.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
-                .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"), buffer.reactiveTerrainClearingOnDamage)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage", true))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamage = value)
-                .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"), buffer.reactiveTerrainClearingOnDamageTamed)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamageTamed = value)
                 .build());
 
         @SuppressWarnings({"rawtypes", "unchecked"})
@@ -969,15 +950,21 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.ultimatePenalty = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_base"), buffer.tamingChanceBase)
-                .setDefaultValue(defaults.extraDouble("taming_chance_base", 7.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 14.2857D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceBase = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_beef"), buffer.tamingChanceBeef)
+                .setDefaultValue(defaults.extraDouble("taming_chance_beef", 20.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceBeef = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_hearty"), buffer.tamingChanceHearty)
-                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 4.0))
-                .setMin(1.0D)
-                .setMax(20.0D)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 25.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_stun_health"), buffer.tamingStunHealth)
@@ -1085,14 +1072,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
                 .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"), buffer.reactiveTerrainClearingOnDamage)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage", true))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamage = value)
-                .build());
-        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"), buffer.reactiveTerrainClearingOnDamageTamed)
-                .setDefaultValue(defaults.extraBoolean("reactive_terrain_clearing_on_damage_tamed", false))
-                .setSaveConsumer(value -> buffer.reactiveTerrainClearingOnDamageTamed = value)
-                .build());
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.ignivorus"), rawEntries)
@@ -1120,6 +1099,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 abilities,
                 Map.of(
                         "taming_chance_base", cindervaneBuffer.tamingChanceBase,
+                        "taming_chance_chicken", cindervaneBuffer.tamingChanceChicken,
                         "taming_chance_hearty", cindervaneBuffer.tamingChanceHearty,
                         "egg_hatch_chance_normal", cindervaneBuffer.eggHatchChanceNormal,
                         "egg_drop_chance", cindervaneBuffer.eggDropChance,
@@ -1128,9 +1108,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         "wild_flying_speed_multiplier", cindervaneBuffer.wildFlyingSpeedMultiplier
                 ),
                 Map.of(
-                        "aggressive_wild", cindervaneBuffer.aggressiveWild,
-                        "reactive_terrain_clearing_on_damage", cindervaneBuffer.reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", cindervaneBuffer.reactiveTerrainClearingOnDamageTamed
+                        "aggressive_wild", cindervaneBuffer.aggressiveWild
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.CINDERVANE_ID, updated);
@@ -1152,9 +1130,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         "egg_drop_chance", stegonautBuffer.eggDropChance
                 ),
                 Map.of(
-                        "aggressive_wild", stegonautBuffer.aggressiveWild,
-                        "reactive_terrain_clearing_on_damage", stegonautBuffer.reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", stegonautBuffer.reactiveTerrainClearingOnDamageTamed
+                        "aggressive_wild", stegonautBuffer.aggressiveWild
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.STEGONAUT_ID, updatedStegonaut);
@@ -1173,9 +1149,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 buildRaevyxExtras(raevyxBuffer),
                 Map.of(
                         "legacy_taming", raevyxBuffer.legacyTaming,
-                        "aggressive_wild", raevyxBuffer.aggressiveWild,
-                        "reactive_terrain_clearing_on_damage", raevyxBuffer.reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", raevyxBuffer.reactiveTerrainClearingOnDamageTamed
+                        "aggressive_wild", raevyxBuffer.aggressiveWild
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.RAEVYX_ID, updatedRaevyx);
@@ -1196,14 +1170,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 Map.of(
                         "swim_speed", varasuchusBuffer.swimSpeed,
                         "taming_chance", varasuchusBuffer.tamingChance,
+                        "taming_chance_tropical", varasuchusBuffer.tamingChanceTropical,
                         "egg_hatch_chance_normal", varasuchusBuffer.eggHatchChanceNormal,
                         "egg_drop_chance", varasuchusBuffer.eggDropChance
                 ),
                 Map.of(
                         "legacy_taming", varasuchusBuffer.legacyTaming,
-                        "aggressive_wild", varasuchusBuffer.aggressiveWild,
-                        "reactive_terrain_clearing_on_damage", varasuchusBuffer.reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", varasuchusBuffer.reactiveTerrainClearingOnDamageTamed
+                        "aggressive_wild", varasuchusBuffer.aggressiveWild
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.VARASUCHUS_ID, updatedVarasuchus);
@@ -1228,9 +1201,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 buildIgnivorusExtras(ignivorusBuffer),
                 Map.of(
                         "legacy_taming", ignivorusBuffer.legacyTaming,
-                        "aggressive_wild", ignivorusBuffer.aggressiveWild,
-                        "reactive_terrain_clearing_on_damage", ignivorusBuffer.reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", ignivorusBuffer.reactiveTerrainClearingOnDamageTamed
+                        "aggressive_wild", ignivorusBuffer.aggressiveWild
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.IGNIVORUS_ID, updatedIgnivorus);
@@ -1246,6 +1217,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double volleyDamage;
         double fireBodyDamage;
         double tamingChanceBase;
+        double tamingChanceChicken;
         double tamingChanceHearty;
         double eggHatchChanceNormal;
         double eggDropChance;
@@ -1253,8 +1225,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double fireBodySelfDamageOnCrash;
         double wildFlyingSpeedMultiplier;
         boolean aggressiveWild;
-        boolean reactiveTerrainClearingOnDamage;
-        boolean reactiveTerrainClearingOnDamageTamed;
     }
 
     private static final class StegonautAttributeBuffer {
@@ -1268,8 +1238,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double eggHatchChanceNormal;
         double eggDropChance;
         boolean aggressiveWild;
-        boolean reactiveTerrainClearingOnDamage;
-        boolean reactiveTerrainClearingOnDamageTamed;
     }
 
     private static final class RaevyxAttributeBuffer {
@@ -1299,8 +1267,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double eggLootAncientCity;
         double eggDropChance;
         boolean aggressiveWild;
-        boolean reactiveTerrainClearingOnDamage;
-        boolean reactiveTerrainClearingOnDamageTamed;
     }
 
     private static final class VarasuchusAttributeBuffer {
@@ -1315,12 +1281,11 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double hornPhase1;
         double hornPhase2;
         double tamingChance;
+        double tamingChanceTropical;
         boolean legacyTaming;
         double eggHatchChanceNormal;
         double eggDropChance;
         boolean aggressiveWild;
-        boolean reactiveTerrainClearingOnDamage;
-        boolean reactiveTerrainClearingOnDamageTamed;
     }
 
     private static final class IgnivorusAttributeBuffer {
@@ -1339,6 +1304,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double ultimateDamage;
         double ultimatePenalty;
         double tamingChanceBase;
+        double tamingChanceBeef;
         double tamingChanceHearty;
         double tamingStunHealth;
         double wildFlyingSpeedMultiplier;
@@ -1359,8 +1325,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double eggLootAncientCity;
         double eggDropChance;
         boolean aggressiveWild;
-        boolean reactiveTerrainClearingOnDamage;
-        boolean reactiveTerrainClearingOnDamageTamed;
     }
 
     private static Map<String, Double> buildRaevyxExtras(RaevyxAttributeBuffer buffer) {
@@ -1389,6 +1353,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         Map<String, Double> extras = new HashMap<>();
         extras.put("ultimate_penalty_health", buffer.ultimatePenalty);
         extras.put("taming_chance_base", buffer.tamingChanceBase);
+        extras.put("taming_chance_beef", buffer.tamingChanceBeef);
         extras.put("taming_chance_hearty", buffer.tamingChanceHearty);
         extras.put("taming_stun_health", buffer.tamingStunHealth);
         extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);

@@ -52,6 +52,9 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
         if (entry == null || entry.soundSupplier() == null) {
             return null;
         }
+        if (dragon.isBaby()) {
+            return null;
+        }
         int duration = switch (key) {
             case "grumble1", "cindervane_grumble1" -> 37;
             case "grumble2", "cindervane_grumble2" -> 27;

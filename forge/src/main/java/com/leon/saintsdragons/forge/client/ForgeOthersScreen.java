@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.client;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -20,6 +21,14 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
 
     @Override
     protected void buildEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.section")));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.dragon_griefing"),
+                () -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get(),
+                val -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(val),
+                SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED::save
+        ));
+
         // Ivy the Dragon Merchant
         entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));
         entries.add(new IntEntry(
@@ -32,6 +41,7 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
 
     @Override
     protected void onSave() {
+        SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
         ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
     }
 }

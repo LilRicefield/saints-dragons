@@ -61,7 +61,7 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
                           int packedLight,
                           int packedOverlay,
                           float red, float green, float blue, float alpha) {
-        this.shadowRadius = entity.isBaby() ? 1.0f : 2.4f;
+        this.shadowRadius = entity.isBaby() ? 1.1f : 2.4f;
         this.lastBakedModel = model;
         if (model != null) {
             model.getBone(PASSENGER_BONE).ifPresent(b -> b.setTrackingMatrices(true));

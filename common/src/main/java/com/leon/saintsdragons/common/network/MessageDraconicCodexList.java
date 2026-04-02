@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.common.network;
 
 import com.leon.saintsdragons.platform.Services;
+import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
-import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public class MessageDraconicCodexList {
                     dragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR),
                     dragon.getHunger(),
                     dragon.getHappiness(),
-                    dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus ? ignivorus.getTextureVariant() : 0,
+                    dragon.getTextureVariant(),
                     dragon.getGender().getId(),
                     dragon.hasGender(),
                     dragonType,
@@ -78,16 +78,9 @@ public class MessageDraconicCodexList {
     }
 
     private static String getDragonTypeName(DragonEntity dragon) {
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus) {
-            return "ignivorus";
-        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
-            return "raevyx";
-        } else if (dragon instanceof Varasuchus) {
-            return "varasuchus";
-        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane) {
-            return "cindervane";
-        } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut) {
-            return "stegonaut";
+        DragonType type = DragonType.fromEntity(dragon);
+        if (type != null) {
+            return type.getName();
         }
         return "ignivorus"; // Default fallback
     }

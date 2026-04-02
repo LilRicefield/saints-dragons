@@ -1497,6 +1497,39 @@
       }
     ]
   },
+  "volitans_grumble1": {
+    "subtitle": "Volitans grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_grumble1",
+        "volume": 1.6,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "volitans_grumble2": {
+    "subtitle": "Volitans grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_grumble2",
+        "volume": 1.6,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "volitans_grumble3": {
+    "subtitle": "Volitans grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_grumble3",
+        "volume": 1.6,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
   "volitans_walk": {
     "subtitle": "Volitans walks",
     "sounds": [
@@ -1514,6 +1547,17 @@
       {
         "name": "saintsdragons:entity/volitans/volitans_run",
         "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "volitans_eat": {
+    "subtitle": "Volitans eats",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_eat",
+        "volume": 1.4,
         "pitch": 1.0,
         "attenuation_distance": 20
       }

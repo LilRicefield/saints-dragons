@@ -61,7 +61,7 @@ public final class CommonModEvents {
         );
         registrar.register(
                 ModEntities.STEGONAUT.get(),
-                SpawnPlacements.Type.ON_GROUND,
+                SpawnPlacements.Type.NO_RESTRICTIONS,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Stegonaut::canSpawnHere
         );

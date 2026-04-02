@@ -15,9 +15,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
     private static final float BABY_PITCH_MULTIPLIER = 1.6f;
 
     private static final Map<String, Boolean> BABY_ALLOWED_KEYS = Map.ofEntries(
-            Map.entry("raevyx_grumble1", true),
-            Map.entry("raevyx_grumble2", true),
-            Map.entry("raevyx_grumble3", true),
             Map.entry("raevyx_eat", true),
             Map.entry("raevyx_hurt", true),
             Map.entry("raevyx_die", true)
@@ -60,6 +57,9 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
     @Override
     public DragonSoundSpec getVocalSpec(DragonSoundHandler handler, DragonEntity dragon, String key, DragonEntity.VocalEntry entry) {
         if (entry == null || entry.soundSupplier() == null) {
+            return null;
+        }
+        if (dragon.isBaby()) {
             return null;
         }
         int duration = switch (key) {

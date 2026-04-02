@@ -47,9 +47,9 @@
     "phase2_toggle_off_chance": 0.05,
     "phase2_decision_min_ticks": 60.0,
     "phase2_decision_max_ticks": 120.0,
-    "taming_chance_base": 7.0,
-    "taming_chance_beef": 5.0,
-    "taming_chance_hearty": 4.0,
+    "taming_chance_base": 14.2857,
+    "taming_chance_beef": 20.0,
+    "taming_chance_hearty": 25.0,
     "egg_hatch_chance_normal": 9.0,
     "egg_loot_bastion_treasure": 0.15,
     "egg_loot_nether_bridge": 0.15,
@@ -57,7 +57,6 @@
     "egg_drop_chance": 0.12,
     "wild_flying_speed_multiplier": 1.0,
     "taming_stun_health": 100.0,
-    "griefing_enabled": true,
     "aggressive_wild": false
   }
 }

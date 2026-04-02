@@ -155,9 +155,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private Player killDataAttackingPlayer;
     // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
     private boolean isRespawning = false;
-    private int nextReactiveTerrainClearTick = 0;
-    private static final String REACTIVE_TERRAIN_CLEAR_ON_DAMAGE_KEY = "reactive_terrain_clearing_on_damage";
-    private static final String REACTIVE_TERRAIN_CLEAR_ON_DAMAGE_TAMED_KEY = "reactive_terrain_clearing_on_damage_tamed";
 
     // Flag to prevent respawn logic from triggering on newly spawned babies (from spawn eggs/breeding)
     public int skipRespawnTicks = 0;
@@ -239,6 +236,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
      */
     protected DragonBabyComponent createBabyComponent() {
         return new DragonBabyComponent(this);
+    }
+
+    @Nullable
+    public DragonBabyComponent getBabyComponent() {
+        return babyComponent;
     }
 
     public DragonAiCombatPacingComponent getAiCombatPacing() {
@@ -794,7 +796,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                 this.lastDamagerTimestamp = this.tickCount;
             }
             onSuccessfulDamage(source, amount);
-            tryReactiveTerrainClearOnDamage();
         }
         if (result && !level().isClientSide && this.isTame() && this.getOwnerUUID() != null) {
             net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level();
@@ -823,127 +824,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
 
         return false;
-    }
-
-    private void tryReactiveTerrainClearOnDamage() {
-        if (this.tickCount < nextReactiveTerrainClearTick) {
-            return;
-        }
-        if (!canReactiveTerrainClear()) {
-            return;
-        }
-        if (!isUpperBodyObstructed()) {
-            return;
-        }
-
-        Vec3 eye = this.getEyePosition();
-        Vec3 look = this.getLookAngle();
-        if (look.lengthSqr() < 1.0E-4) {
-            look = new Vec3(0.0, 0.0, 1.0);
-        }
-        Vec3 headCenter = eye.add(look.normalize().scale(Math.max(0.8D, this.getBbWidth() * 0.35D)));
-        Vec3 bodyCenter = this.position().add(0.0D, this.getBbHeight() * 0.7D, 0.0D);
-
-        int maxBlocks = Math.max(8, (int) Math.ceil(this.getBbWidth() * 2.5D));
-        int broken = 0;
-        broken += clearObstructingBlocksAround(headCenter, Math.max(0.9D, this.getBbWidth() * 0.42D), 0.6D, maxBlocks);
-        if (broken < maxBlocks) {
-            broken += clearObstructingBlocksAround(bodyCenter, Math.max(0.9D, this.getBbWidth() * 0.35D), 0.7D, maxBlocks - broken);
-        }
-        if (broken > 0) {
-            nextReactiveTerrainClearTick = this.tickCount + 10;
-        } else {
-            nextReactiveTerrainClearTick = this.tickCount + 5;
-        }
-    }
-
-    private boolean canReactiveTerrainClear() {
-        if (level().isClientSide || !this.isAlive() || this.isBaby()) {
-            return false;
-        }
-        DragonAttributeConfig config = getReactiveTerrainClearingConfig();
-        if (!config.extraBoolean(REACTIVE_TERRAIN_CLEAR_ON_DAMAGE_KEY, true)) {
-            return false;
-        }
-        if (this.isTame() && !config.extraBoolean(REACTIVE_TERRAIN_CLEAR_ON_DAMAGE_TAMED_KEY, false)) {
-            return false;
-        }
-        return level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
-    }
-
-    private DragonAttributeConfig getReactiveTerrainClearingConfig() {
-        ResourceLocation id = getDragonAttributeConfigId();
-        if (id == null) {
-            return DragonAttributeConfig.EMPTY;
-        }
-        return DragonAttributeConfigLoader.getInstance().getConfig(id);
-    }
-
-    @Nullable
-    private ResourceLocation getDragonAttributeConfigId() {
-        DragonType type = getDragonType();
-        return type != null ? type.getConfigId() : null;
-    }
-
-    private boolean isUpperBodyObstructed() {
-        if (this.horizontalCollision || this.verticalCollision || this.isInWall()) {
-            return true;
-        }
-        Vec3 eye = this.getEyePosition();
-        BlockPos eyePos = BlockPos.containing(eye);
-        BlockState state = level().getBlockState(eyePos);
-        if (!state.getCollisionShape(level(), eyePos).isEmpty()) {
-            return true;
-        }
-        Vec3 forward = eye.add(this.getLookAngle().normalize().scale(Math.max(0.6D, this.getBbWidth() * 0.3D)));
-        BlockPos forwardPos = BlockPos.containing(forward);
-        BlockState forwardState = level().getBlockState(forwardPos);
-        return !forwardState.getCollisionShape(level(), forwardPos).isEmpty();
-    }
-
-    private int clearObstructingBlocksAround(Vec3 center, double radius, double halfHeight, int maxBlocks) {
-        int minX = (int) Math.floor(center.x - radius);
-        int maxX = (int) Math.floor(center.x + radius);
-        int minY = (int) Math.floor(center.y - halfHeight);
-        int maxY = (int) Math.floor(center.y + halfHeight);
-        int minZ = (int) Math.floor(center.z - radius);
-        int maxZ = (int) Math.floor(center.z + radius);
-        double radiusSq = radius * radius;
-
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        int broken = 0;
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
-                    if (broken >= maxBlocks) {
-                        return broken;
-                    }
-                    double dx = (x + 0.5D) - center.x;
-                    double dz = (z + 0.5D) - center.z;
-                    if (dx * dx + dz * dz > radiusSq) {
-                        continue;
-                    }
-                    cursor.set(x, y, z);
-                    if (!level().hasChunkAt(cursor)) {
-                        continue;
-                    }
-
-                    BlockState state = level().getBlockState(cursor);
-                    if (state.isAir() || !state.getFluidState().isEmpty() || state.hasBlockEntity()) {
-                        continue;
-                    }
-                    float hardness = state.getDestroySpeed(level(), cursor);
-                    if (hardness < 0.0F || hardness > 5.0F) {
-                        continue;
-                    }
-
-                    if (level().destroyBlock(cursor, true, this)) {
-                        broken++;
-                    }
-                }
-            }
-        }
-        return broken;
     }
 
     @Nullable

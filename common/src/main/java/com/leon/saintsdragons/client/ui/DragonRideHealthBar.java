@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,6 +29,8 @@ public class DragonRideHealthBar {
     private static final ResourceLocation VARASUCHUS_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/varasuchus/varasuchus_overlay.png");
     private static final ResourceLocation STEGONAUT_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/stegonaut/stegonaut_base.png");
     private static final ResourceLocation STEGONAUT_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/stegonaut/stegonaut_overlay.png");
+    private static final ResourceLocation VOLITANS_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/volitans/volitans_base.png");
+    private static final ResourceLocation VOLITANS_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/volitans/volitans_overlay.png");
 
     // Bar dimensions
     private static final int BAR_WIDTH = 182;
@@ -90,6 +93,8 @@ public class DragonRideHealthBar {
             renderTexturedHealthBar(guiGraphics, x, y, VARASUCHUS_BASE, VARASUCHUS_OVERLAY);
         } else if (dragon instanceof Stegonaut) {
             renderTexturedHealthBar(guiGraphics, x, y, STEGONAUT_BASE, STEGONAUT_OVERLAY);
+        } else if (dragon instanceof Volitans) {
+            renderTexturedHealthBar(guiGraphics, x, y, VOLITANS_BASE, VOLITANS_OVERLAY);
         } else {
             // Fallback colored bar for other dragons
             renderFallbackHealthBar(guiGraphics, x, y);

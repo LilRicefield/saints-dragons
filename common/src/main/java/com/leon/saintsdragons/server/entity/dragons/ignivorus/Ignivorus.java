@@ -717,11 +717,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             groundTicks = 0;
             timeFlying++;
 
-            // Break vegetation blocks during takeoff
-            if (isTakeoff()) {
-                breakBlocksDuringTakeoff();
-            }
-
         } else {
             groundTicks++;
             airTicks = 0;
@@ -1522,11 +1517,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
      * Inspired by Epic Fight's Demolition Leap
      */
     private void breakGroundCircle(ServerLevel level, Vec3 center, double radius) {
-        if (!DragonGriefingRules.canIgnivorusGriefing()) {
-            return;
-        }
-        // Check if mob griefing is allowed
-        if (!level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
+        if (!DragonGriefingRules.canDestroyBlocks(level)) {
             return;
         }
 
@@ -2685,56 +2676,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
-    /**
-     * Break vegetation blocks that the dragon collides with during takeoff
-     * Prevents wobbling when taking off near trees
-     */
-    private void breakBlocksDuringTakeoff() {
-        if (level().isClientSide) return;
-        if (!level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) return;
-        if (!DragonGriefingRules.canIgnivorusGriefing()) return;
-
-        // Get bounding box
-        var bb = this.getBoundingBox();
-
-        // Expand slightly to catch blocks we're about to hit
-        bb = bb.inflate(0.2);
-
-        // Check all block positions within the bounding box
-        BlockPos minPos = BlockPos.containing(bb.minX, bb.minY, bb.minZ);
-        BlockPos maxPos = BlockPos.containing(bb.maxX, bb.maxY, bb.maxZ);
-
-        for (BlockPos pos : BlockPos.betweenClosed(minPos, maxPos)) {
-            if (!level().hasChunkAt(pos)) continue;
-            var state = level().getBlockState(pos);
-
-            // Skip air
-            if (state.isAir()) {
-                continue;
-            }
-
-            // Check if it's breakable vegetation
-            if (isBreakableVegetation(state)) {
-                // Break the block without drops (just destroy it)
-                level().destroyBlock(pos, false);
-            }
-        }
-    }
-
-    /**
-     * Check if a block is breakable vegetation
-     */
-    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
-        var block = state.getBlock();
-        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
-               block instanceof net.minecraft.world.level.block.VineBlock ||
-               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
-               block instanceof net.minecraft.world.level.block.FlowerBlock ||
-               block instanceof net.minecraft.world.level.block.DoublePlantBlock ||
-               block instanceof net.minecraft.world.level.block.SaplingBlock ||
-               block instanceof net.minecraft.world.level.block.BushBlock;
-    }
-
     public void setHovering(boolean hovering) {
         this.entityData.set(DATA_HOVERING, hovering);
     }
@@ -3698,10 +3639,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (level().isClientSide || this.isBaby() || !this.isAlive()) {
             return;
         }
-        if (!DragonGriefingRules.canIgnivorusGriefing()) {
-            return;
-        }
-        if (!level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+        if (!DragonGriefingRules.canDestroyBlocks(level())) {
             return;
         }
 
@@ -4341,4 +4279,3 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return 180; // Allow full pitch range for head tracking
     }
 }
-

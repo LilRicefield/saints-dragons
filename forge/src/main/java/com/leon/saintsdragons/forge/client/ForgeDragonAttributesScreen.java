@@ -207,18 +207,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 () -> ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.cindervane.griefing_enabled"),
-                () -> ForgeDragonAttributesConfig.CINDERVANE_GRIEFING_ENABLED.get(),
-                ForgeDragonAttributesConfig.CINDERVANE_GRIEFING_ENABLED::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
-                () -> ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
-                ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"),
-                () -> ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.get(),
-                ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED::set,
-                null));
     }
 
     private void addStegonautEntries(List<ConfigEntry> entries) {
@@ -262,14 +250,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
-                () -> ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
-                ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"),
-                () -> ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.get(),
-                ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED::set,
                 null));
     }
 
@@ -379,14 +359,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 () -> ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
-                () -> ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
-                ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"),
-                () -> ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.get(),
-                ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED::set,
-                null));
     }
 
     private void addVarasuchusEntries(List<ConfigEntry> entries) {
@@ -454,18 +426,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.griefing_enabled"),
-                () -> ForgeDragonAttributesConfig.VARASUCHUS_GRIEFING_ENABLED.get(),
-                ForgeDragonAttributesConfig.VARASUCHUS_GRIEFING_ENABLED::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
-                () -> ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
-                ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"),
-                () -> ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.get(),
-                ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED::set,
                 null));
     }
 
@@ -615,18 +575,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 () -> ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.griefing_enabled"),
-                () -> ForgeDragonAttributesConfig.IGNIVORUS_GRIEFING_ENABLED.get(),
-                ForgeDragonAttributesConfig.IGNIVORUS_GRIEFING_ENABLED::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage"),
-                () -> ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.get(),
-                ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE::set,
-                null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.reactive_terrain_clearing_on_damage_tamed"),
-                () -> ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.get(),
-                ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED::set,
-                null));
     }
 
     private void resetSection() {
@@ -649,9 +597,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH.set(ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.getDefault());
-                ForgeDragonAttributesConfig.CINDERVANE_GRIEFING_ENABLED.set(ForgeDragonAttributesConfig.CINDERVANE_GRIEFING_ENABLED.getDefault());
-                ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
             case STEGONAUT -> {
                 ForgeDragonAttributesConfig.STEGONAUT_MAX_HEALTH.set(ForgeDragonAttributesConfig.STEGONAUT_MAX_HEALTH.getDefault());
@@ -664,8 +609,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.getDefault());
-                ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
             case RAEVYX -> {
                 ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.set(ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.getDefault());
@@ -693,8 +636,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
             case VARASUCHUS -> {
                 ForgeDragonAttributesConfig.VARASUCHUS_MAX_HEALTH.set(ForgeDragonAttributesConfig.VARASUCHUS_MAX_HEALTH.getDefault());
@@ -713,9 +654,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.getDefault());
-                ForgeDragonAttributesConfig.VARASUCHUS_GRIEFING_ENABLED.set(ForgeDragonAttributesConfig.VARASUCHUS_GRIEFING_ENABLED.getDefault());
-                ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
             case IGNIVORUS -> {
                 ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH.getDefault());
@@ -754,9 +692,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_GRIEFING_ENABLED.set(ForgeDragonAttributesConfig.IGNIVORUS_GRIEFING_ENABLED.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.set(ForgeDragonAttributesConfig.IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED.getDefault());
             }
         }
 

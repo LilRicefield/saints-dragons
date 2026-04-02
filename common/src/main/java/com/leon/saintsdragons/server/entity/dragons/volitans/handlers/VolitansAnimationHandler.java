@@ -27,11 +27,17 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.volitans.landed");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.volitans.swim");
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.volitans.swim_idle");
+    private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.volitans.hurt");
+    private static final RawAnimation DIE = RawAnimation.begin().thenPlay("animation.volitans.die");
 
     private static final RawAnimation BITE = RawAnimation.begin().thenPlay("animation.volitans.bite");
     private static final RawAnimation HORN_GORE = RawAnimation.begin().thenPlay("animation.volitans.horn_gore");
     private static final RawAnimation SWIPE_LEFT = RawAnimation.begin().thenPlay("animation.volitans.swipe_left");
     private static final RawAnimation SWIPE_RIGHT = RawAnimation.begin().thenPlay("animation.volitans.swipe_right");
+    private static final RawAnimation EAT = RawAnimation.begin().thenPlay("animation.volitans.eat");
+    private static final RawAnimation GRUMBLE_1 = RawAnimation.begin().thenPlay("animation.volitans.grumble1");
+    private static final RawAnimation GRUMBLE_2 = RawAnimation.begin().thenPlay("animation.volitans.grumble2");
+    private static final RawAnimation GRUMBLE_3 = RawAnimation.begin().thenPlay("animation.volitans.grumble3");
     private static final RawAnimation ROAR = RawAnimation.begin().thenPlay("animation.volitans.roar");
     private static final RawAnimation ROAR_AIR_WATER = RawAnimation.begin().thenPlay("animation.volitans.roar_air_water");
     private static final RawAnimation BREATH_START = RawAnimation.begin().thenPlay("animation.volitans.breath_start");
@@ -172,6 +178,10 @@ public final class VolitansAnimationHandler {
     }
 
     public void setupActionController(AnimationController<Volitans> controller) {
+        controller.triggerableAnim("eat", EAT);
+        controller.triggerableAnim("grumble1", GRUMBLE_1);
+        controller.triggerableAnim("grumble2", GRUMBLE_2);
+        controller.triggerableAnim("grumble3", GRUMBLE_3);
         controller.triggerableAnim("horn_gore", HORN_GORE);
         controller.triggerableAnim("swipe_left", SWIPE_LEFT);
         controller.triggerableAnim("swipe_right", SWIPE_RIGHT);
@@ -201,9 +211,7 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("roar_air_water", ROAR_AIR_WATER);
         controller.triggerableAnim("slamming", SLAMMING);
         controller.triggerableAnim("slammed", SLAMMED);
-        controller.triggerableAnim("volitans_hurt",
-                RawAnimation.begin().thenPlay("animation.volitans.hurt"));
-        controller.triggerableAnim("volitans_die",
-                RawAnimation.begin().thenPlay("animation.volitans.die"));
+        controller.triggerableAnim("volitans_hurt", HURT);
+        controller.triggerableAnim("volitans_die", DIE);
     }
 }

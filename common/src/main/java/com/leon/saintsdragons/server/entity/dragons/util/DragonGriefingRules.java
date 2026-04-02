@@ -1,41 +1,21 @@
 package com.leon.saintsdragons.server.entity.dragons.util;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 
-/**
- * Centralized dragon griefing toggles (global + per-dragon).
- */
 public final class DragonGriefingRules {
-    private static final String GRIEFING_ENABLED_KEY = "griefing_enabled";
-
     private DragonGriefingRules() {
     }
 
-    public static boolean isGlobalGriefingEnabled() {
-        return SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED == null
-                || SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get();
-    }
-
-    public static boolean canCindervaneGriefing() {
-        return canDragonGriefing(DragonAttributeConfigLoader.CINDERVANE_ID);
-    }
-
-    public static boolean canIgnivorusGriefing() {
-        return canDragonGriefing(DragonAttributeConfigLoader.IGNIVORUS_ID);
-    }
-
-    public static boolean canVarasuchusGriefing() {
-        return canDragonGriefing(DragonAttributeConfigLoader.VARASUCHUS_ID);
-    }
-
-    private static boolean canDragonGriefing(ResourceLocation dragonId) {
-        if (!isGlobalGriefingEnabled()) {
+    public static boolean canDestroyBlocks(Level level) {
+        if (level == null) {
             return false;
         }
-        return DragonAttributeConfigLoader.getInstance()
-                .getConfig(dragonId)
-                .extraBoolean(GRIEFING_ENABLED_KEY, true);
+        if (!level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+            return false;
+        }
+        return SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED == null
+                || SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get();
     }
 }

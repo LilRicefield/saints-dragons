@@ -7,6 +7,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.AABB;
+
 public final class DragonSpawnRules {
     private static final double SAME_SPECIES_RADIUS = 96.0D;
     private static final double ANY_DRAGON_RADIUS = 160.0D;
@@ -29,6 +30,10 @@ public final class DragonSpawnRules {
         boolean feetFree = level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
         boolean headFree = level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
         return solidGround && feetFree && headFree;
+    }
+
+    public static boolean hasCaveGroundSpawnSpace(LevelAccessor level, BlockPos pos) {
+        return hasDryGroundSpawnSpace(level, pos) && !level.canSeeSky(pos);
     }
 
     public static boolean passesNearbyDragonDensityCheck(LevelAccessor level,

@@ -26,9 +26,9 @@ public final class SaintsDragonsConfig {
     public static final int IGNIVORUS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int IGNIVORUS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 2;
-    public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
     public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT = true;
+    public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
 
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
@@ -97,11 +97,11 @@ public final class SaintsDragonsConfig {
         builder.comment("Biome IDs or biome tags to exclude from default Raevyx spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
         RAEVYX_EXCLUDED_BIOMES = builder.defineList("raevyxExcludedBiomes", Collections.emptyList());
 
-        builder.comment("Stegonaut spawn settings (land-focused; broaden via additional biome IDs/tags as needed)");
+        builder.comment("Stegonaut spawn settings (lush caves by default; broaden via additional biome IDs/tags as needed)");
         STEGONAUT_SPAWN_WEIGHT = builder.defineInt("stegonautSpawnWeight", STEGONAUT_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         STEGONAUT_MIN_GROUP_SIZE = builder.defineInt("stegonautMinGroupSize", STEGONAUT_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         STEGONAUT_MAX_GROUP_SIZE = builder.defineInt("stegonautMaxGroupSize", STEGONAUT_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Stegonaut can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\", \"#c:is_overworld\")");
+        builder.comment("Additional biome IDs or biome tags where Stegonaut can spawn beyond lush caves (e.g., \"minecraft:dripstone_caves\", \"terralith:cave/thermal_caves\", \"#forge:is_cave\")");
         STEGONAUT_ADDITIONAL_BIOMES = builder.defineList("stegonautAdditionalBiomes", Collections.emptyList());
         builder.comment("Biome IDs or biome tags to exclude from default Stegonaut spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
         STEGONAUT_EXCLUDED_BIOMES = builder.defineList("stegonautExcludedBiomes", Collections.emptyList());
@@ -140,9 +140,11 @@ public final class SaintsDragonsConfig {
         builder.pop();
 
         builder.push("gameplay");
-        builder.comment("Master switch for all dragon-caused block destruction/terrain griefing.");
+        builder.comment("Extra Saints & Dragons griefing toggle layered on top of the vanilla mobGriefing gamerule.");
+        builder.comment("If false, dragon-caused block destruction is disabled even when mobGriefing is true.");
         DRAGON_GRIEFING_ENABLED = builder.defineBoolean("dragonGriefingEnabled", DRAGON_GRIEFING_ENABLED_DEFAULT);
         builder.pop();
+
         builder.build();
     }
 

@@ -1,15 +1,19 @@
 package com.leon.saintsdragons.server.entity.component;
 
+import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import net.minecraft.network.chat.Component;
 import java.util.UUID;
+import java.util.function.IntConsumer;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-/**
- * Shared baby/offspring utilities for dragon entities.
- * Keeps ownership and Codex registration behavior consistent across species.
- */
 public final class DragonBabyComponent {
     private final DragonEntity dragon;
 
@@ -35,5 +39,67 @@ public final class DragonBabyComponent {
         if (offspring.isTame() && offspring.getOwnerUUID() != null) {
             DragonCodexSavedData.get(level).addDragon(offspring.getOwnerUUID(), offspring);
         }
+    }
+
+    public boolean ensureCanFeed(Player player, String translationPrefix, boolean canFeed) {
+        if (canFeed) {
+            return true;
+        }
+        if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.displayClientMessage(
+                    Component.translatable(translationPrefix + ".still_eating", dragon.getName()),
+                    true
+            );
+        }
+        return false;
+    }
+
+    public void applyBabyGrowth(Player player, boolean heartyMeal, String translationPrefix, int normalGrowthTicks, int heartyGrowthTicks) {
+        int growthTicks = heartyMeal ? heartyGrowthTicks : normalGrowthTicks;
+        int newAge = Math.min(0, dragon.getAge() + growthTicks);
+        dragon.setAge(newAge);
+        dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+
+        if (player instanceof ServerPlayer serverPlayer) {
+            String messageKey = newAge == 0
+                    ? translationPrefix + ".baby_grown"
+                    : translationPrefix + ".baby_fed";
+            serverPlayer.displayClientMessage(Component.translatable(messageKey, dragon.getName()), true);
+        }
+
+        dragon.applyFeedingHunger(heartyMeal);
+    }
+
+    public void applyBabyTamingResult(Player player, boolean success, Runnable onSuccess) {
+        if (success) {
+            onSuccess.run();
+            dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+        } else {
+            dragon.level().broadcastEntityEvent(dragon, (byte) 6);
+        }
+    }
+
+    public void handleBabyFoodTaming(Player player,
+                                     ItemStack food,
+                                     int feedingCooldownTicks,
+                                     boolean heartyMeal,
+                                     Runnable eatFeedback,
+                                     IntConsumer feedingCooldownSetter,
+                                     double tameChance,
+                                     Runnable onSuccess) {
+        if (!player.getAbilities().instabuild) {
+            food.shrink(1);
+        }
+
+        eatFeedback.run();
+        feedingCooldownSetter.accept(feedingCooldownTicks);
+
+        if (heartyMeal) {
+            dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+        }
+        dragon.applyFeedingHunger(heartyMeal);
+
+        boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
+        applyBabyTamingResult(player, success, onSuccess);
     }
 }

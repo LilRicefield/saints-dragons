@@ -123,6 +123,11 @@ public class VolitansAirCombatGoal extends Goal {
 
         dragon.getLookControl().setLookAt(target, 35.0F, 35.0F);
 
+        if (dragon.isTakeoff() && dragon.onGround()) {
+            dragon.getNavigation().stop();
+            return;
+        }
+
         if (dragon.isTakeoff() && !dragon.onGround()) {
             dragon.beginAiFlight();
         }
@@ -225,6 +230,9 @@ public class VolitansAirCombatGoal extends Goal {
     }
 
     private void flyToward(Vec3 destination, double speedScale) {
+        if (dragon.isTakeoff() && dragon.onGround()) {
+            return;
+        }
         dragon.beginAiFlight();
         Vec3 toDest = destination.subtract(dragon.position());
         if (toDest.lengthSqr() < 1.0E-4D) {

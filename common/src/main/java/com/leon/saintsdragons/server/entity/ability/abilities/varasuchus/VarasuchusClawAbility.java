@@ -159,13 +159,9 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
         if (!(dragon.level() instanceof ServerLevel server)) {
             return;
         }
-        if (!server.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) {
+        if (!DragonGriefingRules.canDestroyBlocks(server)) {
             return;
         }
-        if (!DragonGriefingRules.canVarasuchusGriefing()) {
-            return;
-        }
-
         Vec3 mouth = dragon.getMouthPosition();
         Vec3 look = dragon.getLookAngle().normalize();
 

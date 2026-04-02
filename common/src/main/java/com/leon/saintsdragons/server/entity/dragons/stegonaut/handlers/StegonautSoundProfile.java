@@ -55,6 +55,9 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
         if (entry == null || entry.soundSupplier() == null) {
             return null;
         }
+        if (dragon.isBaby()) {
+            return null;
+        }
         int duration = switch (key) {
             case "grumble1", "stegonaut_grumble1" -> 54;
             case "grumble2", "stegonaut_grumble2" -> 83;

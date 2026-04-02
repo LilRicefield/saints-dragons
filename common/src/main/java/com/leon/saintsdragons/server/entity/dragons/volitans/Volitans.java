@@ -26,7 +26,10 @@ import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderCon
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansSoundProfile;
+import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
@@ -45,11 +48,14 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.Pufferfish;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -61,6 +67,7 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -77,7 +84,15 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.Map;
+
 public class Volitans extends RideableDragonBase implements DragonFlightCapable, SemiAquaticDragon, SoundHandledDragon, ShakesScreen {
+    private static final double BABY_MAX_HEALTH = 60.0D;
+    private static final double BABY_ARMOR = 0.0D;
+    private static final float BABY_HITBOX_SCALE = 0.55F;
+    public static final int VARIANT_DEFAULT = 0;
+    public static final int VARIANT_BLOODSHOT = 1;
+    private static final float BLOODSHOT_VARIANT_CHANCE = 0.10F;
     private static final EntityDataAccessor<Boolean> DATA_FLYING =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
@@ -129,10 +144,13 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final int SIT_DOWN_ANIMATION_TICKS = 50;
     private static final int SIT_UP_ANIMATION_TICKS = 25;
     private static final int LANDED_CONTROL_LOCK_TICKS = 20;
-    private static final int WALK_SOUND_DURATION_TICKS = 60;
+    private static final int WALK_SOUND_DURATION_TICKS = 33;
     private static final int RUN_SOUND_DURATION_TICKS = 30;
-    private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = 52;
+    private static final int EAT_SOUND_DURATION_TICKS = 34;
+    private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = 33;
     private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = 25;
+    private static final int MIN_AMBIENT_DELAY = 220;
+    private static final int MAX_AMBIENT_DELAY = 420;
     private static final int RIDER_BACK_DASH_COOLDOWN_TICKS = 30;
     private static final int RIDER_DASH_SOUND_TICKS = 60; // 3.0s
     private static final int RIDER_DODGE_SOUND_TICKS = 60; // 3.0s
@@ -175,6 +193,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
     private static final float BURROW_MOVE_SHAKE_INTENSITY = 0.12F;
     private static final int BURROW_EXIT_TAKEOFF_BLOCK_BUFFER_TICKS = 8;
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
+            .add("grumble1", "actions", "animation.volitans.grumble1", ModSounds.VOLITANS_GRUMBLE_1, 1.0f, 0.98f, 0.08f, false, false, false)
+            .add("grumble2", "actions", "animation.volitans.grumble2", ModSounds.VOLITANS_GRUMBLE_2, 1.0f, 0.98f, 0.08f, false, false, false)
+            .add("grumble3", "actions", "animation.volitans.grumble3", ModSounds.VOLITANS_GRUMBLE_3, 1.0f, 1.0f, 0.06f, false, false, false)
+            .build();
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final VolitansAnimationHandler animationHandler = new VolitansAnimationHandler(this);
@@ -228,6 +251,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private boolean aiSpecialCombatActive = false;
     private boolean aiSpecialCombatReserved = false;
     private int tempInvulnTicks = 0;
+    private int ambientSoundTimer;
+    private int nextAmbientSoundDelay;
 
     public Volitans(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
@@ -249,6 +274,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (!level.isClientSide) {
             applyConfiguredAttributes();
         }
+        resetAmbientSoundTimer();
     }
 
     private DragonTakeoff createTakeoffComponent() {
@@ -393,12 +419,30 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     public static AttributeSupplier.Builder createAttributes() {
+        var config = com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.getInstance()
+                .getConfig(com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.VOLITANS_ID);
         return TamableAnimal.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 90.0D)
+                .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.30D)
-                .add(Attributes.FLYING_SPEED, RIDER_FLY_SPEED)
+                .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
-                .add(Attributes.ARMOR, 4.0D);
+                .add(Attributes.ARMOR, config.armor());
+    }
+
+    @Override
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
+        EntityDimensions baseDimensions = super.getDimensions(pose);
+        return isBaby() ? baseDimensions.scale(BABY_HITBOX_SCALE) : baseDimensions;
+    }
+
+    @Override
+    public void ageBoundaryReached() {
+        super.ageBoundaryReached();
+        if (this.getTextureVariant() == VARIANT_DEFAULT) {
+            this.setTextureVariant(rollAdultVariant());
+        }
+        applyConfiguredAttributes();
+        refreshDimensions();
     }
 
     public static boolean canSpawnHere(EntityType<? extends Volitans> type,
@@ -422,6 +466,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected void playStepSound(net.minecraft.core.BlockPos pos, BlockState state) {
+        if (isBaby()) {
+            return;
+        }
         if (this.level().isClientSide) {
             return;
         }
@@ -454,19 +501,120 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             this.goalSelector.addGoal(4, new VolitansWaterCombatGoal(this));
         }
         this.goalSelector.addGoal(5, new DirectSwimToTargetGoal(this, 8.0F, 0.28D, true));
-        this.goalSelector.addGoal(6, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forCindervane()));
+        this.goalSelector.addGoal(6, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
+            @Override
+            protected void startFollowTakeoff() {
+                if (Volitans.this.isFlying() || Volitans.this.isTakeoff()) {
+                    return;
+                }
+                Volitans.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
+            }
+
+            @Override
+            protected void handleFlightFollowing(LivingEntity owner) {
+                if (Volitans.this.isTakeoff() && Volitans.this.onGround()) {
+                    return;
+                }
+
+                Vec3 destination = getFlightFollowTarget(owner);
+                if (!Volitans.this.onGround() && (Volitans.this.isTakeoff() || !Volitans.this.isFlying())) {
+                    Volitans.this.beginAiFlight();
+                }
+
+                Vec3 toDest = destination.subtract(Volitans.this.position());
+                if (toDest.lengthSqr() < 1.0E-4D) {
+                    Volitans.this.getNavigation().stop();
+                    return;
+                }
+
+                Vec3 targetDir = toDest.normalize();
+                Vec3 current = Volitans.this.getDeltaMovement();
+                double flightSpeed = Math.max(0.18D, Volitans.this.getFlightSpeed() * getFlightFollowSpeed());
+                Vec3 targetVel = targetDir.scale(flightSpeed);
+                Vec3 blended = new Vec3(
+                        current.x + (targetVel.x - current.x) * 0.12D,
+                        current.y + (targetVel.y - current.y) * 0.12D,
+                        current.z + (targetVel.z - current.z) * 0.12D
+                ).scale(0.94D);
+
+                Volitans.this.setSpeed((float) flightSpeed);
+                Volitans.this.setDeltaMovement(blended);
+                Volitans.this.move(MoverType.SELF, blended);
+                Volitans.this.hasImpulse = true;
+            }
+
+            @Override
+            public boolean canUse() {
+                return !Volitans.this.isVehicle() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !Volitans.this.isVehicle() && super.canContinueToUse();
+            }
+        });
         this.goalSelector.addGoal(7, new DirectSwimToTargetGoal(this, 8.0F, 0.24D, false));
         this.goalSelector.addGoal(8, new DragonGroundWanderGoal<>(this, 0.9D, 70));
         this.goalSelector.addGoal(9, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
-        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(11, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+            @Override
+            public boolean canUse() {
+                return !Volitans.this.isVehicle() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !Volitans.this.isVehicle() && super.canContinueToUse();
+            }
+        });
+        this.goalSelector.addGoal(11, new RandomLookAroundGoal(this) {
+            @Override
+            public boolean canUse() {
+                return !Volitans.this.isVehicle() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !Volitans.this.isVehicle() && super.canContinueToUse();
+            }
+        });
         if (!this.isBaby()) {
-            this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-            this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
+            this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this) {
+                @Override
+                public boolean canUse() {
+                    return !Volitans.this.isVehicle() && super.canUse();
+                }
+            });
+            this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this) {
+                @Override
+                public boolean canUse() {
+                    return !Volitans.this.isVehicle() && super.canUse();
+                }
+            });
             this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Volitans.class));
-            this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
+            this.targetSelector.addGoal(4, new HurtByTargetGoal(this) {
+                @Override
+                public boolean canUse() {
+                    return !Volitans.this.isVehicle() && super.canUse();
+                }
+
+                @Override
+                public boolean canContinueToUse() {
+                    return !Volitans.this.isVehicle() && super.canContinueToUse();
+                }
+            });
             this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                    target -> shouldAggroOnSight()));
+                    target -> shouldAggroOnSight()) {
+                @Override
+                public boolean canUse() {
+                    return !Volitans.this.isVehicle() && super.canUse();
+                }
+
+                @Override
+                public boolean canContinueToUse() {
+                    return !Volitans.this.isVehicle() && super.canContinueToUse();
+                }
+            });
         }
     }
 
@@ -714,8 +862,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             takeoffComponent.clear();
             return;
         }
-        if (takeoff && !wasTakeoff && !level().isClientSide) {
-            getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_TAKEOFF.get(), 2.0f, 1.0f, 40);
+        if (takeoff && !wasTakeoff && !level().isClientSide && !isBaby()) {
+            getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_TAKEOFF.get(), 2.0f, 1.0f, 50);
         }
     }
 
@@ -1012,6 +1160,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             if (aiGroundMobilityCooldownTicks > 0) {
                 aiGroundMobilityCooldownTicks--;
             }
+            handleAmbientSounds();
             takeoffComponent.tick();
             if (riderTakeoffTicks > 0) {
                 riderTakeoffTicks--;
@@ -1392,8 +1541,49 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         Volitans baby = com.leon.saintsdragons.common.registry.ModEntities.VOLITANS.get().create(level);
         if (baby != null) {
             assignMotherToBaby(baby, otherParent);
+            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+            java.util.UUID ownerId = this.getOwnerUUID();
+            if (ownerId != null) {
+                baby.setOwnerUUID(ownerId);
+                baby.setTame(true);
+            }
+            baby.setAge(-24000);
+            baby.setBaby(true);
+            baby.setTextureVariant(VARIANT_DEFAULT);
+            baby.applyConfiguredAttributes();
+            baby.setHealth(baby.getMaxHealth());
+            net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
+            double spawnY = safePos != null ? safePos.getY() : this.getY();
+            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
+            registerToOwnerCodex(baby, level);
         }
         return baby;
+    }
+
+    @Override
+    protected int getMaxTextureVariant() {
+        return VARIANT_BLOODSHOT;
+    }
+
+    @Override
+    protected int chooseSpawnTextureVariant(@NotNull net.minecraft.world.level.ServerLevelAccessor levelAccessor,
+                                            @NotNull net.minecraft.world.DifficultyInstance difficulty,
+                                            @NotNull MobSpawnType reason,
+                                            @Nullable net.minecraft.world.entity.SpawnGroupData spawnData,
+                                            @Nullable CompoundTag spawnTag) {
+        return rollAdultVariant();
+    }
+
+    @Override
+    public java.util.Map<String, Integer> getTextureVariantNameMap() {
+        return java.util.Map.of(
+                "default", VARIANT_DEFAULT,
+                "bloodshot", VARIANT_BLOODSHOT
+        );
+    }
+
+    private int rollAdultVariant() {
+        return this.getRandom().nextFloat() < BLOODSHOT_VARIANT_CHANCE ? VARIANT_BLOODSHOT : VARIANT_DEFAULT;
     }
 
     @Override
@@ -1533,6 +1723,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
+        if (source.getEntity() instanceof Pufferfish || source.getDirectEntity() instanceof Pufferfish) {
+            return false;
+        }
         if (source.is(DamageTypes.MAGIC) && this.hasEffect(MobEffects.POISON)) {
             return false;
         }
@@ -1553,6 +1746,16 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     @Override
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
+    }
+
+    @Override
+    public Map<String, VocalEntry> getVocalEntries() {
+        return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonSoundProfile getSoundProfile() {
+        return VolitansSoundProfile.INSTANCE;
     }
 
     @Override
@@ -2123,6 +2326,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private void playForwardDashSound() {
+        if (isBaby()) {
+            return;
+        }
         if (this.level().isClientSide) {
             return;
         }
@@ -2130,6 +2336,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private void playBackwardDashSound() {
+        if (isBaby()) {
+            return;
+        }
         if (this.level().isClientSide) {
             return;
         }
@@ -2137,6 +2346,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private void playDodgeSound() {
+        if (isBaby()) {
+            return;
+        }
         if (this.level().isClientSide) {
             return;
         }
@@ -2347,7 +2559,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             boolean completedLanding = isLanding() && onGround();
             if ((completedLanding || touchdownFromFlight) && onGround() && !level().isClientSide) {
                 triggerAnim("actions", "landed");
-                getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
+                if (!isBaby()) {
+                    getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
+                }
                 lockRiderControls(LANDED_CONTROL_LOCK_TICKS);
                 markLandedNow();
             }
@@ -2413,10 +2627,12 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private void applyConfiguredAttributes() {
-        setAttributeBase(Attributes.MAX_HEALTH, 90.0D);
+        var config = com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.getInstance()
+                .getConfig(com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.VOLITANS_ID);
+        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
         setAttributeBase(Attributes.MOVEMENT_SPEED, 0.30D);
-        setAttributeBase(Attributes.FLYING_SPEED, RIDER_FLY_SPEED);
-        setAttributeBase(Attributes.ARMOR, 4.0D);
+        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
+        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : config.armor());
         if (this.getHealth() > this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
@@ -2427,6 +2643,50 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (instance != null) {
             instance.setBaseValue(value);
         }
+    }
+
+    private void handleAmbientSounds() {
+        if (nextAmbientSoundDelay <= 0) {
+            resetAmbientSoundTimer();
+        }
+        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || areRiderControlsLocked()) {
+            return;
+        }
+        if (getTarget() != null || getActiveAbility() != null || isBreathing() || isBurrowing()) {
+            return;
+        }
+        if (isVehicle() || isTakeoff() || isLanding() || isHovering()) {
+            return;
+        }
+
+        ambientSoundTimer++;
+        if (ambientSoundTimer < nextAmbientSoundDelay) {
+            return;
+        }
+
+        playAmbientGrumble();
+        resetAmbientSoundTimer();
+    }
+
+    private void playAmbientGrumble() {
+        float roll = this.getRandom().nextFloat();
+        String vocalKey = roll < 0.34f ? "grumble1" : (roll < 0.67f ? "grumble2" : "grumble3");
+        this.getSoundHandler().playVocal(vocalKey);
+    }
+
+    private void resetAmbientSoundTimer() {
+        RandomSource random = getRandom();
+        ambientSoundTimer = 0;
+        int range = Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1);
+        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(range);
+    }
+
+    public void playEatMovingSound() {
+        if (level().isClientSide) {
+            return;
+        }
+        float pitch = isBaby() ? 1.6f : 1.0f;
+        getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_EAT.get(), 1.0f, pitch, EAT_SOUND_DURATION_TICKS);
     }
 
     @Override

@@ -251,7 +251,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
             // Apply block effects only at the impact point to avoid excessive destruction
             boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING
-                    && DragonGriefingRules.canIgnivorusGriefing();
+                    && DragonGriefingRules.canDestroyBlocks(serverLevel);
             // Projectile-only damage model: flame entities are the sole source of entity damage.
             // Keep impact damage at 0 to avoid look/area damage before flames visually arrive.
             float fallbackImpactDamage = 0.0f;

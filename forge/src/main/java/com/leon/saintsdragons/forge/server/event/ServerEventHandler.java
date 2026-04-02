@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.server.event;
 
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBinderAbility;
+import com.leon.saintsdragons.server.world.StegonautLushCaveSpawner;
 import com.leon.saintsdragons.server.world.VillageIvySpawner;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.TickEvent;
@@ -26,6 +27,7 @@ public class ServerEventHandler {
             // Tick village Ivy spawner for all levels
             for (ServerLevel level : event.getServer().getAllLevels()) {
                 VillageIvySpawner.tick(level);
+                StegonautLushCaveSpawner.tick(level);
             }
         }
     }
@@ -36,5 +38,6 @@ public class ServerEventHandler {
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         VillageIvySpawner.clearTracking();
+        StegonautLushCaveSpawner.clearTracking();
     }
 }

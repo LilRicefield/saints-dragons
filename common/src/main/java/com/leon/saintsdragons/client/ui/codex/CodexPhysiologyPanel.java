@@ -130,6 +130,7 @@ public class CodexPhysiologyPanel {
             case "ignivorus" -> "saintsdragons.variant.crimson";
             case "cindervane" -> "saintsdragons.variant.albino";
             case "raevyx" -> "saintsdragons.variant.night_gold";
+            case "volitans" -> "saintsdragons.variant.bloodshot";
             default -> "saintsdragons.variant.default";
         };
     }

@@ -137,7 +137,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         updateFlightState(shouldFly, ownerAirborne, distance);
 
         // Execute movement
-        if (dragon.isFlying()) {
+        if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
             handleFlightFollowing(owner);
         } else {
             handleGroundFollowing(owner, distance);
@@ -159,13 +159,9 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     /**
      * Update flight state based on conditions
      */
-    private void updateFlightState(boolean shouldFly, boolean ownerAirborne, double distance) {
-        if (shouldFly && !dragon.isFlying()) {
-            // Take off to follow owner
-            dragon.setFlying(true);
-            dragon.setTakeoff(true);
-            dragon.setLanding(false);
-            dragon.setHovering(false);
+    protected void updateFlightState(boolean shouldFly, boolean ownerAirborne, double distance) {
+        if (shouldFly && !dragon.isFlying() && !dragon.isTakeoff()) {
+            startFollowTakeoff();
             resetPathTracking();
         } else if (dragon.isFlying()) {
             // Check if should land
@@ -181,36 +177,44 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         }
     }
 
+    protected void startFollowTakeoff() {
+        dragon.setFlying(true);
+        dragon.setTakeoff(true);
+        dragon.setLanding(false);
+        dragon.setHovering(false);
+    }
+
     /**
      * Handle flight movement toward owner
      */
-    private void handleFlightFollowing(LivingEntity owner) {
-        // Position slightly above and behind owner
-        double targetY = owner.getY() + owner.getBbHeight() + config.hoverHeight;
-
-        // Offset behind owner's look direction
-        Vec3 ownerLook = owner.getLookAngle();
-        double offsetX = -ownerLook.x * 3.0;
-        double offsetZ = -ownerLook.z * 3.0;
-
-        // Add subtle bobbing for natural flight
-        double verticalOffset = Math.sin(dragon.tickCount * 0.2) * 0.3;
-
-        double targetX = owner.getX() + offsetX;
-        double targetZ = owner.getZ() + offsetZ;
-
-        // Only update if not too close (prevent jitter)
-        double distToTargetSq = dragon.distanceToSqr(targetX, targetY, targetZ);
+    protected void handleFlightFollowing(LivingEntity owner) {
+        Vec3 targetPos = getFlightFollowTarget(owner);
+        double distToTargetSq = dragon.distanceToSqr(targetPos.x, targetPos.y, targetPos.z);
         if (distToTargetSq > 1.0) {
             dragon.getMoveControl().setWantedPosition(
-                    targetX,
-                    targetY + verticalOffset,
-                    targetZ,
-                    config.flightSpeed
+                    targetPos.x,
+                    targetPos.y,
+                    targetPos.z,
+                    getFlightFollowSpeed()
             );
         } else {
             dragon.getNavigation().stop();
         }
+    }
+
+    protected double getFlightFollowSpeed() {
+        return config.flightSpeed;
+    }
+
+    protected Vec3 getFlightFollowTarget(LivingEntity owner) {
+        double targetY = owner.getY() + owner.getBbHeight() + config.hoverHeight;
+        Vec3 ownerLook = owner.getLookAngle();
+        double offsetX = -ownerLook.x * 3.0;
+        double offsetZ = -ownerLook.z * 3.0;
+        double verticalOffset = Math.sin(dragon.tickCount * 0.2) * 0.3;
+        double targetX = owner.getX() + offsetX;
+        double targetZ = owner.getZ() + offsetZ;
+        return new Vec3(targetX, targetY + verticalOffset, targetZ);
     }
 
     /**
@@ -270,7 +274,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     private boolean shouldTriggerFlight(LivingEntity owner, double distance, boolean ownerAirborne) {
         // If already flying, check if should land
-        if (dragon.isFlying()) {
+        if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
             if (shouldForceFollow() || ownerAirborne) {
                 return true; // Keep flying
             }
@@ -456,6 +460,24 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
                     1.0,    // maxWalkSpeed
                     1.6,    // maxRunSpeed
                     1.0     // flightSpeed (uses dragon.getFlightSpeed())
+            );
+        }
+
+        public static FollowConfig forVolitans() {
+            return new FollowConfig(
+                    20.0,   // startFollowDist
+                    8.0,    // stopFollowDist
+                    64.0,   // teleportDist
+                    10.0,   // runDist
+                    24.0,   // flightTriggerDist
+                    6.0,    // flightHeightDiff
+                    10.0,   // landingDistance
+                    2.5,    // hoverHeight
+                    0.7,    // walkSpeed
+                    1.1,    // runSpeed
+                    1.0,    // maxWalkSpeed
+                    1.6,    // maxRunSpeed
+                    4.0     // flightSpeed multiplier for direct air-follow
             );
         }
     }

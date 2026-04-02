@@ -71,6 +71,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -160,6 +161,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private int landingTicks;
     private int riderTakeoffTicks;
     private boolean wasVehicleLastTick;
+    private int forceOwnerFollowTicks;
     private boolean fireBodyCrashArmed;
     private double fireBodyCrashMaxHeight;
     private boolean autoGrabPassengerMountAllowed;
@@ -686,7 +688,17 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // Baby-specific: follow nearby adult dragons (wild babies only)
         this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal<>(this, Cindervane.class, 1.15D));
 
-        this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forCindervane()));
+        this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forCindervane()) {
+            @Override
+            protected boolean shouldForceFollow() {
+                return Cindervane.this.forceOwnerFollowTicks > 0;
+            }
+
+            @Override
+            protected void clearForceFollow() {
+                Cindervane.this.forceOwnerFollowTicks = 0;
+            }
+        });
         this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 0.6D, 160));
         // Idle water behavior: prefer swimming toward shore rather than sinking/hovering in place.
         this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
@@ -740,11 +752,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 airTicks++;
                 groundTicks = 0;
                 this.fallDistance = 0.0F;
-
-                // Break vegetation blocks during takeoff
-                if (isTakeoff()) {
-                    breakBlocksDuringTakeoff();
-                }
 
                 if (onGroundNow && !isTakeoff()) {
                     if (isLanding()) {
@@ -820,6 +827,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             targetCooldown--;
         }
 
+        tickOwnerFollowRecovery();
+
         // Update timeFlying counter
         if (isFlying()) {
             timeFlying++;
@@ -866,6 +875,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private void tickMountedState() {
         boolean mounted = this.isVehicle();
 
+        if (!mounted && forceOwnerFollowTicks > 0) {
+            forceOwnerFollowTicks--;
+        }
+
         if (mounted && !wasVehicleLastTick) {
             clearSitProgress();
             clearStatesWhenMounted();
@@ -893,9 +906,81 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             this.entityData.set(DATA_RIDER_FORWARD, 0f);
             this.entityData.set(DATA_RIDER_STRAFE, 0f);
             this.syncAnimState(0, -1);
+            if (this.isTame() && this.getOwner() != null && this.getCommand() == 0) {
+                this.forceOwnerFollowTicks = 40;
+            }
         }
 
         wasVehicleLastTick = mounted;
+    }
+
+    private void tickOwnerFollowRecovery() {
+        if (!this.isTame() || this.isOrderedToSit() || this.getCommand() != 0) {
+            return;
+        }
+
+        LivingEntity owner = this.getOwner();
+        if (owner == null || !owner.isAlive() || owner.level() != this.level()) {
+            return;
+        }
+
+        if (this.isVehicle() || this.isPassenger() || this.getControllingPassenger() != null) {
+            return;
+        }
+
+        if (this.isFlying()) {
+            return;
+        }
+
+        double distSq = this.distanceToSqr(owner);
+        if (distSq < (18.0D * 18.0D)) {
+            if (!this.getNavigation().isInProgress()) {
+                this.getNavigation().moveTo(owner, 0.8D);
+            }
+            return;
+        }
+
+        boolean moveGoalActive = this.goalSelector.getRunningGoals().anyMatch(wrapped -> {
+            Goal goal = wrapped.getGoal();
+            return goal instanceof com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal
+                    || goal instanceof CindervaneCombatGoal
+                    || goal instanceof CindervaneFlightGoal;
+        });
+        if (moveGoalActive) {
+            return;
+        }
+
+        switchToGroundNavigation();
+        boolean shouldRun = distSq > (25.0D * 25.0D);
+        setRunning(shouldRun);
+        setGroundMoveStateFromAI(shouldRun ? 2 : 1);
+        double speed = shouldRun ? 1.15D : 0.8D;
+        if (!this.getNavigation().moveTo(owner, speed)) {
+            this.getNavigation().stop();
+            attemptOwnerTeleport(owner);
+        }
+    }
+
+    private void attemptOwnerTeleport(LivingEntity owner) {
+        BlockPos ownerPos = owner.blockPosition();
+        for (int i = 0; i < 8; i++) {
+            int dx = this.random.nextInt(7) - 3;
+            int dz = this.random.nextInt(7) - 3;
+            BlockPos candidate = ownerPos.offset(dx, 0, dz);
+            if (isTeleportFriendlyBlock(candidate)) {
+                this.teleportTo(candidate.getX() + 0.5D, candidate.getY(), candidate.getZ() + 0.5D);
+                this.getNavigation().stop();
+                return;
+            }
+        }
+    }
+
+    private boolean isTeleportFriendlyBlock(BlockPos pos) {
+        BlockPos below = pos.below();
+        BlockState floor = level().getBlockState(below);
+        BlockState body = level().getBlockState(pos);
+        BlockState above = level().getBlockState(pos.above());
+        return floor.isSolidRender(level(), below) && body.isAir() && above.isAir();
     }
 
     private void spawnBabiesIfNeeded() {
@@ -2111,7 +2196,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (!(level() instanceof ServerLevel server)) {
             return;
         }
-        boolean allowGriefing = DragonGriefingRules.canCindervaneGriefing();
+        boolean allowGriefing = DragonGriefingRules.canDestroyBlocks(server);
         double x = this.getX();
         double y = this.getY();
         double z = this.getZ();
@@ -2768,56 +2853,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
     }
 
-    /**
-     * Break vegetation blocks that the dragon collides with during takeoff
-     * Prevents wobbling when taking off near trees
-     */
-    private void breakBlocksDuringTakeoff() {
-        if (level().isClientSide) return;
-        if (!level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING)) return;
-        if (!DragonGriefingRules.canCindervaneGriefing()) return;
-
-        // Get bounding box
-        var bb = this.getBoundingBox();
-
-        // Expand slightly to catch blocks we're about to hit
-        bb = bb.inflate(0.2);
-
-        // Check all block positions within the bounding box
-        BlockPos minPos = BlockPos.containing(bb.minX, bb.minY, bb.minZ);
-        BlockPos maxPos = BlockPos.containing(bb.maxX, bb.maxY, bb.maxZ);
-
-        for (BlockPos pos : BlockPos.betweenClosed(minPos, maxPos)) {
-            if (!level().hasChunkAt(pos)) continue;
-            var state = level().getBlockState(pos);
-
-            // Skip air
-            if (state.isAir()) {
-                continue;
-            }
-
-            // Check if it's breakable vegetation
-            if (isBreakableVegetation(state)) {
-                // Break the block without drops (just destroy it)
-                level().destroyBlock(pos, false);
-            }
-        }
-    }
-
-    /**
-     * Check if a block is breakable vegetation
-     */
-    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
-        var block = state.getBlock();
-        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
-               block instanceof net.minecraft.world.level.block.VineBlock ||
-               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
-               block instanceof net.minecraft.world.level.block.FlowerBlock ||
-               block instanceof net.minecraft.world.level.block.DoublePlantBlock ||
-               block instanceof net.minecraft.world.level.block.SaplingBlock ||
-               block instanceof net.minecraft.world.level.block.BushBlock;
-    }
-
     private boolean riderOverridesSittingCommand() {
         return this.isVehicle() && this.getControllingPassenger() instanceof Player;
     }
@@ -3177,4 +3212,3 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         eggEntity.setBabyGender(babyGender);
     }
 }
-

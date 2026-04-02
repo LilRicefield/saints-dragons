@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -40,6 +41,12 @@ public enum DragonType {
         Stegonaut.class, ModEntities.STEGONAUT,
         ElementalProfile.builder()
             .resistantTo(DamageTypeTags.IS_FALL, 0.3f)  // Sturdy, reduced fall damage
+            .build()),
+
+    VOLITANS("volitans", ElementalClass.NON_ELEMENTAL,
+        DragonAttributeConfigLoader.VOLITANS_ID,
+        Volitans.class, ModEntities.VOLITANS,
+        ElementalProfile.builder()
             .build()),
 
     IGNIVORUS("ignivorus", ElementalClass.FIRE,

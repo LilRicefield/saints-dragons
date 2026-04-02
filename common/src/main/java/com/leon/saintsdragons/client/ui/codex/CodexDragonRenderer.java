@@ -13,6 +13,7 @@ import net.minecraft.world.entity.EntityType;
 public class CodexDragonRenderer {
     private static final int IGNIVORUS_SCALE = 8;
     private static final int RAEVYX_SCALE = 13;
+    private static final int VOLITANS_SCALE = 13;
     private static final int VARASUCHUS_SCALE = 15;
     private static final int CINDERVANE_SCALE = 12;
     private static final int STEGONAUT_SCALE = 23;
@@ -21,6 +22,8 @@ public class CodexDragonRenderer {
     private static final int IGNIVORUS_OFFSET_Y = 0;
     private static final int RAEVYX_OFFSET_X = 0;
     private static final int RAEVYX_OFFSET_Y = -5;
+    private static final int VOLITANS_OFFSET_X = 0;
+    private static final int VOLITANS_OFFSET_Y = -5;
     private static final int VARASUCHUS_OFFSET_X = 0;
     private static final int VARASUCHUS_OFFSET_Y = -10;
     private static final int CINDERVANE_OFFSET_X = 0;
@@ -76,6 +79,8 @@ public class CodexDragonRenderer {
             return IGNIVORUS_SCALE;
         } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
             return RAEVYX_SCALE;
+        } else if (dragon.getType() == ModEntities.VOLITANS.get()) {
+            return VOLITANS_SCALE;
         } else if (dragon.getType() == ModEntities.VARASUCHUS.get()) {
             return VARASUCHUS_SCALE;
         } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
@@ -91,6 +96,8 @@ public class CodexDragonRenderer {
             return IGNIVORUS_OFFSET_X;
         } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
             return RAEVYX_OFFSET_X;
+        } else if (dragon.getType() == ModEntities.VOLITANS.get()) {
+            return VOLITANS_OFFSET_X;
         } else if (dragon.getType() == ModEntities.VARASUCHUS.get()) {
             return VARASUCHUS_OFFSET_X;
         } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
@@ -106,6 +113,8 @@ public class CodexDragonRenderer {
             return IGNIVORUS_OFFSET_Y;
         } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
             return RAEVYX_OFFSET_Y;
+        } else if (dragon.getType() == ModEntities.VOLITANS.get()) {
+            return VOLITANS_OFFSET_Y;
         } else if (dragon.getType() == ModEntities.VARASUCHUS.get()) {
             return VARASUCHUS_OFFSET_Y;
         } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
@@ -150,6 +159,7 @@ public class CodexDragonRenderer {
         return switch (dragonType) {
             case "ignivorus" -> ModEntities.IGNIVORUS.get();
             case "raevyx" -> ModEntities.RAEVYX.get();
+            case "volitans" -> ModEntities.VOLITANS.get();
             case "varasuchus" -> ModEntities.VARASUCHUS.get();
             case "cindervane" -> ModEntities.CINDERVANE.get();
             case "stegonaut" -> ModEntities.STEGONAUT.get();

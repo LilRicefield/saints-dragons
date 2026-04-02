@@ -154,6 +154,14 @@ public class VolitansSlamSequenceGoal extends Goal {
         cancelPreSequenceAbilities();
         dragon.beginAiTakeoff();
 
+        if (dragon.isTakeoff() && dragon.onGround()) {
+            dragon.getNavigation().stop();
+            if (phaseTicks > TAKEOFF_MAX_TICKS) {
+                transitionTo(Phase.LAND);
+            }
+            return;
+        }
+
         double wantedY = target != null
                 ? Math.max(dragon.getY() + 6.0D, target.getY() + TRACK_ALTITUDE - 2.0D)
                 : dragon.getY() + 8.0D;

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
@@ -118,8 +119,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
                 : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
-            int tameRoll = (int) Math.round(tameChance);
-            boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
+            boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
 
             if (success) {
                 dragon.tame(player);
@@ -149,54 +149,39 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         boolean client = dragon.level().isClientSide;
+        var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
         if (!dragon.isFood(itemstack) && !itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
             return InteractionResult.PASS;
         }
 
         // Check feeding cooldown to prevent spam-feeding
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.raevyx.still_eating", dragon.getName()),
-                    true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.raevyx", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
-        if (!client) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
-
-            // Trigger eat animation
-            dragon.triggerAnim("action", "eat");
-            dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
-
-            // Set feeding cooldown (3.0417 seconds * 20 ticks/second = 61 ticks)
-            dragon.setFeedingCooldown(61);
-
-            if (hearty) {
-                dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
-            }
-            dragon.applyFeedingHunger(hearty);
-
+        if (!client && baby != null) {
             double tameChance = hearty
                 ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
                 : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
-            int tameRoll = (int) Math.round(tameChance);
-            boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
-
-            if (success) {
-                dragon.tame(player);
-                dragon.setOrderedToSit(true);
-                dragon.setCommandManual(1);
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
-                triggerTamingAdvancement(player);
-            } else {
-                dragon.level().broadcastEntityEvent(dragon, (byte) 6);
-            }
+            baby.handleBabyFoodTaming(
+                    player,
+                    itemstack,
+                    61,
+                    hearty,
+                    () -> {
+                        dragon.triggerAnim("action", "eat");
+                        dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
+                    },
+                    dragon::setFeedingCooldown,
+                    tameChance,
+                    () -> {
+                        dragon.tame(player);
+                        dragon.setOrderedToSit(true);
+                        dragon.setCommandManual(1);
+                        triggerTamingAdvancement(player);
+                    }
+            );
         }
 
         return InteractionResult.sidedSuccess(client);
@@ -247,15 +232,10 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
      */
     private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
         boolean client = dragon.level().isClientSide;
+        var baby = dragon.getBabyComponent();
 
         // Check feeding cooldown to prevent spam-feeding
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.raevyx.still_eating", dragon.getName()),
-                    true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.raevyx", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
@@ -297,14 +277,9 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
      * Handle feeding tamed dragons for healing or growth.
      */
     private InteractionResult handleFeeding(Player player, ItemStack itemstack) {
+        var baby = dragon.getBabyComponent();
         // Check feeding cooldown to prevent spam-feeding
-        if (!dragon.canFeed()) {
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.raevyx.still_eating", dragon.getName()),
-                    true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.raevyx", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
@@ -328,26 +303,10 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
             // Babies: speed up growth instead of healing
             if (dragon.isBaby()) {
-                int growthTicks = heartyMeal ? 4800 : 2400; // hearty meal doubles growth bonus
-                int currentAge = dragon.getAge();
-                int newAge = Math.min(0, currentAge + growthTicks);
-                dragon.setAge(newAge);
-
                 dragon.level().broadcastEntityEvent(dragon, (byte) 6); // Eating sound
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7); // Hearts particles
-
-                if (player instanceof ServerPlayer serverPlayer) {
-                    int remainingTicks = Math.abs(newAge);
-                    int remainingMinutes = remainingTicks / 1200;
-                    String messageKey = (newAge == 0)
-                        ? "entity.saintsdragons.raevyx.baby_grown"
-                        : "entity.saintsdragons.raevyx.baby_fed";
-                    serverPlayer.displayClientMessage(
-                        Component.translatable(messageKey, dragon.getName()),
-                        true
-                    );
+                if (baby != null) {
+                    baby.applyBabyGrowth(player, heartyMeal, "entity.saintsdragons.raevyx", 2400, 4800);
                 }
-                dragon.applyFeedingHunger(heartyMeal);
             } else {
                 // Adults: heal when fed
                 float healAmount = heartyMeal ? 28.0f : 10.0f; // hearty meal heals more

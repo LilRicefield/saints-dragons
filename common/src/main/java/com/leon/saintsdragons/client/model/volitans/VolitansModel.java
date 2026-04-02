@@ -12,8 +12,15 @@ import software.bernie.geckolib.model.data.EntityModelData;
 
 public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/volitans.geo.json");
+    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_volitans.geo.json");
     private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/volitans.animation.json");
+    private static final ResourceLocation BABY_ANIM = SaintsDragonsCommon.rl("animations/entity/baby_volitans.animation.json");
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/volitans.png");
+    private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/volitans_female.png");
+    private static final ResourceLocation BLOODSHOT_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/volitans_bloodshot.png");
+    private static final ResourceLocation BLOODSHOT_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/volitans_bloodshot_female.png");
+    private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/baby_volitans.png");
+    private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/baby_volitans_female.png");
 
     public VolitansModel() {
         super(SaintsDragonsCommon.rl("volitans"));
@@ -21,17 +28,24 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
 
     @Override
     public ResourceLocation getModelResource(Volitans animatable) {
-        return MODEL;
+        return animatable.isBaby() ? BABY_MODEL : MODEL;
     }
 
     @Override
     public ResourceLocation getTextureResource(Volitans animatable) {
-        return TEXTURE;
+        if (animatable.isBaby()) {
+            return animatable.isFemale() ? BABY_FEMALE_TEXTURE : BABY_TEXTURE;
+        }
+        boolean bloodshot = animatable.getTextureVariant() == Volitans.VARIANT_BLOODSHOT;
+        if (animatable.isFemale()) {
+            return bloodshot ? BLOODSHOT_FEMALE_TEXTURE : FEMALE_TEXTURE;
+        }
+        return bloodshot ? BLOODSHOT_TEXTURE : TEXTURE;
     }
 
     @Override
     public ResourceLocation getAnimationResource(Volitans animatable) {
-        return ANIM;
+        return animatable.isBaby() ? BABY_ANIM : ANIM;
     }
 
     @Override

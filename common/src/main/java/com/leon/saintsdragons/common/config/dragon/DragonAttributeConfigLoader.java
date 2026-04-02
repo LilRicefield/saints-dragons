@@ -36,6 +36,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation VARASUCHUS_ID = SaintsDragonsCommon.rl("varasuchus");
     public static final ResourceLocation IGNIVORUS_ID = SaintsDragonsCommon.rl("ignivorus");
     public static final ResourceLocation STEGONAUT_ID = SaintsDragonsCommon.rl("stegonaut");
+    public static final ResourceLocation VOLITANS_ID = SaintsDragonsCommon.rl("volitans");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
     private static final boolean IS_FORGE = Services.PLATFORM.isModLoaded("forge");
@@ -62,18 +63,15 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double slashGrabHit2Damage = 7.0D;
         double magmaVolleyDamage = 20.0D;
         double fireBodyDamage = 3.0D;
-        double tamingChanceBase = 4.0D;
-        double tamingChanceChicken = 3.0D;
-        double tamingChanceHearty = 2.0D;
+        double tamingChanceBase = 25.0D;
+        double tamingChanceChicken = 33.3333D;
+        double tamingChanceHearty = 50.0D;
         double eggHatchChanceNormal = 2.0D;
         double eggDropChance = 0.12D;
         double fireBodyExplosionDamage = 200.0D;
         double fireBodySelfDamageOnCrash = 40.0D;
         double wildFlyingSpeedMultiplier = 1.0D;
         boolean aggressiveWild = true;
-        boolean griefingEnabled = true;
-        boolean reactiveTerrainClearingOnDamage = true;
-        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -95,9 +93,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 fireBodySelfDamageOnCrash = (double) configClass.getField("CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER").get(null));
                 aggressiveWild = (boolean) configClass.getField("CINDERVANE_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_AGGRESSIVE_WILD").get(null));
-                griefingEnabled = (boolean) configClass.getField("CINDERVANE_GRIEFING_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_GRIEFING_ENABLED").get(null));
-                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
-                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -123,12 +118,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "fire_body_self_damage_on_crash", fireBodySelfDamageOnCrash,
                         "wild_flying_speed_multiplier", wildFlyingSpeedMultiplier
                 ),
-                Map.of(
-                        "aggressive_wild", aggressiveWild,
-                        "griefing_enabled", griefingEnabled,
-                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
-                )
+                Map.of("aggressive_wild", aggressiveWild)
         );
     }
 
@@ -140,8 +130,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double lightningBeamDamage = 35.0D;
         double hornGoreDamage = 15.0D;
         double dashDamage = 10.0D;
-        double tamingChanceBase = 5.0D;
-        double tamingChanceHearty = 3.0D;
+        double tamingChanceBase = 20.0D;
+        double tamingChanceHearty = 33.3333D;
         double beamDrainPerTick = 0.014D;
         double beamRegenPerTick = 0.0025D;
         double summonStormCooldownTicks = 4800.0D;
@@ -159,9 +149,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
         boolean aggressiveWild = false;
-        boolean griefingEnabled = true;
-        boolean reactiveTerrainClearingOnDamage = true;
-        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -192,8 +179,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingStunHealth = (double) configClass.getField("RAEVYX_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_STUN_HEALTH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("RAEVYX_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_WILD_FLYING_SPEED_MULTIPLIER").get(null));
                 aggressiveWild = (boolean) configClass.getField("RAEVYX_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_AGGRESSIVE_WILD").get(null));
-                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
-                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -230,9 +215,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 extras,
                 Map.of(
                         "legacy_taming", legacyTaming,
-                        "aggressive_wild", aggressiveWild,
-                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
+                        "aggressive_wild", aggressiveWild
                 )
         );
     }
@@ -248,15 +231,12 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double hornPhase1Damage = 16.0D;
         double hornPhase2Damage = 20.8D;
         double swimSpeed = 1.45D;
-        double tamingChance = 6.0D;
-        double tamingChanceTropical = 4.0D;
+        double tamingChance = 16.6667D;
+        double tamingChanceTropical = 25.0D;
         boolean legacyTaming = false;
         double eggHatchChanceNormal = 3.0D;
         double eggDropChance = 0.12D;
         boolean aggressiveWild = false;
-        boolean griefingEnabled = true;
-        boolean reactiveTerrainClearingOnDamage = true;
-        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -277,9 +257,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 eggHatchChanceNormal = (double) configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggDropChance = (double) configClass.getField("VARASUCHUS_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_EGG_DROP_CHANCE").get(null));
                 aggressiveWild = (boolean) configClass.getField("VARASUCHUS_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_AGGRESSIVE_WILD").get(null));
-                griefingEnabled = (boolean) configClass.getField("VARASUCHUS_GRIEFING_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_GRIEFING_ENABLED").get(null));
-                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
-                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -306,10 +283,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ),
                 Map.of(
                         "legacy_taming", legacyTaming,
-                        "aggressive_wild", aggressiveWild,
-                        "griefing_enabled", griefingEnabled,
-                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
+                        "aggressive_wild", aggressiveWild
                 )
         );
     }
@@ -330,9 +304,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double ultimateDamage = 200.0D;
         double ultimatePenaltyHealth = 50.0D;
         double ultimateTriggerHealthFraction = 0.5D;
-        double tamingChanceBase = 7.0D;
-        double tamingChanceBeef = 5.0D;
-        double tamingChanceHearty = 4.0D;
+        double tamingChanceBase = 14.2857D;
+        double tamingChanceBeef = 20.0D;
+        double tamingChanceHearty = 25.0D;
         boolean legacyTaming = false;
         double fireBreathDrainPerTick = 0.00625D;
         double fireBreathRegenPerTick = 0.0025D;
@@ -352,9 +326,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
         boolean aggressiveWild = false;
-        boolean griefingEnabled = true;
-        boolean reactiveTerrainClearingOnDamage = true;
-        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -396,9 +367,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingStunHealth = (double) configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null));
                 aggressiveWild = (boolean) configClass.getField("IGNIVORUS_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_AGGRESSIVE_WILD").get(null));
-                griefingEnabled = (boolean) configClass.getField("IGNIVORUS_GRIEFING_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_GRIEFING_ENABLED").get(null));
-                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
-                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -446,10 +414,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 extras,
                 Map.of(
                         "legacy_taming", legacyTaming,
-                        "aggressive_wild", aggressiveWild,
-                        "griefing_enabled", griefingEnabled,
-                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
+                        "aggressive_wild", aggressiveWild
                 )
         );
     }
@@ -460,13 +425,11 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double biteDamage = 5.0D;
         double chinSlamDamage = 8.0D;
         double groundEatingDamage = 10.0D;
-        double tamingChanceBase = 1.0D;
-        double tamingChanceHearty = 1.0D;
+        double tamingChanceBase = 100.0D;
+        double tamingChanceHearty = 100.0D;
         double eggHatchChanceNormal = 2.0D;
         double eggDropChance = 0.12D;
         boolean aggressiveWild = false;
-        boolean reactiveTerrainClearingOnDamage = true;
-        boolean reactiveTerrainClearingOnDamageTamed = false;
 
         if (IS_FORGE) {
             try {
@@ -491,10 +454,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         .invoke(configClass.getField("STEGONAUT_EGG_DROP_CHANCE").get(null));
                 aggressiveWild = (boolean) configClass.getField("STEGONAUT_AGGRESSIVE_WILD").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_AGGRESSIVE_WILD").get(null));
-                reactiveTerrainClearingOnDamage = (boolean) configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null).getClass().getMethod("get")
-                        .invoke(configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE").get(null));
-                reactiveTerrainClearingOnDamageTamed = (boolean) configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null).getClass().getMethod("get")
-                        .invoke(configClass.getField("STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED").get(null));
             } catch (Exception ignored) {
             }
         }
@@ -514,11 +473,18 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "egg_hatch_chance_normal", eggHatchChanceNormal,
                         "egg_drop_chance", eggDropChance
                 ),
-                Map.of(
-                        "aggressive_wild", aggressiveWild,
-                        "reactive_terrain_clearing_on_damage", reactiveTerrainClearingOnDamage,
-                        "reactive_terrain_clearing_on_damage_tamed", reactiveTerrainClearingOnDamageTamed
-                )
+                Map.of("aggressive_wild", aggressiveWild)
+        );
+    }
+
+    private static DragonAttributeConfig volitansDefaults() {
+        return new DragonAttributeConfig(
+                140.0D,
+                6.0D,
+                0.38D,
+                Map.of(),
+                Map.of(),
+                Map.of()
         );
     }
 
@@ -1022,34 +988,32 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         base.put(VARASUCHUS_ID, varasuchusDefaults());
         base.put(IGNIVORUS_ID, ignivorusDefaults());
         base.put(STEGONAUT_ID, stegonautDefaults());
+        base.put(VOLITANS_ID, volitansDefaults());
         return base;
     }
 
     private static JsonObject defaultHints(ResourceLocation id) {
         JsonObject hints = new JsonObject();
         // Shared taming guidance
-        hints.addProperty("taming_chance_base", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
-        hints.addProperty("taming_chance_chicken", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
-        hints.addProperty("taming_chance_beef", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
-        hints.addProperty("taming_chance_hearty", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
-        hints.addProperty("taming_chance", "Lower is easier: 1 = 100% per attempt, 100 = 1% per attempt");
-        hints.addProperty("taming_chance_tropical", "Lower is easier: 1 = 100% per feed, 100 = 1% per feed");
+        hints.addProperty("taming_chance_base", "Percent chance per feed, from 0 to 100");
+        hints.addProperty("taming_chance_chicken", "Percent chance per feed, from 0 to 100");
+        hints.addProperty("taming_chance_beef", "Percent chance per feed, from 0 to 100");
+        hints.addProperty("taming_chance_hearty", "Percent chance per feed, from 0 to 100");
+        hints.addProperty("taming_chance", "Percent chance base used by Varasuchus taming. Legacy food taming rolls it directly; rodeo taming converts it into a smaller per-tick chance");
+        hints.addProperty("taming_chance_tropical", "Percent chance per feed for Varasuchus tropical fish taming, from 0 to 100");
         hints.addProperty("legacy_taming", "true = simple food taming, false = special mechanics (rodeo/low-health)");
-        hints.addProperty("egg_hatch_chance_normal", "Lower = faster (1 = every random tick)");
-        hints.addProperty("egg_hatch_chance_thunder", "Lower = faster during thunderstorms");
+        hints.addProperty("egg_hatch_chance_normal", "1 in N random-tick roll. Lower = faster hatching");
+        hints.addProperty("egg_hatch_chance_thunder", "1 in N random-tick roll during thunderstorms. Lower = faster hatching");
         hints.addProperty("egg_storm_instant_chance", "1 in N chance to instantly hatch when placed during a storm");
-        hints.addProperty("egg_drop_chance", "Chance (0-1) for females to drop an egg on death");
-        hints.addProperty("egg_loot_pillager_outpost", "Chance (0-1) for egg in pillager outpost chests");
-        hints.addProperty("egg_loot_shipwreck_treasure", "Chance (0-1) for egg in shipwreck treasure chests");
-        hints.addProperty("egg_loot_ancient_city", "Chance (0-1) for egg in ancient city chests");
-        hints.addProperty("egg_loot_bastion_treasure", "Chance (0-1) for egg in bastion treasure chests");
-        hints.addProperty("egg_loot_nether_bridge", "Chance (0-1) for egg in nether fortress chests");
+        hints.addProperty("egg_drop_chance", "Chance from 0 to 1 for females to drop an egg on death");
+        hints.addProperty("egg_loot_pillager_outpost", "Chance from 0 to 1 for an egg in pillager outpost chests");
+        hints.addProperty("egg_loot_shipwreck_treasure", "Chance from 0 to 1 for an egg in shipwreck treasure chests");
+        hints.addProperty("egg_loot_ancient_city", "Chance from 0 to 1 for an egg in ancient city chests");
+        hints.addProperty("egg_loot_bastion_treasure", "Chance from 0 to 1 for an egg in bastion treasure chests");
+        hints.addProperty("egg_loot_nether_bridge", "Chance from 0 to 1 for an egg in nether fortress chests");
         hints.addProperty("aggressive_wild", "true = wild dragons aggro on sight, false = only retaliate");
-        hints.addProperty("griefing_enabled", "true = this dragon can break/destroy blocks (global dragonGriefingEnabled must also be true)");
-        hints.addProperty("reactive_terrain_clearing_on_damage", "true = clear soft obstructing blocks when hurt (requires mobGriefing)");
-        hints.addProperty("reactive_terrain_clearing_on_damage_tamed", "true = tamed dragons can also clear on hurt (off = safer bases)");
         hints.addProperty("taming_stun_health", "Health threshold for taming stun (0 = disable stun)");
-        hints.addProperty("wild_flying_speed_multiplier", "Scales AI flight speed only for untamed dragons (1 = default, ridden flight unchanged)");
+        hints.addProperty("wild_flying_speed_multiplier", "Multiplier for AI flight speed on untamed dragons only (1 = default, ridden flight unchanged)");
         hints.addProperty("summon_storm_cooldown_ticks", "Cooldown for Summon Storm (20 ticks = 1 second)");
         hints.addProperty("summon_storm_supercharge_ticks", "How long Summon Storm supercharge lasts (20 ticks = 1 second)");
         hints.addProperty("summon_storm_supercharge_damage_multiplier", "Damage multiplier applied while supercharged (1 = normal damage)");
@@ -1062,13 +1026,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             hints.addProperty("fire_body_self_damage_on_crash", "Self-damage applied to Cindervane after Fire Body crash impact");
         } else if (id.equals(IGNIVORUS_ID)) {
             hints.addProperty("ultimate_penalty_health", "Typical 1-10000");
-            hints.addProperty("ultimate_trigger_health_fraction", "Health fraction (0-1). 0.5 = trigger at 50% max health");
-            hints.addProperty("fire_breath_flame_spawn_multiplier", "0 = disable flame entities, 1 = default");
-            hints.addProperty("fire_breath_flame_speed_multiplier", "Scales flame projectile speed (1 = default)");
-            hints.addProperty("fire_breath_flame_lifetime_multiplier", "Scales flame lifetime ticks (1 = default)");
-            hints.addProperty("fire_breath_ignite_block_chance", "0 = never ignite, 1 = always ignite");
-            hints.addProperty("phase2_toggle_on_chance", "Chance (0-1) to switch from phase 1 to phase 2 when grounded");
-            hints.addProperty("phase2_toggle_off_chance", "Chance (0-1) to switch from phase 2 back to phase 1 when grounded");
+            hints.addProperty("ultimate_trigger_health_fraction", "Health fraction from 0 to 1. Example: 0.5 = trigger at 50% max health");
+            hints.addProperty("fire_breath_flame_spawn_multiplier", "Multiplier for flame entity count (0 = disable, 1 = default)");
+            hints.addProperty("fire_breath_flame_speed_multiplier", "Multiplier for flame projectile speed (1 = default)");
+            hints.addProperty("fire_breath_flame_lifetime_multiplier", "Multiplier for flame lifetime ticks (1 = default)");
+            hints.addProperty("fire_breath_ignite_block_chance", "Chance from 0 to 1 for igniting blocks");
+            hints.addProperty("phase2_toggle_on_chance", "Chance from 0 to 1 to switch from phase 1 to phase 2 when grounded");
+            hints.addProperty("phase2_toggle_off_chance", "Chance from 0 to 1 to switch from phase 2 back to phase 1 when grounded");
             hints.addProperty("phase2_decision_min_ticks", "Minimum ticks between phase switch checks (20 ticks = 1 second)");
             hints.addProperty("phase2_decision_max_ticks", "Maximum ticks between phase switch checks (20 ticks = 1 second)");
         }

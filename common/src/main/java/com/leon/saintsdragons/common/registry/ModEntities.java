@@ -40,7 +40,7 @@ public final class ModEntities {
     public static final Supplier<EntityType<Raevyx>> RAEVYX =
             REGISTER.register("raevyx", () -> EntityType.Builder.of(Raevyx::new, MobCategory.CREATURE)
                     .sized(4.5F, 4.5F)
-                    .clientTrackingRange(64)
+                    .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("raevyx"));
 
@@ -74,7 +74,7 @@ public final class ModEntities {
 
     public static final Supplier<EntityType<Volitans>> VOLITANS =
             REGISTER.register("volitans", () -> EntityType.Builder.of(Volitans::new, MobCategory.CREATURE)
-                    .sized(3.5F, 2.76F)
+                    .sized(5.0F, 4.0F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("volitans"));

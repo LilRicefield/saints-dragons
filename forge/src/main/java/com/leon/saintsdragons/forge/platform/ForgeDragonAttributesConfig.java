@@ -27,9 +27,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH;
     public static ForgeConfigSpec.BooleanValue CINDERVANE_AGGRESSIVE_WILD;
-    public static ForgeConfigSpec.BooleanValue CINDERVANE_GRIEFING_ENABLED;
-    public static ForgeConfigSpec.BooleanValue CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
-    public static ForgeConfigSpec.BooleanValue CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Raevyx
     public static ForgeConfigSpec.DoubleValue RAEVYX_MAX_HEALTH;
@@ -58,8 +55,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_LOOT_ANCIENT_CITY;
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue RAEVYX_AGGRESSIVE_WILD;
-    public static ForgeConfigSpec.BooleanValue RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
-    public static ForgeConfigSpec.BooleanValue RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Varasuchus
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_MAX_HEALTH;
@@ -78,9 +73,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_EGG_HATCH_CHANCE_NORMAL;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue VARASUCHUS_AGGRESSIVE_WILD;
-    public static ForgeConfigSpec.BooleanValue VARASUCHUS_GRIEFING_ENABLED;
-    public static ForgeConfigSpec.BooleanValue VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
-    public static ForgeConfigSpec.BooleanValue VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Ignivorus
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_MAX_HEALTH;
@@ -119,9 +111,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_ANCIENT_CITY;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_AGGRESSIVE_WILD;
-    public static ForgeConfigSpec.BooleanValue IGNIVORUS_GRIEFING_ENABLED;
-    public static ForgeConfigSpec.BooleanValue IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
-    public static ForgeConfigSpec.BooleanValue IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Stegonaut
     public static ForgeConfigSpec.DoubleValue STEGONAUT_MAX_HEALTH;
@@ -134,8 +123,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_HATCH_CHANCE_NORMAL;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_DROP_CHANCE;
     public static ForgeConfigSpec.BooleanValue STEGONAUT_AGGRESSIVE_WILD;
-    public static ForgeConfigSpec.BooleanValue STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE;
-    public static ForgeConfigSpec.BooleanValue STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED;
 
     // Others (NPCs, misc)
     public static ForgeConfigSpec.IntValue IVY_RESTOCK_INTERVAL;
@@ -156,10 +143,10 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_SLASH_GRAB_HIT2_DAMAGE = builder.defineInRange("slash_grab_hit2_damage", 7.0, 0.0, 100.0);
         CINDERVANE_MAGMA_VOLLEY_DAMAGE = builder.defineInRange("magma_volley_damage", 20.0, 0.0, 100.0);
         CINDERVANE_FIRE_BODY_DAMAGE = builder.defineInRange("fire_body_damage", 3.0, 0.0, 100.0);
-        builder.comment("Taming Chances (lower = easier)");
-        CINDERVANE_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 4.0, 1.0, 20.0);
-        CINDERVANE_TAMING_CHANCE_CHICKEN = builder.defineInRange("taming_chance_chicken", 3.0, 1.0, 20.0);
-        CINDERVANE_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 2.0, 1.0, 20.0);
+        builder.comment("Taming chance percent per feed (0-100)");
+        CINDERVANE_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 25.0, 0.0, 100.0);
+        CINDERVANE_TAMING_CHANCE_CHICKEN = builder.defineInRange("taming_chance_chicken", 33.3333, 0.0, 100.0);
+        CINDERVANE_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 50.0, 0.0, 100.0);
         builder.comment("Eggs (1 in N chance per random tick)");
         CINDERVANE_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 2.0, 1.0, 200.0);
         builder.comment("Egg drop chance (0-1)");
@@ -170,11 +157,6 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH = builder.defineInRange("fire_body_self_damage_on_crash", 40.0, 0.0, 1000.0);
         builder.comment("Aggressive wild behavior");
         CINDERVANE_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
-        builder.comment("Allow this dragon to damage/destroy blocks with abilities and movement");
-        CINDERVANE_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
-        builder.comment("Reactive terrain clearing (requires mobGriefing)");
-        CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
-        CINDERVANE_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Raevyx Configuration
@@ -197,9 +179,9 @@ public final class ForgeDragonAttributesConfig {
         RAEVYX_SUMMON_STORM_SUPERCHARGE_TICKS = builder.defineInRange("summon_storm_supercharge_ticks", 1200.0, 20.0, 120000.0);
         RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER = builder.defineInRange("summon_storm_supercharge_damage_multiplier", 2.0, 0.0, 100.0);
         RAEVYX_SUMMON_STORM_DURATION_TICKS = builder.defineInRange("summon_storm_duration_ticks", 1200.0, 20.0, 120000.0);
-        builder.comment("Taming Chances (lower = easier)");
-        RAEVYX_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 5.0, 1.0, 20.0);
-        RAEVYX_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 3.0, 1.0, 20.0);
+        builder.comment("Taming chance percent per feed (0-100)");
+        RAEVYX_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 20.0, 0.0, 100.0);
+        RAEVYX_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 33.3333, 0.0, 100.0);
         builder.comment("Taming stun health threshold (HP)");
         RAEVYX_TAMING_STUN_HEALTH = builder.defineInRange("taming_stun_health", 60.0, 0.0, 1000.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
@@ -217,9 +199,6 @@ public final class ForgeDragonAttributesConfig {
         RAEVYX_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         RAEVYX_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
-        builder.comment("Reactive terrain clearing (requires mobGriefing)");
-        RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
-        RAEVYX_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Varasuchus Configuration
@@ -236,9 +215,9 @@ public final class ForgeDragonAttributesConfig {
         VARASUCHUS_DASH_CLAW_DAMAGE = builder.defineInRange("dash_claw_damage", 16.0, 0.0, 200.0);
         VARASUCHUS_HORN_GORE_PHASE1_DAMAGE = builder.defineInRange("horn_gore_phase1_damage", 16.0, 0.0, 200.0);
         VARASUCHUS_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", 20.8, 0.0, 200.0);
-        builder.comment("Taming Chance (lower = easier)");
-        VARASUCHUS_TAMING_CHANCE = builder.defineInRange("taming_chance", 6.0, 1.0, 20.0);
-        VARASUCHUS_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", 4.0, 1.0, 20.0);
+        builder.comment("Base taming chance percent. Legacy food taming rolls it directly; rodeo taming converts it into a smaller per-tick chance");
+        VARASUCHUS_TAMING_CHANCE = builder.defineInRange("taming_chance", 16.6667, 0.0, 100.0);
+        VARASUCHUS_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", 25.0, 0.0, 100.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
         VARASUCHUS_LEGACY_TAMING = builder.define("legacy_taming", false);
         builder.comment("Eggs (1 in N chance per random tick)");
@@ -247,11 +226,6 @@ public final class ForgeDragonAttributesConfig {
         VARASUCHUS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         VARASUCHUS_AGGRESSIVE_WILD = builder.define("aggressive_wild", true);
-        builder.comment("Allow this dragon to damage/destroy blocks with abilities and movement");
-        VARASUCHUS_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
-        builder.comment("Reactive terrain clearing (requires mobGriefing)");
-        VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
-        VARASUCHUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Ignivorus Configuration
@@ -286,10 +260,10 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE = builder.defineInRange("phase2_toggle_off_chance", 0.05, 0.0, 1.0);
         IGNIVORUS_PHASE2_DECISION_MIN_TICKS = builder.defineInRange("phase2_decision_min_ticks", 60.0, 1.0, 1200.0);
         IGNIVORUS_PHASE2_DECISION_MAX_TICKS = builder.defineInRange("phase2_decision_max_ticks", 120.0, 1.0, 1200.0);
-        builder.comment("Taming Chances (lower = easier)");
-        IGNIVORUS_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 7.0, 1.0, 20.0);
-        IGNIVORUS_TAMING_CHANCE_BEEF = builder.defineInRange("taming_chance_beef", 5.0, 1.0, 20.0);
-        IGNIVORUS_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 4.0, 1.0, 20.0);
+        builder.comment("Taming chance percent per feed (0-100)");
+        IGNIVORUS_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 14.2857, 0.0, 100.0);
+        IGNIVORUS_TAMING_CHANCE_BEEF = builder.defineInRange("taming_chance_beef", 20.0, 0.0, 100.0);
+        IGNIVORUS_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 25.0, 0.0, 100.0);
         builder.comment("Taming stun health threshold (HP)");
         IGNIVORUS_TAMING_STUN_HEALTH = builder.defineInRange("taming_stun_health", 100.0, 0.0, 1000.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
@@ -304,11 +278,6 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         IGNIVORUS_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
-        builder.comment("Allow this dragon to damage/destroy blocks with abilities and movement");
-        IGNIVORUS_GRIEFING_ENABLED = builder.define("griefing_enabled", true);
-        builder.comment("Reactive terrain clearing (requires mobGriefing)");
-        IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
-        IGNIVORUS_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Stegonaut Configuration
@@ -320,18 +289,15 @@ public final class ForgeDragonAttributesConfig {
         STEGONAUT_BITE_DAMAGE = builder.defineInRange("bite_damage", 5.0, 0.0, 100.0);
         STEGONAUT_CHIN_SLAM_DAMAGE = builder.defineInRange("chin_slam_damage", 8.0, 0.0, 100.0);
         STEGONAUT_GROUND_EATING_DAMAGE = builder.defineInRange("ground_eating_damage", 10.0, 0.0, 100.0);
-        builder.comment("Taming Chances (lower = easier)");
-        STEGONAUT_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 1.0, 1.0, 20.0);
-        STEGONAUT_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 1.0, 1.0, 20.0);
+        builder.comment("Taming chance percent per feed (0-100)");
+        STEGONAUT_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 100.0, 0.0, 100.0);
+        STEGONAUT_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 100.0, 0.0, 100.0);
         builder.comment("Eggs (1 in N chance per random tick)");
         STEGONAUT_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_chance_normal", 2.0, 1.0, 200.0);
         builder.comment("Egg drop chance (0-1)");
         STEGONAUT_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         STEGONAUT_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
-        builder.comment("Reactive terrain clearing (requires mobGriefing)");
-        STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE = builder.define("reactive_terrain_clearing_on_damage", true);
-        STEGONAUT_REACTIVE_TERRAIN_CLEARING_ON_DAMAGE_TAMED = builder.define("reactive_terrain_clearing_on_damage_tamed", false);
         builder.pop();
 
         // Others (NPCs and Miscellaneous)

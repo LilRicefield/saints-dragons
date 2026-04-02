@@ -17,8 +17,8 @@
     }
   },
   "extra": {
-    "taming_chance_base": 5.0,
-    "taming_chance_hearty": 3.0,
+    "taming_chance_base": 20.0,
+    "taming_chance_hearty": 33.3333,
     "beam_drain_per_tick": 0.014,
     "beam_regen_per_tick": 0.0025,
     "summon_storm_cooldown_ticks": 4800.0,

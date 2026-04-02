@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
@@ -89,12 +90,11 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
             double tameChance = heartyMeal
-                    ? config.extraDoubles().getOrDefault("taming_chance", 6.0) / 2.0  // Hearty meal doubles chance
+                    ? Math.min(100.0D, config.extraDoubles().getOrDefault("taming_chance", 16.6667D) * 2.0D)
                     : tropicalFish
-                        ? config.extraDoubles().getOrDefault("taming_chance_tropical", 4.0)
-                        : config.extraDoubles().getOrDefault("taming_chance", 6.0);
-            int tameRoll = (int) Math.round(tameChance);
-            boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
+                        ? config.extraDoubles().getOrDefault("taming_chance_tropical", 25.0D)
+                        : config.extraDoubles().getOrDefault("taming_chance", 16.6667D);
+            boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
 
             if (success) {
                 dragon.tame(player);
@@ -136,14 +136,9 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     private InteractionResult handleBreeding(Player player, ItemStack food) {
         boolean client = dragon.level().isClientSide;
+        var baby = dragon.getBabyComponent();
 
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                        Component.translatable("entity.saintsdragons.varasuchus.still_eating", dragon.getName()),
-                        true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.varasuchus", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
@@ -178,13 +173,8 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack food, boolean untamed) {
-        if (!dragon.canFeed()) {
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                        Component.translatable("entity.saintsdragons.varasuchus.still_eating", dragon.getName()),
-                        true
-                );
-            }
+        var baby = dragon.getBabyComponent();
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.varasuchus", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
@@ -200,23 +190,9 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
-                int growthTicks = heartyMeal ? 4800 : 2400;
-                int currentAge = dragon.getAge();
-                int newAge = Math.min(0, currentAge + growthTicks);
-                dragon.setAge(newAge);
-
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
-
-                if (player instanceof ServerPlayer serverPlayer) {
-                    String messageKey = (newAge == 0)
-                            ? "entity.saintsdragons.varasuchus.baby_grown"
-                            : "entity.saintsdragons.varasuchus.baby_fed";
-                    serverPlayer.displayClientMessage(
-                            Component.translatable(messageKey, dragon.getName()),
-                            true
-                    );
+                if (baby != null) {
+                    baby.applyBabyGrowth(player, heartyMeal, "entity.saintsdragons.varasuchus", 2400, 4800);
                 }
-                dragon.applyFeedingHunger(heartyMeal);
             } else {
                 float healAmount;
                 if (heartyMeal) {
@@ -259,52 +235,40 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     private InteractionResult handleBabyTaming(Player player, ItemStack food, DragonAttributeConfig config) {
         boolean client = dragon.level().isClientSide;
+        var baby = dragon.getBabyComponent();
         boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
         boolean tropicalFish = food.is(net.minecraft.world.item.Items.TROPICAL_FISH);
         if (!isVarasuchusFood(food)) {
             return InteractionResult.PASS;
         }
 
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                        Component.translatable("entity.saintsdragons.varasuchus.still_eating", dragon.getName()),
-                        true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.varasuchus", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
-        if (!client) {
-            if (!player.getAbilities().instabuild) {
-                food.shrink(1);
-            }
-
-            dragon.triggerAnim("action", "eat");
-            playEatSound();
-            dragon.setFeedingCooldown(50);
-
-            if (heartyMeal) {
-                dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
-            }
-            dragon.applyFeedingHunger(heartyMeal);
-
+        if (!client && baby != null) {
             double tameChance = heartyMeal
-                    ? config.extraDoubles().getOrDefault("taming_chance", 6.0) / 2.0
+                    ? Math.min(100.0D, config.extraDoubles().getOrDefault("taming_chance", 16.6667D) * 2.0D)
                     : tropicalFish
-                        ? config.extraDoubles().getOrDefault("taming_chance_tropical", 4.0)
-                        : config.extraDoubles().getOrDefault("taming_chance", 6.0);
-            int tameRoll = (int) Math.round(tameChance);
-            boolean success = dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0;
-
-            if (success) {
-                dragon.tame(player);
-                dragon.setOrderedToSit(true);
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
-                dragon.awardTamingAdvancement(player);
-            } else {
-                dragon.level().broadcastEntityEvent(dragon, (byte) 6);
-            }
+                        ? config.extraDoubles().getOrDefault("taming_chance_tropical", 25.0D)
+                        : config.extraDoubles().getOrDefault("taming_chance", 16.6667D);
+            baby.handleBabyFoodTaming(
+                    player,
+                    food,
+                    50,
+                    heartyMeal,
+                    () -> {
+                        dragon.triggerAnim("action", "eat");
+                        playEatSound();
+                    },
+                    dragon::setFeedingCooldown,
+                    tameChance,
+                    () -> {
+                        dragon.tame(player);
+                        dragon.setOrderedToSit(true);
+                        dragon.awardTamingAdvancement(player);
+                    }
+            );
         }
 
         return InteractionResult.sidedSuccess(client);

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.varasuchus;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.varasuchus.VarasuchusAbilities;
@@ -2115,13 +2116,11 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
             // Load taming chance from config
             DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
-            double tamingChanceConfig = config.extraDoubles().getOrDefault("taming_chance", 6.0);
+            double tamingChanceConfig = config.extraDoubles().getOrDefault("taming_chance", 16.6667D);
 
-            // Convert config value to per-tick success chance
-            // Higher values = much harder to tame (exponential scaling)
-            // taming_chance of 6.0 means base chance of 1/6 per eligible tick
-            // But we divide by 100 to make it a reasonable per-tick rate since this runs every tick
-            float baseChance = 1.0F / (float) (tamingChanceConfig * 100.0);
+            // Rodeo taming rolls every eligible tick, so convert the user-facing percent
+            // into a much smaller base per-tick probability before progress scaling.
+            float baseChance = (float) (DragonTamingChance.probabilityFromPercent(tamingChanceConfig) / 100.0D);
 
             // Scale with progress: only becomes reasonable at high progress
             // This encourages players to stay on longer for better odds

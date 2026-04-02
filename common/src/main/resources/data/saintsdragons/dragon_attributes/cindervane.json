@@ -20,9 +20,9 @@
     }
   },
   "extra": {
-    "taming_chance_base": 4.0,
-    "taming_chance_chicken": 3.0,
-    "taming_chance_hearty": 2.0,
+    "taming_chance_base": 25.0,
+    "taming_chance_chicken": 33.3333,
+    "taming_chance_hearty": 50.0,
     "egg_hatch_chance_normal": 2.0,
     "egg_drop_chance": 0.12,
     "wild_flying_speed_multiplier": 1.0,
@@ -31,7 +31,6 @@
     "slash_grab_dismount_tick": 32.0,
     "slash_grab_max_target_width": 1.6,
     "slash_grab_max_target_height": 2.6,
-    "griefing_enabled": true,
     "aggressive_wild": false
   }
 }

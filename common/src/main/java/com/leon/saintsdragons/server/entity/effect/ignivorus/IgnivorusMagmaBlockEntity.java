@@ -221,9 +221,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         float scale = getVisualScale();
         BlockPos impactPos = BlockPos.containing(impact);
         boolean aiFireball = owner != null && owner.getControllingPassenger() == null;
-        boolean allowGriefing = !aiFireball
-                && server.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)
-                && DragonGriefingRules.canIgnivorusGriefing();
+        boolean allowGriefing = DragonGriefingRules.canDestroyBlocks(server);
 
         // Core explosion particles - scale with fireball size
         server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(10, scale, 60),

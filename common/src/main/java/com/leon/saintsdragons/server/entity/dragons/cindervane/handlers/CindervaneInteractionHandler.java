@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -67,13 +68,11 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             dragon.applyFeedingHunger(hearty);
 
             double tameChance = resolveTamingChance(heldItem, config);
-            int tameRoll = (int) Math.round(tameChance);
-
             if (hearty) {
                 dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
             }
 
-            if (dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0) {
+            if (DragonTamingChance.rollPercent(dragon.getRandom(), tameChance)) {
                 dragon.tame(player);
                 dragon.getNavigation().stop();
                 dragon.setOrderedToSit(true);
@@ -216,14 +215,9 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
 
     private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
         boolean client = dragon.level().isClientSide;
+        var baby = dragon.getBabyComponent();
 
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                        Component.translatable("entity.saintsdragons.cindervane.still_eating", dragon.getName()),
-                        true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.cindervane", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
@@ -261,14 +255,9 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
      * Handle feeding the dragon for healing
      */
     private InteractionResult handleFeeding(Player player, ItemStack food) {
+        var baby = dragon.getBabyComponent();
         // Check feeding cooldown to prevent spam-feeding
-        if (!dragon.canFeed()) {
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.cindervane.still_eating", dragon.getName()),
-                    true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.cindervane", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
@@ -287,23 +276,9 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             boolean hearty = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
-                int growthTicks = hearty ? 4800 : 2400;
-                int currentAge = dragon.getAge();
-                int newAge = Math.min(0, currentAge + growthTicks);
-                dragon.setAge(newAge);
-
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
-
-                if (player instanceof ServerPlayer serverPlayer) {
-                    String messageKey = (newAge == 0)
-                            ? "entity.saintsdragons.cindervane.baby_grown"
-                            : "entity.saintsdragons.cindervane.baby_fed";
-                    serverPlayer.displayClientMessage(
-                            Component.translatable(messageKey, dragon.getName()),
-                            true
-                    );
+                if (baby != null) {
+                    baby.applyBabyGrowth(player, hearty, "entity.saintsdragons.cindervane", 2400, 4800);
                 }
-                dragon.applyFeedingHunger(hearty);
             } else {
                 float healAmount = hearty ? 15.0F : 5.0F;
                 float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
@@ -380,50 +355,38 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         boolean client = dragon.level().isClientSide;
+        var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
         if (!dragon.isFood(itemstack) && !itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
             return InteractionResult.PASS;
         }
 
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.cindervane.still_eating", dragon.getName()),
-                    true
-                );
-            }
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.cindervane", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
-        if (!client) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
-
-            dragon.triggerAnim("actions", "eat");
-            dragon.playEatMovingSound();
-            dragon.setFeedingCooldown(44);
-
-            if (hearty) {
-                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
-            }
-            dragon.applyFeedingHunger(hearty);
-
+        if (!client && baby != null) {
             double tameChance = resolveTamingChance(itemstack, config);
-            int tameRoll = (int) Math.round(tameChance);
-
-            if (dragon.getRandom().nextInt(Math.max(1, tameRoll)) == 0) {
-                dragon.tame(player);
-                dragon.getNavigation().stop();
-                dragon.setOrderedToSit(true);
-                dragon.setCommand(1);
-                dragon.setTarget(null);
-                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
-
-                triggerTamingAdvancement(player);
-            } else {
-                dragon.level().broadcastEntityEvent(dragon, (byte) 6);
-            }
+            baby.handleBabyFoodTaming(
+                    player,
+                    itemstack,
+                    44,
+                    hearty,
+                    () -> {
+                        dragon.triggerAnim("actions", "eat");
+                        dragon.playEatMovingSound();
+                    },
+                    dragon::setFeedingCooldown,
+                    tameChance,
+                    () -> {
+                        dragon.tame(player);
+                        dragon.getNavigation().stop();
+                        dragon.setOrderedToSit(true);
+                        dragon.setCommand(1);
+                        dragon.setTarget(null);
+                        triggerTamingAdvancement(player);
+                    }
+            );
         }
 
         return InteractionResult.sidedSuccess(client);
