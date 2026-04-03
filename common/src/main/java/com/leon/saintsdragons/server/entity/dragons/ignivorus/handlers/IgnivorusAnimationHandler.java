@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.object.PlayState;
 
@@ -162,69 +163,33 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 return PlayState.CONTINUE;
             }
 
-            // GLIDE_DOWN - for both ridden and AI dragons
-            if (dragon.isVehicle()) {
-                // Ridden: use player pitch
-                float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
-                if (pitchDegrees < -10.0f && !dragon.isRiderLandingBlendActive()) {
-                    state.getController().transitionLength(6);
-                    state.setAndContinue(GLIDE_DOWN);
-                    return PlayState.CONTINUE;
-                }
-            } else {
-                // AI: calculate pitch from velocity
-                net.minecraft.world.phys.Vec3 velocity = dragon.getDeltaMovement();
-                double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-                if (horizontalSpeed > 0.01) {
-                    double pitchRadians = Math.atan2(-velocity.y, horizontalSpeed);
-                    double pitchDegrees = Math.toDegrees(pitchRadians);
-
-                    if (pitchDegrees > 10.0) {
-                        state.getController().transitionLength(6);
-                        state.setAndContinue(GLIDE_DOWN);
-                        return PlayState.CONTINUE;
-                    }
-                }
+            DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
+            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+                state.getController().transitionLength(6);
+                state.setAndContinue(GLIDE_DOWN);
+                return PlayState.CONTINUE;
             }
 
-            // Mode 5: FLY_IDLE - stationary rider hover
-            if (syncedMode == 5) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.FLY_IDLE) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(FLY_IDLE);
                 return PlayState.CONTINUE;
             }
 
-            // Mode 4: SPRINT_FLAP - accelerating flight
-            if (syncedMode == 4) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.SPRINT_FLAP) {
                 state.getController().transitionLength(3);
                 state.setAndContinue(SPRINT_FLAP);
                 return PlayState.CONTINUE;
             }
 
-            // ASCENDING - always flap when going up (rider or AI)
-            if (dragon.isGoingUp() || vel.y > 0.02) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
                 state.getController().transitionLength(4);
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            // HOVER - stationary in air
-            if (syncedMode == 2 || dragon.isHovering()) {
-                state.getController().transitionLength(6);
                 state.setAndContinue(sprinting ? SPRINT_FLAP : FLAP);
                 return PlayState.CONTINUE;
             }
 
-            // FLAP vs GLIDE based on physics controller
-            // Mode 1 = FLAP (low altitude or needs lift)
-            // Mode 0 = GLIDE (high altitude, can glide)
-            if (syncedMode == 1) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(sprinting ? SPRINT_FLAP : FLAP);
-            } else {
-                state.getController().transitionLength(12);
-                state.setAndContinue(GLIDE);
-            }
+            state.getController().transitionLength(12);
+            state.setAndContinue(GLIDE);
         } else {
             // Ground movement - use DATA_GROUND_MOVE_STATE as single source of truth
             // This value is set by:

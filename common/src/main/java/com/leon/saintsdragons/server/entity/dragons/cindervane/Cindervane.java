@@ -7,15 +7,22 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonPackDefendPackGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
 import com.leon.saintsdragons.server.ai.goals.cindervane.*;
-import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
+import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
+import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
@@ -28,6 +35,7 @@ import java.util.HashMap;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -98,7 +106,7 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
-public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
+public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, PackMember<Cindervane> {
     // Note: DATA_FIRE_BREATHING will be defined in defineSynchedData() using a unique ID
     private static final int LANDING_SETTLE_TICKS = 4;
     // 1.25s * 20 TPS = 25 ticks.
@@ -111,6 +119,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final float FIRE_BODY_SELF_DAMAGE_ON_CRASH = 40.0F;
     private static final double BREED_PARTNER_RANGE = 20.0D;
     private static final double BREED_DISTANCE_SQR = 2500.0D;
+    private static final int MAX_PACK_SIZE = 6;
+    private static final double PACK_SEARCH_RADIUS = 48.0D;
 
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 420;
@@ -138,16 +148,17 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final CindervaneAnimationHandler animationHandler = new CindervaneAnimationHandler(this);
-    // Flight mode state (moved inline from physics controller for performance)
-    private boolean riderHighAltitudeGlide = false;
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
     private final DragonRiderFlight riderFlightComponent;
 
     private final DragonPathNavigateGround groundNav;
+    private final AsyncFlightController asyncAirController;
+    private final AsyncFlightMoveControl asyncAirMoveControl;
+    private final MoveControl groundMoveControl;
     private final FlyingPathNavigation airNav;
-    private boolean usingAirNav;
+    private final DragonNavigationModeController navigationModeController;
 
     // ===== HARDCODED GROUND SPEEDS =====
     public static final double RIDER_WALK_SPEED = 0.18D;
@@ -167,27 +178,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private boolean autoGrabPassengerMountAllowed;
     @Nullable
     private UUID slashGrabPassengerUuid;
+    @Nullable
+    private UUID packLeaderUuid;
 
-    // Banking smoothing state (procedural - no animation controllers needed)
-    private float bankSmoothedYaw = 0f;
-    private float bankAngle = 0f;
-    private float prevBankAngle = 0f;
-
-    // Pitching smoothing state (procedural - no animation controllers needed)
-    private float pitchSmoothedPitch = 0f; // Used for AI pitch detection only
-    private float flightPitchRad = 0f;
-    private float prevFlightPitchRad = 0f;
-    private float smoothedPlayerPitchRad = 0f; // Input smoothing for rider camera pitch (like bankSmoothedYaw)
+    private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
+    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
-
-    // Position tracking for FLY_IDLE detection (xo/yo/zo are synced too early in tick cycle)
-    // Public for physics controller access
-    public double lastCheckedX = 0;
-    public double lastCheckedY = 0;
-    public double lastCheckedZ = 0;
-    public int ticksSinceLastMovement = 0;
 
     private float prevScreenShakeAmount = 0f;
     private float screenShakeAmount = 0f;
@@ -298,8 +296,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         super(type, level);
         this.setMaxUpStep(1.1F);
 
+        this.asyncAirController = new AsyncFlightController(this);
+        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
         this.groundNav = new DragonPathNavigateGround(this, level);
-        this.airNav = new FlyingPathNavigation(this, level) {
+        this.groundMoveControl = new MoveControl(this);
+        this.airNav = new AsyncFlyingPathNavigation(this, level, this.asyncAirController) {
             @Override
             public boolean isStableDestination(@Nonnull BlockPos pos) {
                 BlockState below = this.level.getBlockState(pos.below());
@@ -310,9 +311,38 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.airNav.setCanFloat(false);
         this.airNav.setCanPassDoors(false);
 
-        this.navigation = groundNav;
-        this.moveControl = new MoveControl(this);
-        this.usingAirNav = false;
+        this.navigationModeController = new DragonNavigationModeController(
+                new DragonNavigationModeController.Host() {
+                    @Override
+                    public void setActiveNavigation(PathNavigation navigation) {
+                        Cindervane.this.navigation = navigation;
+                    }
+
+                    @Override
+                    public void setActiveMoveControl(MoveControl moveControl) {
+                        Cindervane.this.moveControl = moveControl;
+                    }
+
+                    @Override
+                    public void afterSwitchToGround() {
+                        // Touchdown should hand authority back to ground cleanly.
+                        // Damp leftover async-air momentum so the landed animation can settle.
+                        if (Cindervane.this.onGround()) {
+                            Cindervane.this.setDeltaMovement(Vec3.ZERO);
+                            Cindervane.this.hasImpulse = false;
+                        } else {
+                            Vec3 motion = Cindervane.this.getDeltaMovement();
+                            Cindervane.this.setDeltaMovement(motion.x * 0.25D, motion.y, motion.z * 0.25D);
+                        }
+                    }
+                },
+                this.groundNav,
+                this.airNav,
+                this.groundMoveControl,
+                this.asyncAirMoveControl
+        );
+        this.navigation = this.groundNav;
+        this.moveControl = this.groundMoveControl;
         this.riderController = new CindervaneRiderController(this);
         this.takeoffComponent = createTakeoffComponent();
         this.riderFlightComponent = createRiderFlightComponent();
@@ -699,13 +729,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 Cindervane.this.forceOwnerFollowTicks = 0;
             }
         });
-        this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 0.6D, 160));
+        this.goalSelector.addGoal(7, new DragonPackFollowLeaderGoal<>(this, Cindervane.class, 1.0D, 20.0D, 10.0D));
+        this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 0.6D, 160));
         // Idle water behavior: prefer swimming toward shore rather than sinking/hovering in place.
-        this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
+        this.goalSelector.addGoal(9, new com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
 
         // Adults can breed, babies cannot
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(9, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(
+            this.goalSelector.addGoal(10, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(
                 this, 1.0D, Cindervane.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
             ));
         }
@@ -713,8 +744,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.targetSelector.addGoal(1, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal<>(this, Cindervane.class)); // Protect and stay with babies
-        this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+        this.targetSelector.addGoal(4, new DragonPackDefendPackGoal<>(this, Cindervane.class, 36.0D));
+        this.targetSelector.addGoal(5, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
                 target -> shouldAggroOnSight()));
         // Look goals that skip when being ridden (so rider has full control)
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
@@ -785,7 +817,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         this.setNoGravity(isFlying() || isHovering());
-        if (!isFlying() && usingAirNav) {
+        if (!isFlying() && navigationModeController.isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
     }
@@ -828,6 +860,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         tickOwnerFollowRecovery();
+
+        if (this.navigationModeController.isUsingAirNavigation() && (this.isFlying() || this.isTakeoff() || this.isLanding()) && !this.isVehicle()) {
+            this.asyncAirController.serverTick();
+        }
 
         // Update timeFlying counter
         if (isFlying()) {
@@ -1209,7 +1245,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             this.getNavigation().stop();
         }
 
-        if (!isFlying() && usingAirNav) {
+        if (!isFlying() && navigationModeController.isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
 
@@ -1231,42 +1267,17 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     private void tickBankingLogic() {
-        prevBankAngle = bankAngle;
-
         // Apply banking to all flying Cindervanes (ridden and wild)
         boolean shouldBank = isFlying() && !isLanding() && !isHovering()
                 && (!isOrderedToSit() || riderOverridesSittingCommand());
-
-        // Reset banking when not flying - instant snap back
-        if (!shouldBank) {
-            bankSmoothedYaw = 0f;
-            bankAngle = 0f;
-            prevBankAngle = 0f;
-            return;
-        }
-
-        if (horizontalCollision || verticalCollision) {
-            bankSmoothedYaw *= 0.45f;
-            bankAngle = Mth.lerp(0.55f, bankAngle, 0f);
-            if (Math.abs(bankAngle) < 0.01f) {
-                bankAngle = 0f;
-            }
-            return;
-        }
-
-        // Exponential smoothing on yaw delta to avoid jitter, wrap to account for crossing 360 -> 0
-        float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
-        bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;
-
-        // Convert smoothed yaw delta into a banking roll. Multiplying gives us headroom for aggressive turns.
-        // More aggressive multiplier for glider-style banking (6.0f vs Raevyx's 5.0f)
-        float targetAngle = Mth.clamp(bankSmoothedYaw * 6.0f, -90f, 90f);
-        // Ease toward the new target so long sweeping turns feel weighty but responsive.
-        bankAngle = Mth.lerp(0.30f, bankAngle, targetAngle);
-        if (Math.abs(bankAngle) < 0.01f) {
-            bankAngle = 0f;
-        }
-        // Banking is now fully procedural - no need for animation controller directions
+        DragonFlightVisuals.tickBanking(
+                this.flightVisualState,
+                shouldBank,
+                this.horizontalCollision,
+                this.verticalCollision,
+                this.getYRot(),
+                this.yRotO
+        );
     }
 
     private void tickRiderLandingBlendTimer() {
@@ -1340,24 +1351,20 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private void tickPitchingLogic() {
         tickRiderLandingBlendTimer();
-        prevFlightPitchRad = flightPitchRad;
+        DragonFlightVisuals.beginPitchTick(this.flightVisualState);
         if (level().isClientSide) {
-            // Client: Just use synced pitch from server (calculated in server logic below)
-            flightPitchRad = this.entityData.get(DATA_FLIGHT_PITCH);
+            this.flightVisualState.flightPitchRad = this.entityData.get(DATA_FLIGHT_PITCH);
             return;
         }
         // Reset pitching when in water, not flying, or when controls are locked - INSTANT reset
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
         if (inWater || areRiderControlsLocked() || !isFlying() || isLanding() || isHovering() || (isOrderedToSit() && !riderOverridesSittingCommand())) {
-            pitchSmoothedPitch = 0f;
-            flightPitchRad = 0f;
-            smoothedPlayerPitchRad = 0f; // Reset input smoothing
-            this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
+            DragonFlightVisuals.resetPitch(this.flightVisualState);
+            this.entityData.set(DATA_FLIGHT_PITCH, this.flightVisualState.flightPitchRad);
             return;
         }
 
         Vec3 velocity = getDeltaMovement();
-        double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         float targetPitchRad = 0f;
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
@@ -1371,8 +1378,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                     rawKeyPitchRad = (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
                 }
 
-                smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
-                targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+                targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawKeyPitchRad);
             } else {
                 // RIDING: Use player camera for visual pitch WHEN MOVING
                 float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
@@ -1384,13 +1390,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                     // Negate because Minecraft xRot is positive=down, but we want dragon to pitch up when looking up
                     float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
 
-                    // Exponential smoothing on player pitch input to avoid jitter (matches banking system)
-                    smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
-
-                    targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+                    targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawPlayerPitchRad);
                 } else {
                     // Hovering (no WASD)  pitch = 0, even if ascending/descending with Spacebar/L-Alt
-                    smoothedPlayerPitchRad = 0f; // Reset smoothing when not moving
+                    DragonFlightVisuals.clearRiderPitchInput(this.flightVisualState);
                     targetPitchRad = 0f;
                 }
             }
@@ -1404,20 +1407,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 }
             }
         } else {
-            // NOT RIDING (AI): Use velocity-based pitch
-            if (horizontalSpeed > 0.15) {
-                targetPitchRad = (float)Math.atan2(velocity.y, horizontalSpeed);
-                targetPitchRad = Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-            }
+            targetPitchRad = DragonFlightVisuals.computeAiPitchTarget(velocity);
         }
-        // Smooth pitch transitions (matches banking lerp speed for consistent feel)
-        // Banking uses 0.40f, we use slightly slower 0.35f for more graceful pitch changes
-        // NOTE: Input is already smoothed above, so this is the second level of smoothing
-        flightPitchRad = Mth.lerp(0.35f, flightPitchRad, targetPitchRad);
-        if (Math.abs(flightPitchRad) < 0.001f) {
-            flightPitchRad = 0f;
-        }
-        this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
+        this.flightVisualState.flightPitchRad =
+                DragonFlightVisuals.approachPitch(this.flightVisualState.flightPitchRad, targetPitchRad);
+        this.entityData.set(DATA_FLIGHT_PITCH, this.flightVisualState.flightPitchRad);
 
         // Trigger landing blend when descending close to ground while ridden
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
@@ -1537,10 +1531,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
      * Interpolated bank angle for smooth client-side rendering.
      */
     public float getBankAngleDegrees(float partialTick) {
-        return Mth.lerp(partialTick, prevBankAngle, bankAngle);
+        return Mth.lerp(partialTick, this.flightVisualState.prevBankAngle, this.flightVisualState.bankAngle);
     }
     public float getFlightPitchRadians(float partialTick) {
-        return Mth.lerp(partialTick, prevFlightPitchRad, flightPitchRad);
+        return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
     }
 
     public boolean isRiderPitchKeyMode() {
@@ -1617,104 +1611,31 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public int getFlightMode() {
-        // Flight mode computation (moved inline from physics controller for performance)
-        // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
-        if (!isFlying()) {
-            riderHighAltitudeGlide = false;
-            return -1;
-        }
-        if (shouldPlayTakeoff()) {
-            riderHighAltitudeGlide = false;
-            return 3;
-        }
-
-        if (isHovering() || isLanding()) {
-            riderHighAltitudeGlide = false;
-            return 2;
-        }
-
-        // Check for ridden flight modes (sprint and fly_idle) before altitude-based logic
-        if (isRiddenByOwner()) {
-            // Track position changes manually (xo/yo/zo are synced too early in tick cycle)
-            double deltaX = getX() - lastCheckedX;
-            double deltaY = getY() - lastCheckedY;
-            double deltaZ = getZ() - lastCheckedZ;
-            double positionChangeSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
-
-            boolean goingUp = isGoingUp();
-            boolean goingDown = isGoingDown();
-            boolean accelerating = isAccelerating();
-
-            // Update position tracking and movement timer
-            if (positionChangeSqr > 0.0001 || goingUp || goingDown || accelerating) {
-                ticksSinceLastMovement = 0;
-                lastCheckedX = getX();
-                lastCheckedY = getY();
-                lastCheckedZ = getZ();
-            } else {
-                ticksSinceLastMovement++;
-            }
-
-            // Only switch to FLY_IDLE after being stationary for 3+ ticks
-            if (ticksSinceLastMovement > 3) {
-                return 5; // FLY_IDLE
-            }
-
-            // Check for sprinting - SPRINT_FLAP mode
-            if (accelerating) {
-                return 4; // SPRINT_FLAP
-            }
-        }
-
         double altitude = getY() - level().getHeight(
                 net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 (int) getX(),
                 (int) getZ());
-
-        Vec3 velocity = getDeltaMovement();
-        boolean ascending = velocity.y > 0.02;
-        boolean riderAscending = isVehicle() && isGoingUp();
-
-        if (isRiddenByOwner()) {
-            if (shouldForceSurfaceGlide(altitude)) {
-                riderHighAltitudeGlide = false;
-                return 0;
-            }
-
-            if (ascending || riderAscending) {
-                return 1;
-            }
-
-            if (riderHighAltitudeGlide) {
-                if (altitude > RIDER_GLIDE_ALTITUDE_EXIT) {
-                    return 0;
-                }
-                riderHighAltitudeGlide = false;
-            } else if (altitude > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
-                riderHighAltitudeGlide = true;
-                return 0;
-            }
-
-            return 1;
-        } else {
-            riderHighAltitudeGlide = false;
-        }
-
-        // AI flight mode determination (tamed dragons following owner or wild dragons)
-        double horizontalSpeedSqr = velocity.horizontalDistanceSqr();
-        double yDelta = getY() - yo;
-
-        // Check if hovering still (reached destination or stationary)
-        // Increased threshold from 0.0025 to 0.01 (0.1 blocks/tick) for smaller, lighter dragons
-        if (horizontalSpeedSqr < 0.01 && Math.abs(yDelta) < 0.1) {
-            return 5; // FLY_IDLE - hovering still in air
-        }
-
-        if (ascending || riderAscending) {
-            return 1;
-        }
-
-        return altitude > 35.0 ? 0 : 1;
+        boolean riddenByOwner = isRiddenByOwner();
+        DragonFlightStateEvaluator.FlightInput input = new DragonFlightStateEvaluator.FlightInput(
+                isFlying(),
+                shouldPlayTakeoff(),
+                isHovering(),
+                isLanding(),
+                riddenByOwner,
+                isGoingUp(),
+                isGoingDown(),
+                isAccelerating(),
+                riddenByOwner && shouldForceSurfaceGlide(altitude),
+                getX(),
+                getY(),
+                getZ(),
+                this.yo,
+                altitude,
+                RIDER_GLIDE_ALTITUDE_THRESHOLD,
+                RIDER_GLIDE_ALTITUDE_EXIT,
+                getDeltaMovement()
+        );
+        return DragonFlightStateEvaluator.evaluateSyncedMode(flightModeState, input);
     }
 
     private boolean shouldPlayTakeoff() {
@@ -1729,6 +1650,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             return false;
         }
         return isOwnedBy(player);
+    }
+
+    public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
+        return DragonFlightStateEvaluator.evaluateVisualState(
+                getSyncedFlightMode(),
+                isVehicle(),
+                getFlightPitchRadians(partialTick),
+                getDeltaMovement()
+        );
     }
 
     private boolean shouldForceSurfaceGlide(double altitudeAboveTerrain) {
@@ -2143,24 +2073,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     public void switchToAirNavigation() {
-        if (!usingAirNav) {
-            this.navigation = this.airNav;
-            this.moveControl = new DragonFlightMoveHelper(this, getGliderFlightParameters());
-            this.usingAirNav = true;
-        }
-    }
-
-    // Amphithere-specific flight parameters for glider behavior
-    private DragonFlightMoveHelper.FlightParameters getGliderFlightParameters() {
-        return new DragonFlightMoveHelper.FlightParameters(
-                3.0F,    // maxYawChange - smoother turns for gradual banking
-                5.0F,    // maxPitchChange - slower pitching for glider
-                0.3F,    // speedFactorMin - lower minimum speed
-                2.0F,    // speedFactorMax - lower maximum speed for glider
-                0.08F,   // speedTransitionRate - slower transitions for glider
-                0.15D,   // accelerationCap - lower acceleration cap for glider
-                0.10D    // velocityBlendRate - gentler blend for glider
-        );
+        this.navigationModeController.switchToAir();
     }
 
     private void handleFireBodyCrash() {
@@ -2394,11 +2307,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     public void switchToGroundNavigation() {
-        if (usingAirNav) {
-            this.navigation = this.groundNav;
-            this.moveControl = new MoveControl(this);
-            this.usingAirNav = false;
-        }
+        this.navigationModeController.switchToGround();
     }
 
     // Fire immunity (vanilla environmental fire only) is handled in hurt() method above
@@ -2726,6 +2635,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             tag.putBoolean("FamilySpawnPending", true);
             tag.putInt("FamilySpawnCount", babiesToSpawn);
         }
+        if (this.packLeaderUuid != null) {
+            tag.putUUID("PackLeaderUuid", this.packLeaderUuid);
+        }
     }
 
     @Override
@@ -2742,6 +2654,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (tag.contains("FamilySpawnPending")) {
             this.shouldSpawnBabies = tag.getBoolean("FamilySpawnPending");
             this.babiesToSpawn = tag.getInt("FamilySpawnCount");
+        }
+        this.packLeaderUuid = tag.hasUUID("PackLeaderUuid") ? tag.getUUID("PackLeaderUuid") : null;
+        if (this.isTame()) {
+            this.packLeaderUuid = null;
         }
         // Reset all tick counters to prevent state inconsistencies
         // Reset ground ticks when flying
@@ -2800,6 +2716,55 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         clearStatesWhenMounted();
+    }
+
+    @Override
+    public @Nullable UUID getPackLeaderUuid() {
+        return this.packLeaderUuid;
+    }
+
+    @Override
+    public void setPackLeaderUuid(@Nullable UUID leaderUuid) {
+        this.packLeaderUuid = leaderUuid;
+    }
+
+    @Override
+    public boolean canParticipateInPack() {
+        if (this.isTame()) {
+            return false;
+        }
+        if (this.isBaby() || this.isDying()) {
+            return false;
+        }
+        if (!this.isAlive() || this.isRemoved()) {
+            return false;
+        }
+        return !this.isOrderedToSit() && this.getCommand() != 1;
+    }
+
+    @Override
+    public boolean canLeadPack() {
+        return canParticipateInPack() && !this.isFemale();
+    }
+
+    @Override
+    public int getPackLeadershipPriority() {
+        return (int) Math.round((this.getHealth() / Math.max(1.0F, this.getMaxHealth())) * 100.0F);
+    }
+
+    @Override
+    public int getMaxPackSize() {
+        return MAX_PACK_SIZE;
+    }
+
+    @Override
+    public double getPackSearchRadius() {
+        return PACK_SEARCH_RADIUS;
+    }
+
+    @Override
+    public int getPackLeaderRefreshIntervalTicks() {
+        return 60;
     }
 
     // ===== DragonFlightCapable =====
@@ -3127,10 +3092,9 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.getNavigation().stop();
         this.setDeltaMovement(0, 0, 0);
         this.setRunning(false);
-        this.setFlying(false);
-        this.setHovering(false);
-        this.setTakeoff(false);
-        this.setLanding(false);
+        // Sleep entry only happens once the dragon is already grounded.
+        // Do not force-clear flight states here; that bypasses landing logic
+        // and can create vertical drop behavior with async air movement.
         setGroundMoveStateFromAI(0);
     }
 

@@ -86,13 +86,21 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
 
         boolean ridden = wyvern.getControllingPassenger() != null;
         double range = ridden ? GORE_RANGE_RIDDEN : GORE_RANGE;
+        double cosLimit = Math.cos(Math.toRadians(GORE_ANGLE_DEG));
+
+        if (!ridden) {
+            LivingEntity target = wyvern.getTarget();
+            if (isDirectAiTargetValid(wyvern, target, head, look, range, cosLimit)) {
+                return java.util.List.of(target);
+            }
+            return java.util.List.of();
+        }
 
         // Use wyvern body bounding box inflated by range as broadphase
         AABB broad = wyvern.getBoundingBox().inflate(range, range, range);
         List<LivingEntity> candidates = wyvern.level().getEntitiesOfClass(LivingEntity.class, broad,
                 e -> e != wyvern && e.isAlive() && e.attackable() && !isAllied(wyvern, e));
 
-        double cosLimit = Math.cos(Math.toRadians(GORE_ANGLE_DEG));
         java.util.List<LivingEntity> hits = new java.util.ArrayList<>();
 
         for (LivingEntity e : candidates) {
@@ -117,6 +125,28 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
             hits.add(e);
         }
         return hits;
+    }
+
+    private boolean isDirectAiTargetValid(Raevyx wyvern, LivingEntity target, Vec3 head, Vec3 look,
+                                          double range, double cosLimit) {
+        if (target == null || !target.isAlive() || !target.attackable() || isAllied(wyvern, target) || !wyvern.isTargetValid(target)) {
+            return false;
+        }
+
+        double dist = distancePointToAABB(head, target.getBoundingBox());
+        if (dist > range + 0.4) {
+            return false;
+        }
+
+        Vec3 toward = target.getBoundingBox().getCenter().subtract(head);
+        double len = toward.length();
+        if (len < 1.0e-4) {
+            return false;
+        }
+
+        double dot = toward.normalize().dot(look);
+        boolean close = dist < (range * 0.6);
+        return close || dot >= cosLimit;
     }
 
     private void applyGore(LivingEntity target) {

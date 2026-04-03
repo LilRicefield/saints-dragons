@@ -9,32 +9,20 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * Air-to-air combat goal for Raevyx - handles flying targets (players riding dragons, etc).
- *
- * Features:
- * - 3D chase movement using flight controls
- * - Lightning beam at range (smart tracking)
- * - Bite attacks up close
- * - Emergency landing when shot from below
- */
 public class RaevyxAirCombatGoal extends Goal {
     private final Raevyx dragon;
 
-    // Combat ranges
-    private final double biteRange = 6.0;               // Close-range melee (matches ability reach better)
-    private final double beamMinRange = 20.0;          // Beam at medium-long range
-    private final double beamMaxRange = 64.0;          // Max effective range
+    private static final double BITE_TRIGGER_RANGE = 7.0;
+    private static final double ENGAGEMENT_DISTANCE = 30.0;
+    private static final double BITE_APPROACH_DISTANCE = 10.0;
 
-    // Flight positioning
-    private static final double HOVER_HEIGHT_OFFSET = 2.0; // Stay slightly above target
-    private static final double ENGAGEMENT_DISTANCE = 30.0; // Preferred beam distance
-    private static final double BITE_APPROACH_DISTANCE = 4.0; // Hold near mouth range
-
+    private final double beamMinRange = 20.0;
+    private final double beamMaxRange = 70.0;
     private int attackCooldown = 0;
     private int repositionCooldown = 0;
-
-    // Beam cooldown (AI only - 2 minute cooldown for air combat)
+    private int movementRefreshCooldown = 0;
+    private Vec3 lastMoveTarget = null;
+    private double lastMoveSpeed = -1.0D;
     private int beamCooldown = 0;
     private static final int BEAM_COOLDOWN_TICKS = 2400; // 2 minutes
 
@@ -140,6 +128,9 @@ public class RaevyxAirCombatGoal extends Goal {
         dragon.setAggressive(false);
         attackCooldown = 0;
         repositionCooldown = 0;
+        movementRefreshCooldown = 0;
+        lastMoveTarget = null;
+        lastMoveSpeed = -1.0D;
 
         // Don't call setLanding() - it triggers setTakeoff(true) which causes animation issues
         // Just clear flying/takeoff and let natural landing occur
@@ -153,6 +144,9 @@ public class RaevyxAirCombatGoal extends Goal {
     @Override
     public void start() {
         dragon.setAggressive(true);
+        movementRefreshCooldown = 0;
+        lastMoveTarget = null;
+        lastMoveSpeed = -1.0D;
 
         // If grounded, trigger takeoff sequence
         // Only set takeoff if truly grounded (not already flying/hovering)
@@ -182,6 +176,10 @@ public class RaevyxAirCombatGoal extends Goal {
             attackCooldown--;
         }
 
+        if (movementRefreshCooldown > 0) {
+            movementRefreshCooldown--;
+        }
+
         if (beamCooldown > 0) {
             beamCooldown--;
         }
@@ -204,7 +202,7 @@ public class RaevyxAirCombatGoal extends Goal {
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
 
         // Attack logic based on distance
-        if (distance <= biteRange && hasLineOfSight) {
+        if (distance <= BITE_TRIGGER_RANGE && hasLineOfSight) {
             // Close range - bite attack
             if (!isCurrentlyAttacking()) {
                 tryAttack(target, distance);
@@ -218,7 +216,7 @@ public class RaevyxAirCombatGoal extends Goal {
             }
             // Hold position while firing beam
             if (dragon.isAbilityActive(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM)) {
-                dragon.getMoveControl().setWantedPosition(
+                requestAirMove(
                     dragon.getX(),
                     dragon.getY(),
                     dragon.getZ(),
@@ -253,7 +251,7 @@ public class RaevyxAirCombatGoal extends Goal {
             return;
         }
 
-        if (distance <= biteRange) {
+        if (distance <= BITE_TRIGGER_RANGE) {
             // Close range - bite attack
             if (!canUseAiAbility(RaevyxAbilities.RAEVYX_BITE, false)) {
                 return;
@@ -273,12 +271,9 @@ public class RaevyxAirCombatGoal extends Goal {
         }
     }
 
-    /**
-     * Chase target in 3D space using flight controls
-     */
+
     private void chaseTarget(LivingEntity target) {
-        // Calculate target position - slightly above and closing distance
-        double targetY = target.getY() + target.getBbHeight() + HOVER_HEIGHT_OFFSET;
+        double targetY = target.getY() + target.getBbHeight() * 0.5D;
 
         // Get direction to target for positioning
         Vec3 toTarget = new Vec3(
@@ -295,24 +290,21 @@ public class RaevyxAirCombatGoal extends Goal {
         // Add slight vertical bobbing for natural flight
         double verticalOffset = Math.sin(dragon.tickCount * 0.15) * 0.5;
 
-        dragon.getMoveControl().setWantedPosition(
+        requestAirMove(
             targetX,
             targetY + verticalOffset,
             targetZ,
-            1.5 // Aggressive chase speed
+            7.0
         );
     }
 
-    /**
-     * Maintain combat position (circle or hold distance)
-     */
     private void maintainCombatPosition(LivingEntity target) {
         if (repositionCooldown > 0) {
             return;
         }
 
         double distance = dragon.distanceTo(target);
-        double targetY = target.getY() + target.getBbHeight() + HOVER_HEIGHT_OFFSET;
+        double targetY = target.getY() + target.getBbHeight() * 0.5D;
 
         // Get target's look vector for positioning
         Vec3 targetLook = target.getLookAngle();
@@ -328,7 +320,7 @@ public class RaevyxAirCombatGoal extends Goal {
         // Add vertical variation
         double verticalOffset = Math.sin(dragon.tickCount * 0.1) * 1.0;
 
-        dragon.getMoveControl().setWantedPosition(
+        requestAirMove(
             posX,
             targetY + verticalOffset,
             posZ,
@@ -342,7 +334,7 @@ public class RaevyxAirCombatGoal extends Goal {
      * Maintain a tight position for bite attempts.
      */
     private void maintainBitePosition(LivingEntity target) {
-        double targetY = target.getY() + target.getBbHeight() * 0.5 + HOVER_HEIGHT_OFFSET;
+        double targetY = target.getY() + target.getBbHeight() * 0.5D;
 
         Vec3 toTarget = new Vec3(
             target.getX() - dragon.getX(),
@@ -359,7 +351,40 @@ public class RaevyxAirCombatGoal extends Goal {
         Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
 
         double speed = dist > BITE_APPROACH_DISTANCE ? 1.2 : 0.6;
-        dragon.getMoveControl().setWantedPosition(desired.x, desired.y, desired.z, speed);
+        requestAirMove(desired.x, desired.y, desired.z, speed);
+    }
+
+    private void requestAirMove(double x, double y, double z, double speed) {
+        Vec3 target = new Vec3(x, y, z);
+        if (shouldRefreshMoveTarget(target, speed)) {
+            dragon.getMoveControl().setWantedPosition(x, y, z, speed);
+            lastMoveTarget = target;
+            lastMoveSpeed = speed;
+            movementRefreshCooldown = movementRefreshInterval(speed);
+        }
+    }
+
+    private boolean shouldRefreshMoveTarget(Vec3 target, double speed) {
+        if (lastMoveTarget == null || movementRefreshCooldown <= 0) {
+            return true;
+        }
+
+        double movedSq = target.distanceToSqr(lastMoveTarget);
+        if (movedSq > 9.0D) {
+            return true;
+        }
+
+        return Math.abs(speed - lastMoveSpeed) > 0.15D;
+    }
+
+    private int movementRefreshInterval(double speed) {
+        if (speed >= 1.4D) {
+            return 3;
+        }
+        if (speed >= 1.0D) {
+            return 5;
+        }
+        return 7;
     }
 
     /**

@@ -202,11 +202,11 @@ public CindervaneModel() {
         float targetVelocity = (float) velocity;
         float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity);
         float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
-        applyTailBoneRotation("bone", velocityRad * 0.75f);
-        applyTailBoneRotation("tail1", velocityRad * 1.0f);
-        applyTailBoneRotation("tail2", velocityRad * 1.5f);
-        applyTailBoneRotation("tail3", velocityRad * 2.0f);
-        applyTailBoneRotation("tail4", velocityRad * 2.5f);
+        applyTailBoneRotation("bone", velocityRad * 0.25f);
+        applyTailBoneRotation("tail1", velocityRad * 0.50f);
+        applyTailBoneRotation("tail2", velocityRad * 0.75f);
+        applyTailBoneRotation("tail3", velocityRad * 1.0f);
+        applyTailBoneRotation("tail4", velocityRad * 1.25f);
     }
 
     private void applyTailBoneRotation(String boneName, float rotationY) {

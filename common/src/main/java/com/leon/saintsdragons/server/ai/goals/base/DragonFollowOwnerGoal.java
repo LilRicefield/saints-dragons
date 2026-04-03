@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -16,12 +17,18 @@ import java.util.EnumSet;
  * Handles both ground and flight following with configurable parameters.
  */
 public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCapable> extends DragonBaseGoal<T> {
+    private static final double AIR_MOVE_TARGET_EPSILON_SQR = 9.0D;
+    private static final double AIR_MOVE_SPEED_EPSILON = 0.15D;
+
     private final FollowConfig config;
 
     private int pathRecalcCooldown = 0;
     private double lastOwnerX = Double.NaN;
     private double lastOwnerY = Double.NaN;
     private double lastOwnerZ = Double.NaN;
+    private int airMoveRefreshCooldown = 0;
+    private Vec3 lastAirMoveTarget = null;
+    private double lastAirMoveSpeed = Double.NaN;
 
     public DragonFollowOwnerGoal(T dragon, FollowConfig config) {
         super(dragon);
@@ -117,6 +124,9 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     public void tick() {
         LivingEntity owner = dragon.getOwner();
         if (owner == null) return;
+        if (airMoveRefreshCooldown > 0) {
+            airMoveRefreshCooldown--;
+        }
 
         double distance = dragon.distanceTo(owner);
 
@@ -134,11 +144,13 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         boolean shouldFly = shouldTriggerFlight(owner, distance, ownerAirborne);
 
         // Handle flight state transitions
-        updateFlightState(shouldFly, ownerAirborne, distance);
+        updateFlightState(owner, shouldFly, ownerAirborne, distance);
 
         // Execute movement
-        if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
-            handleFlightFollowing(owner);
+        if (shouldUseWaterFollowing(owner)) {
+            handleWaterFollowing(owner, distance);
+        } else if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
+            handleFlightFollowing(owner, ownerAirborne);
         } else {
             handleGroundFollowing(owner, distance);
         }
@@ -159,13 +171,16 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     /**
      * Update flight state based on conditions
      */
-    protected void updateFlightState(boolean shouldFly, boolean ownerAirborne, double distance) {
+    protected void updateFlightState(LivingEntity owner, boolean shouldFly, boolean ownerAirborne, double distance) {
         if (shouldFly && !dragon.isFlying() && !dragon.isTakeoff()) {
             startFollowTakeoff();
             resetPathTracking();
-        } else if (dragon.isFlying()) {
+        } else if (dragon.isFlying() || dragon.isHovering()) {
             // Check if should land
-            boolean shouldLand = !shouldFly && !ownerAirborne && distance < config.landingDistance;
+            double dx = owner.getX() - dragon.getX();
+            double dz = owner.getZ() - dragon.getZ();
+            double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+            boolean shouldLand = !shouldFly && !ownerAirborne && horizontalDistance < config.landingDistance;
 
             if (shouldLand && !dragon.isLanding()) {
                 dragon.setLanding(true);
@@ -187,16 +202,12 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     /**
      * Handle flight movement toward owner
      */
-    protected void handleFlightFollowing(LivingEntity owner) {
-        Vec3 targetPos = getFlightFollowTarget(owner);
+    protected void handleFlightFollowing(LivingEntity owner, boolean ownerAirborne) {
+        Vec3 targetPos = getFlightFollowTarget(owner, ownerAirborne);
+        double followSpeed = getFlightFollowSpeed();
         double distToTargetSq = dragon.distanceToSqr(targetPos.x, targetPos.y, targetPos.z);
         if (distToTargetSq > 1.0) {
-            dragon.getMoveControl().setWantedPosition(
-                    targetPos.x,
-                    targetPos.y,
-                    targetPos.z,
-                    getFlightFollowSpeed()
-            );
+            requestAirMove(targetPos, followSpeed);
         } else {
             dragon.getNavigation().stop();
         }
@@ -206,12 +217,15 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         return config.flightSpeed;
     }
 
-    protected Vec3 getFlightFollowTarget(LivingEntity owner) {
-        double targetY = owner.getY() + owner.getBbHeight() + config.hoverHeight;
+    protected Vec3 getFlightFollowTarget(LivingEntity owner, boolean ownerAirborne) {
+        double targetY = ownerAirborne
+                ? owner.getY() + owner.getBbHeight() + config.hoverHeight
+                : owner.getY() + owner.getBbHeight() * 0.5D;
         Vec3 ownerLook = owner.getLookAngle();
-        double offsetX = -ownerLook.x * 3.0;
-        double offsetZ = -ownerLook.z * 3.0;
-        double verticalOffset = Math.sin(dragon.tickCount * 0.2) * 0.3;
+        double followOffset = ownerAirborne ? 3.0D : 1.5D;
+        double offsetX = -ownerLook.x * followOffset;
+        double offsetZ = -ownerLook.z * followOffset;
+        double verticalOffset = ownerAirborne ? Math.sin(dragon.tickCount * 0.2) * 0.3D : 0.0D;
         double targetX = owner.getX() + offsetX;
         double targetZ = owner.getZ() + offsetZ;
         return new Vec3(targetX, targetY + verticalOffset, targetZ);
@@ -273,6 +287,10 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
 
     private boolean shouldTriggerFlight(LivingEntity owner, double distance, boolean ownerAirborne) {
+        if (shouldUseWaterFollowing(owner)) {
+            return false;
+        }
+
         // If already flying, check if should land
         if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
             if (shouldForceFollow() || ownerAirborne) {
@@ -312,6 +330,63 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
                 && dragon.getControllingPassenger() == null
                 && !dragon.isPassenger()
                 && dragon.getActiveAbility() == null;
+    }
+
+    private boolean shouldUseWaterFollowing(LivingEntity owner) {
+        return dragon instanceof SemiAquaticDragon
+                && (dragon.isInWaterOrBubble() || owner.isInWaterOrBubble());
+    }
+
+    private void handleWaterFollowing(LivingEntity owner, double distance) {
+        dragon.getNavigation().stop();
+
+        if (distance <= config.stopFollowDist) {
+            dragon.setRunning(false);
+            dragon.setGroundMoveStateFromAI(0);
+            dragon.setDeltaMovement(dragon.getDeltaMovement().scale(0.85D));
+            return;
+        }
+
+        boolean shouldRun = distance > config.runDist;
+        dragon.setRunning(shouldRun);
+        dragon.setGroundMoveStateFromAI(shouldRun ? 2 : 1);
+
+        double dx = owner.getX() - dragon.getX();
+        double dy = (owner.getY() + owner.getEyeHeight() * 0.5D) - (dragon.getY() + dragon.getEyeHeight() * 0.5D);
+        double dz = owner.getZ() - dragon.getZ();
+        double horizontalDist = Math.sqrt(dx * dx + dz * dz);
+        if (horizontalDist < 1.0E-5D && Math.abs(dy) < 1.0E-5D) {
+            return;
+        }
+
+        float targetYaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
+        dragon.setYRot(Mth.wrapDegrees(targetYaw));
+        dragon.yBodyRot = dragon.getYRot();
+        dragon.yHeadRot = dragon.getYRot();
+
+        float targetPitch = -((float) (Mth.atan2(dy, horizontalDist) * Mth.RAD_TO_DEG));
+        dragon.setXRot(Mth.clamp(Mth.wrapDegrees(targetPitch), -85.0F, 85.0F));
+
+        double swimSpeed = getWaterFollowSpeed(shouldRun, distance);
+        double yawRad = dragon.getYRot() * Mth.DEG_TO_RAD;
+        double pitchRad = dragon.getXRot() * Mth.DEG_TO_RAD;
+        double dirX = -Math.sin(yawRad) * Math.cos(pitchRad);
+        double dirY = -Math.sin(pitchRad);
+        double dirZ = Math.cos(yawRad) * Math.cos(pitchRad);
+
+        dragon.setDeltaMovement(dirX * swimSpeed, dirY * swimSpeed, dirZ * swimSpeed);
+        dragon.hasImpulse = true;
+    }
+
+    private double getWaterFollowSpeed(boolean running, double distance) {
+        double baseSpeed = running ? config.runSpeed : config.walkSpeed;
+        if (dragon instanceof SemiAquaticDragon semiAquaticDragon) {
+            baseSpeed = semiAquaticDragon.getSwimSpeed() * (running ? 0.35D : 0.25D);
+            if (distance > 15.0D) {
+                baseSpeed *= 1.2D;
+            }
+        }
+        return baseSpeed;
     }
 
 
@@ -365,6 +440,40 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         this.lastOwnerX = Double.NaN;
         this.lastOwnerY = Double.NaN;
         this.lastOwnerZ = Double.NaN;
+        this.airMoveRefreshCooldown = 0;
+        this.lastAirMoveTarget = null;
+        this.lastAirMoveSpeed = Double.NaN;
+    }
+
+    private void requestAirMove(Vec3 target, double speed) {
+        if (shouldRefreshAirMoveTarget(target, speed)) {
+            dragon.getMoveControl().setWantedPosition(target.x, target.y, target.z, speed);
+            lastAirMoveTarget = target;
+            lastAirMoveSpeed = speed;
+            airMoveRefreshCooldown = airMoveRefreshInterval(speed);
+        }
+    }
+
+    private boolean shouldRefreshAirMoveTarget(Vec3 target, double speed) {
+        if (lastAirMoveTarget == null || airMoveRefreshCooldown <= 0) {
+            return true;
+        }
+
+        if (target.distanceToSqr(lastAirMoveTarget) > AIR_MOVE_TARGET_EPSILON_SQR) {
+            return true;
+        }
+
+        return Math.abs(speed - lastAirMoveSpeed) > AIR_MOVE_SPEED_EPSILON;
+    }
+
+    private int airMoveRefreshInterval(double speed) {
+        if (speed >= 1.4D) {
+            return 3;
+        }
+        if (speed >= 1.0D) {
+            return 5;
+        }
+        return 7;
     }
 
     protected boolean shouldForceFollow() {

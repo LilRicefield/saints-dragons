@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.block.RaevyxEggBlock;
 import com.leon.saintsdragons.common.block.IgnivorusEggBlock;
 import com.leon.saintsdragons.common.block.CindervaneEggBlock;
 import com.leon.saintsdragons.common.block.VarasuchusEggBlock;
+import com.leon.saintsdragons.common.block.VolitansEggBlock;
 import com.leon.saintsdragons.common.block.StegonautEggBlock;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
@@ -62,6 +63,15 @@ public class ModBlocks {
             REGISTER.register("stegonaut_egg",
                     () -> new StegonautEggBlock(BlockBehaviour.Properties.of()
                             .mapColor(MapColor.TERRACOTTA_BROWN)
+                            .strength(0.5F)
+                            .sound(SoundType.METAL)
+                            .noOcclusion()
+                            .randomTicks()));
+
+    public static final Supplier<Block> VOLITANS_EGG =
+            REGISTER.register("volitans_egg",
+                    () -> new VolitansEggBlock(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_LIGHT_BLUE)
                             .strength(0.5F)
                             .sound(SoundType.METAL)
                             .noOcclusion()

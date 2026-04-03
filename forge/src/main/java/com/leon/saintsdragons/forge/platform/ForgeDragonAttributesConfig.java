@@ -90,6 +90,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_BULLDOZE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_ULTIMATE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_ULTIMATE_PENALTY_HEALTH;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER;
@@ -135,7 +136,9 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Core Attributes");
         CINDERVANE_MAX_HEALTH = builder.defineInRange("max_health", 80.0, 1.0, 100000.0);
         CINDERVANE_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
+        builder.comment("Base rider flying speed");
         CINDERVANE_FLYING_SPEED = builder.defineInRange("flying_speed", 0.60, 0.0, 2.0);
+        builder.comment("Multiplier for wild flying speed only");
         CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         CINDERVANE_BITE_DAMAGE = builder.defineInRange("bite_damage", 12.0, 0.0, 100.0);
@@ -164,7 +167,9 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Core Attributes");
         RAEVYX_MAX_HEALTH = builder.defineInRange("max_health", 180.0, 1.0, 100000.0);
         RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 100000.0);
+        builder.comment("Base rider flying speed");
         RAEVYX_FLYING_SPEED = builder.defineInRange("flying_speed", 0.5, 0.0, 2.0);
+        builder.comment("Multiplier for wild flying speed only");
         RAEVYX_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         RAEVYX_BITE_DAMAGE = builder.defineInRange("bite_damage", 15.0, 0.0, 100.0);
@@ -233,7 +238,9 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Core Attributes");
         IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 100000.0);
         IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
+        builder.comment("Base rider flying speed");
         IGNIVORUS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.35, 0.0, 2.0);
+        builder.comment("Multiplier for wild flying speed only");
         IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");
         IGNIVORUS_BITE_DAMAGE = builder.defineInRange("bite_damage", 50.0, 0.0, 200.0);
@@ -248,6 +255,8 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_ULTIMATE_DAMAGE = builder.defineInRange("ultimate_damage", 200.0, 0.0, 10000.0);
         builder.comment("Ultimate ability health penalty");
         IGNIVORUS_ULTIMATE_PENALTY_HEALTH = builder.defineInRange("ultimate_penalty_health", 50.0, 1.0, 10000.0);
+        builder.comment("Health fraction threshold for enabling the ultimate ability");
+        IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION = builder.defineInRange("ultimate_trigger_health_fraction", 0.5, 0.0, 1.0);
         builder.comment("Fire Breath Tuning");
         IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK = builder.defineInRange("fire_breath_drain_per_tick", 0.00625, 0.0, 1.0);
         IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK = builder.defineInRange("fire_breath_regen_per_tick", 0.0025, 0.0, 1.0);

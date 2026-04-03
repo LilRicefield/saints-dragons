@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -243,16 +244,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         }
 
         if (wyvern.isFlying()) {
-            int syncedMode = wyvern.getSyncedFlightMode();
-            Vec3 vNow = wyvern.getDeltaMovement();
-
-            // Mode 3: Takeoff
-            if (syncedMode == 3) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(TAKEOFF);
-                return PlayState.CONTINUE;
-            }
-
             // Rider landing blend (overrides flight mode)
             if (wyvern.isRiderLandingBlendActive()) {
                 state.getController().transitionLength(4);
@@ -261,40 +252,26 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            // GLIDE_DOWN check - for both ridden and AI dragons
-            if (wyvern.isVehicle()) {
-                // Ridden: use player pitch
-                float pitchDegrees = (float)Math.toDegrees(wyvern.getFlightPitchRadians(state.getPartialTick()));
-                if (pitchDegrees < -10.0f && !wyvern.isRiderLandingBlendActive()) {
-                    RawAnimation descend = GLIDE_DOWN;
-                    if (currentFlightAnimation != descend) {
-                        state.getController().transitionLength(6);
-                        currentFlightAnimation = descend;
-                    }
-                    state.setAndContinue(descend);
-                    return PlayState.CONTINUE;
-                }
-            } else {
-                // AI: calculate pitch from velocity
-                double horizontalSpeed = Math.sqrt(vNow.x * vNow.x + vNow.z * vNow.z);
-                if (horizontalSpeed > 0.01) {
-                    double pitchRadians = Math.atan2(-vNow.y, horizontalSpeed);
-                    double pitchDegrees = Math.toDegrees(pitchRadians);
+            DragonFlightStateEvaluator.VisualState visualState =
+                    wyvern.getVisualFlightState(state.getPartialTick());
 
-                    if (pitchDegrees > 10.0) {
-                        RawAnimation descend = GLIDE_DOWN;
-                        if (currentFlightAnimation != descend) {
-                            state.getController().transitionLength(6);
-                            currentFlightAnimation = descend;
-                        }
-                        state.setAndContinue(descend);
-                        return PlayState.CONTINUE;
-                    }
-                }
+            if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
+                state.getController().transitionLength(4);
+                state.setAndContinue(TAKEOFF);
+                return PlayState.CONTINUE;
             }
 
-            // Mode 5: FLY_IDLE (stationary rider hover)
-            if (syncedMode == 5) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+                RawAnimation descend = GLIDE_DOWN;
+                if (currentFlightAnimation != descend) {
+                    state.getController().transitionLength(6);
+                    currentFlightAnimation = descend;
+                }
+                state.setAndContinue(descend);
+                return PlayState.CONTINUE;
+            }
+
+            if (visualState == DragonFlightStateEvaluator.VisualState.FLY_IDLE) {
                 RawAnimation hover = FLY_IDLE;
                 if (currentFlightAnimation != hover) {
                     state.getController().transitionLength(6);
@@ -304,8 +281,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            // Mode 4: SPRINT_FLAP
-            if (syncedMode == 4) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.SPRINT_FLAP) {
                 RawAnimation sprint = SPRINT_FLAP;
                 if (currentFlightAnimation != sprint) {
                     state.getController().transitionLength(3);
@@ -315,28 +291,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            // Mode 2: Hover
-            if (syncedMode == 2) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            // Mode 1: Forward flight (flap)
-            if (syncedMode == 1) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(FLAP);
                 return PlayState.CONTINUE;
             }
 
-            // Mode 0: Glide
-            if (syncedMode == 0) {
-                state.getController().transitionLength(12);
-                state.setAndContinue(FLY_GLIDE);
-                return PlayState.CONTINUE;
-            }
-
-            // Fallback: should not reach here with proper sync, but default to glide
             state.getController().transitionLength(12);
             state.setAndContinue(FLY_GLIDE);
             return PlayState.CONTINUE;

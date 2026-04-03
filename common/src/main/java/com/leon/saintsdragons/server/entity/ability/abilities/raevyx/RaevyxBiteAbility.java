@@ -115,6 +115,15 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
         // Use a larger effective range when ridden to accommodate height/offset while mounted
         boolean ridden = wyvern.getControllingPassenger() != null;
         double effectiveRange = ridden ? BITE_RANGE_RIDDEN : BITE_RANGE;
+        double cosLimit = Math.cos(Math.toRadians(BITE_ANGLE_DEG));
+
+        if (!ridden) {
+            LivingEntity target = wyvern.getTarget();
+            if (isDirectAiTargetValid(wyvern, target, mouth, look, effectiveRange, cosLimit)) {
+                return target;
+            }
+            return null;
+        }
 
         // Forward sweep out from the mouth so hits originate ahead of the head
         double horizontalInflate = ridden ? BITE_SWIPE_HORIZONTAL_RIDDEN : BITE_SWIPE_HORIZONTAL;
@@ -126,7 +135,6 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
         List<LivingEntity> candidates = wyvern.level().getEntitiesOfClass(LivingEntity.class, forwardSweep,
                 e -> e != wyvern && e.isAlive() && e.attackable() && !isAllied(wyvern, e));
 
-        double cosLimit = Math.cos(Math.toRadians(BITE_ANGLE_DEG));
         LivingEntity best = null;
         double bestDist = Double.MAX_VALUE;
 
@@ -160,6 +168,32 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             }
         }
         return best;
+    }
+
+    private boolean isDirectAiTargetValid(Raevyx wyvern, LivingEntity target, Vec3 mouth, Vec3 look,
+                                          double effectiveRange, double cosLimit) {
+        if (target == null || !target.isAlive() || !target.attackable() || isAllied(wyvern, target) || !wyvern.isTargetValid(target)) {
+            return false;
+        }
+
+        double distToAabb = distancePointToAABB(mouth, target.getBoundingBox());
+        if (distToAabb > effectiveRange + 0.4) {
+            return false;
+        }
+
+        Vec3 toward = closestPointOnAABB(mouth, target.getBoundingBox()).subtract(mouth);
+        double len = toward.length();
+        if (len <= 0.0001) {
+            return false;
+        }
+
+        double dot = toward.scale(1.0 / len).dot(look);
+        if (dot <= 0.0) {
+            return false;
+        }
+
+        boolean veryClose = distToAabb < (effectiveRange * 0.35);
+        return veryClose || dot >= cosLimit;
     }
 
     private void bitePrimary(LivingEntity primary) {

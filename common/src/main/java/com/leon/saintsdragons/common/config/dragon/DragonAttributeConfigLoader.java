@@ -148,7 +148,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double eggDropChance = 0.12D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
-        boolean aggressiveWild = false;
+        boolean aggressiveWild = true;
 
         if (IS_FORGE) {
             try {
@@ -483,7 +483,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 6.0D,
                 0.38D,
                 Map.of(),
-                Map.of(),
+                Map.of(
+                        "egg_hatch_chance_normal", 3.0D
+                ),
                 Map.of()
         );
     }
@@ -1013,7 +1015,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         hints.addProperty("egg_loot_nether_bridge", "Chance from 0 to 1 for an egg in nether fortress chests");
         hints.addProperty("aggressive_wild", "true = wild dragons aggro on sight, false = only retaliate");
         hints.addProperty("taming_stun_health", "Health threshold for taming stun (0 = disable stun)");
-        hints.addProperty("wild_flying_speed_multiplier", "Multiplier for AI flight speed on untamed dragons only (1 = default, ridden flight unchanged)");
+        hints.addProperty("flying_speed", "Base rider flying speed. Wild flight uses this too before any wild-only multiplier is applied");
+        hints.addProperty("wild_flying_speed_multiplier", "Multiplier for wild flying speed only (1 = default, ridden flight unchanged)");
         hints.addProperty("summon_storm_cooldown_ticks", "Cooldown for Summon Storm (20 ticks = 1 second)");
         hints.addProperty("summon_storm_supercharge_ticks", "How long Summon Storm supercharge lasts (20 ticks = 1 second)");
         hints.addProperty("summon_storm_supercharge_damage_multiplier", "Damage multiplier applied while supercharged (1 = normal damage)");

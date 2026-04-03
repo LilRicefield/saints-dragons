@@ -416,7 +416,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.flying_speed"), buffer.flyingSpeed)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.rider_flying_speed"), buffer.flyingSpeed)
                 .setDefaultValue(defaults.flyingSpeed())
                 .setMin(0.0D)
                 .setMax(2.0D)
@@ -600,7 +600,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.flying_speed"), buffer.flyingSpeed)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.rider_flying_speed"), buffer.flyingSpeed)
                 .setDefaultValue(defaults.flyingSpeed())
                 .setMin(0.0D)
                 .setMax(2.0D)
@@ -871,7 +871,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.flying_speed"), buffer.flyingSpeed)
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.rider_flying_speed"), buffer.flyingSpeed)
                 .setDefaultValue(defaults.flyingSpeed())
                 .setMin(0.0D)
                 .setMax(2.0D)

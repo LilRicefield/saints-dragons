@@ -1,13 +1,18 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -18,6 +23,9 @@ import java.util.UUID;
  * Generic pack-follow behavior for dragon species that support alpha/leader logic.
  */
 public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> extends Goal {
+    private static final double AIR_MOVE_TARGET_EPSILON_SQR = 9.0D;
+    private static final double AIR_MOVE_SPEED_EPSILON = 0.15D;
+
     private final T member;
     private final Class<T> memberClass;
     private final double followSpeed;
@@ -30,9 +38,12 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     private T leader;
     private int leaderRefreshCooldown = 0;
     private int pathRecalcCooldown = 0;
+    private int airMoveRefreshCooldown = 0;
     private double lastLeaderX = Double.NaN;
     private double lastLeaderY = Double.NaN;
     private double lastLeaderZ = Double.NaN;
+    private Vec3 lastAirMoveTarget = null;
+    private double lastAirMoveSpeed = Double.NaN;
 
     public DragonPackFollowLeaderGoal(T member,
                                       Class<T> memberClass,
@@ -84,6 +95,9 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     @Override
     public void stop() {
         member.getNavigation().stop();
+        if (member instanceof DragonFlightCapable flightMember && member instanceof RideableDragonBase) {
+            flightMember.setHovering(false);
+        }
         leader = null;
         pathRecalcCooldown = 0;
         resetLeaderTracking();
@@ -106,6 +120,10 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
         }
 
         member.getLookControl().setLookAt(leader, 20.0F, 20.0F);
+
+        if (handleAirPackFollowing(leader)) {
+            return;
+        }
 
         double distance = member.distanceTo(leader);
         if (distance * distance <= stopFollowDistSq) {
@@ -316,5 +334,126 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
         this.lastLeaderX = Double.NaN;
         this.lastLeaderY = Double.NaN;
         this.lastLeaderZ = Double.NaN;
+        this.airMoveRefreshCooldown = 0;
+        this.lastAirMoveTarget = null;
+        this.lastAirMoveSpeed = Double.NaN;
+    }
+
+    private boolean handleAirPackFollowing(T currentLeader) {
+        if (!(member instanceof RideableDragonBase rideableMember) || !(member instanceof DragonFlightCapable flightMember)) {
+            return false;
+        }
+        if (!(currentLeader instanceof DragonFlightCapable flightLeader)) {
+            return false;
+        }
+
+        if (airMoveRefreshCooldown > 0) {
+            airMoveRefreshCooldown--;
+        }
+
+        boolean leaderAirborne = isDragonAirborne(flightLeader, currentLeader);
+        boolean memberAirborne = isDragonAirborne(flightMember, rideableMember);
+        if (!leaderAirborne && !memberAirborne) {
+            return false;
+        }
+
+        if (leaderAirborne && !flightMember.isFlying() && !flightMember.isTakeoff() && flightMember.canTakeoff()) {
+            flightMember.setFlying(true);
+            flightMember.setTakeoff(true);
+            flightMember.setLanding(false);
+            flightMember.setHovering(false);
+            resetLeaderTracking();
+        }
+
+        Vec3 target = getAirFollowTarget(currentLeader);
+        double distanceToTargetSq = rideableMember.distanceToSqr(target.x, target.y, target.z);
+        if (!leaderAirborne && distanceToTargetSq <= stopFollowDistSq) {
+            if (flightMember.isFlying() || flightMember.isHovering()) {
+                flightMember.setLanding(true);
+                flightMember.setFlying(false);
+                flightMember.setHovering(false);
+                flightMember.setTakeoff(false);
+            }
+            rideableMember.getNavigation().stop();
+            pathRecalcCooldown = 0;
+            return true;
+        }
+
+        if (distanceToTargetSq > 1.0D) {
+            requestAirMove(rideableMember, target, getAirFollowSpeed(flightMember));
+        } else {
+            rideableMember.getNavigation().stop();
+        }
+        rememberLeaderPosition(currentLeader);
+        return true;
+    }
+
+    private boolean isDragonAirborne(DragonFlightCapable dragon, Entity entity) {
+        if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering() || dragon.isLanding()) {
+            return true;
+        }
+        if (entity.onGround()) {
+            return false;
+        }
+        BlockPos pos = entity.blockPosition();
+        int groundY = entity.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos).getY();
+        return entity.getY() - groundY > 4.0D;
+    }
+
+    private Vec3 getAirFollowTarget(T currentLeader) {
+        Vec3 leaderLook = currentLeader.getLookAngle();
+        Vec3 lateral = new Vec3(-leaderLook.z, 0.0D, leaderLook.x);
+        if (lateral.lengthSqr() < 1.0E-4D) {
+            lateral = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            lateral = lateral.normalize();
+        }
+
+        int slot = Math.floorMod(member.getUUID().hashCode(), 3);
+        double lateralOffset = switch (slot) {
+            case 0 -> -3.0D;
+            case 1 -> 3.0D;
+            default -> 0.0D;
+        };
+        double trailingOffset = slot == 2 ? 5.0D : 3.5D;
+        double hoverOffset = slot == 2 ? 1.5D : 2.0D;
+
+        return currentLeader.position()
+                .subtract(leaderLook.scale(trailingOffset))
+                .add(lateral.scale(lateralOffset))
+                .add(0.0D, currentLeader.getBbHeight() + hoverOffset, 0.0D);
+    }
+
+    private double getAirFollowSpeed(DragonFlightCapable flightMember) {
+        return Math.max(1.0D, flightMember.getFlightSpeed() * 1.05D);
+    }
+
+    private void requestAirMove(RideableDragonBase rideableMember, Vec3 target, double speed) {
+        if (shouldRefreshAirMoveTarget(target, speed)) {
+            rideableMember.getMoveControl().setWantedPosition(target.x, target.y, target.z, speed);
+            lastAirMoveTarget = target;
+            lastAirMoveSpeed = speed;
+            airMoveRefreshCooldown = airMoveRefreshInterval(speed);
+        }
+    }
+
+    private boolean shouldRefreshAirMoveTarget(Vec3 target, double speed) {
+        if (lastAirMoveTarget == null || airMoveRefreshCooldown <= 0) {
+            return true;
+        }
+        if (target.distanceToSqr(lastAirMoveTarget) > AIR_MOVE_TARGET_EPSILON_SQR) {
+            return true;
+        }
+        return Math.abs(speed - lastAirMoveSpeed) > AIR_MOVE_SPEED_EPSILON;
+    }
+
+    private int airMoveRefreshInterval(double speed) {
+        if (speed >= 1.4D) {
+            return 3;
+        }
+        if (speed >= 1.0D) {
+            return 5;
+        }
+        return 7;
     }
 }

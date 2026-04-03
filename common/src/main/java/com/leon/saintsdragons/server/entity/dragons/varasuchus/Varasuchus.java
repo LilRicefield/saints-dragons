@@ -649,8 +649,8 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
             this.goalSelector.addGoal(2, new VarasuchusCombatGoal(this));
         }
         this.goalSelector.addGoal(3, new DirectSwimToTargetGoal(this, 8.0F, 0.30D, true));
-        this.goalSelector.addGoal(5, new VarasuchusLeaveWaterGoal(this));
-        this.goalSelector.addGoal(6, new VarasuchusFindWaterGoal(this));
+        this.goalSelector.addGoal(5, new DragonLeaveWaterGoal<>(this));
+        this.goalSelector.addGoal(6, new DragonFindWaterGoal<>(this));
         this.goalSelector.addGoal(7, new VarasuchusFollowOwnerGoal(this));
         this.goalSelector.addGoal(8, new DirectSwimToTargetGoal(this, 8.0F, 0.25D, false));
         this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));

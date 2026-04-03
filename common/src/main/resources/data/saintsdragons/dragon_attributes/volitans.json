@@ -1,5 +1,8 @@
 {
   "max_health": 140.0,
   "armor": 6.0,
-  "flying_speed": 0.38
+  "flying_speed": 0.38,
+  "extra": {
+    "egg_hatch_chance_normal": 3.0
+  }
 }

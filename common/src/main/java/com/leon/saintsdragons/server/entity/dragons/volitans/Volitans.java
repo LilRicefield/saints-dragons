@@ -1,14 +1,19 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
+import com.leon.saintsdragons.common.block.VolitansEggBlock;
+import com.leon.saintsdragons.common.block.VolitansEggBlockEntity;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLeaveWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DirectSwimToTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansAirCombatGoal;
@@ -73,6 +78,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
@@ -218,6 +224,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private double lastCheckedY;
     private double lastCheckedZ;
     private int ticksSinceLastMovement;
+    private int ticksInWater;
+    private int ticksOutOfWater;
     private float bankSmoothedYaw = 0f;
     private float bankAngle = 0f;
     private float prevBankAngle = 0f;
@@ -501,7 +509,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             this.goalSelector.addGoal(4, new VolitansWaterCombatGoal(this));
         }
         this.goalSelector.addGoal(5, new DirectSwimToTargetGoal(this, 8.0F, 0.28D, true));
-        this.goalSelector.addGoal(6, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
+        this.goalSelector.addGoal(6, new DragonLeaveWaterGoal<>(this));
+        this.goalSelector.addGoal(7, new DragonFindWaterGoal<>(this));
+        this.goalSelector.addGoal(8, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
             @Override
             protected void startFollowTakeoff() {
                 if (Volitans.this.isFlying() || Volitans.this.isTakeoff()) {
@@ -511,12 +521,12 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             }
 
             @Override
-            protected void handleFlightFollowing(LivingEntity owner) {
+            protected void handleFlightFollowing(LivingEntity owner, boolean ownerAirborne) {
                 if (Volitans.this.isTakeoff() && Volitans.this.onGround()) {
                     return;
                 }
 
-                Vec3 destination = getFlightFollowTarget(owner);
+                Vec3 destination = getFlightFollowTarget(owner, ownerAirborne);
                 if (!Volitans.this.onGround() && (Volitans.this.isTakeoff() || !Volitans.this.isFlying())) {
                     Volitans.this.beginAiFlight();
                 }
@@ -553,10 +563,10 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 return !Volitans.this.isVehicle() && super.canContinueToUse();
             }
         });
-        this.goalSelector.addGoal(7, new DirectSwimToTargetGoal(this, 8.0F, 0.24D, false));
-        this.goalSelector.addGoal(8, new DragonGroundWanderGoal<>(this, 0.9D, 70));
-        this.goalSelector.addGoal(9, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
-        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+        this.goalSelector.addGoal(9, new DirectSwimToTargetGoal(this, 8.0F, 0.24D, false));
+        this.goalSelector.addGoal(10, new DragonGroundWanderGoal<>(this, 0.9D, 70));
+        this.goalSelector.addGoal(11, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
+        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
@@ -567,7 +577,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 return !Volitans.this.isVehicle() && super.canContinueToUse();
             }
         });
-        this.goalSelector.addGoal(11, new RandomLookAroundGoal(this) {
+        this.goalSelector.addGoal(13, new RandomLookAroundGoal(this) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
@@ -1161,6 +1171,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 aiGroundMobilityCooldownTicks--;
             }
             handleAmbientSounds();
+            tickWaterPreferenceTimers();
             takeoffComponent.tick();
             if (riderTakeoffTicks > 0) {
                 riderTakeoffTicks--;
@@ -1561,6 +1572,25 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
+    public BlockState getEggBlockState() {
+        return ModBlocks.VOLITANS_EGG.get().defaultBlockState().setValue(VolitansEggBlock.WATERLOGGED, isInWaterOrBubble());
+    }
+
+    @Override
+    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable com.leon.saintsdragons.server.entity.base.DragonEntity partner) {
+        if (!(blockEntity instanceof VolitansEggBlockEntity eggEntity)) {
+            return;
+        }
+
+        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
+        if (ownerUUID != null) {
+            eggEntity.setOwnerUUID(ownerUUID);
+        }
+
+        eggEntity.setBabyGender(this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+    }
+
+    @Override
     protected int getMaxTextureVariant() {
         return VARIANT_BLOODSHOT;
     }
@@ -1678,6 +1708,17 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
     }
 
+    private void tickWaterPreferenceTimers() {
+        if (isInWaterOrBubble()) {
+            this.setAirSupply(this.getMaxAirSupply());
+            this.ticksInWater = Math.min(this.ticksInWater + 1, 1200);
+            this.ticksOutOfWater = 0;
+        } else {
+            this.ticksOutOfWater = Math.min(this.ticksOutOfWater + 1, 1200);
+            this.ticksInWater = 0;
+        }
+    }
+
     @Override
     public int getDeathAnimationDurationTicks() {
         return 70; // 3.5s
@@ -1699,6 +1740,44 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     @Override
     public boolean canBreatheUnderwater() {
         return true;
+    }
+
+    @Override
+    public boolean shouldEnterWater() {
+        if (isOrderedToSit() || isVehicle() || isFlying() || isTakeoff() || isLanding()) {
+            return false;
+        }
+        if (isOnFire()) {
+            return true;
+        }
+        if (getTarget() != null && getHealth() < getMaxHealth() * 0.5F) {
+            return true;
+        }
+        return this.ticksOutOfWater > 1000 && this.getRandom().nextFloat() < 0.08F;
+    }
+
+    @Override
+    public boolean shouldLeaveWater() {
+        if (isOrderedToSit() || isVehicle()) {
+            return false;
+        }
+
+        LivingEntity owner = getOwner();
+        if (isTame() && owner != null && !owner.isInWater() && distanceToSqr(owner) > 100.0D) {
+            return true;
+        }
+
+        LivingEntity target = getTarget();
+        if (target != null && !target.isInWater()) {
+            return true;
+        }
+
+        return this.ticksInWater >= 1200 && this.getRandom().nextFloat() < 0.08F;
+    }
+
+    @Override
+    public int getWaterSearchRange() {
+        return 20;
     }
 
     public boolean canBeBound() {
@@ -2626,7 +2705,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         return false;
     }
 
-    private void applyConfiguredAttributes() {
+    public void applyConfiguredAttributes() {
         var config = com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.getInstance()
                 .getConfig(com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.VOLITANS_ID);
         setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
@@ -2649,7 +2728,13 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (nextAmbientSoundDelay <= 0) {
             resetAmbientSoundTimer();
         }
-        if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || areRiderControlsLocked()) {
+        if (isBaby()
+                || isDying()
+                || isSleeping()
+                || isSleepTransitioning()
+                || isOrderedToSit()
+                || isInSitTransition()
+                || areRiderControlsLocked()) {
             return;
         }
         if (getTarget() != null || getActiveAbility() != null || isBreathing() || isBurrowing()) {
@@ -2704,6 +2789,18 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     private void updateSittingProgress() {
         if (level().isClientSide) {
+            return;
+        }
+
+        if (this.isInWaterOrBubble()) {
+            if (isSittingDown || isStandingUp || sitTransitionTicks > 0) {
+                isSittingDown = false;
+                isStandingUp = false;
+                sitTransitionTicks = 0;
+            }
+            if (getSitProgress() != 0f || getPrevSitProgress() != 0f) {
+                clearSitProgress();
+            }
             return;
         }
 

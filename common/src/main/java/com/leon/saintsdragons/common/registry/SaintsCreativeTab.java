@@ -38,6 +38,8 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.IGNIVORUS_TOOTH.get());
                                 output.accept(ModItems.VARASUCHUS_SCALE.get());
                                 output.accept(ModItems.STEGONAUT_SCALE.get());
+                                output.accept(ModItems.VOLITANS_SCALE.get());
+                                output.accept(ModItems.VOLITANS_SPINE.get());
                                 output.accept(ModItems.POTION_OF_TIDEGUARD.get());
                                 output.accept(ModItems.POTION_OF_SEARING.get());
                                 output.accept(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
@@ -47,6 +49,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.CINDERVANE_EGG.get());
                                 output.accept(ModItems.VARASUCHUS_EGG.get());
                                 output.accept(ModItems.STEGONAUT_EGG.get());
+                                output.accept(ModItems.VOLITANS_EGG.get());
                                 output.accept(ModItems.CINDERVANE_SPAWN_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_SPAWN_EGG.get());
                                 output.accept(ModItems.RAEVYX_SPAWN_EGG.get());

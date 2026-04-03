@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.server.ai.goals.cindervane;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonAerialLandingController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ClipContext;
@@ -13,15 +13,12 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
-/**
- * Amphithere flight goal for high-soaring glider behavior
- * Gliders soar high in clear weather but avoid storms and rain
- * Features large flight ranges (80-200 blocks) and high altitudes (25-60 blocks above ground)
- */
 public class CindervaneFlightGoal extends Goal {
     private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.cindervane();
+    private static final double CRUISE_SPEED = 1.25D;
+    private static final double LANDING_SPEED = 2.5D;
+    private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
     private final Cindervane amphithere;
-    private final DragonAerialLandingController<Cindervane> landingController;
     private Vec3 targetPosition;
     private int stuckCounter = 0;
     private int timeSinceTargetChange = 0;
@@ -37,11 +34,6 @@ public class CindervaneFlightGoal extends Goal {
 
     public CindervaneFlightGoal(Cindervane amphithere) {
         this.amphithere = amphithere;
-        this.landingController = new DragonAerialLandingController<>(
-                amphithere,
-                Cindervane.LANDING_BLEND_ALTITUDE,
-                amphithere::handleAiLandingComplete
-        );
         this.setFlags(EnumSet.of(Flag.MOVE));
         
         // Start with no offset
@@ -50,6 +42,10 @@ public class CindervaneFlightGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (isFollowingPackLeader()) {
+            return false;
+        }
+
         // In Follow command, owner-follow goal should own movement entirely.
         // Otherwise this autonomous flight goal can take off and drift away from the owner.
         if (isInOwnerFollowMode()) {
@@ -165,7 +161,6 @@ public class CindervaneFlightGoal extends Goal {
         }
 
         if (isFlying) {
-            landingController.reset();
             this.targetPosition = findFlightTarget();
             // Reset cooldown for next decision
             this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
@@ -179,6 +174,10 @@ public class CindervaneFlightGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (isFollowingPackLeader()) {
+            return false;
+        }
+
         // Stop autonomous flight immediately when follow mode is active.
         if (isInOwnerFollowMode()) {
             return false;
@@ -193,17 +192,8 @@ public class CindervaneFlightGoal extends Goal {
             return false;
         }
 
-        if (landingController.isLandingApproachActive()) {
-            if (amphithere.onGround()) {
-                landingController.finishLanding();
-                return false;
-            }
-            return true;
-        }
-
-        // Let landing system take over
         if (amphithere.isLanding()) {
-            return false;
+            return !amphithere.onGround();
         }
 
         // Stop if ordered to sit or something important comes up
@@ -263,12 +253,13 @@ public class CindervaneFlightGoal extends Goal {
         if (amphithere.isInWater() || amphithere.isInWaterOrBubble() || amphithere.isInLava()) {
             return;
         }
+        boolean wasOnGround = amphithere.onGround();
         amphithere.setFlying(true);
+        amphithere.setTakeoff(wasOnGround);
         amphithere.setLanding(false);
         amphithere.setHovering(false);
-        landingController.reset();
         if (targetPosition != null) {
-            amphithere.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0D);
+            moveToTarget(targetPosition, CRUISE_SPEED);
         }
     }
 
@@ -276,12 +267,13 @@ public class CindervaneFlightGoal extends Goal {
     public void tick() {
         timeSinceTargetChange++;
 
-        if (landingController.isLandingApproachActive()) {
-            landingController.tickLandingApproach();
-            return;
-        }
         // If amphithere wants to land, let it handle that
         if (amphithere.isLanding()) {
+            if (targetPosition == null) {
+                beginLandingApproach();
+            } else if (!amphithere.getNavigation().isInProgress()) {
+                moveToTarget(targetPosition, LANDING_SPEED);
+            }
             return;
         }
 
@@ -345,14 +337,13 @@ public class CindervaneFlightGoal extends Goal {
         if (needNewTarget) {
             targetPosition = findFlightTarget();
             timeSinceTargetChange = 0;
-            amphithere.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0D);
+            moveToTarget(targetPosition, CRUISE_SPEED);
         }
     }
 
     @Override
     public void stop() {
         targetPosition = null;
-        landingController.reset();
         stuckCounter = 0;
         timeSinceTargetChange = 0;
         amphithere.getNavigation().stop();
@@ -383,15 +374,129 @@ public class CindervaneFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        landingController.beginLandingApproach();
-        if (landingController.isLandingApproachActive()) {
-            targetPosition = null;
+        Vec3 landingTarget = findLandingTarget();
+        if (landingTarget == null) {
+            return;
         }
+
+        targetPosition = landingTarget;
+        amphithere.setHovering(false);
+        amphithere.setTakeoff(false);
+        amphithere.setLanding(true);
+        moveToTarget(landingTarget, LANDING_SPEED);
     }
 
     private void finishLanding() {
         targetPosition = null;
-        landingController.finishLanding();
+        if (amphithere.onGround()) {
+            amphithere.handleAiLandingComplete();
+        } else {
+            amphithere.setLanding(false);
+            amphithere.setFlying(false);
+            amphithere.setHovering(false);
+            amphithere.setTakeoff(false);
+        }
+        amphithere.getNavigation().stop();
+    }
+
+    private void moveToTarget(Vec3 target, double speed) {
+        if (target != null) {
+            amphithere.getNavigation().moveTo(target.x, target.y, target.z, speed);
+        }
+    }
+
+    private Vec3 findLandingTarget() {
+        BlockPos origin = amphithere.blockPosition();
+        double currentAltitude = Math.max(0.0D, amphithere.getY()
+                - amphithere.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin.getX(), origin.getZ()));
+        double minHorizontalDistance = currentAltitude > 6.0D ? MIN_AIRBORNE_LANDING_HORIZONTAL : 0.0D;
+
+        for (int radius = 8; radius <= 40; radius += 8) {
+            for (int attempt = 0; attempt < 16; attempt++) {
+                int dx = amphithere.getRandom().nextInt(radius * 2 + 1) - radius;
+                int dz = amphithere.getRandom().nextInt(radius * 2 + 1) - radius;
+                BlockPos column = origin.offset(dx, 0, dz);
+                double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+                if (horizontalDistance < minHorizontalDistance) {
+                    continue;
+                }
+                if (!amphithere.level().hasChunkAt(column)) {
+                    continue;
+                }
+
+                int surfaceY = amphithere.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+                if (isValidLandingSurface(ground)) {
+                    return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+                }
+            }
+        }
+
+        if (minHorizontalDistance > 0.0D) {
+            double relaxedMinHorizontal = Math.max(3.0D, minHorizontalDistance * 0.5D);
+            for (int radius = 8; radius <= 40; radius += 8) {
+                for (int attempt = 0; attempt < 16; attempt++) {
+                    int dx = amphithere.getRandom().nextInt(radius * 2 + 1) - radius;
+                    int dz = amphithere.getRandom().nextInt(radius * 2 + 1) - radius;
+                    BlockPos column = origin.offset(dx, 0, dz);
+                    double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+                    if (horizontalDistance < relaxedMinHorizontal) {
+                        continue;
+                    }
+                    if (!amphithere.level().hasChunkAt(column)) {
+                        continue;
+                    }
+
+                    int surfaceY = amphithere.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                    BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+                    if (isValidLandingSurface(ground)) {
+                        return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+                    }
+                }
+            }
+        }
+
+        for (int radius = 8; radius <= 40; radius += 8) {
+            for (int attempt = 0; attempt < 12; attempt++) {
+                int dx = amphithere.getRandom().nextInt(radius * 2 + 1) - radius;
+                int dz = amphithere.getRandom().nextInt(radius * 2 + 1) - radius;
+                BlockPos column = origin.offset(dx, 0, dz);
+                if (!amphithere.level().hasChunkAt(column)) {
+                    continue;
+                }
+
+                int surfaceY = amphithere.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+                if (isValidLandingSurface(ground)) {
+                    return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isValidLandingSurface(BlockPos ground) {
+        if (!amphithere.level().hasChunkAt(ground)) {
+            return false;
+        }
+
+        var state = amphithere.level().getBlockState(ground);
+        if (state.isAir() || !state.getFluidState().isEmpty()) {
+            return false;
+        }
+        if (!state.isFaceSturdy(amphithere.level(), ground, Direction.UP)) {
+            return false;
+        }
+
+        BlockPos above = ground.above();
+        BlockPos aboveTwo = above.above();
+        var aboveState = amphithere.level().getBlockState(above);
+        var aboveTwoState = amphithere.level().getBlockState(aboveTwo);
+        return aboveState.getCollisionShape(amphithere.level(), above).isEmpty()
+                && aboveState.getFluidState().isEmpty()
+                && aboveTwoState.getCollisionShape(amphithere.level(), aboveTwo).isEmpty()
+                && aboveTwoState.getFluidState().isEmpty();
     }
 
     private Vec3 generateFlightCandidate(Vec3 anchor, Vec3 dragonPos, int attempt) {
@@ -442,48 +547,22 @@ public class CindervaneFlightGoal extends Goal {
         int ix = (int) x;
         int iz = (int) z;
 
-        // Check if dragon is currently in a cave/enclosed space
-        BlockPos dragonPos = amphithere.blockPosition();
-        boolean canSeeSky = amphithere.level().canSeeSky(dragonPos);
+        int groundY = amphithere.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+        boolean thundering = amphithere.level().isThundering();
+        boolean raining = !thundering && amphithere.level().isRaining();
 
-        int groundY;
         double capAboveGround;
-
-        if (canSeeSky) {
-            // OUTDOOR: Use heightmap for normal flight
-            groundY = amphithere.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
-
-            // Weather-based cap above ground - gliders avoid storms
-            boolean thundering = amphithere.level().isThundering();
-            boolean raining = !thundering && amphithere.level().isRaining();
-
-            if (tethered) {
-                capAboveGround = thundering ? 12.0 : (raining ? 18.0 : 32.0);
-            } else {
-                capAboveGround = thundering ? 20.0 : (raining ? 30.0 : 80.0);
-            }
+        if (tethered) {
+            capAboveGround = thundering ? 12.0 : (raining ? 18.0 : 32.0);
         } else {
-            // CAVE/INDOOR: Find actual floor and ceiling, fly between them
-            int surfaceY = amphithere.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
-            groundY = findGroundInCave(x, surfaceY, z);
-            int ceilingY = findCeilingInCave(x, groundY, z);
-
-            // Fly between 40-70% of the distance from floor to ceiling
-            double caveFactor = tethered ? (0.4 + amphithere.getRandom().nextDouble() * 0.2) : // 40-60% for tethered
-                                          (0.5 + amphithere.getRandom().nextDouble() * 0.2);  // 50-70% for free
-            capAboveGround = (ceilingY - groundY) * caveFactor;
-
-            // Ensure minimum clearance
-            capAboveGround = Math.max(capAboveGround, tethered ? 8.0 : 12.0);
+            capAboveGround = thundering ? 20.0 : (raining ? 30.0 : 80.0);
         }
 
         double base;
         if (tethered) {
-            base = canSeeSky ? (12.0 + amphithere.getRandom().nextDouble() * 12.0) :
-                               (5.0 + amphithere.getRandom().nextDouble() * 8.0); // Lower base in caves
+            base = 12.0 + amphithere.getRandom().nextDouble() * 12.0;
         } else {
-            base = canSeeSky ? (25.0 + amphithere.getRandom().nextDouble() * 35.0) :
-                               (8.0 + amphithere.getRandom().nextDouble() * 15.0); // Lower base in caves
+            base = 25.0 + amphithere.getRandom().nextDouble() * 35.0;
         }
 
         double target = groundY + base;
@@ -491,38 +570,6 @@ public class CindervaneFlightGoal extends Goal {
         double worldCap = amphithere.level().getMaxBuildHeight() - 10.0;
 
         return Math.min(Math.min(target, cap), worldCap);
-    }
-
-    /**
-     * Finds the actual ground level in a cave by searching downward
-     */
-    private int findGroundInCave(double x, double currentY, double z) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, currentY, z);
-
-        // Search down to find solid ground
-        while (pos.getY() > amphithere.level().getMinBuildHeight() &&
-               !amphithere.level().getBlockState(pos).isSolid() &&
-               amphithere.level().getFluidState(pos).isEmpty()) {
-            pos.move(0, -1, 0);
-        }
-
-        return pos.getY();
-    }
-
-    /**
-     * Finds the ceiling in a cave by searching upward from the floor
-     */
-    private int findCeilingInCave(double x, double floorY, double z) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, floorY + 2, z);
-
-        // Search up to find ceiling
-        while (pos.getY() < amphithere.level().getMaxBuildHeight() &&
-               !amphithere.level().getBlockState(pos).isSolid()) {
-            pos.move(0, 1, 0);
-        }
-
-        // Return ceiling position (subtract 1 to get the air block just below the solid ceiling)
-        return Math.max((int) floorY + 10, pos.getY() - 1);
     }
 
     private Vec3 getFlightAnchor() {
@@ -546,6 +593,14 @@ public class CindervaneFlightGoal extends Goal {
                 && owner != null
                 && owner.isAlive()
                 && owner.level() == amphithere.level();
+    }
+
+    private boolean isFollowingPackLeader() {
+        if (!amphithere.canParticipateInPack()) {
+            return false;
+        }
+        java.util.UUID leaderUuid = amphithere.getPackLeaderUuid();
+        return leaderUuid != null && !leaderUuid.equals(amphithere.getUUID());
     }
 
     private boolean isValidFlightTarget(Vec3 target) {
@@ -638,10 +693,6 @@ public class CindervaneFlightGoal extends Goal {
 
     // ===== UTILITY METHODS =====
 
-    /**
-     * Check if there's enough vertical clearance above the dragon to safely take off
-     * Prevents takeoff when surrounded by trees/blocks
-     */
     private boolean hasTakeoffClearance() {
         BlockPos dragonPos = amphithere.blockPosition();
         double dragonWidth = amphithere.getBbWidth();
@@ -659,13 +710,10 @@ public class CindervaneFlightGoal extends Goal {
 
                     BlockPos checkPos = dragonPos.offset(dx, dy, dz);
                     var state = amphithere.level().getBlockState(checkPos);
-
-                    // Allow takeoff through leaves and other breakable vegetation
-                    if (state.isAir() || isBreakableVegetation(state)) {
+                    if (state.isAir()) {
                         continue;
                     }
 
-                    // Blocked by solid block
                     if (!state.getCollisionShape(amphithere.level(), checkPos).isEmpty()) {
                         return false;
                     }
@@ -673,19 +721,7 @@ public class CindervaneFlightGoal extends Goal {
             }
         }
 
-        return true; // Clear path upward
-    }
-
-    /**
-     * Check if a block is breakable vegetation that won't stop takeoff
-     */
-    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
-        var block = state.getBlock();
-        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
-               block instanceof net.minecraft.world.level.block.VineBlock ||
-               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
-               block instanceof net.minecraft.world.level.block.FlowerBlock ||
-               block instanceof net.minecraft.world.level.block.DoublePlantBlock;
+        return true;
     }
 
     private boolean hasNearbyBabies() {

@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonAerialLandingController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ClipContext;
@@ -13,14 +13,13 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
-/**
- * Flight goal for Ignivorus - provides aggressive patrol behavior.
- * Fire dragons are bold and active, preferring to patrol their territory from the air.
- */
+
 public class IgnivorusFlightGoal extends Goal {
     private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.ignivorus();
+    private static final double CRUISE_SPEED = 1.75D;
+    private static final double LANDING_SPEED = 2.0D;
+    private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
     private final Ignivorus dragon;
-    private final DragonAerialLandingController<Ignivorus> landingController;
     private Vec3 targetPosition;
     private int stuckCounter = 0;
     private int timeSinceTargetChange = 0;
@@ -33,11 +32,6 @@ public class IgnivorusFlightGoal extends Goal {
 
     public IgnivorusFlightGoal(Ignivorus dragon) {
         this.dragon = dragon;
-        this.landingController = new DragonAerialLandingController<>(
-                dragon,
-                Ignivorus.LANDING_BLEND_ALTITUDE,
-                dragon::handleAiLandingComplete
-        );
         this.setFlags(EnumSet.of(Flag.MOVE));
         this.flightDecisionCooldown = 0;
     }
@@ -115,7 +109,6 @@ public class IgnivorusFlightGoal extends Goal {
         }
 
         if (shouldFly) {
-            landingController.reset();
             this.targetPosition = findFlightTarget();
             this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
             return true;
@@ -150,20 +143,12 @@ public class IgnivorusFlightGoal extends Goal {
             }
             return false;
         }
-        if (landingController.isLandingApproachActive()) {
-            if (dragon.onGround()) {
-                landingController.finishLanding();
-                return false;
-            }
-            return true;
-        }
         if (dragon.isAiSpecialCombatActive()) {
             return false;
         }
 
-        // Let landing system take over
         if (dragon.isLanding()) {
-            return false;
+            return !dragon.onGround();
         }
 
         // Stop if ordered to sit or something important comes up
@@ -197,12 +182,13 @@ public class IgnivorusFlightGoal extends Goal {
         if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
             return;
         }
+        boolean wasOnGround = dragon.onGround();
         dragon.setFlying(true);
+        dragon.setTakeoff(wasOnGround);
         dragon.setLanding(false);
         dragon.setHovering(false);
-        landingController.reset();
         if (targetPosition != null) {
-            dragon.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0D);
+            moveToTarget(targetPosition, CRUISE_SPEED);
         }
     }
 
@@ -210,13 +196,13 @@ public class IgnivorusFlightGoal extends Goal {
     public void tick() {
         timeSinceTargetChange++;
 
-        if (landingController.isLandingApproachActive()) {
-            landingController.tickLandingApproach();
-            return;
-        }
-
         // If dragon wants to land, let it handle that
         if (dragon.isLanding()) {
+            if (targetPosition == null) {
+                beginLandingApproach();
+            } else if (!dragon.getNavigation().isInProgress()) {
+                moveToTarget(targetPosition, LANDING_SPEED);
+            }
             return;
         }
 
@@ -274,14 +260,13 @@ public class IgnivorusFlightGoal extends Goal {
         if (needNewTarget) {
             targetPosition = findFlightTarget();
             timeSinceTargetChange = 0;
-            dragon.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0D);
+            moveToTarget(targetPosition, CRUISE_SPEED);
         }
     }
 
     @Override
     public void stop() {
         targetPosition = null;
-        landingController.reset();
         stuckCounter = 0;
         timeSinceTargetChange = 0;
         dragon.getNavigation().stop();
@@ -312,15 +297,129 @@ public class IgnivorusFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        landingController.beginLandingApproach();
-        if (landingController.isLandingApproachActive()) {
-            targetPosition = null;
+        Vec3 landingTarget = findLandingTarget();
+        if (landingTarget == null) {
+            return;
         }
+
+        targetPosition = landingTarget;
+        dragon.setHovering(false);
+        dragon.setTakeoff(false);
+        dragon.setLanding(true);
+        moveToTarget(landingTarget, LANDING_SPEED);
+    }
+
+    private void moveToTarget(Vec3 target, double speed) {
+        if (target != null) {
+            dragon.getNavigation().moveTo(target.x, target.y, target.z, speed);
+        }
+    }
+
+    private Vec3 findLandingTarget() {
+        BlockPos origin = dragon.blockPosition();
+        double currentAltitude = Math.max(0.0D, dragon.getY()
+                - dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin.getX(), origin.getZ()));
+        double minHorizontalDistance = currentAltitude > 6.0D ? MIN_AIRBORNE_LANDING_HORIZONTAL : 0.0D;
+
+        for (int radius = 8; radius <= 40; radius += 8) {
+            for (int attempt = 0; attempt < 16; attempt++) {
+                int dx = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                int dz = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                BlockPos column = origin.offset(dx, 0, dz);
+                double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+                if (horizontalDistance < minHorizontalDistance) {
+                    continue;
+                }
+                if (!dragon.level().hasChunkAt(column)) {
+                    continue;
+                }
+
+                int surfaceY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+                if (isValidLandingSurface(ground)) {
+                    return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+                }
+            }
+        }
+
+        if (minHorizontalDistance > 0.0D) {
+            double relaxedMinHorizontal = Math.max(3.0D, minHorizontalDistance * 0.5D);
+            for (int radius = 8; radius <= 40; radius += 8) {
+                for (int attempt = 0; attempt < 16; attempt++) {
+                    int dx = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                    int dz = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                    BlockPos column = origin.offset(dx, 0, dz);
+                    double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+                    if (horizontalDistance < relaxedMinHorizontal) {
+                        continue;
+                    }
+                    if (!dragon.level().hasChunkAt(column)) {
+                        continue;
+                    }
+
+                    int surfaceY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                    BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+                    if (isValidLandingSurface(ground)) {
+                        return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+                    }
+                }
+            }
+        }
+
+        for (int radius = 8; radius <= 40; radius += 8) {
+            for (int attempt = 0; attempt < 12; attempt++) {
+                int dx = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                int dz = dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                BlockPos column = origin.offset(dx, 0, dz);
+                if (!dragon.level().hasChunkAt(column)) {
+                    continue;
+                }
+
+                int surfaceY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+                if (isValidLandingSurface(ground)) {
+                    return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isValidLandingSurface(BlockPos ground) {
+        if (!dragon.level().hasChunkAt(ground)) {
+            return false;
+        }
+
+        var state = dragon.level().getBlockState(ground);
+        if (state.isAir() || !state.getFluidState().isEmpty()) {
+            return false;
+        }
+        if (!state.isFaceSturdy(dragon.level(), ground, Direction.UP)) {
+            return false;
+        }
+
+        BlockPos above = ground.above();
+        BlockPos aboveTwo = above.above();
+        var aboveState = dragon.level().getBlockState(above);
+        var aboveTwoState = dragon.level().getBlockState(aboveTwo);
+        return aboveState.getCollisionShape(dragon.level(), above).isEmpty()
+                && aboveState.getFluidState().isEmpty()
+                && aboveTwoState.getCollisionShape(dragon.level(), aboveTwo).isEmpty()
+                && aboveTwoState.getFluidState().isEmpty();
     }
 
     private void finishLanding() {
         targetPosition = null;
-        landingController.finishLanding();
+        if (dragon.onGround()) {
+            dragon.handleAiLandingComplete();
+        } else {
+            dragon.setLanding(false);
+            dragon.setFlying(false);
+            dragon.setHovering(false);
+            dragon.setTakeoff(false);
+        }
+        dragon.getNavigation().stop();
     }
 
     private Vec3 generateFlightCandidate(Vec3 anchor, Vec3 dragonPos, int attempt) {
@@ -373,41 +472,14 @@ public class IgnivorusFlightGoal extends Goal {
         int ix = (int) x;
         int iz = (int) z;
 
-        // Check if dragon is currently in a cave/enclosed space
-        BlockPos dragonPos = dragon.blockPosition();
-        boolean canSeeSky = dragon.level().canSeeSky(dragonPos);
-
-        int groundY;
-        double capAboveGround;
-
-        if (canSeeSky) {
-            // OUTDOOR: Use heightmap for normal flight
-            groundY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
-            capAboveGround = tethered ? 40.0 : 60.0;
-        } else {
-            // CAVE/INDOOR: Find actual floor and ceiling, fly between them
-            int surfaceY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
-            groundY = findGroundInCave(x, surfaceY, z);
-            int ceilingY = findCeilingInCave(x, groundY, z);
-
-            // Fly between 50-75% of the distance from floor to ceiling (fire dragons more aggressive)
-            double caveFactor = tethered ? (0.45 + dragon.getRandom().nextDouble() * 0.2) : // 45-65% for tethered
-                                          (0.55 + dragon.getRandom().nextDouble() * 0.2);  // 55-75% for free
-            capAboveGround = (ceilingY - groundY) * caveFactor;
-
-            // Ensure minimum clearance
-            capAboveGround = Math.max(capAboveGround, tethered ? 10.0 : 15.0);
-        }
+        int groundY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+        double capAboveGround = tethered ? 40.0 : 60.0;
 
         double base;
         if (tethered) {
-            // Tamed: moderate altitude around owner
-            base = canSeeSky ? (15.0 + dragon.getRandom().nextDouble() * 15.0) :
-                               (8.0 + dragon.getRandom().nextDouble() * 12.0); // Lower base in caves
+            base = 15.0 + dragon.getRandom().nextDouble() * 15.0;
         } else {
-            // Wild: aggressive patrol at medium-high altitude
-            base = canSeeSky ? (20.0 + dragon.getRandom().nextDouble() * 25.0) :
-                               (10.0 + dragon.getRandom().nextDouble() * 18.0); // Lower base in caves
+            base = 20.0 + dragon.getRandom().nextDouble() * 25.0;
         }
 
         double target = groundY + base;
@@ -415,38 +487,6 @@ public class IgnivorusFlightGoal extends Goal {
         double worldCap = dragon.level().getMaxBuildHeight() - 10.0;
 
         return Math.min(Math.min(target, cap), worldCap);
-    }
-
-    /**
-     * Finds the actual ground level in a cave by searching downward
-     */
-    private int findGroundInCave(double x, double currentY, double z) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, currentY, z);
-
-        // Search down to find solid ground
-        while (pos.getY() > dragon.level().getMinBuildHeight() &&
-               !dragon.level().getBlockState(pos).isSolid() &&
-               dragon.level().getFluidState(pos).isEmpty()) {
-            pos.move(0, -1, 0);
-        }
-
-        return pos.getY();
-    }
-
-    /**
-     * Finds the ceiling in a cave by searching upward from the floor
-     */
-    private int findCeilingInCave(double x, double floorY, double z) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, floorY + 2, z);
-
-        // Search up to find ceiling
-        while (pos.getY() < dragon.level().getMaxBuildHeight() &&
-               !dragon.level().getBlockState(pos).isSolid()) {
-            pos.move(0, 1, 0);
-        }
-
-        // Return ceiling position (subtract 1 to get the air block just below the solid ceiling)
-        return Math.max((int) floorY + 10, pos.getY() - 1);
     }
 
     private Vec3 getFlightAnchor() {
@@ -515,10 +555,6 @@ public class IgnivorusFlightGoal extends Goal {
 
     // ===== UTILITY METHODS =====
 
-    /**
-     * Check if there's enough vertical clearance above the dragon to safely take off
-     * Prevents takeoff when surrounded by trees/blocks
-     */
     private boolean hasTakeoffClearance() {
         BlockPos dragonPos = dragon.blockPosition();
         double dragonWidth = dragon.getBbWidth();
@@ -536,13 +572,10 @@ public class IgnivorusFlightGoal extends Goal {
 
                     BlockPos checkPos = dragonPos.offset(dx, dy, dz);
                     var state = dragon.level().getBlockState(checkPos);
-
-                    // Allow takeoff through leaves and other breakable vegetation
-                    if (state.isAir() || isBreakableVegetation(state)) {
+                    if (state.isAir()) {
                         continue;
                     }
 
-                    // Blocked by solid block
                     if (!state.getCollisionShape(dragon.level(), checkPos).isEmpty()) {
                         return false;
                     }
@@ -550,19 +583,7 @@ public class IgnivorusFlightGoal extends Goal {
             }
         }
 
-        return true; // Clear path upward
-    }
-
-    /**
-     * Check if a block is breakable vegetation that won't stop takeoff
-     */
-    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
-        var block = state.getBlock();
-        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
-               block instanceof net.minecraft.world.level.block.VineBlock ||
-               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
-               block instanceof net.minecraft.world.level.block.FlowerBlock ||
-               block instanceof net.minecraft.world.level.block.DoublePlantBlock;
+        return true;
     }
 
     private boolean isOverDanger() {

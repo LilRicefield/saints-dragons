@@ -9,25 +9,18 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * Air-to-air combat goal for Ignivorus - handles flying targets (players riding dragons, etc).
- *
- * Features:
- * - 3D chase movement using flight controls
- * - Fire breath at range (longer duration in air)
- * - Bite attacks up close
- * - Emergency landing when shot from below
- */
+
 public class IgnivorusAirCombatGoal extends Goal {
+
     private final Ignivorus dragon;
 
     // Combat ranges
+    private static final double BITE_APPROACH_DISTANCE = 10.0D;
     private final double biteRange = 16.0;              // Close-range melee
     private final double fireBreathMinRange = 20.0;   // Fire breath at medium-long range
     private final double fireBreathMaxRange = 64.0;   // Max effective range
 
     // Flight positioning
-    private static final double HOVER_HEIGHT_OFFSET = 2.0; // Stay slightly above target
     private static final double ENGAGEMENT_DISTANCE = 25.0; // Preferred combat distance
 
     private int attackCooldown = 0;
@@ -41,6 +34,9 @@ public class IgnivorusAirCombatGoal extends Goal {
     private int shotFromBelowCounter = 0;
     private static final int SHOT_FROM_BELOW_THRESHOLD = 3; // Land after 3 hits from below
     private long lastDamageTick = 0;
+    private Vec3 lastRequestedAirDestination;
+    private double lastRequestedAirSpeed = Double.NaN;
+    private int airMoveRefreshCooldown = 0;
 
     public IgnivorusAirCombatGoal(Ignivorus dragon) {
         this.dragon = dragon;
@@ -157,6 +153,9 @@ public class IgnivorusAirCombatGoal extends Goal {
         dragon.setAggressive(false);
         attackCooldown = 0;
         repositionCooldown = 0;
+        lastRequestedAirDestination = null;
+        lastRequestedAirSpeed = Double.NaN;
+        airMoveRefreshCooldown = 0;
 
         // Don't call setLanding() if it triggers setTakeoff() - just clear flight flags
         if (dragon.isFlying() || dragon.isHovering()) {
@@ -169,6 +168,9 @@ public class IgnivorusAirCombatGoal extends Goal {
     @Override
     public void start() {
         dragon.setAggressive(true);
+        lastRequestedAirDestination = null;
+        lastRequestedAirSpeed = Double.NaN;
+        airMoveRefreshCooldown = 0;
 
         // If grounded, trigger takeoff sequence
         // Only set takeoff if truly grounded (not already flying/hovering)
@@ -212,6 +214,9 @@ public class IgnivorusAirCombatGoal extends Goal {
         if (repositionCooldown > 0) {
             repositionCooldown--;
         }
+        if (airMoveRefreshCooldown > 0) {
+            airMoveRefreshCooldown--;
+        }
 
         LivingEntity target = dragon.getTarget();
         if (!dragon.isTargetValid(target)) {
@@ -233,7 +238,7 @@ public class IgnivorusAirCombatGoal extends Goal {
                 tryAttack(target, distance);
             }
             // Maintain position for bite
-            maintainCombatPosition(target);
+            maintainBitePosition(target);
         } else if (distance >= fireBreathMinRange && distance <= fireBreathMaxRange && hasLineOfSight && breathCooldown <= 0) {
             // Medium-long range - fire breath
             if (!isCurrentlyAttacking()) {
@@ -241,11 +246,9 @@ public class IgnivorusAirCombatGoal extends Goal {
             }
             // Hold position while breathing fire
             if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)) {
-                dragon.getMoveControl().setWantedPosition(
-                    dragon.getX(),
-                    dragon.getY(),
-                    dragon.getZ(),
-                    0.5 // Slow movement while breathing
+                requestAirMove(
+                        new Vec3(dragon.getX(), dragon.getY(), dragon.getZ()),
+                        0.5D
                 );
             } else {
                 maintainCombatPosition(target);
@@ -302,8 +305,7 @@ public class IgnivorusAirCombatGoal extends Goal {
      * Chase target in 3D space using flight controls (based on FollowOwnerGoal pattern)
      */
     private void chaseTarget(LivingEntity target) {
-        // Calculate target position - slightly above and closing distance
-        double targetY = target.getY() + target.getBbHeight() + HOVER_HEIGHT_OFFSET;
+        double targetY = target.getY() + target.getBbHeight() * 0.5D;
 
         // Get direction to target for positioning
         Vec3 toTarget = new Vec3(
@@ -320,11 +322,9 @@ public class IgnivorusAirCombatGoal extends Goal {
         // Add slight vertical bobbing for natural flight
         double verticalOffset = Math.sin(dragon.tickCount * 0.15) * 0.5;
 
-        dragon.getMoveControl().setWantedPosition(
-            targetX,
-            targetY + verticalOffset,
-            targetZ,
-            3.5 // Aggressive chase speed
+        requestAirMove(
+                new Vec3(targetX, targetY + verticalOffset, targetZ),
+                7.0D
         );
     }
 
@@ -337,7 +337,7 @@ public class IgnivorusAirCombatGoal extends Goal {
         }
 
         double distance = dragon.distanceTo(target);
-        double targetY = target.getY() + target.getBbHeight() + HOVER_HEIGHT_OFFSET;
+        double targetY = target.getY() + target.getBbHeight() * 0.5D;
 
         // Get target's look vector for positioning
         Vec3 targetLook = target.getLookAngle();
@@ -353,32 +353,72 @@ public class IgnivorusAirCombatGoal extends Goal {
         // Add vertical variation
         double verticalOffset = Math.sin(dragon.tickCount * 0.1) * 1.0;
 
-        dragon.getMoveControl().setWantedPosition(
-            posX,
-            targetY + verticalOffset,
-            posZ,
-            1.0 // Moderate positioning speed
+        requestAirMove(
+                new Vec3(posX, targetY + verticalOffset, posZ),
+                1.0D
         );
 
         repositionCooldown = 20; // Reposition every second
+    }
+
+    private void maintainBitePosition(LivingEntity target) {
+        double targetY = target.getY() + target.getBbHeight() * 0.5D;
+
+        Vec3 toTarget = new Vec3(
+                target.getX() - dragon.getX(),
+                targetY - dragon.getY(),
+                target.getZ() - dragon.getZ()
+        );
+
+        double dist = toTarget.length();
+        if (dist < 1.0E-4D) {
+            return;
+        }
+
+        Vec3 dir = toTarget.scale(1.0D / dist);
+        Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
+
+        double speed = dist > BITE_APPROACH_DISTANCE ? 1.2D : 0.6D;
+        requestAirMove(desired, speed);
+    }
+
+    private void requestAirMove(Vec3 destination, double speed) {
+        boolean destinationChanged = lastRequestedAirDestination == null
+                || lastRequestedAirDestination.distanceToSqr(destination) > 9.0D;
+        boolean speedChanged = Double.isNaN(lastRequestedAirSpeed)
+                || Math.abs(lastRequestedAirSpeed - speed) > 0.15D;
+
+        if (!destinationChanged && !speedChanged && airMoveRefreshCooldown > 0) {
+            return;
+        }
+
+        dragon.getMoveControl().setWantedPosition(destination.x, destination.y, destination.z, speed);
+        lastRequestedAirDestination = destination;
+        lastRequestedAirSpeed = speed;
+        airMoveRefreshCooldown = movementRefreshInterval(speed);
+    }
+
+    private int movementRefreshInterval(double speed) {
+        if (speed >= 1.4D) {
+            return 3;
+        }
+        if (speed >= 1.0D) {
+            return 5;
+        }
+        return 7;
     }
 
     /**
      * Check if target is airborne (flying, riding flying mount, or off ground)
      */
     private boolean isTargetAirborne(LivingEntity target) {
-        // Check if target is on ground
         if (target.onGround()) {
             return false;
         }
 
-        // Check if riding something (might be a flying dragon)
         if (target.isPassenger() && target.getVehicle() != null) {
-            return true; // Assume mounted targets are valid air targets
+            return true;
         }
-
-        // Check if significantly off ground (more than 8 blocks up for elytra/flight stability)
-        // Increased from 3 to prevent low elytra gliding from triggering constant takeoff
         double groundY = dragon.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
         if (target.getY() - groundY > 8.0) {
             return true;

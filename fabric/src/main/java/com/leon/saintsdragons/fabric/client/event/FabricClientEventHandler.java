@@ -23,6 +23,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 
+import java.lang.reflect.Method;
+
 /**
  * Fabric client event handler for camera adjustments and screen shake effects.
  * Equivalent to the Forge ClientEventHandler.
@@ -72,6 +74,8 @@ public class FabricClientEventHandler {
     private static net.minecraft.client.CameraType previousPerspective = null;
     private static float beamCameraForward = 0.0f;
     private static float beamCameraUp = 0.0f;
+    private static boolean zoomifyLookupResolved = false;
+    private static Method zoomifyDivisorMethod = null;
 
     /**
      * Initialize the client event handler.
@@ -174,6 +178,7 @@ public class FabricClientEventHandler {
                 // Apply the smoothed zoom and lateral shift using the mixin accessor
                 CameraAccessor cameraAccessor = (CameraAccessor) camera;
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(raevyxCameraZoom);
+                maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
                 // Apply lateral and vertical shifts
                 cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, raevyxCameraShift);
@@ -244,6 +249,7 @@ public class FabricClientEventHandler {
                 // Apply the smoothed zoom and lateral shift using the mixin accessor
                 CameraAccessor cameraAccessor = (CameraAccessor) camera;
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(cindervaneCameraZoom);
+                maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
 
                 // Move camera: back (zoom), no vertical, lateral shift based on banking
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
@@ -313,6 +319,7 @@ public class FabricClientEventHandler {
                 // Apply the smoothed zoom using the mixin accessor
                 CameraAccessor cameraAccessor = (CameraAccessor) camera;
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(ignivorusCameraZoom);
+                maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
                 // Apply lateral and vertical shifts
                 cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, ignivorusCameraShift);
@@ -364,6 +371,7 @@ public class FabricClientEventHandler {
                 verticalCameraShift += (targetVerticalShift - verticalCameraShift) * verticalBlendRate;
 
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(raevyxCameraZoom);
+                maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
                 cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, raevyxCameraShift);
 
@@ -376,6 +384,7 @@ public class FabricClientEventHandler {
                 cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
             } else {
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(raevyxCameraZoomTarget);
+                maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
                 raevyxCameraShift = 0.0;
                 verticalCameraShift = 0.0;
@@ -390,6 +399,7 @@ public class FabricClientEventHandler {
                 stegonautCameraZoom += (stegonautCameraZoomTarget - stegonautCameraZoom) * blendRate;
                 CameraAccessor cameraAccessor = (CameraAccessor) camera;
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(stegonautCameraZoom);
+                maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
             } else {
                 DragonRiderCameraSync.applyFirstPersonBoneAnchor(
@@ -430,6 +440,7 @@ public class FabricClientEventHandler {
 
                 CameraAccessor cameraAccessor = (CameraAccessor) camera;
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(volitansCameraZoom);
+                maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
                 cameraAccessor.saintsdragons$invokeMove(0, verticalCameraShift, volitansCameraShift);
 
@@ -493,6 +504,40 @@ public class FabricClientEventHandler {
             randomTremorOffsets[1] = (Math.random() - 0.5) * 2.0;
             randomTremorOffsets[2] = (Math.random() - 0.5) * 2.0;
         }
+    }
+
+    private static double applyZoomifyCameraDistance(double maxZoom, float partialTicks) {
+        double zoomDivisor = getZoomifyZoomDivisor(partialTicks);
+        if (zoomDivisor <= 1.0D) {
+            return maxZoom;
+        }
+        return maxZoom / zoomDivisor;
+    }
+
+    private static double getZoomifyZoomDivisor(float partialTicks) {
+        if (!zoomifyLookupResolved) {
+            zoomifyLookupResolved = true;
+            try {
+                Class<?> zoomifyClass = Class.forName("dev.isxander.zoomify.Zoomify");
+                zoomifyDivisorMethod = zoomifyClass.getMethod("getZoomDivisor", float.class);
+            } catch (ReflectiveOperationException ignored) {
+                zoomifyDivisorMethod = null;
+            }
+        }
+
+        if (zoomifyDivisorMethod == null) {
+            return 1.0D;
+        }
+
+        try {
+            Object value = zoomifyDivisorMethod.invoke(null, partialTicks);
+            if (value instanceof Number number) {
+                return Math.max(1.0D, number.doubleValue());
+            }
+        } catch (ReflectiveOperationException ignored) {
+            zoomifyDivisorMethod = null;
+        }
+        return 1.0D;
     }
 }
 

@@ -161,7 +161,7 @@ public final class VolitansInteractionHandler {
     }
 
     private InteractionResult handleCommandCycling(Player player) {
-        if (dragon.isInSitTransition()) {
+        if (!dragon.isInWaterOrBubble() && dragon.isInSitTransition()) {
             if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 String messageKey;
                 if (dragon.isSittingDownAnimation()) {

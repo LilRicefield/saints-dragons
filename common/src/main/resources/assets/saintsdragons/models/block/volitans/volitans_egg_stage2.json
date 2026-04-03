@@ -1,0 +1,23 @@
+{
+	"credit": "With love, by Leon Saint",
+	"ambientocclusion": false,
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "saintsdragons:block/volitans/volitans_egg_very_cracked",
+		"particle": "saintsdragons:block/volitans/volitans_egg_very_cracked"
+	},
+	"elements": [
+		{
+			"from": [5, 0, 5],
+			"to": [11, 8, 11],
+			"faces": {
+				"north": {"uv": [3, 3, 6, 7], "texture": "#0"},
+				"east": {"uv": [0, 3, 3, 7], "texture": "#0"},
+				"south": {"uv": [9, 3, 12, 7], "texture": "#0"},
+				"west": {"uv": [6, 3, 9, 7], "texture": "#0"},
+				"up": {"uv": [6, 3, 3, 0], "texture": "#0"},
+				"down": {"uv": [9, 0, 6, 3], "texture": "#0"}
+			}
+		}
+	]
+}

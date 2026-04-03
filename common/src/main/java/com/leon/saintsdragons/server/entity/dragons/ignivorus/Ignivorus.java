@@ -17,14 +17,18 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
-import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusSpecialCombatGoal;
-import com.leon.saintsdragons.server.ai.navigation.DragonFlightMoveHelper;
+import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
+import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
@@ -54,6 +58,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -246,16 +251,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
 
-    // Flight mode state (moved from physics controller for performance)
-    private boolean riderHighAltitudeGlide = false;
     private final IgnivorusRiderController riderController;
     private final DragonRiderFlight riderFlightComponent;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
     private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
 
     private final DragonPathNavigateGround groundNav;
+    private final AsyncFlightController asyncAirController;
+    private final AsyncFlightMoveControl asyncAirMoveControl;
+    private final MoveControl groundMoveControl;
     private final FlyingPathNavigation airNav;
-    private boolean usingAirNav;
+    private final DragonNavigationModeController navigationModeController;
 
     public int timeFlying = 0;
     private int airTicks;
@@ -280,10 +286,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int fireTime = 0; // Tracks how long fire breath has been active for accuracy ramping
     private Vec3 fireServerTarget = null; // Server-side smooth target position with wobble
 
-    // Banking smoothing state (procedural - no animation controllers needed)
-    private float bankSmoothedYaw = 0f;
-    private float bankAngle = 0f;
-    private float prevBankAngle = 0f;
+    private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
+    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
 
     // Bulldoze toggle state
     private boolean bulldozing = false;
@@ -351,21 +355,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
 
-    // Pitching smoothing state (procedural - no animation controllers needed)
-    private float pitchSmoothedPitch = 0f; // Used for AI pitch detection only
-    private float flightPitchRad = 0f;
-    private float prevFlightPitchRad = 0f;
-    private float smoothedPlayerPitchRad = 0f; // Input smoothing for rider camera pitch (like bankSmoothedYaw)
-
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
-
-    // Position tracking for FLY_IDLE detection (xo/yo/zo are synced too early in tick cycle)
-    // Public for physics controller access
-    public double lastCheckedX = 0;
-    public double lastCheckedY = 0;
-    public double lastCheckedZ = 0;
-    public int ticksSinceLastMovement = 0;
 
     // Sitting transition state (1.88 seconds = 38 ticks for both down and up animations)
     private int sitTransitionTicks = 0;
@@ -379,16 +370,49 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         super(type, level);
         this.setMaxUpStep(1.1F);
 
+        this.asyncAirController = new AsyncFlightController(this);
+        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
         this.groundNav = new DragonPathNavigateGround(this, level);
-        this.airNav = new FlyingPathNavigation(this, level) {
+        this.groundMoveControl = new MoveControl(this);
+        this.airNav = new AsyncFlyingPathNavigation(this, level, this.asyncAirController) {
             @Override
             public boolean isStableDestination(@NotNull net.minecraft.core.BlockPos pos) {
                 return !this.level.getBlockState(pos.below()).isAir();
             }
         };
+        this.airNav.setCanOpenDoors(false);
+        this.airNav.setCanFloat(false);
+        this.airNav.setCanPassDoors(false);
+        this.navigationModeController = new DragonNavigationModeController(
+                new DragonNavigationModeController.Host() {
+                    @Override
+                    public void setActiveNavigation(PathNavigation navigation) {
+                        Ignivorus.this.navigation = navigation;
+                    }
+
+                    @Override
+                    public void setActiveMoveControl(MoveControl moveControl) {
+                        Ignivorus.this.moveControl = moveControl;
+                    }
+
+                    @Override
+                    public void afterSwitchToGround() {
+                        if (Ignivorus.this.onGround()) {
+                            Ignivorus.this.setDeltaMovement(Vec3.ZERO);
+                            Ignivorus.this.hasImpulse = false;
+                        } else {
+                            Vec3 motion = Ignivorus.this.getDeltaMovement();
+                            Ignivorus.this.setDeltaMovement(motion.x * 0.25D, motion.y, motion.z * 0.25D);
+                        }
+                    }
+                },
+                this.groundNav,
+                this.airNav,
+                this.groundMoveControl,
+                this.asyncAirMoveControl
+        );
         this.navigation = this.groundNav;
-        this.moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this); // Start with ground control
-        this.usingAirNav = false;
+        this.moveControl = this.groundMoveControl;
         // Fire dragon: don't treat fire as a hazard for pathfinding.
         // This prevents repeated repath spikes when long fire lines are present.
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);
@@ -644,10 +668,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         // Large body needs stronger buoyancy to keep shoreline exits reliable.
         this.goalSelector.addGoal(0, new com.leon.saintsdragons.server.ai.goals.base.DragonFloatGoal(this, 0.018D, -0.02D, 0.95F));
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(2, new IgnivorusSpecialCombatGoal(this));
-            this.goalSelector.addGoal(3, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
-            this.goalSelector.addGoal(4, new IgnivorusAirCombatGoal(this));
-            this.goalSelector.addGoal(4, new IgnivorusGroundCombatGoal(this));
+            this.goalSelector.addGoal(2, new com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal(this));
+            this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
+            this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
         }
         this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forIgnivorus()));
         this.goalSelector.addGoal(6, new DragonFollowParentGoal<>(this, Ignivorus.class, 1.1D));
@@ -739,6 +762,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // CRITICAL: Disable gravity when flying/hovering (fixes grounding issue)
         this.setNoGravity(isFlying() || isHovering());
+
+        if (!level().isClientSide && this.navigationModeController.isUsingAirNavigation()
+                && (this.isFlying() || this.isTakeoff() || this.isLanding()) && !this.isVehicle()) {
+            this.asyncAirController.serverTick();
+        }
 
         // Update banking and pitching for animations
         tickBankingLogic();
@@ -2031,10 +2059,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.setDeltaMovement(0, 0, 0);
         this.setRunning(false);
         this.setGroundMoveStateFromAI(0);
-        this.setFlying(false);
-        this.setHovering(false);
-        this.setTakeoff(false);
-        this.setLanding(false);
         this.setOrderedToSit(true);
     }
 
@@ -2529,19 +2553,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     // ===== FLIGHT SYSTEM =====
 
     public void switchToAirNavigation() {
-        if (!this.usingAirNav) {
-            this.navigation = this.airNav;
-            this.moveControl = new DragonFlightMoveHelper(this);
-            this.usingAirNav = true;
-        }
+        this.navigationModeController.switchToAir();
     }
 
     public void switchToGroundNavigation() {
-        if (this.usingAirNav) {
-            this.navigation = this.groundNav;
-            this.moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
-            this.usingAirNav = false;
-        }
+        this.navigationModeController.switchToGround();
     }
 
     @Override
@@ -2664,13 +2680,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public void setTakeoff(boolean takeoff) {
-        boolean wasTakeoff = isTakeoff();
         this.entityData.set(DATA_TAKEOFF, takeoff);
         if (!takeoff && takeoffComponent.isActive()) {
             takeoffComponent.clear();
             return;
         }
-        if (takeoff && !wasTakeoff && !level().isClientSide) {
+        if (takeoff && !level().isClientSide) {
             triggerAnim("instant", isPhase2Active() ? "phase2_takeoff" : "takeoff");
             getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
         }
@@ -2720,118 +2735,58 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public int getFlightMode() {
-        // Flight mode computation (consistent with Cindervane/Raevyx architecture)
-        // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
-        if (!isFlying()) {
-            riderHighAltitudeGlide = false;
-            return -1;
-        }
-
-        // Takeoff check
-        if (shouldPlayTakeoff()) {
-            riderHighAltitudeGlide = false;
-            return 3;
-        }
-
-        if (isHovering() || isLanding()) {
-            riderHighAltitudeGlide = false;
-            return 2;
-        }
-
-        // Rider-specific modes (sprint and fly_idle)
-        if (isTame() && isVehicle()) {
-            Entity rider = getControllingPassenger();
-            if (rider instanceof Player player && isOwnedBy(player)) {
-                // Track position changes manually (xo/yo/zo are synced too early)
-                double deltaX = getX() - lastCheckedX;
-                double deltaY = getY() - lastCheckedY;
-                double deltaZ = getZ() - lastCheckedZ;
-                double positionChangeSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
-
-                boolean goingUp = isGoingUp();
-                boolean goingDown = isGoingDown();
-                boolean accelerating = isAccelerating();
-
-                // Update position tracking and movement timer
-                if (positionChangeSqr > 0.0001 || goingUp || goingDown || accelerating) {
-                    ticksSinceLastMovement = 0;
-                    lastCheckedX = getX();
-                    lastCheckedY = getY();
-                    lastCheckedZ = getZ();
-                } else {
-                    ticksSinceLastMovement++;
-                }
-
-                // FLY_IDLE after 3+ ticks stationary
-                if (ticksSinceLastMovement > 3) {
-                    return 5;
-                }
-
-                // SPRINT_FLAP when accelerating
-                if (accelerating) {
-                    return 4;
-                }
-            }
-        }
-
         double altitude = getY() - level().getHeight(
                 net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 (int) getX(),
                 (int) getZ());
-
-        Vec3 velocity = getDeltaMovement();
-        boolean ascending = velocity.y > 0.02;
-        boolean riderAscending = isVehicle() && isGoingUp();
-
-        // Rider altitude-based logic
-        if (isTame() && isVehicle() && getControllingPassenger() instanceof Player player && isOwnedBy(player)) {
-            // Force glide near terrain/water
-            if (altitude <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD || isNearWaterSurface()) {
-                riderHighAltitudeGlide = false;
-                return 0;
-            }
-
-            if (ascending || riderAscending) {
-                return 1;
-            }
-
-            // High altitude glide state machine
-            if (riderHighAltitudeGlide) {
-                if (altitude > RIDER_GLIDE_ALTITUDE_EXIT) {
-                    return 0;
-                }
-                riderHighAltitudeGlide = false;
-            } else if (altitude > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
-                riderHighAltitudeGlide = true;
-                return 0;
-            }
-
-            return 1;
-        } else {
-            riderHighAltitudeGlide = false;
-        }
-
-        // AI flight mode determination (tamed dragons following owner or wild dragons)
-        double horizontalSpeedSqr = velocity.horizontalDistanceSqr();
-        double yDelta = getY() - yo;
-
-        // Check if hovering still (reached destination or stationary)
-        // Threshold: 0.01 squared = 0.1 blocks/tick horizontal movement
-        if (horizontalSpeedSqr < 0.01 && Math.abs(yDelta) < 0.1) {
-            return 5; // FLY_IDLE - hovering still in air
-        }
-
-        // AI flight: flap when ascending
-        if (ascending || riderAscending) {
-            return 1;
-        }
-
-        // AI flight: altitude-based
-        return altitude > 35.0 ? 0 : 1;
+        boolean riddenByOwner = isRiddenByOwner();
+        DragonFlightStateEvaluator.FlightInput input = new DragonFlightStateEvaluator.FlightInput(
+                isFlying(),
+                shouldPlayTakeoff(),
+                isHovering(),
+                isLanding(),
+                riddenByOwner,
+                isGoingUp(),
+                isGoingDown(),
+                isAccelerating(),
+                riddenByOwner && shouldForceSurfaceGlide(altitude),
+                getX(),
+                getY(),
+                getZ(),
+                this.yo,
+                altitude,
+                RIDER_GLIDE_ALTITUDE_THRESHOLD,
+                RIDER_GLIDE_ALTITUDE_EXIT,
+                getDeltaMovement()
+        );
+        return DragonFlightStateEvaluator.evaluateSyncedMode(flightModeState, input);
     }
 
     private boolean shouldPlayTakeoff() {
         return isTakeoff();
+    }
+
+    private boolean isRiddenByOwner() {
+        if (!isTame() || !isVehicle()) {
+            return false;
+        }
+        if (!(getControllingPassenger() instanceof Player player)) {
+            return false;
+        }
+        return isOwnedBy(player);
+    }
+
+    private boolean shouldForceSurfaceGlide(double altitudeAboveTerrain) {
+        return altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD || isNearWaterSurface();
+    }
+
+    public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
+        return DragonFlightStateEvaluator.evaluateVisualState(
+                getSyncedFlightMode(),
+                isVehicle(),
+                getFlightPitchRadians(partialTick),
+                getDeltaMovement()
+        );
     }
 
     private boolean isNearWaterSurface() {
@@ -3380,60 +3335,32 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     // ===== BANKING & PITCHING ANIMATIONS =====
 
     private void tickBankingLogic() {
-        prevBankAngle = bankAngle;
-
-        // Reset banking when not flying - instant snap back
-        if (!isFlying()) {
-            bankSmoothedYaw = 0f;
-            bankAngle = 0f;
-            prevBankAngle = 0f;
-            return;
-        }
-
-        if (horizontalCollision || verticalCollision) {
-            bankSmoothedYaw *= 0.45f;
-            bankAngle = Mth.lerp(0.55f, bankAngle, 0f);
-            if (Math.abs(bankAngle) < 0.01f) {
-                bankAngle = 0f;
-            }
-            return;
-        }
-
-        // Exponential smoothing on yaw delta to avoid jitter, wrap to account for crossing 360 -> 0
-        float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
-        bankSmoothedYaw = bankSmoothedYaw * 0.70f + yawChange * 0.30f; // More reactive than before, less than Raevyx
-
-        // Convert smoothed yaw delta into a banking roll
-        float targetAngle = Mth.clamp(bankSmoothedYaw * 4.5f, -45f, 45f); // More dramatic than before, less than Raevyx
-
-        // Ease toward the new target
-        bankAngle = Mth.lerp(0.28f, bankAngle, targetAngle); // Snappier than before, less snappy than Raevyx
-        if (Math.abs(bankAngle) < 0.01f) {
-            bankAngle = 0f;
-        }
-        // Banking is now fully procedural - no need for animation controller directions
+        DragonFlightVisuals.tickBanking(
+                this.flightVisualState,
+                this.isFlying(),
+                this.horizontalCollision,
+                this.verticalCollision,
+                this.getYRot(),
+                this.yRotO
+        );
     }
 
     private void tickPitchingLogic() {
         tickRiderLandingBlendTimer();
-        prevFlightPitchRad = flightPitchRad;
+        DragonFlightVisuals.beginPitchTick(this.flightVisualState);
         if (level().isClientSide) {
-            // Client: Just use synced pitch from server (calculated in server logic below)
-            flightPitchRad = this.entityData.get(DATA_FLIGHT_PITCH);
+            this.flightVisualState.flightPitchRad = this.entityData.get(DATA_FLIGHT_PITCH);
             return;
         }
         // Reset pitching when in water, not flying, or when controls are locked - INSTANT reset
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
         if (inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit() || isBreathingFire()) {
-            pitchSmoothedPitch = 0f;
-            flightPitchRad = 0f;
-            smoothedPlayerPitchRad = 0f; // Reset input smoothing
-            this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
+            DragonFlightVisuals.resetPitch(this.flightVisualState);
+            this.entityData.set(DATA_FLIGHT_PITCH, this.flightVisualState.flightPitchRad);
             return;
         }
 
         Vec3 velocity = getDeltaMovement();
-        double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         float targetPitchRad = 0f;
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
@@ -3447,8 +3374,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     rawKeyPitchRad = (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
                 }
 
-                smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
-                targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+                targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawKeyPitchRad);
             } else {
                 // RIDING: Use player camera for visual pitch WHEN MOVING
                 float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
@@ -3460,13 +3386,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     // Negate because Minecraft xRot is positive=down, but we want dragon to pitch up when looking up
                     float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
 
-                    // Exponential smoothing on player pitch input to avoid jitter (matches banking system)
-                    smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
-
-                    targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+                    targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawPlayerPitchRad);
                 } else {
-                    // Hovering (no WASD)  pitch = 0, even if ascending/descending with Spacebar/L-Alt
-                    smoothedPlayerPitchRad = 0f; // Reset smoothing when not moving
+                    DragonFlightVisuals.clearRiderPitchInput(this.flightVisualState);
                     targetPitchRad = 0f;
                 }
             }
@@ -3480,20 +3402,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 }
             }
         } else {
-            // NOT RIDING (AI): Use velocity-based pitch
-            if (horizontalSpeed > 0.15) {
-                targetPitchRad = (float)Math.atan2(velocity.y, horizontalSpeed);
-                targetPitchRad = Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-            }
+            targetPitchRad = DragonFlightVisuals.computeAiPitchTarget(velocity);
         }
-        // Smooth pitch transitions (matches banking lerp speed for consistent feel)
-        // Banking uses 0.40f, we use slightly slower 0.35f for more graceful pitch changes
-        // NOTE: Input is already smoothed above, so this is the second level of smoothing
-        flightPitchRad = Mth.lerp(0.35f, flightPitchRad, targetPitchRad);
-        if (Math.abs(flightPitchRad) < 0.001f) {
-            flightPitchRad = 0f;
-        }
-        this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
+        this.flightVisualState.flightPitchRad =
+                DragonFlightVisuals.approachPitch(this.flightVisualState.flightPitchRad, targetPitchRad);
+        this.entityData.set(DATA_FLIGHT_PITCH, this.flightVisualState.flightPitchRad);
 
         // Trigger landing blend when descending close to ground while ridden
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
@@ -3805,10 +3718,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public float getBankAngleDegrees(float partialTick) {
-        return Mth.lerp(partialTick, prevBankAngle, bankAngle);
+        return Mth.lerp(partialTick, this.flightVisualState.prevBankAngle, this.flightVisualState.bankAngle);
     }
     public float getFlightPitchRadians(float partialTick) {
-        return Mth.lerp(partialTick, prevFlightPitchRad, flightPitchRad);
+        return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
     }
 
     public boolean isRiderPitchKeyMode() {
@@ -4163,7 +4076,21 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
         if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
+            if (!level().isClientSide) {
+                System.out.println("[IgnivorusAggro] reject target=" + target.getType()
+                        + " stunned=" + isTamingStunned()
+                        + " calmTicks=" + tamingAbortCalmTicks
+                        + " pos=" + position());
+            }
             return;
+        }
+        if (!level().isClientSide && target != this.getTarget()) {
+            System.out.println("[IgnivorusAggro] setTarget=" + (target == null ? "null" : target.getType())
+                    + " tame=" + isTame()
+                    + " baby=" + isBaby()
+                    + " stunned=" + isTamingStunned()
+                    + " calmTicks=" + tamingAbortCalmTicks
+                    + " pos=" + position());
         }
         super.setTarget(target);
     }
@@ -4174,7 +4101,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        return config.extraBoolean("aggressive_wild", false);
+        boolean aggro = config.extraBoolean("aggressive_wild", false);
+        if (!level().isClientSide && this.tickCount % 20 == 0) {
+            System.out.println("[IgnivorusAggro] shouldAggroOnSight=" + aggro
+                    + " currentTarget=" + (getTarget() == null ? "null" : getTarget().getType())
+                    + " tame=" + isTame()
+                    + " baby=" + isBaby()
+                    + " pos=" + position());
+        }
+        return aggro;
     }
 
     // ===== FALL DAMAGE IMMUNITY =====

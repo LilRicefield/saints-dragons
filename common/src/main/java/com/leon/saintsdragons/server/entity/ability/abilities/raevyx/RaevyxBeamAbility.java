@@ -14,6 +14,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  * Initial version: only toggles beaming state; damage/VFX added later.
  */
 public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
+    private static final double AI_TARGET_HIT_RADIUS = 0.55D;
+    private static final double RIDER_BEAM_RADIUS = 1.2D;
+    private static final double AI_BEAM_RADIUS = 0.75D;
 
     // Beam timeline: 1s startup (20 ticks) then variable active duration.
     // Rider-controlled: 400 ticks (~20 seconds)
@@ -231,15 +234,21 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private void damageAlongBeam(Raevyx wyvern, net.minecraft.world.phys.Vec3 start, net.minecraft.world.phys.Vec3 end) {
         if (!(wyvern.level() instanceof net.minecraft.server.level.ServerLevel server)) return;
 
-        final double BASE_RADIUS = 1.2;  // base affect radius around beam core
+        boolean riderControlled = wyvern.getControllingPassenger() != null;
         final float configuredBaseDamage = (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
                 .abilityDamage("lightning_beam", DEFAULT_BEAM_DAMAGE);
 
         // Apply water conductivity bonuses
         var conductivity = wyvern.getConductivityState();
-        final double RADIUS = BASE_RADIUS * conductivity.rangeMultiplier();
+        final double radiusBase = riderControlled ? RIDER_BEAM_RADIUS : AI_BEAM_RADIUS;
+        final double RADIUS = radiusBase * conductivity.rangeMultiplier();
         final float DAMAGE = configuredBaseDamage * conductivity.damageMultiplier() * wyvern.getDamageMultiplier();
+
+        if (!riderControlled) {
+            damageAiBeamTargetOnly(wyvern, start, end, DAMAGE, RADIUS);
+            return;
+        }
 
         // Create a bounding box that encompasses the entire beam path, inflated by radius
         var beamAABB = new net.minecraft.world.phys.AABB(start, end).inflate(RADIUS);
@@ -262,6 +271,26 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
                 target.push(away.x * 0.15, 0.08, away.z * 0.15);
             }
         }
+    }
+
+    private void damageAiBeamTargetOnly(Raevyx wyvern, net.minecraft.world.phys.Vec3 start,
+                                        net.minecraft.world.phys.Vec3 end, float damage, double radius) {
+        net.minecraft.world.entity.LivingEntity target = wyvern.getTarget();
+        if (!isValidTarget(target) || !wyvern.isTargetValid(target) || isAllied(wyvern, target)) {
+            return;
+        }
+
+        var targetAABB = target.getBoundingBox().inflate(Math.min(radius, AI_TARGET_HIT_RADIUS));
+        var hit = targetAABB.clip(start, end);
+        boolean pointBlankOverlap = targetAABB.contains(start) || targetAABB.contains(end);
+        if (hit.isEmpty() && !pointBlankOverlap) {
+            return;
+        }
+
+        var hitPos = hit.orElse(start);
+        target.hurt(resolveBeamDamageSource(wyvern, target), damage);
+        var away = target.position().subtract(hitPos).normalize();
+        target.push(away.x * 0.15, 0.08, away.z * 0.15);
     }
 
     private boolean isAllied(Raevyx wyvern, net.minecraft.world.entity.Entity other) {

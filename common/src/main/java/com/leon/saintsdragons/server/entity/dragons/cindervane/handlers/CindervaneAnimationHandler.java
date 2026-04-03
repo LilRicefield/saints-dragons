@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -178,59 +179,37 @@ public class CindervaneAnimationHandler {
         if (dragon.isFlying()) {
             int syncedMode = dragon.getSyncedFlightMode();
 
-            // Takeoff is handled by instant controller.
-            if (syncedMode == 3) {
+            DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
+
+            if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
                 return PlayState.STOP;
             }
 
-            // GLIDE_DOWN check for AI dragons (calculate pitch from velocity)
-            if (!dragon.isVehicle()) {
-                net.minecraft.world.phys.Vec3 velocity = dragon.getDeltaMovement();
-                double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-                if (horizontalSpeed > 0.01) { // Only check pitch if moving horizontally
-                    // Calculate pitch angle from velocity (negative = diving down)
-                    double pitchRadians = Math.atan2(-velocity.y, horizontalSpeed);
-                    double pitchDegrees = Math.toDegrees(pitchRadians);
-
-                    // If diving down steeply (pitch > 10 degrees downward)
-                    if (pitchDegrees > 10.0) {
-                        state.getController().transitionLength(6);
-                        state.setAndContinue(GLIDE_DOWN);
-                        return PlayState.CONTINUE;
-                    }
-                }
+            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+                state.getController().transitionLength(6);
+                state.setAndContinue(GLIDE_DOWN);
+                return PlayState.CONTINUE;
             }
 
-            // Mode 5: FLY_IDLE (hovering still)
-            if (syncedMode == 5) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.FLY_IDLE) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(FLY_IDLE);
                 return PlayState.CONTINUE;
             }
 
-            // Mode 4: SPRINT_FLAP
-            if (syncedMode == 4) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.SPRINT_FLAP) {
                 state.getController().transitionLength(3);
                 state.setAndContinue(SPRINT_FLAP);
                 return PlayState.CONTINUE;
             }
 
-            // Mode 2: Hover (AI hovering/landing)
-            if (syncedMode == 2) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(FLAP);
                 return PlayState.CONTINUE;
             }
 
-            // Mode 1: Forward flight (flapping)
-            if (syncedMode == 1) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            // Mode 0: Glide
-            if (syncedMode == 0) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE) {
                 state.getController().transitionLength(8);
                 state.setAndContinue(GLIDE);
                 return PlayState.CONTINUE;

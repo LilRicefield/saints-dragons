@@ -111,6 +111,11 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.STEGONAUT_EGG.get(),
                             new Item.Properties()));
 
+    public static final Supplier<Item> VOLITANS_EGG =
+            REGISTER.register("volitans_egg",
+                    () -> new BlockItem(ModBlocks.VOLITANS_EGG.get(),
+                            new Item.Properties()));
+
     public static final Supplier<Item> DRACONIC_CODEX =
             REGISTER.register("draconic_codex",
                     () -> new DragonAllyBookItem(
@@ -167,6 +172,18 @@ public class ModItems {
 
     public static final Supplier<Item> VARASUCHUS_SCALE =
             REGISTER.register("varasuchus_scale",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> VOLITANS_SCALE =
+            REGISTER.register("volitans_scale",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> VOLITANS_SPINE =
+            REGISTER.register("volitans_spine",
                     () -> new Item(
                             new Item.Properties()
                     ));

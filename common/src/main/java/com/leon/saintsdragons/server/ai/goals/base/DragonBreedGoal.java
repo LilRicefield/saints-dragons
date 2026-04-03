@@ -14,6 +14,8 @@ import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.Fluids;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -155,6 +157,11 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
         BlockState eggState = female.getEggBlockState();
         if (eggState == null) {
             return;
+        }
+
+        if (eggState.hasProperty(BlockStateProperties.WATERLOGGED)) {
+            eggState = eggState.setValue(BlockStateProperties.WATERLOGGED,
+                    serverlevel.getFluidState(eggPos).getType() == Fluids.WATER);
         }
 
         serverlevel.setBlock(eggPos, eggState, 3);

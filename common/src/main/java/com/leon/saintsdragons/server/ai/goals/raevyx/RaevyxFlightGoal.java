@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonAerialLandingController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -13,15 +13,13 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * CLEANED UP flight system that works with the new landing logic
- * Fixed the stupid infinite fly-land-fly loop
- */
 public class RaevyxFlightGoal extends Goal {
     private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.raevyx();
+    private static final double CRUISE_SPEED = 2.0D;
+    private static final double LANDING_SPEED = 1.0D;
+    private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
 
     private final Raevyx wyvern;
-    private final DragonAerialLandingController<Raevyx> landingController;
     private Vec3 targetPosition;
     private int stuckCounter = 0;
     private int timeSinceTargetChange = 0;
@@ -37,11 +35,6 @@ public class RaevyxFlightGoal extends Goal {
 
     public RaevyxFlightGoal(Raevyx wyvern) {
         this.wyvern = wyvern;
-        this.landingController = new DragonAerialLandingController<>(
-                wyvern,
-                Raevyx.LANDING_BLEND_ALTITUDE,
-                wyvern::handleAiLandingComplete
-        );
         this.setFlags(EnumSet.of(Flag.MOVE));
         
         // Start with no offset
@@ -143,7 +136,6 @@ public class RaevyxFlightGoal extends Goal {
         }
 
         if (isFlying) {
-            landingController.reset();
             this.targetPosition = findFlightTarget();
             // Reset cooldown for next decision
             this.flightDecisionCooldown = nextDecisionCooldown(decisionInterval);
@@ -165,17 +157,8 @@ public class RaevyxFlightGoal extends Goal {
             return false;
         }
 
-        if (landingController.isLandingApproachActive()) {
-            if (wyvern.onGround()) {
-                landingController.finishLanding();
-                return false;
-            }
-            return true;
-        }
-
-        // Let landing system take over
         if (wyvern.isLanding()) {
-            return false;
+            return !wyvern.onGround();
         }
 
         // Stop if ordered to sit or something important comes up
@@ -208,21 +191,15 @@ public class RaevyxFlightGoal extends Goal {
         wyvern.setTakeoff(wasOnGround);
         wyvern.setLanding(false);
         wyvern.setHovering(false);
-        landingController.reset();
 
         if (targetPosition != null) {
-            wyvern.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0);
+            moveToTarget(targetPosition, CRUISE_SPEED);
         }
     }
 
     @Override
     public void tick() {
         timeSinceTargetChange++;
-
-        if (landingController.isLandingApproachActive()) {
-            landingController.tickLandingApproach();
-            return;
-        }
 
         // Clear takeoff flag once airborne
         if (wyvern.isTakeoff() && wyvern.isFlying() && !wyvern.onGround()) {
@@ -231,6 +208,11 @@ public class RaevyxFlightGoal extends Goal {
 
         // If wyvern wants to land, let it handle that
         if (wyvern.isLanding()) {
+            if (targetPosition == null) {
+                beginLandingApproach();
+            } else if (!wyvern.getNavigation().isInProgress()) {
+                moveToTarget(targetPosition, LANDING_SPEED);
+            }
             return;
         }
 
@@ -280,14 +262,13 @@ public class RaevyxFlightGoal extends Goal {
         if (needNewTarget) {
             targetPosition = findFlightTarget();
             timeSinceTargetChange = 0;
-            wyvern.getMoveControl().setWantedPosition(targetPosition.x, targetPosition.y, targetPosition.z, 1.0);
+            moveToTarget(targetPosition, CRUISE_SPEED);
         }
     }
 
     @Override
     public void stop() {
         targetPosition = null;
-        landingController.reset();
         stuckCounter = 0;
         timeSinceTargetChange = 0;
         wyvern.getNavigation().stop();
@@ -317,15 +298,107 @@ public class RaevyxFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        landingController.beginLandingApproach();
-        if (landingController.isLandingApproachActive()) {
-            targetPosition = null;
+        Vec3 landingTarget = findLandingTarget();
+        if (landingTarget == null) {
+            return;
         }
+
+        targetPosition = landingTarget;
+        wyvern.setHovering(false);
+        wyvern.setTakeoff(false);
+        wyvern.setLanding(true);
+        moveToTarget(landingTarget, LANDING_SPEED);
     }
 
     private void finishLanding() {
         targetPosition = null;
-        landingController.finishLanding();
+        if (wyvern.onGround()) {
+            wyvern.handleAiLandingComplete();
+        } else {
+            wyvern.setLanding(false);
+            wyvern.setFlying(false);
+            wyvern.setHovering(false);
+            wyvern.setTakeoff(false);
+        }
+        wyvern.getNavigation().stop();
+    }
+
+    private void moveToTarget(Vec3 target, double speed) {
+        if (target != null) {
+            wyvern.getNavigation().moveTo(target.x, target.y, target.z, speed);
+        }
+    }
+
+    private Vec3 findLandingTarget() {
+        BlockPos origin = wyvern.blockPosition();
+        double currentAltitude = Math.max(0.0D, wyvern.getY()
+                - wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, origin.getX(), origin.getZ()));
+        double minHorizontalDistance = currentAltitude > 6.0D ? MIN_AIRBORNE_LANDING_HORIZONTAL : 0.0D;
+
+        for (int radius = 8; radius <= 24; radius += 8) {
+            for (int attempt = 0; attempt < 10; attempt++) {
+                int dx = wyvern.getRandom().nextInt(radius * 2 + 1) - radius;
+                int dz = wyvern.getRandom().nextInt(radius * 2 + 1) - radius;
+                BlockPos column = origin.offset(dx, 0, dz);
+                double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+                if (horizontalDistance < minHorizontalDistance) {
+                    continue;
+                }
+                if (!wyvern.level().hasChunkAt(column)) {
+                    continue;
+                }
+
+                int surfaceY = wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+                if (isValidLandingSurface(ground)) {
+                    return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+                }
+            }
+        }
+
+        if (minHorizontalDistance > 0.0D) {
+            for (int radius = 0; radius <= 24; radius += 8) {
+                for (int attempt = 0; attempt < 10; attempt++) {
+                    int dx = radius == 0 ? 0 : wyvern.getRandom().nextInt(radius * 2 + 1) - radius;
+                    int dz = radius == 0 ? 0 : wyvern.getRandom().nextInt(radius * 2 + 1) - radius;
+                    BlockPos column = origin.offset(dx, 0, dz);
+                    if (!wyvern.level().hasChunkAt(column)) {
+                        continue;
+                    }
+
+                    int surfaceY = wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+                    BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+                    if (isValidLandingSurface(ground)) {
+                        return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isValidLandingSurface(BlockPos ground) {
+        if (!wyvern.level().hasChunkAt(ground)) {
+            return false;
+        }
+
+        var state = wyvern.level().getBlockState(ground);
+        if (state.isAir() || !state.getFluidState().isEmpty()) {
+            return false;
+        }
+        if (!state.isFaceSturdy(wyvern.level(), ground, Direction.UP)) {
+            return false;
+        }
+
+        BlockPos above = ground.above();
+        BlockPos aboveTwo = above.above();
+        var aboveState = wyvern.level().getBlockState(above);
+        var aboveTwoState = wyvern.level().getBlockState(aboveTwo);
+        return aboveState.getCollisionShape(wyvern.level(), above).isEmpty()
+                && aboveState.getFluidState().isEmpty()
+                && aboveTwoState.getCollisionShape(wyvern.level(), aboveTwo).isEmpty()
+                && aboveTwoState.getFluidState().isEmpty();
     }
 
     private Vec3 generateFlightCandidate(Vec3 dragonPos, int attempt) {
@@ -362,78 +435,18 @@ public class RaevyxFlightGoal extends Goal {
         int ix = (int) x;
         int iz = (int) z;
 
-        // Check if dragon is currently in a cave/enclosed space
-        BlockPos dragonPos = wyvern.blockPosition();
-        boolean canSeeSky = wyvern.level().canSeeSky(dragonPos);
-
-        int groundY;
-        double capAboveGround;
-
         // Weather snapshot
         boolean thundering = wyvern.level().isThundering();
         boolean raining = !thundering && wyvern.level().isRaining();
-
-        if (canSeeSky) {
-            // OUTDOOR: Use heightmap for normal flight
-            groundY = wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
-
-            // Weather-based cap above ground - lightning wyverns love storms
-            capAboveGround = thundering ? 90.0 : (raining ? 70.0 : 50.0);
-        } else {
-            // CAVE/INDOOR: Find actual floor and ceiling, fly between them
-            int surfaceY = wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
-            groundY = findGroundInCave(x, surfaceY, z);
-            int ceilingY = findCeilingInCave(x, groundY, z);
-
-            // Fly between 60-80% of the distance from floor to ceiling (lightning wyverns fly high)
-            double caveFactor = 0.6 + wyvern.getRandom().nextDouble() * 0.2; // 60-80%
-            capAboveGround = (ceilingY - groundY) * caveFactor;
-
-            // Ensure minimum clearance
-            capAboveGround = Math.max(capAboveGround, 12.0);
-        }
-
-        // Base hover altitude above ground
-        double base = canSeeSky ? (15.0 + wyvern.getRandom().nextDouble() * 20.0) : // 15-35 outdoors
-                                  (10.0 + wyvern.getRandom().nextDouble() * 15.0); // 10-25 in caves
+        int groundY = wyvern.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
+        double capAboveGround = thundering ? 90.0 : (raining ? 70.0 : 50.0);
+        double base = 15.0 + wyvern.getRandom().nextDouble() * 20.0;
 
         double target = groundY + base;
         double cap = groundY + capAboveGround;
         double worldCap = wyvern.level().getMaxBuildHeight() - 10.0;
 
         return Math.min(Math.min(target, cap), worldCap);
-    }
-
-    /**
-     * Finds the actual ground level in a cave by searching downward
-     */
-    private int findGroundInCave(double x, double currentY, double z) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, currentY, z);
-
-        // Search down to find solid ground
-        while (pos.getY() > wyvern.level().getMinBuildHeight() &&
-               !wyvern.level().getBlockState(pos).isSolid() &&
-               wyvern.level().getFluidState(pos).isEmpty()) {
-            pos.move(0, -1, 0);
-        }
-
-        return pos.getY();
-    }
-
-    /**
-     * Finds the ceiling in a cave by searching upward from the floor
-     */
-    private int findCeilingInCave(double x, double floorY, double z) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, floorY + 2, z);
-
-        // Search up to find ceiling
-        while (pos.getY() < wyvern.level().getMaxBuildHeight() &&
-               !wyvern.level().getBlockState(pos).isSolid()) {
-            pos.move(0, 1, 0);
-        }
-
-        // Return ceiling position (subtract 1 to get the air block just below the solid ceiling)
-        return Math.max((int) floorY + 10, pos.getY() - 1);
     }
 
     private boolean isValidFlightTarget(Vec3 target) {
@@ -505,10 +518,6 @@ public class RaevyxFlightGoal extends Goal {
 
     // ===== UTILITY METHODS =====
 
-    /**
-     * Check if there's enough vertical clearance above the dragon to safely take off
-     * Prevents takeoff when surrounded by trees/blocks
-     */
     private boolean hasTakeoffClearance() {
         BlockPos dragonPos = wyvern.blockPosition();
         double dragonWidth = wyvern.getBbWidth();
@@ -526,13 +535,10 @@ public class RaevyxFlightGoal extends Goal {
 
                     BlockPos checkPos = dragonPos.offset(dx, dy, dz);
                     var state = wyvern.level().getBlockState(checkPos);
-
-                    // Allow takeoff through leaves and other breakable vegetation
-                    if (state.isAir() || isBreakableVegetation(state)) {
+                    if (state.isAir()) {
                         continue;
                     }
 
-                    // Blocked by solid block
                     if (!state.getCollisionShape(wyvern.level(), checkPos).isEmpty()) {
                         return false;
                     }
@@ -540,24 +546,10 @@ public class RaevyxFlightGoal extends Goal {
             }
         }
 
-        return true; // Clear path upward
+        return true;
     }
 
-    /**
-     * Check if a block is breakable vegetation that won't stop takeoff
-     */
-    private boolean isBreakableVegetation(net.minecraft.world.level.block.state.BlockState state) {
-        var block = state.getBlock();
-        return block instanceof net.minecraft.world.level.block.LeavesBlock ||
-               block instanceof net.minecraft.world.level.block.VineBlock ||
-               block instanceof net.minecraft.world.level.block.TallGrassBlock ||
-               block instanceof net.minecraft.world.level.block.FlowerBlock ||
-               block instanceof net.minecraft.world.level.block.DoublePlantBlock;
-    }
 
-    /**
-     * Check if there are baby Raevyx nearby that this parent should protect
-     */
     private boolean hasNearbyBabies() {
         return wyvern.hasNearbyAssignedBabies(Raevyx.class);
     }

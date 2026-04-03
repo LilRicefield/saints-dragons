@@ -20371,6 +20371,11 @@
 						}
 					}
 				},
+				"headController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftwing": {
 					"rotation": {
 						"0.0": {
