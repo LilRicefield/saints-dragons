@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.goals.ignivorus;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -107,6 +108,10 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (dragon.isLanding()) {
+            return !dragon.onGround();
+        }
+
         if (dragon.isBaby()) {
             return false;
         }
@@ -180,15 +185,19 @@ public class IgnivorusGroundCombatGoal extends Goal {
         dragon.setAggressive(true);
         dragon.setGroundMoveStateFromAI(2);
 
-        // Force dragon to land and stay grounded during combat
+        hasUsedUltimateTrigger = false;
+
+        LivingEntity target = dragon.getTarget();
+        if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff() || dragon.isLanding()) {
+            DragonAggroLandingHelper.beginAggroLanding(dragon, target, 2.0D);
+            return;
+        }
+
         dragon.markLandedNow();
         dragon.setHovering(false);
         dragon.setLanding(false);
         dragon.setTakeoff(false);
 
-        hasUsedUltimateTrigger = false;
-
-        LivingEntity target = dragon.getTarget();
         if (target != null) {
             dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
             // Avoid forcing an immediate expensive repath on every goal (re)start.
@@ -199,6 +208,13 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (dragon.isLanding()) {
+            if (!dragon.getNavigation().isInProgress()) {
+                DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 2.0D);
+            }
+            return;
+        }
+
         if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
             dragon.getNavigation().stop();
             pathRecalcCooldown = 8;

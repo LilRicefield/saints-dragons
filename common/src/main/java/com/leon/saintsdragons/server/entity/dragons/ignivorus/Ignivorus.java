@@ -4076,21 +4076,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             return;
         }
         if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
-            if (!level().isClientSide) {
-                System.out.println("[IgnivorusAggro] reject target=" + target.getType()
-                        + " stunned=" + isTamingStunned()
-                        + " calmTicks=" + tamingAbortCalmTicks
-                        + " pos=" + position());
-            }
             return;
-        }
-        if (!level().isClientSide && target != this.getTarget()) {
-            System.out.println("[IgnivorusAggro] setTarget=" + (target == null ? "null" : target.getType())
-                    + " tame=" + isTame()
-                    + " baby=" + isBaby()
-                    + " stunned=" + isTamingStunned()
-                    + " calmTicks=" + tamingAbortCalmTicks
-                    + " pos=" + position());
         }
         super.setTarget(target);
     }
@@ -4101,15 +4087,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        boolean aggro = config.extraBoolean("aggressive_wild", false);
-        if (!level().isClientSide && this.tickCount % 20 == 0) {
-            System.out.println("[IgnivorusAggro] shouldAggroOnSight=" + aggro
-                    + " currentTarget=" + (getTarget() == null ? "null" : getTarget().getType())
-                    + " tame=" + isTame()
-                    + " baby=" + isBaby()
-                    + " pos=" + position());
-        }
-        return aggro;
+        return config.extraBoolean("aggressive_wild", false);
     }
 
     // ===== FALL DAMAGE IMMUNITY =====

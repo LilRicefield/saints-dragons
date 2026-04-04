@@ -781,6 +781,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     /**
+     * Returns true when collision terrain is close enough for a landing animation handoff.
+     */
+    public boolean isNearLandingTerrain(double maxAltitude) {
+        double altitude = getAltitudeAboveCollisionTerrain(24, true);
+        return altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= maxAltitude;
+    }
+
+    /**
      * Check if the dragon is flying. Final bridge delegates to subclass hook to avoid obfuscation mismatches.
      */
     @Override

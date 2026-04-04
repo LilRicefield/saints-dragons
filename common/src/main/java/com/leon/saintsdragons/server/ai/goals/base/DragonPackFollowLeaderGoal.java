@@ -77,6 +77,9 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
         if (!canPackFollow()) {
             return false;
         }
+        if (member instanceof DragonFlightCapable flightMember && flightMember.isLanding()) {
+            return !member.onGround();
+        }
         if (!isLeaderUsable(leader)) {
             leader = resolveLeader(true);
             if (leader == null) {
@@ -357,6 +360,13 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
             return false;
         }
 
+        if (flightMember.isLanding()) {
+            if (!rideableMember.getNavigation().isInProgress()) {
+                DragonAggroLandingHelper.beginAggroLanding(rideableMember, currentLeader, getAirFollowSpeed(flightMember));
+            }
+            return true;
+        }
+
         if (leaderAirborne && !flightMember.isFlying() && !flightMember.isTakeoff() && flightMember.canTakeoff()) {
             flightMember.setFlying(true);
             flightMember.setTakeoff(true);
@@ -369,12 +379,8 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
         double distanceToTargetSq = rideableMember.distanceToSqr(target.x, target.y, target.z);
         if (!leaderAirborne && distanceToTargetSq <= stopFollowDistSq) {
             if (flightMember.isFlying() || flightMember.isHovering()) {
-                flightMember.setLanding(true);
-                flightMember.setFlying(false);
-                flightMember.setHovering(false);
-                flightMember.setTakeoff(false);
+                DragonAggroLandingHelper.beginAggroLanding(rideableMember, currentLeader, getAirFollowSpeed(flightMember));
             }
-            rideableMember.getNavigation().stop();
             pathRecalcCooldown = 0;
             return true;
         }

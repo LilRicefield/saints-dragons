@@ -17,10 +17,15 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonLeaveWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DirectSwimToTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansAirCombatGoal;
+import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansSlamSequenceGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansGroundCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansWaterCombatGoal;
+import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
@@ -189,7 +194,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final double RIDER_SIDE_DODGE_DISTANCE_BLOCKS = 10.0D;
     private static final int RIDER_SIDE_DODGE_RECOVERY_TICKS = 5;
     private static final double RIDER_SIDE_DODGE_RECOVERY_DRAG = 0.82D;
-    private static final double LANDING_BLEND_ALTITUDE = 8.0D;
+    public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
     public static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
@@ -213,10 +218,13 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final java.util.Map<String, Vec3> clientLocatorCache = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final AsyncFlightController asyncAirController;
+    private final AsyncFlightMoveControl asyncAirMoveControl;
     private final DragonPathNavigateGround groundNav;
+    private final MoveControl groundMoveControl;
     private final FlyingPathNavigation airNav;
+    private final DragonNavigationModeController navigationModeController;
     private final DragonTakeoff takeoffComponent;
-    private boolean usingAirNav;
     private int timeFlying;
     private int riderTakeoffTicks;
     private boolean riderHighAltitudeGlide;
@@ -270,14 +278,46 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         this.takeoffComponent = createTakeoffComponent();
         this.riderFlightComponent = createRiderFlightComponent();
 
+        this.asyncAirController = new AsyncFlightController(this);
+        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
         this.groundNav = new DragonPathNavigateGround(this, level);
-        this.airNav = new FlyingPathNavigation(this, level);
+        this.groundMoveControl = new MoveControl(this);
+        this.airNav = new AsyncFlyingPathNavigation(this, level, this.asyncAirController) {
+            @Override
+            public boolean isStableDestination(@NotNull net.minecraft.core.BlockPos pos) {
+                return !this.level.getBlockState(pos.below()).isAir();
+            }
+        };
         this.airNav.setCanOpenDoors(false);
         this.airNav.setCanPassDoors(false);
         this.airNav.setCanFloat(false);
-        this.navigation = groundNav;
-        this.moveControl = new MoveControl(this);
-        this.usingAirNav = false;
+        this.navigationModeController = new DragonNavigationModeController(
+                new DragonNavigationModeController.Host() {
+                    @Override
+                    public void setActiveNavigation(PathNavigation navigation) {
+                        Volitans.this.navigation = navigation;
+                    }
+
+                    @Override
+                    public void setActiveMoveControl(MoveControl moveControl) {
+                        Volitans.this.moveControl = moveControl;
+                    }
+
+                    @Override
+                    public void afterSwitchToGround() {
+                        if (Volitans.this.onGround()) {
+                            Volitans.this.setDeltaMovement(Vec3.ZERO);
+                            Volitans.this.hasImpulse = false;
+                        }
+                    }
+                },
+                this.groundNav,
+                this.airNav,
+                this.groundMoveControl,
+                this.asyncAirMoveControl
+        );
+        this.navigation = this.groundNav;
+        this.moveControl = this.groundMoveControl;
 
         if (!level.isClientSide) {
             applyConfiguredAttributes();
@@ -521,39 +561,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             }
 
             @Override
-            protected void handleFlightFollowing(LivingEntity owner, boolean ownerAirborne) {
-                if (Volitans.this.isTakeoff() && Volitans.this.onGround()) {
-                    return;
-                }
-
-                Vec3 destination = getFlightFollowTarget(owner, ownerAirborne);
-                if (!Volitans.this.onGround() && (Volitans.this.isTakeoff() || !Volitans.this.isFlying())) {
-                    Volitans.this.beginAiFlight();
-                }
-
-                Vec3 toDest = destination.subtract(Volitans.this.position());
-                if (toDest.lengthSqr() < 1.0E-4D) {
-                    Volitans.this.getNavigation().stop();
-                    return;
-                }
-
-                Vec3 targetDir = toDest.normalize();
-                Vec3 current = Volitans.this.getDeltaMovement();
-                double flightSpeed = Math.max(0.18D, Volitans.this.getFlightSpeed() * getFlightFollowSpeed());
-                Vec3 targetVel = targetDir.scale(flightSpeed);
-                Vec3 blended = new Vec3(
-                        current.x + (targetVel.x - current.x) * 0.12D,
-                        current.y + (targetVel.y - current.y) * 0.12D,
-                        current.z + (targetVel.z - current.z) * 0.12D
-                ).scale(0.94D);
-
-                Volitans.this.setSpeed((float) flightSpeed);
-                Volitans.this.setDeltaMovement(blended);
-                Volitans.this.move(MoverType.SELF, blended);
-                Volitans.this.hasImpulse = true;
-            }
-
-            @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
             }
@@ -564,9 +571,10 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             }
         });
         this.goalSelector.addGoal(9, new DirectSwimToTargetGoal(this, 8.0F, 0.24D, false));
-        this.goalSelector.addGoal(10, new DragonGroundWanderGoal<>(this, 0.9D, 70));
-        this.goalSelector.addGoal(11, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
-        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+        this.goalSelector.addGoal(10, new VolitansFlightGoal(this));
+        this.goalSelector.addGoal(11, new DragonGroundWanderGoal<>(this, 0.9D, 70));
+        this.goalSelector.addGoal(12, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
+        this.goalSelector.addGoal(13, new LookAtPlayerGoal(this, Player.class, 8.0F) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
@@ -577,7 +585,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 return !Volitans.this.isVehicle() && super.canContinueToUse();
             }
         });
-        this.goalSelector.addGoal(13, new RandomLookAroundGoal(this) {
+        this.goalSelector.addGoal(14, new RandomLookAroundGoal(this) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
@@ -1207,12 +1215,23 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         tickPitchingLogic();
 
         this.noPhysics = false;
-        if (isFlying()) {
+        boolean shouldUseAirNavigation = isFlying() || isTakeoff() || isLanding() || isHovering();
+        if (shouldUseAirNavigation) {
             this.setNoGravity(true);
             switchToAirNavigation();
         } else {
             this.setNoGravity(false);
             switchToGroundNavigation();
+        }
+
+        if (!this.level().isClientSide
+                && this.navigationModeController.isUsingAirNavigation()
+                && shouldUseAirNavigation
+                && !this.isVehicle()
+                && (this.isLanding() || this.getTarget() == null)
+                && !this.isAiSpecialCombatActive()
+                && !this.isAiSpecialCombatReserved()) {
+            this.asyncAirController.serverTick();
         }
 
         if (!this.level().isClientSide) {
@@ -1379,19 +1398,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private void switchToAirNavigation() {
-        if (!usingAirNav) {
-            this.navigation = this.airNav;
-            this.moveControl = new MoveControl(this);
-            this.usingAirNav = true;
-        }
+        this.navigationModeController.switchToAir();
     }
 
     private void switchToGroundNavigation() {
-        if (usingAirNav) {
-            this.navigation = this.groundNav;
-            this.moveControl = new MoveControl(this);
-            this.usingAirNav = false;
-        }
+        this.navigationModeController.switchToGround();
     }
 
     @Override
@@ -1646,7 +1657,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
         // Burrow is an active ability state and should never survive reconnect/reload.
         setBurrowing(false);
-        if (isFlying() || isHovering()) {
+        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
             switchToAirNavigation();
             setNoGravity(true);
         } else {
@@ -1729,7 +1740,16 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
      */
     @Override
     protected boolean repositionEntityAfterLoad() {
-        return !isFlying() && !isHovering();
+        return !isFlying() && !isTakeoff() && !isLanding() && !isHovering();
+    }
+
+    public boolean isFlightControllerStuck() {
+        if (!this.navigationModeController.isUsingAirNavigation()) {
+            return false;
+        }
+        AsyncFlightController.PathState state = this.asyncAirController.getState();
+        return state == AsyncFlightController.PathState.STUCK
+                || state == AsyncFlightController.PathState.FAILED;
     }
 
     @Override
@@ -1973,6 +1993,22 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         setFlying(false);
         setGoingUp(false);
         setGoingDown(false);
+    }
+
+    public void handleAiLandingComplete() {
+        if (isInWaterOrBubble()) {
+            suppressSleep(60);
+            markLandedNow();
+            return;
+        }
+        if (!level().isClientSide) {
+            triggerAnim("actions", "landed");
+            if (!isBaby()) {
+                getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
+            }
+            suppressSleep(60);
+        }
+        markLandedNow();
     }
 
     public void forceEndActiveAbility() {

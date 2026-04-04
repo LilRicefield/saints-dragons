@@ -157,7 +157,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             }
 
             // Landing animation (second priority) - use rider landing blend for ridden dragons
-            if (dragon.isRiderLandingBlendActive() || dragon.isLanding()) {
+            if (dragon.isRiderLandingBlendActive()
+                    || (dragon.isLanding() && dragon.isNearLandingTerrain(Ignivorus.LANDING_BLEND_ALTITUDE))) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(LANDING);
                 return PlayState.CONTINUE;

@@ -101,6 +101,10 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return true;
         }
 
+        if (dragon.isLanding()) {
+            return !dragon.onGround();
+        }
+
         // Keep following until close enough
         double distSq = dragon.distanceToSqr(owner);
         return distSq > config.stopFollowDist * config.stopFollowDist;
@@ -149,6 +153,10 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         // Execute movement
         if (shouldUseWaterFollowing(owner)) {
             handleWaterFollowing(owner, distance);
+        } else if (dragon.isLanding()) {
+            if (!dragon.getNavigation().isInProgress()) {
+                DragonAggroLandingHelper.beginAggroLanding(dragon, owner, getFlightFollowSpeed());
+            }
         } else if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
             handleFlightFollowing(owner, ownerAirborne);
         } else {
@@ -183,10 +191,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             boolean shouldLand = !shouldFly && !ownerAirborne && horizontalDistance < config.landingDistance;
 
             if (shouldLand && !dragon.isLanding()) {
-                dragon.setLanding(true);
-                dragon.setFlying(false);
-                dragon.setHovering(false);
-                dragon.setTakeoff(false);
+                DragonAggroLandingHelper.beginAggroLanding(dragon, owner, getFlightFollowSpeed());
                 pathRecalcCooldown = 0;
             }
         }
@@ -533,7 +538,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
                     1.5,    // runSpeed
                     1.2,    // maxWalkSpeed
                     2.5,    // maxRunSpeed
-                    1.2     // flightSpeed
+                    2.5     // flightSpeed
             );
         }
 

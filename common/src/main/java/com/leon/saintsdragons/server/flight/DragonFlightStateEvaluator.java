@@ -11,6 +11,7 @@ public final class DragonFlightStateEvaluator {
     public static final int MODE_TAKEOFF = 3;
     public static final int MODE_SPRINT_FLAP = 4;
     public static final int MODE_FLY_IDLE = 5;
+    public static final int MODE_LANDING = 6;
 
     private static final double RIDER_MOVEMENT_POSITION_THRESHOLD_SQR = 0.01D;
     private static final int RIDER_IDLE_TICKS = 10;
@@ -39,7 +40,13 @@ public final class DragonFlightStateEvaluator {
             return MODE_TAKEOFF;
         }
 
-        if (input.hovering || input.landing) {
+        if (input.landing) {
+            state.riderHighAltitudeGlide = false;
+            resetAiState(state);
+            return MODE_LANDING;
+        }
+
+        if (input.hovering) {
             state.riderHighAltitudeGlide = false;
             resetAiState(state);
             return MODE_HOVER;
@@ -57,6 +64,7 @@ public final class DragonFlightStateEvaluator {
     public static VisualState evaluateVisualState(int syncedMode, boolean ridden, float flightPitchRadians, Vec3 velocity) {
         return switch (syncedMode) {
             case MODE_TAKEOFF -> VisualState.TAKEOFF;
+            case MODE_LANDING -> VisualState.GLIDE_DOWN;
             case MODE_FLY_IDLE -> VisualState.FLY_IDLE;
             case MODE_SPRINT_FLAP -> shouldUseGlideDown(ridden, flightPitchRadians, velocity)
                     ? VisualState.GLIDE_DOWN

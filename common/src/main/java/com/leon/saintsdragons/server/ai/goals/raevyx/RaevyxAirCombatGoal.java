@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -78,6 +79,10 @@ public class RaevyxAirCombatGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (dragon.isLanding()) {
+            return !dragon.onGround();
+        }
+
         LivingEntity target = dragon.getTarget();
 
         if (!dragon.isTargetValid(target)) {
@@ -103,11 +108,10 @@ public class RaevyxAirCombatGoal extends Goal {
 
         // Stop if target lands (switch to ground combat)
         if (!isTargetAirborne(target)) {
-            return false;
-        }
-
-        // Stop if we are actually landing (not just touching ground briefly)
-        if (dragon.isLanding()) {
+            if (dragon.isFlying() || dragon.isHovering()) {
+                DragonAggroLandingHelper.beginAggroLanding(dragon, target, 1.6D);
+                return true;
+            }
             return false;
         }
 
@@ -134,10 +138,8 @@ public class RaevyxAirCombatGoal extends Goal {
 
         // Don't call setLanding() - it triggers setTakeoff(true) which causes animation issues
         // Just clear flying/takeoff and let natural landing occur
-        if (dragon.isFlying() || dragon.isHovering()) {
-            dragon.setFlying(false);
-            dragon.setTakeoff(false);
-            dragon.setHovering(false);
+        if ((dragon.isFlying() || dragon.isHovering()) && !dragon.isLanding()) {
+            DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.6D);
         }
     }
 
@@ -167,6 +169,13 @@ public class RaevyxAirCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (dragon.isLanding()) {
+            if (!dragon.getNavigation().isInProgress()) {
+                DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.6D);
+            }
+            return;
+        }
+
         // Force clear takeoff flag if airborne and flying - don't let it stick
         if (dragon.isTakeoff() && dragon.isFlying() && !dragon.onGround()) {
             dragon.setTakeoff(false);
@@ -442,9 +451,7 @@ public class RaevyxAirCombatGoal extends Goal {
      * Force dragon to land (shot from below)
      */
     private void triggerEmergencyLanding() {
-        dragon.setLanding(true);
-        dragon.setFlying(false);
-        dragon.setHovering(true);
+        DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.6D);
         shotFromBelowCounter = 0; // Reset counter
     }
 

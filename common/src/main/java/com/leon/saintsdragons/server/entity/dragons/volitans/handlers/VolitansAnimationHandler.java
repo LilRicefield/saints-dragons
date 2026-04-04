@@ -101,7 +101,10 @@ public final class VolitansAnimationHandler {
         }
 
         if (dragon.isLanding()) {
-            state.setAndContinue(LANDING);
+            RawAnimation landingAnimation = dragon.isNearLandingTerrain(Volitans.LANDING_BLEND_ALTITUDE)
+                    ? LANDING
+                    : GLIDE_DOWN;
+            state.setAndContinue(landingAnimation);
             return PlayState.CONTINUE;
         }
 

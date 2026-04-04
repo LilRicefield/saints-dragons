@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,6 +43,9 @@ public class VolitansAirCombatGoal extends Goal {
         if (dragon.isBaby() || dragon.isVehicle() || dragon.isOrderedToSit()) {
             return false;
         }
+        if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
+            return false;
+        }
         if (dragon.isAiSpecialCombatActive() || dragon.isAiSpecialCombatReserved()) {
             return false;
         }
@@ -57,7 +61,14 @@ public class VolitansAirCombatGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (dragon.isLanding()) {
+            return !dragon.onGround();
+        }
+
         if (dragon.isBaby() || dragon.isVehicle() || dragon.isOrderedToSit()) {
+            return false;
+        }
+        if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
             return false;
         }
         if (dragon.isAiSpecialCombatActive() || dragon.isAiSpecialCombatReserved()) {
@@ -76,9 +87,10 @@ public class VolitansAirCombatGoal extends Goal {
             return true;
         }
         if (!isTargetAirborne(target)) {
-            return false;
-        }
-        if (dragon.isLanding()) {
+            if (dragon.isFlying() || dragon.isHovering()) {
+                DragonAggroLandingHelper.beginAggroLanding(dragon, target, 1.0D);
+                return true;
+            }
             return false;
         }
         return dragon.distanceToSqr(target) <= getMaxAggroDistanceSqr();
@@ -110,12 +122,19 @@ public class VolitansAirCombatGoal extends Goal {
             dragon.forceEndActiveAbility();
         }
         if (dragon.isFlying() || dragon.isHovering()) {
-            dragon.beginAiLanding();
+            DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.0D);
         }
     }
 
     @Override
     public void tick() {
+        if (dragon.isLanding()) {
+            if (!dragon.getNavigation().isInProgress()) {
+                DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.0D);
+            }
+            return;
+        }
+
         LivingEntity target = dragon.getTarget();
         if (!isValidTarget(target)) {
             return;

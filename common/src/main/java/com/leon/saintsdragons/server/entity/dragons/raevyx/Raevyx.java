@@ -577,15 +577,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // Navigation (Package-private for controller access)
     public final GroundPathNavigation groundNav;
     public final FlyingPathNavigation airNav;
-    public boolean usingAirNav = false;
     private final AsyncFlightController asyncAirController;
     private final AsyncFlightMoveControl asyncAirMoveControl;
     private final MoveControl groundMoveControl;
     private final DragonNavigationModeController navigationModeController;
 
     // ===== HARDCODED GROUND SPEEDS =====
-    public static final double RIDER_WALK_SPEED = 0.18D;
-    public static final double RIDER_RUN_SPEED = 0.40D;
+    public static final double RIDER_WALK_SPEED = 0.15D;
+    public static final double RIDER_RUN_SPEED = 0.35D;
 
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
@@ -635,13 +634,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     }
 
                     @Override
-                    public void afterSwitchToAir() {
-                        Raevyx.this.usingAirNav = true;
-                    }
-
-                    @Override
                     public void afterSwitchToGround() {
-                        Raevyx.this.usingAirNav = false;
                         if (Raevyx.this.onGround()) {
                             Raevyx.this.setDeltaMovement(Vec3.ZERO);
                             Raevyx.this.hasImpulse = false;
@@ -2327,7 +2320,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.setNoGravity(isFlying() || isHovering());
 
         // Switch to ground navigation when landed
-        if (!isFlying() && usingAirNav) {
+        if (!isFlying() && navigationModeController.isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
     }
@@ -4183,7 +4176,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 setTakeoff(false);
                 setLanding(false);
                 setHovering(false);
-                this.usingAirNav = false;
                 postStandUnlockTicks = Math.max(postStandUnlockTicks, 20);
             }
             if (this.getCommand() == 1) {
@@ -4245,7 +4237,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
         tag.putInt("TimeFlying", timeFlying);
-        tag.putBoolean("UsingAirNav", usingAirNav);
+        tag.putBoolean("UsingAirNav", navigationModeController.isUsingAirNavigation());
         tag.putInt("RiderTakeoffTicks", riderTakeoffTicks);
         tag.putLong("LastLandingGameTime", lastLandingGameTime);
         tag.putBoolean("LandingFlag", landingFlag);
@@ -4274,7 +4266,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         loadRideableData(tag);
         boolean savedFlying = tag.getBoolean("Flying");
         this.timeFlying = tag.getInt("TimeFlying");
-        this.usingAirNav = tag.getBoolean("UsingAirNav");
+        boolean savedUsingAirNav = tag.getBoolean("UsingAirNav");
         this.riderTakeoffTicks = tag.contains("RiderTakeoffTicks") ? tag.getInt("RiderTakeoffTicks") : 0;
         this.lastLandingGameTime = tag.contains("LastLandingGameTime") ? tag.getLong("LastLandingGameTime") : Long.MIN_VALUE;
         this.landingFlag = tag.contains("LandingFlag") && tag.getBoolean("LandingFlag");
@@ -4325,7 +4317,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         this.manualSitCommand = tag.contains("ManualSitCommand") && tag.getBoolean("ManualSitCommand");
 
-        if (this.usingAirNav) {
+        if (savedUsingAirNav) {
             switchToAirNavigation();
         } else {
             switchToGroundNavigation();

@@ -37,7 +37,6 @@ public class VolitansSlamSequenceGoal extends Goal {
 
     private enum Phase {
         IDLE,
-        TAKEOFF,
         TRACK,
         SLAM,
         LAND
@@ -63,7 +62,11 @@ public class VolitansSlamSequenceGoal extends Goal {
             dragon.setAiSpecialCombatReserved(false);
             return false;
         }
-        if (dragon.getActiveAbility() != null || dragon.isBurrowing() || dragon.isFlying()) {
+        if (dragon.getActiveAbility() != null || dragon.isBurrowing()) {
+            dragon.setAiSpecialCombatReserved(false);
+            return false;
+        }
+        if ((!dragon.isFlying() && !dragon.isHovering()) || dragon.isTakeoff() || dragon.isLanding() || dragon.onGround()) {
             dragon.setAiSpecialCombatReserved(false);
             return false;
         }
@@ -111,7 +114,8 @@ public class VolitansSlamSequenceGoal extends Goal {
         dragon.setAiSpecialCombatActive(true);
         dragon.setAggressive(true);
         dragon.getNavigation().stop();
-        transitionTo(Phase.TAKEOFF);
+        dragon.beginAiFlight();
+        transitionTo(Phase.TRACK);
     }
 
     @Override
@@ -141,44 +145,10 @@ public class VolitansSlamSequenceGoal extends Goal {
         }
 
         switch (phase) {
-            case TAKEOFF -> tickTakeoff(target);
             case TRACK -> tickTrack(target);
             case SLAM -> tickSlam();
             case LAND -> tickLand(target);
             default -> {
-            }
-        }
-    }
-
-    private void tickTakeoff(LivingEntity target) {
-        cancelPreSequenceAbilities();
-        dragon.beginAiTakeoff();
-
-        if (dragon.isTakeoff() && dragon.onGround()) {
-            dragon.getNavigation().stop();
-            if (phaseTicks > TAKEOFF_MAX_TICKS) {
-                transitionTo(Phase.LAND);
-            }
-            return;
-        }
-
-        double wantedY = target != null
-                ? Math.max(dragon.getY() + 6.0D, target.getY() + TRACK_ALTITUDE - 2.0D)
-                : dragon.getY() + 8.0D;
-        flyToward(new Vec3(dragon.getX(), wantedY, dragon.getZ()), TAKEOFF_SPEED, true);
-
-        if (!dragon.onGround() && phaseTicks > Volitans.TAKEOFF_ANIMATION_TICKS + 4) {
-            dragon.beginAiFlight();
-            transitionTo(Phase.TRACK);
-            return;
-        }
-
-        if (phaseTicks > TAKEOFF_MAX_TICKS) {
-            if (!dragon.onGround()) {
-                dragon.beginAiFlight();
-                transitionTo(Phase.TRACK);
-            } else {
-                transitionTo(Phase.LAND);
             }
         }
     }

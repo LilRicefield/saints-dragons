@@ -90,9 +90,16 @@ public class CindervaneAnimationHandler {
                     return PlayState.STOP;
                 }
                 // Check for landing blend (second highest priority)
-                if (dragon.isRiderLandingBlendActive()) {
+                if (dragon.isRiderLandingBlendActive()
+                        || (dragon.isLanding() && dragon.isNearLandingTerrain(Cindervane.LANDING_BLEND_ALTITUDE))) {
                     state.getController().transitionLength(4);
                     state.setAndContinue(LANDING);
+                    return PlayState.CONTINUE;
+                }
+
+                if (dragon.isLanding()) {
+                    state.getController().transitionLength(6);
+                    state.setAndContinue(GLIDE_DOWN);
                     return PlayState.CONTINUE;
                 }
 
@@ -178,6 +185,12 @@ public class CindervaneAnimationHandler {
 
         if (dragon.isFlying()) {
             int syncedMode = dragon.getSyncedFlightMode();
+
+            if (dragon.isLanding() && dragon.isNearLandingTerrain(Cindervane.LANDING_BLEND_ALTITUDE)) {
+                state.getController().transitionLength(4);
+                state.setAndContinue(LANDING);
+                return PlayState.CONTINUE;
+            }
 
             DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
 

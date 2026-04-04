@@ -28,7 +28,7 @@
 				{
 					"name": "spinBone",
 					"parent": "heightController",
-					"pivot": [0, 50, -7.5]
+					"pivot": [0, 50, 2.5]
 				},
 				{
 					"name": "upperbody",

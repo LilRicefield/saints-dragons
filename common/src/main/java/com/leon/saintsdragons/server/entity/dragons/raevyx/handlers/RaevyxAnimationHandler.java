@@ -233,7 +233,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         }
 
         if (wyvern.isLanding()) {
-            state.setAndContinue(LANDING);
+            state.getController().transitionLength(4);
+            RawAnimation landingAnimation = wyvern.isNearLandingTerrain(Raevyx.LANDING_BLEND_ALTITUDE)
+                    ? LANDING
+                    : GLIDE_DOWN;
+            currentFlightAnimation = landingAnimation;
+            state.setAndContinue(landingAnimation);
             return PlayState.CONTINUE;
         }
 

@@ -16,7 +16,7 @@ import java.util.EnumSet;
 public class RaevyxFlightGoal extends Goal {
     private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.raevyx();
     private static final double CRUISE_SPEED = 2.0D;
-    private static final double LANDING_SPEED = 1.0D;
+    private static final double LANDING_SPEED = 1.6D;
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
 
     private final Raevyx wyvern;

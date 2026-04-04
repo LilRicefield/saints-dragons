@@ -64,4 +64,21 @@ public record DragonFlightBehaviorProfile(
                 3000
         );
     }
+
+    public static DragonFlightBehaviorProfile volitans() {
+        return new DragonFlightBehaviorProfile(
+                60,
+                64.0,
+                240,
+                12,
+                12,
+                12,
+                45,
+                45,
+                45,
+                2600,
+                2600,
+                2600
+        );
+    }
 }
