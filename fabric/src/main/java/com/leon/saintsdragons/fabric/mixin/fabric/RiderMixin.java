@@ -49,10 +49,6 @@ public abstract class RiderMixin {
         if (now - lastRender > riderSpec.staleMs) {
             return;
         }
-        int currentFrameId = RiderBullcrap.getCurrentRenderFrameId();
-        if (currentFrameId != 0 && RiderBullcrap.getLastRenderFrameId(dragon.getId()) != currentFrameId) {
-            return;
-        }
 
         Matrix4f viewMatrix = RiderBullcrap.get(dragon.getId(), seatIndex);
         if (viewMatrix == null) {
@@ -61,9 +57,6 @@ public abstract class RiderMixin {
 
         long lastUpdate = RiderBullcrap.getTimestamp(dragon.getId(), seatIndex);
         if (now - lastUpdate > riderSpec.staleMs) {
-            return;
-        }
-        if (currentFrameId != 0 && RiderBullcrap.getFrameId(dragon.getId(), seatIndex) != currentFrameId) {
             return;
         }
 
