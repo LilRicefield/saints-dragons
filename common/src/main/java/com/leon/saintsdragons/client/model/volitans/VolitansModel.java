@@ -187,7 +187,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     }
 
     private void applySwimPitch(Volitans entity, float partialTick) {
-        if (!entity.isInWaterOrBubble() || entity.isFlying()) {
+        if (!entity.isInWaterOrBubble() || !entity.isFlying()) {
             return;
         }
 
@@ -202,7 +202,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     }
 
     private void applySwimRoll(Volitans entity, float partialTick) {
-        if (!entity.isInWaterOrBubble() || entity.isFlying()) {
+        if (!entity.isInWaterOrBubble() || !entity.isFlying()) {
             return;
         }
 
