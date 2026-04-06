@@ -303,6 +303,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             holder.save();
             SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
             SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
+            SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
             persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer);
             refreshLoadedDragonAttributesOnIntegratedServer();
         });
@@ -422,7 +423,14 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ).setDefaultValue(SaintsDragonsConfig.SCREEN_SHAKE_ENABLED_DEFAULT)
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.screen_shake.tooltip"))
          .setSaveConsumer(value -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.set(value))
-         .build());
+          .build());
+        others.addEntry(entryBuilder.startBooleanToggle(
+                Component.translatable("saintsdragons.config_screen.others.barrel_roll"),
+                SaintsDragonsConfig.BARREL_ROLL_ENABLED.get()
+        ).setDefaultValue(SaintsDragonsConfig.BARREL_ROLL_ENABLED_DEFAULT)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.barrel_roll.tooltip"))
+         .setSaveConsumer(value -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.set(value))
+          .build());
         others.addEntry(entryBuilder.startIntSlider(
                 Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
                 config.ivyRestockInterval,

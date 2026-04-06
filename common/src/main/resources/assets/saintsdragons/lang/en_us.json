@@ -645,6 +645,8 @@
   "saintsdragons.config_screen.others.dragon_griefing.tooltip": "Saint's Dragons only break blocks when this is enabled and the vanilla mobGriefing gamerule is also true",
   "saintsdragons.config_screen.others.screen_shake": "Enable Screen Shake",
   "saintsdragons.config_screen.others.screen_shake.tooltip": "Disables dragon and ability-driven camera shake effects when turned off",
+  "saintsdragons.config_screen.others.barrel_roll": "Enable Barrel Roll",
+  "saintsdragons.config_screen.others.barrel_roll.tooltip": "Disables rider-triggered barrel roll for all flying dragons when turned off",
   "saintsdragons.config_screen.others.ivy": "Ivy the Dragon Merchant",
   "saintsdragons.config_screen.others.ivy.restock_interval": "Restock Interval (ticks)",
   "saintsdragons.config_screen.others.ivy.restock_interval.tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)",

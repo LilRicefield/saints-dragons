@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -3430,7 +3431,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     private void tickBarrelRollLogic() {
         float currentRoll = getAccumulatedRoll();
-        if (isVehicle() && getControllingPassenger() != null) {
+        boolean barrelRollEnabled = SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
+        if (barrelRollEnabled && isVehicle() && getControllingPassenger() != null) {
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
@@ -3444,7 +3446,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                         isVehicle(),
                         onGround(),
                         isLanding(),
-                        isActivelyBarrelRolling(),
+                        barrelRollEnabled && isActivelyBarrelRolling(),
                         shouldEaseAirAutoAlign(),
                         isRiderLandingBlendActive(),
                         LANDING_BLEND_ALTITUDE,

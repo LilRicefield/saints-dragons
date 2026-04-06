@@ -34,6 +34,7 @@ public final class SaintsDragonsConfig {
     public static final boolean VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
     public static final boolean SCREEN_SHAKE_ENABLED_DEFAULT = true;
+    public static final boolean BARREL_ROLL_ENABLED_DEFAULT = true;
 
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
@@ -74,6 +75,7 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.ListValue VOLITANS_EXCLUDED_BIOMES;
     public static ConfigHelper.BooleanValue DRAGON_GRIEFING_ENABLED;
     public static ConfigHelper.BooleanValue SCREEN_SHAKE_ENABLED;
+    public static ConfigHelper.BooleanValue BARREL_ROLL_ENABLED;
 
     private static volatile boolean initialized = false;
 
@@ -166,6 +168,8 @@ public final class SaintsDragonsConfig {
         DRAGON_GRIEFING_ENABLED = builder.defineBoolean("dragonGriefingEnabled", DRAGON_GRIEFING_ENABLED_DEFAULT);
         builder.comment("Global toggle for dragon and ability-driven screen shake effects.");
         SCREEN_SHAKE_ENABLED = builder.defineBoolean("screenShakeEnabled", SCREEN_SHAKE_ENABLED_DEFAULT);
+        builder.comment("Global toggle for rider-triggered barrel roll on flying dragons.");
+        BARREL_ROLL_ENABLED = builder.defineBoolean("barrelRollEnabled", BARREL_ROLL_ENABLED_DEFAULT);
         builder.pop();
 
         builder.build();

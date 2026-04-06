@@ -40,12 +40,12 @@ public final class DragonBarrelRollHelper {
         float currentPrevSmoothedRoll = smoothedRoll;
 
         if (input.grounded()) {
-            float uprightRoll = getNearestUprightRoll(currentRoll);
+            float uprightRoll = 0.0f;
             return new Output(uprightRoll, uprightRoll, uprightRoll);
         }
 
         if (!input.ridden()) {
-            float uprightRoll = getNearestUprightRoll(currentRoll);
+            float uprightRoll = 0.0f;
             return new Output(uprightRoll, uprightRoll, uprightRoll);
         }
 
@@ -57,10 +57,14 @@ public final class DragonBarrelRollHelper {
         }
 
         if (!input.activelyRolling() && input.easeAllowed()) {
-            float nearestUprightRoll = getNearestUprightRoll(currentRoll);
-            float uprightOffset = currentRoll - nearestUprightRoll;
+            currentRoll = DragonFlightOrientationHelper.normalizeRoll(currentRoll);
+            currentSmoothedRoll = DragonFlightOrientationHelper.normalizeRoll(currentSmoothedRoll);
+            currentPrevSmoothedRoll = currentSmoothedRoll;
 
-            if (Math.abs(uprightOffset) > 0.001f && Math.abs(uprightOffset) <= config.maxAutoAlignOffsetRad()) {
+            float nearestUprightRoll = 0.0f;
+            float uprightOffset = currentRoll;
+
+            if (Math.abs(uprightOffset) > 0.001f) {
                 float decay = config.airAutoAlignDecay();
 
                 if (input.riderLandingBlendActive() && input.altitudeAboveTerrain() != Double.POSITIVE_INFINITY) {

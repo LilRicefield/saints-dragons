@@ -119,6 +119,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "varasuchusEggBlockWorldgen" -> () -> holder().getConfig().varasuchusEggBlockWorldgen;
             case "dragonGriefingEnabled" -> () -> holder().getConfig().dragonGriefingEnabled;
             case "screenShakeEnabled" -> () -> holder().getConfig().screenShakeEnabled;
+            case "barrelRollEnabled" -> () -> holder().getConfig().barrelRollEnabled;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -132,6 +133,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "varasuchusEggBlockWorldgen" -> value -> holder().getConfig().varasuchusEggBlockWorldgen = value;
             case "dragonGriefingEnabled" -> value -> holder().getConfig().dragonGriefingEnabled = value;
             case "screenShakeEnabled" -> value -> holder().getConfig().screenShakeEnabled = value;
+            case "barrelRollEnabled" -> value -> holder().getConfig().barrelRollEnabled = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
         };
     }

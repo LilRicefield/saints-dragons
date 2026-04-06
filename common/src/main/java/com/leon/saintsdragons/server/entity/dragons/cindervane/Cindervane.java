@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
@@ -1376,7 +1377,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private void tickBarrelRollLogic() {
         float currentRoll = getAccumulatedRoll();
-        if (isVehicle() && getControllingPassenger() != null) {
+        boolean barrelRollEnabled = SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
+        if (barrelRollEnabled && isVehicle() && getControllingPassenger() != null) {
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
@@ -1390,7 +1392,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                         isVehicle(),
                         onGround(),
                         isLanding(),
-                        isActivelyBarrelRolling(),
+                        barrelRollEnabled && isActivelyBarrelRolling(),
                         shouldEaseAirAutoAlign(),
                         isRiderLandingBlendActive(),
                         LANDING_BLEND_ALTITUDE,
