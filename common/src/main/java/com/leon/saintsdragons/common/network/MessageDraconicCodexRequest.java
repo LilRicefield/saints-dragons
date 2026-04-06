@@ -76,9 +76,12 @@ public class MessageDraconicCodexRequest {
                     boolean binderExists = BinderComponentUtil.isDragonBoundInLoadedWorld(serverLevel, dragonId);
                     if (binderExists) {
                         data.updateDragonBoundState(player.getUUID(), dragonId, true);
+                    } else if (message.pruneMissingBoundEntries) {
+                        // Manual refresh acts as an intentional hard-prune pass.
+                        // Live codex updates stay non-destructive so modded storage
+                        // does not silently wipe entries while the screen is open.
+                        data.removeDragon(player.getUUID(), dragonId);
                     }
-                    // Keep bound entries when the binder isn't visible to vanilla inventory scans.
-                    // Modded storage like backpacks/chests can still legitimately hold the binder.
                 }
             }
             entries = data.getEntriesFor(player);

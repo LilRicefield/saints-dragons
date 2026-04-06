@@ -4726,7 +4726,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // ===== DRAGON FLIGHT CAPABLE INTERFACE =====
     @Override
     public float getFlightSpeed() {
-        return (float) this.getAttributeValue(Attributes.FLYING_SPEED);
+        float baseSpeed = (float) this.getAttributeValue(Attributes.FLYING_SPEED);
+        if (this.isTame()) {
+            return baseSpeed;
+        }
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
+        return (float) (baseSpeed * config.extraDouble("wild_flying_speed_multiplier", 1.0D));
     }
 
     @Override

@@ -4,6 +4,12 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricSpawnConfig;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
@@ -15,6 +21,7 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -297,6 +304,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
             SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
             persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer);
+            refreshLoadedDragonAttributesOnIntegratedServer();
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
@@ -1793,5 +1801,32 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("roar_air_water_poison_duration_ticks", buffer.roarAirWaterPoisonDurationTicks);
         extras.put("roar_air_water_poison_level", buffer.roarAirWaterPoisonLevel);
         return extras;
+    }
+
+    private void refreshLoadedDragonAttributesOnIntegratedServer() {
+        var integratedServer = Minecraft.getInstance().getSingleplayerServer();
+        if (integratedServer == null) {
+            return;
+        }
+
+        integratedServer.execute(() -> {
+            for (var level : integratedServer.getAllLevels()) {
+                for (var entity : level.getAllEntities()) {
+                    if (entity instanceof Cindervane dragon) {
+                        dragon.applyConfiguredAttributes();
+                    } else if (entity instanceof Stegonaut dragon) {
+                        dragon.applyConfiguredAttributes();
+                    } else if (entity instanceof Raevyx dragon) {
+                        dragon.applyConfiguredAttributes();
+                    } else if (entity instanceof Varasuchus dragon) {
+                        dragon.applyConfiguredAttributes();
+                    } else if (entity instanceof Ignivorus dragon) {
+                        dragon.applyConfiguredAttributes();
+                    } else if (entity instanceof Volitans dragon) {
+                        dragon.applyConfiguredAttributes();
+                    }
+                }
+            }
+        });
     }
 }
