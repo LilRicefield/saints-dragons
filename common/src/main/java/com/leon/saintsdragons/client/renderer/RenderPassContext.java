@@ -15,6 +15,6 @@ public final class RenderPassContext {
     }
 
     public static boolean isExtractionAllowed(int dragonId) {
-        return extractingDragonId == dragonId;
+        return extractingDragonId == dragonId && !ShaderPassCompatibility.isIrisShadowPass();
     }
 }

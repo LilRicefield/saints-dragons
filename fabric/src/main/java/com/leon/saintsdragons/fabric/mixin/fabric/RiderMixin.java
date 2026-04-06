@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -31,6 +32,9 @@ public abstract class RiderMixin {
         if (!(entity instanceof RideableDragonBase dragon)) {
             return;
         }
+        if (ShaderPassCompatibility.isIrisShadowPass()) {
+            return;
+        }
         RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(dragon);
         if (riderSpec == null) {
             return;
@@ -45,6 +49,10 @@ public abstract class RiderMixin {
         if (now - lastRender > riderSpec.staleMs) {
             return;
         }
+        int currentFrameId = RiderBullcrap.getCurrentRenderFrameId();
+        if (currentFrameId != 0 && RiderBullcrap.getLastRenderFrameId(dragon.getId()) != currentFrameId) {
+            return;
+        }
 
         Matrix4f viewMatrix = RiderBullcrap.get(dragon.getId(), seatIndex);
         if (viewMatrix == null) {
@@ -53,6 +61,9 @@ public abstract class RiderMixin {
 
         long lastUpdate = RiderBullcrap.getTimestamp(dragon.getId(), seatIndex);
         if (now - lastUpdate > riderSpec.staleMs) {
+            return;
+        }
+        if (currentFrameId != 0 && RiderBullcrap.getFrameId(dragon.getId(), seatIndex) != currentFrameId) {
             return;
         }
 

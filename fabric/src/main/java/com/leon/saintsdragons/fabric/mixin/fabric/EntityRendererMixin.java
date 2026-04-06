@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.client.camera.DragonFovHelper;
+import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
@@ -57,6 +58,11 @@ public class EntityRendererMixin {
         } else {
             saint_sDragons$currentFOVMultiplier = 1.0;
         }
+    }
+
+    @Inject(method = "render", at = @At("HEAD"), require = 0)
+    private void saintsdragons$beginRiderRenderFrame(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        RiderBullcrap.beginRenderFrame();
     }
 
     @Unique
