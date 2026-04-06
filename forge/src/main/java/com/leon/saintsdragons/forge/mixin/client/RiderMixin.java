@@ -2,6 +2,7 @@ package com.leon.saintsdragons.forge.mixin.client;
 
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -29,6 +30,9 @@ public abstract class RiderMixin {
                                                        CallbackInfo ci) {
         Entity entity = player.getVehicle();
         if (!(entity instanceof RideableDragonBase dragon)) {
+            return;
+        }
+        if (ShaderPassCompatibility.isIrisShadowPass()) {
             return;
         }
         RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(dragon);
