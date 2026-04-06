@@ -78,6 +78,7 @@ import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.item.ItemStack;
@@ -133,45 +134,17 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     // ===== ENTITY DATA ACCESSORS =====
 
-    /** Entity data accessor for flying state */
-    public static final EntityDataAccessor<Boolean> DATA_FLYING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
-    /** Entity data accessor for takeoff state */
-    public static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
-    /** Entity data accessor for hovering state */
-    public static final EntityDataAccessor<Boolean> DATA_HOVERING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
-    /** Entity data accessor for landing state */
-    public static final EntityDataAccessor<Boolean> DATA_LANDING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
     /** Entity data accessor for landed state (post-landing settle animation) */
     public static final EntityDataAccessor<Boolean> DATA_LANDED =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
-    /** Entity data accessor for running state */
-    public static final EntityDataAccessor<Boolean> DATA_RUNNING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
-    /** Entity data accessor for ground move state (0=idle, 1=walk, 2=run) */
-    public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
-
-    /** Entity data accessor for flight mode (0=glide,1=forward,2=hover,3=takeoff,-1=ground) */
-    public static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
-
-    /** Entity data accessor for rider forward input */
-    public static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
-
-    /** Entity data accessor for rider strafe input */
-    public static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+    /**
+     * Compatibility padding for modpacks that inject an extra tracked field into an upstream mob class.
+     * Keep this unregistered; it only reserves one Raevyx tracker id so the real Raevyx fields below
+     * don't collide with that injected parent tracker slot.
+     */
+    private static final EntityDataAccessor<Byte> DATA_TRACKER_COMPAT_PADDING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BYTE);
 
     /** Entity data accessor for screen shake amount */
     public static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
@@ -220,18 +193,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     /** Entity data accessor for beam start Z coordinate */
     public static final EntityDataAccessor<Float> DATA_BEAM_START_Z =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
-
-    /** Entity data accessor for going up state */
-    public static final EntityDataAccessor<Boolean> DATA_GOING_UP =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
-    /** Entity data accessor for going down state */
-    public static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-
-    /** Entity data accessor for accelerating state */
-    public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
     /** Entity data accessor for dashing state */
     public static final EntityDataAccessor<Boolean> DATA_DASHING =
@@ -385,6 +346,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final int RIDER_DODGE_COOLDOWN_TICKS = 30;
     private static final int AI_DODGE_COOLDOWN_TICKS = 60;
     private static final double DODGE_DISTANCE_BLOCKS = 20;
+    private static final float REACTIVE_HIT_DODGE_CHANCE = 0.35F;
     boolean dodging = false;
     int dodgeTicksLeft = 0;
     Vec3 dodgeVec = Vec3.ZERO;
@@ -857,6 +819,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void playStepSound(@Nonnull BlockPos pos, @Nonnull BlockState state) {
+        if (isBaby()) {
+            return;
+        }
         if (this.level().isClientSide) {
             return;
         }
@@ -890,13 +855,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.ARMOR, config.armor());
     }
-
-    // Cooldown to prevent hurt sound spam when ridden or under rapid hits
     private int hurtSoundCooldown = 0;
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        // Define Lightning Dragon specific data
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_BEAM_GLOW, false);
@@ -920,58 +882,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     protected void defineRideableDragonData() {
         // Define all rideable wyvern data keys for LightningDragonEntity
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
         this.entityData.define(DATA_LANDED, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_RIDER_FORWARD, 0f);
-        this.entityData.define(DATA_RIDER_STRAFE, 0f);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_DASHING, false);
         this.entityData.define(DATA_LAST_DASH_RIGHT, false);
         this.entityData.define(DATA_GROUND_RENDING, false);
-    }
-
-    // Implementation of abstract accessor methods
-    @Override
-    protected EntityDataAccessor<Float> getRiderForwardAccessor() {
-        return DATA_RIDER_FORWARD;
-    }
-
-    @Override
-    protected EntityDataAccessor<Float> getRiderStrafeAccessor() {
-        return DATA_RIDER_STRAFE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
-        return DATA_GROUND_MOVE_STATE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Integer> getFlightModeAccessor() {
-        return DATA_FLIGHT_MODE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingUpAccessor() {
-        return DATA_GOING_UP;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingDownAccessor() {
-        return DATA_GOING_DOWN;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
-        return DATA_ACCELERATING;
     }
 
     @Override
@@ -1468,8 +1382,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         int s = level().isClientSide ? getEffectiveGroundState() : this.entityData.get(DATA_GROUND_MOVE_STATE);
         if (s == 2) return true;
         if (s == 1) return false;
-        // Fallback: rely on synced running flag if state not yet set
-        return getBooleanData(DATA_RUNNING);
+        return false;
     }
 
 
@@ -1479,12 +1392,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             // Dragon is being ridden, ignore landing requests to maintain player control
             return;
         }
+        if (landing && this.onGround() && !this.isFlying() && !this.isTakeoff()) {
+            return;
+        }
 
         this.entityData.set(DATA_LANDING, landing);
         if (landing) {
             landingTimer = 0;
-            this.getNavigation().stop();
             this.setTakeoff(false);
+            this.setHovering(false);
             this.landingFlag = true;
         } else {
             this.landingFlag = false;
@@ -1614,12 +1530,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     
     @Override
     public boolean isRunning() {
-        return getBooleanData(DATA_RUNNING);
+        return !isFlying() && getEffectiveGroundState() == 2;
     }
     
     @Override
     public void setRunning(boolean running) {
-        setBooleanData(DATA_RUNNING, running);
         if (running) {
             runningTicks = 0;
         }
@@ -1921,6 +1836,40 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             animationHandler.triggerDodgeRightAnimation();
         }
 
+        return true;
+    }
+
+    private boolean tryReactiveHitDodge(@Nonnull DamageSource damageSource, float amount) {
+        if (level().isClientSide || amount <= 0.0F || aiDodgeCooldownTicks > 0 || isVehicle() || !isAlive() || isDying()) {
+            return false;
+        }
+
+        LivingEntity attacker = null;
+        if (damageSource.getEntity() instanceof LivingEntity living) {
+            attacker = living;
+        } else if (damageSource.getDirectEntity() instanceof LivingEntity living) {
+            attacker = living;
+        } else if (damageSource.getDirectEntity() instanceof Projectile projectile
+                && projectile.getOwner() instanceof LivingEntity living) {
+            attacker = living;
+        }
+
+        if (!(attacker instanceof Player player)) {
+            return false;
+        }
+        if (player.isCreative() || player.isSpectator()) {
+            return false;
+        }
+        if (this.getRandom().nextFloat() >= REACTIVE_HIT_DODGE_CHANCE) {
+            return false;
+        }
+        if (!tryAIGroundDodge(player)) {
+            return false;
+        }
+
+        // The hit still counts as a real interaction for retaliation; we just snub the damage and sell the dodge.
+        this.setLastHurtByMob(player);
+        this.setTarget(player);
         return true;
     }
 
@@ -3820,6 +3769,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (isTamingStunned() && !isTame()) {
             // Allow damage normally - stunned dragon can be killed
             return super.hurt(damageSource, amount);
+        }
+
+        if (tryReactiveHitDodge(damageSource, amount)) {
+            return false;
         }
 
         // Store previous flying state to restore if being ridden

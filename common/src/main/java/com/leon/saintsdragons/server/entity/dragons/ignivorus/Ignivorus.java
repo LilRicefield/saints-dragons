@@ -107,43 +107,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     // ===== ENTITY DATA ACCESSORS =====
 
-    public static final EntityDataAccessor<Boolean> DATA_FLYING =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
-    public static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
-    public static final EntityDataAccessor<Boolean> DATA_HOVERING =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
-    public static final EntityDataAccessor<Boolean> DATA_LANDING =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
-    public static final EntityDataAccessor<Boolean> DATA_RUNNING =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
-    public static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
-
-    public static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
-
-    public static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
-
-    public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
-
-    public static final EntityDataAccessor<Boolean> DATA_GOING_UP =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
-    public static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-
-    public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
     public static final EntityDataAccessor<Boolean> DATA_BULLDOZING =
@@ -607,19 +571,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_RIDER_FORWARD, 0F);
-        this.entityData.define(DATA_RIDER_STRAFE, 0F);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_BULLDOZING, false);
         this.entityData.define(DATA_PHASE2, false);
         this.entityData.define(DATA_LEAPING, false);
@@ -2704,13 +2656,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public void setRunning(boolean running) {
-        this.entityData.set(DATA_RUNNING, running);
         // MOVEMENT_SPEED is fixed for AI - rider speed is handled by RiderController
     }
 
     @Override
     public boolean isRunning() {
-        return this.entityData.get(DATA_RUNNING);
+        return !isFlying() && getEffectiveGroundState() == 2;
     }
 
     @Override
@@ -3295,43 +3246,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         super.onDeathAbilityStarted();
     }
 
-    // ===== ENTITY DATA ACCESSOR GETTERS =====
-
-    @Override
-    protected EntityDataAccessor<Float> getRiderForwardAccessor() {
-        return DATA_RIDER_FORWARD;
-    }
-
-    @Override
-    protected EntityDataAccessor<Float> getRiderStrafeAccessor() {
-        return DATA_RIDER_STRAFE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
-        return DATA_GROUND_MOVE_STATE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Integer> getFlightModeAccessor() {
-        return DATA_FLIGHT_MODE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingUpAccessor() {
-        return DATA_GOING_UP;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingDownAccessor() {
-        return DATA_GOING_DOWN;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
-        return DATA_ACCELERATING;
-    }
-
     // ===== BANKING & PITCHING ANIMATIONS =====
 
     private void tickBankingLogic() {
@@ -3821,7 +3735,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         if (groundStepSoundCooldownTicks > 0) {
             groundStepSoundCooldownTicks--;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || !onGround()) {
+        if (isBaby() || isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || !onGround()) {
             groundStepSoundCooldownTicks = 0;
             return;
         }

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.stegonaut;
 
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
+import com.leon.saintsdragons.client.renderer.RenderPassContext;
 import com.leon.saintsdragons.client.model.stegonaut.StegonautModel;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.fabricmc.api.EnvType;
@@ -76,8 +77,13 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
     @Override
     public void render(@NotNull Stegonaut entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        try {
+            super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        } finally {
+            RenderPassContext.endExtraction();
+        }
         
         // After bones have been processed, sample accurate world positions for mouth locator
         sampleAndStashLocatorsAccurate(entity);
@@ -95,7 +101,7 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
         if (riderSpec == null || !bone.getName().equals(riderSpec.boneName)) {
             return;
         }
-        if (!RiderBullcrap.tryLockForFrame(animatable.getId(), 0)) {
+        if (!RenderPassContext.isExtractionAllowed(animatable.getId())) {
             return;
         }
 
@@ -107,6 +113,9 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
                         + boneViewPos4.z() * boneViewPos4.z()
         );
         if (viewSpaceDistance >= riderSpec.maxCaptureDistance) {
+            return;
+        }
+        if (!RiderBullcrap.tryLockForFrame(animatable.getId(), 0)) {
             return;
         }
 

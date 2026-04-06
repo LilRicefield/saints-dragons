@@ -1751,7 +1751,17 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public boolean isTargetValid(@Nullable LivingEntity target) {
         if (target == null) return false;
         if (!target.isAlive() || target.isRemoved()) return false;
+        if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
         return !isIafMobDead(target);
+    }
+
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
+            super.setTarget(null);
+            return;
+        }
+        super.setTarget(target);
     }
 
     private static final ConcurrentHashMap<Class<?>, Optional<Method>> IAF_DEAD_METHODS =

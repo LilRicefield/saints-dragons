@@ -4,19 +4,19 @@
 		{
 			"description": {
 				"identifier": "geometry.volitans_spines",
-				"texture_width": 64,
-				"texture_height": 64,
-				"visible_bounds_width": 2,
+				"texture_width": 40,
+				"texture_height": 8,
+				"visible_bounds_width": 3,
 				"visible_bounds_height": 1.5,
 				"visible_bounds_offset": [0, 0.25, 0]
 			},
 			"bones": [
 				{
-					"name": "root",
+					"name": "bb_main",
 					"pivot": [0, 0, 0],
 					"cubes": [
-						{"origin": [-1, 0, -7], "size": [2, 4, 14], "uv": [0, 0]},
-						{"origin": [-1, 0, -7], "size": [2, 4, 14], "pivot": [0, 2, 0], "rotation": [0, 0, 90], "uv": [0, 18]}
+						{"origin": [0, 0, -10], "size": [0, 8, 20], "uv": [0, -20]},
+						{"origin": [0, 0, -10], "size": [0, 8, 20], "pivot": [0, 4, 0], "rotation": [0, 0, -90], "uv": [0, -20]}
 					]
 				}
 			]

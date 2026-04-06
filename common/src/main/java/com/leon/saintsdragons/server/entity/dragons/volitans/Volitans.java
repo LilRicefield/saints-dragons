@@ -79,6 +79,7 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -104,32 +105,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_BLOODSHOT = 1;
     private static final float BLOODSHOT_VARIANT_CHANCE = 0.10F;
-    private static final EntityDataAccessor<Boolean> DATA_FLYING =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_HOVERING =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_LANDING =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_RUNNING =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_UP =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
-            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
@@ -139,6 +116,14 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final EntityDataAccessor<Integer> DATA_BREATH_MODE =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_BREATHING =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_WATER_BREATH_ENERGY =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_POISON_BREATH_ENERGY =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_WATER_BREATH_DEPLETED =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_POISON_BREATH_DEPLETED =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_BURROWING =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
@@ -181,6 +166,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final float RIDER_BACK_DASH_SPIKE_INACCURACY = 0.10F;
     private static final int RIDER_BACK_DASH_SPIKE_DELAY_TICKS = 8;
     private static final double RIDER_BACK_DASH_SPIKE_Y_OFFSET = -3.0D;
+    private static final float REACTIVE_HIT_EVADE_CHANCE = 0.35F;
     private static final int RIDER_FORWARD_DASH_DURATION_TICKS = 25; // 1.25s
     private static final double RIDER_FORWARD_DASH_DISTANCE_BLOCKS = 32.0D;
     private static final double RIDER_FORWARD_DASH_HORIZONTAL_DRAG = 0.90D;
@@ -194,6 +180,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final double RIDER_SIDE_DODGE_DISTANCE_BLOCKS = 10.0D;
     private static final int RIDER_SIDE_DODGE_RECOVERY_TICKS = 5;
     private static final double RIDER_SIDE_DODGE_RECOVERY_DRAG = 0.82D;
+    private static final float BREATH_DEPLETED_THRESHOLD = 0.01F;
+    private static final float BREATH_REARM_THRESHOLD = 0.20F;
+    private static final float BREATH_GAUGE_REGEN_PER_TICK = 0.0025F;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
@@ -667,61 +656,18 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected void defineRideableDragonData() {
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
         this.entityData.define(DATA_FLIGHT_PITCH, 0.0F);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
-        this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_ULTIMATE_SLAM_ACTIVE, false);
         this.entityData.define(DATA_BREATH_MODE, 0); // 0=water, 1=poison
         this.entityData.define(DATA_BREATHING, false);
+        this.entityData.define(DATA_WATER_BREATH_ENERGY, 1.0F);
+        this.entityData.define(DATA_POISON_BREATH_ENERGY, 1.0F);
+        this.entityData.define(DATA_WATER_BREATH_DEPLETED, false);
+        this.entityData.define(DATA_POISON_BREATH_DEPLETED, false);
         this.entityData.define(DATA_BURROWING, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
-    }
-
-    @Override
-    protected EntityDataAccessor<Float> getRiderForwardAccessor() {
-        return DATA_RIDER_FORWARD;
-    }
-
-    @Override
-    protected EntityDataAccessor<Float> getRiderStrafeAccessor() {
-        return DATA_RIDER_STRAFE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
-        return DATA_GROUND_MOVE_STATE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Integer> getFlightModeAccessor() {
-        return DATA_FLIGHT_MODE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingUpAccessor() {
-        return DATA_GOING_UP;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingDownAccessor() {
-        return DATA_GOING_DOWN;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
-        return DATA_ACCELERATING;
     }
 
     @Override
@@ -853,12 +799,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public boolean isRunning() {
-        return this.entityData.get(DATA_RUNNING);
+        return !isFlying() && getEffectiveGroundState() == 2;
     }
 
     @Override
     public void setRunning(boolean running) {
-        this.entityData.set(DATA_RUNNING, running);
     }
 
     @Override
@@ -1180,6 +1125,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             }
             handleAmbientSounds();
             tickWaterPreferenceTimers();
+            tickBreathGaugeEnergy();
             takeoffComponent.tick();
             if (riderTakeoffTicks > 0) {
                 riderTakeoffTicks--;
@@ -1643,6 +1589,22 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (tag.contains("VolitansBreathMode")) {
             setBreathMode(tag.getInt("VolitansBreathMode"));
         }
+        if (tag.contains("VolitansWaterBreathEnergy")) {
+            setWaterBreathEnergy(tag.getFloat("VolitansWaterBreathEnergy"));
+        } else {
+            setWaterBreathEnergy(1.0F);
+        }
+        if (tag.contains("VolitansPoisonBreathEnergy")) {
+            setPoisonBreathEnergy(tag.getFloat("VolitansPoisonBreathEnergy"));
+        } else {
+            setPoisonBreathEnergy(1.0F);
+        }
+        if (tag.contains("VolitansWaterBreathDepleted")) {
+            setWaterBreathDepleted(tag.getBoolean("VolitansWaterBreathDepleted"));
+        }
+        if (tag.contains("VolitansPoisonBreathDepleted")) {
+            setPoisonBreathDepleted(tag.getBoolean("VolitansPoisonBreathDepleted"));
+        }
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
@@ -1672,6 +1634,10 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
         tag.putInt("VolitansBreathMode", getBreathMode());
+        tag.putFloat("VolitansWaterBreathEnergy", getWaterBreathEnergy());
+        tag.putFloat("VolitansPoisonBreathEnergy", getPoisonBreathEnergy());
+        tag.putBoolean("VolitansWaterBreathDepleted", isWaterBreathDepleted());
+        tag.putBoolean("VolitansPoisonBreathDepleted", isPoisonBreathDepleted());
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putInt("VolitansTempInvulnTicks", tempInvulnTicks);
@@ -1822,13 +1788,61 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
+        if (isDying() || !isAlive()) {
+            return false;
+        }
         if (source.getEntity() instanceof Pufferfish || source.getDirectEntity() instanceof Pufferfish) {
             return false;
         }
         if (source.is(DamageTypes.MAGIC) && this.hasEffect(MobEffects.POISON)) {
             return false;
         }
+        if (tryReactiveHitEvade(source, amount)) {
+            return false;
+        }
         return super.hurt(source, amount);
+    }
+
+    private boolean tryReactiveHitEvade(@NotNull DamageSource source, float amount) {
+        if (level().isClientSide || amount <= 0.0F || isVehicle() || !isAlive() || isDying()) {
+            return false;
+        }
+
+        LivingEntity attacker = null;
+        if (source.getEntity() instanceof LivingEntity living) {
+            attacker = living;
+        } else if (source.getDirectEntity() instanceof LivingEntity living) {
+            attacker = living;
+        } else if (source.getDirectEntity() instanceof Projectile projectile
+                && projectile.getOwner() instanceof LivingEntity living) {
+            attacker = living;
+        }
+
+        if (!(attacker instanceof Player player)) {
+            return false;
+        }
+        if (player.isCreative() || player.isSpectator()) {
+            return false;
+        }
+        if (this.getRandom().nextFloat() >= REACTIVE_HIT_EVADE_CHANCE) {
+            return false;
+        }
+
+        boolean evaded = this.getRandom().nextBoolean()
+                ? tryAiGroundBackstep(player)
+                : tryAiGroundDodge(player);
+        if (!evaded) {
+            evaded = this.getRandom().nextBoolean()
+                    ? tryAiGroundBackstep(player)
+                    : tryAiGroundDodge(player);
+        }
+        if (!evaded) {
+            return false;
+        }
+
+        this.setLastHurtByMob(player);
+        this.setTarget(player);
+        return true;
     }
 
     @Override
@@ -1925,6 +1939,68 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         return getBreathMode() == 1;
     }
 
+    public float getWaterBreathEnergy() {
+        return this.entityData.get(DATA_WATER_BREATH_ENERGY);
+    }
+
+    public void setWaterBreathEnergy(float energy) {
+        float clamped = Mth.clamp(energy, 0.0F, 1.0F);
+        this.entityData.set(DATA_WATER_BREATH_ENERGY, clamped);
+        this.entityData.set(DATA_POISON_BREATH_ENERGY, clamped);
+        if (clamped >= BREATH_REARM_THRESHOLD && (isWaterBreathDepleted() || isPoisonBreathDepleted())) {
+            setWaterBreathDepleted(false);
+        }
+    }
+
+    public float getPoisonBreathEnergy() {
+        return getWaterBreathEnergy();
+    }
+
+    public void setPoisonBreathEnergy(float energy) {
+        setWaterBreathEnergy(energy);
+    }
+
+    public float getCurrentBreathEnergy() {
+        return getWaterBreathEnergy();
+    }
+
+    public void setCurrentBreathEnergy(float energy) {
+        setWaterBreathEnergy(energy);
+    }
+
+    public boolean hasCurrentBreathEnergy() {
+        return getCurrentBreathEnergy() > BREATH_DEPLETED_THRESHOLD;
+    }
+
+    public boolean isWaterBreathDepleted() {
+        return this.entityData.get(DATA_WATER_BREATH_DEPLETED);
+    }
+
+    public void setWaterBreathDepleted(boolean depleted) {
+        this.entityData.set(DATA_WATER_BREATH_DEPLETED, depleted);
+        this.entityData.set(DATA_POISON_BREATH_DEPLETED, depleted);
+    }
+
+    public boolean isPoisonBreathDepleted() {
+        return isWaterBreathDepleted();
+    }
+
+    public void setPoisonBreathDepleted(boolean depleted) {
+        setWaterBreathDepleted(depleted);
+    }
+
+    public boolean isCurrentBreathDepleted() {
+        return isWaterBreathDepleted();
+    }
+
+    public void setCurrentBreathDepleted(boolean depleted) {
+        setWaterBreathDepleted(depleted);
+    }
+
+    public boolean canUseCurrentBreathMode() {
+        return hasCurrentBreathEnergy() && !isCurrentBreathDepleted();
+    }
+
     public boolean isBreathing() {
         return this.entityData.get(DATA_BREATHING);
     }
@@ -1953,6 +2029,16 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     public void toggleBreathMode() {
         setBreathMode(isPoisonBreathMode() ? 0 : 1);
+    }
+
+    private void tickBreathGaugeEnergy() {
+        if (isBreathing()) {
+            return;
+        }
+
+        if (getWaterBreathEnergy() < 1.0F) {
+            setWaterBreathEnergy(getWaterBreathEnergy() + BREATH_GAUGE_REGEN_PER_TICK);
+        }
     }
 
     public boolean isUltimateSlamActive() {

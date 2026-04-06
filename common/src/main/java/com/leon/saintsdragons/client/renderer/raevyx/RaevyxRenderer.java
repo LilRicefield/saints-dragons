@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.renderer.raevyx;
 
 import com.leon.saintsdragons.client.model.raevyx.RaevyxModel;
+import com.leon.saintsdragons.client.renderer.RenderPassContext;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
@@ -94,11 +95,14 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     @Override
     public void render(@NotNull Raevyx entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
-        // Call normal rendering first
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        try {
+            super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        } finally {
+            RenderPassContext.endExtraction();
+        }
 
-        // After bones have been processed, sample accurate world positions for foot locators
         sampleAndStashLocatorsAccurate(entity);
     }
 
@@ -117,7 +121,7 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         if (!bone.getName().equals(riderConfig.boneName)) {
             return;
         }
-        if (!RiderBullcrap.tryLockForFrame(animatable.getId())) {
+        if (!RenderPassContext.isExtractionAllowed(animatable.getId())) {
             return;
         }
 
@@ -129,6 +133,9 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
                         + boneViewPos4.z() * boneViewPos4.z()
         );
         if (viewSpaceDistance >= riderConfig.maxCaptureDistance) {
+            return;
+        }
+        if (!RiderBullcrap.tryLockForFrame(animatable.getId())) {
             return;
         }
 

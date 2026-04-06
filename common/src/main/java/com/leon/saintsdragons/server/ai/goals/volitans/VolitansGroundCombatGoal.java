@@ -172,18 +172,9 @@ public class VolitansGroundCombatGoal extends Goal {
                 tryMelee(gap);
                 return;
             }
-            if (tryReactiveMobility(target, gap)) {
-                dragon.getAiCombatPacing().setCadenceCooldownMin(8);
-                return;
-            }
             if (gap > BITE_RANGE) {
                 updateChasePath(target);
             }
-            return;
-        }
-
-        if (tryReactiveMobility(target, gap)) {
-            dragon.getAiCombatPacing().setCadenceCooldownMin(10);
             return;
         }
 
@@ -262,32 +253,6 @@ public class VolitansGroundCombatGoal extends Goal {
             return true;
         }
         return false;
-    }
-
-    private boolean tryReactiveMobility(LivingEntity target, double gap) {
-        if (dragon.isGroundCombatAbilityActive() || dragon.isGroundMobilityActive()) {
-            return false;
-        }
-
-        float chance = 0.0F;
-        if (dragon.hurtTime > 0 && gap <= 10.0D) {
-            chance += 0.12F;
-        }
-        if (gap <= 4.0D && dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0) {
-            chance += 0.08F;
-        }
-        if (target.swingTime > 0 && gap <= 6.0D) {
-            chance += 0.10F;
-        }
-
-        if (chance <= 0.0F || dragon.getRandom().nextFloat() >= chance) {
-            return false;
-        }
-
-        if (gap <= 4.5D && dragon.getRandom().nextFloat() < 0.45F) {
-            return dragon.tryAiGroundBackstep(target);
-        }
-        return dragon.tryAiGroundDodge(target);
     }
 
     private boolean tryRoarPunish(double gap) {

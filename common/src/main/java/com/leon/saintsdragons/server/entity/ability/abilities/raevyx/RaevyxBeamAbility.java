@@ -202,7 +202,8 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             return null;
         }
 
-        net.minecraft.world.phys.Vec3 aimDir = wyvern.refreshBeamAimDirection(origin, false);
+        boolean smoothAim = wyvern.getControllingPassenger() == null;
+        net.minecraft.world.phys.Vec3 aimDir = wyvern.refreshBeamAimDirection(origin, smoothAim);
         if (aimDir == null || aimDir.lengthSqr() < 1.0E-6) {
             wyvern.clearBeamPath();
             return null;

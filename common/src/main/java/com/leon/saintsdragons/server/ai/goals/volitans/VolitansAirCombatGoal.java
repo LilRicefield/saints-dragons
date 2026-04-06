@@ -115,14 +115,24 @@ public class VolitansAirCombatGoal extends Goal {
     public void stop() {
         dragon.setAggressive(false);
         dragon.setAiSpecialCombatReserved(false);
+        LivingEntity target = dragon.getTarget();
         if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)) {
             dragon.requestPoisonBallRelease();
         }
         if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
             dragon.forceEndActiveAbility();
         }
-        if (dragon.isFlying() || dragon.isHovering()) {
-            DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.0D);
+        if (target != null
+                && dragon.isTargetValid(target)
+                && !isTargetAirborne(target)
+                && (dragon.isFlying() || dragon.isHovering())) {
+            DragonAggroLandingHelper.tryBeginAggroLanding(dragon, target, 1.0D);
+            return;
+        }
+        if (target == null || dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
+            dragon.setTarget(null);
+            dragon.setLanding(false);
+            dragon.setHovering(false);
         }
     }
 
@@ -130,7 +140,15 @@ public class VolitansAirCombatGoal extends Goal {
     public void tick() {
         if (dragon.isLanding()) {
             if (!dragon.getNavigation().isInProgress()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.0D);
+                LivingEntity landingTarget = dragon.getTarget();
+                if (landingTarget != null
+                        && dragon.isTargetValid(landingTarget)
+                        && !isTargetAirborne(landingTarget)
+                        && DragonAggroLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.0D)) {
+                    return;
+                }
+                dragon.setLanding(false);
+                dragon.beginAiFlight();
             }
             return;
         }

@@ -25,6 +25,7 @@ public class AsyncFlightController {
     private WaypointArrivalCallback currentArrivalCallback;
     private PathState state = PathState.IDLE;
     private double speedModifier = 1.0;
+    private long pathRequestGeneration = 0L;
     private final int recalculationInterval = 40;
     private final int maxRetries = 5;
     private final double baseArrivalDistance = 1.5;
@@ -150,6 +151,7 @@ public class AsyncFlightController {
         this.currentWaypoint = null;
         this.currentArrivalCallback = null;
         this.state = PathState.IDLE;
+        this.invalidatePathRequests();
         this.pathResolver.clearPathNodes();
         this.resetPathingState();
         this.movementExecutor.zeroVelocity();
@@ -219,6 +221,18 @@ public class AsyncFlightController {
 
     void setState(PathState state) {
         this.state = state;
+    }
+
+    long beginPathRequest() {
+        return ++this.pathRequestGeneration;
+    }
+
+    void invalidatePathRequests() {
+        this.pathRequestGeneration++;
+    }
+
+    boolean isPathRequestCurrent(long requestGeneration) {
+        return this.pathRequestGeneration == requestGeneration;
     }
 
     public boolean isIdle() {

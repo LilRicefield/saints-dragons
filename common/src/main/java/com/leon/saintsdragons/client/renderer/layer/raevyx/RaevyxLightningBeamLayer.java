@@ -17,32 +17,23 @@ import net.minecraft.util.Mth;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-/**
- * - Draws a multi-layered cylindrical beam with inner core and outer glow
- * Server handles damage; this is visual-only.
- */
 public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
-    // Core textures: inner (crisp) + outer (soft)
     private static final ResourceLocation INNER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/lightning_beam_inner.png");
     private static final ResourceLocation OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/lightning_beam_outer.png");
     private static final ResourceLocation GOLDEN_INNER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/golden_lightning_beam_inner.png");
     private static final ResourceLocation GOLDEN_OUTER_TEX = SaintsDragonsCommon.rl("textures/effects/raevyx/golden_lightning_beam_outer.png");
-    // Beam tuning constants - adjust these to change beam appearance
     private static final float BASE_BEAM_WIDTH = 0.45F;        // Base width of the beam
     private static final float OUTER_BEAM_BONUS = 0.15F;      // Extra width for outer glow layer
     private static final float INNER_SPEED_MULTIPLIER = 0.25F; // Animation speed for inner beam
     private static final float OUTER_SPEED_MULTIPLIER = 0.25F; // Animation speed for outer beam
     private static final float BEAM_SHAKE_INTENSITY = 0.01F; // Intensity of beam shake effect
 
-    // No end-caps; beam is a tubular mesh only
-
-    // Per-entity visual state for appear/disappear easing
     private static final class BeamState {
-        float appear;      // 0 -> 1 while appearing
-        float disappear;   // 0 -> 1 while fading out
+        float appear;
+        float disappear;
         net.minecraft.world.phys.Vec3 lastMouth;
         net.minecraft.world.phys.Vec3 lastEnd;
-        net.minecraft.world.phys.Vec3 smoothedEnd; // Smoothly lerped end position for delayed following
+        net.minecraft.world.phys.Vec3 smoothedEnd;
     }
     private static final Map<Raevyx, BeamState> STATES = new WeakHashMap<>();
     private static final float APPEAR_TICKS = 5f;
@@ -87,13 +78,11 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             net.minecraft.world.phys.Vec3 targetEnd;
             if (isRiding) {
                 targetEnd = predictedEnd;
-            } else if (serverEnd == null) {
-                targetEnd = predictedEnd;
             } else {
-                double hspeed = animatable.getDeltaMovement().horizontalDistance();
-                float turnRate = Math.abs(net.minecraft.util.Mth.degreesDifference(animatable.yHeadRotO, animatable.yHeadRot));
-                float weight = net.minecraft.util.Mth.clamp((float) (hspeed * 3.0 + (turnRate / 90.0f)), 0.0f, 1.0f);
-                targetEnd = lerpVec(serverEnd, predictedEnd, weight);
+                // AI beam should visually honor the authoritative server path first.
+                // The old server/predicted blend could drift away from the real damage line
+                // during airborne tracking and make the beam look like an invisible cone.
+                targetEnd = serverEnd != null ? serverEnd : predictedEnd;
             }
 
             // Apply smooth delayed following (beam catches up to target)
@@ -103,7 +92,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
             // Lerp factor: higher = faster catch-up, lower = more delay
             // 0.3 = beam follows with noticeable but smooth delay
-            float smoothFactor = 0.3f;
+            float smoothFactor = isRiding ? 0.3f : 0.65f;
             state.smoothedEnd = lerpVec(state.smoothedEnd, targetEnd, smoothFactor);
             end = state.smoothedEnd;
 

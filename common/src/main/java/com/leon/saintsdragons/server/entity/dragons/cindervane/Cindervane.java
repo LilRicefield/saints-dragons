@@ -586,31 +586,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
 
-    // Rideable dragon data accessors specific to Cindervane
-    private static final EntityDataAccessor<Boolean> DATA_FLYING =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_HOVERING =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_LANDING =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_RUNNING =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_UP =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
-            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
@@ -645,55 +620,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     protected void defineRideableDragonData() {
         // Define all rideable dragon data keys for AmphithereEntity
-        this.entityData.define(DATA_FLYING, false);
-        this.entityData.define(DATA_TAKEOFF, false);
-        this.entityData.define(DATA_HOVERING, false);
-        this.entityData.define(DATA_LANDING, false);
-        this.entityData.define(DATA_RUNNING, false);
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_RIDER_FORWARD, 0f);
-        this.entityData.define(DATA_RIDER_STRAFE, 0f);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_ACCELERATING, false);
         this.entityData.define(DATA_SLASH_GRAB_PASSENGER_ID, -1);
-    }
-
-    // Implementation of abstract accessor methods
-    @Override
-    protected EntityDataAccessor<Float> getRiderForwardAccessor() {
-        return DATA_RIDER_FORWARD;
-    }
-
-    @Override
-    protected EntityDataAccessor<Float> getRiderStrafeAccessor() {
-        return DATA_RIDER_STRAFE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
-        return DATA_GROUND_MOVE_STATE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Integer> getFlightModeAccessor() {
-        return DATA_FLIGHT_MODE;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingUpAccessor() {
-        return DATA_GOING_UP;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingDownAccessor() {
-        return DATA_GOING_DOWN;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
-        return DATA_ACCELERATING;
     }
 
     @Override
@@ -712,6 +639,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // Babies don't have flight or combat abilities
         if (!this.isBaby()) {
             this.goalSelector.addGoal(3, new CindervaneFlightGoal(this));
+            this.goalSelector.addGoal(4, new CindervaneAirCombatGoal(this));
             this.goalSelector.addGoal(5, new CindervaneCombatGoal(this));
         }
 
@@ -1193,7 +1121,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         if (groundStepSoundCooldownTicks > 0) {
             groundStepSoundCooldownTicks--;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || !onGround()) {
+        if (isBaby() || isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || !onGround()) {
             groundStepSoundCooldownTicks = 0;
             return;
         }
@@ -1559,12 +1487,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public boolean isRunning() {
-        return this.entityData.get(DATA_RUNNING);
+        return !isFlying() && getEffectiveGroundState() == 2;
     }
 
     @Override
     public void setRunning(boolean running) {
-        this.entityData.set(DATA_RUNNING, running);
         // MOVEMENT_SPEED is fixed for AI - rider speed is handled by RiderController
     }
 

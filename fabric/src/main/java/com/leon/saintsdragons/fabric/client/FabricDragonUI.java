@@ -6,9 +6,11 @@ import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
 import com.leon.saintsdragons.client.ui.IgnivorusFireBreathMeterIndicator;
 import com.leon.saintsdragons.client.ui.MeleeModeNotification;
 import com.leon.saintsdragons.client.ui.RaevyxBeamMeterIndicator;
+import com.leon.saintsdragons.client.ui.VolitansBreathMeterIndicator;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -24,6 +26,7 @@ public final class FabricDragonUI {
     private static final FireballChargeIndicator fireballChargeIndicator = new FireballChargeIndicator();
     private static final RaevyxBeamMeterIndicator raevyxBeamMeterIndicator = new RaevyxBeamMeterIndicator();
     private static final IgnivorusFireBreathMeterIndicator ignivorusFireBreathMeterIndicator = new IgnivorusFireBreathMeterIndicator();
+    private static final VolitansBreathMeterIndicator volitansBreathMeterIndicator = new VolitansBreathMeterIndicator();
     private static final DragonRideHealthBar rideHealthBar = new DragonRideHealthBar();
 
     private static final KeyMapping TOGGLE_DRAGON_UI = new KeyMapping(
@@ -64,6 +67,7 @@ public final class FabricDragonUI {
             fireballChargeIndicator.tick();
             raevyxBeamMeterIndicator.tick();
             ignivorusFireBreathMeterIndicator.tick();
+            volitansBreathMeterIndicator.tick();
         });
 
         HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -105,6 +109,12 @@ public final class FabricDragonUI {
                 raevyxBeamMeterIndicator.setBeamEnergy(raevyx.getBeamEnergy());
                 raevyxBeamMeterIndicator.setBeaming(raevyx.isBeaming());
                 raevyxBeamMeterIndicator.render(graphics, width, height, tickDelta);
+            } else if (currentDragon instanceof Volitans volitans) {
+                volitansBreathMeterIndicator.setWaterEnergy(volitans.getWaterBreathEnergy());
+                volitansBreathMeterIndicator.setPoisonEnergy(volitans.getPoisonBreathEnergy());
+                volitansBreathMeterIndicator.setBreathMode(volitans.getBreathMode());
+                volitansBreathMeterIndicator.setBreathing(volitans.isBreathing());
+                volitansBreathMeterIndicator.render(graphics, width, height, tickDelta);
             }
 
             // Render dragon ride health bar when riding any dragon

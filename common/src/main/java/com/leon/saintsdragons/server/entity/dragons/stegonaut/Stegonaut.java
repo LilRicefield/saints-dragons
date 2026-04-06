@@ -132,24 +132,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
 
-    // Synced ground movement state for reliable animation
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
-
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> DATA_RIDER_FORWARD =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> DATA_RIDER_STRAFE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_ACCELERATING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_GOING_UP =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_GOING_DOWN =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_RUNNING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_HAS_CHEST =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Stegonaut.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
@@ -201,14 +183,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
 
     @Override
     protected void defineRideableDragonData() {
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
-        this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
-        this.entityData.define(DATA_ACCELERATING, false);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-        this.entityData.define(DATA_RUNNING, false);
         this.entityData.define(DATA_HAS_CHEST, false);
     }
 
@@ -1236,7 +1210,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         if (groundStepSoundCooldownTicks > 0) {
             groundStepSoundCooldownTicks--;
         }
-        if (isSleeping() || isSleepTransitioning() || isOrderedToSit() || areRiderControlsLocked() || !onGround() || isInWaterOrBubble()) {
+        if (isBaby() || isSleeping() || isSleepTransitioning() || isOrderedToSit() || areRiderControlsLocked() || !onGround() || isInWaterOrBubble()) {
             groundStepSoundCooldownTicks = 0;
             return;
         }
@@ -1308,12 +1282,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
      * Check if the drake is currently running
      */
     public boolean isRunning() {
-        return this.entityData.get(DATA_RUNNING);
+        return getEffectiveGroundState() == 2;
     }
 
     @Override
     public void setRunning(boolean running) {
-        this.entityData.set(DATA_RUNNING, running);
     }
 
     /**
@@ -1663,41 +1636,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
     @Override
     public @Nullable net.minecraft.world.entity.LivingEntity getControllingPassenger() {
         return riderController.getControllingPassenger();
-    }
-
-    @Override
-    protected net.minecraft.network.syncher.EntityDataAccessor<Float> getRiderForwardAccessor() {
-        return DATA_RIDER_FORWARD;
-    }
-
-    @Override
-    protected net.minecraft.network.syncher.EntityDataAccessor<Float> getRiderStrafeAccessor() {
-        return DATA_RIDER_STRAFE;
-    }
-
-    @Override
-    protected net.minecraft.network.syncher.EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
-        return DATA_GROUND_MOVE_STATE;
-    }
-
-    @Override
-    protected net.minecraft.network.syncher.EntityDataAccessor<Integer> getFlightModeAccessor() {
-        return DATA_FLIGHT_MODE;
-    }
-
-    @Override
-    protected net.minecraft.network.syncher.EntityDataAccessor<Boolean> getGoingUpAccessor() {
-        return DATA_GOING_UP;
-    }
-
-    @Override
-    protected net.minecraft.network.syncher.EntityDataAccessor<Boolean> getGoingDownAccessor() {
-        return DATA_GOING_DOWN;
-    }
-
-    @Override
-    protected net.minecraft.network.syncher.EntityDataAccessor<Boolean> getAcceleratingAccessor() {
-        return DATA_ACCELERATING;
     }
 
     @Override

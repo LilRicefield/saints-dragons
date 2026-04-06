@@ -90,10 +90,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.5F;
 
-    private static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> DATA_RIDER_FORWARD = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> DATA_RIDER_STRAFE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Boolean> DATA_ACCELERATING = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
@@ -103,10 +99,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     private static final EntityDataAccessor<Boolean> DATA_WILD_RIDE_ACTIVE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
 
-    // flight mode data accessor (not used for ground drake but required by interface)
-    private static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_UP = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_GOING_DOWN = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
 
@@ -595,50 +587,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     
     @Override
     protected void defineRideableDragonData() {
-        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
-        this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
-        this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
-        this.entityData.define(DATA_ACCELERATING, false);
-        this.entityData.define(DATA_FLIGHT_MODE, -1);
-        this.entityData.define(DATA_GOING_UP, false);
-        this.entityData.define(DATA_GOING_DOWN, false);
-    }
-    
-    // ===== REQUIRED ABSTRACT METHODS FROM RIDEABLEDRAGONBASE =====
-    
-    @Override
-    protected EntityDataAccessor<Float> getRiderForwardAccessor() {
-        return DATA_RIDER_FORWARD;
-    }
-    
-    @Override
-    protected EntityDataAccessor<Float> getRiderStrafeAccessor() {
-        return DATA_RIDER_STRAFE;
-    }
-    
-    @Override
-    protected EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
-        return DATA_GROUND_MOVE_STATE;
-    }
-    
-    @Override
-    protected EntityDataAccessor<Integer> getFlightModeAccessor() {
-        return DATA_FLIGHT_MODE;
-    }
-    
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingUpAccessor() {
-        return DATA_GOING_UP;
-    }
-    
-    @Override
-    protected EntityDataAccessor<Boolean> getGoingDownAccessor() {
-        return DATA_GOING_DOWN;
-    }
-    
-    @Override
-    protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
-        return DATA_ACCELERATING;
     }
 
     @Override
@@ -1326,7 +1274,11 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     }
 
     private void triggerFailedTamingAggro(@Nullable Player rider) {
-        if (!isWildAggressionEnabled() || rider == null || !rider.isAlive()) {
+        if (!isWildAggressionEnabled()
+                || rider == null
+                || !rider.isAlive()
+                || rider.isCreative()
+                || rider.isSpectator()) {
             return;
         }
         clearBabyProtectionAggroTarget();
@@ -1795,7 +1747,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         if (groundStepSoundCooldownTicks > 0) {
             groundStepSoundCooldownTicks--;
         }
-        if (this.isInWaterOrBubble() || this.isSwimming() || !this.onGround() || this.areRiderControlsLocked()) {
+        if (this.isBaby() || this.isInWaterOrBubble() || this.isSwimming() || !this.onGround() || this.areRiderControlsLocked()) {
             groundStepSoundCooldownTicks = 0;
             return;
         }

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.ignivorus;
 
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
+import com.leon.saintsdragons.client.renderer.RenderPassContext;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusMouthSmokeLayer;
@@ -118,8 +119,13 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     @Override
     public void render(@NotNull Ignivorus entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        try {
+            super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        } finally {
+            RenderPassContext.endExtraction();
+        }
 
         if (this.lastBakedModel == null) {
             return;
@@ -189,7 +195,7 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         if (riderSpec == null || !bone.getName().equals(riderSpec.boneName)) {
             return;
         }
-        if (!RiderBullcrap.tryLockForFrame(animatable.getId())) {
+        if (!RenderPassContext.isExtractionAllowed(animatable.getId())) {
             return;
         }
 
@@ -201,6 +207,9 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
                         + boneViewPos4.z() * boneViewPos4.z()
         );
         if (viewSpaceDistance >= riderSpec.maxCaptureDistance) {
+            return;
+        }
+        if (!RiderBullcrap.tryLockForFrame(animatable.getId())) {
             return;
         }
 

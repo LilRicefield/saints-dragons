@@ -299,12 +299,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         actionController.triggerableAnim("eat",
             RawAnimation.begin().thenPlay("animation.ignivorus.eat"));
 
-        // Wing swipe animations (Phase 2 melee attacks)
-        actionController.triggerableAnim("wing_swipe_left",
-            RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
-        actionController.triggerableAnim("wing_swipe_right",
-            RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
-
         // Stomp animations (Phase 2 alternate melee attacks)
         actionController.triggerableAnim("stomp_left",
             RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_left"));
@@ -401,6 +395,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     public void setupInstantActionController(AnimationController<Ignivorus> controller) {
         controller.triggerableAnim("takeoff", TAKEOFF);
         controller.triggerableAnim("phase2_takeoff", PHASE2_TAKEOFF);
+        controller.triggerableAnim("wing_swipe_left",
+                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
+        controller.triggerableAnim("wing_swipe_right",
+                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
         controller.triggerableAnim("ignivorus_hurt",
                 RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
         controller.triggerableAnim("die",

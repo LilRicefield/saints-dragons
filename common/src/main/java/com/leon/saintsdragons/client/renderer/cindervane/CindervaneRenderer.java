@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.cindervane;
 
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
+import com.leon.saintsdragons.client.renderer.RenderPassContext;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -98,8 +99,13 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     @Override
     public void render(@NotNull Cindervane entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        try {
+            super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        } finally {
+            RenderPassContext.endExtraction();
+        }
 
         // Sample passenger bone positions and store in entity's locator cache for RiderController to use
         if (this.lastBakedModel != null) {
@@ -161,7 +167,7 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         if (seatIndex < 0) {
             return;
         }
-        if (!RiderBullcrap.tryLockForFrame(animatable.getId(), seatIndex)) {
+        if (!RenderPassContext.isExtractionAllowed(animatable.getId())) {
             return;
         }
 
@@ -173,6 +179,9 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
                         + boneViewPos4.z() * boneViewPos4.z()
         );
         if (viewSpaceDistance >= riderSpec.maxCaptureDistance) {
+            return;
+        }
+        if (!RiderBullcrap.tryLockForFrame(animatable.getId(), seatIndex)) {
             return;
         }
 

@@ -41,6 +41,10 @@ public class CindervaneCombatGoal extends Goal {
             return false;
         }
 
+        if (amphithere.isFlying() || amphithere.isHovering() || amphithere.isTakeoff() || amphithere.isLanding()) {
+            return false;
+        }
+
         if (amphithere.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
             return false;
         }
@@ -57,6 +61,10 @@ public class CindervaneCombatGoal extends Goal {
         }
 
         if (amphithere.isVehicle() || amphithere.isOrderedToSit()) {
+            return false;
+        }
+
+        if (amphithere.isFlying() || amphithere.isHovering() || amphithere.isTakeoff() || amphithere.isLanding()) {
             return false;
         }
 

@@ -28,29 +28,55 @@ import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Base implementation for rideable dragons.
- * Provides common functionality for animation state management and rider input handling.
- * Usage: Extend this class in your dragon entity to get the standard rideable dragon behavior.
- */
 public abstract class RideableDragonBase extends DragonEntity implements RideableDragon, FlyingAnimal {
     private static final Logger LOGGER = LoggerFactory.getLogger(RideableDragonBase.class);
     private static final int MAX_PERSISTED_FLIGHT_MODE = 5;
     private final Set<String> warnedMissingActions = new HashSet<>();
 
-    /** Entity data accessor for melee mode (0=primary melee, 1=secondary melee) */
+    /**
+     * Compatibility padding for modpacks that inject an extra tracked field into an upstream mob class.
+     * Keep this unregistered; it reserves one shared rideable tracker id so the real fields below do not
+     * collide with that injected parent slot in heavily-modded Fabric packs. PROMINENCE II?? Bomboclaat, i'm too lazy to track, so here we are.
+     */
+    private static final EntityDataAccessor<Byte> DATA_TRACKER_COMPAT_PADDING =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
+
     private static final EntityDataAccessor<Integer> DATA_MELEE_MODE =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.INT);
-
-    /** Entity data accessor for rider control lock state (synced to client) */
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_FLYING =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_TAKEOFF =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_HOVERING =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_LANDING =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
 
-    /** Server-side tick counter for rider control lock duration */
+    /**
+     * Second compatibility gap for packs that occupy tracker id 41 in a parent class without reserving it
+     * through normal defineId sequencing. This keeps the shared movement-state block above that slot. TWO. JUST CAUSE.
+     */
+    private static final EntityDataAccessor<Byte> DATA_MOVEMENT_TRACKER_COMPAT_PADDING =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
+    public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Float> DATA_RIDER_FORWARD =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> DATA_RIDER_STRAFE =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Boolean> DATA_GOING_UP =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_GOING_DOWN =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> DATA_ACCELERATING =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
+
     private int riderControlLockTicks = 0;
-    /** Shared touchdown tracking for ridden landing animations. */
     private boolean riderWasAirborneForLanding = false;
-    /** Number of consecutive airborne ticks while ridden (used to filter false touch events). */
     private int riderAirborneTicksForLanding = 0;
 
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
@@ -62,10 +88,20 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         super.defineSynchedData();
         this.entityData.define(DATA_MELEE_MODE, 0); // Default to primary melee (mode 0)
         this.entityData.define(DATA_RIDER_LOCKED, false);
+        this.entityData.define(DATA_FLYING, false);
+        this.entityData.define(DATA_TAKEOFF, false);
+        this.entityData.define(DATA_HOVERING, false);
+        this.entityData.define(DATA_LANDING, false);
+        this.entityData.define(DATA_GROUND_MOVE_STATE, 0);
+        this.entityData.define(DATA_FLIGHT_MODE, -1);
+        this.entityData.define(DATA_RIDER_FORWARD, 0.0F);
+        this.entityData.define(DATA_RIDER_STRAFE, 0.0F);
+        this.entityData.define(DATA_GOING_UP, false);
+        this.entityData.define(DATA_GOING_DOWN, false);
+        this.entityData.define(DATA_ACCELERATING, false);
         defineRideableDragonData();
     }
 
-    // This method should be overridden by subclasses to define their own entity data keys
     protected abstract void defineRideableDragonData();
 
 
@@ -116,17 +152,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             return;
         }
 
-        // Try dragon-specific handler first
         if (handleCustomRiderAction(player, action, abilityName, locked)) {
-            return; // Dragon handled it
+            return;
         }
 
         if (!supportsRiderAction(action)) {
             warnMissingAction(action.name().toLowerCase());
             return;
         }
-
-        // Base actions shared by all rideable dragons
         switch (action) {
             case TAKEOFF_REQUEST -> { if (!locked) onRiderTakeoffRequest(player); }
             case ACCELERATE -> { if (!locked) onRiderAccelerationStart(player); }
@@ -367,14 +400,33 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     // ===== RIDER INPUT IMPLEMENTATION =====
 
-    // Abstract methods for entity-specific data accessors
-    protected abstract EntityDataAccessor<Float> getRiderForwardAccessor();
-    protected abstract EntityDataAccessor<Float> getRiderStrafeAccessor();
-    protected abstract EntityDataAccessor<Integer> getGroundMoveStateAccessor();
-    protected abstract EntityDataAccessor<Integer> getFlightModeAccessor();
-    protected abstract EntityDataAccessor<Boolean> getGoingUpAccessor();
-    protected abstract EntityDataAccessor<Boolean> getGoingDownAccessor();
-    protected abstract EntityDataAccessor<Boolean> getAcceleratingAccessor();
+    protected EntityDataAccessor<Float> getRiderForwardAccessor() {
+        return DATA_RIDER_FORWARD;
+    }
+
+    protected EntityDataAccessor<Float> getRiderStrafeAccessor() {
+        return DATA_RIDER_STRAFE;
+    }
+
+    protected EntityDataAccessor<Integer> getGroundMoveStateAccessor() {
+        return DATA_GROUND_MOVE_STATE;
+    }
+
+    protected EntityDataAccessor<Integer> getFlightModeAccessor() {
+        return DATA_FLIGHT_MODE;
+    }
+
+    protected EntityDataAccessor<Boolean> getGoingUpAccessor() {
+        return DATA_GOING_UP;
+    }
+
+    protected EntityDataAccessor<Boolean> getGoingDownAccessor() {
+        return DATA_GOING_DOWN;
+    }
+
+    protected EntityDataAccessor<Boolean> getAcceleratingAccessor() {
+        return DATA_ACCELERATING;
+    }
 
     @Override
     public void setLastRiderForward(float forward) {

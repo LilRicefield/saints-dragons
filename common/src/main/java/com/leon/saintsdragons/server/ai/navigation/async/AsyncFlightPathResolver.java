@@ -28,8 +28,13 @@ class AsyncFlightPathResolver {
     }
 
     public void startFlyingPathAsync(Vec3 currentWaypoint) {
+        long requestGeneration = this.component.beginPathRequest();
         this.component.setState(AsyncFlightController.PathState.CALCULATING);
         AsyncDragonPathfinder.calculateFlyingPathAsync(this.dragon, currentWaypoint, path -> {
+            if (!this.component.isPathRequestCurrent(requestGeneration)) {
+                return;
+            }
+
             double distToTarget = this.dragon.position().distanceTo(currentWaypoint);
             if (path != null && path.getNodeCount() == 0 && distToTarget < this.component.calculateArrivalDistance()) {
                 this.component.onArrived();

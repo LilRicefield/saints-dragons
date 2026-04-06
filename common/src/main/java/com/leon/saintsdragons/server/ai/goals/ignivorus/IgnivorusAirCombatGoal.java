@@ -160,10 +160,15 @@ public class IgnivorusAirCombatGoal extends Goal {
         lastRequestedAirDestination = null;
         lastRequestedAirSpeed = Double.NaN;
         airMoveRefreshCooldown = 0;
+        LivingEntity target = dragon.getTarget();
 
         // Don't call setLanding() if it triggers setTakeoff() - just clear flight flags
-        if ((dragon.isFlying() || dragon.isHovering()) && !dragon.isLanding()) {
-            DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.0D);
+        if (target != null
+                && dragon.isTargetValid(target)
+                && !isTargetAirborne(target)
+                && (dragon.isFlying() || dragon.isHovering())
+                && !dragon.isLanding()) {
+            DragonAggroLandingHelper.tryBeginAggroLanding(dragon, target, 1.0D);
         }
     }
 
@@ -195,7 +200,14 @@ public class IgnivorusAirCombatGoal extends Goal {
     public void tick() {
         if (dragon.isLanding()) {
             if (!dragon.getNavigation().isInProgress()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.0D);
+                LivingEntity landingTarget = dragon.getTarget();
+                if (landingTarget != null
+                        && dragon.isTargetValid(landingTarget)
+                        && !isTargetAirborne(landingTarget)
+                        && DragonAggroLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.0D)) {
+                    return;
+                }
+                dragon.setLanding(false);
             }
             return;
         }
@@ -467,7 +479,7 @@ public class IgnivorusAirCombatGoal extends Goal {
      * Force dragon to land (shot from below)
      */
     private void triggerEmergencyLanding() {
-        DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.0D);
+        DragonAggroLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), 1.0D);
         shotFromBelowCounter = 0; // Reset counter
     }
 

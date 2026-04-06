@@ -19,8 +19,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class VolitansBreathAbility extends DragonAbility<Volitans> {
     // animation.volitans.breath_start = 0.8333s -> ~16.666 ticks, rounded to 17
     private static final int STARTUP_TICKS = 17;
-    private static final int ACTIVE_TICKS_MAX = 20 * 20; // 20s
+    private static final int ACTIVE_TICKS_MAX = 20 * 12; // 12s
     private static final int COOLDOWN_TICKS = 20;
+    private static final float BREATH_DRAIN_PER_TICK = 1.0F / ACTIVE_TICKS_MAX;
     private static final int BREATH_START_SOUND_TICKS = 20; // 1.0s
     private static final int BREATH_END_SOUND_TICKS = 50;   // 2.5s
     private static final float BREATH_VOLUME = 2.0F;
@@ -42,6 +43,11 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     }
 
     @Override
+    public boolean canUse() {
+        return super.canUse() && getUser().canUseCurrentBreathMode();
+    }
+
+    @Override
     protected void endSection(DragonAbilitySection section) {
         if (section != null && section.sectionType == ACTIVE) {
             getUser().triggerAnim("actions", "breath_end");
@@ -58,6 +64,10 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         }
         Volitans dragon = getUser();
         if (section.sectionType == STARTUP) {
+            if (!dragon.canUseCurrentBreathMode()) {
+                interrupt();
+                return;
+            }
             dragon.triggerAnim("actions", "breath_start");
             dragon.setBreathing(false);
             playBreathStartSound();
@@ -86,6 +96,14 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         Vec3 origin = dragon.getMouthPosition();
         Vec3 direction = getBreathDirection(dragon, origin);
         if (direction.lengthSqr() < 1.0E-6) {
+            return;
+        }
+
+        float energy = Math.max(0.0F, dragon.getCurrentBreathEnergy() - BREATH_DRAIN_PER_TICK);
+        dragon.setCurrentBreathEnergy(energy);
+        if (!dragon.hasCurrentBreathEnergy()) {
+            dragon.setCurrentBreathDepleted(true);
+            interrupt();
             return;
         }
         boolean poisonMode = dragon.isPoisonBreathMode();

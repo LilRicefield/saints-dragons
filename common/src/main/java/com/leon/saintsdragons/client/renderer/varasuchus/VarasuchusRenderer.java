@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.renderer.varasuchus;
 import com.leon.saintsdragons.client.model.varasuchus.VarasuchusModel;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
+import com.leon.saintsdragons.client.renderer.RenderPassContext;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -66,11 +67,14 @@ public class VarasuchusRenderer extends GeoEntityRenderer<Varasuchus> {
     @Override
     public void render(@NotNull Varasuchus entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
-        // Call normal rendering first
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        try {
+            super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        } finally {
+            RenderPassContext.endExtraction();
+        }
 
-        // After bones have been processed, sample accurate world positions for locators
         sampleAndStashLocatorsAccurate(entity);
     }
 
@@ -86,7 +90,7 @@ public class VarasuchusRenderer extends GeoEntityRenderer<Varasuchus> {
         if (riderConfig == null || !bone.getName().equals(riderConfig.boneName)) {
             return;
         }
-        if (!RiderBullcrap.tryLockForFrame(animatable.getId())) {
+        if (!RenderPassContext.isExtractionAllowed(animatable.getId())) {
             return;
         }
 
@@ -98,6 +102,9 @@ public class VarasuchusRenderer extends GeoEntityRenderer<Varasuchus> {
                         + boneViewPos4.z() * boneViewPos4.z()
         );
         if (viewSpaceDistance >= riderConfig.maxCaptureDistance) {
+            return;
+        }
+        if (!RiderBullcrap.tryLockForFrame(animatable.getId())) {
             return;
         }
 

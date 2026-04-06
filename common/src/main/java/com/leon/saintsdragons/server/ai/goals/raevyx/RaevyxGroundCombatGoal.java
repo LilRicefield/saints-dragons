@@ -63,6 +63,10 @@ public class RaevyxGroundCombatGoal extends Goal {
             return false;
         }
 
+        if (wyvern.isFlying() || wyvern.isHovering() || wyvern.isTakeoff() || wyvern.isLanding()) {
+            return false;
+        }
+
         // Don't use ground combat if target is airborne (let air combat goal handle it)
         if (isTargetAirborne(target)) {
             return false;
@@ -91,6 +95,10 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
 
         if (wyvern.isVehicle() || wyvern.isOrderedToSit()) {
+            return false;
+        }
+
+        if (wyvern.isFlying() || wyvern.isHovering() || wyvern.isTakeoff() || wyvern.isLanding()) {
             return false;
         }
 
@@ -197,7 +205,6 @@ public class RaevyxGroundCombatGoal extends Goal {
                     hasUsedRoarOpener = true;
                     attackCooldown = 40; // Brief cooldown after roar
                     postRoarGroundRendTicks = 40;
-                    wyvern.tryAIGroundDodge(target); // sidestep to avoid bolt flames
                 }
                 return; // Don't do normal attacks during roar opener phase
             }
@@ -210,13 +217,6 @@ public class RaevyxGroundCombatGoal extends Goal {
 
             if (tryGroundRendPressure(target, gap, hasLineOfSight)) {
                 return;
-            }
-
-            if (combatDirector.shouldTryDodge(wyvern, target, gap, isCurrentlyAttacking())) {
-                if (wyvern.tryAIGroundDodge(target)) {
-                    attackCooldown = Math.max(attackCooldown, 8);
-                    return;
-                }
             }
 
             if (combatDirector.shouldTryDash(wyvern, gap, isCurrentlyAttacking())) {
@@ -339,9 +339,6 @@ public class RaevyxGroundCombatGoal extends Goal {
             return false;
         }
         if (!hasLineOfSight || gap < groundRendMinRange || gap > groundRendRange) {
-            return false;
-        }
-        if (gap <= goreRange && combatDirector.shouldTryDodge(wyvern, target, gap, false)) {
             return false;
         }
         wyvern.getNavigation().stop();

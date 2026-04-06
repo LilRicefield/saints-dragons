@@ -21,18 +21,26 @@ public final class DragonAggroLandingHelper {
             @Nullable LivingEntity target,
             double landingSpeed
     ) {
+        tryBeginAggroLanding(dragon, target, landingSpeed);
+    }
+
+    public static boolean tryBeginAggroLanding(
+            RideableDragonBase dragon,
+            @Nullable LivingEntity target,
+            double landingSpeed
+    ) {
         if (!(dragon instanceof DragonFlightCapable flightCapable)) {
-            return;
+            return false;
         }
         Vec3 landingTarget = findLandingTarget(dragon, target);
+        if (landingTarget == null) {
+            return false;
+        }
         flightCapable.setHovering(false);
         flightCapable.setTakeoff(false);
         flightCapable.setLanding(true);
-        if (landingTarget != null) {
-            dragon.getNavigation().moveTo(landingTarget.x, landingTarget.y, landingTarget.z, landingSpeed);
-        } else {
-            dragon.getNavigation().stop();
-        }
+        dragon.getNavigation().moveTo(landingTarget.x, landingTarget.y, landingTarget.z, landingSpeed);
+        return true;
     }
 
     private static Vec3 findLandingTarget(RideableDragonBase dragon, @Nullable LivingEntity target) {
