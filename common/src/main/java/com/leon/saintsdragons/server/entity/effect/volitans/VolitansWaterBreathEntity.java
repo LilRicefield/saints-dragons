@@ -32,20 +32,20 @@ public class VolitansWaterBreathEntity extends Entity {
     private float pushStrength;
     private int age;
     private int maxAge;
+    private int poisonDurationTicks;
+    private int poisonAmplifier;
 
     public VolitansWaterBreathEntity(EntityType<? extends VolitansWaterBreathEntity> type, Level level) {
         super(type, level);
         this.noPhysics = true;
         this.maxAge = 12;
+        this.poisonDurationTicks = 80;
+        this.poisonAmplifier = 0;
     }
 
     public VolitansWaterBreathEntity(Level level, Vec3 position, Vec3 velocity, Entity owner,
-                                     float damage, float pushStrength, int lifetime) {
-        this(level, position, velocity, owner, damage, pushStrength, lifetime, false);
-    }
-
-    public VolitansWaterBreathEntity(Level level, Vec3 position, Vec3 velocity, Entity owner,
-                                     float damage, float pushStrength, int lifetime, boolean poisonMode) {
+                                     float damage, float pushStrength, int lifetime, boolean poisonMode,
+                                     int poisonDurationTicks, int poisonAmplifier) {
         this(ModEntities.VOLITANS_WATER_BREATH.get(), level);
         this.setPos(position);
         this.setDeltaMovement(velocity);
@@ -54,6 +54,8 @@ public class VolitansWaterBreathEntity extends Entity {
         this.damage = damage;
         this.pushStrength = pushStrength;
         this.maxAge = Math.max(1, lifetime);
+        this.poisonDurationTicks = Math.max(0, poisonDurationTicks);
+        this.poisonAmplifier = Math.max(-1, poisonAmplifier);
         this.entityData.set(DATA_POISON_MODE, poisonMode);
     }
 
@@ -106,8 +108,8 @@ public class VolitansWaterBreathEntity extends Entity {
                     ? level().damageSources().mobAttack(attacker)
                     : level().damageSources().generic();
             target.hurt(source, damage);
-            if (isPoisonMode()) {
-                target.addEffect(new MobEffectInstance(MobEffects.POISON, 80, 0));
+            if (isPoisonMode() && poisonDurationTicks > 0 && poisonAmplifier >= 0) {
+                target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDurationTicks, poisonAmplifier));
             }
 
             Vec3 pushDir = target.position().subtract(position());
@@ -165,6 +167,8 @@ public class VolitansWaterBreathEntity extends Entity {
         maxAge = tag.getInt("MaxAge");
         damage = tag.getFloat("Damage");
         pushStrength = tag.getFloat("PushStrength");
+        poisonDurationTicks = tag.getInt("PoisonDuration");
+        poisonAmplifier = tag.getInt("PoisonAmplifier");
         this.entityData.set(DATA_POISON_MODE, tag.getBoolean("PoisonMode"));
         if (tag.hasUUID("Owner")) {
             ownerUUID = tag.getUUID("Owner");
@@ -177,6 +181,8 @@ public class VolitansWaterBreathEntity extends Entity {
         tag.putInt("MaxAge", maxAge);
         tag.putFloat("Damage", damage);
         tag.putFloat("PushStrength", pushStrength);
+        tag.putInt("PoisonDuration", poisonDurationTicks);
+        tag.putInt("PoisonAmplifier", poisonAmplifier);
         tag.putBoolean("PoisonMode", this.entityData.get(DATA_POISON_MODE));
         if (ownerUUID != null) {
             tag.putUUID("Owner", ownerUUID);

@@ -39,9 +39,9 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
     private static final float AIR_WATER_ROAR_DAMAGE = 7.0F;
     private static final float ROAR_SHAKE_INTENSITY = 0.85F;
     private static final int GROUNDED_POISON_DURATION_TICKS = 1200;
-    private static final int GROUNDED_POISON_AMPLIFIER = 2;
+    private static final int GROUNDED_POISON_LEVEL = 3;
     private static final int AIR_WATER_POISON_DURATION_TICKS = 200;
-    private static final int AIR_WATER_POISON_AMPLIFIER = 1;
+    private static final int AIR_WATER_POISON_LEVEL = 2;
     private static final int GROUNDED_STUN_TICKS = 40;
     private static final int AIR_WATER_STUN_TICKS = 20;
     private static final double GROUNDED_HIT_RADIUS = 20.0D;
@@ -158,9 +158,17 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
         Volitans dragon = getUser();
         Vec3 origin = dragon.position();
         double hitRadius = airOrWaterRoar ? AIR_WATER_HIT_RADIUS : GROUNDED_HIT_RADIUS;
-        float roarDamage = airOrWaterRoar ? AIR_WATER_ROAR_DAMAGE : GROUNDED_ROAR_DAMAGE;
-        int poisonDuration = airOrWaterRoar ? AIR_WATER_POISON_DURATION_TICKS : GROUNDED_POISON_DURATION_TICKS;
-        int poisonAmplifier = airOrWaterRoar ? AIR_WATER_POISON_AMPLIFIER : GROUNDED_POISON_AMPLIFIER;
+        float roarDamage = airOrWaterRoar
+                ? dragon.getConfiguredAbilityDamage("roar_air_water", AIR_WATER_ROAR_DAMAGE)
+                : dragon.getConfiguredAbilityDamage("roar_ground", GROUNDED_ROAR_DAMAGE);
+        int poisonDuration = Math.max(0, (int) Math.round(dragon.getConfiguredExtra(
+                airOrWaterRoar ? "roar_air_water_poison_duration_ticks" : "roar_ground_poison_duration_ticks",
+                airOrWaterRoar ? AIR_WATER_POISON_DURATION_TICKS : GROUNDED_POISON_DURATION_TICKS
+        )));
+        int poisonAmplifier = dragon.getConfiguredPoisonAmplifier(
+                airOrWaterRoar ? "roar_air_water_poison_level" : "roar_ground_poison_level",
+                airOrWaterRoar ? AIR_WATER_POISON_LEVEL : GROUNDED_POISON_LEVEL
+        );
         int stunTicks = airOrWaterRoar ? AIR_WATER_STUN_TICKS : GROUNDED_STUN_TICKS;
         AABB hitBox = new AABB(
                 origin.x - hitRadius,
@@ -184,7 +192,9 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
                 continue;
             }
             target.hurt(source, roarDamage);
-            target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDuration, poisonAmplifier));
+            if (poisonDuration > 0 && poisonAmplifier >= 0) {
+                target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDuration, poisonAmplifier));
+            }
             applyStun(target, stunTicks);
         }
     }

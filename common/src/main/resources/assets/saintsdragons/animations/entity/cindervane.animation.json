@@ -2342,6 +2342,225 @@
 				}
 			}
 		},
+		"animation.cindervane.falling": {
+			"loop": true,
+			"bones": {
+				"tail1": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *150-250) * 9", "0+math.sin(query.anim_time *100-250) * -10", 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *150+50) * 2", "0+math.sin(query.anim_time *100+50) * -5", 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *150-50) * 4", "0+math.sin(query.anim_time *100-50) * -10", 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"heightController": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["42.5+math.cos(query.anim_time*100)*2", 0, "math.sin(query.anim_time*200)"]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"position": {
+						"0.0": {
+							"post": {
+								"vector": ["math.cos(query.anim_time*200)*-2", "math.sin(query.anim_time*100)*-3", 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"leftforearm": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": [0, 52.5, 10]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"leftfinger": {
+					"rotation": {
+						"vector": [0, -12.5, 0]
+					}
+				},
+				"leftarm": {
+					"rotation": {
+						"vector": ["33.7416+math.sin(query.anim_time * 800) - 0.2", -63.0034, "42.4359+math.sin(query.anim_time * 400 - 50) * 2"]
+					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *200+100) * 5", "0+math.sin(query.anim_time *100+100)  * -4", 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"headController": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *200-50) * -8", "math.sin(query.anim_time *100-50) * 5", "math.sin(query.anim_time *100-90) * -5"]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"leftinnerphalanges2": {
+					"rotation": {
+						"vector": [0, -12.5, 0]
+					}
+				},
+				"leftmostinnerphalanges": {
+					"rotation": {
+						"vector": [0, -12.5, 0]
+					}
+				},
+				"leftmostouterphalanges": {
+					"rotation": {
+						"vector": [0, -17.5, 0]
+					}
+				},
+				"leftforearm2": {
+					"rotation": {
+						"vector": ["math.sin(query.anim_time * 400+100)*1", "5+math.sin(query.anim_time * 400+100)*1", 0]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *200+80) *-7", 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"neck3Controller": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *200+40) *-2", 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"neck4Controller": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *150+80)", 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"bone": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *150-250) *2", "0+math.sin(query.anim_time *100-250) * -5", 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": ["0+math.sin(query.anim_time *150) * 2", "0+math.sin(query.anim_time *100) * -10", 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"rightarm": {
+					"rotation": {
+						"vector": ["33.7416+math.sin(query.anim_time * 800) - 0.2", 63.0034, "-42.4359-math.sin(query.anim_time * 400 - 50) * 2"]
+					}
+				},
+				"rightforearm": {
+					"rotation": {
+						"0.0": {
+							"post": {
+								"vector": [0, -52.5, -10]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				},
+				"rightforearm2": {
+					"rotation": {
+						"vector": ["math.sin(query.anim_time * 400+100)*1", "5+math.sin(query.anim_time * 400+100)*1", 0]
+					}
+				},
+				"rightinnerphalanges2": {
+					"rotation": {
+						"vector": [0, 12.5, 0]
+					}
+				},
+				"rightmostinnerphalanges": {
+					"rotation": {
+						"vector": [0, 12.5, 0]
+					}
+				},
+				"rightmostouterphalanges": {
+					"rotation": {
+						"vector": [0, 17.5, 0]
+					}
+				},
+				"rightfinger": {
+					"rotation": {
+						"vector": [0, 12.5, 0]
+					}
+				},
+				"bone2": {
+					"rotation": {
+						"vector": [0, 0, 4]
+					},
+					"scale": {
+						"vector": [1.2, 1, 1]
+					}
+				},
+				"bone3": {
+					"rotation": {
+						"vector": [0, 0, -4]
+					},
+					"scale": {
+						"vector": [1.2, 1, 1]
+					}
+				}
+			}
+		},
 		"animation.cindervane.flap": {
 			"loop": true,
 			"animation_length": 3,
@@ -13561,6 +13780,5 @@
 				}
 			}
 		}
-	},
-	"geckolib_format_version": 2
+	}
 }

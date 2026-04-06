@@ -12,7 +12,6 @@ import java.util.Map;
 public final class RaevyxSoundProfile implements DragonSoundProfile {
 
     public static final RaevyxSoundProfile INSTANCE = new RaevyxSoundProfile();
-    private static final int BABY_STAGE_3_MIN_AGE = -8000;
     private static final float BABY_PITCH_MULTIPLIER = 1.6f;
 
     private static final Map<String, Boolean> BABY_ALLOWED_KEYS = Map.ofEntries(
@@ -40,9 +39,7 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
 
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
-        if (dragon.isBaby()
-                && !BABY_ALLOWED_KEYS.containsKey(key)
-                && !isBabyStage3SoftVocal(dragon, key)) {
+        if (dragon.isBaby() && !BABY_ALLOWED_KEYS.containsKey(key)) {
             return true;
         }
         if (key.startsWith("raevyx_flap") || key.startsWith("flap")) {
@@ -62,7 +59,7 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         if (entry == null || entry.soundSupplier() == null) {
             return null;
         }
-        if (dragon.isBaby() && !isBabyStage3SoftVocal(dragon, key)) {
+        if (dragon.isBaby()) {
             return null;
         }
         int duration = switch (key) {
@@ -102,7 +99,4 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         handler.playClientSound(dragon, dragon.position(), ModSounds.RAEVYX_FLAP.get(), volume, pitch);
     }
 
-    private static boolean isBabyStage3SoftVocal(DragonEntity dragon, String key) {
-        return dragon.getAge() >= BABY_STAGE_3_MIN_AGE && ("grumble1".equals(key) || "purr".equals(key));
-    }
 }

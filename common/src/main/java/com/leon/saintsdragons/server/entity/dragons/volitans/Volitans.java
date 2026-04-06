@@ -2,9 +2,12 @@ package com.leon.saintsdragons.server.entity.dragons.volitans;
 
 import com.leon.saintsdragons.common.block.VolitansEggBlock;
 import com.leon.saintsdragons.common.block.VolitansEggBlockEntity;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFindWaterGoal;
@@ -30,6 +33,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
@@ -37,6 +41,7 @@ import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansSoundProfile;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansTamingHandler;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -129,6 +134,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
 
     private static final double RIDER_WALK_SPEED = 0.24D;
     private static final double RIDER_RUN_SPEED = 0.34D;
@@ -182,7 +189,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final double RIDER_SIDE_DODGE_RECOVERY_DRAG = 0.82D;
     private static final float BREATH_DEPLETED_THRESHOLD = 0.01F;
     private static final float BREATH_REARM_THRESHOLD = 0.20F;
-    private static final float BREATH_GAUGE_REGEN_PER_TICK = 0.0025F;
+    private static final int SPINE_DROP_COOLDOWN_TICKS = 30;
+    private static final float FISH_DROP_CHANCE = 0.40F;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
@@ -202,6 +210,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final VolitansAnimationHandler animationHandler = new VolitansAnimationHandler(this);
     private final VolitansInteractionHandler interactionHandler = new VolitansInteractionHandler(this);
+    private final VolitansTamingHandler tamingController = new VolitansTamingHandler(this);
     private final VolitansRiderController riderController;
     private final DragonRiderFlight riderFlightComponent;
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
@@ -215,6 +224,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private final DragonNavigationModeController navigationModeController;
     private final DragonTakeoff takeoffComponent;
     private int timeFlying;
+    private int spineDropCooldownTicks;
     private int riderTakeoffTicks;
     private boolean riderHighAltitudeGlide;
     private double lastCheckedX;
@@ -237,6 +247,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private boolean isSittingDown = false;
     private boolean isStandingUp = false;
     private int riderBackDashCooldownTicks = 0;
+    private int tamingAbortCalmTicks = 0;
     private boolean riderForwardDashing = false;
     private int riderForwardDashTicksLeft = 0;
     private int riderForwardDashTicksElapsed = 0;
@@ -651,7 +662,35 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (locked && isUltimateSlamActive()) {
             return;
         }
-        super.applyRiderVerticalInput(player, goingUp, goingDown, locked);
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        boolean canRecover = canRecoverTakeoffFromFall();
+
+        if (inWater) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+            return;
+        }
+
+        if (locked) {
+            setGoingUp(false);
+            setGoingDown(false);
+            return;
+        }
+
+        if (goingUp && canRecover) {
+            setGoingUp(true);
+            setGoingDown(false);
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
+
+        if (isFlying() || canRecover) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+        } else {
+            setGoingUp(false);
+            setGoingDown(false);
+        }
     }
 
     @Override
@@ -668,6 +707,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         this.entityData.define(DATA_POISON_BREATH_DEPLETED, false);
         this.entityData.define(DATA_BURROWING, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+        this.entityData.define(DATA_TAMING_STUNNED, false);
     }
 
     @Override
@@ -846,7 +886,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public float getFlightSpeed() {
-        return (float) this.getAttributeValue(Attributes.FLYING_SPEED);
+        float baseSpeed = (float) this.getAttributeValue(Attributes.FLYING_SPEED);
+        if (this.isTame()) {
+            return baseSpeed;
+        }
+        return (float) (baseSpeed * getConfiguredExtra("wild_flying_speed_multiplier", 1.0D));
     }
 
     @Override
@@ -875,10 +919,50 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (shouldSuppressTakeoffInput()) {
             return;
         }
+        if (canRecoverTakeoffFromFall()) {
+            setGoingUp(true);
+            setGoingDown(false);
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
         if (!this.isInWaterOrBubble()) {
             clearGroundMobilityState();
         }
         riderFlightComponent.requestRiderTakeoff();
+    }
+
+    public boolean isFallingForAnimation() {
+        return DragonRiderFallRecovery.isFallingForAnimation(
+                isVehicle(),
+                isFlying(),
+                isTakeoff(),
+                isLanding(),
+                isHovering(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                this.fallDistance,
+                getDeltaMovement()
+        );
+    }
+
+    private boolean canRecoverTakeoffFromFall() {
+        return DragonRiderFallRecovery.canRecoverTakeoffFromFall(
+                isTame(),
+                isVehicle(),
+                isAlive(),
+                isBaby(),
+                isFlying(),
+                isTakeoff(),
+                isLanding(),
+                isHovering(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                shouldSuppressTakeoffInput() || isUltimateSlamActive() || isBurrowing(),
+                this.fallDistance,
+                getDeltaMovement()
+        );
     }
 
     @Override
@@ -1078,6 +1162,13 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         tickScreenShake();
 
         if (!this.level().isClientSide) {
+            if (tamingAbortCalmTicks > 0) {
+                tamingAbortCalmTicks--;
+            }
+            tamingController.tickServer();
+            if (isTamingStunned()) {
+                tamingController.enforceGroundingTick();
+            }
             tickTemporaryInvulnerability();
             tickRiderControlLock();
             if (takeoffInputBlockTicks > 0) {
@@ -1117,6 +1208,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 handleRiderSideDodgeRecoveryMovement();
             }
             tickFeedingCooldown();
+            if (spineDropCooldownTicks > 0) {
+                spineDropCooldownTicks--;
+            }
             if (riderBackDashCooldownTicks > 0) {
                 riderBackDashCooldownTicks--;
             }
@@ -1582,10 +1676,72 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 || stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
+    public boolean isTamingStunned() {
+        return !this.isBaby() && this.entityData.get(DATA_TAMING_STUNNED);
+    }
+
+    public void enterTamingStun() {
+        if (this.isBaby()) {
+            return;
+        }
+        tamingController.enterStun();
+    }
+
+    public void setTamingRecoveryTarget(float targetHealth) {
+        tamingController.setRecoveryTarget(targetHealth);
+    }
+
+    public void clearTamingRecovery() {
+        tamingController.clearRecovery();
+    }
+
+    public void incrementTamingFailures() {
+        tamingController.incrementFailures();
+    }
+
+    public void resetTamingFailures() {
+        tamingController.resetFailures();
+    }
+
+    public boolean isAwaitingTamingFeed() {
+        return tamingController.isAwaitingFeed();
+    }
+
+    public void abortTamingAttempt() {
+        clearTamingRecovery();
+        resetTamingFailures();
+        setTarget(null);
+        setAggressive(false);
+        setLastHurtByMob(null);
+        this.setLastHurtByPlayer(null);
+        this.combatManager.clearAllStates();
+        this.hurtMarked = false;
+        if (isAlive()) {
+            setHealth(getMaxHealth());
+        }
+        tamingAbortCalmTicks = Math.max(tamingAbortCalmTicks, 100);
+    }
+
+    public boolean isBelowTamingThreshold() {
+        if (this.isBaby()) {
+            return false;
+        }
+        return this.getHealth() <= getTamingThreshold();
+    }
+
+    public float getTamingThreshold() {
+        double configured = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.VOLITANS_ID)
+                .extraDouble("taming_stun_health", 60.0D);
+        double clamped = Math.max(0.0D, Math.min(configured, this.getMaxHealth()));
+        return (float) clamped;
+    }
+
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         loadRideableData(tag);
+        tamingController.load(tag);
         if (tag.contains("VolitansBreathMode")) {
             setBreathMode(tag.getInt("VolitansBreathMode"));
         }
@@ -1641,6 +1797,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putInt("VolitansTempInvulnTicks", tempInvulnTicks);
+        tamingController.save(tag);
     }
 
     public boolean canFeed() {
@@ -1698,7 +1855,41 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public int getDeathAnimationDurationTicks() {
-        return 70; // 3.5s
+        return 55;
+    }
+
+    @Override
+    protected void dropAllDeathLoot(@NotNull DamageSource source) {
+        if (deathTime < getDeathAnimationDurationTicks()) {
+            return;
+        }
+
+        super.dropAllDeathLoot(source);
+
+        if (level().isClientSide) {
+            return;
+        }
+
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
+        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
+
+        if (getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
+            this.spawnAtLocation(ModItems.VOLITANS_EGG.get());
+        }
+
+        dropFishType(Items.SALMON);
+        dropFishType(Items.COD);
+        dropFishType(Items.TROPICAL_FISH);
+        dropFishType(Items.PUFFERFISH);
+    }
+
+    private void dropFishType(net.minecraft.world.item.Item fishItem) {
+        if (this.random.nextFloat() >= getConfiguredExtra("fish_drop_chance", FISH_DROP_CHANCE)) {
+            return;
+        }
+        int amount = Mth.nextInt(this.random, 1, 3);
+        this.spawnAtLocation(new ItemStack(fishItem, amount));
     }
 
     /**
@@ -1800,7 +1991,25 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (tryReactiveHitEvade(source, amount)) {
             return false;
         }
-        return super.hurt(source, amount);
+        boolean hurt = super.hurt(source, amount);
+        if (hurt && shouldDropCombatSpine(source, amount)) {
+            this.spawnAtLocation(ModItems.VOLITANS_SPINE.get());
+            spineDropCooldownTicks = SPINE_DROP_COOLDOWN_TICKS;
+        }
+        return hurt;
+    }
+
+    private boolean shouldDropCombatSpine(@NotNull DamageSource source, float amount) {
+        if (level().isClientSide || amount <= 0.0F || spineDropCooldownTicks > 0) {
+            return false;
+        }
+        if (this.random.nextDouble() >= getConfiguredExtra("spine_drop_chance", 1.0D)) {
+            return false;
+        }
+        if (source.getEntity() instanceof LivingEntity) {
+            return true;
+        }
+        return source.getDirectEntity() instanceof Projectile;
     }
 
     private boolean tryReactiveHitEvade(@NotNull DamageSource source, float amount) {
@@ -2037,8 +2246,30 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
 
         if (getWaterBreathEnergy() < 1.0F) {
-            setWaterBreathEnergy(getWaterBreathEnergy() + BREATH_GAUGE_REGEN_PER_TICK);
+            setWaterBreathEnergy(getWaterBreathEnergy() + (float) getConfiguredExtra("breath_regen_per_tick", 0.0025D));
         }
+    }
+
+    public DragonAttributeConfig getConfiguredDragonAttributes() {
+        return DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
+    }
+
+    public float getConfiguredAbilityDamage(String key, float fallback) {
+        return (float) getConfiguredDragonAttributes().abilityDamage(key, fallback);
+    }
+
+    public double getConfiguredExtra(String key, double fallback) {
+        return getConfiguredDragonAttributes().extraDouble(key, fallback);
+    }
+
+    public int getConfiguredPoisonLevel(String key, int fallbackLevel) {
+        int level = Mth.floor(getConfiguredExtra(key, fallbackLevel));
+        return Mth.clamp(level, 0, 4);
+    }
+
+    public int getConfiguredPoisonAmplifier(String key, int fallbackLevel) {
+        int level = getConfiguredPoisonLevel(key, fallbackLevel);
+        return level <= 0 ? -1 : level - 1;
     }
 
     public boolean isUltimateSlamActive() {
@@ -2733,7 +2964,24 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private boolean shouldAggroOnSight() {
-        return !isTame() && !isBaby();
+        if (isTame() || isBaby()) {
+            return false;
+        }
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
+        return config.extraBoolean("aggressive_wild", true);
+    }
+
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
+            return;
+        }
+        if (isBaby()) {
+            super.setTarget(null);
+            return;
+        }
+        super.setTarget(target);
     }
 
     private void tickRiderLandingBlendTimer() {

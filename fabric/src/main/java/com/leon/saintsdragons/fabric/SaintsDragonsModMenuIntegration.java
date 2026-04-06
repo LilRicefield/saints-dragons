@@ -217,13 +217,86 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ignivorusBuffer.eggDropChance = ignivorusCurrent.extraDouble("egg_drop_chance", 0.12D);
         ignivorusBuffer.aggressiveWild = ignivorusCurrent.extraBoolean("aggressive_wild", false);
 
+        DragonAttributeConfig volitansCurrent = loader.getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
+        DragonAttributeConfig volitansDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.VOLITANS_ID);
+        VolitansAttributeBuffer volitansBuffer = new VolitansAttributeBuffer();
+        volitansBuffer.maxHealth = volitansCurrent.maxHealth();
+        volitansBuffer.armor = volitansCurrent.armor();
+        volitansBuffer.flyingSpeed = volitansCurrent.flyingSpeed();
+        volitansBuffer.wildFlyingSpeedMultiplier = volitansCurrent.extraDouble("wild_flying_speed_multiplier",
+                volitansDefaults.extraDouble("wild_flying_speed_multiplier", 1.0D));
+        volitansBuffer.biteDamage = volitansCurrent.abilityDamage("bite",
+                volitansDefaults.abilityDamage("bite", 12.0D));
+        volitansBuffer.clawDamage = volitansCurrent.abilityDamage("claw",
+                volitansDefaults.abilityDamage("claw", 11.0D));
+        volitansBuffer.hornGoreDamage = volitansCurrent.abilityDamage("horn_gore",
+                volitansDefaults.abilityDamage("horn_gore", 15.0D));
+        volitansBuffer.roarGroundDamage = volitansCurrent.abilityDamage("roar_ground",
+                volitansDefaults.abilityDamage("roar_ground", 10.0D));
+        volitansBuffer.roarAirWaterDamage = volitansCurrent.abilityDamage("roar_air_water",
+                volitansDefaults.abilityDamage("roar_air_water", 7.0D));
+        volitansBuffer.burrowDamage = volitansCurrent.abilityDamage("burrow",
+                volitansDefaults.abilityDamage("burrow", 30.0D));
+        volitansBuffer.poisonBallDamage = volitansCurrent.abilityDamage("poison_ball",
+                volitansDefaults.abilityDamage("poison_ball", 12.0D));
+        volitansBuffer.waterBreathDamage = volitansCurrent.abilityDamage("water_breath",
+                volitansDefaults.abilityDamage("water_breath", 1.8D));
+        volitansBuffer.poisonBreathDamage = volitansCurrent.abilityDamage("poison_breath",
+                volitansDefaults.abilityDamage("poison_breath", 1.4D));
+        volitansBuffer.tamingChanceBase = volitansCurrent.extraDouble("taming_chance_base",
+                volitansDefaults.extraDouble("taming_chance_base", 5.0D));
+        volitansBuffer.tamingChanceHearty = volitansCurrent.extraDouble("taming_chance_hearty",
+                volitansDefaults.extraDouble("taming_chance_hearty", 3.0D));
+        volitansBuffer.tamingStunHealth = volitansCurrent.extraDouble("taming_stun_health",
+                volitansDefaults.extraDouble("taming_stun_health", 60.0D));
+        volitansBuffer.legacyTaming = volitansCurrent.extraBoolean("legacy_taming", false);
+        volitansBuffer.eggHatchChanceNormal = volitansCurrent.extraDouble("egg_hatch_chance_normal", 3.0D);
+        volitansBuffer.eggDropChance = volitansCurrent.extraDouble("egg_drop_chance", 0.12D);
+        volitansBuffer.scaleDropChanceBrush = volitansCurrent.extraDouble("scale_drop_chance_brush",
+                volitansDefaults.extraDouble("scale_drop_chance_brush", 0.30D));
+        volitansBuffer.spineDropChance = volitansCurrent.extraDouble("spine_drop_chance",
+                volitansDefaults.extraDouble("spine_drop_chance", 1.0D));
+        volitansBuffer.fishDropChance = volitansCurrent.extraDouble("fish_drop_chance",
+                volitansDefaults.extraDouble("fish_drop_chance", 0.40D));
+        volitansBuffer.breathActiveTicksMax = volitansCurrent.extraDouble("breath_active_ticks_max",
+                volitansDefaults.extraDouble("breath_active_ticks_max", 240.0D));
+        volitansBuffer.breathDrainPerTick = volitansCurrent.extraDouble("breath_drain_per_tick",
+                volitansDefaults.extraDouble("breath_drain_per_tick", 1.0D / (20.0D * 12.0D)));
+        volitansBuffer.breathRegenPerTick = volitansCurrent.extraDouble("breath_regen_per_tick",
+                volitansDefaults.extraDouble("breath_regen_per_tick", 0.0025D));
+        volitansBuffer.breathProjectileSpread = volitansCurrent.extraDouble("breath_projectile_spread",
+                volitansDefaults.extraDouble("breath_projectile_spread", 0.20D));
+        volitansBuffer.breathProjectileSpeed = volitansCurrent.extraDouble("breath_projectile_speed",
+                volitansDefaults.extraDouble("breath_projectile_speed", 1.60D));
+        volitansBuffer.breathProjectileLifetime = volitansCurrent.extraDouble("breath_projectile_lifetime",
+                volitansDefaults.extraDouble("breath_projectile_lifetime", 28.0D));
+        volitansBuffer.poisonBreathPoisonDurationTicks = volitansCurrent.extraDouble("poison_breath_poison_duration_ticks",
+                volitansDefaults.extraDouble("poison_breath_poison_duration_ticks", 80.0D));
+        volitansBuffer.poisonBreathPoisonLevel = volitansCurrent.extraDouble("poison_breath_poison_level",
+                volitansDefaults.extraDouble("poison_breath_poison_level", 1.0D));
+        volitansBuffer.poisonBallPoisonDurationTicks = volitansCurrent.extraDouble("poison_ball_poison_duration_ticks",
+                volitansDefaults.extraDouble("poison_ball_poison_duration_ticks", 120.0D));
+        volitansBuffer.poisonBallPoisonLevel = volitansCurrent.extraDouble("poison_ball_poison_level",
+                volitansDefaults.extraDouble("poison_ball_poison_level", 1.0D));
+        volitansBuffer.roarGroundPoisonDurationTicks = volitansCurrent.extraDouble("roar_ground_poison_duration_ticks",
+                volitansDefaults.extraDouble("roar_ground_poison_duration_ticks", 1200.0D));
+        volitansBuffer.roarGroundPoisonLevel = volitansCurrent.extraDouble("roar_ground_poison_level",
+                volitansDefaults.extraDouble("roar_ground_poison_level", 3.0D));
+        volitansBuffer.roarAirWaterPoisonDurationTicks = volitansCurrent.extraDouble("roar_air_water_poison_duration_ticks",
+                volitansDefaults.extraDouble("roar_air_water_poison_duration_ticks", 200.0D));
+        volitansBuffer.roarAirWaterPoisonLevel = volitansCurrent.extraDouble("roar_air_water_poison_level",
+                volitansDefaults.extraDouble("roar_air_water_poison_level", 2.0D));
+        volitansBuffer.aggressiveWild = volitansCurrent.extraBoolean("aggressive_wild", true);
+
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
                 .setTitle(TITLE);
         builder.setTransparentBackground(true);
         builder.setSavingRunnable(() -> {
             holder.save();
-            persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer);
+            SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
+            SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
+            persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer);
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
@@ -304,12 +377,28 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 null, null, true,
                 1, 1, 2);
 
+        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.volitans"),
+                () -> config.volitansSpawnWeight, value -> config.volitansSpawnWeight = value,
+                () -> config.volitansMinGroupSize, value -> config.volitansMinGroupSize = value,
+                () -> config.volitansMaxGroupSize, value -> config.volitansMaxGroupSize = value,
+                () -> config.volitansAdditionalBiomes, list -> {
+                    config.volitansAdditionalBiomes.clear();
+                    config.volitansAdditionalBiomes.addAll(list);
+                },
+                () -> config.volitansExcludedBiomes, list -> {
+                    config.volitansExcludedBiomes.clear();
+                    config.volitansExcludedBiomes.addAll(list);
+                },
+                null, null, false,
+                1, 1, 1);
+
         ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
         addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
         addStegonautAttributes(attributes, entryBuilder, stegonautBuffer, stegonautDefaults);
         addRaevyxAttributes(attributes, entryBuilder, raevyxBuffer, raevyxDefaults);
         addVarasuchusAttributes(attributes, entryBuilder, varasuchusBuffer, varasuchusDefaults);
         addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
+        addVolitansAttributes(attributes, entryBuilder, volitansBuffer, volitansDefaults);
 
         ConfigCategory others = builder.getOrCreateCategory(OTHERS_CATEGORY);
         others.addEntry(entryBuilder.startBooleanToggle(
@@ -318,6 +407,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ).setDefaultValue(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED_DEFAULT)
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.tooltip"))
          .setSaveConsumer(value -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(value))
+         .build());
+        others.addEntry(entryBuilder.startBooleanToggle(
+                Component.translatable("saintsdragons.config_screen.others.screen_shake"),
+                SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()
+        ).setDefaultValue(SaintsDragonsConfig.SCREEN_SHAKE_ENABLED_DEFAULT)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.screen_shake.tooltip"))
+         .setSaveConsumer(value -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.set(value))
          .build());
         others.addEntry(entryBuilder.startIntSlider(
                 Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
@@ -431,31 +527,31 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.bite_damage"), buffer.biteDamage)
                 .setDefaultValue(defaults.abilityDamage("bite", 12.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.biteDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.slash_grab_hit1_damage"), buffer.slashGrabHit1Damage)
                 .setDefaultValue(defaults.abilityDamage("slash_grab_hit1", 5.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.slashGrabHit1Damage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.slash_grab_hit2_damage"), buffer.slashGrabHit2Damage)
                 .setDefaultValue(defaults.abilityDamage("slash_grab_hit2", 7.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.slashGrabHit2Damage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.volley_damage"), buffer.volleyDamage)
                 .setDefaultValue(defaults.abilityDamage("magma_volley", 20.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.volleyDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_damage"), buffer.fireBodyDamage)
                 .setDefaultValue(defaults.abilityDamage("fire_body", 3.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.fireBodyDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.taming_base"), buffer.tamingChanceBase)
@@ -491,13 +587,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_explosion_damage"), buffer.fireBodyExplosionDamage)
                 .setDefaultValue(defaults.extraDouble("fire_body_explosion_damage", 200.0D))
                 .setMin(0.0D)
-                .setMax(1000.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.fireBodyExplosionDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_self_damage_on_crash"), buffer.fireBodySelfDamageOnCrash)
                 .setDefaultValue(defaults.extraDouble("fire_body_self_damage_on_crash", 40.0D))
                 .setMin(0.0D)
-                .setMax(1000.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.fireBodySelfDamageOnCrash = value)
                 .build());
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.cindervane.aggressive_wild"), buffer.aggressiveWild)
@@ -532,19 +628,19 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.bite_damage"), buffer.biteDamage)
                 .setDefaultValue(defaults.abilityDamage("bite", 5.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.biteDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.chin_slam_damage"), buffer.chinSlamDamage)
                 .setDefaultValue(defaults.abilityDamage("chin_slam", 8.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.chinSlamDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_eating_damage"), buffer.groundEatingDamage)
                 .setDefaultValue(defaults.abilityDamage("ground_eating", 10.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.groundEatingDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"), buffer.tamingChanceBase)
@@ -615,25 +711,25 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.bite_damage"), buffer.biteDamage)
                 .setDefaultValue(defaults.abilityDamage("bite", 15.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.biteDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.beam_damage"), buffer.beamDamage)
                 .setDefaultValue(defaults.abilityDamage("lightning_beam", 35.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.beamDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.horn_damage"), buffer.hornDamage)
                 .setDefaultValue(defaults.abilityDamage("horn_gore", 15.0D))
                 .setMin(0.0D)
-                .setMax(100.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.hornDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.dash_damage"), buffer.dashDamage)
                 .setDefaultValue(defaults.abilityDamage("dash", 10.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.dashDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_base"), buffer.tamingChanceBase)
@@ -774,43 +870,43 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.bite_phase1"), buffer.bitePhase1)
                 .setDefaultValue(defaults.abilityDamage("bite_phase1", 40.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.bitePhase1 = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.bite_phase2"), buffer.bitePhase2)
                 .setDefaultValue(defaults.abilityDamage("bite_phase2", 50.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.bitePhase2 = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.tail_attack"), buffer.tailAttack)
                 .setDefaultValue(defaults.abilityDamage("tail_attack", 8.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.tailAttack = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_tail_swipe"), buffer.dashTailSwipe)
                 .setDefaultValue(defaults.abilityDamage("dash_tail_swipe", 14.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.dashTailSwipe = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_claw"), buffer.dashClaw)
                 .setDefaultValue(defaults.abilityDamage("dash_claw", 16.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.dashClaw = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase1"), buffer.hornPhase1)
                 .setDefaultValue(defaults.abilityDamage("horn_gore_phase1", 16.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.hornPhase1 = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase2"), buffer.hornPhase2)
                 .setDefaultValue(defaults.abilityDamage("horn_gore_phase2", 20.8D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.hornPhase2 = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_chance"), buffer.tamingChance)
@@ -886,61 +982,61 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.bite_damage"), buffer.biteDamage)
                 .setDefaultValue(defaults.abilityDamage("bite", 50.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.biteDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.body_slam_damage"), buffer.bodySlamDamage)
                 .setDefaultValue(defaults.abilityDamage("body_slam", 40.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.bodySlamDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.leap_slam_damage"), buffer.leapSlamDamage)
                 .setDefaultValue(defaults.abilityDamage("leap_slam", 50.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.leapSlamDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_damage"), buffer.fireBreathDamage)
                 .setDefaultValue(defaults.abilityDamage("fire_breath", 80.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.fireBreathDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fireball_damage"), buffer.fireballDamage)
                 .setDefaultValue(defaults.abilityDamage("fireball", 70.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.fireballDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.magma_pillar_damage"), buffer.magmaPillarDamage)
                 .setDefaultValue(defaults.abilityDamage("magma_pillar", 18.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.magmaPillarDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.wing_swipe_damage"), buffer.wingSwipeDamage)
                 .setDefaultValue(defaults.abilityDamage("wing_swipe", 15.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.wingSwipeDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.stomp_damage"), buffer.stompDamage)
                 .setDefaultValue(defaults.abilityDamage("stomp", 18.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.stompDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.bulldoze_damage"), buffer.bulldozeDamage)
                 .setDefaultValue(defaults.abilityDamage("bulldoze", 10.0D))
                 .setMin(0.0D)
-                .setMax(200.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.bulldozeDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_damage"), buffer.ultimateDamage)
                 .setDefaultValue(defaults.abilityDamage("ultimate", 200.0D))
                 .setMin(0.0D)
-                .setMax(10000.0D)
+                .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.ultimateDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_penalty"), buffer.ultimatePenalty)
@@ -1079,11 +1175,243 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .build());
     }
 
+    private void addVolitansAttributes(ConfigCategory category,
+                                       ConfigEntryBuilder entryBuilder,
+                                       VolitansAttributeBuffer buffer,
+                                       DragonAttributeConfig defaults) {
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.max_health"), buffer.maxHealth)
+                .setDefaultValue(defaults.maxHealth())
+                .setMin(1.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.maxHealth = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.armor"), buffer.armor)
+                .setDefaultValue(defaults.armor())
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.armor = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.rider_flying_speed"), buffer.flyingSpeed)
+                .setDefaultValue(defaults.flyingSpeed())
+                .setMin(0.0D)
+                .setMax(2.0D)
+                .setSaveConsumer(value -> buffer.flyingSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.wild_flying_speed_multiplier"), buffer.wildFlyingSpeedMultiplier)
+                .setDefaultValue(defaults.extraDouble("wild_flying_speed_multiplier", 1.0D))
+                .setMin(0.05D)
+                .setMax(10.0D)
+                .setSaveConsumer(value -> buffer.wildFlyingSpeedMultiplier = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.bite_damage"), buffer.biteDamage)
+                .setDefaultValue(defaults.abilityDamage("bite", 12.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.biteDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.claw_damage"), buffer.clawDamage)
+                .setDefaultValue(defaults.abilityDamage("claw", 11.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.clawDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.horn_gore_damage"), buffer.hornGoreDamage)
+                .setDefaultValue(defaults.abilityDamage("horn_gore", 15.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.hornGoreDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.roar_ground_damage"), buffer.roarGroundDamage)
+                .setDefaultValue(defaults.abilityDamage("roar_ground", 10.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.roarGroundDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.roar_air_water_damage"), buffer.roarAirWaterDamage)
+                .setDefaultValue(defaults.abilityDamage("roar_air_water", 7.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.roarAirWaterDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.burrow_damage"), buffer.burrowDamage)
+                .setDefaultValue(defaults.abilityDamage("burrow", 30.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.burrowDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.poison_ball_damage"), buffer.poisonBallDamage)
+                .setDefaultValue(defaults.abilityDamage("poison_ball", 12.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.poisonBallDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.water_breath_damage"), buffer.waterBreathDamage)
+                .setDefaultValue(defaults.abilityDamage("water_breath", 1.8D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.waterBreathDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.poison_breath_damage"), buffer.poisonBreathDamage)
+                .setDefaultValue(defaults.abilityDamage("poison_breath", 1.4D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.poisonBreathDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.taming_chance_base"), buffer.tamingChanceBase)
+                .setDefaultValue(defaults.extraDouble("taming_chance_base", 5.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceBase = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.taming_chance_hearty"), buffer.tamingChanceHearty)
+                .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 3.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceHearty = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.taming_stun_health"), buffer.tamingStunHealth)
+                .setDefaultValue(defaults.extraDouble("taming_stun_health", 60.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.tamingStunHealth = value)
+                .build());
+        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.volitans.legacy_taming"), buffer.legacyTaming)
+                .setDefaultValue(defaults.extraBoolean("legacy_taming", false))
+                .setTooltip(Component.translatable("config.saintsdragons.attributes.legacy_taming.tooltip"))
+                .setSaveConsumer(value -> buffer.legacyTaming = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_active_ticks_max"), buffer.breathActiveTicksMax)
+                .setDefaultValue(defaults.extraDouble("breath_active_ticks_max", 240.0D))
+                .setMin(1.0D)
+                .setMax(24000.0D)
+                .setSaveConsumer(value -> buffer.breathActiveTicksMax = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_drain_per_tick"), buffer.breathDrainPerTick)
+                .setDefaultValue(defaults.extraDouble("breath_drain_per_tick", 1.0D / (20.0D * 12.0D)))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.breathDrainPerTick = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_regen_per_tick"), buffer.breathRegenPerTick)
+                .setDefaultValue(defaults.extraDouble("breath_regen_per_tick", 0.0025D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.breathRegenPerTick = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_spread"), buffer.breathProjectileSpread)
+                .setDefaultValue(defaults.extraDouble("breath_projectile_spread", 0.20D))
+                .setMin(0.0D)
+                .setMax(5.0D)
+                .setSaveConsumer(value -> buffer.breathProjectileSpread = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_speed"), buffer.breathProjectileSpeed)
+                .setDefaultValue(defaults.extraDouble("breath_projectile_speed", 1.60D))
+                .setMin(0.0D)
+                .setMax(10.0D)
+                .setSaveConsumer(value -> buffer.breathProjectileSpeed = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_lifetime"), buffer.breathProjectileLifetime)
+                .setDefaultValue(defaults.extraDouble("breath_projectile_lifetime", 28.0D))
+                .setMin(1.0D)
+                .setMax(1200.0D)
+                .setSaveConsumer(value -> buffer.breathProjectileLifetime = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.poison_breath_poison_duration_ticks"), buffer.poisonBreathPoisonDurationTicks)
+                .setDefaultValue(defaults.extraDouble("poison_breath_poison_duration_ticks", 80.0D))
+                .setMin(0.0D)
+                .setMax(12000.0D)
+                .setSaveConsumer(value -> buffer.poisonBreathPoisonDurationTicks = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.poison_breath_poison_level"), buffer.poisonBreathPoisonLevel)
+                .setDefaultValue(defaults.extraDouble("poison_breath_poison_level", 1.0D))
+                .setMin(0.0D)
+                .setMax(4.0D)
+                .setSaveConsumer(value -> buffer.poisonBreathPoisonLevel = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.poison_ball_poison_duration_ticks"), buffer.poisonBallPoisonDurationTicks)
+                .setDefaultValue(defaults.extraDouble("poison_ball_poison_duration_ticks", 120.0D))
+                .setMin(0.0D)
+                .setMax(12000.0D)
+                .setSaveConsumer(value -> buffer.poisonBallPoisonDurationTicks = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.poison_ball_poison_level"), buffer.poisonBallPoisonLevel)
+                .setDefaultValue(defaults.extraDouble("poison_ball_poison_level", 1.0D))
+                .setMin(0.0D)
+                .setMax(4.0D)
+                .setSaveConsumer(value -> buffer.poisonBallPoisonLevel = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.roar_ground_poison_duration_ticks"), buffer.roarGroundPoisonDurationTicks)
+                .setDefaultValue(defaults.extraDouble("roar_ground_poison_duration_ticks", 1200.0D))
+                .setMin(0.0D)
+                .setMax(12000.0D)
+                .setSaveConsumer(value -> buffer.roarGroundPoisonDurationTicks = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.roar_ground_poison_level"), buffer.roarGroundPoisonLevel)
+                .setDefaultValue(defaults.extraDouble("roar_ground_poison_level", 3.0D))
+                .setMin(0.0D)
+                .setMax(4.0D)
+                .setSaveConsumer(value -> buffer.roarGroundPoisonLevel = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.roar_air_water_poison_duration_ticks"), buffer.roarAirWaterPoisonDurationTicks)
+                .setDefaultValue(defaults.extraDouble("roar_air_water_poison_duration_ticks", 200.0D))
+                .setMin(0.0D)
+                .setMax(12000.0D)
+                .setSaveConsumer(value -> buffer.roarAirWaterPoisonDurationTicks = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.roar_air_water_poison_level"), buffer.roarAirWaterPoisonLevel)
+                .setDefaultValue(defaults.extraDouble("roar_air_water_poison_level", 2.0D))
+                .setMin(0.0D)
+                .setMax(4.0D)
+                .setSaveConsumer(value -> buffer.roarAirWaterPoisonLevel = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.scale_drop_chance_brush"), buffer.scaleDropChanceBrush)
+                .setDefaultValue(defaults.extraDouble("scale_drop_chance_brush", 0.30D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.scaleDropChanceBrush = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"), buffer.spineDropChance)
+                .setDefaultValue(defaults.extraDouble("spine_drop_chance", 1.0D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.spineDropChance = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"), buffer.fishDropChance)
+                .setDefaultValue(defaults.extraDouble("fish_drop_chance", 0.40D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.fishDropChance = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.egg_hatch_chance_normal"), buffer.eggHatchChanceNormal)
+                .setDefaultValue(defaults.extraDouble("egg_hatch_chance_normal", 3.0D))
+                .setMin(1.0D)
+                .setMax(200.0D)
+                .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"), buffer.eggDropChance)
+                .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
+                .setMin(0.0D)
+                .setMax(1.0D)
+                .setSaveConsumer(value -> buffer.eggDropChance = value)
+                .build());
+        entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.volitans.aggressive_wild"), buffer.aggressiveWild)
+                .setDefaultValue(defaults.extraBoolean("aggressive_wild", true))
+                .setSaveConsumer(value -> buffer.aggressiveWild = value)
+                .build());
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.volitans"), rawEntries)
+                .setExpanded(false)
+                .build());
+    }
+
     private void persistDragonAttributes(CindervaneAttributeBuffer cindervaneBuffer,
                                          StegonautAttributeBuffer stegonautBuffer,
                                          RaevyxAttributeBuffer raevyxBuffer,
                                          VarasuchusAttributeBuffer varasuchusBuffer,
-                                         IgnivorusAttributeBuffer ignivorusBuffer) {
+                                         IgnivorusAttributeBuffer ignivorusBuffer,
+                                         VolitansAttributeBuffer volitansBuffer) {
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         Map<String, DragonAbilityOverride> abilities = new HashMap<>(current.abilities());
@@ -1205,6 +1533,30 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 )
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.IGNIVORUS_ID, updatedIgnivorus);
+
+        DragonAttributeConfig volitansCurrent = loader.getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
+        Map<String, DragonAbilityOverride> volitansAbilities = new HashMap<>(volitansCurrent.abilities());
+        volitansAbilities.put("bite", DragonAbilityOverride.ofDamage(volitansBuffer.biteDamage));
+        volitansAbilities.put("claw", DragonAbilityOverride.ofDamage(volitansBuffer.clawDamage));
+        volitansAbilities.put("horn_gore", DragonAbilityOverride.ofDamage(volitansBuffer.hornGoreDamage));
+        volitansAbilities.put("roar_ground", DragonAbilityOverride.ofDamage(volitansBuffer.roarGroundDamage));
+        volitansAbilities.put("roar_air_water", DragonAbilityOverride.ofDamage(volitansBuffer.roarAirWaterDamage));
+        volitansAbilities.put("burrow", DragonAbilityOverride.ofDamage(volitansBuffer.burrowDamage));
+        volitansAbilities.put("poison_ball", DragonAbilityOverride.ofDamage(volitansBuffer.poisonBallDamage));
+        volitansAbilities.put("water_breath", DragonAbilityOverride.ofDamage(volitansBuffer.waterBreathDamage));
+        volitansAbilities.put("poison_breath", DragonAbilityOverride.ofDamage(volitansBuffer.poisonBreathDamage));
+        DragonAttributeConfig updatedVolitans = new DragonAttributeConfig(
+                volitansBuffer.maxHealth,
+                volitansBuffer.armor,
+                volitansBuffer.flyingSpeed,
+                volitansAbilities,
+                buildVolitansExtras(volitansBuffer),
+                Map.of(
+                        "legacy_taming", volitansBuffer.legacyTaming,
+                        "aggressive_wild", volitansBuffer.aggressiveWild
+                )
+        );
+        loader.overwriteConfig(DragonAttributeConfigLoader.VOLITANS_ID, updatedVolitans);
     }
 
     private static final class CindervaneAttributeBuffer {
@@ -1327,6 +1679,46 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         boolean aggressiveWild;
     }
 
+    private static final class VolitansAttributeBuffer {
+        double maxHealth;
+        double armor;
+        double flyingSpeed;
+        double wildFlyingSpeedMultiplier;
+        double biteDamage;
+        double clawDamage;
+        double hornGoreDamage;
+        double roarGroundDamage;
+        double roarAirWaterDamage;
+        double burrowDamage;
+        double poisonBallDamage;
+        double waterBreathDamage;
+        double poisonBreathDamage;
+        double tamingChanceBase;
+        double tamingChanceHearty;
+        double tamingStunHealth;
+        boolean legacyTaming;
+        double eggHatchChanceNormal;
+        double eggDropChance;
+        double scaleDropChanceBrush;
+        double spineDropChance;
+        double fishDropChance;
+        double breathActiveTicksMax;
+        double breathDrainPerTick;
+        double breathRegenPerTick;
+        double breathProjectileSpread;
+        double breathProjectileSpeed;
+        double breathProjectileLifetime;
+        double poisonBreathPoisonDurationTicks;
+        double poisonBreathPoisonLevel;
+        double poisonBallPoisonDurationTicks;
+        double poisonBallPoisonLevel;
+        double roarGroundPoisonDurationTicks;
+        double roarGroundPoisonLevel;
+        double roarAirWaterPoisonDurationTicks;
+        double roarAirWaterPoisonLevel;
+        boolean aggressiveWild;
+    }
+
     private static Map<String, Double> buildRaevyxExtras(RaevyxAttributeBuffer buffer) {
         Map<String, Double> extras = new HashMap<>();
         extras.put("taming_chance_base", buffer.tamingChanceBase);
@@ -1372,6 +1764,34 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("egg_loot_nether_bridge", buffer.eggLootNetherBridge);
         extras.put("egg_loot_ancient_city", buffer.eggLootAncientCity);
         extras.put("egg_drop_chance", buffer.eggDropChance);
+        return extras;
+    }
+
+    private static Map<String, Double> buildVolitansExtras(VolitansAttributeBuffer buffer) {
+        Map<String, Double> extras = new HashMap<>();
+        extras.put("taming_chance_base", buffer.tamingChanceBase);
+        extras.put("taming_chance_hearty", buffer.tamingChanceHearty);
+        extras.put("taming_stun_health", buffer.tamingStunHealth);
+        extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);
+        extras.put("egg_hatch_chance_normal", buffer.eggHatchChanceNormal);
+        extras.put("egg_drop_chance", buffer.eggDropChance);
+        extras.put("scale_drop_chance_brush", buffer.scaleDropChanceBrush);
+        extras.put("spine_drop_chance", buffer.spineDropChance);
+        extras.put("fish_drop_chance", buffer.fishDropChance);
+        extras.put("breath_active_ticks_max", buffer.breathActiveTicksMax);
+        extras.put("breath_drain_per_tick", buffer.breathDrainPerTick);
+        extras.put("breath_regen_per_tick", buffer.breathRegenPerTick);
+        extras.put("breath_projectile_spread", buffer.breathProjectileSpread);
+        extras.put("breath_projectile_speed", buffer.breathProjectileSpeed);
+        extras.put("breath_projectile_lifetime", buffer.breathProjectileLifetime);
+        extras.put("poison_breath_poison_duration_ticks", buffer.poisonBreathPoisonDurationTicks);
+        extras.put("poison_breath_poison_level", buffer.poisonBreathPoisonLevel);
+        extras.put("poison_ball_poison_duration_ticks", buffer.poisonBallPoisonDurationTicks);
+        extras.put("poison_ball_poison_level", buffer.poisonBallPoisonLevel);
+        extras.put("roar_ground_poison_duration_ticks", buffer.roarGroundPoisonDurationTicks);
+        extras.put("roar_ground_poison_level", buffer.roarGroundPoisonLevel);
+        extras.put("roar_air_water_poison_duration_ticks", buffer.roarAirWaterPoisonDurationTicks);
+        extras.put("roar_air_water_poison_level", buffer.roarAirWaterPoisonLevel);
         return extras;
     }
 }

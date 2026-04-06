@@ -19,9 +19,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class VolitansBreathAbility extends DragonAbility<Volitans> {
     // animation.volitans.breath_start = 0.8333s -> ~16.666 ticks, rounded to 17
     private static final int STARTUP_TICKS = 17;
-    private static final int ACTIVE_TICKS_MAX = 20 * 12; // 12s
+    private static final int ACTIVE_TICKS_CAP = 20 * 60; // hard failsafe cap, real duration is config-driven
     private static final int COOLDOWN_TICKS = 20;
-    private static final float BREATH_DRAIN_PER_TICK = 1.0F / ACTIVE_TICKS_MAX;
     private static final int BREATH_START_SOUND_TICKS = 20; // 1.0s
     private static final int BREATH_END_SOUND_TICKS = 50;   // 2.5s
     private static final float BREATH_VOLUME = 2.0F;
@@ -35,7 +34,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
-            new AbilitySectionDuration(ACTIVE, ACTIVE_TICKS_MAX)
+            new AbilitySectionDuration(ACTIVE, ACTIVE_TICKS_CAP)
     };
 
     public VolitansBreathAbility(DragonAbilityType<Volitans, VolitansBreathAbility> type, Volitans user) {
@@ -92,6 +91,12 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             return;
         }
 
+        int activeTicksMax = Math.max(1, (int) Math.round(dragon.getConfiguredExtra("breath_active_ticks_max", 20.0D * 12.0D)));
+        if (getTicksInSection() >= activeTicksMax) {
+            interrupt();
+            return;
+        }
+
         updateAiBreathTracking(dragon);
         Vec3 origin = dragon.getMouthPosition();
         Vec3 direction = getBreathDirection(dragon, origin);
@@ -99,7 +104,8 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             return;
         }
 
-        float energy = Math.max(0.0F, dragon.getCurrentBreathEnergy() - BREATH_DRAIN_PER_TICK);
+        float drainPerTick = (float) dragon.getConfiguredExtra("breath_drain_per_tick", 1.0D / (20.0D * 12.0D));
+        float energy = Math.max(0.0F, dragon.getCurrentBreathEnergy() - drainPerTick);
         dragon.setCurrentBreathEnergy(energy);
         if (!dragon.hasCurrentBreathEnergy()) {
             dragon.setCurrentBreathDepleted(true);
@@ -107,11 +113,17 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             return;
         }
         boolean poisonMode = dragon.isPoisonBreathMode();
-        float damage = poisonMode ? POISON_PROJECTILE_DAMAGE : WATER_PROJECTILE_DAMAGE;
+        float damage = poisonMode
+                ? dragon.getConfiguredAbilityDamage("poison_breath", POISON_PROJECTILE_DAMAGE)
+                : dragon.getConfiguredAbilityDamage("water_breath", WATER_PROJECTILE_DAMAGE);
         float push = poisonMode ? POISON_PROJECTILE_PUSH : WATER_PROJECTILE_PUSH;
+        double spread = dragon.getConfiguredExtra("breath_projectile_spread", 0.20D);
+        float projectileSpeed = (float) dragon.getConfiguredExtra("breath_projectile_speed", PROJECTILE_SPEED);
+        int projectileLifetime = Math.max(1, (int) Math.round(dragon.getConfiguredExtra("breath_projectile_lifetime", PROJECTILE_LIFETIME)));
+        int poisonDurationTicks = Math.max(0, (int) Math.round(dragon.getConfiguredExtra("poison_breath_poison_duration_ticks", 80.0D)));
+        int poisonAmplifier = dragon.getConfiguredPoisonAmplifier("poison_breath_poison_level", 1);
 
         for (int i = 0; i < 8; i++) {
-            double spread = 0.20D;
             Vec3 randomized = direction.add(
                     (dragon.getRandom().nextDouble() - 0.5D) * spread,
                     (dragon.getRandom().nextDouble() - 0.5D) * spread,
@@ -122,12 +134,14 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             VolitansWaterBreathEntity projectile = new VolitansWaterBreathEntity(
                     dragon.level(),
                     spawn,
-                    randomized.scale(PROJECTILE_SPEED),
+                    randomized.scale(projectileSpeed),
                     dragon,
                     damage,
                     push,
-                    PROJECTILE_LIFETIME,
-                    poisonMode
+                    projectileLifetime,
+                    poisonMode,
+                    poisonDurationTicks,
+                    poisonAmplifier
             );
             dragon.level().addFreshEntity(projectile);
         }

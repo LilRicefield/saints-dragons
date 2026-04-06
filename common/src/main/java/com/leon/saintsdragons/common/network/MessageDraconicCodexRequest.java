@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,33 +46,29 @@ public class MessageDraconicCodexRequest {
         }
         long now = serverLevel.getGameTime();
         UUID playerId = player.getUUID();
-        long nextAllowed = NEXT_ALLOWED_REQUEST_TICK.getOrDefault(playerId, 0L);
-        if (now < nextAllowed) {
-            return;
+        if (!message.pruneMissingBoundEntries) {
+            long nextAllowed = NEXT_ALLOWED_REQUEST_TICK.getOrDefault(playerId, 0L);
+            if (now < nextAllowed) {
+                return;
+            }
         }
         NEXT_ALLOWED_REQUEST_TICK.put(playerId, now + REQUEST_COOLDOWN_TICKS);
 
         DragonCodexSavedData data = DragonCodexSavedData.get(serverLevel);
-        List<DragonCodexSavedData.DragonCodexEntry> entries = data.getEntriesFor(player);
-
-        List<DragonEntity> dragons = serverLevel.getEntitiesOfClass(
-                DragonEntity.class,
-                player.getBoundingBox().inflate(256.0),
-                dragon -> dragon.isTame() && dragon.isOwnedBy(player)
-        );
-        for (DragonEntity dragon : dragons) {
-            data.addDragon(player, dragon);
+        Map<UUID, DragonEntity> loadedOwnedDragons = collectLoadedOwnedDragons(serverLevel, playerId);
+        for (DragonEntity dragon : loadedOwnedDragons.values()) {
+            data.addDragon(playerId, dragon);
         }
-        entries = data.getEntriesFor(player);
+
+        List<DragonCodexSavedData.DragonCodexEntry> entries = data.getEntriesFor(player);
 
         if (!entries.isEmpty()) {
             for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
                 UUID dragonId = entry.dragonId();
-                DragonEntity dragon = findDragon(serverLevel, dragonId);
+                DragonEntity dragon = loadedOwnedDragons.get(dragonId);
                 if (dragon != null && dragon.isTame() && dragon.isOwnedBy(player)) {
                     data.updateDragonName(player.getUUID(), dragonId, dragon.getName().getString());
                     data.updateDragonStats(player.getUUID(), dragon);
-                    entry.setDisplayName(dragon.getName().getString());
                     continue;
                 }
 
@@ -80,6 +77,8 @@ public class MessageDraconicCodexRequest {
                     if (binderExists) {
                         data.updateDragonBoundState(player.getUUID(), dragonId, true);
                     }
+                    // Keep bound entries when the binder isn't visible to vanilla inventory scans.
+                    // Modded storage like backpacks/chests can still legitimately hold the binder.
                 }
             }
             entries = data.getEntriesFor(player);
@@ -118,23 +117,19 @@ public class MessageDraconicCodexRequest {
         NetworkHandler.sendToPlayer(player, response);
     }
 
-    private static DragonEntity findDragon(ServerLevel originLevel, UUID dragonId) {
-        net.minecraft.world.entity.Entity sameLevelEntity = originLevel.getEntity(dragonId);
-        if (sameLevelEntity instanceof DragonEntity dragon) {
-            return dragon;
+    private static Map<UUID, DragonEntity> collectLoadedOwnedDragons(ServerLevel originLevel, UUID ownerId) {
+        Map<UUID, DragonEntity> dragons = new java.util.HashMap<>();
+        if (originLevel.getServer() == null || ownerId == null) {
+            return dragons;
         }
-        if (originLevel.getServer() == null) {
-            return null;
-        }
+
         for (ServerLevel level : originLevel.getServer().getAllLevels()) {
-            if (level == originLevel) {
-                continue;
-            }
-            net.minecraft.world.entity.Entity entity = level.getEntity(dragonId);
-            if (entity instanceof DragonEntity dragon) {
-                return dragon;
+            for (var entity : level.getAllEntities()) {
+                if (entity instanceof DragonEntity dragon && dragon.isTame() && ownerId.equals(dragon.getOwnerUUID())) {
+                    dragons.put(dragon.getUUID(), dragon);
+                }
             }
         }
-        return null;
+        return dragons;
     }
 }

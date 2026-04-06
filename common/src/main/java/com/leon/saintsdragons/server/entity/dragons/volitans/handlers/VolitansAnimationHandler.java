@@ -23,10 +23,13 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation FLY_IDLE = RawAnimation.begin().thenLoop("animation.volitans.fly_idle");
     private static final RawAnimation FLY_GLIDE = RawAnimation.begin().thenLoop("animation.volitans.fly_glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.volitans.glide_down");
+    private static final RawAnimation FALLING = RawAnimation.begin().thenLoop("animation.volitans.falling");
     private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.volitans.landing");
     private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.volitans.landed");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.volitans.swim");
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.volitans.swim_idle");
+    private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.volitans.stunned");
+    private static final RawAnimation UNDERWATER_STUNNED = RawAnimation.begin().thenLoop("animation.volitans.underwater_stunned");
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.volitans.hurt");
     private static final RawAnimation DIE = RawAnimation.begin().thenPlay("animation.volitans.die");
 
@@ -76,6 +79,11 @@ public final class VolitansAnimationHandler {
             return PlayState.CONTINUE;
         }
 
+        if (dragon.isTamingStunned()) {
+            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
+            return PlayState.CONTINUE;
+        }
+
         float sitProgress = dragon.getSitProgress();
         float maxSit = dragon.maxSitTicks();
         if (sitProgress >= maxSit) {
@@ -105,6 +113,11 @@ public final class VolitansAnimationHandler {
                     ? LANDING
                     : GLIDE_DOWN;
             state.setAndContinue(landingAnimation);
+            return PlayState.CONTINUE;
+        }
+
+        if (dragon.isFallingForAnimation()) {
+            state.setAndContinue(FALLING);
             return PlayState.CONTINUE;
         }
 

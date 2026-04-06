@@ -75,7 +75,15 @@ public class CodexEcologyPanel {
             new ResourceLocation("minecraft", "tropical_fish"),
             new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
-    private static final List<ResourceLocation> VOLITANS_DROPS = List.of();
+    private static final List<ResourceLocation> VOLITANS_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "volitans_scale"),
+            new ResourceLocation("saintsdragons", "volitans_spine"),
+            new ResourceLocation("saintsdragons", "volitans_egg"),
+            new ResourceLocation("minecraft", "salmon"),
+            new ResourceLocation("minecraft", "cod"),
+            new ResourceLocation("minecraft", "tropical_fish"),
+            new ResourceLocation("minecraft", "pufferfish")
+    );
     private Button ecologyPrevPageButton;
     private Button ecologyNextPageButton;
     private int linkScrollOffset = 0;
@@ -402,7 +410,7 @@ public class CodexEcologyPanel {
             }
             case "volitans" -> {
                 List<SectionLink> sections = List.of(
-                        new SectionLink("1. Overview", 1, ecologyPage == 1),
+                        new SectionLink("1. Overview", 1, ecologyPage >= 1 && ecologyPage <= 3),
                         new SectionLink("2. Favorite Food", 4, ecologyPage == 4),
                         new SectionLink("3. Drops", 5, ecologyPage == 5)
                 );

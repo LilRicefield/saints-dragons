@@ -2,7 +2,7 @@
   "parent": "minecraft:husbandry/tame_an_animal",
   "display": {
     "icon": {
-      "item": "minecraft:salmon"
+      "item": "saintsdragons:raevyx_binder"
     },
     "title": {
       "translate": "advancement.saintsdragons.tame_raevyx.title"

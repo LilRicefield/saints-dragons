@@ -166,6 +166,7 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
                 origin.z + EXIT_RADIUS
         );
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
+        float damage = dragon.getConfiguredAbilityDamage("burrow", EXIT_DAMAGE);
         List<LivingEntity> targets = dragon.level().getEntitiesOfClass(
                 LivingEntity.class,
                 hitBox,
@@ -176,7 +177,7 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
                         && entity.distanceToSqr(dragon) <= EXIT_RADIUS * EXIT_RADIUS
         );
         for (LivingEntity target : targets) {
-            target.hurt(source, EXIT_DAMAGE);
+            target.hurt(source, damage);
             Vec3 motion = target.getDeltaMovement();
             target.setDeltaMovement(motion.x * 0.35D, Math.max(motion.y, EXIT_UPWARD_KNOCK), motion.z * 0.35D);
             target.hurtMarked = true;

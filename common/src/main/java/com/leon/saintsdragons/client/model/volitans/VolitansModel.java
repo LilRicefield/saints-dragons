@@ -52,9 +52,16 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     public void setCustomAnimations(Volitans entity, long instanceId, AnimationState<Volitans> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
+        if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
+            return;
+        }
+
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) return;
         if (entity.isAlive()){
+            if (entity.isTamingStunned()) {
+                return;
+            }
             if (entity.isDeadOrDying()){
                 return;
             }

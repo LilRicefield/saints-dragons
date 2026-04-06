@@ -5,7 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.Stegonau
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.world.StegonautLushCaveSpawner;
-import com.leon.saintsdragons.server.world.VolitansCoastalSpawner;
+import com.leon.saintsdragons.server.world.VolitansUnderwaterSpawner;
 import com.leon.saintsdragons.server.world.VillageIvySpawner;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -44,7 +44,7 @@ public final class FabricServerEvents {
             for (var level : server.getAllLevels()) {
                 VillageIvySpawner.tick(level);
                 StegonautLushCaveSpawner.tick(level);
-                VolitansCoastalSpawner.tick(level);
+                VolitansUnderwaterSpawner.tick(level);
             }
         });
 
@@ -76,7 +76,7 @@ public final class FabricServerEvents {
         // Clean up village tracking
         VillageIvySpawner.clearTracking();
         StegonautLushCaveSpawner.clearTracking();
-        VolitansCoastalSpawner.clearTracking();
+        VolitansUnderwaterSpawner.clearTracking();
     }
 
     private static void handlePlayerJoin(ServerPlayer player) {

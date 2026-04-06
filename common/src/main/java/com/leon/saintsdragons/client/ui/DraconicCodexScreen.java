@@ -74,6 +74,7 @@ public class DraconicCodexScreen extends Screen {
     private static final int REFRESH_ICON_HEIGHT = 9;
     private static final int REFRESH_ICON_TEXTURE_WIDTH = 8;
     private static final int REFRESH_ICON_TEXTURE_HEIGHT = 9;
+    private static final int LIVE_REFRESH_INTERVAL_TICKS = 10;
 
     private final CodexTabPanel tabPanel = new CodexTabPanel();
     private final CodexDragonListPanel dragonListPanel = new CodexDragonListPanel();
@@ -94,6 +95,7 @@ public class DraconicCodexScreen extends Screen {
     private List<String> allyList = new ArrayList<>();
     private int allyScrollOffset = 0;
     private int ecologyPage = 1;
+    private int liveRefreshTicker = 0;
     @Nullable
     private Button refreshEntryButton;
     public DraconicCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
@@ -143,6 +145,17 @@ public class DraconicCodexScreen extends Screen {
         updateAllyWidgetVisibility();
         updateEcologyWidgetVisibility();
         playCodexFlipSound();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        liveRefreshTicker++;
+        if (liveRefreshTicker >= LIVE_REFRESH_INTERVAL_TICKS) {
+            liveRefreshTicker = 0;
+            requestCodexRefresh(false);
+        }
     }
 
     @Override

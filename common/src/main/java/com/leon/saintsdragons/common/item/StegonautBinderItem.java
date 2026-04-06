@@ -1,334 +1,87 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.item.util.BinderComponentUtil;
-import com.leon.saintsdragons.server.data.DragonCodexSavedData;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
-import net.minecraft.nbt.CompoundTag;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Item used to bind a Primitive Drake for portable resistance buff.
- * Right-click on a tamed primitive drake to bind it to this item.
- * While carrying a bound drake binder, the player gets resistance buff.
- */
-public class StegonautBinderItem extends Item {
-    
-    // NBT keys for storing bound drake data
-    private static final String BOUND_DRAGON_UUID = "BoundDragonUUID";
-    private static final String BOUND_DRAGON_NAME = "BoundDragonName";
-    private static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
-    private static final String BOUND_OWNER_NAME = "BoundOwnerName";
-    private static final String BOUND_CUSTOM_NAME = "BoundCustomName";
+public class StegonautBinderItem extends AbstractDragonBinderItem<Stegonaut> {
+
     private static final String DRAGON_DATA_KEY = "StegonautData";
-    private static final String IS_BOUND = "IsBound";
-    
+
     public StegonautBinderItem(Properties properties) {
         super(properties);
     }
-    
+
     @Override
-    public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
-        if (target instanceof Stegonaut drake) {
-            // Check if player owns the drake
-            if (!drake.isTame() || !drake.isOwnedBy(player)) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.not_dragon_owner"), 
-                    true);
-                return InteractionResult.FAIL;
-            }
-            
-            // Check if drake can be captured (not playing dead, not sleeping, etc.)
-            if (!drake.canBeBound()) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.stegonaut_cannot_be_captured"),
-                    true);
-                return InteractionResult.FAIL;
-            }
-            
-            // Check if binder is already occupied
-            if (isBound(stack)) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.binder_already_occupied"), 
-                    true);
-                return InteractionResult.FAIL;
-            }
-            
-            // Capture the drake into the binder
-            ItemStack newStack = captureDrake(stack, drake, player);
-            
-            // Replace the item in the player's hand
-            if (hand == InteractionHand.MAIN_HAND) {
-                player.getInventory().setItem(player.getInventory().selected, newStack);
-            } else {
-                player.getInventory().offhand.set(0, newStack);
-            }
-            
-            return InteractionResult.SUCCESS;
-        }
-        
-        return super.interactLivingEntity(stack, player, target, hand);
+    protected Class<Stegonaut> getDragonClass() {
+        return Stegonaut.class;
     }
-    
+
     @Override
-    public @NotNull InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
-        Player player = context.getPlayer();
-        ItemStack stack = context.getItemInHand();
-        
-        if (player != null && isBound(stack)) {
-            // Release the drake at the clicked location
-            return releaseDrake(stack, player, context.getClickedPos())
-                    ? InteractionResult.SUCCESS
-                    : InteractionResult.FAIL;
-        }
-        
-        return super.useOn(context);
+    protected Stegonaut createDragon(ServerLevel level) {
+        return new Stegonaut(ModEntities.STEGONAUT.get(), level);
     }
-    
+
     @Override
-    public net.minecraft.world.@NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, Player player, @NotNull InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        
-        if (isBound(stack)) {
-            // Don't allow releasing drakes by right-clicking in air
-            // Only allow release via useOn (right-clicking on blocks)
-            return net.minecraft.world.InteractionResultHolder.pass(stack);
-        }
-        
-        return super.use(level, player, hand);
+    protected boolean canBind(Stegonaut dragon) {
+        return dragon.canBeBound();
     }
-    
-    /**
-     * Capture a drake into this binder (Pokeball style)
-     */
-    private ItemStack captureDrake(ItemStack stack, Stegonaut drake, Player player) {
-        // Create a new item stack with the modified data
-        ItemStack newStack = stack.copy();
-        CompoundTag tag = newStack.getOrCreateTag();
-        
-        // Store drake data
-        tag.putUUID(BOUND_DRAGON_UUID, drake.getUUID());
-        tag.putString(BOUND_DRAGON_NAME, drake.getName().getString());
 
-        // Store custom name if present
-        if (drake.hasCustomName()) {
-            Component customName = drake.getCustomName();
-            if (customName != null) {
-                tag.putString(BOUND_CUSTOM_NAME, Component.Serializer.toJson(customName));
-            } else {
-                tag.remove(BOUND_CUSTOM_NAME);
-            }
-        } else {
-            tag.remove(BOUND_CUSTOM_NAME);
-        }
-        tag.putBoolean(IS_BOUND, true);
-
-        // Store owner data
-        LivingEntity owner = drake.getOwner();
-        if (owner instanceof Player ownerPlayer) {
-            tag.putUUID(BOUND_OWNER_UUID, ownerPlayer.getUUID());
-            tag.putString(BOUND_OWNER_NAME, ownerPlayer.getName().getString());
-        } else {
-            tag.remove(BOUND_OWNER_UUID);
-            tag.remove(BOUND_OWNER_NAME);
-        }
-
-        // Store drake's current state
-        CompoundTag drakeData = new CompoundTag();
-        drake.setBoundInBinder(true);
-        drake.addAdditionalSaveData(drakeData);
-        tag.put(DRAGON_DATA_KEY, drakeData);
-        
-        // Set the tag on the new stack
-        newStack.setTag(tag);
-
-        if (player.level() instanceof ServerLevel serverLevel) {
-            DragonCodexSavedData.get(serverLevel).updateDragonBoundState(player.getUUID(), drake.getUUID(), true);
-        }
-
-        // Remove the drake from the world
-        drake.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
-        
-        // Send success message
-        player.displayClientMessage(
-            Component.translatable("saintsdragons.message.stegonaut_captured", drake.getName().getString()),
-            true
-        );
-        
-        return newStack;
+    @Override
+    protected String getDragonDataKey() {
+        return DRAGON_DATA_KEY;
     }
-    
-    /**
-     * Release the drake from this binder (Pokeball style)
-     */
-    private boolean releaseDrake(ItemStack stack, Player player, net.minecraft.core.BlockPos pos) {
-        CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains(BOUND_DRAGON_UUID)) {
-            return false;
-        }
-        
-        String drakeName = tag.getString(BOUND_DRAGON_NAME);
-        UUID ownerUUID = tag.hasUUID(BOUND_OWNER_UUID) ? tag.getUUID(BOUND_OWNER_UUID) : null;
-        
-        if (ownerUUID != null && !player.getUUID().equals(ownerUUID)) {
-            player.displayClientMessage(
-                Component.translatable("saintsdragons.message.not_dragon_owner"),
-                true
-            );
-            return false;
-        }
-        
-        if (!(player.level() instanceof ServerLevel serverLevel)) {
-            return false;
-        }
 
-        UUID originalUUID = tag.getUUID(BOUND_DRAGON_UUID);
-
-        Stegonaut newDrake = new Stegonaut(
-            com.leon.saintsdragons.common.registry.ModEntities.STEGONAUT.get(),
-            serverLevel
-        );
-
-        // Restore drake data with error handling
-        if (tag.contains(DRAGON_DATA_KEY)) {
-            try {
-                CompoundTag drakeData = tag.getCompound(DRAGON_DATA_KEY);
-                newDrake.readAdditionalSaveData(drakeData);
-                newDrake.setBoundInBinder(false);
-            } catch (Exception e) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.binder_data_corrupted"),
-                    true
-                );
-                return false;
-            }
-        }
-
-        // Preserve original UUID to maintain references
-        newDrake.setUUID(originalUUID);
-
-        // Set position
-        newDrake.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
-
-        // Restore owner even if they're offline
-        if (ownerUUID != null) {
-            newDrake.setTame(true);
-            newDrake.setOwnerUUID(ownerUUID);
-        } else {
-            newDrake.tame(player);
-        }
-
-        // Restore custom name with error handling
-        if (tag.contains(BOUND_CUSTOM_NAME)) {
-            try {
-                Component customName = Component.Serializer.fromJson(tag.getString(BOUND_CUSTOM_NAME));
-                if (customName != null) {
-                    newDrake.setCustomName(customName);
-                }
-            } catch (Exception e) {
-                // If custom name is corrupted, just skip it
-            }
-        }
-
-        // Spawn the drake
-        serverLevel.addFreshEntity(newDrake);
-        DragonCodexSavedData.get(serverLevel).updateDragonBoundState(
-                ownerUUID != null ? ownerUUID : player.getUUID(),
-                originalUUID,
-                false
-        );
-
-        // Clear binder data
-        tag.remove(BOUND_DRAGON_UUID);
-        tag.remove(BOUND_DRAGON_NAME);
-        tag.remove(BOUND_OWNER_UUID);
-        tag.remove(BOUND_OWNER_NAME);
-        tag.remove(BOUND_CUSTOM_NAME);
-        tag.remove(DRAGON_DATA_KEY);
-        tag.putBoolean(IS_BOUND, false);
-
-        // Send success message
-        player.displayClientMessage(
-            Component.translatable("saintsdragons.message.stegonaut_released", drakeName),
-            true
-        );
-        return true;
+    @Override
+    protected String getReleaseNotOwnerMessageKey() {
+        return "saintsdragons.message.not_dragon_owner";
     }
-    
-    /**
-     * Check if this binder has a drake bound to it
-     */
+
+    @Override
+    protected String getTooltipDescriptionKey() {
+        return "saintsdragons.tooltip.stegonaut_binder.description";
+    }
+
+    @Override
+    protected boolean shouldShowReleaseTooltipWhenBound() {
+        return false;
+    }
+
+    @Override
+    protected void appendExtraBoundTooltip(@NotNull List<Component> tooltip, @Nullable String dragonName) {
+        tooltip.add(Component.translatable("saintsdragons.tooltip.stegonaut_binder.bound_desc"));
+    }
+
     public static boolean isBound(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.getBoolean(IS_BOUND);
+        return BinderComponentUtil.isBound(stack);
     }
-    
-    /**
-     * Get the UUID of the bound drake
-     */
+
     @Nullable
     public static UUID getBoundDrakeUUID(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains(BOUND_DRAGON_UUID)) {
-            return tag.getUUID(BOUND_DRAGON_UUID);
-        }
-        return null;
+        return BinderComponentUtil.getBoundDragonUuid(stack);
     }
-    
-    /**
-     * Get the name of the bound drake
-     */
+
     @Nullable
     public static String getBoundDrakeName(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains(BOUND_DRAGON_NAME)) {
-            return tag.getString(BOUND_DRAGON_NAME);
-        }
-        return null;
-    }
-    
-    
-    @Override
-    @Environment(EnvType.CLIENT)
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("saintsdragons.tooltip.stegonaut_binder.description"));
-        if (isBound(stack)) {
-            String drakeName = getBoundDrakeName(stack);
-            if (drakeName != null) {
-                tooltip.add(Component.translatable("saintsdragons.tooltip.stegonaut_binder.bound", drakeName));
-                tooltip.add(Component.translatable("saintsdragons.tooltip.stegonaut_binder.bound_desc"));
-            }
-        } else {
-            tooltip.add(Component.translatable("saintsdragons.tooltip.stegonaut_binder.empty"));
-            tooltip.add(Component.translatable("saintsdragons.tooltip.stegonaut_binder.right_click_to_release"));
-        }
-    }
-    
-    @Override
-    public boolean isFoil(@NotNull ItemStack stack) {
-        // Make bound binders have enchantment glint
-        return isBound(stack);
+        return BinderComponentUtil.getBoundDragonName(stack);
     }
 
     @Override
-    public void onDestroyed(@NotNull ItemEntity itemEntity) {
-        BinderComponentUtil.handleDestroyedBoundBinder(itemEntity);
-        super.onDestroyed(itemEntity);
+    @Environment(EnvType.CLIENT)
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip,
+                                @NotNull TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
     }
 }

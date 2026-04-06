@@ -23,6 +23,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
+import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
@@ -1631,6 +1632,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        boolean canRecover = canRecoverTakeoffFromFall();
 
         if (inWater) {
             setGoingUp(goingUp);
@@ -1644,20 +1646,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             return;
         }
 
-
-        if (inWater) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-            return;
-        }
-
-        if (locked) {
-            setGoingUp(false);
+        if (goingUp && canRecover) {
+            setGoingUp(true);
             setGoingDown(false);
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
             return;
         }
 
-        if (this.isFlying()) {
+        if (this.isFlying() || canRecover) {
             setGoingUp(goingUp);
             setGoingDown(goingDown);
         } else {
@@ -1685,7 +1681,47 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     protected void onRiderTakeoffRequest(Player player) {
+        if (canRecoverTakeoffFromFall()) {
+            setGoingUp(true);
+            setGoingDown(false);
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
         requestRiderTakeoff();
+    }
+
+    public boolean isFallingForAnimation() {
+        return DragonRiderFallRecovery.isFallingForAnimation(
+                isVehicle(),
+                isFlying(),
+                isTakeoff(),
+                isLanding(),
+                isHovering(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                this.fallDistance,
+                getDeltaMovement()
+        );
+    }
+
+    private boolean canRecoverTakeoffFromFall() {
+        return DragonRiderFallRecovery.canRecoverTakeoffFromFall(
+                isTame(),
+                isVehicle(),
+                isAlive(),
+                isBaby(),
+                isFlying(),
+                isTakeoff(),
+                isLanding(),
+                isHovering(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                false,
+                this.fallDistance,
+                getDeltaMovement()
+        );
     }
 
     @Override

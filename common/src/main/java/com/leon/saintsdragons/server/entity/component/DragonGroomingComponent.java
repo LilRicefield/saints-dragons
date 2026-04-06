@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -87,6 +88,10 @@ public final class DragonGroomingComponent {
         }
         if (dragon instanceof Stegonaut) {
             return new GroomingProfile(0.30F, ModItems.STEGONAUT_SCALE.get(), 1, 2);
+        }
+        if (dragon instanceof Volitans volitans) {
+            float dropChance = (float) volitans.getConfiguredExtra("scale_drop_chance_brush", 0.30D);
+            return new GroomingProfile(dropChance, ModItems.VOLITANS_SCALE.get(), 1, 2);
         }
         return new GroomingProfile(0.25F, Items.SCUTE, 1, 1);
     }

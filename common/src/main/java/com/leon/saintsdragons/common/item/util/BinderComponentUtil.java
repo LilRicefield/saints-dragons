@@ -1,11 +1,6 @@
 package com.leon.saintsdragons.common.item.util;
 
-import com.leon.saintsdragons.common.item.CindervaneBinderItem;
-import com.leon.saintsdragons.common.item.IgnivorusBinderItem;
-import com.leon.saintsdragons.common.item.VarasuchusBinderItem;
-import com.leon.saintsdragons.common.item.RaevyxBinderItem;
-import com.leon.saintsdragons.common.item.StegonautBinderItem;
-import com.leon.saintsdragons.common.item.VolitansBinderItem;
+import com.leon.saintsdragons.common.item.AbstractDragonBinderItem;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,34 +10,48 @@ import net.minecraft.world.item.ItemStack;
 import java.util.UUID;
 
 public final class BinderComponentUtil {
-    private static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
+    public static final String BOUND_DRAGON_UUID = "BoundDragonUUID";
+    public static final String BOUND_DRAGON_NAME = "BoundDragonName";
+    public static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
+    public static final String BOUND_OWNER_NAME = "BoundOwnerName";
+    public static final String BOUND_CUSTOM_NAME = "BoundCustomName";
+    public static final String IS_BOUND = "IsBound";
 
     private BinderComponentUtil() {
     }
 
     public static UUID getBoundDragonUuid(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
+        if (!isBinderStack(stack) || !isBound(stack)) {
             return null;
         }
-        if (stack.getItem() instanceof RaevyxBinderItem) {
-            return RaevyxBinderItem.getBoundDragonUUID(stack);
+        var tag = stack.getTag();
+        if (tag == null || !tag.hasUUID(BOUND_DRAGON_UUID)) {
+            return null;
         }
-        if (stack.getItem() instanceof CindervaneBinderItem) {
-            return CindervaneBinderItem.getBoundAmphithereUUID(stack);
+        return tag.getUUID(BOUND_DRAGON_UUID);
+    }
+
+    public static String getBoundDragonName(ItemStack stack) {
+        if (!isBinderStack(stack) || !isBound(stack)) {
+            return null;
         }
-        if (stack.getItem() instanceof VarasuchusBinderItem) {
-            return VarasuchusBinderItem.getBoundRiftDrakeUUID(stack);
+        var tag = stack.getTag();
+        if (tag == null || !tag.contains(BOUND_DRAGON_NAME)) {
+            return null;
         }
-        if (stack.getItem() instanceof IgnivorusBinderItem) {
-            return IgnivorusBinderItem.getBoundIgnivorusUUID(stack);
+        return tag.getString(BOUND_DRAGON_NAME);
+    }
+
+    public static boolean isBound(ItemStack stack) {
+        if (!isBinderStack(stack)) {
+            return false;
         }
-        if (stack.getItem() instanceof StegonautBinderItem) {
-            return StegonautBinderItem.getBoundDrakeUUID(stack);
-        }
-        if (stack.getItem() instanceof VolitansBinderItem) {
-            return VolitansBinderItem.getBoundVolitansUUID(stack);
-        }
-        return null;
+        var tag = stack.getTag();
+        return tag != null && tag.getBoolean(IS_BOUND);
+    }
+
+    public static boolean isBinderStack(ItemStack stack) {
+        return stack != null && !stack.isEmpty() && stack.getItem() instanceof AbstractDragonBinderItem<?>;
     }
 
     public static boolean containsDragonUuid(ItemStack stack, UUID dragonId) {
@@ -85,7 +94,7 @@ public final class BinderComponentUtil {
     }
 
     public static UUID getBoundOwnerUuid(ItemStack stack) {
-        if (stack == null || stack.isEmpty() || !stack.hasTag()) {
+        if (!isBinderStack(stack) || !stack.hasTag()) {
             return null;
         }
         var tag = stack.getTag();
@@ -109,6 +118,10 @@ public final class BinderComponentUtil {
         }
 
         ItemStack stack = itemEntity.getItem();
+        if (!isBound(stack)) {
+            return;
+        }
+
         UUID dragonId = getBoundDragonUuid(stack);
         if (dragonId == null) {
             return;

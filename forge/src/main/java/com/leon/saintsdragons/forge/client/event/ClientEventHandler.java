@@ -7,6 +7,7 @@ import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundContro
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.forge.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -403,6 +404,10 @@ public class ClientEventHandler {
         }
 
         // Screen shake detection and application
+        if (!SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()) {
+            return;
+        }
+
         double shakeDistanceScale = 64.0;
         double distance = Double.MAX_VALUE;
         // Screen shake system

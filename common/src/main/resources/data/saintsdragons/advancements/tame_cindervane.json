@@ -2,7 +2,7 @@
   "parent": "minecraft:husbandry/tame_an_animal",
   "display": {
     "icon": {
-      "item": "minecraft:magma_block"
+      "item": "saintsdragons:cindervane_binder"
     },
     "title": {
       "translate": "advancement.saintsdragons.tame_cindervane.title"

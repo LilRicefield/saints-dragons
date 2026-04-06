@@ -103,6 +103,9 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "ignivorusSpawnWeight" -> () -> holder().getConfig().ignivorusSpawnWeight;
             case "ignivorusMinGroupSize" -> () -> holder().getConfig().ignivorusMinGroupSize;
             case "ignivorusMaxGroupSize" -> () -> holder().getConfig().ignivorusMaxGroupSize;
+            case "volitansSpawnWeight" -> () -> holder().getConfig().volitansSpawnWeight;
+            case "volitansMinGroupSize" -> () -> holder().getConfig().volitansMinGroupSize;
+            case "volitansMaxGroupSize" -> () -> holder().getConfig().volitansMaxGroupSize;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -114,6 +117,8 @@ final class FabricClothConfigHelper implements ConfigHelper {
         return switch (key) {
             case "cindervaneEggBlockWorldgen" -> () -> holder().getConfig().cindervaneEggBlockWorldgen;
             case "varasuchusEggBlockWorldgen" -> () -> holder().getConfig().varasuchusEggBlockWorldgen;
+            case "dragonGriefingEnabled" -> () -> holder().getConfig().dragonGriefingEnabled;
+            case "screenShakeEnabled" -> () -> holder().getConfig().screenShakeEnabled;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -125,6 +130,8 @@ final class FabricClothConfigHelper implements ConfigHelper {
         return switch (key) {
             case "cindervaneEggBlockWorldgen" -> value -> holder().getConfig().cindervaneEggBlockWorldgen = value;
             case "varasuchusEggBlockWorldgen" -> value -> holder().getConfig().varasuchusEggBlockWorldgen = value;
+            case "dragonGriefingEnabled" -> value -> holder().getConfig().dragonGriefingEnabled = value;
+            case "screenShakeEnabled" -> value -> holder().getConfig().screenShakeEnabled = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
         };
     }
@@ -141,6 +148,8 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "varasuchusExcludedBiomes" -> () -> holder().getConfig().varasuchusExcludedBiomes;
             case "ignivorusAdditionalBiomes" -> () -> holder().getConfig().ignivorusAdditionalBiomes;
             case "ignivorusExcludedBiomes" -> () -> holder().getConfig().ignivorusExcludedBiomes;
+            case "volitansAdditionalBiomes" -> () -> holder().getConfig().volitansAdditionalBiomes;
+            case "volitansExcludedBiomes" -> () -> holder().getConfig().volitansExcludedBiomes;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config list key '{}'; using default", key);
                 yield () -> defaultValue;

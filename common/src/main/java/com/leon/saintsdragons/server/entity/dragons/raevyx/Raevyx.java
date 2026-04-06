@@ -36,6 +36,7 @@ import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityS
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
+import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -238,10 +239,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
     private static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     private static final int RIDER_WATER_SCAN_RADIUS = 2;
-    private static final float FALL_ANIMATION_MIN_BLOCKS = 1.0F;
-    private static final float FALL_RECOVERY_MIN_BLOCKS = 1.0F;
-    private static final double FALL_ANIMATION_MIN_DESCENT = -0.12D;
-    private static final double FALL_RECOVERY_MIN_DESCENT = -0.08D;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
@@ -1480,28 +1477,37 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     public boolean isFallingForAnimation() {
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
-            return false;
-        }
-        if (onGround() || isInWaterOrBubble() || isInLava()) {
-            return false;
-        }
-        return this.fallDistance >= FALL_ANIMATION_MIN_BLOCKS
-                && getDeltaMovement().y <= FALL_ANIMATION_MIN_DESCENT;
+        return DragonRiderFallRecovery.isFallingForAnimation(
+                isVehicle(),
+                isFlying(),
+                isTakeoff(),
+                isLanding(),
+                isHovering(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                this.fallDistance,
+                getDeltaMovement()
+        );
     }
 
     private boolean canRecoverTakeoffFromFall() {
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
-            return false;
-        }
-        if (!isTame() || !isVehicle() || !isAlive() || isBaby()) {
-            return false;
-        }
-        if (onGround() || isInWaterOrBubble() || isInLava() || isGroundRending()) {
-            return false;
-        }
-        return this.fallDistance >= FALL_RECOVERY_MIN_BLOCKS
-                || getDeltaMovement().y <= FALL_RECOVERY_MIN_DESCENT;
+        return DragonRiderFallRecovery.canRecoverTakeoffFromFall(
+                isTame(),
+                isVehicle(),
+                isAlive(),
+                isBaby(),
+                isFlying(),
+                isTakeoff(),
+                isLanding(),
+                isHovering(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                isGroundRending(),
+                this.fallDistance,
+                getDeltaMovement()
+        );
     }
 
     @Override

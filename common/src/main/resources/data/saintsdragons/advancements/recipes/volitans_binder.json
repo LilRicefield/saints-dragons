@@ -1,0 +1,40 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_volitans_scale": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:volitans_scale"
+            ]
+          }
+        ]
+      }
+    },
+    "has_volitans_spine": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:volitans_spine"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_volitans_scale",
+      "has_volitans_spine"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:volitans_binder"
+    ]
+  }
+}

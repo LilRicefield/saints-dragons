@@ -11,10 +11,10 @@
     },
     "S": {
       "item": "saintsdragons:volitans_spine"
-    },
+    }
+  },
     "result": {
-      "item": "saintsdragons:varasuchus_binder",
+      "item": "saintsdragons:volitans_binder",
       "count": 1
     }
-  }
 }

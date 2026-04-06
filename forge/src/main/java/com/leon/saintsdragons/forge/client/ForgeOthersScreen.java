@@ -28,6 +28,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                 val -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(val),
                 SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED::save
         ));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.screen_shake"),
+                () -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get(),
+                val -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.set(val),
+                SaintsDragonsConfig.SCREEN_SHAKE_ENABLED::save
+        ));
 
         // Ivy the Dragon Merchant
         entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));
@@ -42,6 +48,7 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
     @Override
     protected void onSave() {
         SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
+        SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
         ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
     }
 }

@@ -20,6 +20,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.ignivorus.landed");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.ignivorus.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.ignivorus.glide_down");
+    private static final RawAnimation FALLING = RawAnimation.begin().thenLoop("animation.ignivorus.falling");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.flap");
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.ignivorus.sprint_flap");
     private static final RawAnimation FLY_IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.fly_idle");
@@ -134,6 +135,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
         if (!dragon.isFlying() && dragon.isInWaterOrBubble()) {
             state.setAndContinue(SWIM);
+            return PlayState.CONTINUE;
+        }
+
+        if (dragon.isFallingForAnimation()) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(FALLING);
             return PlayState.CONTINUE;
         }
 

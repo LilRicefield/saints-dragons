@@ -388,7 +388,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
 
     @Override
     public int getDeathAnimationDurationTicks() {
-        return 41;
+        return 43;
     }
 
     @Override

@@ -217,6 +217,10 @@ public final class SaintsDragonsForge {
                     varasuchus.applyConfiguredAttributes();
                 } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
                     ignivorus.applyConfiguredAttributes();
+                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans volitans) {
+                    volitans.applyConfiguredAttributes();
+                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut stegonaut) {
+                    stegonaut.applyConfiguredAttributes();
                 }
             }
         }

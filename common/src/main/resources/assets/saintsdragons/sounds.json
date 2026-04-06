@@ -957,9 +957,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_walk",
-        "volume": 2.5,
+        "volume": 1.5,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 40
       }
     ]
   },
@@ -970,7 +970,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_enter",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 40
       }
     ]
   },
@@ -979,9 +979,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_walk",
-        "volume": 2.5,
+        "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 40
       }
     ]
   },
@@ -992,7 +992,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_run",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 40
       }
     ]
   },
@@ -1001,9 +1001,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_run",
-        "volume": 1.0,
+        "volume": 2.5,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 40
       }
     ]
   },
@@ -1024,7 +1024,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_die",
         "volume": 1.7,
         "pitch": 1,
-        "attenuation_distance": 16
+        "attenuation_distance": 40
       }
     ]
   },

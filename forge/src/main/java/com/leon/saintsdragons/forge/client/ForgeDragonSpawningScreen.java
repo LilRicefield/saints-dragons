@@ -15,7 +15,8 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
         STEGONAUT,
         CINDERVANE,
         VARASUCHUS,
-        IGNIVORUS
+        IGNIVORUS,
+        VOLITANS
     }
 
     private Section section = Section.RAEVYX;
@@ -33,12 +34,13 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             case CINDERVANE -> addCindervaneEntries(entries);
             case VARASUCHUS -> addVarasuchusEntries(entries);
             case IGNIVORUS -> addIgnivorusEntries(entries);
+            case VOLITANS -> addVolitansEntries(entries);
         }
     }
 
     @Override
     protected void addHeaderButtons() {
-        int buttonWidth = Math.min(90, (width - 50) / 3);
+        int buttonWidth = Math.min(90, (width - 60) / 3);
         int spacing = 6;
         int totalTopWidth = buttonWidth * 3 + spacing * 2;
         int startTopX = (width - totalTopWidth) / 2;
@@ -65,7 +67,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startTopX + (buttonWidth + spacing) * 2, yTop, buttonWidth, 20).build());
 
-        int totalBottomWidth = buttonWidth * 2 + spacing;
+        int totalBottomWidth = buttonWidth * 3 + spacing * 2;
         int startBottomX = (width - totalBottomWidth) / 2;
         int yBottom = yTop + 24;
 
@@ -82,6 +84,13 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 rebuildWidgets();
             }
         }).bounds(startBottomX + (buttonWidth + spacing), yBottom, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.volitans"), button -> {
+            if (section != Section.VOLITANS) {
+                section = Section.VOLITANS;
+                rebuildWidgets();
+            }
+        }).bounds(startBottomX + (buttonWidth + spacing) * 2, yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
@@ -233,6 +242,31 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES::save));
     }
 
+    private void addVolitansEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.volitans")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
+                SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT::get,
+                SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT::set,
+                SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.min_group"),
+                SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE::get,
+                SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE::set,
+                SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.max_group"),
+                SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE::get,
+                SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE::set,
+                SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.additional_biomes"),
+                SaintsDragonsConfig.VOLITANS_ADDITIONAL_BIOMES::get,
+                SaintsDragonsConfig.VOLITANS_ADDITIONAL_BIOMES::set,
+                SaintsDragonsConfig.VOLITANS_ADDITIONAL_BIOMES::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.excluded_biomes"),
+                SaintsDragonsConfig.VOLITANS_EXCLUDED_BIOMES::get,
+                SaintsDragonsConfig.VOLITANS_EXCLUDED_BIOMES::set,
+                SaintsDragonsConfig.VOLITANS_EXCLUDED_BIOMES::save));
+    }
+
     private void resetSection() {
         switch (section) {
             case RAEVYX -> {
@@ -298,6 +332,18 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.save();
                 SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES.save();
                 SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES.save();
+            }
+            case VOLITANS -> {
+                SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.set(SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT_DEFAULT);
+                SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE.set(SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE.set(SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.VOLITANS_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.VOLITANS_EXCLUDED_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.save();
+                SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE.save();
+                SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE.save();
+                SaintsDragonsConfig.VOLITANS_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.VOLITANS_EXCLUDED_BIOMES.save();
             }
         }
     }

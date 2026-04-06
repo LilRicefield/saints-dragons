@@ -2,327 +2,57 @@ package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.item.util.BinderComponentUtil;
 import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.Level;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.UUID;
 
-/**
- * Item used to bind an Amphithere for portable convenience.
- * Right-click on a tamed amphithere to bind it to this item.
- * While carrying a bound amphithere binder, the player can release the amphithere.
- */
-public class CindervaneBinderItem extends Item {
+public class CindervaneBinderItem extends AbstractDragonBinderItem<Cindervane> {
 
-    // NBT keys for storing bound dragon data
-    private static final String BOUND_DRAGON_UUID = "BoundDragonUUID";
-    private static final String BOUND_DRAGON_NAME = "BoundDragonName";
-    private static final String BOUND_OWNER_UUID = "BoundOwnerUUID";
-    private static final String BOUND_OWNER_NAME = "BoundOwnerName";
-    private static final String BOUND_CUSTOM_NAME = "BoundCustomName";
     private static final String DRAGON_DATA_KEY = "CindervaneData";
-    private static final String IS_BOUND = "IsBound";
 
     public CindervaneBinderItem(Properties properties) {
         super(properties);
     }
 
     @Override
-    public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
-        if (target instanceof Cindervane amphithere) {
-            // Check if player owns the amphithere
-            if (!amphithere.isTame() || !amphithere.isOwnedBy(player)) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.not_dragon_owner"),
-                    true);
-                return InteractionResult.FAIL;
-            }
-
-            // Check if amphithere can be captured (not flying, not dying, etc.)
-            if (!amphithere.canBeBound()) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.dragon_cannot_be_captured"),
-                    true);
-                return InteractionResult.FAIL;
-            }
-
-            // Check if binder is already occupied
-            if (isBound(stack)) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.binder_already_occupied"),
-                    true);
-                return InteractionResult.FAIL;
-            }
-
-            // Capture the amphithere into the binder
-            ItemStack newStack = captureAmphithere(stack, amphithere, player);
-
-            // Replace the item in the player's hand
-            if (hand == InteractionHand.MAIN_HAND) {
-                player.getInventory().setItem(player.getInventory().selected, newStack);
-            } else {
-                player.getInventory().setItem(40, newStack); // Off-hand slot
-            }
-
-            return InteractionResult.SUCCESS;
-        }
-
-        return InteractionResult.PASS;
+    protected Class<Cindervane> getDragonClass() {
+        return Cindervane.class;
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        if (isBound(stack)) {
-            return InteractionResultHolder.pass(stack);
-        }
-
-        return super.use(level, player, hand);
+    protected Cindervane createDragon(ServerLevel level) {
+        return new Cindervane(ModEntities.CINDERVANE.get(), level);
     }
 
     @Override
-    public @NotNull InteractionResult useOn(@NotNull UseOnContext context) {
-        Player player = context.getPlayer();
-        ItemStack stack = context.getItemInHand();
-
-        if (player != null && isBound(stack)) {
-            return releaseAmphithere(stack, player, context.getClickedPos())
-                ? InteractionResult.SUCCESS
-                : InteractionResult.FAIL;
-        }
-
-        return super.useOn(context);
+    protected boolean canBind(Cindervane dragon) {
+        return dragon.canBeBound();
     }
 
-    /**
-     * Capture an amphithere into this binder (Pokeball style)
-     */
-    private ItemStack captureAmphithere(ItemStack stack, Cindervane amphithere, Player player) {
-        // Create a new item stack with the modified data
-        ItemStack newStack = stack.copy();
-        CompoundTag tag = newStack.getOrCreateTag();
-
-        // Store amphithere UUID (preserved on release)
-        tag.putUUID(BOUND_DRAGON_UUID, amphithere.getUUID());
-        tag.putString(BOUND_DRAGON_NAME, amphithere.getName().getString());
-
-        // Store custom name if present
-        if (amphithere.hasCustomName()) {
-            Component customName = amphithere.getCustomName();
-            if (customName != null) {
-                tag.putString(BOUND_CUSTOM_NAME, Component.Serializer.toJson(customName));
-            } else {
-                tag.remove(BOUND_CUSTOM_NAME);
-            }
-        } else {
-            tag.remove(BOUND_CUSTOM_NAME);
-        }
-        tag.putBoolean(IS_BOUND, true);
-
-        // Store owner data
-        LivingEntity owner = amphithere.getOwner();
-        if (owner instanceof Player ownerPlayer) {
-            tag.putUUID(BOUND_OWNER_UUID, ownerPlayer.getUUID());
-            tag.putString(BOUND_OWNER_NAME, ownerPlayer.getName().getString());
-        } else {
-            tag.remove(BOUND_OWNER_UUID);
-            tag.remove(BOUND_OWNER_NAME);
-        }
-
-        // Store amphithere's current state
-        CompoundTag amphithereData = new CompoundTag();
-        amphithere.setBoundInBinder(true);
-        amphithere.addAdditionalSaveData(amphithereData);
-        tag.put(DRAGON_DATA_KEY, amphithereData);
-
-        // Set the tag on the new stack
-        newStack.setTag(tag);
-
-        if (player.level() instanceof ServerLevel serverLevel) {
-            DragonCodexSavedData.get(serverLevel).updateDragonBoundState(player.getUUID(), amphithere.getUUID(), true);
-        }
-
-        // Remove the amphithere from the world
-        amphithere.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
-
-        // Send success message
-        player.displayClientMessage(
-            Component.translatable("saintsdragons.message.cindervane_captured", amphithere.getName().getString()),
-            true
-        );
-
-        return newStack;
+    @Override
+    protected String getDragonDataKey() {
+        return DRAGON_DATA_KEY;
     }
 
-    /**
-     * Release the bound amphithere from this binder
-     */
-    private boolean releaseAmphithere(ItemStack stack, Player player, BlockPos pos) {
-        CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.contains(BOUND_DRAGON_UUID)) {
-            return false;
-        }
-
-        UUID ownerUUID = tag.contains(BOUND_OWNER_UUID) ? tag.getUUID(BOUND_OWNER_UUID) : null;
-        if (ownerUUID != null && !player.getUUID().equals(ownerUUID)) {
-            player.displayClientMessage(
-                Component.translatable("saintsdragons.message.cannot_release_others_dragon"),
-                true
-            );
-            return false;
-        }
-
-        if (!(player.level() instanceof ServerLevel serverLevel)) {
-            return false;
-        }
-
-        String amphithereName = tag.getString(BOUND_DRAGON_NAME);
-        UUID originalUUID = tag.getUUID(BOUND_DRAGON_UUID);
-
-        Cindervane newAmphithere = new Cindervane(
-            ModEntities.CINDERVANE.get(),
-            serverLevel
-        );
-
-        // Restore dragon data with error handling
-        if (tag.contains(DRAGON_DATA_KEY)) {
-            try {
-                CompoundTag amphithereData = tag.getCompound(DRAGON_DATA_KEY);
-                newAmphithere.readAdditionalSaveData(amphithereData);
-                newAmphithere.setBoundInBinder(false);
-            } catch (Exception e) {
-                player.displayClientMessage(
-                    Component.translatable("saintsdragons.message.binder_data_corrupted"),
-                    true
-                );
-                return false;
-            }
-        }
-
-        // Preserve original UUID to maintain references
-        newAmphithere.setUUID(originalUUID);
-
-        newAmphithere.setPos(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5);
-
-        // Restore owner even if they're offline
-        if (ownerUUID != null) {
-            newAmphithere.setTame(true);
-            newAmphithere.setOwnerUUID(ownerUUID);
-        } else {
-            newAmphithere.tame(player);
-        }
-
-        // Restore custom name with error handling
-        if (tag.contains(BOUND_CUSTOM_NAME)) {
-            try {
-                Component customName = Component.Serializer.fromJson(tag.getString(BOUND_CUSTOM_NAME));
-                if (customName != null) {
-                    newAmphithere.setCustomName(customName);
-                }
-            } catch (Exception e) {
-                // If custom name is corrupted, just skip it
-            }
-        }
-
-        serverLevel.addFreshEntity(newAmphithere);
-        DragonCodexSavedData.get(serverLevel).updateDragonBoundState(
-                ownerUUID != null ? ownerUUID : player.getUUID(),
-                originalUUID,
-                false
-        );
-
-        tag.remove(BOUND_DRAGON_UUID);
-        tag.remove(BOUND_DRAGON_NAME);
-        tag.remove(BOUND_OWNER_UUID);
-        tag.remove(BOUND_OWNER_NAME);
-        tag.remove(BOUND_CUSTOM_NAME);
-        tag.remove(DRAGON_DATA_KEY);
-        tag.putBoolean(IS_BOUND, false);
-
-        player.displayClientMessage(
-            Component.translatable("saintsdragons.message.cindervane_released", amphithereName),
-            true
-        );
-        return true;
+    @Override
+    protected String getTooltipDescriptionKey() {
+        return "saintsdragons.tooltip.cindervane_binder.description";
     }
 
-    /**
-     * Check if this binder has an amphithere bound to it
-     */
     public static boolean isBound(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.getBoolean(IS_BOUND);
+        return BinderComponentUtil.isBound(stack);
     }
 
-    /**
-     * Get the UUID of the bound amphithere
-     */
     @Nullable
     public static UUID getBoundAmphithereUUID(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains(BOUND_DRAGON_UUID)) {
-            return tag.getUUID(BOUND_DRAGON_UUID);
-        }
-        return null;
+        return BinderComponentUtil.getBoundDragonUuid(stack);
     }
 
-    /**
-     * Get the name of the bound amphithere
-     */
     @Nullable
     public static String getBoundAmphithereName(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains(BOUND_DRAGON_NAME)) {
-            return tag.getString(BOUND_DRAGON_NAME);
-        }
-        return null;
-    }
-
-    @Override
-    @Environment(EnvType.CLIENT)
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("saintsdragons.tooltip.cindervane_binder.description"));
-        if (isBound(stack)) {
-            String amphithereName = getBoundAmphithereName(stack);
-            if (amphithereName != null) {
-                tooltip.add(Component.translatable("saintsdragons.tooltip.cindervane_binder.bound", amphithereName));
-            }
-            tooltip.add(Component.translatable("saintsdragons.tooltip.cindervane_binder.right_click_to_release"));
-        } else {
-            tooltip.add(Component.translatable("saintsdragons.tooltip.cindervane_binder.empty"));
-            tooltip.add(Component.translatable("saintsdragons.tooltip.cindervane_binder.right_click_cindervane_to_bind"));
-        }
-    }
-
-    @Override
-    public boolean isFoil(@NotNull ItemStack stack) {
-        return isBound(stack);
-    }
-
-    @Override
-    public void onDestroyed(@NotNull ItemEntity itemEntity) {
-        BinderComponentUtil.handleDestroyedBoundBinder(itemEntity);
-        super.onDestroyed(itemEntity);
+        return BinderComponentUtil.getBoundDragonName(stack);
     }
 }

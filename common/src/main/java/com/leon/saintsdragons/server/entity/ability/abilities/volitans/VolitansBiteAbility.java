@@ -7,8 +7,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -121,11 +119,7 @@ public class VolitansBiteAbility extends DragonAbility<Volitans> {
         Volitans dragon = getUser();
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
 
-        float damage = BASE_DAMAGE;
-        AttributeInstance attack = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (attack != null && attack.getValue() > 0.0) {
-            damage = (float) attack.getValue();
-        }
+        float damage = dragon.getConfiguredAbilityDamage("bite", BASE_DAMAGE);
         damage *= dragon.getHungerMeleeDamageMultiplier();
 
         target.hurt(source, damage);

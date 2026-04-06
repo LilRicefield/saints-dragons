@@ -29,16 +29,12 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-/**
- * Secondary melee for Ignivorus: a ground-only body slam that locks rider controls briefly,
- * then damages and knocks back everything overlapping the dragon's hitbox.
- */
 public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
-    private static final int STARTUP_TICKS = 15; // ~0.75s
-    private static final int ACTIVE_TICKS = 6;
+    private static final int STARTUP_TICKS = 15;
+    private static final int ACTIVE_TICKS = 7;
     private static final int RECOVERY_TICKS = 8;
-    private static final int CONTROL_LOCK_TICKS = 29; // ~1.46s
-    private static final int COOLDOWN_TICKS = 10;
+    private static final int CONTROL_LOCK_TICKS = 29;
+    private static final int COOLDOWN_TICKS = 20;
 
     private static final float BASE_DAMAGE = 40.0f;
     private static final double PUSH_STRENGTH = 1.1D;

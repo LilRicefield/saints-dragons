@@ -29,6 +29,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
+import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
@@ -2476,11 +2477,84 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
+    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        boolean canRecover = canRecoverTakeoffFromFall();
+
+        if (inWater) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+            return;
+        }
+
+        if (locked) {
+            setGoingUp(false);
+            setGoingDown(false);
+            return;
+        }
+
+        if (goingUp && canRecover) {
+            setGoingUp(true);
+            setGoingDown(false);
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
+
+        if (isFlying() || canRecover) {
+            setGoingUp(goingUp);
+            setGoingDown(goingDown);
+        } else {
+            setGoingUp(false);
+            setGoingDown(false);
+        }
+    }
+
+    @Override
     protected void onRiderTakeoffRequest(Player player) {
+        if (canRecoverTakeoffFromFall()) {
+            setGoingUp(true);
+            setGoingDown(false);
+            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
+            return;
+        }
         if (!isFlying()) {
             enforcePrimaryMeleeForFlight(player);
             requestRiderTakeoff();
         }
+    }
+
+    public boolean isFallingForAnimation() {
+        return DragonRiderFallRecovery.isFallingForAnimation(
+                isVehicle(),
+                isFlying(),
+                isTakeoff(),
+                isLanding(),
+                isHovering(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                this.fallDistance,
+                getDeltaMovement()
+        );
+    }
+
+    private boolean canRecoverTakeoffFromFall() {
+        return DragonRiderFallRecovery.canRecoverTakeoffFromFall(
+                isTame(),
+                isVehicle(),
+                isAlive(),
+                isBaby(),
+                isFlying(),
+                isTakeoff(),
+                isLanding(),
+                isHovering(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                leaping || getLeapAnimState() != 0,
+                this.fallDistance,
+                getDeltaMovement()
+        );
     }
 
     public void requestRiderTakeoff() {
@@ -3757,7 +3831,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
         boolean running = moveState == 2;
         if (isPhase2Active()) {
-            int duration = running ? 27 : 34;
+            int duration = running ? 33 : 42;
             getSoundHandler().playMovingEntitySound(
                     running ? ModSounds.IGNIVORUS_PHASE2_RUN.get() : ModSounds.IGNIVORUS_PHASE2_WALK.get(),
                     1.0f, 1.0f, duration
@@ -3765,7 +3839,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             groundStepSoundCooldownTicks = duration;
             return;
         }
-        int duration = running ? 22 : 38;
+        int duration = running ? 25 : 42;
         getSoundHandler().playMovingEntitySound(
                 running ? ModSounds.IGNIVORUS_RUN.get() : ModSounds.IGNIVORUS_WALK.get(),
                 1.0f, 1.0f, duration

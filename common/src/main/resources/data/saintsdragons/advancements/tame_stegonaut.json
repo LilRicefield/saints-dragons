@@ -2,7 +2,7 @@
   "parent": "minecraft:husbandry/tame_an_animal",
   "display": {
     "icon": {
-      "item": "minecraft:stone"
+      "item": "saintsdragons:stegonaut_binder"
     },
     "title": {
       "translate": "advancement.saintsdragons.tame_stegonaut.title"

@@ -28,7 +28,7 @@ import java.util.Set;
  * Underwater fallback for Volitans where normal biome spawn entries are too unreliable.
  * It spawns them submerged above ocean floor / wetland floor instead of relying on vanilla pool placement.
  */
-public final class VolitansCoastalSpawner {
+public final class VolitansUnderwaterSpawner {
     private static final TagKey<Biome> DEFAULT_VOLITANS_BIOME_TAG = TagKey.create(
             Registries.BIOME,
             SaintsDragonsCommon.rl("has_volitans")
@@ -46,7 +46,7 @@ public final class VolitansCoastalSpawner {
     private static final Map<ResourceLocation, Integer> tickCounters = new HashMap<>();
     private static final Map<ResourceLocation, Set<Long>> activeClusters = new HashMap<>();
 
-    private VolitansCoastalSpawner() {
+    private VolitansUnderwaterSpawner() {
     }
 
     public static void tick(ServerLevel level) {

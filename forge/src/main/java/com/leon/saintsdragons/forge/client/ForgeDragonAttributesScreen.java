@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.AABB;
@@ -24,7 +25,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         STEGONAUT,
         RAEVYX,
         VARASUCHUS,
-        IGNIVORUS
+        IGNIVORUS,
+        VOLITANS
     }
 
     private Section section = Section.CINDERVANE;
@@ -41,14 +43,15 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case RAEVYX -> addRaevyxEntries(entries);
             case VARASUCHUS -> addVarasuchusEntries(entries);
             case IGNIVORUS -> addIgnivorusEntries(entries);
+            case VOLITANS -> addVolitansEntries(entries);
         }
     }
 
     @Override
     protected void addHeaderButtons() {
-        int buttonWidth = Math.min(90, (width - 60) / 5);
+        int buttonWidth = Math.min(90, (width - 70) / 6);
         int spacing = 6;
-        int totalWidth = buttonWidth * 5 + spacing * 4;
+        int totalWidth = buttonWidth * 6 + spacing * 5;
         int startX = (width - totalWidth) / 2;
         int y = 32;
 
@@ -86,6 +89,13 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing) * 4, y, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.volitans"), button -> {
+            if (section != Section.VOLITANS) {
+                section = Section.VOLITANS;
+                rebuildWidgets();
+            }
+        }).bounds(startX + (buttonWidth + spacing) * 5, y, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
@@ -132,6 +142,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                     varasuchus.applyConfiguredAttributes();
                 } else if (dragon instanceof Ignivorus ignivorus) {
                     ignivorus.applyConfiguredAttributes();
+                } else if (dragon instanceof Volitans volitans) {
+                    volitans.applyConfiguredAttributes();
                 }
             }
         }
@@ -577,6 +589,158 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 null));
     }
 
+    private void addVolitansEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.volitans")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.max_health"),
+                ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.armor"),
+                ForgeDragonAttributesConfig.VOLITANS_ARMOR::get,
+                ForgeDragonAttributesConfig.VOLITANS_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.rider_flying_speed"),
+                ForgeDragonAttributesConfig.VOLITANS_FLYING_SPEED::get,
+                ForgeDragonAttributesConfig.VOLITANS_FLYING_SPEED::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.wild_flying_speed_multiplier"),
+                ForgeDragonAttributesConfig.VOLITANS_WILD_FLYING_SPEED_MULTIPLIER::get,
+                ForgeDragonAttributesConfig.VOLITANS_WILD_FLYING_SPEED_MULTIPLIER::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.bite_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_BITE_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_BITE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.claw_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_CLAW_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_CLAW_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.horn_gore_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_HORN_GORE_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_HORN_GORE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.roar_ground_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.roar_air_water_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.burrow_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_BURROW_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_BURROW_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.poison_ball_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.water_breath_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_WATER_BREATH_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_WATER_BREATH_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.poison_breath_damage"),
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_DAMAGE::get,
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.taming_chance_base"),
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_CHANCE_BASE::get,
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_CHANCE_BASE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.taming_chance_hearty"),
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_CHANCE_HEARTY::get,
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_CHANCE_HEARTY::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.taming_stun_health"),
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_STUN_HEALTH::get,
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_STUN_HEALTH::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.volitans.legacy_taming"),
+                ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::get,
+                ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_active_ticks_max"),
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX::get,
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_drain_per_tick"),
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK::get,
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_regen_per_tick"),
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK::get,
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_spread"),
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPREAD::get,
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPREAD::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_speed"),
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPEED::get,
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPEED::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_lifetime"),
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_LIFETIME::get,
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_LIFETIME::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.poison_breath_poison_duration_ticks"),
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_DURATION_TICKS::get,
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_DURATION_TICKS::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.poison_breath_poison_level"),
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_LEVEL::get,
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_LEVEL::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.poison_ball_poison_duration_ticks"),
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_DURATION_TICKS::get,
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_DURATION_TICKS::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.poison_ball_poison_level"),
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_LEVEL::get,
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_LEVEL::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.roar_ground_poison_duration_ticks"),
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_POISON_DURATION_TICKS::get,
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_POISON_DURATION_TICKS::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.roar_ground_poison_level"),
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_POISON_LEVEL::get,
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_POISON_LEVEL::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.roar_air_water_poison_duration_ticks"),
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_DURATION_TICKS::get,
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_DURATION_TICKS::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.roar_air_water_poison_level"),
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL::get,
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.scale_drop_chance_brush"),
+                ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH::get,
+                ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"),
+                ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE::get,
+                ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"),
+                ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE::get,
+                ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_hatch_chance_normal"),
+                ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::get,
+                ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"),
+                ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE::get,
+                ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.volitans.aggressive_wild"),
+                ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD::get,
+                ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD::set,
+                null));
+    }
+
     private void resetSection() {
         switch (section) {
             case CINDERVANE -> {
@@ -692,6 +856,45 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.getDefault());
+            }
+            case VOLITANS -> {
+                ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH.set(ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_ARMOR.set(ForgeDragonAttributesConfig.VOLITANS_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_FLYING_SPEED.set(ForgeDragonAttributesConfig.VOLITANS_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_WILD_FLYING_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.VOLITANS_WILD_FLYING_SPEED_MULTIPLIER.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_BITE_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_CLAW_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_CLAW_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_HORN_GORE_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_HORN_GORE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_BURROW_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_BURROW_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_WATER_BREATH_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_WATER_BREATH_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.VOLITANS_TAMING_CHANCE_BASE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.VOLITANS_TAMING_CHANCE_HEARTY.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_TAMING_STUN_HEALTH.set(ForgeDragonAttributesConfig.VOLITANS_TAMING_STUN_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH.set(ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE.set(ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE.set(ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPREAD.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPREAD.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPEED.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPEED.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_LIFETIME.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_LIFETIME.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_DURATION_TICKS.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_DURATION_TICKS.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_LEVEL.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_LEVEL.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_DURATION_TICKS.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_DURATION_TICKS.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_LEVEL.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_LEVEL.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_POISON_DURATION_TICKS.set(ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_POISON_DURATION_TICKS.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_POISON_LEVEL.set(ForgeDragonAttributesConfig.VOLITANS_ROAR_GROUND_POISON_LEVEL.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_DURATION_TICKS.set(ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_DURATION_TICKS.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL.set(ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD.getDefault());
             }
         }
 

@@ -478,15 +478,134 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static DragonAttributeConfig volitansDefaults() {
+        double maxHealth = 140.0D;
+        double armor = 6.0D;
+        double flyingSpeed = 0.38D;
+        double biteDamage = 12.0D;
+        double clawDamage = 11.0D;
+        double hornGoreDamage = 15.0D;
+        double roarGroundDamage = 10.0D;
+        double roarAirWaterDamage = 7.0D;
+        double burrowDamage = 30.0D;
+        double poisonBallDamage = 12.0D;
+        double waterBreathDamage = 1.8D;
+        double poisonBreathDamage = 1.4D;
+        double tamingChanceBase = 5.0D;
+        double tamingChanceHearty = 3.0D;
+        double tamingStunHealth = 60.0D;
+        double eggHatchChanceNormal = 3.0D;
+        double eggDropChance = 0.12D;
+        double wildFlyingSpeedMultiplier = 1.0D;
+        double scaleDropChanceBrush = 0.30D;
+        double spineDropChance = 1.0D;
+        double fishDropChance = 0.40D;
+        double breathActiveTicksMax = 240.0D;
+        double breathDrainPerTick = 1.0D / (20.0D * 12.0D);
+        double breathRegenPerTick = 0.0025D;
+        double breathProjectileSpread = 0.20D;
+        double breathProjectileSpeed = 1.60D;
+        double breathProjectileLifetime = 28.0D;
+        double poisonBreathPoisonDurationTicks = 80.0D;
+        double poisonBreathPoisonLevel = 1.0D;
+        double poisonBallPoisonDurationTicks = 120.0D;
+        double poisonBallPoisonLevel = 1.0D;
+        double roarGroundPoisonDurationTicks = 1200.0D;
+        double roarGroundPoisonLevel = 3.0D;
+        double roarAirWaterPoisonDurationTicks = 200.0D;
+        double roarAirWaterPoisonLevel = 2.0D;
+        boolean legacyTaming = false;
+        boolean aggressiveWild = true;
+
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                maxHealth = (double) configClass.getField("VOLITANS_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_MAX_HEALTH").get(null));
+                armor = (double) configClass.getField("VOLITANS_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_ARMOR").get(null));
+                flyingSpeed = (double) configClass.getField("VOLITANS_FLYING_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_FLYING_SPEED").get(null));
+                biteDamage = (double) configClass.getField("VOLITANS_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BITE_DAMAGE").get(null));
+                clawDamage = (double) configClass.getField("VOLITANS_CLAW_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_CLAW_DAMAGE").get(null));
+                hornGoreDamage = (double) configClass.getField("VOLITANS_HORN_GORE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_HORN_GORE_DAMAGE").get(null));
+                roarGroundDamage = (double) configClass.getField("VOLITANS_ROAR_GROUND_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_ROAR_GROUND_DAMAGE").get(null));
+                roarAirWaterDamage = (double) configClass.getField("VOLITANS_ROAR_AIR_WATER_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_ROAR_AIR_WATER_DAMAGE").get(null));
+                burrowDamage = (double) configClass.getField("VOLITANS_BURROW_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BURROW_DAMAGE").get(null));
+                poisonBallDamage = (double) configClass.getField("VOLITANS_POISON_BALL_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BALL_DAMAGE").get(null));
+                waterBreathDamage = (double) configClass.getField("VOLITANS_WATER_BREATH_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_WATER_BREATH_DAMAGE").get(null));
+                poisonBreathDamage = (double) configClass.getField("VOLITANS_POISON_BREATH_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BREATH_DAMAGE").get(null));
+                tamingChanceBase = (double) configClass.getField("VOLITANS_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_TAMING_CHANCE_BASE").get(null));
+                tamingChanceHearty = (double) configClass.getField("VOLITANS_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_TAMING_CHANCE_HEARTY").get(null));
+                tamingStunHealth = (double) configClass.getField("VOLITANS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_TAMING_STUN_HEALTH").get(null));
+                eggHatchChanceNormal = (double) configClass.getField("VOLITANS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_EGG_HATCH_CHANCE_NORMAL").get(null));
+                eggDropChance = (double) configClass.getField("VOLITANS_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_EGG_DROP_CHANCE").get(null));
+                wildFlyingSpeedMultiplier = (double) configClass.getField("VOLITANS_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_WILD_FLYING_SPEED_MULTIPLIER").get(null));
+                scaleDropChanceBrush = (double) configClass.getField("VOLITANS_SCALE_DROP_CHANCE_BRUSH").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_SCALE_DROP_CHANCE_BRUSH").get(null));
+                spineDropChance = (double) configClass.getField("VOLITANS_SPINE_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_SPINE_DROP_CHANCE").get(null));
+                fishDropChance = (double) configClass.getField("VOLITANS_FISH_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_FISH_DROP_CHANCE").get(null));
+                breathActiveTicksMax = (double) configClass.getField("VOLITANS_BREATH_ACTIVE_TICKS_MAX").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_ACTIVE_TICKS_MAX").get(null));
+                breathDrainPerTick = (double) configClass.getField("VOLITANS_BREATH_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_DRAIN_PER_TICK").get(null));
+                breathRegenPerTick = (double) configClass.getField("VOLITANS_BREATH_REGEN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_REGEN_PER_TICK").get(null));
+                breathProjectileSpread = (double) configClass.getField("VOLITANS_BREATH_PROJECTILE_SPREAD").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_PROJECTILE_SPREAD").get(null));
+                breathProjectileSpeed = (double) configClass.getField("VOLITANS_BREATH_PROJECTILE_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_PROJECTILE_SPEED").get(null));
+                breathProjectileLifetime = (double) configClass.getField("VOLITANS_BREATH_PROJECTILE_LIFETIME").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_PROJECTILE_LIFETIME").get(null));
+                poisonBreathPoisonDurationTicks = (double) configClass.getField("VOLITANS_POISON_BREATH_POISON_DURATION_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BREATH_POISON_DURATION_TICKS").get(null));
+                poisonBreathPoisonLevel = (double) configClass.getField("VOLITANS_POISON_BREATH_POISON_LEVEL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BREATH_POISON_LEVEL").get(null));
+                poisonBallPoisonDurationTicks = (double) configClass.getField("VOLITANS_POISON_BALL_POISON_DURATION_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BALL_POISON_DURATION_TICKS").get(null));
+                poisonBallPoisonLevel = (double) configClass.getField("VOLITANS_POISON_BALL_POISON_LEVEL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BALL_POISON_LEVEL").get(null));
+                roarGroundPoisonDurationTicks = (double) configClass.getField("VOLITANS_ROAR_GROUND_POISON_DURATION_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_ROAR_GROUND_POISON_DURATION_TICKS").get(null));
+                roarGroundPoisonLevel = (double) configClass.getField("VOLITANS_ROAR_GROUND_POISON_LEVEL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_ROAR_GROUND_POISON_LEVEL").get(null));
+                roarAirWaterPoisonDurationTicks = (double) configClass.getField("VOLITANS_ROAR_AIR_WATER_POISON_DURATION_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_ROAR_AIR_WATER_POISON_DURATION_TICKS").get(null));
+                roarAirWaterPoisonLevel = (double) configClass.getField("VOLITANS_ROAR_AIR_WATER_POISON_LEVEL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_ROAR_AIR_WATER_POISON_LEVEL").get(null));
+                legacyTaming = (boolean) configClass.getField("VOLITANS_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_LEGACY_TAMING").get(null));
+                aggressiveWild = (boolean) configClass.getField("VOLITANS_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_AGGRESSIVE_WILD").get(null));
+            } catch (Exception ignored) {
+            }
+        }
+
+        Map<String, DragonAbilityOverride> abilities = new HashMap<>();
+        abilities.put("bite", DragonAbilityOverride.ofDamage(biteDamage));
+        abilities.put("claw", DragonAbilityOverride.ofDamage(clawDamage));
+        abilities.put("horn_gore", DragonAbilityOverride.ofDamage(hornGoreDamage));
+        abilities.put("roar_ground", DragonAbilityOverride.ofDamage(roarGroundDamage));
+        abilities.put("roar_air_water", DragonAbilityOverride.ofDamage(roarAirWaterDamage));
+        abilities.put("burrow", DragonAbilityOverride.ofDamage(burrowDamage));
+        abilities.put("poison_ball", DragonAbilityOverride.ofDamage(poisonBallDamage));
+        abilities.put("water_breath", DragonAbilityOverride.ofDamage(waterBreathDamage));
+        abilities.put("poison_breath", DragonAbilityOverride.ofDamage(poisonBreathDamage));
+
+        Map<String, Double> extras = new HashMap<>();
+        extras.put("taming_chance_base", tamingChanceBase);
+        extras.put("taming_chance_hearty", tamingChanceHearty);
+        extras.put("taming_stun_health", tamingStunHealth);
+        extras.put("egg_hatch_chance_normal", eggHatchChanceNormal);
+        extras.put("egg_drop_chance", eggDropChance);
+        extras.put("wild_flying_speed_multiplier", wildFlyingSpeedMultiplier);
+        extras.put("scale_drop_chance_brush", scaleDropChanceBrush);
+        extras.put("spine_drop_chance", spineDropChance);
+        extras.put("fish_drop_chance", fishDropChance);
+        extras.put("breath_active_ticks_max", breathActiveTicksMax);
+        extras.put("breath_drain_per_tick", breathDrainPerTick);
+        extras.put("breath_regen_per_tick", breathRegenPerTick);
+        extras.put("breath_projectile_spread", breathProjectileSpread);
+        extras.put("breath_projectile_speed", breathProjectileSpeed);
+        extras.put("breath_projectile_lifetime", breathProjectileLifetime);
+        extras.put("poison_breath_poison_duration_ticks", poisonBreathPoisonDurationTicks);
+        extras.put("poison_breath_poison_level", poisonBreathPoisonLevel);
+        extras.put("poison_ball_poison_duration_ticks", poisonBallPoisonDurationTicks);
+        extras.put("poison_ball_poison_level", poisonBallPoisonLevel);
+        extras.put("roar_ground_poison_duration_ticks", roarGroundPoisonDurationTicks);
+        extras.put("roar_ground_poison_level", roarGroundPoisonLevel);
+        extras.put("roar_air_water_poison_duration_ticks", roarAirWaterPoisonDurationTicks);
+        extras.put("roar_air_water_poison_level", roarAirWaterPoisonLevel);
+
         return new DragonAttributeConfig(
-                140.0D,
-                6.0D,
-                0.38D,
-                Map.of(),
+                maxHealth,
+                armor,
+                flyingSpeed,
+                abilities,
+                extras,
                 Map.of(
-                        "egg_hatch_chance_normal", 3.0D
-                ),
-                Map.of()
+                        "legacy_taming", legacyTaming,
+                        "aggressive_wild", aggressiveWild
+                )
         );
     }
 
@@ -960,7 +1079,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private void backfillWildFlyingSpeedMultiplier(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
-        boolean applies = id.equals(CINDERVANE_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID);
+        boolean applies = id.equals(CINDERVANE_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID) || id.equals(VOLITANS_ID);
         if (!applies) {
             return;
         }
@@ -980,7 +1099,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static boolean requiresLegacyTamingFlag(ResourceLocation id) {
-        return id.equals(VARASUCHUS_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID);
+        return id.equals(VARASUCHUS_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID) || id.equals(VOLITANS_ID);
     }
 
     private static Map<ResourceLocation, DragonAttributeConfig> buildDefaultConfigs() {
@@ -1027,6 +1146,24 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         } else if (id.equals(CINDERVANE_ID)) {
             hints.addProperty("fire_body_explosion_damage", "Direct blast damage on Fire Body crash impact");
             hints.addProperty("fire_body_self_damage_on_crash", "Self-damage applied to Cindervane after Fire Body crash impact");
+        } else if (id.equals(VOLITANS_ID)) {
+            hints.addProperty("scale_drop_chance_brush", "Chance from 0 to 1 to drop Volitans scales when brushed");
+            hints.addProperty("spine_drop_chance", "Chance from 0 to 1 to drop a Volitans spine on qualifying combat hits");
+            hints.addProperty("fish_drop_chance", "Chance from 0 to 1 for each fish type to drop on death");
+            hints.addProperty("breath_active_ticks_max", "Maximum active breath duration in ticks before auto-stop (20 ticks = 1 second)");
+            hints.addProperty("breath_drain_per_tick", "Breath energy drained per active tick");
+            hints.addProperty("breath_regen_per_tick", "Breath energy regenerated per tick while not breathing");
+            hints.addProperty("breath_projectile_spread", "Random spread applied to each breath projectile");
+            hints.addProperty("breath_projectile_speed", "Base speed multiplier for breath projectiles");
+            hints.addProperty("breath_projectile_lifetime", "Lifetime in ticks for each breath projectile");
+            hints.addProperty("poison_breath_poison_duration_ticks", "Poison duration from poison breath in ticks (0 = disable)");
+            hints.addProperty("poison_breath_poison_level", "Poison level from 0 to 4 applied by poison breath (0 = disable)");
+            hints.addProperty("poison_ball_poison_duration_ticks", "Poison duration from poison ball in ticks (0 = disable)");
+            hints.addProperty("poison_ball_poison_level", "Poison level from 0 to 4 applied by poison ball (0 = disable)");
+            hints.addProperty("roar_ground_poison_duration_ticks", "Poison duration from grounded roar in ticks (0 = disable)");
+            hints.addProperty("roar_ground_poison_level", "Poison level from 0 to 4 applied by grounded roar (0 = disable)");
+            hints.addProperty("roar_air_water_poison_duration_ticks", "Poison duration from air/water roar in ticks (0 = disable)");
+            hints.addProperty("roar_air_water_poison_level", "Poison level from 0 to 4 applied by air/water roar (0 = disable)");
         } else if (id.equals(IGNIVORUS_ID)) {
             hints.addProperty("ultimate_penalty_health", "Typical 1-10000");
             hints.addProperty("ultimate_trigger_health_fraction", "Health fraction from 0 to 1. Example: 0.5 = trigger at 50% max health");

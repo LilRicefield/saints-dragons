@@ -16,6 +16,7 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.cindervane.idle");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.cindervane.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.glide_down");
+    private static final RawAnimation FALLING = RawAnimation.begin().thenLoop("animation.cindervane.falling");
     private static final RawAnimation FLAP = RawAnimation.begin().thenLoop("animation.cindervane.flap");
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.cindervane.sprint_flap");
     private static final RawAnimation FLY_IDLE = RawAnimation.begin().thenLoop("animation.cindervane.fly_idle");
@@ -74,6 +75,13 @@ public class CindervaneAnimationHandler {
         if (inWater) {
             state.getController().transitionLength(6);
             state.setAndContinue(SWIM);
+            state.getController().setAnimationSpeed(1.0f);
+            return PlayState.CONTINUE;
+        }
+
+        if (dragon.isFallingForAnimation()) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(FALLING);
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
         }
