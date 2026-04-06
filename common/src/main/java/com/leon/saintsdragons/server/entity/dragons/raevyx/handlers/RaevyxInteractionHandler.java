@@ -82,7 +82,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
             float minRequiredHealth = dragon.getTamingThreshold();
             // Add 1.0 HP buffer to prevent edge cases (e.g., small regeneration between ticks)
             if (dragon.getHealth() > minRequiredHealth + 1.0F) {
-                sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_need_weakened");
+                sendStatusMessage(player, "entity.saintsdragons.raevyx.taming_need_weakened", dragon.getName(), Math.round(minRequiredHealth));
                 return InteractionResult.CONSUME;
             }
         }

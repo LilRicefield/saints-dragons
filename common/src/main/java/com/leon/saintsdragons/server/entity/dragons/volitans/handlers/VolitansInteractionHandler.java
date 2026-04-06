@@ -69,7 +69,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
         if (!legacyTaming) {
             float minRequiredHealth = dragon.getTamingThreshold();
             if (dragon.getHealth() > minRequiredHealth + 1.0F) {
-                sendStatusMessage(player, "entity.saintsdragons.volitans.taming_need_weakened");
+                sendStatusMessage(player, "entity.saintsdragons.volitans.taming_need_weakened", dragon.getName(), Math.round(minRequiredHealth));
                 return InteractionResult.CONSUME;
             }
         }

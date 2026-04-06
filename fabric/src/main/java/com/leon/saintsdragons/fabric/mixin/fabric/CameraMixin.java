@@ -30,6 +30,9 @@ public abstract class CameraMixin implements CameraAccessor {
     @Shadow
     protected abstract float getYRot();
 
+    @Shadow
+    private float roll;
+
     /**
      * Accessor methods for other parts of the mod to call.
      */
@@ -61,6 +64,11 @@ public abstract class CameraMixin implements CameraAccessor {
     @Override
     public float saintsdragons$invokeGetYRot() {
         return this.getYRot();
+    }
+
+    @Override
+    public void saintsdragons$setRoll(float roll) {
+        this.roll = roll;
     }
 
     /**

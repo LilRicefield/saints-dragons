@@ -51,6 +51,12 @@ public abstract class AbstractDragonInteractionHandler<T extends DragonEntity> {
         }
     }
 
+    protected void sendStatusMessage(Player player, String key, Object... args) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.displayClientMessage(Component.translatable(key, args), true);
+        }
+    }
+
     protected abstract Item getBinderItem();
 
     protected abstract InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem);

@@ -160,12 +160,19 @@ public class ClientEventHandler {
                 raevyxCameraPitch += (raevyxTargetPitch - raevyxCameraPitch) * raevyxPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + raevyxCameraPitch, -90.0f, 90.0f));
             } else {
+                // First person - anchor to saddle bone
                 DragonRiderCameraSync.applyFirstPersonBoneAnchor(
                         raevyx,
                         (float) event.getPartialTick(),
                         raevyx.getBankAngleDegrees((float) event.getPartialTick()),
                         ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
                 );
+
+                // Apply camera roll to match dragon banking (first person only)
+                if (raevyx.isFlying()) {
+                    float bankAngle = raevyx.getBankAngleDegrees((float) event.getPartialTick());
+                    event.setRoll(bankAngle); // Roll camera to match dragon banking
+                }
             }
         } else {
             // Reset zoom and shift when not riding Raevyx
@@ -225,6 +232,7 @@ public class ClientEventHandler {
                 cindervaneCameraPitch += (cindervaneTargetPitch - cindervaneCameraPitch) * cindervanePitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + cindervaneCameraPitch, -90.0f, 90.0f));
             } else {
+                // First person - anchor to saddle bone
                 DragonRiderCameraSync.applyFirstPersonBoneAnchor(
                         cindervane,
                         Math.max(seatIndex, 0),
@@ -232,6 +240,12 @@ public class ClientEventHandler {
                         cindervane.getBankAngleDegrees((float) event.getPartialTick()),
                         ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
                 );
+
+                // Apply camera roll to match dragon banking (first person only)
+                if (cindervane.isFlying()) {
+                    float bankAngle = cindervane.getBankAngleDegrees((float) event.getPartialTick());
+                    event.setRoll(bankAngle); // Roll camera to match dragon banking
+                }
             }
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
@@ -287,12 +301,19 @@ public class ClientEventHandler {
                 ignivorusCameraPitch += (ignivorusTargetPitch - ignivorusCameraPitch) * ignivorusPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + ignivorusCameraPitch, -90.0f, 90.0f));
             } else {
+                // First person - anchor to saddle bone
                 DragonRiderCameraSync.applyFirstPersonBoneAnchor(
                         ignivorus,
                         (float) event.getPartialTick(),
                         ignivorus.getBankAngleDegrees((float) event.getPartialTick()),
                         ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
                 );
+
+                // Apply camera roll to match dragon banking (first person only)
+                if (ignivorus.isFlying()) {
+                    float bankAngle = ignivorus.getBankAngleDegrees((float) event.getPartialTick());
+                    event.setRoll(bankAngle); // Roll camera to match dragon banking
+                }
             }
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom and shift when not riding Ignivorus
@@ -389,12 +410,19 @@ public class ClientEventHandler {
                 volitansCameraPitch += (volitansTargetPitch - volitansCameraPitch) * volitansPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + volitansCameraPitch, -90.0f, 90.0f));
             } else {
+                // First person - anchor to saddle bone
                 DragonRiderCameraSync.applyFirstPersonBoneAnchor(
                         volitans,
                         (float) event.getPartialTick(),
                         volitans.getBankAngleDegrees((float) event.getPartialTick()),
                         ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
                 );
+
+                // Apply camera roll to match dragon banking (first person only)
+                if (volitans.isFlying()) {
+                    float bankAngle = volitans.getBankAngleDegrees((float) event.getPartialTick());
+                    event.setRoll(bankAngle); // Roll camera to match dragon banking
+                }
             }
         } else if (!(player.getVehicle() instanceof Volitans)) {
             volitansCameraZoom = DragonRideCameraTuning.VOLITANS.grounded();
