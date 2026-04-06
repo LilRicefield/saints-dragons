@@ -33,6 +33,8 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
+import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
@@ -111,6 +113,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public static final int VARIANT_BLOODSHOT = 1;
     private static final float BLOODSHOT_VARIANT_CHANCE = 0.10F;
     private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ACCUMULATED_ROLL =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
@@ -199,6 +203,18 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     public static final int RIDER_WATER_SCAN_RADIUS = 2;
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
+    private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
+    private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
+    private static final float INVERTED_PITCH_TRIGGER_RAD = Mth.HALF_PI;
+    private static final float BARREL_ROLL_INPUT_SPEED = 0.275f;
+    private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
+            new DragonBarrelRollHelper.Config(
+                    AIR_AUTO_ALIGN_DECAY,
+                    LANDING_AUTO_ALIGN_STEP,
+                    0.04f,
+                    0.005f,
+                    Mth.HALF_PI
+            );
     private static final float BURROW_MOVE_SHAKE_INTENSITY = 0.12F;
     private static final int BURROW_EXIT_TAKEOFF_BLOCK_BUFFER_TICKS = 8;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
@@ -239,6 +255,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private float flightPitchRad = 0f;
     private float prevFlightPitchRad = 0f;
     private float smoothedPlayerPitchRad = 0f;
+    private float prevSmoothedRoll = 0.0f;
+    private float smoothedRoll = 0.0f;
     private float prevScreenShakeAmount = 0.0F;
     private float screenShakeAmount = 0.0F;
     private int screenShakeHoldTicks = 0;
@@ -696,6 +714,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     @Override
     protected void defineRideableDragonData() {
         this.entityData.define(DATA_FLIGHT_PITCH, 0.0F);
+        this.entityData.define(DATA_ACCUMULATED_ROLL, 0.0F);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_ULTIMATE_SLAM_ACTIVE, false);
@@ -1252,6 +1271,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
 
         tickBankingLogic();
+        tickBarrelRollLogic();
         tickPitchingLogic();
 
         this.noPhysics = false;
@@ -2885,12 +2905,75 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
     }
 
+    private void tickBarrelRollLogic() {
+        float currentRoll = getAccumulatedRoll();
+        if (isVehicle() && getControllingPassenger() != null) {
+            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+            if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
+                currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
+            }
+        }
+        DragonBarrelRollHelper.Output output = DragonBarrelRollHelper.tick(
+                currentRoll,
+                this.smoothedRoll,
+                new DragonBarrelRollHelper.Input(
+                        isVehicle(),
+                        onGround(),
+                        isLanding(),
+                        isActivelyBarrelRolling(),
+                        shouldEaseAirAutoAlign(),
+                        isLanding(),
+                        LANDING_BLEND_ALTITUDE,
+                        getAltitudeAboveCollisionTerrain(16, true)
+                ),
+                BARREL_ROLL_CONFIG
+        );
+
+        setAccumulatedRoll(output.accumulatedRoll());
+        this.prevSmoothedRoll = output.prevSmoothedRoll();
+        this.smoothedRoll = output.smoothedRoll();
+    }
+
     public float getBankAngleDegrees(float partialTick) {
         return Mth.lerp(partialTick, prevBankAngle, bankAngle);
     }
 
     public float getFlightPitchRadians(float partialTick) {
         return Mth.lerp(partialTick, prevFlightPitchRad, flightPitchRad);
+    }
+
+    public float getAccumulatedRoll() {
+        return this.entityData.get(DATA_ACCUMULATED_ROLL);
+    }
+
+    public void setAccumulatedRoll(float radians) {
+        this.entityData.set(DATA_ACCUMULATED_ROLL, radians);
+    }
+
+    public void addAccumulatedRoll(float radians) {
+        setAccumulatedRoll(getAccumulatedRoll() + radians);
+    }
+
+    private boolean shouldEaseAirAutoAlign() {
+        if (!isFlying() || areRiderControlsLocked()) {
+            return false;
+        }
+
+        if (Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f) {
+            return false;
+        }
+
+        return Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.05f;
+    }
+
+    private boolean isActivelyBarrelRolling() {
+        return this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
+                && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
+    }
+
+    public float getSmoothedRoll(float partialTick) {
+        return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
     }
 
     private void tickScreenShake() {

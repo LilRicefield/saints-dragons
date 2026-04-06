@@ -14,6 +14,7 @@ import software.bernie.geckolib.core.object.PlayState;
  */
 public record RaevyxAnimationHandler(Raevyx wyvern) {
     // ===== ANIMATION CONSTANTS =====
+    private static final float INVERTED_GLIDE_ROLL_WINDOW_DEGREES = 45.0f;
 
     /** Ground idle animation */
     private static final RawAnimation GROUND_IDLE = RawAnimation.begin().thenLoop("animation.raevyx.idle");
@@ -249,6 +250,13 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         }
 
         if (wyvern.isFlying()) {
+            if (isInvertedGlideWindow(state.getPartialTick())) {
+                state.getController().transitionLength(5);
+                currentFlightAnimation = FLY_GLIDE;
+                state.setAndContinue(FLY_GLIDE);
+                return PlayState.CONTINUE;
+            }
+
             // Rider landing blend (overrides flight mode)
             if (wyvern.isRiderLandingBlendActive()) {
                 state.getController().transitionLength(4);
@@ -318,6 +326,14 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             state.setAndContinue(GROUND_IDLE);
         }
         return PlayState.CONTINUE;
+    }
+
+    private boolean isInvertedGlideWindow(float partialTick) {
+        float roll = wyvern.getSmoothedRoll(partialTick);
+        float nearestInvertedRoll = Math.round((roll - net.minecraft.util.Mth.PI) / net.minecraft.util.Mth.TWO_PI)
+                * net.minecraft.util.Mth.TWO_PI + net.minecraft.util.Mth.PI;
+        float offsetDegrees = Math.abs((roll - nearestInvertedRoll) * net.minecraft.util.Mth.RAD_TO_DEG);
+        return offsetDegrees <= INVERTED_GLIDE_ROLL_WINDOW_DEGREES;
     }
 
     // ===== GECKOLIB SETUP =====

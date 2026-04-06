@@ -21,6 +21,8 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
+import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
+import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
@@ -110,6 +112,18 @@ import javax.annotation.Nonnull;
 public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, PackMember<Cindervane> {
     // Note: DATA_FIRE_BREATHING will be defined in defineSynchedData() using a unique ID
     private static final int LANDING_SETTLE_TICKS = 4;
+    private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
+    private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
+    private static final float INVERTED_PITCH_TRIGGER_RAD = Mth.HALF_PI;
+    private static final float BARREL_ROLL_INPUT_SPEED = 0.275f;
+    private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
+            new DragonBarrelRollHelper.Config(
+                    AIR_AUTO_ALIGN_DECAY,
+                    LANDING_AUTO_ALIGN_STEP,
+                    0.04f,
+                    0.005f,
+                    Mth.HALF_PI
+            );
     // 1.25s * 20 TPS = 25 ticks.
     public static final int TAKEOFF_ANIMATION_TICKS = 24;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
@@ -184,6 +198,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
+    private float prevSmoothedRoll = 0.0f;
+    private float smoothedRoll = 0.0f;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -593,6 +609,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ACCUMULATED_ROLL =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SLASH_GRAB_PASSENGER_ID =
@@ -614,6 +632,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0f);
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
+        this.entityData.define(DATA_ACCUMULATED_ROLL, 0f);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
@@ -756,6 +775,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         super.tick();
         tickRiderControlLock();
         tickBankingLogic();
+        tickBarrelRollLogic();
         tickPitchingLogic();
         tickScreenShake();
         // === CLIENT-SIDE ONLY ===
@@ -1318,7 +1338,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                     // Player is pressing WASD  use camera pitch for visuals
                     // Negate because Minecraft xRot is positive=down, but we want dragon to pitch up when looking up
                     float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
-
                     targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawPlayerPitchRad);
                 } else {
                     // Hovering (no WASD)  pitch = 0, even if ascending/descending with Spacebar/L-Alt
@@ -1353,6 +1372,36 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             }
         }
         // Pitching is now fully procedural - no need for animation controller directions
+    }
+
+    private void tickBarrelRollLogic() {
+        float currentRoll = getAccumulatedRoll();
+        if (isVehicle() && getControllingPassenger() != null) {
+            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+            if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
+                currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
+            }
+        }
+        DragonBarrelRollHelper.Output output = DragonBarrelRollHelper.tick(
+                currentRoll,
+                this.smoothedRoll,
+                new DragonBarrelRollHelper.Input(
+                        isVehicle(),
+                        onGround(),
+                        isLanding(),
+                        isActivelyBarrelRolling(),
+                        shouldEaseAirAutoAlign(),
+                        isRiderLandingBlendActive(),
+                        LANDING_BLEND_ALTITUDE,
+                        getAltitudeAboveTerrain()
+                ),
+                BARREL_ROLL_CONFIG
+        );
+
+        setAccumulatedRoll(output.accumulatedRoll());
+        this.prevSmoothedRoll = output.prevSmoothedRoll();
+        this.smoothedRoll = output.smoothedRoll();
     }
 
     private void tickScreenShake() {
@@ -1464,6 +1513,39 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
     public float getFlightPitchRadians(float partialTick) {
         return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
+    }
+
+    public float getAccumulatedRoll() {
+        return this.entityData.get(DATA_ACCUMULATED_ROLL);
+    }
+
+    public void setAccumulatedRoll(float radians) {
+        this.entityData.set(DATA_ACCUMULATED_ROLL, radians);
+    }
+
+    public void addAccumulatedRoll(float radians) {
+        setAccumulatedRoll(getAccumulatedRoll() + radians);
+    }
+
+    private boolean shouldEaseAirAutoAlign() {
+        if (!isFlying() || areRiderControlsLocked()) {
+            return false;
+        }
+
+        if (Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f) {
+            return false;
+        }
+
+        return Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.05f;
+    }
+
+    private boolean isActivelyBarrelRolling() {
+        return this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
+                && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
+    }
+
+    public float getSmoothedRoll(float partialTick) {
+        return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
     }
 
     public boolean isRiderPitchKeyMode() {

@@ -313,4 +313,5 @@ public record RaevyxRiderController(Raevyx wyvern) {
     public void requestRiderTakeoff() {
         wyvern.requestRiderTakeoff();
     }
+
 }

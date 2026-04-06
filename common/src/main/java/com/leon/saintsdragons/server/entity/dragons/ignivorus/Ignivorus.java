@@ -27,6 +27,8 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
+import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
+import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
@@ -131,6 +133,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     /** Entity data accessor for flight pitch (radians) */
     public static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> DATA_ACCUMULATED_ROLL =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
     /** Entity data accessor for rider pitch key mode */
     public static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
@@ -185,6 +189,18 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final double WATER_EFFECT_MAX_HEIGHT = 8.0D;
     private static final double WATER_EFFECT_INTENSITY = 0.6D;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
+    private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
+    private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
+    private static final float INVERTED_PITCH_TRIGGER_RAD = Mth.HALF_PI;
+    private static final float BARREL_ROLL_INPUT_SPEED = 0.235f;
+    private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
+            new DragonBarrelRollHelper.Config(
+                    AIR_AUTO_ALIGN_DECAY,
+                    LANDING_AUTO_ALIGN_STEP,
+                    0.04f,
+                    0.005f,
+                    Mth.HALF_PI
+            );
     private static final int RIDER_LANDING_BLEND_DURATION = 5;
     public static final double BREED_PARTNER_RANGE = 20.0D;
     public static final double BREED_DISTANCE_SQR = 2500.0D;
@@ -232,6 +248,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int airTicks;
     public int groundTicks;
     private int riderLandingBlendTicks = 0;
+    private float prevSmoothedRoll = 0.0f;
+    private float smoothedRoll = 0.0f;
 
     // ===== HARDCODED GROUND SPEEDS =====
     public static final double RIDER_WALK_SPEED = 0.225D;
@@ -594,6 +612,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
+        this.entityData.define(DATA_ACCUMULATED_ROLL, 0f);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_FIREBALL_CHARGE, 0);
     }
@@ -723,6 +742,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Update banking and pitching for animations
         tickBankingLogic();
+        tickBarrelRollLogic();
         tickPitchingLogic();
 
         if (!level().isClientSide) {
@@ -3373,7 +3393,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                     // Player is pressing WASD  use camera pitch for visuals
                     // Negate because Minecraft xRot is positive=down, but we want dragon to pitch up when looking up
                     float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
-
                     targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawPlayerPitchRad);
                 } else {
                     DragonFlightVisuals.clearRiderPitchInput(this.flightVisualState);
@@ -3407,6 +3426,36 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             }
         }
         // Pitching is now fully procedural - no need for animation controller directions
+    }
+
+    private void tickBarrelRollLogic() {
+        float currentRoll = getAccumulatedRoll();
+        if (isVehicle() && getControllingPassenger() != null) {
+            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+            if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
+                currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
+            }
+        }
+        DragonBarrelRollHelper.Output output = DragonBarrelRollHelper.tick(
+                currentRoll,
+                this.smoothedRoll,
+                new DragonBarrelRollHelper.Input(
+                        isVehicle(),
+                        onGround(),
+                        isLanding(),
+                        isActivelyBarrelRolling(),
+                        shouldEaseAirAutoAlign(),
+                        isRiderLandingBlendActive(),
+                        LANDING_BLEND_ALTITUDE,
+                        getAltitudeAboveTerrain()
+                ),
+                BARREL_ROLL_CONFIG
+        );
+
+        setAccumulatedRoll(output.accumulatedRoll());
+        this.prevSmoothedRoll = output.prevSmoothedRoll();
+        this.smoothedRoll = output.smoothedRoll();
     }
 
 
@@ -3710,6 +3759,39 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
     public float getFlightPitchRadians(float partialTick) {
         return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
+    }
+
+    public float getAccumulatedRoll() {
+        return this.entityData.get(DATA_ACCUMULATED_ROLL);
+    }
+
+    public void setAccumulatedRoll(float radians) {
+        this.entityData.set(DATA_ACCUMULATED_ROLL, radians);
+    }
+
+    public void addAccumulatedRoll(float radians) {
+        setAccumulatedRoll(getAccumulatedRoll() + radians);
+    }
+
+    private boolean shouldEaseAirAutoAlign() {
+        if (!isFlying() || areRiderControlsLocked()) {
+            return false;
+        }
+
+        if (Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f) {
+            return false;
+        }
+
+        return Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.05f;
+    }
+
+    private boolean isActivelyBarrelRolling() {
+        return this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
+                && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
+    }
+
+    public float getSmoothedRoll(float partialTick) {
+        return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
     }
 
     public boolean isRiderPitchKeyMode() {

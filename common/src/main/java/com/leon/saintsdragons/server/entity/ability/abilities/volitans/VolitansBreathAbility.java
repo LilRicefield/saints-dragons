@@ -17,7 +17,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class VolitansBreathAbility extends DragonAbility<Volitans> {
-    // animation.volitans.breath_start = 0.8333s -> ~16.666 ticks, rounded to 17
+
     private static final int STARTUP_TICKS = 17;
     private static final int ACTIVE_TICKS_CAP = 20 * 60; // hard failsafe cap, real duration is config-driven
     private static final int COOLDOWN_TICKS = 20;

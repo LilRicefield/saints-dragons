@@ -5,6 +5,7 @@ import com.leon.saintsdragons.fabric.client.event.FabricClientEventHandler;
 import net.minecraft.client.Camera;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -30,8 +31,8 @@ public abstract class CameraMixin implements CameraAccessor {
     @Shadow
     protected abstract float getYRot();
 
-    @Shadow
-    private float roll;
+    @Unique
+    private float saintsdragons$roll;
 
     /**
      * Accessor methods for other parts of the mod to call.
@@ -68,7 +69,7 @@ public abstract class CameraMixin implements CameraAccessor {
 
     @Override
     public void saintsdragons$setRoll(float roll) {
-        this.roll = roll;
+        this.saintsdragons$roll = roll;
     }
 
     /**
@@ -83,6 +84,7 @@ public abstract class CameraMixin implements CameraAccessor {
             boolean inverseView,
             float partialTick,
             CallbackInfo ci) {
+        this.saintsdragons$roll = 0.0f;
         FabricClientEventHandler.onComputeCamera((Camera) (Object) this, partialTick);
     }
 }

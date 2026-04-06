@@ -90,8 +90,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
                 applyNeckFollow(entity, modelData, animationState.getPartialTick());
             }
             applyBodyRotationDeviation(entity, partialTick);  // Same as Varasuchus/Stegonaut
-            applyBankingRoll(entity, animationState);
-            applyFlightPitch(entity, animationState);
+            applyFlightRotations(entity, animationState); // Combined pitch + roll using quaternions
             applyNeckBankingLean(entity, partialTick); // Then layer procedural leans so they add on top
             applyGroundNeckTurn(entity, partialTick);  // Same for ground turning
             applyTailDrag(entity, partialTick);
@@ -104,7 +103,7 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
      * This creates the natural "head leads, body follows" behavior.
      */
     private void applyBodyRotationDeviation(Raevyx entity, float partialTick) {
-        var rootOpt = getBone("body");
+        var rootOpt = getBone("root");
         if (rootOpt.isEmpty()) {
             return;
         }
@@ -122,43 +121,31 @@ public class RaevyxModel extends DefaultedEntityGeoModel<Raevyx> {
         root.setRotY(snap.getRotY() - deviationRad);
     }
 
-    /**
-     * Apply smoothed banking roll straight to the body bone so we can lean at any angle.
-     * FIXED: Always calculate from initialSnapshot to prevent cross-entity sync bleeding.
-     */
-    private void applyBankingRoll(Raevyx entity, AnimationState<Raevyx> state) {
+    private void applyFlightRotations(Raevyx entity, AnimationState<Raevyx> state) {
+        var rootOpt = getBone("root");
         var bodyOpt = getBone("body");
-        if (bodyOpt.isEmpty()) {
+        if (rootOpt.isEmpty() || bodyOpt.isEmpty()) {
             return;
         }
 
+        GeoBone root = rootOpt.get();
         GeoBone body = bodyOpt.get();
+        var rootSnap = root.getInitialSnapshot();
         var snap = body.getInitialSnapshot();
-
-        float partialTick = state.getPartialTick();
-        float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
-        // Banking right rotates negative around Z, hence the inversion.
-        float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
-
-        // Set directly from snapshot + bank angle (no lerp with previous frame's bone rotation)
-        // This prevents sync bleeding between multiple dragons rendering in the same frame
-        body.setRotZ(snap.getRotZ() + bankAngleRad);
-    }
-
-    private void applyFlightPitch(Raevyx entity, AnimationState<Raevyx> state) {
-        var bodyOpt = getBone("body");
-        if (bodyOpt.isEmpty()) {
-            return;
-        }
-
-        GeoBone body = bodyOpt.get();
-        var snap = body.getInitialSnapshot();
-
         float partialTick = state.getPartialTick();
         float pitchRad = entity.getFlightPitchRadians(partialTick);
+        float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
+        float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
+
+        float barrelRollRad = entity.getSmoothedRoll(partialTick);
         pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
 
-        body.setRotX(snap.getRotX() + pitchRad);
+        float totalRollRad = bankAngleRad + barrelRollRad;
+
+        root.setRotX(rootSnap.getRotX() + pitchRad);
+        body.setRotY(snap.getRotY());
+        body.setRotZ(snap.getRotZ() + totalRollRad);
+
     }
 
     /**

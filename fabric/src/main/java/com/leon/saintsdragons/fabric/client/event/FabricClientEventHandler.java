@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
-import com.leon.saintsdragons.client.renderer.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
@@ -26,12 +25,10 @@ import net.minecraft.world.phys.AABB;
 
 import java.lang.reflect.Method;
 
-/**
- * Fabric client event handler for camera adjustments and screen shake effects.
- * Equivalent to the Forge ClientEventHandler.
- */
+
 public class FabricClientEventHandler {
     private static final double[] randomTremorOffsets = new double[3];
+    private static float currentFirstPersonRoll = 0.0f;
 
     // Raevyx takeoff camera zoom transition
     private static float raevyxCameraZoom = DragonRideCameraTuning.RAEVYX.grounded();
@@ -105,6 +102,7 @@ public class FabricClientEventHandler {
     public static void onComputeCamera(Camera camera, float partialTicks) {
         Entity player = Minecraft.getInstance().getCameraEntity();
         if (player == null) return;
+        currentFirstPersonRoll = 0.0f;
 
         // Dragon riding camera adjustments - Raevyx
         if (player.isPassenger() && player.getVehicle() instanceof Raevyx raevyx) {
@@ -191,20 +189,6 @@ public class FabricClientEventHandler {
                 float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
                 float clampedPitch = Mth.clamp(currentPitch + raevyxCameraPitch, -90.0f, 90.0f);
                 cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
-            } else {
-                // First person - anchor to saddle bone
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        raevyx,
-                        partialTicks,
-                        raevyx.getBankAngleDegrees(partialTicks),
-                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
-                );
-
-                // Apply camera roll to match dragon banking (first person only)
-                if (raevyx.isFlying()) {
-                    float bankAngle = raevyx.getBankAngleDegrees(partialTicks);
-                    ((CameraAccessor) camera).saintsdragons$setRoll(bankAngle);
-                }
             }
         } else {
             // Reset zoom and shift when not riding Raevyx
@@ -271,21 +255,6 @@ public class FabricClientEventHandler {
                 float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
                 float clampedPitch = Mth.clamp(currentPitch + cindervaneCameraPitch, -90.0f, 90.0f);
                 cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
-            } else {
-                // First person - anchor to saddle bone
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        cindervane,
-                        Math.max(seatIndex, 0),
-                        partialTicks,
-                        cindervane.getBankAngleDegrees(partialTicks),
-                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
-                );
-
-                // Apply camera roll to match dragon banking (first person only)
-                if (cindervane.isFlying()) {
-                    float bankAngle = cindervane.getBankAngleDegrees(partialTicks);
-                    ((CameraAccessor) camera).saintsdragons$setRoll(bankAngle);
-                }
             }
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
@@ -346,20 +315,6 @@ public class FabricClientEventHandler {
                 float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
                 float clampedPitch = Mth.clamp(currentPitch + ignivorusCameraPitch, -90.0f, 90.0f);
                 cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
-            } else {
-                // First person - anchor to saddle bone
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        ignivorus,
-                        partialTicks,
-                        ignivorus.getBankAngleDegrees(partialTicks),
-                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
-                );
-
-                // Apply camera roll to match dragon banking (first person only)
-                if (ignivorus.isFlying()) {
-                    float bankAngle = ignivorus.getBankAngleDegrees(partialTicks);
-                    ((CameraAccessor) camera).saintsdragons$setRoll(bankAngle);
-                }
             }
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom and shift when not riding Ignivorus
@@ -423,14 +378,6 @@ public class FabricClientEventHandler {
                 double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(stegonautCameraZoom);
                 maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
                 cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
-            } else {
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        stegonaut,
-                        0,
-                        partialTicks,
-                        0.0f,
-                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
-                );
             }
         } else if (!(player.getVehicle() instanceof Stegonaut)) {
             stegonautCameraZoom = DragonRideCameraTuning.STEGONAUT.grounded();
@@ -473,20 +420,6 @@ public class FabricClientEventHandler {
                 float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
                 float clampedPitch = Mth.clamp(currentPitch + volitansCameraPitch, -90.0f, 90.0f);
                 cameraAccessor.saintsdragons$invokeSetRotation(currentYaw, clampedPitch);
-            } else {
-                // First person - anchor to saddle bone
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        volitans,
-                        partialTicks,
-                        volitans.getBankAngleDegrees(partialTicks),
-                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
-                );
-
-                // Apply camera roll to match dragon banking (first person only)
-                if (volitans.isFlying()) {
-                    float bankAngle = volitans.getBankAngleDegrees(partialTicks);
-                    ((CameraAccessor) camera).saintsdragons$setRoll(bankAngle);
-                }
             }
         } else if (!(player.getVehicle() instanceof Volitans)) {
             volitansCameraZoom = DragonRideCameraTuning.VOLITANS.grounded();
@@ -497,6 +430,10 @@ public class FabricClientEventHandler {
 
         // Screen shake detection and application
         applyScreenShake(camera, player, partialTicks);
+    }
+
+    public static float getCurrentFirstPersonRoll() {
+        return currentFirstPersonRoll;
     }
 
     private static void applyScreenShake(Camera camera, Entity player, float partialTicks) {

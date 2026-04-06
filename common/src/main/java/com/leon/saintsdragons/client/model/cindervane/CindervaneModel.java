@@ -78,7 +78,7 @@ public CindervaneModel() {
         return entity.isBaby() ? BABY_ANIM : ANIM;
     }
     private void applyBodyRotationDeviation(Cindervane entity, float partialTick) {
-        var rootOpt = getBone("body");
+        var rootOpt = getBone("root");
         if (rootOpt.isEmpty()) {
             return;
         }
@@ -103,23 +103,24 @@ public CindervaneModel() {
         float partialTick = state.getPartialTick();
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
-        body.setRotZ(snap.getRotZ() + bankAngleRad);
+        float barrelRollRad = entity.getSmoothedRoll(partialTick);
+        body.setRotZ(snap.getRotZ() + bankAngleRad + barrelRollRad);
     }
 
     private void applyFlightPitch(Cindervane entity, AnimationState<Cindervane> state) {
-        var bodyOpt = getBone("body");
-        if (bodyOpt.isEmpty()) {
+        var rootOpt = getBone("root");
+        if (rootOpt.isEmpty()) {
             return;
         }
 
-        GeoBone body = bodyOpt.get();
-        var snap = body.getInitialSnapshot();
+        GeoBone root = rootOpt.get();
+        var snap = root.getInitialSnapshot();
 
         float partialTick = state.getPartialTick();
         float pitchRad = entity.getFlightPitchRadians(partialTick);
         pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
 
-        body.setRotX(snap.getRotX() + pitchRad);
+        root.setRotX(snap.getRotX() + pitchRad);
     }
 
     private void applyNeckBankingLean(Cindervane entity, float partialTick) {

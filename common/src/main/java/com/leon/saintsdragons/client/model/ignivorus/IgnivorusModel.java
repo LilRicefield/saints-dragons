@@ -2,7 +2,6 @@ package com.leon.saintsdragons.client.model.ignivorus;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -90,7 +89,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     }
 
     private void applyBodyRotationDeviation(Ignivorus entity, float partialTick) {
-        var rootOpt = getBone("body");
+        var rootOpt = getBone("root");
         if (rootOpt.isEmpty()) return;
 
         GeoBone root = rootOpt.get();
@@ -109,21 +108,22 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         float partialTick = state.getPartialTick();
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
-        body.setRotZ(snap.getRotZ() + bankAngleRad);
+        float barrelRollRad = entity.getSmoothedRoll(partialTick);
+        body.setRotZ(snap.getRotZ() + bankAngleRad + barrelRollRad);
     }
 
     private void applyFlightPitch(Ignivorus entity, AnimationState<Ignivorus> state) {
-        var bodyOpt = getBone("body");
-        if (bodyOpt.isEmpty()) return;
+        var rootOpt = getBone("root");
+        if (rootOpt.isEmpty()) return;
 
-        GeoBone body = bodyOpt.get();
-        var snap = body.getInitialSnapshot();
+        GeoBone root = rootOpt.get();
+        var snap = root.getInitialSnapshot();
 
         float partialTick = state.getPartialTick();
         float pitchRad = entity.getFlightPitchRadians(partialTick);
         pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
 
-        body.setRotX(snap.getRotX() + pitchRad);
+        root.setRotX(snap.getRotX() + pitchRad);
     }
 
     private void applyNeckBankingLean(Ignivorus entity, float partialTick) {

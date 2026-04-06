@@ -36,6 +36,8 @@ import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityS
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
+import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
+import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
@@ -227,6 +229,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public static final EntityDataAccessor<Boolean> DATA_BEAM_DEPLETED =
             net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
+    /** Entity data accessor for accumulated barrel roll angle (RADIANS) - rider controlled only */
+    public static final EntityDataAccessor<Float> DATA_ACCUMULATED_ROLL =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(Raevyx.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
     // ===== OTHER CONSTANTS =====
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
 
@@ -240,6 +246,18 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     private static final int RIDER_WATER_SCAN_RADIUS = 2;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
+    private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
+    private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
+    private static final float INVERTED_PITCH_TRIGGER_RAD = Mth.HALF_PI;
+    private static final float BARREL_ROLL_INPUT_SPEED = 0.275f;
+    private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
+            new DragonBarrelRollHelper.Config(
+                    AIR_AUTO_ALIGN_DECAY,
+                    LANDING_AUTO_ALIGN_STEP,
+                    0.04f,
+                    0.005f,
+                    Mth.HALF_PI
+            );
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
     private static final double BABY_MAX_HEALTH = 60.0D;
@@ -874,6 +892,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_BEAM_ENERGY, 1.0f); // Start with full energy
         this.entityData.define(DATA_BEAM_DEPLETED, false); // Start unlocked
+        this.entityData.define(DATA_ACCUMULATED_ROLL, 0.0f); // Start upright
     }
 
     @Override
@@ -2080,6 +2099,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // === ANIMATION LOGIC (every tick for smooth visuals) ===
         tickBankingLogic();
         tickPitchingLogic();
+        tickBarrelRollLogic(); // Rider barrel roll - snap to zero and landing realignment
         tickRunningTime();
         tickScreenShake(); // Both sides: client reads, server decays
 
@@ -3117,7 +3137,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 } else if (isGoingDown()) {
                     rawKeyPitchRad = (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
                 }
-
                 targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawKeyPitchRad);
             } else {
                 // RIDING: Use player camera for visual pitch WHEN MOVING
@@ -3129,7 +3148,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                     // Player is pressing WASD  use camera pitch for visuals
                     // Negate because Minecraft xRot is positive=down, but we want dragon to pitch up when looking up
                     float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
-
                     targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawPlayerPitchRad);
                 } else {
                     DragonFlightVisuals.clearRiderPitchInput(this.flightVisualState);
@@ -3163,6 +3181,47 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             }
         }
         // Pitching is now fully procedural - no need for animation controller directions
+    }
+
+    /**
+     * Manages barrel roll realignment logic and smoothing.
+     * - Forces upright when not ridden or when landing
+     * - Applies smart snap-to-zero when within threshold while ridden
+     * - Smooths roll for visual rendering
+     */
+    private void tickBarrelRollLogic() {
+        float currentRoll = getAccumulatedRoll();
+        boolean isRidden = isVehicle() && getControllingPassenger() != null;
+        if (isRidden) {
+            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+            if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
+                currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
+            }
+        }
+        boolean isActivelyRolling = isActivelyBarrelRolling();
+        boolean riderLandingBlendActive = isRiderLandingBlendActive();
+        double altitudeAboveTerrain = riderLandingBlendActive ? getAltitudeAboveTerrain() : Double.POSITIVE_INFINITY;
+        DragonBarrelRollHelper.Output rollState = DragonBarrelRollHelper.tick(
+                currentRoll,
+                smoothedRoll,
+                new DragonBarrelRollHelper.Input(
+                        isRidden,
+                        onGround(),
+                        isLanding(),
+                        isActivelyRolling,
+                        shouldEaseAirAutoAlign(),
+                        riderLandingBlendActive,
+                        LANDING_BLEND_ALTITUDE,
+                        altitudeAboveTerrain
+                ),
+                BARREL_ROLL_CONFIG
+        );
+        currentRoll = rollState.accumulatedRoll();
+        prevSmoothedRoll = rollState.prevSmoothedRoll();
+        smoothedRoll = rollState.smoothedRoll();
+        setAccumulatedRoll(currentRoll);
+
     }
 
     @Override
@@ -3828,6 +3887,59 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
     public float getFlightPitchRadians(float partialTick) {
         return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
+    }
+
+    // ===== BARREL ROLL (Rider Only) =====
+
+    /**
+     * Get accumulated barrel roll angle in RADIANS.
+     * Only used when ridden - wild dragons don't roll.
+     */
+    public float getAccumulatedRoll() {
+        return this.entityData.get(DATA_ACCUMULATED_ROLL);
+    }
+
+    /**
+     * Set accumulated barrel roll angle in RADIANS.
+     */
+    public void setAccumulatedRoll(float radians) {
+        this.entityData.set(DATA_ACCUMULATED_ROLL, radians);
+    }
+
+    /**
+     * Add to accumulated roll in RADIANS
+     * Positive = roll left (counter-clockwise), Negative = roll right (clockwise)
+     */
+    public void addAccumulatedRoll(float radians) {
+        setAccumulatedRoll(getAccumulatedRoll() + radians);
+    }
+
+    private boolean shouldEaseAirAutoAlign() {
+        if (!isFlying() || areRiderControlsLocked()) {
+            return false;
+        }
+
+        if (Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f) {
+            return false;
+        }
+
+        return Math.abs(getRiderForwardInput()) > 0.05f;
+    }
+
+    private boolean isActivelyBarrelRolling() {
+        return this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
+                && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
+    }
+
+    // Smoothed roll for visual interpolation (client-side only, not synced)
+    private float prevSmoothedRoll = 0.0f;
+    private float smoothedRoll = 0.0f;
+
+    /**
+     * Get smoothed barrel roll for rendering (RADIANS)
+     */
+    public float getSmoothedRoll(float partialTick) {
+        return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
     }
 
     // ===== SUPERCHARGE (Summon Storm) =====

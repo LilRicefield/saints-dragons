@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "CameraMixin",
+    "GameRendererMixin",
     "RiderMixin",
     "EntityRendererMixin",
     "EntityRenderDispatcherMixin",
