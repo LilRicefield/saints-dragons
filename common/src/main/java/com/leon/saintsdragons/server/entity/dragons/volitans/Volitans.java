@@ -119,7 +119,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final float BABY_HITBOX_SCALE = 0.55F;
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_BLOODSHOT = 1;
-    private static final float BLOODSHOT_VARIANT_CHANCE = 0.10F;
+    private static final float BLOODSHOT_VARIANT_CHANCE = 0.50F;
     private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_ACCUMULATED_ROLL =
@@ -520,9 +520,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     @Override
     public void ageBoundaryReached() {
         super.ageBoundaryReached();
-        if (this.getTextureVariant() == VARIANT_DEFAULT) {
-            this.setTextureVariant(rollAdultVariant());
-        }
         applyConfiguredAttributes();
         refreshDimensions();
     }
@@ -1715,7 +1712,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             }
             baby.setAge(-24000);
             baby.setBaby(true);
-            baby.setTextureVariant(VARIANT_DEFAULT);
             baby.applyConfiguredAttributes();
             baby.setHealth(baby.getMaxHealth());
             net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
@@ -1777,6 +1773,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                                             @NotNull MobSpawnType reason,
                                             @Nullable net.minecraft.world.entity.SpawnGroupData spawnData,
                                             @Nullable CompoundTag spawnTag) {
+        return rollAdultVariant();
+    }
+
+    @Override
+    protected int chooseAdultTextureVariant() {
         return rollAdultVariant();
     }
 

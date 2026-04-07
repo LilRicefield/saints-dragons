@@ -169,10 +169,17 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
      */
     private void handleTeleportToOwner(LivingEntity owner) {
         dragon.teleportTo(owner.getX(), owner.getY() + 3, owner.getZ());
-        dragon.setFlying(true);
-        dragon.setTakeoff(false);
-        dragon.setLanding(false);
-        dragon.setHovering(false);
+        if (dragon.canTakeoff()) {
+            dragon.setFlying(true);
+            dragon.setTakeoff(false);
+            dragon.setLanding(false);
+            dragon.setHovering(false);
+        } else {
+            dragon.setFlying(false);
+            dragon.setTakeoff(false);
+            dragon.setLanding(false);
+            dragon.setHovering(false);
+        }
         resetPathTracking();
     }
 
@@ -198,6 +205,9 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     }
 
     protected void startFollowTakeoff() {
+        if (!dragon.canTakeoff()) {
+            return;
+        }
         dragon.setFlying(true);
         dragon.setTakeoff(true);
         dragon.setLanding(false);

@@ -943,8 +943,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                                             @NotNull MobSpawnType reason,
                                             @Nullable SpawnGroupData spawnData,
                                             @Nullable CompoundTag spawnTag) {
-        // Crimson is rare: 25% chance, default is 75%.
-        return this.getRandom().nextFloat() < 0.25F ? 1 : 0;
+        return this.getRandom().nextFloat() < 0.05F ? 1 : 0;
+    }
+
+    @Override
+    protected int chooseAdultTextureVariant() {
+        return this.getRandom().nextFloat() < 0.50F ? 1 : 0;
     }
 
     @Override
@@ -4032,7 +4036,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             baby.skipRespawnTicks = 5;
             baby.setAge(-24000);
             baby.setBaby(true);
-            baby.setTextureVariant(baby.rollRandomTextureVariant());
             baby.applyConfiguredAttributes();
             baby.setHealth(baby.getMaxHealth());
 

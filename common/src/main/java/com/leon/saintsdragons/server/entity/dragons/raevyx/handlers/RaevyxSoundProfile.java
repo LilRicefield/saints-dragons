@@ -24,9 +24,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             Map.entry("grumble1", 52),
             Map.entry("grumble2", 72),
             Map.entry("grumble3", 43),
-            Map.entry("content", 105),
-            Map.entry("purr", 106),
-            Map.entry("chuff", 51),
             Map.entry("roar", 112),
             Map.entry("roar_ground", 112),
             Map.entry("roar_air", 112),
@@ -67,9 +64,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             case "grumble1" -> 52;
             case "grumble2" -> 72;
             case "grumble3" -> 43;
-            case "chuff" -> 51;
-            case "content" -> 105;
-            case "purr" -> 106;
             case "excited" -> 89;
             default -> -1;
         };

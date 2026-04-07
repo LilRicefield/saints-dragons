@@ -120,8 +120,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = WALK_SOUND_DURATION_TICKS;
     private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = RUN_SOUND_DURATION_TICKS;
     public static final int VARIANT_DEFAULT = 0;
-    public static final int VARIANT_NIGHT_GOLD = 1;
-    private static final float NIGHT_GOLD_VARIANT_CHANCE = 0.15F;
+    public static final int VARIANT_NIGHT_GOLD = 50;
+    private static final float NIGHT_GOLD_VARIANT_CHANCE = 0.10F;
 
     // ===== CONSTANTS =====
 
@@ -270,9 +270,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             .add("grumble1", "action", "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble2", "action", "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble3", "action", "animation.raevyx.grumble3", ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("purr", "action", "animation.raevyx.purr", ModSounds.RAEVYX_PURR, 0.8f, 1.05f, 0.05f, true, false, true)
-            .add("chuff", "action", "animation.raevyx.chuff", ModSounds.RAEVYX_CHUFF, 0.9f, 0.9f, 0.2f, false, false, false)
-            .add("content", "action", "animation.raevyx.content", ModSounds.RAEVYX_CONTENT, 0.8f, 1.0f, 0.1f, true, false, true)
             .add("excited", "action", "", ModSounds.RAEVYX_EXCITED, 1.0f, 1.0f, 0.3f, false, false, false)  // Sound-only, no animation
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
@@ -441,6 +438,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                                             @Nullable SpawnGroupData spawnData,
                                             @Nullable CompoundTag spawnTag) {
         // Night Gold is rare: 15% chance, default is 85%.
+        return rollAdultVariant();
+    }
+
+    @Override
+    protected int chooseAdultTextureVariant() {
         return rollAdultVariant();
     }
 
@@ -3262,21 +3264,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         RandomSource random = getRandom();
 
         // Don't make ambient sounds if we're in combat or using abilities
-        if (isDying() || isAggressive() || isBeaming() || getActiveAbility() != null) {
+        if (isDying() || isBaby() || isAggressive() || isBeaming() || getActiveAbility() != null) {
             return;
         }
         String vocalKey = null;
 
         // Choose sound based on current state and mood
         if (isOrderedToSit()) {
-            // Content sitting sounds
-            vocalKey = (random.nextFloat() < 0.6f) ? "content" : "purr";
-        } else if (isFlying()) {
-            // Occasional aerial sounds
-            if (random.nextFloat() < 0.3f) vocalKey = "chuff";
-        } else if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering() && (isWalking() || isRunning())) {
-            // Ground movement sounds - different based on speed
-            vocalKey = "chuff";
+            vocalKey = "grumble1";
         } else {
             // Regular idle grumbling
             float grumbleChance = random.nextFloat();
@@ -3284,10 +3279,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 vocalKey = "grumble1";
             } else if (grumbleChance < 0.7f) {
                 vocalKey = "grumble2";
-            } else if (grumbleChance < 0.9f || isBaby()) {
-                vocalKey = "grumble3";
             } else {
-                vocalKey = "purr";
+                vocalKey = "grumble3";
             }
         }
         // Play/animate if we chose one
@@ -4661,11 +4654,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     public void ageBoundaryReached() {
         super.ageBoundaryReached();
-        // Babies use shared baby textures; when reaching adulthood, roll adult skin variant.
-        // Keep an explicitly-set non-default variant (e.g., command/admin override).
-        if (this.getTextureVariant() == VARIANT_DEFAULT) {
-            this.setTextureVariant(rollAdultVariant());
-        }
         // Refresh hitbox dimensions when baby grows into adult
         applyConfiguredAttributes();
         this.refreshDimensions();
@@ -4866,7 +4854,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     
     @Override
     public boolean canTakeoff() {
-        return !isGroundRending() && !isInWaterOrBubble() && !isInLava() && onGround();
+        return !isBaby() && !isGroundRending() && !isInWaterOrBubble() && !isInLava() && onGround();
     }
 
     private boolean shouldStaySeatedCommand() {
@@ -4935,5 +4923,3 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
     }
 }
-
-

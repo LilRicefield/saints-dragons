@@ -111,11 +111,10 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
 public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, PackMember<Cindervane> {
-    // Note: DATA_FIRE_BREATHING will be defined in defineSynchedData() using a unique ID
+    private static final float ALBINO_VARIANT_CHANCE = 0.50F;
     private static final int LANDING_SETTLE_TICKS = 4;
     private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
     private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
-    private static final float INVERTED_PITCH_TRIGGER_RAD = Mth.HALF_PI;
     private static final float BARREL_ROLL_INPUT_SPEED = 0.275f;
     private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
             new DragonBarrelRollHelper.Config(
@@ -125,7 +124,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                     0.005f,
                     Mth.HALF_PI
             );
-    // 1.25s * 20 TPS = 25 ticks.
     public static final int TAKEOFF_ANIMATION_TICKS = 24;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
     private static final float FIRE_BODY_EXPLOSION_RADIUS = 15.0F;
@@ -145,10 +143,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     private int nextAmbientSoundDelay;
     private int groundStepSoundCooldownTicks = 0;
 
-    /**
-     * Family group spawning: When a wild Cindervane spawns naturally, it has a 5% chance
-     * to spawn with 1 baby hatchling, creating a family group.
-     */
     private boolean shouldSpawnBabies = false;
     private int babiesToSpawn = 0;
 
@@ -211,9 +205,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private static final double MODEL_SCALE = 1.0D;
 
-    // ===== ALTITUDE-BASED FLYING SYSTEM (like Raevyx) =====
     public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
-    public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
+    public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
     public static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
     public static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
     public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
@@ -301,6 +294,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                 "default", 0,
                 "albino", 1
         );
+    }
+
+    @Override
+    protected int chooseAdultTextureVariant() {
+        return this.getRandom().nextFloat() < ALBINO_VARIANT_CHANCE ? 1 : 0;
     }
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====
@@ -578,11 +576,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void ageBoundaryReached() {
         super.ageBoundaryReached();
-        // Babies use shared baby texture; roll adult variant on adulthood.
-        // Preserve explicitly set non-default variants (e.g., admin/command override).
-        if (this.getTextureVariant() == 0) {
-            this.setTextureVariant(this.rollRandomTextureVariant());
-        }
         // Refresh attributes when baby grows into adult
         applyConfiguredAttributes();
         this.refreshDimensions();

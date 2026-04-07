@@ -429,7 +429,7 @@ public class DragonCodexSavedData extends SavedData {
     }
 
     private static int resolveVariantId(DragonEntity dragon) {
-        return dragon.getTextureVariant();
+        return dragon.getCodexTextureVariant();
     }
 
     private static String resolveDragonType(DragonEntity dragon) {

@@ -83,6 +83,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_PENDING_ADULT_TEXTURE_VARIANT =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
     public static final int HUNGER_MAX = DragonHungerComponent.HUNGER_MAX;
     public static final int HAPPINESS_MAX = DragonHappinessComponent.HAPPINESS_MAX;
     private DragonAbility<?> activeAbility = null;
@@ -242,6 +244,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.define(DATA_PITCH_DEVIATION, 0.0f);
         this.entityData.define(DATA_YAW_VELOCITY, 0.0f);
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
+        this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT, -1);
     }
 
     public float smoothTailDragVelocity(float targetDegrees) {
@@ -429,6 +432,54 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.set(DATA_TEXTURE_VARIANT, clamped);
     }
 
+    protected boolean shouldPersistAdultTextureVariantOnBabies() {
+        return getMaxTextureVariant() > 0;
+    }
+
+    protected int chooseAdultTextureVariant() {
+        return rollRandomTextureVariant();
+    }
+
+    public int getPendingAdultTextureVariant() {
+        return this.entityData.get(DATA_PENDING_ADULT_TEXTURE_VARIANT);
+    }
+
+    public void setPendingAdultTextureVariant(int variant) {
+        int clamped = Math.max(-1, Math.min(getMaxTextureVariant(), variant));
+        this.entityData.set(DATA_PENDING_ADULT_TEXTURE_VARIANT, clamped);
+    }
+
+    protected void ensurePendingAdultTextureVariant() {
+        if (!shouldPersistAdultTextureVariantOnBabies()) {
+            return;
+        }
+        if (getPendingAdultTextureVariant() < 0) {
+            setPendingAdultTextureVariant(chooseAdultTextureVariant());
+        }
+    }
+
+    protected void applyPendingAdultTextureVariant() {
+        if (!shouldPersistAdultTextureVariantOnBabies()) {
+            return;
+        }
+        int pending = getPendingAdultTextureVariant();
+        if (pending < 0) {
+            pending = chooseAdultTextureVariant();
+        }
+        setTextureVariant(pending);
+        setPendingAdultTextureVariant(-1);
+    }
+
+    public int getCodexTextureVariant() {
+        if (this.isBaby() && shouldPersistAdultTextureVariantOnBabies()) {
+            int pending = getPendingAdultTextureVariant();
+            if (pending >= 0) {
+                return pending;
+            }
+        }
+        return getTextureVariant();
+    }
+
     protected int getMaxTextureVariant() {
         return 0;
     }
@@ -475,7 +526,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                                             @NotNull MobSpawnType reason,
                                             @Nullable SpawnGroupData spawnData,
                                             @Nullable CompoundTag spawnTag) {
-        return rollRandomTextureVariant();
+        return chooseAdultTextureVariant();
     }
 
     public boolean tryBrush(Player player, net.minecraft.world.item.ItemStack brushStack) {
@@ -515,7 +566,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                                                  @Nullable SpawnGroupData spawnData, @Nullable CompoundTag spawnTag) {
         SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
         ensureGenderInitialized();
-        setTextureVariant(chooseSpawnTextureVariant(levelAccessor, difficulty, reason, spawnData, spawnTag));
+        int chosenVariant = chooseSpawnTextureVariant(levelAccessor, difficulty, reason, spawnData, spawnTag);
+        if (this.isBaby() && shouldPersistAdultTextureVariantOnBabies()) {
+            setPendingAdultTextureVariant(chosenVariant);
+            setTextureVariant(0);
+        } else {
+            setTextureVariant(chosenVariant);
+        }
 
         // If baby spawned from spawn egg, reposition on ground to prevent falling from sky
         if (this.isBaby() && reason == MobSpawnType.SPAWN_EGG) {
@@ -1566,6 +1623,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             genderComponent.saveToNBT(tag);
         }
         tag.putInt("TextureVariant", getTextureVariant());
+        tag.putInt("PendingAdultTextureVariant", getPendingAdultTextureVariant());
         tag.putBoolean("BoundInBinder", this.boundInBinder);
         if (assignedParentUuid != null) {
             tag.putUUID("AssignedParentUuid", assignedParentUuid);
@@ -1604,6 +1662,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         if (tag.contains("TextureVariant")) {
             setTextureVariant(tag.getInt("TextureVariant"));
+        }
+        if (tag.contains("PendingAdultTextureVariant")) {
+            setPendingAdultTextureVariant(tag.getInt("PendingAdultTextureVariant"));
         }
         this.assignedParentUuid = tag.hasUUID("AssignedParentUuid") ? tag.getUUID("AssignedParentUuid") : null;
         this.boundInBinder = tag.getBoolean("BoundInBinder");
@@ -1645,6 +1706,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         boolean isInitialLoad = !wasBaby && age < 0 && this.tickCount == 0;
 
         if (wasBaby != isNowBaby && !level().isClientSide && !isRespawning && this.getId() != -1 && skipRespawnTicks == 0 && !isInitialLoad) {
+            if (wasBaby && !isNowBaby) {
+                applyPendingAdultTextureVariant();
+            }
 
             // Set flag to prevent re-entrancy when newEntity.load() calls setAge()
             isRespawning = true;
@@ -1707,6 +1771,22 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             }
 
             // Note: We don't reset the flag on old entity because it's about to be discarded anyway
+        }
+    }
+
+    @Override
+    public void setBaby(boolean baby) {
+        super.setBaby(baby);
+
+        if (level().isClientSide || !shouldPersistAdultTextureVariantOnBabies()) {
+            return;
+        }
+
+        if (baby) {
+            ensurePendingAdultTextureVariant();
+            setTextureVariant(0);
+        } else {
+            applyPendingAdultTextureVariant();
         }
     }
 

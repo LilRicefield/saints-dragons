@@ -277,7 +277,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
      * Defaults to true - ground-only/aquatic dragons should override and return false.
      */
     public boolean canTakeoff() {
-        return true;
+        return !this.isBaby();
     }
 
     protected void onRiderTakeoffRequest(Player player) {

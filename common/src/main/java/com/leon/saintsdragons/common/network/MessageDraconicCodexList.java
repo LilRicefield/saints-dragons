@@ -60,7 +60,7 @@ public class MessageDraconicCodexList {
                     dragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR),
                     dragon.getHunger(),
                     dragon.getHappiness(),
-                    dragon.getTextureVariant(),
+                    dragon.getCodexTextureVariant(),
                     dragon.getGender().getId(),
                     dragon.hasGender(),
                     dragonType,

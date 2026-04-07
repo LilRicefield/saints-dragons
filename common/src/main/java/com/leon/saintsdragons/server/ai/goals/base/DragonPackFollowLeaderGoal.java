@@ -356,6 +356,15 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
 
         boolean leaderAirborne = isDragonAirborne(flightLeader, currentLeader);
         boolean memberAirborne = isDragonAirborne(flightMember, rideableMember);
+        if (member.isBaby()) {
+            if (flightMember.isFlying() || flightMember.isTakeoff() || flightMember.isHovering() || flightMember.isLanding()) {
+                flightMember.setFlying(false);
+                flightMember.setTakeoff(false);
+                flightMember.setHovering(false);
+                flightMember.setLanding(false);
+            }
+            return false;
+        }
         if (!leaderAirborne && !memberAirborne) {
             return false;
         }

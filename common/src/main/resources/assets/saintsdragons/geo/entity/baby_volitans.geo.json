@@ -16,8 +16,13 @@
 					"pivot": [0, 4, 1]
 				},
 				{
-					"name": "heightController",
+					"name": "body",
 					"parent": "root",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "heightController",
+					"parent": "body",
 					"pivot": [0, 4, 1],
 					"cubes": [
 						{"origin": [4.5186, 9.93159, -8], "size": [0, 5, 15], "pivot": [4.5186, 11.93159, 1], "rotation": [0, 0, 15], "uv": [0, 52]},
