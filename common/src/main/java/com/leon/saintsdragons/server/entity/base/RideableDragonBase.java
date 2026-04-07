@@ -51,6 +51,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_HOVERING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
+
+    /**
+     * Prominence II injects a parent tracker that lands exactly where our landing flag would normally sit.
+     * Keep this unregistered so that slot is skipped before we register DATA_LANDING.
+     */
+    private static final EntityDataAccessor<Byte> DATA_LANDING_TRACKER_COMPAT_PADDING =
+            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
+
     public static final EntityDataAccessor<Boolean> DATA_LANDING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
 
