@@ -115,6 +115,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         DragonFlightCapable, ShakesScreen, SoundHandledDragon, ElectricalConductivityCapable {
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
     private static final float DEFAULT_DASH_DAMAGE = 10.0F;
+    private static final int WALK_SOUND_DURATION_TICKS = 32;
+    private static final int RUN_SOUND_DURATION_TICKS = 25;
+    private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = WALK_SOUND_DURATION_TICKS;
+    private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = RUN_SOUND_DURATION_TICKS;
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_NIGHT_GOLD = 1;
     private static final float NIGHT_GOLD_VARIANT_CHANCE = 0.15F;
@@ -134,7 +138,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     /** Time to live for aggression tracking (in ticks) */
     public static final int AGGRO_TTL_TICKS = 200; // ~10s
     public static final double BREED_PARTNER_RANGE = 8.0D;
-    public static final double BREED_DISTANCE_SQR = 2500.0D;
+    public static final double BREED_DISTANCE_SQR = 16.0D;
 
     // ===== ENTITY DATA ACCESSORS =====
 
@@ -800,7 +804,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         });
     }
 
-    private void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+    public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
         if (this.isBaby()) {
             return;
         }
@@ -848,16 +852,16 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         long now = this.level().getGameTime();
         double horizontalSpeedSq = this.getDeltaMovement().horizontalDistanceSqr();
         boolean running = isActuallyRunning() || horizontalSpeedSq > 0.02D;
-        long minIntervalTicks = running ? 20L : 33L;
+        long minIntervalTicks = running ? RUN_SOUND_REPLAY_INTERVAL_TICKS : WALK_SOUND_REPLAY_INTERVAL_TICKS;
         if (now - getSoundHandler().getLastStepTick() < minIntervalTicks) {
             return;
         }
         getSoundHandler().setLastStepTick(now);
 
         if (running) {
-            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_RUN.get(), 1.0f, 1.0f, 20);
+            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_RUN.get(), 1.0f, 1.0f, RUN_SOUND_DURATION_TICKS);
         } else {
-            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_WALK.get(), 1.0f, 1.0f, 34);
+            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_WALK.get(), 1.0f, 1.0f, WALK_SOUND_DURATION_TICKS);
         }
     }
 
@@ -2291,12 +2295,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             tickAnimationStates();
         }
 
-        // CRITICAL: Update NoGravity every tick (like Cindervane)
-        // This allows proper landing - NoGravity is disabled when grounded
-        this.setNoGravity(isFlying() || isHovering());
+        // Keep aerial transitions from getting stomped during takeoff/landing handoff.
+        this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
 
-        // Switch to ground navigation when landed
-        if (!isFlying() && navigationModeController.isUsingAirNavigation()) {
+        // Only snap back to ground navigation once fully out of aerial states.
+        if (!isFlying() && !isTakeoff() && !isLanding() && navigationModeController.isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
     }
@@ -3744,7 +3747,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Raevyx.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         }
 
-        this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forRaevyx()));
+        this.goalSelector.addGoal(8, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forRaevyx()) {
+            @Override
+            protected void startFollowTakeoff() {
+                if (Raevyx.this.isFlying() || Raevyx.this.isTakeoff()) {
+                    return;
+                }
+                Raevyx.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
+            }
+        });
         this.goalSelector.addGoal(9, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 60));
         // Idle water behavior when no target: swim instead of passively sinking.
         this.goalSelector.addGoal(10, new com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));

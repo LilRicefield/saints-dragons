@@ -191,7 +191,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
             return;
         }
 
-        var bodyOpt = getBone("body");
+        var bodyOpt = getBone("heightController");
         if (bodyOpt.isEmpty()) {
             return;
         }
@@ -206,7 +206,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
             return;
         }
 
-        var bodyOpt = getBone("body");
+        var bodyOpt = getBone("heightController");
         if (bodyOpt.isEmpty()) {
             return;
         }

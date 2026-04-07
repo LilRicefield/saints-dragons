@@ -2,8 +2,6 @@
 
 package com.leon.saintsdragons.server.entity.base;
 
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -30,9 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -52,7 +48,6 @@ import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -65,20 +60,11 @@ import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Base class for all wyvern entities in the mod.
- * Provides common GeckoLib integration, ability management, and basic wyvern functionality.
- */
 public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
-    // Shared command synced data for all dragons
     protected static final EntityDataAccessor<Integer> DATA_COMMAND =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
-
-    // Shared sit progress data for all dragons
     public static final EntityDataAccessor<Float> DATA_SIT_PROGRESS =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
-
-    // Shared gender flag for all dragons (0=male,1=female)
     private static final EntityDataAccessor<Byte> DATA_GENDER =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_HAPPINESS =
@@ -89,8 +75,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
-
-    // Rotation deviation sync (REQUIRED for smooth animations)
     private static final EntityDataAccessor<Float> DATA_BODY_DEVIATION =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_PITCH_DEVIATION =
@@ -99,21 +83,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
-
     public static final int HUNGER_MAX = DragonHungerComponent.HUNGER_MAX;
     public static final int HAPPINESS_MAX = DragonHappinessComponent.HAPPINESS_MAX;
-
-
-    // Dragon ability system (lightweight base – no global cooldown here)
     private DragonAbility<?> activeAbility = null;
-
-    // Combat manager for handling abilities and cooldowns
     public final DragonCombatHandler combatManager;
-
-    // Ally manager for handling wyvern allies
     public final DragonAllyManager allyManager;
-
-    // Components for animation sync, commands, gender, hunger, happiness, sitting, and sleep behavior
     @Nullable
     private final DragonAnimationSyncComponent animationSyncComponent;
     @Nullable
@@ -144,8 +118,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             com.leon.saintsdragons.util.math.SmoothValue.value(0.0);
     @Nullable
     private DragonType cachedDragonType;
-
-    // Death sequence management
     private boolean dying = false;
     @Nullable
     private LivingEntity lastDamager;
@@ -153,15 +125,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private DamageSource killDataCause;
     private int killDataRecentlyHit;
     private Player killDataAttackingPlayer;
-    // Re-entrancy guard for setAge() to prevent infinite recursion during baby->adult respawn
     private boolean isRespawning = false;
-
-    // Flag to prevent respawn logic from triggering on newly spawned babies (from spawn eggs/breeding)
     public int skipRespawnTicks = 0;
-
-    // Store reference to our custom body control for server-side rotation updates
     private BodyControl dragonBodyControl;
-    // Safety flag for binder storage; when true, survival stats are paused.
     private boolean boundInBinder = false;
     @Nullable
     private UUID assignedParentUuid;
@@ -180,7 +146,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.animationSyncComponent = createAnimationSyncComponent();
         this.sitComponent = createSitComponent();
         this.babyComponent = createBabyComponent();
-        // Set custom look control (lookControl field is protected in Mob)
         this.lookControl = new com.leon.saintsdragons.server.entity.controller.DragonLookControl<>(this);
     }
 
@@ -230,10 +195,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     @Nullable
-    /**
-     * Optional hook for baby lifecycle behavior.
-     * Subclasses may return null to opt out without breaking base behavior.
-     */
     protected DragonBabyComponent createBabyComponent() {
         return new DragonBabyComponent(this);
     }
@@ -253,10 +214,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return this.dragonBodyControl;
     }
 
-    /**
-     * Returns the turn speed multiplier for body rotation when moving.
-     * Higher = faster turns. Default 0.6, override for slower/faster species.
-     */
     protected float getBodyTurnSpeed() {
         return 0.6f; // Default for most dragons
     }
@@ -287,9 +244,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
     }
 
-    /**
-     * Smooths tail drag velocity per entity on the client, preventing renderer-wide leakage.
-     */
     public float smoothTailDragVelocity(float targetDegrees) {
         if (animationSyncComponent == null) {
             return targetDegrees;
@@ -297,9 +251,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return animationSyncComponent.smoothTailDragVelocity(targetDegrees);
     }
 
-    /**
-     * Resets the cached tail drag smoothing value (e.g., when the entity respawns).
-     */
+
     public void resetTailDragVelocity() {
         if (animationSyncComponent != null) {
             animationSyncComponent.resetTailDragVelocity();
@@ -477,25 +429,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.set(DATA_TEXTURE_VARIANT, clamped);
     }
 
-    /**
-     * Maximum valid texture variant index for this dragon.
-     * Default is 0 (single texture/no variants).
-     */
     protected int getMaxTextureVariant() {
         return 0;
     }
 
-    /**
-     * Exposes the maximum valid texture variant index for command/UI helpers.
-     */
-    public int getMaxTextureVariantIndex() {
-        return getMaxTextureVariant();
-    }
 
-    /**
-     * Human-readable variant names accepted by commands.
-     * Default dragons support only "default".
-     */
     public Map<String, Integer> getTextureVariantNameMap() {
         return Map.of("default", 0);
     }
@@ -707,22 +645,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
     }
 
-    @Override
-    protected SoundEvent getHurtSound(@NotNull DamageSource source) {
-        // Hurt vocals are driven by DragonAbility/HurtAbility for precise timing (avoid vanilla fallback subtitles)
-        return null;
-    }
-
-    @Override
-    protected SoundEvent getDeathSound() {
-        // Death vocals are handled by DieAbility; suppress vanilla generic subtitle
-        return null;
-    }
 
     @Override
     protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
-        // Mute vanilla step sounds - dragons use custom step sounds via animation keyframes
-        // Step sounds are handled by DragonSoundHandler -> DragonSoundProfile
+
     }
 
     @Override
@@ -732,17 +658,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     @Override
     public void push(double x, double y, double z) {
-        // Intentionally ignore external push impulses (entity crowding/collision pushes).
     }
 
     @Override
     public void knockback(double strength, double x, double z) {
-        // Dragons are immune to knockback displacement.
     }
 
     @Override
     public boolean isInvulnerableTo(@NotNull DamageSource source) {
-        // Check elemental immunities first
         DragonType dragonType = getDragonType();
         if (dragonType != null && dragonType.getElementalProfile().isImmuneTo(source)) {
             return true;
@@ -752,16 +675,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     @Override
     public boolean fireImmune() {
-        // Keep base behavior here; specific dragons gate mundane fire in their own hurt() overrides.
-        // This avoids over-broad immunity paths that can accidentally swallow non-fire damage channels.
         return super.fireImmune();
     }
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
-        // Prevent rider-triggered left click attacks from damaging the dragon itself.
-        // While mounted, left click is used for rider abilities, not vanilla melee.
-        // Keep admin/command kill paths working (e.g. /kill uses bypass-invuln damage types).
         if (isDamageFromCurrentRider(source) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return false;
         }
@@ -835,22 +753,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return lastDamagerTimestamp;
     }
 
-    /**
-     * Override die() to store kill data and trigger death ability (Mowzie-style).
-     * This is called by vanilla when health reaches 0.
-     */
     @Override
     public void die(@NotNull DamageSource cause) {
         if (!this.dead) {
-            // Store kill data for proper loot/XP drops after animation
             killDataCause = cause;
             killDataRecentlyHit = this.lastHurtByPlayerTime;
             killDataAttackingPlayer = this.lastHurtByPlayer;
 
-            // Mark as dying to prevent hurt ability interrupts
             dying = true;
 
-            // Trigger death ability based on age
             DragonAbilityType<?, ?> deathAbility = getDeathAbilityType();
             if (deathAbility != null && !level().isClientSide) {
                 combatManager.forceUseAbility(deathAbility);
@@ -890,49 +801,33 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
     }
 
-    /**
-     * Override tickDeath() to delay entity removal until death animation completes (Mowzie-style).
-     * Vanilla tickDeath() increments deathTime and removes the entity after 20 ticks.
-     * We extend this to match our death animation duration.
-     */
+
     @Override
     protected void tickDeath() {
         ++this.deathTime;
         int deathDuration = getDeathAnimationDurationTicks();
 
         if (this.deathTime >= deathDuration && !this.level().isClientSide()) {
-            // Restore kill data for proper loot table context
+
             this.lastHurtByPlayer = killDataAttackingPlayer;
             this.lastHurtByPlayerTime = killDataRecentlyHit;
 
-            // Drop loot with proper kill credit
             if (killDataCause != null) {
                 this.dropAllDeathLoot(killDataCause);
             }
-
-            // Broadcast death event and remove entity
             this.level().broadcastEntityEvent(this, (byte)60);
             this.remove(Entity.RemovalReason.KILLED);
         }
     }
 
-    /**
-     * Prevent loot drops during hurt() damage - wait for tickDeath() to handle it properly.
-     * This ensures loot drops only after the death animation completes.
-     */
     @Override
     protected void dropAllDeathLoot(@NotNull DamageSource source) {
         if (deathTime < getDeathAnimationDurationTicks()) {
-            // Still playing death animation - don't drop yet
             return;
         }
         super.dropAllDeathLoot(source);
     }
 
-    /**
-     * Get the dragon type for this entity.
-     * Used for elemental damage calculations and type-specific behavior.
-     */
     @Nullable
     public DragonType getDragonType() {
         if (cachedDragonType == null) {
@@ -941,45 +836,22 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return cachedDragonType;
     }
 
-    /**
-     * Get the primary attack ability for this wyvern type.
-     * Override in subclasses to define wyvern-specific attack abilities.
-     */
     public abstract DragonAbilityType<?, ?> getPrimaryAttackAbility();
-
-    /**
-     * Get the roar ability for this wyvern type (if any)
-     */
     public DragonAbilityType<?, ?> getRoaringAbility() {
         return null; // Default: no roar ability
     }
-
-    /**
-     * Get the summon storm ability for this wyvern type (if any)
-     */
     public DragonAbilityType<?, ?> getChannelingAbility() {
         return null;
     }
 
-    /**
-     * Return the egg block state for this dragon. Override to enable egg laying.
-     */
     @Nullable
     public BlockState getEggBlockState() {
         return null;
     }
 
-    /**
-     * Configure egg block entity data (owner UUID, baby gender, etc).
-     */
     public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
-        // Default no-op.
     }
 
-    /**
-     * Resolves egg ownership from breeding parents.
-     * Prefers the caller parent, then falls back to the partner parent.
-     */
     @Nullable
     protected java.util.UUID resolveEggOwnerUUID(@Nullable DragonEntity partner) {
         if (babyComponent != null) {
@@ -990,10 +862,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return null;
     }
 
-    /**
-     * Registers a dragon in the owner's codex when ownership exists.
-     * Useful for spawn-egg offspring paths that bypass hatch registration.
-     */
     protected void registerToOwnerCodex(@Nullable DragonEntity dragon, @Nullable net.minecraft.server.level.ServerLevel level) {
         if (babyComponent != null) {
             babyComponent.registerToOwnerCodex(dragon, level);
@@ -1008,68 +876,34 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     // ===== DRAGON STATE METHODS =====
-    // These methods should be implemented by wyvern subclasses
+    // These methods should be implemented by subclasses
     // Default implementations return false/null for basic functionality
 
-    /**
-     * Check if the wyvern is currently dying
-     */
+
     public boolean isDying() {
         return dying;
     }
 
-    /**
-     * Hook invoked when the shared death ability starts playing.
-     * Subclasses can override to update custom state.
-     */
     public void onDeathAbilityStarted() {
-        // Default no-op
+
     }
 
-    /**
-     * Duration (in ticks) that the shared death ability should run before the kill pulse.
-     * Subclasses override to match their custom death animation length.
-     */
     public int getDeathAnimationDurationTicks() {
         return 62;
     }
 
-
-    /**
-     * Register a bite sound key for animation controllers.
-     * Convenience method to avoid repeating the same pattern in every wyvern.
-     *
-     * @param controller The animation controller to register the sound key with
-     */
-    protected final void registerBiteSoundKey(software.bernie.geckolib.core.animation.AnimationController<?> controller, String speciesId) {
-        controller.triggerableAnim("bite", software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("animation." + speciesId + ".bite"));
-    }
-
-
-    /**
-     * Check if the wyvern is in a muted state (sitting/staying)
-     */
     public boolean isStayOrSitMuted() {
         return false;
     }
 
-    /**
-     * Whether this dragon supports the sleep system at all.
-     */
     public boolean supportsSleep() {
         return false;
     }
 
-    /**
-     * Check if the wyvern is transitioning between sleep states
-     */
     public boolean isSleepTransitioning() {
         return sleepComponent != null && sleepComponent.isSleepTransitioning();
     }
 
-    /**
-     * Check if the dragon is currently sleeping
-     */
     public boolean isSleeping() {
         return sleepComponent != null && sleepComponent.isSleeping();
     }
@@ -1086,27 +920,17 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return sleepComponent != null && sleepComponent.isSleepLocked();
     }
 
-    /**
-     * Start the sleep enter sequence (sit down -> fall asleep -> sleep)
-     */
     public void startSleepEnter() {
         if (sleepComponent != null) {
             sleepComponent.startSleepEnter();
         }
     }
-
-    /**
-     * Start the sleep exit sequence (wake up -> sit up -> stand)
-     */
     public void startSleepExit() {
         if (sleepComponent != null) {
             sleepComponent.startSleepExit();
         }
     }
 
-    /**
-     * Wake up immediately (e.g., on damage)
-     */
     public void wakeUpImmediately() {
         if (sleepComponent != null) {
             sleepComponent.wakeUpImmediately();
@@ -1119,9 +943,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
     }
 
-    /**
-     * Check if sleep is temporarily suppressed (combat cooldown, etc.)
-     */
     public boolean isSleepSuppressed() {
         return sleepComponent != null && sleepComponent.isSleepSuppressed();
     }
@@ -1339,25 +1160,18 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         onSleepWakeUpImmediate();
     }
 
-    /**
-     * Get this dragon's sleep preferences (day/night, weather, etc.)
-     * Override in each dragon to define their sleep behavior
-     */
     public DragonSleepPreferences getSleepPreferences() {
-        // Default: flexible sleeper (any time)
         return DragonSleepPreferences.FLEXIBLE();
     }
 
-    /**
-     * Check if dragon can sleep right now (custom per-dragon logic)
-     */
     public boolean canSleepNow() {
         return true; // Override for custom logic
     }
 
-    /**
-     * Sleep preferences - each dragon defines their own.
-     */
+    public boolean canSleepInWater() {
+        return false;
+    }
+
     public record DragonSleepPreferences(
             boolean canSleepAtNight,
             boolean canSleepDuringDay,
@@ -1384,65 +1198,32 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
     }
 
-    /**
-     * Check if the wyvern is flying
-     */
     public boolean isFlying() {
         return false;
     }
-
-    /**
-     * Check if the wyvern is running
-     */
     public boolean isRunning() {
         return false;
     }
-
-    /**
-     * Check if the wyvern is walking
-     */
     public boolean isWalking() {
         return false;
     }
 
-    /**
-     * Check if the wyvern is actually running (not just flagged as running)
-     */
     public boolean isActuallyRunning() {
         return false;
     }
-
-    /**
-     * Get cached horizontal speed for performance
-     */
     public double getCachedHorizontalSpeed() {
         return 0.0;
     }
-
-    /**
-     * Check if rider controls are locked
-     */
     public boolean areRiderControlsLocked() {
         return false;
     }
-
-    /**
-     * Get client-side locator position for sound effects
-     */
     public Vec3 getClientLocatorPosition(String locator) {
         return null;
     }
-
-    /**
-     * Get the maximum sit progress ticks for smooth sitting animation
-     */
     public float maxSitTicks() {
         return 15.0F; // Default: 15 ticks to fully sit (about 0.75 seconds)
     }
 
-    /**
-     * Get the current sit progress
-     */
     public float getSitProgress() {
         if (sitComponent == null) {
             return 0f;
@@ -1499,46 +1280,27 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
     }
 
-    /**
-     * Check if the wyvern is going up (for riding controls)
-     */
     public boolean isGoingUp() {
-        return false; // Default implementation - override in subclasses
-    }
+        return false;
 
-    /**
-     * Set if the wyvern is going up (for riding controls)
-     */
+    }
     public void setGoingUp(boolean goingUp) {
-        // Default implementation - override in subclasses
     }
 
-    /**
-     * Check if the wyvern is going down (for riding controls)
-     */
     public boolean isGoingDown() {
-        return false; // Default implementation - override in subclasses
+        return false;
     }
 
-    /**
-     * Set if the wyvern is going down (for riding controls)
-     */
     public void setGoingDown(boolean goingDown) {
-        // Default implementation - override in subclasses
     }
 
-    /**
-     * Get the riding player if any
-     */
     public net.minecraft.world.entity.player.Player getRidingPlayer() {
         if (this.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player player) {
             return player;
         }
         return null;
     }
-    /**
-     * Tick Dragon ability system
-     */
+
     protected void tickAbilities() {
         if (!level().isClientSide) {
             combatManager.tick();
@@ -1554,8 +1316,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             skipRespawnTicks--;
         }
         tickAbilities();
-
-        // Tick sleep behavior (server-side only)
         if (!level().isClientSide) {
             aiCombatPacing.tick();
             if (sleepComponent != null) {
@@ -1578,15 +1338,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             }
         }
 
-        // Update body rotation to follow head/movement (prevents neck crunching)
-        // CRITICAL: Must run on SERVER to keep yBodyRot synced properly
         if (!level().isClientSide && this.dragonBodyControl != null) {
             this.dragonBodyControl.serverTick();
         }
-
-        // Update rotation deviations (Hybrid approach for ridden dragons)
-        // Client: Calculate from synced data OR locally if riding
-        // Server: Calculate and sync to observers
         if (level().isClientSide) {
             syncClientSitProgress();
             if (animationSyncComponent != null) {
@@ -1599,9 +1353,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
     // ===== COMMAND SYSTEM (shared) =====
 
-    /**
-     * Current owner command: 0=Follow, 1=Sit, 2=Wander (extend as needed)
-     */
     public int getCommand() {
         if (commandComponent == null) {
             return this.entityData.get(DATA_COMMAND);
@@ -1609,9 +1360,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return commandComponent.getCommand();
     }
 
-    /**
-     * Sets owner command and applies base behaviors (e.g., sit toggle).
-     */
+
     public void setCommand(int command) {
         if (commandComponent == null) {
             this.entityData.set(DATA_COMMAND, command);
@@ -1622,18 +1371,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         commandComponent.setCommand(command);
     }
-
-    /**
-     * Base owner-command gesture: crouching owner with empty hand by default.
-     * Subclasses can override to change how commands are issued.
-     */
     public boolean canOwnerCommand(Player player) {
         return player != null && player.isCrouching();
     }
 
-    /**
-     * Base mounting permission; subclasses may override with stricter logic.
-     */
     public boolean canOwnerMount(Player player) {
         if (this.isBaby()) {
             return false;
@@ -1657,10 +1398,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return true;
     }
 
-    /**
-     * Check if an entity is an ally of this wyvern.
-     * Includes owner, other dragons owned by the same player, and manually set allies.
-     */
     public boolean isAlly(net.minecraft.world.entity.Entity entity) {
         if (entity == null) return false;
 
@@ -1668,8 +1405,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         if (entity instanceof Player player && this.isTame() && this.isOwnedBy(player)) {
             return true;
         }
-
-        // Other dragons owned by the same player or allied players are allies
         if (entity instanceof DragonEntity otherDragon && this.isTame() && otherDragon.isTame()) {
             LivingEntity owner = this.getOwner();
             if (owner instanceof Player ownerPlayer) {
@@ -1686,16 +1421,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
 
 
-        // Check manually set allies
         if (entity instanceof Player player) {
             return allyManager.isAlly(player);
         }
 
-        // Check if entity is owned by an ally (including the wyvern's owner)
         if (entity instanceof net.minecraft.world.entity.TamableAnimal tamable && tamable.isTame()) {
             net.minecraft.world.entity.LivingEntity owner = tamable.getOwner();
             if (owner instanceof Player playerOwner) {
-                // Check if the pet's owner is the wyvern's owner OR a manually set ally
                 return (this.isTame() && this.isOwnedBy(playerOwner)) || allyManager.isAlly(playerOwner);
             }
         }
@@ -1709,10 +1441,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return false;
     }
 
-    /**
-     * Check if an entity should be considered a valid target for this wyvern.
-     * This prevents targeting allies even in retaliation scenarios.
-     */
     public boolean canTarget(net.minecraft.world.entity.Entity entity) {
         if (entity == null) return false;
 
@@ -1720,34 +1448,27 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return false;
         }
 
-        // Never target allies
         if (isAlly(entity)) {
             return false;
         }
 
-        // Additional check: Never target tamed animals owned by the same player
-        // This prevents targeting pets even if they're not explicitly marked as allies
         if (entity instanceof net.minecraft.world.entity.TamableAnimal tamable && tamable.isTame()) {
             net.minecraft.world.entity.LivingEntity owner = tamable.getOwner();
             if (owner instanceof Player playerOwner && this.isTame() && this.isOwnedBy(playerOwner)) {
-                return false; // Never target pets owned by the same player
+                return false;
             }
         }
 
         if (entity instanceof OwnableEntity ownable) {
             LivingEntity owner = ownable.getOwner();
             if (owner instanceof Player playerOwner && this.isTame() && this.isOwnedBy(playerOwner)) {
-                return false; // Never target entities owned by the same player
+                return false;
             }
         }
 
         return true;
     }
 
-    /**
-     * Check whether a living target should be treated as "alive" for combat.
-     * Handles IaF-style corpse entities that remain alive while flagged as model-dead.
-     */
     public boolean isTargetValid(@Nullable LivingEntity target) {
         if (target == null) return false;
         if (!target.isAlive() || target.isRemoved()) return false;
@@ -1811,10 +1532,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return null;
     }
 
-    /**
-     * Default interaction handling for command cycling (Shift + empty hand).
-     * Subclasses overriding mobInteract should call super to retain this behavior.
-     */
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         if (this.isTame() && this.isOwnedBy(player)) {
@@ -1827,9 +1544,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return super.mobInteract(player, hand);
     }
 
-    /**
-     * Persist base command state to NBT.
-     */
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
@@ -1860,12 +1574,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         allyManager.saveToNBT(tag);
     }
 
-    /**
-     * Load base command state from NBT.
-     */
+
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
-        // Read re-entrancy flag FIRST before calling super (which eventually calls setAge())
+
         if (tag.contains("IsRespawning")) {
             this.isRespawning = tag.getBoolean("IsRespawning");
         }
@@ -1918,11 +1630,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     // ===== BABY/BREEDING SYSTEM =====
-    /**
-     * Override setAge to detect baby->adult transition and force visual update.
-     * GeckoLib caches animations on the client renderer, so we need to force clients to refresh when aging up.
-     * This is a generic solution that works for all dragon types.
-     */
     @Override
     public void setAge(int age) {
         boolean wasBaby = this.isBaby();
@@ -2003,11 +1710,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
     }
 
-    /**
-     * Override to spawn baby on the ground instead of at parent's Y position.
-     * Prevents babies from spawning mid-air when parent is flying/tall.
-     * NOTE: This is ONLY called for natural breeding (two animals in love), NOT for spawn eggs!
-     */
+
     @Override
     public void spawnChildFromBreeding(net.minecraft.server.level.ServerLevel level, net.minecraft.world.entity.animal.Animal otherParent) {
         net.minecraft.world.entity.AgeableMob baby = this.getBreedOffspring(level, otherParent);
@@ -2019,10 +1722,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
     }
 
-    /**
-     * Finds a safe landing block for newly spawned babies by scanning downward until a sturdy,
-     * non-fluid surface with air above is located. Returns null if no such surface is found.
-     */
     @Nullable
     protected net.minecraft.core.BlockPos findSafeBabySpawnPos(net.minecraft.world.level.LevelAccessor level, net.minecraft.core.BlockPos start) {
         if (level == null || start == null) return null;
@@ -2051,16 +1750,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return state.isSolidRender(level, pos) || state.isFaceSturdy(level, pos, net.minecraft.core.Direction.UP);
     }
 
-    // ===== ABSTRACT METHODS =====
-    /**
-     * Get head position for targeting and ability positioning.
-     * Override this in subclasses to provide accurate head positioning.
-     */
     public abstract Vec3 getHeadPosition();
 
-    /**
-     * Get mouth position for beam/breath attacks.
-     * Override this in subclasses to provide accurate mouth positioning.
-     */
     public abstract Vec3 getMouthPosition();
 }

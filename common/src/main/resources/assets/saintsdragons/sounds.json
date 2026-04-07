@@ -108,8 +108,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_lightning_beam_start",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
       }
     ]
   },
@@ -118,7 +119,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_lightning_beaming",
-        "volume": 1.0,
+        "volume": 2.5,
         "pitch": 1.0,
         "attenuation_distance": 48
       }
@@ -129,8 +130,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_lightning_beam_stop",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
       }
     ]
   },
@@ -385,9 +387,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_walk",
-        "volume": 2.0,
+        "volume": 3.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 32
       }
     ]
   },
@@ -1304,9 +1306,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_run",
-        "volume": 3.0,
+        "volume": 3.5,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 36
       }
     ]
   },
@@ -1348,7 +1350,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_ground_rend",
-        "volume": 1.0,
+        "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 32
       }
@@ -1635,6 +1637,17 @@
       {
         "name": "saintsdragons:entity/volitans/volitans_die",
         "volume": 1.8,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_flap": {
+    "subtitle": "Volitans beats its wings",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_flap",
+        "volume": 3.0,
         "pitch": 1.0,
         "attenuation_distance": 40
       }

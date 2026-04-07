@@ -159,17 +159,9 @@ public class RaevyxAirCombatGoal extends Goal {
         lastMoveTarget = null;
         lastMoveSpeed = -1.0D;
 
-        // If grounded, trigger takeoff sequence
-        // Only set takeoff if truly grounded (not already flying/hovering)
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isHovering() && !dragon.isTakeoff() && !dragon.isLanding()) {
-            // Set both flying and takeoff - physics needs flying=true to actually fly
-            // tick() will clear takeoff flag once airborne
-            dragon.setFlying(true);
-            dragon.setTakeoff(true);
-            dragon.setLanding(false);
-            dragon.setHovering(false);
+            dragon.startTakeoffSequence(0.12D, Raevyx.TAKEOFF_ANIMATION_TICKS);
         } else if (dragon.isFlying() || dragon.isHovering()) {
-            // Already airborne - just ensure takeoff flag is cleared and set flying
             dragon.setTakeoff(false);
             dragon.setFlying(true);
             dragon.setLanding(false);

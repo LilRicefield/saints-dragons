@@ -164,6 +164,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> VOLITANS_GRUMBLE_1 = registerSound("volitans_grumble1");
     public static final Supplier<SoundEvent> VOLITANS_GRUMBLE_2 = registerSound("volitans_grumble2");
     public static final Supplier<SoundEvent> VOLITANS_GRUMBLE_3 = registerSound("volitans_grumble3");
+    public static final Supplier<SoundEvent> VOLITANS_FLAP = registerSound("volitans_flap");
     public static final Supplier<SoundEvent> VOLITANS_WALK = registerSound("volitans_walk");
     public static final Supplier<SoundEvent> VOLITANS_RUN = registerSound("volitans_run");
     public static final Supplier<SoundEvent> VOLITANS_EAT = registerSound("volitans_eat");

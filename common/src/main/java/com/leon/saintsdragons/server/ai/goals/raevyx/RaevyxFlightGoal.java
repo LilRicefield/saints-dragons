@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
+import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
@@ -185,12 +186,14 @@ public class RaevyxFlightGoal extends Goal {
 
     @Override
     public void start() {
-        boolean wasOnGround = wyvern.onGround();
-        wyvern.setFlying(true);
-        // Set takeoff animation if dragon is on the ground
-        wyvern.setTakeoff(wasOnGround);
-        wyvern.setLanding(false);
-        wyvern.setHovering(false);
+        if (wyvern.onGround() && !wyvern.isFlying() && !wyvern.isTakeoff() && !wyvern.isLanding()) {
+            wyvern.startTakeoffSequence(0.12D, Raevyx.TAKEOFF_ANIMATION_TICKS);
+        } else {
+            wyvern.setTakeoff(false);
+            wyvern.setFlying(true);
+            wyvern.setLanding(false);
+            wyvern.setHovering(false);
+        }
 
         if (targetPosition != null) {
             moveToTarget(targetPosition, CRUISE_SPEED);
@@ -298,7 +301,7 @@ public class RaevyxFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        Vec3 landingTarget = findLandingTarget();
+        Vec3 landingTarget = DragonAggroLandingHelper.findLandingTarget(wyvern, null);
         if (landingTarget == null) {
             return;
         }

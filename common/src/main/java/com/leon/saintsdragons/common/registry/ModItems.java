@@ -41,7 +41,7 @@ public class ModItems {
             REGISTER.register("stegonaut_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(
                             ModEntities.STEGONAUT,
-                            0x8B4513, 0xCD853F,
+                            0x9E8B70, 0x7148AC,
                             new Item.Properties()
                     ));
 
@@ -49,7 +49,7 @@ public class ModItems {
             REGISTER.register("cindervane_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(
                             ModEntities.CINDERVANE,
-                            0x5E5E5E, 0xA7490D,
+                            0xF88017, 0x414F49,
                             new Item.Properties()
                     ));
 
@@ -57,7 +57,7 @@ public class ModItems {
             REGISTER.register("varasuchus_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(
                             ModEntities.VARASUCHUS,
-                            0x2C3E50, 0x16A085,
+                            0x849B59, 0xE8CE74,
                             new Item.Properties()
                     ));
 

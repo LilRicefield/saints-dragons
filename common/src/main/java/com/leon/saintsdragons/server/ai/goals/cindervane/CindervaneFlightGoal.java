@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.cindervane;
 
+import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
@@ -253,11 +254,14 @@ public class CindervaneFlightGoal extends Goal {
         if (amphithere.isInWater() || amphithere.isInWaterOrBubble() || amphithere.isInLava()) {
             return;
         }
-        boolean wasOnGround = amphithere.onGround();
-        amphithere.setFlying(true);
-        amphithere.setTakeoff(wasOnGround);
-        amphithere.setLanding(false);
-        amphithere.setHovering(false);
+        if (amphithere.onGround() && !amphithere.isFlying() && !amphithere.isTakeoff() && !amphithere.isLanding()) {
+            amphithere.startTakeoffSequence(0.12D, Cindervane.TAKEOFF_ANIMATION_TICKS);
+        } else {
+            amphithere.setTakeoff(false);
+            amphithere.setFlying(true);
+            amphithere.setLanding(false);
+            amphithere.setHovering(false);
+        }
         if (targetPosition != null) {
             moveToTarget(targetPosition, CRUISE_SPEED);
         }
@@ -374,7 +378,7 @@ public class CindervaneFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        Vec3 landingTarget = findLandingTarget();
+        Vec3 landingTarget = DragonAggroLandingHelper.findLandingTarget(amphithere, null);
         if (landingTarget == null) {
             return;
         }

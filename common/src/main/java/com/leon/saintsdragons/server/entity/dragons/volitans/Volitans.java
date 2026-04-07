@@ -21,6 +21,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonLeaveWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DirectSwimToTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansAirCombatGoal;
+import com.leon.saintsdragons.server.ai.goals.volitans.VolitansBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansSlamSequenceGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansGroundCombatGoal;
@@ -33,6 +34,7 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigati
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
@@ -73,6 +75,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Pufferfish;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -88,6 +91,7 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.animal.Dolphin;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -97,6 +101,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.GlowSquid;
+import net.minecraft.world.entity.animal.Squid;
+import net.minecraft.world.entity.animal.TropicalFish;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -151,6 +158,10 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public static final int TAKEOFF_LAUNCH_DELAY_TICKS = 15;
     private static final int SIT_DOWN_ANIMATION_TICKS = 50;
     private static final int SIT_UP_ANIMATION_TICKS = 25;
+    private static final int SLEEP_FALL_ASLEEP_ANIMATION_TICKS = 51;
+    private static final int SLEEP_WAKE_UP_ANIMATION_TICKS = 43;
+    private static final int SLEEP_EXIT_SUPPRESSION_TICKS = 20;
+    private static final int SLEEP_WAKE_SUPPRESSION_TICKS = 20;
     private static final int LANDED_CONTROL_LOCK_TICKS = 20;
     private static final int WALK_SOUND_DURATION_TICKS = 33;
     private static final int RUN_SOUND_DURATION_TICKS = 30;
@@ -200,6 +211,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
     public static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
+    public static final double BREED_PARTNER_RANGE = 20.0D;
+    public static final double BREED_DISTANCE_SQR = 16.0D;
     public static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
     public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     public static final int RIDER_WATER_SCAN_RADIUS = 2;
@@ -286,6 +299,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private boolean aiSpecialCombatActive = false;
     private boolean aiSpecialCombatReserved = false;
     private int tempInvulnTicks = 0;
+    private float sleepLockedYaw = 0.0F;
+    private float sleepLockedPitch = 0.0F;
     private int ambientSoundTimer;
     private int nextAmbientSoundDelay;
 
@@ -566,11 +581,22 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             this.goalSelector.addGoal(2, new VolitansGroundCombatGoal(this));
             this.goalSelector.addGoal(3, new VolitansAirCombatGoal(this));
             this.goalSelector.addGoal(4, new VolitansWaterCombatGoal(this));
+            this.goalSelector.addGoal(5, new VolitansBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         }
-        this.goalSelector.addGoal(5, new DirectSwimToTargetGoal(this, 8.0F, 0.28D, true));
-        this.goalSelector.addGoal(6, new DragonLeaveWaterGoal<>(this));
-        this.goalSelector.addGoal(7, new DragonFindWaterGoal<>(this));
-        this.goalSelector.addGoal(8, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
+        this.goalSelector.addGoal(6, new DirectSwimToTargetGoal(this, 8.0F, 0.28D, true) {
+            @Override
+            public boolean canUse() {
+                return !Volitans.this.isSleepLocked() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !Volitans.this.isSleepLocked() && super.canContinueToUse();
+            }
+        });
+        this.goalSelector.addGoal(7, new DragonLeaveWaterGoal<>(this));
+        this.goalSelector.addGoal(8, new DragonFindWaterGoal<>(this));
+        this.goalSelector.addGoal(9, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
             @Override
             protected void startFollowTakeoff() {
                 if (Volitans.this.isFlying() || Volitans.this.isTakeoff()) {
@@ -589,11 +615,31 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 return !Volitans.this.isVehicle() && super.canContinueToUse();
             }
         });
-        this.goalSelector.addGoal(9, new DirectSwimToTargetGoal(this, 8.0F, 0.24D, false));
-        this.goalSelector.addGoal(10, new VolitansFlightGoal(this));
-        this.goalSelector.addGoal(11, new DragonGroundWanderGoal<>(this, 0.9D, 70));
-        this.goalSelector.addGoal(12, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
-        this.goalSelector.addGoal(13, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+        this.goalSelector.addGoal(10, new DirectSwimToTargetGoal(this, 8.0F, 0.24D, false) {
+            @Override
+            public boolean canUse() {
+                return !Volitans.this.isSleepLocked() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !Volitans.this.isSleepLocked() && super.canContinueToUse();
+            }
+        });
+        this.goalSelector.addGoal(11, new VolitansFlightGoal(this));
+        this.goalSelector.addGoal(12, new DragonGroundWanderGoal<>(this, 0.9D, 70));
+        this.goalSelector.addGoal(13, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30) {
+            @Override
+            public boolean canUse() {
+                return !Volitans.this.isSleepLocked() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !Volitans.this.isSleepLocked() && super.canContinueToUse();
+            }
+        });
+        this.goalSelector.addGoal(14, new LookAtPlayerGoal(this, Player.class, 8.0F) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
@@ -604,7 +650,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 return !Volitans.this.isVehicle() && super.canContinueToUse();
             }
         });
-        this.goalSelector.addGoal(14, new RandomLookAroundGoal(this) {
+        this.goalSelector.addGoal(15, new RandomLookAroundGoal(this) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
@@ -645,6 +691,20 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 @Override
                 public boolean canUse() {
                     return !Volitans.this.isVehicle() && super.canUse();
+                }
+
+                @Override
+                public boolean canContinueToUse() {
+                    return !Volitans.this.isVehicle() && super.canContinueToUse();
+                }
+            });
+            this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
+                    Volitans.this::shouldRandomlyAggroSeaLife) {
+                @Override
+                public boolean canUse() {
+                    return !Volitans.this.isVehicle()
+                            && Volitans.this.getRandom().nextInt(80) == 0
+                            && super.canUse();
                 }
 
                 @Override
@@ -1470,22 +1530,45 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Volitans> movement =
                 new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
-        // Volitans does not use keyframed audio on movement tracks.
-        movement.setSoundKeyframeHandler(event -> { });
+        movement.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         controllers.add(movement);
 
         AnimationController<Volitans> actions =
                 new AnimationController<>(this, "actions", 5, animationHandler::actionPredicate);
-        // Volitans uses manual/programmatic audio routing for abilities; keep keyframe channel consumed to avoid warnings.
-        actions.setSoundKeyframeHandler(event -> { });
+        actions.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         animationHandler.setupActionController(actions);
         controllers.add(actions);
 
         AnimationController<Volitans> instant =
                 new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
-        instant.setSoundKeyframeHandler(event -> { });
+        instant.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         animationHandler.setupInstantActionController(instant);
         controllers.add(instant);
+    }
+
+    private void handleAnimationSound(String soundKey) {
+        DragonSoundProfile profile = getSoundProfile();
+        if (profile != null) {
+            boolean handled = profile.handleAnimationSound(getSoundHandler(), this, soundKey, null);
+            if (!handled) {
+                getSoundHandler().playVocal(soundKey);
+            }
+        }
     }
 
     @Override
@@ -1641,6 +1724,27 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             registerToOwnerCodex(baby, level);
         }
         return baby;
+    }
+
+    @Override
+    public boolean canMate(@NotNull Animal otherAnimal) {
+        if (!this.canBreed()) {
+            return false;
+        }
+
+        if (otherAnimal instanceof Volitans otherDragon) {
+            if (this.isFemale() == otherDragon.isFemale()) {
+                return false;
+            }
+            return otherDragon.canBreed();
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean canBreed() {
+        return this.isTame() && !this.isBaby() && this.getHealth() >= this.getMaxHealth() && this.isInLove();
     }
 
     @Override
@@ -2909,7 +3013,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private void tickBarrelRollLogic() {
         float currentRoll = getAccumulatedRoll();
         boolean barrelRollEnabled = SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
-        if (barrelRollEnabled && isVehicle() && getControllingPassenger() != null) {
+        boolean inWater = isInWaterOrBubble();
+        if (barrelRollEnabled && !inWater && isVehicle() && getControllingPassenger() != null) {
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
@@ -2921,9 +3026,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 this.smoothedRoll,
                 new DragonBarrelRollHelper.Input(
                         isVehicle(),
-                        onGround(),
+                        onGround() || inWater,
                         isLanding(),
-                        barrelRollEnabled && isActivelyBarrelRolling(),
+                        barrelRollEnabled && !inWater && isActivelyBarrelRolling(),
                         shouldEaseAirAutoAlign(),
                         isLanding(),
                         LANDING_BLEND_ALTITUDE,
@@ -2958,7 +3063,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private boolean shouldEaseAirAutoAlign() {
-        if (!isFlying() || areRiderControlsLocked()) {
+        if (!isFlying() || isInWaterOrBubble() || areRiderControlsLocked()) {
             return false;
         }
 
@@ -2970,7 +3075,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private boolean isActivelyBarrelRolling() {
-        return this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
+        return !isInWaterOrBubble()
+                && this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
                 && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
     }
 
@@ -3055,6 +3161,17 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
         return config.extraBoolean("aggressive_wild", true);
+    }
+
+    private boolean shouldRandomlyAggroSeaLife(@Nullable LivingEntity target) {
+        if (!shouldAggroOnSight() || target == null) {
+            return false;
+        }
+        return target instanceof Dolphin
+                || target instanceof Squid
+                || target instanceof GlowSquid
+                || target instanceof TropicalFish
+                || target instanceof Pufferfish;
     }
 
     @Override
@@ -3240,6 +3357,215 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     private int getSitUpAnimationTicks() {
         return SIT_UP_ANIMATION_TICKS;
+    }
+
+    @Override
+    public boolean supportsSleep() {
+        return true;
+    }
+
+    @Override
+    public DragonEntity.DragonSleepPreferences getSleepPreferences() {
+        return DragonEntity.DragonSleepPreferences.DIURNAL();
+    }
+
+    @Override
+    public boolean canSleepNow() {
+        return !isVehicle()
+                && !isBurrowing()
+                && !isFlying()
+                && !isHovering()
+                && !isTakeoff()
+                && !isLanding()
+                && !isBreathing()
+                && getActiveAbility() == null;
+    }
+
+    @Override
+    public boolean canSleepInWater() {
+        return true;
+    }
+
+    @Override
+    protected boolean useSleepSitDownTimer() {
+        return !isInWaterOrBubble();
+    }
+
+    @Override
+    protected boolean requireSeatedBeforeFallAsleep() {
+        return !isInWaterOrBubble();
+    }
+
+    @Override
+    protected boolean sleepForceSitDownOnEnter() {
+        return !isInWaterOrBubble();
+    }
+
+    @Override
+    protected boolean useSleepSitUpAfterWake() {
+        return !isInWaterOrBubble();
+    }
+
+    @Override
+    protected int getSleepSitDownDuration() {
+        return getSitDownAnimationTicks() + 1;
+    }
+
+    @Override
+    protected int getSleepFallAsleepDuration() {
+        return SLEEP_FALL_ASLEEP_ANIMATION_TICKS;
+    }
+
+    @Override
+    protected int getSleepWakeUpDuration() {
+        return SLEEP_WAKE_UP_ANIMATION_TICKS;
+    }
+
+    @Override
+    protected int getSleepSitUpDuration() {
+        return getSitUpAnimationTicks() + 1;
+    }
+
+    @Override
+    protected int getSleepExitSuppressionTicks() {
+        return SLEEP_EXIT_SUPPRESSION_TICKS;
+    }
+
+    @Override
+    protected int getSleepWakeUpSuppressionTicks() {
+        return SLEEP_WAKE_SUPPRESSION_TICKS;
+    }
+
+    @Override
+    protected boolean isAlreadySeatedForSleep() {
+        return isInWaterOrBubble() || getSitProgress() >= maxSitTicks() || isOrderedToSit() || getCommand() == 1;
+    }
+
+    @Override
+    protected boolean shouldStaySeatedAfterWake() {
+        return !isInWaterOrBubble() && (getCommand() == 1 || isOrderedToSit());
+    }
+
+    @Override
+    protected void onSleepLockCommand(int snapshot) {
+        sleepLockedYaw = getYRot();
+        sleepLockedPitch = getXRot();
+        if (getCommand() != 1) {
+            setCommand(1);
+            setOrderedToSit(true);
+        }
+        getNavigation().stop();
+        setTarget(null);
+        setRunning(false);
+        setGroundMoveStateFromAI(0);
+        setDeltaMovement(Vec3.ZERO);
+        setFlying(false);
+        setLanding(false);
+        setTakeoff(false);
+        setHovering(false);
+    }
+
+    @Override
+    protected void onSleepUnlockCommand(int desired) {
+        if (desired >= 0 && desired != getCommand()) {
+            setCommand(desired);
+            setOrderedToSit(desired == 1 && !isInWaterOrBubble());
+        } else if (isInWaterOrBubble()) {
+            setOrderedToSit(false);
+        }
+        getNavigation().stop();
+        setRunning(false);
+        setGroundMoveStateFromAI(0);
+    }
+
+    @Override
+    protected void onSleepFreezeTick() {
+        getNavigation().stop();
+        setTarget(null);
+        setRunning(false);
+        setGroundMoveStateFromAI(0);
+        setYRot(sleepLockedYaw);
+        yRotO = sleepLockedYaw;
+        yBodyRot = sleepLockedYaw;
+        yBodyRotO = sleepLockedYaw;
+        yHeadRot = sleepLockedYaw;
+        yHeadRotO = sleepLockedYaw;
+        setXRot(sleepLockedPitch);
+        xRotO = sleepLockedPitch;
+
+        if (isInWaterOrBubble()) {
+            setDeltaMovement(Vec3.ZERO);
+        } else {
+            setDeltaMovement(Vec3.ZERO);
+        }
+    }
+
+    @Override
+    protected void onSleepSitDownAnimation() {
+        if (!isInWaterOrBubble()) {
+            animationHandler.triggerSitDownAnimation();
+            setOrderedToSit(true);
+        }
+    }
+
+    @Override
+    protected void onSleepFallAsleepAnimation() {
+        if (isInWaterOrBubble()) {
+            triggerAnim("actions", "fall_asleep_underwater");
+        } else {
+            triggerAnim("actions", "fall_asleep");
+        }
+    }
+
+    @Override
+    protected void onSleepLoopAnimation() {
+        if (isInWaterOrBubble()) {
+            triggerAnim("actions", "sleep_underwater");
+        } else {
+            triggerAnim("actions", "sleep");
+            setOrderedToSit(true);
+        }
+    }
+
+    @Override
+    protected void onSleepWakeUpAnimation() {
+        if (isInWaterOrBubble()) {
+            triggerAnim("actions", "wake_up_underwater");
+            setOrderedToSit(false);
+        } else {
+            triggerAnim("actions", "wake_up");
+            setOrderedToSit(true);
+        }
+    }
+
+    @Override
+    protected void onSleepSitUpAnimation() {
+        if (!isInWaterOrBubble()) {
+            animationHandler.triggerSitUpAnimation();
+            setOrderedToSit(false);
+        }
+    }
+
+    @Override
+    protected void onSleepExitSeated() {
+        if (!isInWaterOrBubble()) {
+            setOrderedToSit(true);
+            setSitProgress(maxSitTicks());
+        } else {
+            setOrderedToSit(false);
+        }
+    }
+
+    @Override
+    protected void onSleepExitStarted() {
+        if (!isInWaterOrBubble()) {
+            setOrderedToSit(true);
+        }
+    }
+
+    @Override
+    protected void onSleepWakeUpImmediate() {
+        setOrderedToSit(false);
     }
 
     private void updateSittingProgress() {

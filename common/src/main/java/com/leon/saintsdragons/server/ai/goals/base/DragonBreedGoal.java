@@ -25,16 +25,19 @@ import javax.annotation.Nullable;
  * Generic breed goal for dragons that lay eggs, with configurable partner range and breed distance.
  */
 public class DragonBreedGoal<T extends DragonEntity> extends Goal {
+    private static final double RIDEABLE_BREED_MOVE_SPEED = 0.55D;
+    private static final double CONTACT_BREED_DISTANCE_SQR = 16.0D;
+
     protected final T dragon;
     protected final Level level;
-    private final double speedModifier;
+    protected final double speedModifier;
     private final double partnerRange;
-    private final double breedDistanceSqr;
+    protected final double breedDistanceSqr;
     private final TargetingConditions partnerTargeting;
     private final Class<T> partnerClass;
     @Nullable
     protected T partner;
-    private int loveTime;
+    protected int loveTime;
 
     public DragonBreedGoal(T dragon, double speedModifier, Class<T> partnerClass, double partnerRange, double breedDistanceSqr) {
         this.dragon = dragon;
@@ -83,7 +86,7 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
         if (!this.dragon.isFlying()) {
             double speed = this.speedModifier;
             if (this.dragon instanceof com.leon.saintsdragons.server.entity.base.RideableDragonBase rideable) {
-                speed = Math.min(speed, 0.35D);
+                speed = Math.min(speed, RIDEABLE_BREED_MOVE_SPEED);
                 rideable.setGroundMoveStateFromAI(1);
                 rideable.setRunning(false);
             }
@@ -92,7 +95,7 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
 
         ++this.loveTime;
 
-        if (this.loveTime >= 60 && this.dragon.distanceToSqr(this.partner) < this.breedDistanceSqr) {
+        if (this.loveTime >= 60 && this.dragon.distanceToSqr(this.partner) < CONTACT_BREED_DISTANCE_SQR) {
             handleBreed();
         }
     }
@@ -196,7 +199,7 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
     }
 
     @Nullable
-    private BlockPos findEggLayingPosition(T female) {
+    protected BlockPos findEggLayingPosition(T female) {
         BlockPos startPos = female.blockPosition();
 
         BlockPos groundPos = this.findGroundBelow(startPos, 5);

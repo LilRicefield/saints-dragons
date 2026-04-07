@@ -584,7 +584,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         });
     }
 
-    private void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+    public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
         takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
     }
 
@@ -645,7 +645,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
             this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
         }
-        this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forIgnivorus()));
+        this.goalSelector.addGoal(5, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forIgnivorus()) {
+            @Override
+            protected void startFollowTakeoff() {
+                if (Ignivorus.this.isFlying() || Ignivorus.this.isTakeoff()) {
+                    return;
+                }
+                Ignivorus.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
+            }
+        });
         this.goalSelector.addGoal(6, new DragonFollowParentGoal<>(this, Ignivorus.class, 1.1D));
         if (!this.isBaby()) {
             this.goalSelector.addGoal(7, new com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal<>(this, 1.0D, Ignivorus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
@@ -733,8 +741,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             setHovering(false);
         }
 
-        // CRITICAL: Disable gravity when flying/hovering (fixes grounding issue)
-        this.setNoGravity(isFlying() || isHovering());
+        // Keep takeoff/landing from fighting gravity during state handoff.
+        this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
 
         if (!level().isClientSide && this.navigationModeController.isUsingAirNavigation()
                 && (this.isFlying() || this.isTakeoff() || this.isLanding()) && !this.isVehicle()) {

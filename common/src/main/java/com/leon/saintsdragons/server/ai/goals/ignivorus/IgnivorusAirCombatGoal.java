@@ -179,17 +179,10 @@ public class IgnivorusAirCombatGoal extends Goal {
         lastRequestedAirSpeed = Double.NaN;
         airMoveRefreshCooldown = 0;
 
-        // If grounded, trigger takeoff sequence
-        // Only set takeoff if truly grounded (not already flying/hovering)
+        // Use the same takeoff path as other Ignivorus flight states so physics/flags stay coherent.
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isHovering() && !dragon.isTakeoff() && !dragon.isLanding()) {
-            // Set both flying and takeoff - physics needs flying=true to actually fly
-            // tick() will clear takeoff flag once airborne
-            dragon.setFlying(true);
-            dragon.setTakeoff(true);
-            dragon.setLanding(false);
-            dragon.setHovering(false);
+            dragon.startTakeoffSequence(0.12D, Ignivorus.TAKEOFF_ANIMATION_TICKS);
         } else if (dragon.isFlying() || dragon.isHovering()) {
-            // Already airborne - just ensure takeoff flag is cleared and set flying
             dragon.setTakeoff(false);
             dragon.setFlying(true);
             dragon.setLanding(false);

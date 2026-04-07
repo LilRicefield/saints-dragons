@@ -232,14 +232,15 @@ public final class DragonSleepComponent {
         if (dragon.isDying() || !dragon.isAlive() || dragon.isDeadOrDying()) return false;
         if (dragon.isVehicle()) return false;
         if (dragon.getTarget() != null) return false;
-        if (dragon.isInWaterOrBubble() || dragon.isInLava()) return false;
+        if ((dragon.isInWaterOrBubble() && !dragon.canSleepInWater()) || dragon.isInLava()) return false;
 
         boolean alreadySleepingOrTransitioning = dragon.isSleeping() || dragon.isSleepTransitioning();
         boolean ownerBedSleep = shouldFollowOwnerSleepNow();
         boolean ownerSitCommand = dragon.isTame() && (dragon.isOrderedToSit() || dragon.getCommand() == 1);
+        boolean waterSleeperAtRest = dragon.canSleepInWater() && dragon.isInWaterOrBubble();
         if (!alreadySleepingOrTransitioning) {
             // Some sit poses can transiently report off-ground. Allow owner-bed sleep when explicitly owner-sat.
-            if (!dragon.onGround() && !(ownerBedSleep && ownerSitCommand)) return false;
+            if (!dragon.onGround() && !waterSleeperAtRest && !(ownerBedSleep && ownerSitCommand)) return false;
             if (dragon instanceof com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable flyer) {
                 if (flyer.isFlying() || flyer.isHovering() || flyer.isTakeoff() || flyer.isLanding()) {
                     return false;

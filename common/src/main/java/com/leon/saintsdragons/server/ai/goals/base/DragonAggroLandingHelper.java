@@ -43,7 +43,7 @@ public final class DragonAggroLandingHelper {
         return true;
     }
 
-    private static Vec3 findLandingTarget(RideableDragonBase dragon, @Nullable LivingEntity target) {
+    public static @Nullable Vec3 findLandingTarget(RideableDragonBase dragon, @Nullable LivingEntity target) {
         BlockPos origin = dragon.blockPosition();
         double currentAltitude = Math.max(0.0D, dragon.getY()
                 - dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, dragon.getBlockX(), dragon.getBlockZ()));

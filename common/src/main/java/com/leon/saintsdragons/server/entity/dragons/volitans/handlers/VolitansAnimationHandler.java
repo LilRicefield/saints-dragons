@@ -30,6 +30,12 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.volitans.swim_idle");
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.volitans.stunned");
     private static final RawAnimation UNDERWATER_STUNNED = RawAnimation.begin().thenLoop("animation.volitans.underwater_stunned");
+    private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.volitans.sleep");
+    private static final RawAnimation SLEEP_UNDERWATER = RawAnimation.begin().thenLoop("animation.volitans.sleep_underwater");
+    private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.volitans.fall_asleep");
+    private static final RawAnimation FALL_ASLEEP_UNDERWATER = RawAnimation.begin().thenPlay("animation.volitans.fall_asleep_underwater");
+    private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.volitans.wake_up");
+    private static final RawAnimation WAKE_UP_UNDERWATER = RawAnimation.begin().thenPlay("animation.volitans.wake_up_underwater");
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.volitans.hurt");
     private static final RawAnimation DIE = RawAnimation.begin().thenPlay("animation.volitans.die");
 
@@ -74,9 +80,12 @@ public final class VolitansAnimationHandler {
         var controller = state.getController();
         controller.transitionLength(6);
 
-        if (dragon.isSleepTransitioning() || dragon.isSleeping()) {
-            state.setAndContinue(IDLE);
-            return PlayState.CONTINUE;
+        if (dragon.isSleeping()) {
+            return PlayState.STOP;
+        }
+
+        if (dragon.isSleepTransitioning()) {
+            return PlayState.STOP;
         }
 
         if (dragon.isTamingStunned()) {
@@ -203,6 +212,12 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("swipe_right", SWIPE_RIGHT);
         controller.triggerableAnim("sit_down", SIT_DOWN);
         controller.triggerableAnim("sit_up", SIT_UP);
+        controller.triggerableAnim("fall_asleep", FALL_ASLEEP);
+        controller.triggerableAnim("sleep", SLEEP);
+        controller.triggerableAnim("wake_up", WAKE_UP);
+        controller.triggerableAnim("fall_asleep_underwater", FALL_ASLEEP_UNDERWATER);
+        controller.triggerableAnim("sleep_underwater", SLEEP_UNDERWATER);
+        controller.triggerableAnim("wake_up_underwater", WAKE_UP_UNDERWATER);
         controller.triggerableAnim("breathing", BREATHING);
         controller.triggerableAnim("breath_start", BREATH_START);
         controller.triggerableAnim("breath_end", BREATH_END);

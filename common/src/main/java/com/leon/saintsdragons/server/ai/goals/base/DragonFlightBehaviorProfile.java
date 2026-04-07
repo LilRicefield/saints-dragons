@@ -17,7 +17,7 @@ public record DragonFlightBehaviorProfile(
     public static DragonFlightBehaviorProfile ignivorus() {
         return new DragonFlightBehaviorProfile(
                 60,
-                64.0,
+                25.0,
                 400,
                 10,
                 10,

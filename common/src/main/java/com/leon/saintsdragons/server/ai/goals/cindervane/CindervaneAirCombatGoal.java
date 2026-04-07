@@ -89,10 +89,7 @@ public class CindervaneAirCombatGoal extends Goal {
         lastMoveSpeed = -1.0D;
 
         if (amphithere.onGround() && !amphithere.isFlying() && !amphithere.isHovering() && !amphithere.isTakeoff() && !amphithere.isLanding()) {
-            amphithere.setFlying(true);
-            amphithere.setTakeoff(true);
-            amphithere.setLanding(false);
-            amphithere.setHovering(false);
+            amphithere.startTakeoffSequence(0.12D, Cindervane.TAKEOFF_ANIMATION_TICKS);
         } else if (amphithere.isFlying() || amphithere.isHovering()) {
             amphithere.setTakeoff(false);
             amphithere.setFlying(true);

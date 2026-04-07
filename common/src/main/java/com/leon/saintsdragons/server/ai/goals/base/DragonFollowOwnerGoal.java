@@ -532,8 +532,8 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
                     25.0,   // runDist
                     20.0,   // flightTriggerDist
                     8.0,    // flightHeightDiff
-                    12.0,   // landingDistance
-                    3.0,    // hoverHeight
+                    10.0,   // landingDistance
+                    2.5,    // hoverHeight
                     0.8,    // walkSpeed
                     1.5,    // runSpeed
                     1.2,    // maxWalkSpeed
@@ -550,13 +550,13 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
                     20.0,   // runDist
                     30.0,   // flightTriggerDist
                     8.0,    // flightHeightDiff
-                    12.0,   // landingDistance
-                    3.0,    // hoverHeight
+                    10.0,   // landingDistance
+                    2.5,    // hoverHeight
                     0.8,    // walkSpeed
                     1.5,    // runSpeed
                     1.2,    // maxWalkSpeed
                     2.5,    // maxRunSpeed
-                    1.2     // flightSpeed
+                    4.0     // flightSpeed
             );
         }
 

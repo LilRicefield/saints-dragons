@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans.handlers;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -15,7 +16,8 @@ public final class VolitansSoundProfile implements DragonSoundProfile {
     private static final Map<String, Boolean> BABY_ALLOWED_KEYS = Map.ofEntries(
             Map.entry("volitans_eat", true),
             Map.entry("volitans_hurt", true),
-            Map.entry("volitans_die", true)
+            Map.entry("volitans_die", true),
+            Map.entry("volitans_flap", true)
     );
 
     private VolitansSoundProfile() {
@@ -23,7 +25,32 @@ public final class VolitansSoundProfile implements DragonSoundProfile {
 
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
-        return dragon.isBaby() && key.startsWith("volitans_") && !BABY_ALLOWED_KEYS.containsKey(key);
+        if (dragon.isBaby() && key.startsWith("volitans_") && !BABY_ALLOWED_KEYS.containsKey(key)) {
+            return true;
+        }
+        if (key.startsWith("volitans_flap") || key.startsWith("flap")) {
+            playWingFlap(handler, dragon);
+            return true;
+        }
+        return key.startsWith("volitans_");
+    }
+
+    @Override
+    public boolean handleSoundByName(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        if (dragon.isBaby()) {
+            return true;
+        }
+        if (key.startsWith("volitans_flap") || key.startsWith("flap")) {
+            playWingFlap(handler, dragon);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean handleWingFlapSound(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        playWingFlap(handler, dragon);
+        return true;
     }
 
     @Override
@@ -45,5 +72,11 @@ public final class VolitansSoundProfile implements DragonSoundProfile {
             pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
         }
         return DragonSoundSpec.moving(entry.soundSupplier().get(), SoundSource.NEUTRAL, entry.volume(), pitch, duration);
+    }
+
+    private void playWingFlap(DragonSoundHandler handler, DragonEntity dragon) {
+        float volume = dragon.isBaby() ? 0.7f : 1.0f;
+        float pitch = 0.96f + (dragon.getRandom().nextFloat() - 0.5f) * 0.10f;
+        handler.playClientSound(dragon, dragon.position(), ModSounds.VOLITANS_FLAP.get(), volume, pitch);
     }
 }

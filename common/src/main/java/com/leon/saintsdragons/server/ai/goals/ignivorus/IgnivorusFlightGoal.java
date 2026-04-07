@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
+import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.core.BlockPos;
@@ -182,11 +183,14 @@ public class IgnivorusFlightGoal extends Goal {
         if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
             return;
         }
-        boolean wasOnGround = dragon.onGround();
-        dragon.setFlying(true);
-        dragon.setTakeoff(wasOnGround);
-        dragon.setLanding(false);
-        dragon.setHovering(false);
+        if (dragon.onGround() && !dragon.isFlying() && !dragon.isTakeoff() && !dragon.isLanding()) {
+            dragon.startTakeoffSequence(0.12D, Ignivorus.TAKEOFF_ANIMATION_TICKS);
+        } else {
+            dragon.setTakeoff(false);
+            dragon.setFlying(true);
+            dragon.setLanding(false);
+            dragon.setHovering(false);
+        }
         if (targetPosition != null) {
             moveToTarget(targetPosition, CRUISE_SPEED);
         }
@@ -297,7 +301,7 @@ public class IgnivorusFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        Vec3 landingTarget = findLandingTarget();
+        Vec3 landingTarget = DragonAggroLandingHelper.findLandingTarget(dragon, null);
         if (landingTarget == null) {
             return;
         }

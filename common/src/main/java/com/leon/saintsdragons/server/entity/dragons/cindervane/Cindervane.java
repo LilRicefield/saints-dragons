@@ -504,7 +504,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         });
     }
 
-    private void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+    public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
         takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
     }
 
@@ -669,6 +669,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         this.goalSelector.addGoal(6, new com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal<>(this, com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal.FollowConfig.forCindervane()) {
             @Override
+            protected void startFollowTakeoff() {
+                if (Cindervane.this.isFlying() || Cindervane.this.isTakeoff()) {
+                    return;
+                }
+                Cindervane.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
+            }
+
+            @Override
             protected boolean shouldForceFollow() {
                 return Cindervane.this.forceOwnerFollowTicks > 0;
             }
@@ -765,8 +773,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             tickAnimationStates();
         }
 
-        this.setNoGravity(isFlying() || isHovering());
-        if (!isFlying() && navigationModeController.isUsingAirNavigation()) {
+        this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
+        if (!isFlying() && !isTakeoff() && !isLanding() && navigationModeController.isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
     }
