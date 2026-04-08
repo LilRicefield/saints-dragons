@@ -1,30 +1,36 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 
-import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFloatGoal;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
+import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
@@ -35,19 +41,21 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
-import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
@@ -59,8 +67,10 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon {
+public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, PackMember<Nulljaw> {
     private static final int MIN_AMBIENT_DELAY = 220;
     private static final int MAX_AMBIENT_DELAY = 420;
     private static final int TAME_CHANCE_DENOMINATOR = 5;
@@ -71,7 +81,17 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     private static final double RIDER_ASCEND_SPEED = 0.16D;
     private static final double RIDER_DESCEND_SPEED = 0.18D;
     private static final double AI_CRUISE_SPEED = 0.24D;
+    private static final double FLOAT_ACCEL = 0.10D;
+    private static final double FLOAT_DRAG = 0.96D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
+    private static final int HOVER_VISUAL_GRACE_TICKS = 8;
+    private static final double MOUNTED_HOVER_VISUAL_THRESHOLD_SQ = 0.010D;
+    private static final int MAX_PACK_SIZE = 4;
+    private static final double PACK_SEARCH_RADIUS = 28.0D;
+    private static final EntityDataAccessor<Boolean> DATA_HOVER_VISUAL_ACTIVE =
+            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
+            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
 
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", "actions", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 1.0f, 1.0f, 0.08f, true, true, false)
@@ -85,12 +105,14 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
-    private final AsyncFlightController asyncAirController;
-    private final AsyncFlightMoveControl asyncAirMoveControl;
-    private final FlyingPathNavigation airNav;
+    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
+    private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
 
+    @Nullable
+    private UUID packLeaderUuid;
     private int ambientSoundTimer;
     private int nextAmbientSoundDelay;
+    private int hoverVisualTicks;
     private boolean running;
     private boolean hurtSoundQueued;
     private boolean deathSoundQueued;
@@ -98,11 +120,6 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     public Nulljaw(EntityType<? extends Nulljaw> type, Level level) {
         super(type, level);
         this.setRideable();
-        this.asyncAirController = new AsyncFlightController(this);
-        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
-        this.airNav = new AsyncFlyingPathNavigation(this, level, this.asyncAirController);
-        this.navigation = this.airNav;
-        this.moveControl = this.asyncAirMoveControl;
         this.setFlying(true);
         this.setHovering(false);
         this.setTakeoff(false);
@@ -114,12 +131,31 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     }
 
     public static AttributeSupplier.Builder createAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         return TamableAnimal.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 70.0D)
+                .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.20D)
-                .add(Attributes.FLYING_SPEED, 0.42D)
+                .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
-                .add(Attributes.ARMOR, 4.0D);
+                .add(Attributes.ARMOR, config.armor());
+    }
+
+    public void applyConfiguredAttributes() {
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
+        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
+        setAttributeBase(Attributes.ARMOR, config.armor());
+
+        if (this.getHealth() > this.getMaxHealth()) {
+            this.setHealth(this.getMaxHealth());
+        }
+    }
+
+    private void setAttributeBase(Attribute attribute, double value) {
+        AttributeInstance instance = this.getAttribute(attribute);
+        if (instance != null) {
+            instance.setBaseValue(value);
+        }
     }
 
     public static boolean canSpawnHere(EntityType<? extends Nulljaw> type,
@@ -127,20 +163,44 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
                                        MobSpawnType spawnType,
                                        BlockPos pos,
                                        RandomSource random) {
-        if (!TamableAnimal.checkMobSpawnRules(type, level, spawnType, pos, random)) {
+        boolean peaceful = level.getDifficulty() == Difficulty.PEACEFUL;
+        if (peaceful) {
             return false;
+        }
+        boolean darkEnough = true;
+        if (level instanceof ServerLevelAccessor serverLevel) {
+            darkEnough = Monster.isDarkEnoughToSpawn(serverLevel, pos, random);
+            if (!darkEnough) {
+                return false;
+            }
         }
         FluidState fluidAt = level.getFluidState(pos);
-        FluidState fluidBelow = level.getFluidState(pos.below());
-        if (!fluidAt.isEmpty() || !fluidBelow.isEmpty()) {
+        FluidState fluidAbove = level.getFluidState(pos.above());
+        if (!fluidAt.isEmpty() || !fluidAbove.isEmpty()) {
             return false;
         }
-        BlockState below = level.getBlockState(pos.below());
-        return below.isFaceSturdy(level, pos.below(), net.minecraft.core.Direction.UP);
+        BlockState stateAt = level.getBlockState(pos);
+        BlockState stateAbove = level.getBlockState(pos.above());
+        return stateAt.getCollisionShape(level, pos).isEmpty()
+                && stateAbove.getCollisionShape(level, pos.above()).isEmpty();
+    }
+
+    @Override
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnType) {
+        @SuppressWarnings("unchecked")
+        EntityType<? extends Nulljaw> nulljawType = (EntityType<? extends Nulljaw>) this.getType();
+        return canSpawnHere(nulljawType, level, spawnType, this.blockPosition(), this.getRandom());
+    }
+
+    @Override
+    public boolean checkSpawnObstruction(LevelReader level) {
+        return level.noCollision(this);
     }
 
     @Override
     protected void defineRideableDragonData() {
+        this.entityData.define(DATA_HOVER_VISUAL_ACTIVE, false);
+        this.entityData.define(DATA_FLIGHT_PITCH, 0f);
     }
 
     @Override
@@ -151,6 +211,7 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
             protected void updateFlightState(LivingEntity owner, boolean shouldFly, boolean ownerAirborne, double distance) {
                 Nulljaw.this.setFlying(true);
                 Nulljaw.this.setTakeoff(false);
+                Nulljaw.this.setHovering(false);
                 Nulljaw.this.setLanding(false);
             }
 
@@ -158,12 +219,24 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
             protected void startFollowTakeoff() {
                 Nulljaw.this.setFlying(true);
                 Nulljaw.this.setTakeoff(false);
+                Nulljaw.this.setHovering(false);
                 Nulljaw.this.setLanding(false);
             }
+
+            @Override
+            protected void handleFlightFollowing(LivingEntity owner, boolean ownerAirborne) {
+                Nulljaw.this.setFlying(true);
+                Nulljaw.this.setTakeoff(false);
+                Nulljaw.this.setHovering(false);
+                Nulljaw.this.setLanding(false);
+                Vec3 targetPos = getFlightFollowTarget(owner, true);
+                Nulljaw.this.flyToward(targetPos, getFlightFollowSpeed());
+            }
         });
-        this.goalSelector.addGoal(2, new NulljawFloatGoal(this));
-        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 12.0F));
-        this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(2, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
+        this.goalSelector.addGoal(3, new NulljawFloatGoal(this));
+        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 12.0F));
+        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
     }
 
     @Override
@@ -172,6 +245,7 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         AnimationController<Nulljaw> actions = new AnimationController<>(this, "actions", 2, animationHandler::actionPredicate);
         animationHandler.setupActionController(actions);
         controllers.add(actions);
+        controllers.add(new AnimationController<>(this, "mounted", 2, animationHandler::mountedPredicate));
         AnimationController<Nulljaw> instant = new AnimationController<>(this, "instant", 1, animationHandler::instantPredicate);
         animationHandler.setupInstantController(instant);
         controllers.add(instant);
@@ -197,27 +271,109 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         return VOCAL_ENTRIES;
     }
 
-    public AsyncFlightController getAsyncAirController() {
-        return asyncAirController;
+    public boolean isActuallyHovering() {
+        return this.getDeltaMovement().lengthSqr() > 0.0015D;
     }
 
-    public boolean isActuallyHovering() {
-        return this.getDeltaMovement().lengthSqr() > 0.010D;
+    public boolean shouldUseHoverAnimation() {
+        return this.entityData.get(DATA_HOVER_VISUAL_ACTIVE) || this.isActuallyHovering();
+    }
+
+    public float getBankAngleDegrees(float partialTick) {
+        return Mth.lerp(partialTick, this.flightVisualState.prevBankAngle, this.flightVisualState.bankAngle);
+    }
+
+    public float getFlightPitchRadians(float partialTick) {
+        return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
+    }
+
+    public float getSmoothedRoll(float partialTick) {
+        return 0.0F;
     }
 
     @Override
     public void aiStep() {
         super.aiStep();
         this.soundHandler.tick();
+        tickBankingLogic();
+        tickPitchingLogic();
         if (!this.level().isClientSide) {
             this.setFlying(true);
             this.setTakeoff(false);
             this.setLanding(false);
             this.setNoGravity(true);
-            this.asyncAirController.serverTick();
+            tickHoverVisualState();
             this.tickAmbientVocals();
         }
         this.tickAnimationStates();
+    }
+
+    public void flyToward(Vec3 destination, double speedScale) {
+        this.beginAiFlight();
+        markHoverVisualActive();
+        DragonDirectAirCombatMovementHelper.flyToward(this, destination, speedScale, FLOAT_ACCEL, FLOAT_DRAG);
+    }
+
+    private void markHoverVisualActive() {
+        this.hoverVisualTicks = HOVER_VISUAL_GRACE_TICKS;
+        if (!this.level().isClientSide) {
+            this.entityData.set(DATA_HOVER_VISUAL_ACTIVE, true);
+        }
+    }
+
+    private void tickHoverVisualState() {
+        if (this.isVehicle()) {
+            boolean active = this.getDeltaMovement().lengthSqr() > MOUNTED_HOVER_VISUAL_THRESHOLD_SQ;
+            this.hoverVisualTicks = 0;
+            if (this.entityData.get(DATA_HOVER_VISUAL_ACTIVE) != active) {
+                this.entityData.set(DATA_HOVER_VISUAL_ACTIVE, active);
+            }
+            return;
+        }
+
+        if (this.isActuallyHovering()) {
+            this.hoverVisualTicks = HOVER_VISUAL_GRACE_TICKS;
+        } else if (this.hoverVisualTicks > 0) {
+            this.hoverVisualTicks--;
+        }
+
+        boolean active = this.hoverVisualTicks > 0;
+        if (this.entityData.get(DATA_HOVER_VISUAL_ACTIVE) != active) {
+            this.entityData.set(DATA_HOVER_VISUAL_ACTIVE, active);
+        }
+    }
+
+    private void tickBankingLogic() {
+        DragonFlightVisuals.tickBanking(
+                this.flightVisualState,
+                true,
+                this.horizontalCollision,
+                this.verticalCollision,
+                this.getYRot(),
+                this.yRotO
+        );
+    }
+
+    private void tickPitchingLogic() {
+        DragonFlightVisuals.beginPitchTick(this.flightVisualState);
+
+        if (this.level().isClientSide) {
+            this.flightVisualState.flightPitchRad = this.entityData.get(DATA_FLIGHT_PITCH);
+            return;
+        }
+
+        float targetPitchRad;
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            float rawPlayerPitchRad = (float) Math.toRadians(player.getXRot());
+            targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawPlayerPitchRad);
+        } else {
+            DragonFlightVisuals.clearRiderPitchInput(this.flightVisualState);
+            targetPitchRad = DragonFlightVisuals.computeAiPitchTarget(this.getDeltaMovement());
+        }
+
+        this.flightVisualState.flightPitchRad =
+                DragonFlightVisuals.approachPitch(this.flightVisualState.flightPitchRad, targetPitchRad);
+        this.entityData.set(DATA_FLIGHT_PITCH, this.flightVisualState.flightPitchRad);
     }
 
     private void tickAmbientVocals() {
@@ -248,11 +404,33 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player rider
                 && this.isTame() && this.isOwnedBy(rider)) {
-            handleRiderFlight(rider);
+            if (this.getNavigation().getPath() != null) {
+                this.getNavigation().stop();
+            }
+            super.travel(Vec3.ZERO);
             return;
         }
 
         super.travel(motion);
+    }
+
+    @Override
+    protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+
+        if (areRiderControlsLocked()) {
+            player.fallDistance = 0.0F;
+            this.fallDistance = 0.0F;
+            this.setTarget(null);
+            copyRiderYaw(player);
+            this.setAccelerating(false);
+            this.setGoingUp(false);
+            this.setGoingDown(false);
+            this.setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+
+        handleRiderFlight(player);
     }
 
     private void handleRiderFlight(Player rider) {
@@ -264,9 +442,13 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
 
         float yaw = rider.getYRot();
         float pitch = rider.getXRot();
+        this.yRotO = this.getYRot();
+        this.yBodyRotO = this.yBodyRot;
+        this.yHeadRotO = this.yHeadRot;
+        this.xRotO = this.getXRot();
         this.setYRot(yaw);
         this.yBodyRot = yaw;
-        this.yHeadRot = yaw;
+        this.setYHeadRot(yaw);
         this.setXRot(Mth.clamp(pitch * 0.5F, -45.0F, 45.0F));
 
         float yawRad = yaw * Mth.DEG_TO_RAD;
@@ -305,6 +487,10 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         return this.getFirstPassenger() instanceof LivingEntity living ? living : null;
     }
 
+    public boolean shouldRiderSit() {
+        return false;
+    }
+
     @Override
     public double getPassengersRidingOffset() {
         return this.getBbHeight() * 0.45D;
@@ -317,7 +503,7 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
                 passenger,
                 moveFunction,
                 getPassengersRidingOffset(),
-                null
+                this.level().isClientSide ? this.getClientLocatorPosition("passengerLocator") : null
         );
     }
 
@@ -361,6 +547,20 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         }
 
         if (this.isTame() && this.isOwnedBy(player)) {
+            if (player.isCrouching() && hand == InteractionHand.MAIN_HAND && heldItem.isEmpty()) {
+                if (!this.level().isClientSide) {
+                    int next = (this.getCommand() + 1) % 3;
+                    this.setCommand(next);
+                    if (player instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.displayClientMessage(
+                                Component.translatable("entity.saintsdragons.all.command_" + next, this.getName()),
+                                true
+                        );
+                    }
+                }
+                return InteractionResult.sidedSuccess(this.level().isClientSide);
+            }
+
             if (!player.isCrouching() && hand == InteractionHand.MAIN_HAND) {
                 if (!this.level().isClientSide) {
                     player.startRiding(this);
@@ -391,10 +591,23 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     }
 
     @Override
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, @NotNull DamageSource source) {
+        return false;
+    }
+
+    @Override
     public void die(@NotNull DamageSource cause) {
         if (!this.dead && !this.level().isClientSide && !deathSoundQueued) {
             deathSoundQueued = true;
-            this.soundHandler.playVocal("nulljaw_die");
+            this.triggerAnim("instant", "nulljaw_die");
+            VocalEntry deathEntry = VOCAL_ENTRIES.get("nulljaw_die");
+            if (deathEntry != null && deathEntry.soundSupplier() != null) {
+                float pitch = deathEntry.basePitch();
+                if (deathEntry.pitchVariance() != 0.0F) {
+                    pitch += (this.getRandom().nextFloat() - 0.5F) * deathEntry.pitchVariance() * 2.0F;
+                }
+                this.playSound(deathEntry.soundSupplier().get(), deathEntry.volume(), pitch);
+            }
         }
         super.die(cause);
     }
@@ -426,6 +639,61 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     @Override
     public @Nullable AgeableMob getBreedOffspring(@NotNull ServerLevel level, @NotNull AgeableMob otherParent) {
         return ModEntities.NULLJAW.get().create(level);
+    }
+
+    @Override
+    public @Nullable UUID getPackLeaderUuid() {
+        return this.packLeaderUuid;
+    }
+
+    @Override
+    public void setPackLeaderUuid(@Nullable UUID leaderUuid) {
+        this.packLeaderUuid = leaderUuid;
+    }
+
+    @Override
+    public boolean canParticipateInPack() {
+        if (this.isTame()) {
+            return false;
+        }
+        if (this.isBaby() || this.isDying()) {
+            return false;
+        }
+        if (!this.isAlive() || this.isRemoved()) {
+            return false;
+        }
+        return !this.isOrderedToSit() && this.getCommand() != 1;
+    }
+
+    @Override
+    public boolean canLeadPack() {
+        return canParticipateInPack() && !this.isFemale();
+    }
+
+    @Override
+    public int getPackLeadershipPriority() {
+        return (int) Math.round((this.getHealth() / Math.max(1.0F, this.getMaxHealth())) * 100.0F);
+    }
+
+    @Override
+    public int getMaxPackSize() {
+        return MAX_PACK_SIZE;
+    }
+
+    @Override
+    public double getPackSearchRadius() {
+        return PACK_SEARCH_RADIUS;
+    }
+
+    @Override
+    public int getPackLeaderRefreshIntervalTicks() {
+        return 60;
+    }
+
+    @Override
+    public boolean handleDirectAirPackFollow(Vec3 target, double speed) {
+        this.flyToward(target, speed);
+        return true;
     }
 
     @Override
@@ -513,6 +781,24 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     }
 
     @Override
+    public void beginAiFlight() {
+        this.setFlying(true);
+        this.setTakeoff(false);
+        this.setHovering(false);
+        this.setLanding(false);
+        this.setNoGravity(true);
+    }
+
+    @Override
+    public void beginAiLanding() {
+        beginAiFlight();
+    }
+
+    public void handleAiLandingComplete() {
+        markLandedNow();
+    }
+
+    @Override
     public void markLandedNow() {
         this.setFlying(true);
         this.setTakeoff(false);
@@ -535,5 +821,20 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     public Vec3 getMouthPosition() {
         Vec3 forward = this.getLookAngle().normalize().scale(this.getBbWidth() * 0.8D);
         return this.position().add(0.0D, this.getBbHeight() * 0.66D, 0.0D).add(forward);
+    }
+
+    public void setClientLocatorPosition(String name, Vec3 pos) {
+        if (name == null || pos == null) {
+            return;
+        }
+        this.clientLocatorCache.put(name, pos);
+    }
+
+    @Override
+    public Vec3 getClientLocatorPosition(String name) {
+        if (name == null) {
+            return null;
+        }
+        return this.clientLocatorCache.get(name);
     }
 }

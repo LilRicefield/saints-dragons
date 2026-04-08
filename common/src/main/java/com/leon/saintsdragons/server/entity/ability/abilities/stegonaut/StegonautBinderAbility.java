@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.resources.ResourceKey;
@@ -44,6 +45,21 @@ public final class StegonautBinderAbility {
      * Update the portable resistance buffs for all players carrying bound Drake Binders
      */
     public static void updateAllPortableBuffs(ServerLevel level) {
+        if (!SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.get()) {
+            Set<UUID> previousTargets = ACTIVE_BUFF_TARGETS.getOrDefault(level.dimension(), Collections.emptySet());
+            if (!previousTargets.isEmpty()) {
+                for (UUID uuid : previousTargets) {
+                    Entity entity = level.getEntity(uuid);
+                    if (entity instanceof LivingEntity livingEntity) {
+                        livingEntity.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+                        livingEntity.removeEffect(MobEffects.ABSORPTION);
+                    }
+                }
+            }
+            ACTIVE_BUFF_TARGETS.put(level.dimension(), new HashSet<>());
+            return;
+        }
+
         Set<UUID> currentTargets = new HashSet<>();
 
         for (Player player : level.players()) {

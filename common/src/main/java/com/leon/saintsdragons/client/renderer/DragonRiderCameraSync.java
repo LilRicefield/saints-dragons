@@ -48,7 +48,7 @@ public final class DragonRiderCameraSync {
                 new Vec3(firstPersonOffset.x(), firstPersonOffset.y(), firstPersonOffset.z()),
                 (float) Math.toRadians(Mth.rotLerp(partialTick, dragon.yBodyRotO, dragon.yBodyRot)),
                 (float) Math.toRadians(Mth.lerp(partialTick, dragon.xRotO, dragon.getXRot())),
-                (float) Math.toRadians(rollDegrees)
+                (float) Math.toRadians(-rollDegrees)
         );
 
         cameraSink.setPosition(

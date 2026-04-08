@@ -12,10 +12,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * Generic follow owner goal for all rideable flying dragons.
- * Handles both ground and flight following with configurable parameters.
- */
+
 public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCapable> extends DragonBaseGoal<T> {
     private static final double AIR_MOVE_TARGET_EPSILON_SQR = 9.0D;
     private static final double AIR_MOVE_SPEED_EPSILON = 0.15D;
@@ -568,9 +565,9 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return new FollowConfig(20.,    // startFollowDist
                     8.0,    // stopFollowDist
                     64.0,  // teleportDist
-                    10.0,   // runDist
-                    24.0,   // flightTriggerDist
-                    6.0,    // flightHeightDiff
+                    15.0,   // runDist
+                    30.0,   // flightTriggerDist
+                    10.0,    // flightHeightDiff
                     10.0,   // landingDistance
                     2.5,    // hoverHeight
                     0.7,    // walkSpeed

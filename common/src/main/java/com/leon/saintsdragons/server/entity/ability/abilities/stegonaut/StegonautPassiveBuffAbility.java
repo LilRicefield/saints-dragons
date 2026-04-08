@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.server.level.ServerLevel;
@@ -39,6 +40,14 @@ public class StegonautPassiveBuffAbility {
 
     public void tick() {
         if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        if (!SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.get()) {
+            if (!buffedEntityIds.isEmpty()) {
+                clearTrackedBuffs(serverLevel);
+            }
+            tickCounter = 0;
             return;
         }
 

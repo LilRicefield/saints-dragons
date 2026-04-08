@@ -221,6 +221,8 @@ public final class SaintsDragonsForge {
                     volitans.applyConfiguredAttributes();
                 } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut stegonaut) {
                     stegonaut.applyConfiguredAttributes();
+                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw nulljaw) {
+                    nulljaw.applyConfiguredAttributes();
                 }
             }
         }

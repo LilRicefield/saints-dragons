@@ -106,6 +106,9 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "volitansSpawnWeight" -> () -> holder().getConfig().volitansSpawnWeight;
             case "volitansMinGroupSize" -> () -> holder().getConfig().volitansMinGroupSize;
             case "volitansMaxGroupSize" -> () -> holder().getConfig().volitansMaxGroupSize;
+            case "nulljawSpawnWeight" -> () -> holder().getConfig().nulljawSpawnWeight;
+            case "nulljawMinGroupSize" -> () -> holder().getConfig().nulljawMinGroupSize;
+            case "nulljawMaxGroupSize" -> () -> holder().getConfig().nulljawMaxGroupSize;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -120,6 +123,9 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "dragonGriefingEnabled" -> () -> holder().getConfig().dragonGriefingEnabled;
             case "screenShakeEnabled" -> () -> holder().getConfig().screenShakeEnabled;
             case "barrelRollEnabled" -> () -> holder().getConfig().barrelRollEnabled;
+            case "stegonautBuffsEnabled" -> () -> holder().getConfig().stegonautBuffsEnabled;
+            case "hungerDecayEnabled" -> () -> holder().getConfig().hungerDecayEnabled;
+            case "happinessDecayEnabled" -> () -> holder().getConfig().happinessDecayEnabled;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -134,6 +140,9 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "dragonGriefingEnabled" -> value -> holder().getConfig().dragonGriefingEnabled = value;
             case "screenShakeEnabled" -> value -> holder().getConfig().screenShakeEnabled = value;
             case "barrelRollEnabled" -> value -> holder().getConfig().barrelRollEnabled = value;
+            case "stegonautBuffsEnabled" -> value -> holder().getConfig().stegonautBuffsEnabled = value;
+            case "hungerDecayEnabled" -> value -> holder().getConfig().hungerDecayEnabled = value;
+            case "happinessDecayEnabled" -> value -> holder().getConfig().happinessDecayEnabled = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
         };
     }
@@ -152,6 +161,8 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "ignivorusExcludedBiomes" -> () -> holder().getConfig().ignivorusExcludedBiomes;
             case "volitansAdditionalBiomes" -> () -> holder().getConfig().volitansAdditionalBiomes;
             case "volitansExcludedBiomes" -> () -> holder().getConfig().volitansExcludedBiomes;
+            case "nulljawAdditionalBiomes" -> () -> holder().getConfig().nulljawAdditionalBiomes;
+            case "nulljawExcludedBiomes" -> () -> holder().getConfig().nulljawExcludedBiomes;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config list key '{}'; using default", key);
                 yield () -> defaultValue;

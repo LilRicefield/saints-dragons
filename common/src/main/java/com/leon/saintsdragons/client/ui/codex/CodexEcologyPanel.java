@@ -416,6 +416,12 @@ public class CodexEcologyPanel {
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
+            case "nulljaw" -> {
+                List<SectionLink> sections = List.of(
+                        new SectionLink("1. Overview", 1, ecologyPage == 1)
+                );
+                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
+            }
             default -> {
             }
         }

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.camera;
 
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -15,6 +16,7 @@ public final class DragonRideCameraTuning {
     public static final ZoomProfile VARASUCHUS = new ZoomProfile(15.0f, 18.0f, 5.5f);
     public static final ZoomProfile STEGONAUT = new ZoomProfile(8.0f, 8.0f, 0.0f);
     public static final ZoomProfile VOLITANS = new ZoomProfile(15.0f, 20.0f, 5.5f);
+    public static final ZoomProfile NULLJAW = new ZoomProfile(3.0f, 3.0f, 0.0f);
     public static final ZoomProfile DEFAULT = new ZoomProfile(15.0f, 15.0f, 5.5f);
 
     private DragonRideCameraTuning() {
@@ -35,6 +37,9 @@ public final class DragonRideCameraTuning {
         }
         if (vehicle instanceof Volitans volitans) {
             return volitans.isFlying() || volitans.isInWaterOrBubble();
+        }
+        if (vehicle instanceof Nulljaw) {
+            return true;
         }
         if (vehicle instanceof Stegonaut) {
             return false;
@@ -77,6 +82,9 @@ public final class DragonRideCameraTuning {
         }
         if (vehicle instanceof Volitans) {
             return VOLITANS;
+        }
+        if (vehicle instanceof Nulljaw) {
+            return NULLJAW;
         }
         return DEFAULT;
     }

@@ -40,6 +40,18 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                 val -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.set(val),
                 SaintsDragonsConfig.BARREL_ROLL_ENABLED::save
         ));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
+                () -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get(),
+                val -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.set(val),
+                SaintsDragonsConfig.HUNGER_DECAY_ENABLED::save
+        ));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.happiness_decay"),
+                () -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get(),
+                val -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.set(val),
+                SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED::save
+        ));
 
         // Ivy the Dragon Merchant
         entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));
@@ -56,6 +68,8 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
         SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
         SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
         SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
+        SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
+        SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
         ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
     }
 }

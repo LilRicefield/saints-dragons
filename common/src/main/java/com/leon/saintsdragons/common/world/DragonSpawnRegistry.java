@@ -88,7 +88,7 @@ public final class DragonSpawnRegistry {
                 SaintsDragonsCommon.rl("nulljaw"),
                 ModEntities.NULLJAW,
                 "has_nulljaw",
-                MobCategory.CREATURE,
+                MobCategory.MONSTER,
                 () -> SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get(),

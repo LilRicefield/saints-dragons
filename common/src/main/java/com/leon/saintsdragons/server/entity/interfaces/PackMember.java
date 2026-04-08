@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.interfaces;
 
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -26,5 +27,9 @@ public interface PackMember<T> {
 
     default int getPackLeaderRefreshIntervalTicks() {
         return 60;
+    }
+
+    default boolean handleDirectAirPackFollow(Vec3 target, double speed) {
+        return false;
     }
 }

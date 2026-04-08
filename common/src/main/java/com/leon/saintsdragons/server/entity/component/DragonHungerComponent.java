@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.component;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
@@ -39,6 +40,9 @@ public final class DragonHungerComponent {
     }
 
     public void setHunger(int value) {
+        if (!SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()) {
+            return;
+        }
         int clamped = Mth.clamp(value, 0, HUNGER_MAX);
         if (this.hunger == clamped) {
             return;
@@ -51,6 +55,9 @@ public final class DragonHungerComponent {
     }
 
     public boolean applyFeeding(boolean heartyMeal) {
+        if (!SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()) {
+            return false;
+        }
         boolean wasHungry = isHungry();
         int amount = heartyMeal ? HUNGER_FEED_AMOUNT_HEARTY : HUNGER_FEED_AMOUNT;
         setHunger(this.hunger + amount);
@@ -70,6 +77,10 @@ public final class DragonHungerComponent {
 
     public void tick() {
         if (!dragon.isTame()) {
+            return;
+        }
+        if (!SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()) {
+            hungerDecayTicks = 0;
             return;
         }
 

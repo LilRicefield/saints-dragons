@@ -14,6 +14,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
         RAEVYX,
         STEGONAUT,
         CINDERVANE,
+        NULLJAW,
         VARASUCHUS,
         IGNIVORUS,
         VOLITANS
@@ -32,6 +33,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             case RAEVYX -> addRaevyxEntries(entries);
             case STEGONAUT -> addStegonautEntries(entries);
             case CINDERVANE -> addCindervaneEntries(entries);
+            case NULLJAW -> addNulljawEntries(entries);
             case VARASUCHUS -> addVarasuchusEntries(entries);
             case IGNIVORUS -> addIgnivorusEntries(entries);
             case VOLITANS -> addVolitansEntries(entries);
@@ -40,9 +42,9 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
 
     @Override
     protected void addHeaderButtons() {
-        int buttonWidth = Math.min(90, (width - 60) / 3);
+        int buttonWidth = Math.min(90, (width - 72) / 4);
         int spacing = 6;
-        int totalTopWidth = buttonWidth * 3 + spacing * 2;
+        int totalTopWidth = buttonWidth * 4 + spacing * 3;
         int startTopX = (width - totalTopWidth) / 2;
         int yTop = 32;
 
@@ -66,6 +68,13 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 rebuildWidgets();
             }
         }).bounds(startTopX + (buttonWidth + spacing) * 2, yTop, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.nulljaw"), button -> {
+            if (section != Section.NULLJAW) {
+                section = Section.NULLJAW;
+                rebuildWidgets();
+            }
+        }).bounds(startTopX + (buttonWidth + spacing) * 3, yTop, buttonWidth, 20).build());
 
         int totalBottomWidth = buttonWidth * 3 + spacing * 2;
         int startBottomX = (width - totalBottomWidth) / 2;
@@ -242,6 +251,31 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES::save));
     }
 
+    private void addNulljawEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.nulljaw")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
+                SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT::get,
+                SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT::set,
+                SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.min_group"),
+                SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE::get,
+                SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE::set,
+                SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.max_group"),
+                SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE::get,
+                SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE::set,
+                SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.additional_biomes"),
+                SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::get,
+                SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::set,
+                SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES::save));
+        entries.add(new ListEntry(Component.translatable("config.saintsdragons.spawn.excluded_biomes"),
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES::get,
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES::set,
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES::save));
+    }
+
     private void addVolitansEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.volitans")));
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
@@ -306,6 +340,18 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES.save();
                 SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES.save();
                 SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.save();
+            }
+            case NULLJAW -> {
+                SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.set(SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT_DEFAULT);
+                SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.set(SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.set(SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES.set(java.util.Collections.emptyList());
+                SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.save();
+                SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.save();
+                SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.save();
+                SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES.save();
+                SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES.save();
             }
             case VARASUCHUS -> {
                 SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.set(SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT_DEFAULT);

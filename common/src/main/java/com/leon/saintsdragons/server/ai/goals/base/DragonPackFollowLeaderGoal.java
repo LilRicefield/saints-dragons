@@ -75,6 +75,13 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     @Override
     public boolean canContinueToUse() {
         if (!canPackFollow()) {
+            if (member instanceof RideableDragonBase rideableMember
+                    && member instanceof DragonFlightCapable flightMember
+                    && !flightMember.isLanding()
+                    && (flightMember.isFlying() || flightMember.isTakeoff() || flightMember.isHovering())) {
+                DragonAggroLandingHelper.beginAggroLanding(rideableMember, member, getAirFollowSpeed(flightMember));
+                return true;
+            }
             return false;
         }
         if (member instanceof DragonFlightCapable flightMember && flightMember.isLanding()) {
@@ -151,6 +158,9 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     private boolean canPackFollow() {
         if (!member.canParticipateInPack()) {
             member.setPackLeaderUuid(null);
+            return false;
+        }
+        if (!member.isBaby() && member.hasNearbyAssignedBabies(memberClass)) {
             return false;
         }
         if (member.isOrderedToSit() || member.isVehicle() || member.isPassenger()) {
@@ -444,6 +454,12 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     }
 
     private void requestAirMove(RideableDragonBase rideableMember, Vec3 target, double speed) {
+        if (member.handleDirectAirPackFollow(target, speed)) {
+            lastAirMoveTarget = target;
+            lastAirMoveSpeed = speed;
+            airMoveRefreshCooldown = airMoveRefreshInterval(speed);
+            return;
+        }
         if (shouldRefreshAirMoveTarget(target, speed)) {
             rideableMember.getMoveControl().setWantedPosition(target.x, target.y, target.z, speed);
             lastAirMoveTarget = target;

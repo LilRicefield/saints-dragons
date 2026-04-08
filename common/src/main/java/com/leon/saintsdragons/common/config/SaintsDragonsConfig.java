@@ -31,7 +31,7 @@ public final class SaintsDragonsConfig {
     public static final int VOLITANS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int VOLITANS_MAX_GROUP_SIZE_DEFAULT = 1;
 
-    public static final int NULLJAW_SPAWN_WEIGHT_DEFAULT = 2;
+    public static final int NULLJAW_SPAWN_WEIGHT_DEFAULT = 10;
     public static final int NULLJAW_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int NULLJAW_MAX_GROUP_SIZE_DEFAULT = 2;
     public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
@@ -39,6 +39,9 @@ public final class SaintsDragonsConfig {
     public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
     public static final boolean SCREEN_SHAKE_ENABLED_DEFAULT = true;
     public static final boolean BARREL_ROLL_ENABLED_DEFAULT = true;
+    public static final boolean STEGONAUT_BUFFS_ENABLED_DEFAULT = true;
+    public static final boolean HUNGER_DECAY_ENABLED_DEFAULT = true;
+    public static final boolean HAPPINESS_DECAY_ENABLED_DEFAULT = true;
 
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
@@ -87,6 +90,9 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.BooleanValue DRAGON_GRIEFING_ENABLED;
     public static ConfigHelper.BooleanValue SCREEN_SHAKE_ENABLED;
     public static ConfigHelper.BooleanValue BARREL_ROLL_ENABLED;
+    public static ConfigHelper.BooleanValue STEGONAUT_BUFFS_ENABLED;
+    public static ConfigHelper.BooleanValue HUNGER_DECAY_ENABLED;
+    public static ConfigHelper.BooleanValue HAPPINESS_DECAY_ENABLED;
 
     private static volatile boolean initialized = false;
 
@@ -190,6 +196,12 @@ public final class SaintsDragonsConfig {
         SCREEN_SHAKE_ENABLED = builder.defineBoolean("screenShakeEnabled", SCREEN_SHAKE_ENABLED_DEFAULT);
         builder.comment("Global toggle for rider-triggered barrel roll on flying dragons.");
         BARREL_ROLL_ENABLED = builder.defineBoolean("barrelRollEnabled", BARREL_ROLL_ENABLED_DEFAULT);
+        builder.comment("Global toggle for Stegonaut passive aura buffs and portable binder buffs.");
+        STEGONAUT_BUFFS_ENABLED = builder.defineBoolean("stegonautBuffsEnabled", STEGONAUT_BUFFS_ENABLED_DEFAULT);
+        builder.comment("Global toggle for tame dragon hunger decay.");
+        HUNGER_DECAY_ENABLED = builder.defineBoolean("hungerDecayEnabled", HUNGER_DECAY_ENABLED_DEFAULT);
+        builder.comment("Global toggle for tame dragon happiness decay.");
+        HAPPINESS_DECAY_ENABLED = builder.defineBoolean("happinessDecayEnabled", HAPPINESS_DECAY_ENABLED_DEFAULT);
         builder.pop();
 
         builder.build();

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
+import com.leon.saintsdragons.client.renderer.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
@@ -10,6 +11,7 @@ import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -64,6 +66,8 @@ public class FabricClientEventHandler {
     private static float stegonautCameraZoomTarget = DragonRideCameraTuning.STEGONAUT.grounded();
     private static float volitansCameraZoom = DragonRideCameraTuning.VOLITANS.grounded();
     private static float volitansCameraZoomTarget = DragonRideCameraTuning.VOLITANS.grounded();
+    private static float nulljawCameraZoom = DragonRideCameraTuning.NULLJAW.grounded();
+    private static float nulljawCameraZoomTarget = DragonRideCameraTuning.NULLJAW.grounded();
     private static double volitansCameraShift = 0.0;
     private static float volitansCameraPitch = 0.0f;
 
@@ -382,6 +386,29 @@ public class FabricClientEventHandler {
         } else if (!(player.getVehicle() instanceof Stegonaut)) {
             stegonautCameraZoom = DragonRideCameraTuning.STEGONAUT.grounded();
             stegonautCameraZoomTarget = DragonRideCameraTuning.STEGONAUT.grounded();
+        }
+
+        if (player.isPassenger() && player.getVehicle() instanceof Nulljaw nulljaw) {
+            if (camera.isDetached()) {
+                nulljawCameraZoomTarget = DragonRideCameraTuning.getTargetZoom(nulljaw);
+                float blendRate = 0.05F;
+                nulljawCameraZoom += (nulljawCameraZoomTarget - nulljawCameraZoom) * blendRate;
+
+                CameraAccessor cameraAccessor = (CameraAccessor) camera;
+                double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(nulljawCameraZoom);
+                maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
+                cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
+            } else {
+                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
+                        nulljaw,
+                        partialTicks,
+                        0.0f,
+                        ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
+                );
+            }
+        } else if (!(player.getVehicle() instanceof Nulljaw)) {
+            nulljawCameraZoom = DragonRideCameraTuning.NULLJAW.grounded();
+            nulljawCameraZoomTarget = DragonRideCameraTuning.NULLJAW.grounded();
         }
 
         if (player.isPassenger() && player.getVehicle() instanceof Volitans volitans) {

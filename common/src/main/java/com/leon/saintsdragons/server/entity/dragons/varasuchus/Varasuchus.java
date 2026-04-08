@@ -166,7 +166,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     private static final int BUCK_INTERVAL_MAX = 110;
     private static final double WILD_RIDE_WALK_SPEED = 0.9D;
     private static final double BREED_PARTNER_RANGE = 30.0D;
-    private static final double BREED_DISTANCE_SQR = 2500.0D;
+    private static final double BREED_DISTANCE_SQR = 16.0D;
     private boolean wildRideActive = false;
     private int wildRideTicks = 0;
     private int nextBuckAttemptTick = 0;

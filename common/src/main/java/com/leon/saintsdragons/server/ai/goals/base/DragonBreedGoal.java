@@ -27,6 +27,8 @@ import javax.annotation.Nullable;
 public class DragonBreedGoal<T extends DragonEntity> extends Goal {
     private static final double RIDEABLE_BREED_MOVE_SPEED = 0.55D;
     private static final double CONTACT_BREED_DISTANCE_SQR = 16.0D;
+    private static final int EGG_SEARCH_RADIUS = 4;
+    private static final int EGG_SEARCH_DEPTH = 8;
 
     protected final T dragon;
     protected final Level level;
@@ -200,26 +202,51 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
 
     @Nullable
     protected BlockPos findEggLayingPosition(T female) {
-        BlockPos startPos = female.blockPosition();
+        BlockPos femalePos = female.blockPosition();
+        BlockPos midpoint = this.partner != null
+                ? BlockPos.containing(
+                (female.getX() + this.partner.getX()) * 0.5D,
+                Math.min(female.getY(), this.partner.getY()),
+                (female.getZ() + this.partner.getZ()) * 0.5D
+        )
+                : femalePos;
 
-        BlockPos groundPos = this.findGroundBelow(startPos, 5);
-        if (groundPos != null && this.isValidEggPosition(groundPos)) {
-            return groundPos;
+        BlockPos midpointCandidate = findNearestEggPosition(midpoint);
+        if (midpointCandidate != null) {
+            return midpointCandidate;
         }
 
-        for (int xOffset = -1; xOffset <= 1; xOffset++) {
-            for (int zOffset = -1; zOffset <= 1; zOffset++) {
-                if (xOffset == 0 && zOffset == 0) continue;
+        return findNearestEggPosition(femalePos);
+    }
 
-                BlockPos offsetPos = startPos.offset(xOffset, 0, zOffset);
-                groundPos = this.findGroundBelow(offsetPos, 5);
-                if (groundPos != null && this.isValidEggPosition(groundPos)) {
-                    return groundPos;
+    @Nullable
+    private BlockPos findNearestEggPosition(BlockPos center) {
+        BlockPos bestPos = null;
+        double bestDistSq = Double.MAX_VALUE;
+
+        for (int radius = 0; radius <= EGG_SEARCH_RADIUS; radius++) {
+            for (int xOffset = -radius; xOffset <= radius; xOffset++) {
+                for (int zOffset = -radius; zOffset <= radius; zOffset++) {
+                    if (radius > 0 && Math.max(Math.abs(xOffset), Math.abs(zOffset)) != radius) {
+                        continue;
+                    }
+
+                    BlockPos offsetPos = center.offset(xOffset, 0, zOffset);
+                    BlockPos groundPos = this.findGroundBelow(offsetPos, EGG_SEARCH_DEPTH);
+                    if (groundPos == null || !this.isValidEggPosition(groundPos)) {
+                        continue;
+                    }
+
+                    double distSq = groundPos.distSqr(center);
+                    if (distSq < bestDistSq) {
+                        bestDistSq = distSq;
+                        bestPos = groundPos;
+                    }
                 }
             }
         }
 
-        return null;
+        return bestPos;
     }
 
     @Nullable

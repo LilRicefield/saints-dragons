@@ -101,6 +101,7 @@ class AsyncFlightMovementExecutor {
         float newYaw = this.dragon.getYRot() + Mth.clamp(yawDiff, -MAX_YAW_STEP, MAX_YAW_STEP);
         this.dragon.setYRot(newYaw);
         this.dragon.yBodyRot = newYaw;
+        this.dragon.setYHeadRot(newYaw);
 
         float targetPitch = (float) (-Math.toDegrees(Mth.atan2(velocity.y, Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z))));
         float pitchDiff = Mth.wrapDegrees(targetPitch - this.dragon.getXRot());

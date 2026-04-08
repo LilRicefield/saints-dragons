@@ -164,6 +164,10 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VOLITANS_ROAR_AIR_WATER_POISON_LEVEL;
     public static ForgeConfigSpec.BooleanValue VOLITANS_AGGRESSIVE_WILD;
 
+    // Nulljaw
+    public static ForgeConfigSpec.DoubleValue NULLJAW_MAX_HEALTH;
+    public static ForgeConfigSpec.DoubleValue NULLJAW_ARMOR;
+
     // Others (NPCs, misc)
     public static ForgeConfigSpec.IntValue IVY_RESTOCK_INTERVAL;
 
@@ -398,6 +402,13 @@ public final class ForgeDragonAttributesConfig {
         VOLITANS_ROAR_AIR_WATER_POISON_LEVEL = builder.defineInRange("roar_air_water_poison_level", 2.0, 0.0, 4.0);
         builder.comment("Aggressive wild behavior");
         VOLITANS_AGGRESSIVE_WILD = builder.define("aggressive_wild", true);
+        builder.pop();
+
+        // Nulljaw Configuration
+        builder.comment("Nulljaw Dragon Attributes").push("nulljaw");
+        builder.comment("Core Attributes");
+        NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 70.0, 1.0, 100000.0);
+        NULLJAW_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
         builder.pop();
 
         // Others (NPCs and Miscellaneous)

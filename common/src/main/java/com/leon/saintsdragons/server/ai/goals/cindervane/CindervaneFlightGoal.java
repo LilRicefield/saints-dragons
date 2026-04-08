@@ -754,4 +754,5 @@ public class CindervaneFlightGoal extends Goal {
         if (nearFluid) return true;
         return !foundSolid && dragonPos.getY() < amphithere.level().getMinBuildHeight() + 20;
     }
+
 }

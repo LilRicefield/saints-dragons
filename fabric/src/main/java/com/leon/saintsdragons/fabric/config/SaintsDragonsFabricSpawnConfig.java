@@ -149,6 +149,28 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> volitansExcludedBiomes = new ArrayList<>();
 
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
+    public int nulljawSpawnWeight = 10;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int nulljawMinGroupSize = 1;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int nulljawMaxGroupSize = 2;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> nulljawAdditionalBiomes = new ArrayList<>();
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip(count = 0)
+    public List<String> nulljawExcludedBiomes = new ArrayList<>();
+
     // Others (NPCs, etc.)
     @ConfigEntry.Category("others")
     @ConfigEntry.Gui.Tooltip
@@ -161,6 +183,18 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("others")
     @ConfigEntry.Gui.Tooltip
     public boolean barrelRollEnabled = true;
+
+    @ConfigEntry.Category("others")
+    @ConfigEntry.Gui.Tooltip
+    public boolean stegonautBuffsEnabled = true;
+
+    @ConfigEntry.Category("others")
+    @ConfigEntry.Gui.Tooltip
+    public boolean hungerDecayEnabled = true;
+
+    @ConfigEntry.Category("others")
+    @ConfigEntry.Gui.Tooltip
+    public boolean happinessDecayEnabled = true;
 
     @ConfigEntry.Category("others")
     @ConfigEntry.Gui.Tooltip

@@ -81,8 +81,8 @@ public final class ModEntities {
                     .build("volitans"));
 
     public static final Supplier<EntityType<Nulljaw>> NULLJAW =
-            REGISTER.register("nulljaw", () -> EntityType.Builder.of(Nulljaw::new, MobCategory.CREATURE)
-                    .sized(3.0F, 3.0F)
+            REGISTER.register("nulljaw", () -> EntityType.Builder.of(Nulljaw::new, MobCategory.MONSTER)
+                    .sized(1.20F, 1.15F)
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("nulljaw"));

@@ -1,10 +1,12 @@
 package com.leon.saintsdragons.forge.client;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -26,7 +28,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         RAEVYX,
         VARASUCHUS,
         IGNIVORUS,
-        VOLITANS
+        VOLITANS,
+        NULLJAW
     }
 
     private Section section = Section.CINDERVANE;
@@ -44,14 +47,15 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case VARASUCHUS -> addVarasuchusEntries(entries);
             case IGNIVORUS -> addIgnivorusEntries(entries);
             case VOLITANS -> addVolitansEntries(entries);
+            case NULLJAW -> addNulljawEntries(entries);
         }
     }
 
     @Override
     protected void addHeaderButtons() {
-        int buttonWidth = Math.min(90, (width - 70) / 6);
+        int buttonWidth = Math.min(90, (width - 84) / 7);
         int spacing = 6;
-        int totalWidth = buttonWidth * 6 + spacing * 5;
+        int totalWidth = buttonWidth * 7 + spacing * 6;
         int startX = (width - totalWidth) / 2;
         int y = 32;
 
@@ -97,6 +101,13 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startX + (buttonWidth + spacing) * 5, y, buttonWidth, 20).build());
 
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.nulljaw"), button -> {
+            if (section != Section.NULLJAW) {
+                section = Section.NULLJAW;
+                rebuildWidgets();
+            }
+        }).bounds(startX + (buttonWidth + spacing) * 6, y, buttonWidth, 20).build());
+
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
             rebuildWidgets();
@@ -110,6 +121,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
 
     @Override
     protected void onSave() {
+        SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.save();
         ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
         DragonAttributeConfigLoader.getInstance().refreshFromForgeConfig();
         applyAttributesToLoadedDragons();
@@ -144,6 +156,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                     ignivorus.applyConfiguredAttributes();
                 } else if (dragon instanceof Volitans volitans) {
                     volitans.applyConfiguredAttributes();
+                } else if (dragon instanceof Nulljaw nulljaw) {
+                    nulljaw.applyConfiguredAttributes();
                 }
             }
         }
@@ -263,6 +277,12 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 () -> ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD::set,
                 null));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs"),
+                () -> SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.get(),
+                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED::set,
+                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED::save
+        ));
     }
 
     private void addRaevyxEntries(List<ConfigEntry> entries) {
@@ -589,6 +609,18 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 null));
     }
 
+    private void addNulljawEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.nulljaw")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.max_health"),
+                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.armor"),
+                ForgeDragonAttributesConfig.NULLJAW_ARMOR::get,
+                ForgeDragonAttributesConfig.NULLJAW_ARMOR::set,
+                null));
+    }
+
     private void addVolitansEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.volitans")));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.max_health"),
@@ -895,6 +927,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_DURATION_TICKS.set(ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_DURATION_TICKS.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL.set(ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD.getDefault());
+            }
+            case NULLJAW -> {
+                ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.set(ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_ARMOR.set(ForgeDragonAttributesConfig.NULLJAW_ARMOR.getDefault());
             }
         }
 

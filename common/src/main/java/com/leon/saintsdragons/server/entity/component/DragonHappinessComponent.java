@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.component;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import java.util.UUID;
@@ -50,6 +51,9 @@ public final class DragonHappinessComponent {
     }
 
     public void setHappiness(int value) {
+        if (!SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get()) {
+            return;
+        }
         int clamped = Mth.clamp(value, 0, HAPPINESS_MAX);
         if (this.happiness == clamped) {
             return;
@@ -63,6 +67,9 @@ public final class DragonHappinessComponent {
     }
 
     public void applyFeeding(boolean heartyMeal) {
+        if (!SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get()) {
+            return;
+        }
         if (!dragon.isTame()) {
             return;
         }
@@ -87,6 +94,10 @@ public final class DragonHappinessComponent {
         if (!dragon.isTame()) {
             return;
         }
+        if (!SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get()) {
+            happinessDecayTicks = 0;
+            return;
+        }
 
         happinessDecayTicks += getDecayStep(hunger);
         while (happinessDecayTicks >= HAPPINESS_DECAY_INTERVAL_TICKS && happiness > 0) {
@@ -106,6 +117,9 @@ public final class DragonHappinessComponent {
     }
 
     public void applyHitPenalty(net.minecraft.server.level.ServerLevel serverLevel) {
+        if (!SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get()) {
+            return;
+        }
         setHappiness(this.happiness - HAPPINESS_HIT_PENALTY);
         if (this.happiness <= HAPPINESS_ANGRY_THRESHOLD) {
             serverLevel.sendParticles(

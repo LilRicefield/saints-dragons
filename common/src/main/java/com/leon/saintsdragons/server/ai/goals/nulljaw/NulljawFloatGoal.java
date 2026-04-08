@@ -8,11 +8,17 @@ import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public final class NulljawFloatGoal extends DragonBaseGoal<Nulljaw> {
+    private static final double ARRIVAL_DISTANCE_SQR = 4.0D;
+    private static final int MIN_TRAVEL_TICKS = 50;
+    private static final int MAX_TRAVEL_TICKS = 100;
+
+    private Vec3 target;
+    private int travelTicks;
     private int cooldownTicks;
 
     public NulljawFloatGoal(Nulljaw dragon) {
         super(dragon);
-        this.setFlags(EnumSet.of(Flag.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
@@ -27,23 +33,41 @@ public final class NulljawFloatGoal extends DragonBaseGoal<Nulljaw> {
             cooldownTicks--;
             return false;
         }
-        return dragon.getAsyncAirController().isIdle();
+        return findTarget() != null;
     }
 
     @Override
     public void start() {
-        Vec3 target = findTarget();
-        if (target != null) {
-            dragon.getAsyncAirController().setWaypoint(target, 1.0D);
-            cooldownTicks = 50 + dragon.getRandom().nextInt(50);
-        } else {
-            cooldownTicks = 20;
+        this.target = findTarget();
+        this.travelTicks = MIN_TRAVEL_TICKS + dragon.getRandom().nextInt(MAX_TRAVEL_TICKS - MIN_TRAVEL_TICKS + 1);
+        if (this.target == null) {
+            this.cooldownTicks = 20;
         }
     }
 
     @Override
     protected boolean canContinueAdditional() {
-        return false;
+        return this.target != null && this.travelTicks > 0;
+    }
+
+    @Override
+    public void tick() {
+        if (this.target == null) {
+            return;
+        }
+
+        dragon.flyToward(this.target, 1.0D);
+        this.travelTicks--;
+
+        if (dragon.distanceToSqr(this.target) <= ARRIVAL_DISTANCE_SQR) {
+            this.travelTicks = 0;
+        }
+    }
+
+    @Override
+    public void stop() {
+        this.target = null;
+        this.cooldownTicks = 25 + dragon.getRandom().nextInt(35);
     }
 
     private Vec3 findTarget() {

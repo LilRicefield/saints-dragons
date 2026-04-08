@@ -11,6 +11,7 @@
   "client": [
     "client.CameraMixin",
     "client.RiderMixin",
+    "client.LivingEntityRendererMixin",
     "client.EntityRendererMixin"
   ],
   "server": [

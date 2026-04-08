@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -67,6 +68,9 @@ public class DragonRideHealthBar {
      */
     public void render(GuiGraphics guiGraphics, int screenWidth, int screenHeight, float partialTicks) {
         if (dragon == null || dragon.isDeadOrDying()) {
+            return;
+        }
+        if (dragon instanceof Nulljaw) {
             return;
         }
 

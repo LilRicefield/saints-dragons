@@ -83,12 +83,16 @@ public final class DragonDirectAirCombatMovementHelper {
         double horizontal = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         if (horizontal > 1.0E-4D) {
             float targetYaw = (float) (Math.atan2(velocity.z, velocity.x) * (180.0D / Math.PI)) - 90.0F;
+            dragon.yRotO = dragon.getYRot();
+            dragon.yBodyRotO = dragon.yBodyRot;
+            dragon.yHeadRotO = dragon.yHeadRot;
             dragon.setYRot(targetYaw);
             dragon.yBodyRot = targetYaw;
-            dragon.yHeadRot = targetYaw;
+            dragon.setYHeadRot(targetYaw);
         }
         if (velocity.lengthSqr() > 1.0E-4D) {
             float targetPitch = (float) (-(Math.atan2(velocity.y, horizontal) * (180.0D / Math.PI)));
+            dragon.xRotO = dragon.getXRot();
             dragon.setXRot(Mth.clamp(targetPitch, -45.0F, 45.0F));
         }
     }
