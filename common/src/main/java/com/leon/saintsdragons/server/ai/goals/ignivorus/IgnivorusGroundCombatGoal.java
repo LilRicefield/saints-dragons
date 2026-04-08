@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -751,24 +752,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
      * Check if target is airborne (flying, riding flying mount, or off ground)
      */
     private boolean isTargetAirborne(LivingEntity target) {
-        // Check if target is on ground
-        if (target.onGround()) {
-            return false;
-        }
-
-        // Check if riding something (might be a flying dragon)
-        if (target.isPassenger() && target.getVehicle() != null) {
-            return true; // Assume mounted targets are valid air targets
-        }
-
-        // Check if significantly off ground (more than 8 blocks up for elytra/flight stability)
-        // Increased from 3 to prevent low elytra gliding from triggering constant takeoff
-        double groundY = dragon.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
-        if (target.getY() - groundY > 8.0) {
-            return true;
-        }
-
-        return false;
+        return DragonTargetingHelper.isTargetAirborne(target, 8.0D);
     }
 
     private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {

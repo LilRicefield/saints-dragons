@@ -180,6 +180,14 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> VOLITANS_SLAMMING = registerSound("volitans_slamming");
     public static final Supplier<SoundEvent> VOLITANS_SLAMMED = registerSound("volitans_slammed");
 
+    // Nulljaw
+    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_1 = registerSound("nulljaw_grumble1");
+    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_2 = registerSound("nulljaw_grumble2");
+    public static final Supplier<SoundEvent> NULLJAW_GRUMBLE_3 = registerSound("nulljaw_grumble3");
+    public static final Supplier<SoundEvent> NULLJAW_HURT = registerSound("nulljaw_hurt");
+    public static final Supplier<SoundEvent> NULLJAW_DIE = registerSound("nulljaw_die");
+    public static final Supplier<SoundEvent> NULLJAW_EAT = registerSound("nulljaw_eat");
+
     private static Supplier<SoundEvent> registerSound(String name) {
         return REGISTER.register(name, () -> SoundEvent.createVariableRangeEvent(SaintsDragonsCommon.rl(name)));
     }

@@ -77,6 +77,14 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> NULLJAW_SPAWN_EGG =
+            REGISTER.register("nulljaw_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.NULLJAW,
+                            0x121118, 0x7E8BA6,
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> IVY_THE_MERCHANT_SPAWN_EGG =
             REGISTER.register("ivy_the_merchant_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(

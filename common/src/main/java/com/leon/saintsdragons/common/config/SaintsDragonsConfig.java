@@ -30,6 +30,10 @@ public final class SaintsDragonsConfig {
     public static final int VOLITANS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int VOLITANS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int VOLITANS_MAX_GROUP_SIZE_DEFAULT = 1;
+
+    public static final int NULLJAW_SPAWN_WEIGHT_DEFAULT = 2;
+    public static final int NULLJAW_MIN_GROUP_SIZE_DEFAULT = 1;
+    public static final int NULLJAW_MAX_GROUP_SIZE_DEFAULT = 2;
     public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
@@ -73,6 +77,13 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue VOLITANS_MAX_GROUP_SIZE;
     public static ConfigHelper.ListValue VOLITANS_ADDITIONAL_BIOMES;
     public static ConfigHelper.ListValue VOLITANS_EXCLUDED_BIOMES;
+
+    public static ConfigHelper.IntValue NULLJAW_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
+    public static ConfigHelper.ListValue NULLJAW_ADDITIONAL_BIOMES;
+    public static ConfigHelper.ListValue NULLJAW_EXCLUDED_BIOMES;
+
     public static ConfigHelper.BooleanValue DRAGON_GRIEFING_ENABLED;
     public static ConfigHelper.BooleanValue SCREEN_SHAKE_ENABLED;
     public static ConfigHelper.BooleanValue BARREL_ROLL_ENABLED;
@@ -159,6 +170,15 @@ public final class SaintsDragonsConfig {
         VOLITANS_ADDITIONAL_BIOMES = builder.defineList("volitansAdditionalBiomes", Collections.emptyList());
         builder.comment("Biome IDs or biome tags to exclude from default Volitans spawns (e.g., \"minecraft:plains\", \"#minecraft:is_forest\")");
         VOLITANS_EXCLUDED_BIOMES = builder.defineList("volitansExcludedBiomes", Collections.emptyList());
+
+        builder.comment("Nulljaw spawn settings (End-floating dragon)");
+        NULLJAW_SPAWN_WEIGHT = builder.defineInt("nulljawSpawnWeight", NULLJAW_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
+        NULLJAW_MIN_GROUP_SIZE = builder.defineInt("nulljawMinGroupSize", NULLJAW_MIN_GROUP_SIZE_DEFAULT, 1, 10);
+        NULLJAW_MAX_GROUP_SIZE = builder.defineInt("nulljawMaxGroupSize", NULLJAW_MAX_GROUP_SIZE_DEFAULT, 1, 10);
+        builder.comment("Additional biome IDs or biome tags where Nulljaw can spawn (e.g., \"minecraft:end_highlands\", \"#minecraft:is_end\")");
+        NULLJAW_ADDITIONAL_BIOMES = builder.defineList("nulljawAdditionalBiomes", Collections.emptyList());
+        builder.comment("Biome IDs or biome tags to exclude from default Nulljaw spawns");
+        NULLJAW_EXCLUDED_BIOMES = builder.defineList("nulljawExcludedBiomes", Collections.emptyList());
 
         builder.pop();
 

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.cindervane;
 
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -13,16 +14,14 @@ import java.util.EnumSet;
 public class CindervaneAirCombatGoal extends Goal {
     private static final double BITE_TRIGGER_RANGE = 6.0D;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
-    private static final double AIR_CHASE_SPEED = 1.5D;
+    private static final double AIR_CHASE_SPEED = 4.0D;
     private static final double LANDING_SPEED = 2.2D;
     private static final double FIRE_BODY_ACTIVATION_RANGE = 8.0D;
+    private static final double FLIGHT_ACCEL = 0.12D;
+    private static final double FLIGHT_DRAG = 0.94D;
 
     private final Cindervane amphithere;
     private int fireBodyCheckCooldown = 0;
-    private int movementRefreshCooldown = 0;
-    private Vec3 lastMoveTarget = null;
-    private double lastMoveSpeed = -1.0D;
-
     public CindervaneAirCombatGoal(Cindervane amphithere) {
         this.amphithere = amphithere;
         this.setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
@@ -84,24 +83,15 @@ public class CindervaneAirCombatGoal extends Goal {
 
     @Override
     public void start() {
-        movementRefreshCooldown = 0;
-        lastMoveTarget = null;
-        lastMoveSpeed = -1.0D;
-
         if (amphithere.onGround() && !amphithere.isFlying() && !amphithere.isHovering() && !amphithere.isTakeoff() && !amphithere.isLanding()) {
-            amphithere.startTakeoffSequence(0.12D, Cindervane.TAKEOFF_ANIMATION_TICKS);
+            amphithere.beginAiTakeoff(Cindervane.TAKEOFF_ANIMATION_TICKS);
         } else if (amphithere.isFlying() || amphithere.isHovering()) {
-            amphithere.setTakeoff(false);
-            amphithere.setFlying(true);
-            amphithere.setLanding(false);
+            amphithere.beginAiFlight();
         }
     }
 
     @Override
     public void stop() {
-        movementRefreshCooldown = 0;
-        lastMoveTarget = null;
-        lastMoveSpeed = -1.0D;
         deactivateFireBodyIfActive();
 
         LivingEntity target = amphithere.getTarget();
@@ -119,12 +109,10 @@ public class CindervaneAirCombatGoal extends Goal {
         if (fireBodyCheckCooldown > 0) {
             fireBodyCheckCooldown--;
         }
-        if (movementRefreshCooldown > 0) {
-            movementRefreshCooldown--;
-        }
-
         LivingEntity target = amphithere.getTarget();
         if (!amphithere.isTargetValid(target)) {
+            amphithere.setTarget(null);
+            stop();
             deactivateFireBodyIfActive();
             return;
         }
@@ -162,12 +150,17 @@ public class CindervaneAirCombatGoal extends Goal {
     }
 
     private void chaseTarget(LivingEntity target) {
-        double targetY = target.getY() + target.getBbHeight() * 0.5D;
-        Vec3 targetVelocity = target.getDeltaMovement();
-        double targetX = target.getX() + targetVelocity.x * 4.0D;
-        double targetZ = target.getZ() + targetVelocity.z * 4.0D;
-        double verticalOffset = Math.sin(amphithere.tickCount * 0.15D) * 0.35D;
-        requestAirMove(new Vec3(targetX, targetY + verticalOffset, targetZ), AIR_CHASE_SPEED);
+        DragonDirectAirCombatMovementHelper.chasePredictedTarget(
+                amphithere,
+                target,
+                4.0D,
+                0.5D,
+                0.15D,
+                0.35D,
+                AIR_CHASE_SPEED,
+                FLIGHT_ACCEL,
+                FLIGHT_DRAG
+        );
     }
 
     private void maintainBitePosition(LivingEntity target) {
@@ -186,7 +179,7 @@ public class CindervaneAirCombatGoal extends Goal {
         Vec3 dir = toTarget.scale(1.0D / dist);
         Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
         double speed = dist > BITE_APPROACH_DISTANCE ? 1.2D : 0.7D;
-        requestAirMove(desired, speed);
+        DragonDirectAirCombatMovementHelper.flyToward(amphithere, desired, speed, FLIGHT_ACCEL, FLIGHT_DRAG);
     }
 
     private void tryPerformBite(LivingEntity target) {
@@ -226,35 +219,6 @@ public class CindervaneAirCombatGoal extends Goal {
         if (!amphithere.isVehicle() && amphithere.isAbilityActive(CindervaneAbilities.FIRE_BODY)) {
             amphithere.forceEndAbility(CindervaneAbilities.FIRE_BODY);
         }
-    }
-
-    private void requestAirMove(Vec3 target, double speed) {
-        if (shouldRefreshMoveTarget(target, speed)) {
-            amphithere.getMoveControl().setWantedPosition(target.x, target.y, target.z, speed);
-            lastMoveTarget = target;
-            lastMoveSpeed = speed;
-            movementRefreshCooldown = movementRefreshInterval(speed);
-        }
-    }
-
-    private boolean shouldRefreshMoveTarget(Vec3 target, double speed) {
-        if (lastMoveTarget == null || movementRefreshCooldown <= 0) {
-            return true;
-        }
-        if (target.distanceToSqr(lastMoveTarget) > 9.0D) {
-            return true;
-        }
-        return Math.abs(speed - lastMoveSpeed) > 0.15D;
-    }
-
-    private int movementRefreshInterval(double speed) {
-        if (speed >= 1.4D) {
-            return 3;
-        }
-        if (speed >= 1.0D) {
-            return 5;
-        }
-        return 7;
     }
 
     private boolean isTargetAirborne(LivingEntity target) {

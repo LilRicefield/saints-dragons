@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -461,24 +462,7 @@ public class RaevyxGroundCombatGoal extends Goal {
      * Check if target is airborne (flying, riding flying mount, or off ground)
      */
     private boolean isTargetAirborne(LivingEntity target) {
-        // Check if target is on ground
-        if (target.onGround()) {
-            return false;
-        }
-
-        // Check if riding something (might be a flying dragon)
-        if (target.isPassenger() && target.getVehicle() != null) {
-            return true; // Assume mounted targets are valid air targets
-        }
-
-        // Check if significantly off ground (more than 8 blocks up for elytra/flight stability)
-        // Increased from 3 to prevent low elytra gliding from triggering constant takeoff
-        double groundY = wyvern.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
-        if (target.getY() - groundY > 8.0) {
-            return true;
-        }
-
-        return false;
+        return DragonTargetingHelper.isTargetAirborne(target, 8.0D);
     }
 
     private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {

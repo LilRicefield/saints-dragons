@@ -17,7 +17,7 @@ import java.util.EnumSet;
 public class CindervaneFlightGoal extends Goal {
     private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.cindervane();
     private static final double CRUISE_SPEED = 1.25D;
-    private static final double LANDING_SPEED = 2.5D;
+    private static final double LANDING_SPEED = 1.0D;
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
     private final Cindervane amphithere;
     private Vec3 targetPosition;
@@ -255,12 +255,9 @@ public class CindervaneFlightGoal extends Goal {
             return;
         }
         if (amphithere.onGround() && !amphithere.isFlying() && !amphithere.isTakeoff() && !amphithere.isLanding()) {
-            amphithere.startTakeoffSequence(0.12D, Cindervane.TAKEOFF_ANIMATION_TICKS);
+            amphithere.beginAiTakeoff(Cindervane.TAKEOFF_ANIMATION_TICKS);
         } else {
-            amphithere.setTakeoff(false);
-            amphithere.setFlying(true);
-            amphithere.setLanding(false);
-            amphithere.setHovering(false);
+            amphithere.beginAiFlight();
         }
         if (targetPosition != null) {
             moveToTarget(targetPosition, CRUISE_SPEED);
@@ -384,9 +381,7 @@ public class CindervaneFlightGoal extends Goal {
         }
 
         targetPosition = landingTarget;
-        amphithere.setHovering(false);
-        amphithere.setTakeoff(false);
-        amphithere.setLanding(true);
+        amphithere.beginAiLanding();
         moveToTarget(landingTarget, LANDING_SPEED);
     }
 

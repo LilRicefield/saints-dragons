@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -395,6 +396,6 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean isTargetAirborne(LivingEntity target) {
-        return !target.onGround() && !target.isInWaterOrBubble();
+        return DragonTargetingHelper.isTargetAirborne(target, 8.0D) && !target.isInWaterOrBubble();
     }
 }

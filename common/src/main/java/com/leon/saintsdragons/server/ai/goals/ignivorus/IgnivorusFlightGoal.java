@@ -18,7 +18,7 @@ import java.util.EnumSet;
 public class IgnivorusFlightGoal extends Goal {
     private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.ignivorus();
     private static final double CRUISE_SPEED = 1.75D;
-    private static final double LANDING_SPEED = 2.0D;
+    private static final double LANDING_SPEED = 1.0D;
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
     private final Ignivorus dragon;
     private Vec3 targetPosition;
@@ -184,12 +184,9 @@ public class IgnivorusFlightGoal extends Goal {
             return;
         }
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isTakeoff() && !dragon.isLanding()) {
-            dragon.startTakeoffSequence(0.12D, Ignivorus.TAKEOFF_ANIMATION_TICKS);
+            dragon.beginAiTakeoff(Ignivorus.TAKEOFF_ANIMATION_TICKS);
         } else {
-            dragon.setTakeoff(false);
-            dragon.setFlying(true);
-            dragon.setLanding(false);
-            dragon.setHovering(false);
+            dragon.beginAiFlight();
         }
         if (targetPosition != null) {
             moveToTarget(targetPosition, CRUISE_SPEED);
@@ -307,9 +304,7 @@ public class IgnivorusFlightGoal extends Goal {
         }
 
         targetPosition = landingTarget;
-        dragon.setHovering(false);
-        dragon.setTakeoff(false);
-        dragon.setLanding(true);
+        dragon.beginAiLanding();
         moveToTarget(landingTarget, LANDING_SPEED);
     }
 

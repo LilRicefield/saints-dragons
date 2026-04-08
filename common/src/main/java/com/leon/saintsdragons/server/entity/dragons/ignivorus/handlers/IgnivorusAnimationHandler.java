@@ -48,6 +48,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
+        boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
+
         // CRITICAL: Stop movement controller when controls are locked (e.g., during ultimate)
         // This prevents idle/walk animations from competing with action controller animations
         if (dragon.areRiderControlsLocked()) {
@@ -87,7 +89,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         }
 
         // Check for bulldozing - second priority for ground movement
-        if (!dragon.isFlying() && dragon.getEntityData().get(Ignivorus.DATA_BULLDOZING)) {
+        if (!aerialState && dragon.getEntityData().get(Ignivorus.DATA_BULLDOZING)) {
             // Check if moving (use synced rider input instead of velocity for proper client-side sync)
             float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
             float riderStrafe = dragon.getEntityData().get(Ignivorus.DATA_RIDER_STRAFE);
@@ -101,7 +103,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         }
 
         // Check for Phase 2 - third priority for ground movement
-        if (!dragon.isFlying() && dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
+        if (!aerialState && dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
             if (dragon.isVehicle()) {
                 // Ridden: use synced rider input instead of velocity for proper client-side sync
                 float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
@@ -128,12 +130,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         }
 
         // Check for sitting - highest priority after flying
-        if (!dragon.isFlying() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
+        if (!aerialState && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
             state.setAndContinue(SIT);
             return PlayState.CONTINUE;
         }
 
-        if (!dragon.isFlying() && dragon.isInWaterOrBubble()) {
+        if (!aerialState && dragon.isInWaterOrBubble()) {
             state.setAndContinue(SWIM);
             return PlayState.CONTINUE;
         }
@@ -144,7 +146,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
-        if (dragon.isFlying()) {
+        if (aerialState) {
             // Get synced flight mode from physics controller
             // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
             int syncedMode = dragon.getSyncedFlightMode();
@@ -152,7 +154,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             boolean sprinting = dragon.isAccelerating();
 
             // Mode 3: Takeoff (highest priority)
-            if (syncedMode == 3 || dragon.isTakeoff() || dragon.timeFlying < Ignivorus.TAKEOFF_ANIMATION_TICKS) {
+            if (syncedMode == 3 || dragon.isTakeoff() || (dragon.isFlying() && dragon.timeFlying < Ignivorus.TAKEOFF_ANIMATION_TICKS)) {
                 state.getController().transitionLength(4);
                 // Use Phase 2 takeoff animation if dragon is in Phase 2 mode
                 if (dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {

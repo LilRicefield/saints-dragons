@@ -17,7 +17,7 @@ import java.util.EnumSet;
 public class RaevyxFlightGoal extends Goal {
     private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.raevyx();
     private static final double CRUISE_SPEED = 2.0D;
-    private static final double LANDING_SPEED = 1.6D;
+    private static final double LANDING_SPEED = 1.0D;
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
 
     private final Raevyx wyvern;
@@ -187,12 +187,9 @@ public class RaevyxFlightGoal extends Goal {
     @Override
     public void start() {
         if (wyvern.onGround() && !wyvern.isFlying() && !wyvern.isTakeoff() && !wyvern.isLanding()) {
-            wyvern.startTakeoffSequence(0.12D, Raevyx.TAKEOFF_ANIMATION_TICKS);
+            wyvern.beginAiTakeoff(Raevyx.TAKEOFF_ANIMATION_TICKS);
         } else {
-            wyvern.setTakeoff(false);
-            wyvern.setFlying(true);
-            wyvern.setLanding(false);
-            wyvern.setHovering(false);
+            wyvern.beginAiFlight();
         }
 
         if (targetPosition != null) {
@@ -206,7 +203,7 @@ public class RaevyxFlightGoal extends Goal {
 
         // Clear takeoff flag once airborne
         if (wyvern.isTakeoff() && wyvern.isFlying() && !wyvern.onGround()) {
-            wyvern.setTakeoff(false);
+            wyvern.beginAiFlight();
         }
 
         // If wyvern wants to land, let it handle that
@@ -307,9 +304,7 @@ public class RaevyxFlightGoal extends Goal {
         }
 
         targetPosition = landingTarget;
-        wyvern.setHovering(false);
-        wyvern.setTakeoff(false);
-        wyvern.setLanding(true);
+        wyvern.beginAiLanding();
         moveToTarget(landingTarget, LANDING_SPEED);
     }
 

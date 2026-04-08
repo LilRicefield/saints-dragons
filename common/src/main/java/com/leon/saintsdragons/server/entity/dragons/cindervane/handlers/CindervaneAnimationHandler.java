@@ -44,6 +44,7 @@ public class CindervaneAnimationHandler {
 
     public PlayState handleMovementAnimation(AnimationState<Cindervane> state) {
         state.getController().transitionLength(12); // Longer transitions for smoother animation
+        boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
 
         // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
         // Wait for entity data to sync from server before processing animations
@@ -88,7 +89,7 @@ public class CindervaneAnimationHandler {
 
         if (dragon.isVehicle()) {
             state.getController().transitionLength(4);
-            if (dragon.isFlying()) {
+            if (aerialState) {
                 // Get synced flight mode from physics controller
                 // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
                 int syncedMode = dragon.getSyncedFlightMode();
@@ -191,7 +192,7 @@ public class CindervaneAnimationHandler {
 
         state.getController().setAnimationSpeed(1.0f);
 
-        if (dragon.isFlying()) {
+        if (aerialState) {
             int syncedMode = dragon.getSyncedFlightMode();
 
             if (dragon.isLanding() && dragon.isNearLandingTerrain(Cindervane.LANDING_BLEND_ALTITUDE)) {

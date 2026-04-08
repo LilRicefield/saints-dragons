@@ -155,6 +155,8 @@ public class VolitansAirCombatGoal extends Goal {
 
         LivingEntity target = dragon.getTarget();
         if (!isValidTarget(target)) {
+            dragon.setTarget(null);
+            stop();
             return;
         }
 

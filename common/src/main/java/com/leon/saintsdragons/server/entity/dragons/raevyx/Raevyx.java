@@ -1360,7 +1360,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 setRunning(false);
             } else {
                 takeoffComponent.clear();
-                switchToGroundNavigation();
+                if (!isLanding()) {
+                    switchToGroundNavigation();
+                }
             }
         }
     }
@@ -2147,7 +2149,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         tickRiderControlLock();
 
         if (this.navigationModeController.isUsingAirNavigation()
-                && (this.isFlying() || this.isTakeoff() || this.isLanding()) && !this.isVehicle()) {
+                && (this.isFlying() || this.isTakeoff() || this.isLanding())
+                && !this.isVehicle()
+                && !isDirectAirCombatActive()) {
             this.asyncAirController.serverTick();
         }
 
@@ -2304,6 +2308,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (!isFlying() && !isTakeoff() && !isLanding() && navigationModeController.isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
+    }
+
+    private boolean isDirectAirCombatActive() {
+        LivingEntity target = this.getTarget();
+        return !this.isLanding()
+                && this.isAggressive()
+                && target != null
+                && this.isTargetValid(target);
     }
 
     // ===== TICK SUBMETHODS =====
@@ -3199,21 +3211,28 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         float currentRoll = getAccumulatedRoll();
         boolean isRidden = isVehicle() && getControllingPassenger() != null;
         boolean barrelRollEnabled = SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
-        if (barrelRollEnabled && isRidden) {
+        boolean canBarrelRoll = barrelRollEnabled
+                && isRidden
+                && isFlying()
+                && !areRiderControlsLocked()
+                && !isDodging()
+                && !isDashing()
+                && !isGroundRending();
+        if (canBarrelRoll) {
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
                 currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
             }
         }
-        boolean isActivelyRolling = barrelRollEnabled && isActivelyBarrelRolling();
+        boolean isActivelyRolling = canBarrelRoll && isActivelyBarrelRolling();
         boolean riderLandingBlendActive = isRiderLandingBlendActive();
         double altitudeAboveTerrain = riderLandingBlendActive ? getAltitudeAboveTerrain() : Double.POSITIVE_INFINITY;
         DragonBarrelRollHelper.Output rollState = DragonBarrelRollHelper.tick(
                 currentRoll,
                 smoothedRoll,
                 new DragonBarrelRollHelper.Input(
-                        isRidden,
+                        canBarrelRoll,
                         onGround(),
                         isLanding(),
                         isActivelyRolling,
@@ -3933,7 +3952,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private boolean isActivelyBarrelRolling() {
-        return this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
+        return isFlying()
+                && !areRiderControlsLocked()
+                && !isDodging()
+                && !isDashing()
+                && !isGroundRending()
+                && this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
                 && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
     }
 

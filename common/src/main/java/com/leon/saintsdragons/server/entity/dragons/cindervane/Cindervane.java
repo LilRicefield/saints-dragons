@@ -812,7 +812,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         tickOwnerFollowRecovery();
 
-        if (this.navigationModeController.isUsingAirNavigation() && (this.isFlying() || this.isTakeoff() || this.isLanding()) && !this.isVehicle()) {
+        if (this.navigationModeController.isUsingAirNavigation()
+                && (this.isFlying() || this.isTakeoff() || this.isLanding())
+                && !this.isVehicle()
+                && !isDirectAirCombatActive()) {
             this.asyncAirController.serverTick();
         }
 
@@ -850,6 +853,14 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
 
         tickClientSideUpdates();
+    }
+
+    private boolean isDirectAirCombatActive() {
+        LivingEntity target = this.getTarget();
+        return !this.isLanding()
+                && this.isAggressive()
+                && target != null
+                && this.isTargetValid(target);
     }
 
     private void tickSittingState() {
@@ -2842,8 +2853,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             this.getNavigation().stop();
         } else {
             takeoffComponent.clear();
-            switchToGroundNavigation();
-            setHovering(false);
+            if (!isLanding()) {
+                switchToGroundNavigation();
+                setHovering(false);
+            }
         }
     }
 

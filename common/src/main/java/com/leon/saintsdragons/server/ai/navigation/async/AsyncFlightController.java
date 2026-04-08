@@ -33,6 +33,7 @@ public class AsyncFlightController {
     private final double stuckMovementThreshold = 0.5;
     private final double maxSegmentDistance = 64.0;
     private final double flyingLookAhead = 6.0;
+    private final double liveRetargetRefreshDistanceSq = 16.0D;
 
     public AsyncFlightController(Mob host) {
         this.host = host;
@@ -50,7 +51,7 @@ public class AsyncFlightController {
             return;
         }
         this.stuckDetector.tickBackoff();
-        if (this.stuckDetector.isInBackoff() || this.state == PathState.CALCULATING) {
+        if (this.stuckDetector.isInBackoff()) {
             return;
         }
         if (this.currentWaypoint == null) {
@@ -71,9 +72,11 @@ public class AsyncFlightController {
             return;
         }
 
-        if (this.state == PathState.FOLLOWING) {
+        if (this.state == PathState.FOLLOWING || this.state == PathState.CALCULATING) {
             this.movementExecutor.executeMovement(
-                    this.pathResolver.calculateLookAheadPoint(this.flyingLookAhead),
+                    this.state == PathState.CALCULATING
+                            ? this.currentWaypoint
+                            : this.pathResolver.calculateLookAheadPoint(this.flyingLookAhead),
                     this.currentWaypoint,
                     this.speedModifier,
                     arrivalDist,
@@ -106,6 +109,17 @@ public class AsyncFlightController {
     public void setWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
         if (this.currentWaypoint != null
                 && target.distanceToSqr(this.currentWaypoint) < 1.0
+                && (this.state == PathState.CALCULATING || this.state == PathState.FOLLOWING)) {
+            this.currentWaypoint = target;
+            this.speedModifier = speed;
+            this.currentArrivalCallback = onArrival;
+            return;
+        }
+
+        double retargetDistSq = this.currentWaypoint == null ? -1.0D : target.distanceToSqr(this.currentWaypoint);
+        if (this.currentWaypoint != null
+                && retargetDistSq >= 1.0D
+                && retargetDistSq < this.liveRetargetRefreshDistanceSq
                 && (this.state == PathState.CALCULATING || this.state == PathState.FOLLOWING)) {
             this.currentWaypoint = target;
             this.speedModifier = speed;
@@ -210,9 +224,11 @@ public class AsyncFlightController {
     }
 
     public double calculateArrivalDistance(boolean landingTarget) {
+        if (landingTarget) {
+            return 1.0D;
+        }
         double widthScale = Math.max(1.0, this.host.getBbWidth());
-        double base = landingTarget ? 0.75D : this.baseArrivalDistance;
-        return Math.max(0.75D, base * widthScale);
+        return Math.max(0.75D, this.baseArrivalDistance * widthScale);
     }
 
     public PathState getState() {

@@ -84,6 +84,17 @@ public final class DragonSpawnRegistry {
                 () -> SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES,
                 () -> SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES);
 
+        add(entries,
+                SaintsDragonsCommon.rl("nulljaw"),
+                ModEntities.NULLJAW,
+                "has_nulljaw",
+                MobCategory.CREATURE,
+                () -> SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
+                () -> SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get(),
+                () -> SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES,
+                () -> SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES);
+
         return List.copyOf(entries);
     }
 

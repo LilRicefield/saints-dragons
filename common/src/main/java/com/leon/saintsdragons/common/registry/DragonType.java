@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -46,6 +47,12 @@ public enum DragonType {
     VOLITANS("volitans", ElementalClass.NON_ELEMENTAL,
         DragonAttributeConfigLoader.VOLITANS_ID,
         Volitans.class, ModEntities.VOLITANS,
+        ElementalProfile.builder()
+            .build()),
+
+    NULLJAW("nulljaw", ElementalClass.NON_ELEMENTAL,
+        DragonAttributeConfigLoader.NULLJAW_ID,
+        Nulljaw.class, ModEntities.NULLJAW,
         ElementalProfile.builder()
             .build()),
 

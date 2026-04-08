@@ -75,9 +75,44 @@ public interface DragonFlightCapable {
      * Check if the wyvern can take off from current position
      */
     boolean canTakeoff();
-    
+
+    /**
+     * Trigger the dragon's takeoff sequence.
+     */
+    void startTakeoffSequence(double minUpwardVelocity, int animationTicks);
+
     /**
      * Mark that the wyvern has just landed
      */
     void markLandedNow();
+
+    default void beginAiTakeoff(int animationTicks) {
+        if (this instanceof RideableDragon rideable) {
+            rideable.setGoingUp(true);
+            rideable.setGoingDown(false);
+        }
+        startTakeoffSequence(0.12D, animationTicks);
+    }
+
+    default void beginAiFlight() {
+        setFlying(true);
+        setTakeoff(false);
+        setLanding(false);
+        setHovering(false);
+        if (this instanceof RideableDragon rideable) {
+            rideable.setGoingUp(false);
+            rideable.setGoingDown(false);
+        }
+    }
+
+    default void beginAiLanding() {
+        setTakeoff(false);
+        setHovering(false);
+        setLanding(true);
+        setFlying(false);
+        if (this instanceof RideableDragon rideable) {
+            rideable.setGoingUp(false);
+            rideable.setGoingDown(false);
+        }
+    }
 }

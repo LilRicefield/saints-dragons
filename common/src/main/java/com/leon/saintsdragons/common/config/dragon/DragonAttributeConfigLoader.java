@@ -37,6 +37,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation IGNIVORUS_ID = SaintsDragonsCommon.rl("ignivorus");
     public static final ResourceLocation STEGONAUT_ID = SaintsDragonsCommon.rl("stegonaut");
     public static final ResourceLocation VOLITANS_ID = SaintsDragonsCommon.rl("volitans");
+    public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
     private static final boolean IS_FORGE = Services.PLATFORM.isModLoaded("forge");
@@ -474,6 +475,23 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "egg_drop_chance", eggDropChance
                 ),
                 Map.of("aggressive_wild", aggressiveWild)
+        );
+    }
+
+    private static DragonAttributeConfig nulljawDefaults() {
+        return new DragonAttributeConfig(
+                70.0D,
+                4.0D,
+                0.42D,
+                Map.of(),
+                Map.of(
+                        "taming_chance_base", 20.0D,
+                        "wild_flying_speed_multiplier", 1.0D
+                ),
+                Map.of(
+                        "legacy_taming", true,
+                        "aggressive_wild", false
+                )
         );
     }
 
@@ -1079,7 +1097,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private void backfillWildFlyingSpeedMultiplier(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
-        boolean applies = id.equals(CINDERVANE_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID) || id.equals(VOLITANS_ID);
+        boolean applies = id.equals(CINDERVANE_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID) || id.equals(VOLITANS_ID) || id.equals(NULLJAW_ID);
         if (!applies) {
             return;
         }
@@ -1099,7 +1117,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static boolean requiresLegacyTamingFlag(ResourceLocation id) {
-        return id.equals(VARASUCHUS_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID) || id.equals(VOLITANS_ID);
+        return id.equals(VARASUCHUS_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID) || id.equals(VOLITANS_ID) || id.equals(NULLJAW_ID);
     }
 
     private static Map<ResourceLocation, DragonAttributeConfig> buildDefaultConfigs() {
@@ -1110,6 +1128,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         base.put(IGNIVORUS_ID, ignivorusDefaults());
         base.put(STEGONAUT_ID, stegonautDefaults());
         base.put(VOLITANS_ID, volitansDefaults());
+        base.put(NULLJAW_ID, nulljawDefaults());
         return base;
     }
 

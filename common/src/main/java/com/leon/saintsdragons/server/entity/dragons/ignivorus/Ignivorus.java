@@ -727,8 +727,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             timeFlying = 0;
         }
 
-        // Sync flight mode to entity data for animation system
-        if (!level().isClientSide && isFlying()) {
+        // Sync flight mode to entity data for animation system during any aerial state.
+        if (!level().isClientSide && (isFlying() || isTakeoff() || isLanding() || isHovering())) {
             this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
         }
 
@@ -745,7 +745,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
 
         if (!level().isClientSide && this.navigationModeController.isUsingAirNavigation()
-                && (this.isFlying() || this.isTakeoff() || this.isLanding()) && !this.isVehicle()) {
+                && (this.isFlying() || this.isTakeoff() || this.isLanding())
+                && !this.isVehicle()
+                && !isDirectAirCombatActive()) {
             this.asyncAirController.serverTick();
         }
 
@@ -796,6 +798,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Update sitting progress
         updateSittingProgress();
+    }
+
+    private boolean isDirectAirCombatActive() {
+        LivingEntity target = this.getTarget();
+        return !this.isLanding()
+                && this.isAggressive()
+                && target != null
+                && this.isTargetValid(target);
     }
 
     @Override
@@ -2626,6 +2636,10 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         takeoffComponent.clear();
         setHovering(false);
         timeFlying = 0;
+        if (!level().isClientSide) {
+            switchToGroundNavigation();
+            setNoGravity(false);
+        }
     }
 
     public void handleAiLandingComplete() {
@@ -2733,7 +2747,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 setRunning(false);
             } else {
                 takeoffComponent.clear();
-                switchToGroundNavigation();
+                if (!isLanding()) {
+                    switchToGroundNavigation();
+                }
             }
         }
     }

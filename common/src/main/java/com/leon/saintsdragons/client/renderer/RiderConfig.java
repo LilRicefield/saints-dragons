@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -81,6 +82,18 @@ public final class RiderConfig {
     public static final double VOLITANS_CAPTURE_DISTANCE = 80.0;
     public static final float VOLITANS_YAW_OFFSET_DEG = -180.0f;
 
+    // ===== NULLJAW TUNING =====
+    public static final String NULLJAW_BONE = "passengerBone";
+    public static final float NULLJAW_SEAT_X = 0.0f;
+    public static final float NULLJAW_SEAT_Y = 1.75f;
+    public static final float NULLJAW_SEAT_Z = -1.15f;
+    public static final float NULLJAW_FIRST_PERSON_X = 0.0f;
+    public static final float NULLJAW_FIRST_PERSON_Y = 1.15f;
+    public static final float NULLJAW_FIRST_PERSON_Z = 0.0f;
+    public static final long NULLJAW_STALE_MS = 200L;
+    public static final double NULLJAW_CAPTURE_DISTANCE = 80.0;
+    public static final float NULLJAW_YAW_OFFSET_DEG = -180.0f;
+
     // ===== VARASUCHUS TUNING =====
     public static final String VARASUCHUS_BONE = "passengerBone";
     public static final float VARASUCHUS_SEAT_X = 0.0f;
@@ -150,6 +163,14 @@ public final class RiderConfig {
                 VOLITANS_STALE_MS,
                 VOLITANS_CAPTURE_DISTANCE,
                 VOLITANS_YAW_OFFSET_DEG
+        ));
+        riderConfigs.put(Nulljaw.class, new RiderSpec(
+                NULLJAW_BONE,
+                new Vector3f(NULLJAW_SEAT_X, NULLJAW_SEAT_Y, NULLJAW_SEAT_Z),
+                new Vector3f(NULLJAW_FIRST_PERSON_X, NULLJAW_FIRST_PERSON_Y, NULLJAW_FIRST_PERSON_Z),
+                NULLJAW_STALE_MS,
+                NULLJAW_CAPTURE_DISTANCE,
+                NULLJAW_YAW_OFFSET_DEG
         ));
         riderConfigs.put(Varasuchus.class, new RiderSpec(
                 VARASUCHUS_BONE,

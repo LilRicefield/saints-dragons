@@ -1696,5 +1696,71 @@
         "attenuation_distance": 40
       }
     ]
+  },
+  "nulljaw_grumble1": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble1",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "nulljaw_grumble2": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble2",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "nulljaw_grumble3": {
+    "subtitle": "Nulljaw grumbles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_grumble3",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "nulljaw_hurt": {
+    "subtitle": "Nulljaw hurts",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_hurt",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "nulljaw_die": {
+    "subtitle": "Nulljaw dies",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_die",
+        "volume": 1.6,
+        "pitch": 1.0,
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "nulljaw_eat": {
+    "subtitle": "Nulljaw eats",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_eat",
+        "volume": 1.2,
+        "pitch": 1.0,
+        "attenuation_distance": 20
+      }
+    ]
   }
 }

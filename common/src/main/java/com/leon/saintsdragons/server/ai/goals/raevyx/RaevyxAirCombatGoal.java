@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -12,6 +13,9 @@ import java.util.EnumSet;
 
 public class RaevyxAirCombatGoal extends Goal {
     private final Raevyx dragon;
+    private static final double FLIGHT_ACCEL = 0.12D;
+    private static final double FLIGHT_DRAG = 0.94D;
+    private static final double DIRECT_CHASE_SPEED = 6.0D;
 
     private static final double BITE_TRIGGER_RANGE = 7.0;
     private static final double ENGAGEMENT_DISTANCE = 30.0;
@@ -21,9 +25,6 @@ public class RaevyxAirCombatGoal extends Goal {
     private final double beamMaxRange = 70.0;
     private int attackCooldown = 0;
     private int repositionCooldown = 0;
-    private int movementRefreshCooldown = 0;
-    private Vec3 lastMoveTarget = null;
-    private double lastMoveSpeed = -1.0D;
     private int beamCooldown = 0;
     private static final int BEAM_COOLDOWN_TICKS = 2400; // 2 minutes
 
@@ -136,9 +137,6 @@ public class RaevyxAirCombatGoal extends Goal {
         dragon.setAggressive(false);
         attackCooldown = 0;
         repositionCooldown = 0;
-        movementRefreshCooldown = 0;
-        lastMoveTarget = null;
-        lastMoveSpeed = -1.0D;
         LivingEntity target = dragon.getTarget();
 
         // Don't call setLanding() - it triggers setTakeoff(true) which causes animation issues
@@ -155,16 +153,11 @@ public class RaevyxAirCombatGoal extends Goal {
     @Override
     public void start() {
         dragon.setAggressive(true);
-        movementRefreshCooldown = 0;
-        lastMoveTarget = null;
-        lastMoveSpeed = -1.0D;
 
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isHovering() && !dragon.isTakeoff() && !dragon.isLanding()) {
-            dragon.startTakeoffSequence(0.12D, Raevyx.TAKEOFF_ANIMATION_TICKS);
+            dragon.beginAiTakeoff(Raevyx.TAKEOFF_ANIMATION_TICKS);
         } else if (dragon.isFlying() || dragon.isHovering()) {
-            dragon.setTakeoff(false);
-            dragon.setFlying(true);
-            dragon.setLanding(false);
+            dragon.beginAiFlight();
         }
     }
 
@@ -186,15 +179,11 @@ public class RaevyxAirCombatGoal extends Goal {
 
         // Force clear takeoff flag if airborne and flying - don't let it stick
         if (dragon.isTakeoff() && dragon.isFlying() && !dragon.onGround()) {
-            dragon.setTakeoff(false);
+            dragon.beginAiFlight();
         }
 
         if (attackCooldown > 0) {
             attackCooldown--;
-        }
-
-        if (movementRefreshCooldown > 0) {
-            movementRefreshCooldown--;
         }
 
         if (beamCooldown > 0) {
@@ -207,6 +196,8 @@ public class RaevyxAirCombatGoal extends Goal {
 
         LivingEntity target = dragon.getTarget();
         if (!dragon.isTargetValid(target)) {
+            dragon.setTarget(null);
+            stop();
             return;
         }
 
@@ -240,12 +231,7 @@ public class RaevyxAirCombatGoal extends Goal {
             }
             // Hold position while firing beam
             if (dragon.isAbilityActive(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM)) {
-                requestAirMove(
-                    dragon.getX(),
-                    dragon.getY(),
-                    dragon.getZ(),
-                    0.3 // Slow movement while beaming
-                );
+                DragonDirectAirCombatMovementHelper.holdPosition(dragon, FLIGHT_DRAG);
             } else {
                 maintainCombatPosition(target);
             }
@@ -297,28 +283,16 @@ public class RaevyxAirCombatGoal extends Goal {
 
 
     private void chaseTarget(LivingEntity target) {
-        double targetY = target.getY() + target.getBbHeight() * 0.5D;
-
-        // Get direction to target for positioning
-        Vec3 toTarget = new Vec3(
-            target.getX() - dragon.getX(),
-            targetY - dragon.getY(),
-            target.getZ() - dragon.getZ()
-        ).normalize();
-
-        // Calculate intercept position (predict where target will be)
-        Vec3 targetVelocity = target.getDeltaMovement();
-        double targetX = target.getX() + targetVelocity.x * 5.0; // Predict 5 ticks ahead
-        double targetZ = target.getZ() + targetVelocity.z * 5.0;
-
-        // Add slight vertical bobbing for natural flight
-        double verticalOffset = Math.sin(dragon.tickCount * 0.15) * 0.5;
-
-        requestAirMove(
-            targetX,
-            targetY + verticalOffset,
-            targetZ,
-            7.0
+        DragonDirectAirCombatMovementHelper.chasePredictedTarget(
+                dragon,
+                target,
+                5.0D,
+                0.5D,
+                0.15D,
+                0.5D,
+                DIRECT_CHASE_SPEED,
+                FLIGHT_ACCEL,
+                FLIGHT_DRAG
         );
     }
 
@@ -344,11 +318,12 @@ public class RaevyxAirCombatGoal extends Goal {
         // Add vertical variation
         double verticalOffset = Math.sin(dragon.tickCount * 0.1) * 1.0;
 
-        requestAirMove(
-            posX,
-            targetY + verticalOffset,
-            posZ,
-            1.0 // Moderate positioning speed
+        DragonDirectAirCombatMovementHelper.flyToward(
+                dragon,
+                new Vec3(posX, targetY + verticalOffset, posZ),
+                1.0D,
+                FLIGHT_ACCEL,
+                FLIGHT_DRAG
         );
 
         repositionCooldown = 20; // Reposition every second
@@ -375,40 +350,7 @@ public class RaevyxAirCombatGoal extends Goal {
         Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
 
         double speed = dist > BITE_APPROACH_DISTANCE ? 1.2 : 0.6;
-        requestAirMove(desired.x, desired.y, desired.z, speed);
-    }
-
-    private void requestAirMove(double x, double y, double z, double speed) {
-        Vec3 target = new Vec3(x, y, z);
-        if (shouldRefreshMoveTarget(target, speed)) {
-            dragon.getMoveControl().setWantedPosition(x, y, z, speed);
-            lastMoveTarget = target;
-            lastMoveSpeed = speed;
-            movementRefreshCooldown = movementRefreshInterval(speed);
-        }
-    }
-
-    private boolean shouldRefreshMoveTarget(Vec3 target, double speed) {
-        if (lastMoveTarget == null || movementRefreshCooldown <= 0) {
-            return true;
-        }
-
-        double movedSq = target.distanceToSqr(lastMoveTarget);
-        if (movedSq > 9.0D) {
-            return true;
-        }
-
-        return Math.abs(speed - lastMoveSpeed) > 0.15D;
-    }
-
-    private int movementRefreshInterval(double speed) {
-        if (speed >= 1.4D) {
-            return 3;
-        }
-        if (speed >= 1.0D) {
-            return 5;
-        }
-        return 7;
+        DragonDirectAirCombatMovementHelper.flyToward(dragon, desired, speed, FLIGHT_ACCEL, FLIGHT_DRAG);
     }
 
     /**
