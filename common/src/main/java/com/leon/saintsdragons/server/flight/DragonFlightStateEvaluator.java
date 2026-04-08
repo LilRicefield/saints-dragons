@@ -24,6 +24,7 @@ public final class DragonFlightStateEvaluator {
     private static final double AI_GLIDE_DOWN_MIN_HORIZONTAL_SPEED = 0.14D;
     private static final double AI_GLIDE_DOWN_MIN_DESCENT = -0.12D;
     private static final double AI_GLIDE_DOWN_DEGREES = 24.0D;
+    private static final double LANDING_TOUCHDOWN_ALTITUDE = 3.0D;
 
     private DragonFlightStateEvaluator() {
     }
@@ -77,6 +78,20 @@ public final class DragonFlightStateEvaluator {
                     : VisualState.GLIDE;
             default -> VisualState.GROUND;
         };
+    }
+
+    public static VisualState evaluateAnimationVisualState(int syncedMode, boolean ridden, float flightPitchRadians,
+                                                           Vec3 velocity, boolean landing, double altitudeAboveTerrain,
+                                                           double landingBlendAltitude,
+                                                           boolean riderLandingBlendActive) {
+        boolean nearTouchdownTerrain = altitudeAboveTerrain != Double.POSITIVE_INFINITY
+                && altitudeAboveTerrain >= -0.25D
+                && altitudeAboveTerrain <= Math.min(landingBlendAltitude, LANDING_TOUCHDOWN_ALTITUDE);
+        if (riderLandingBlendActive || (landing && nearTouchdownTerrain)) {
+            return VisualState.LANDING;
+        }
+
+        return evaluateVisualState(syncedMode, ridden, flightPitchRadians, velocity);
     }
 
     public static boolean shouldUseGlideDown(boolean ridden, float flightPitchRadians, Vec3 velocity) {
@@ -214,6 +229,7 @@ public final class DragonFlightStateEvaluator {
     public enum VisualState {
         GROUND,
         TAKEOFF,
+        LANDING,
         GLIDE,
         GLIDE_DOWN,
         FLAP,

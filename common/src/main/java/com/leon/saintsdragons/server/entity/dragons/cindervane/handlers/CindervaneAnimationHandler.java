@@ -90,78 +90,44 @@ public class CindervaneAnimationHandler {
         if (dragon.isVehicle()) {
             state.getController().transitionLength(4);
             if (aerialState) {
-                // Get synced flight mode from physics controller
-                // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
-                int syncedMode = dragon.getSyncedFlightMode();
+                DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
 
-                // Takeoff is handled by instant controller.
-                if (syncedMode == 3) {
+                if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
                     return PlayState.STOP;
                 }
-                // Check for landing blend (second highest priority)
-                if (dragon.isRiderLandingBlendActive()
-                        || (dragon.isLanding() && dragon.isNearLandingTerrain(Cindervane.LANDING_BLEND_ALTITUDE))) {
+
+                if (visualState == DragonFlightStateEvaluator.VisualState.LANDING) {
                     state.getController().transitionLength(4);
                     state.setAndContinue(LANDING);
                     return PlayState.CONTINUE;
                 }
 
-                if (dragon.isLanding()) {
+                if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
                     state.getController().transitionLength(6);
                     state.setAndContinue(GLIDE_DOWN);
                     return PlayState.CONTINUE;
                 }
 
-                // GLIDE_DOWN - third priority (diving past 10 degrees)
-                // Note: pitch is negated, so looking down = negative pitch
-                // Only applies to ridden dragons, prevents AI from always playing glide_down
-                float pitchDegrees = (float)Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
-                if (pitchDegrees < -10.0f && !dragon.isRiderLandingBlendActive()) {
-                    state.getController().transitionLength(6);
-                    state.setAndContinue(GLIDE_DOWN);
-                    return PlayState.CONTINUE;
-                }
-
-                // Mode 5: FLY_IDLE - stationary rider hover (physics controller detects via position tracking)
-                if (syncedMode == 5) {
+                if (visualState == DragonFlightStateEvaluator.VisualState.FLY_IDLE) {
                     state.getController().transitionLength(6);
                     state.setAndContinue(FLY_IDLE);
                     return PlayState.CONTINUE;
                 }
 
-                // Mode 4: SPRINT_FLAP - accelerating flight (detected by physics controller)
-                if (syncedMode == 4) {
+                if (visualState == DragonFlightStateEvaluator.VisualState.SPRINT_FLAP) {
                     state.getController().transitionLength(3);
                     state.setAndContinue(SPRINT_FLAP);
                     return PlayState.CONTINUE;
                 }
 
-                // Mode 2: HOVER
-                if (syncedMode == 2) {
+                if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
                     state.getController().transitionLength(6);
                     state.setAndContinue(FLAP);
                     return PlayState.CONTINUE;
                 }
-                // Altitude-based animations (lowest priority)
-                else {
-                    // Altitude-based animation when being ridden
-                    // IMPORTANT: Use the synced flight mode instead of recalculating client-side
-                    int flightMode = dragon.getSyncedFlightMode();
 
-                    if (flightMode == 0) {
-                        // High altitude glide - long transition for smooth feel
-                        state.getController().transitionLength(12);
-                        state.setAndContinue(GLIDE);
-                    } else if (flightMode == 1) {
-                        // Low altitude flap - medium transition
-                        state.getController().transitionLength(6);
-                        state.setAndContinue(FLAP);
-                    } else {
-                        // Default to glide with long transition
-                        state.getController().transitionLength(12);
-                        state.setAndContinue(GLIDE);
-                    }
-                }
+                state.getController().transitionLength(12);
+                state.setAndContinue(GLIDE);
             } else {
                 int groundState = dragon.getEffectiveGroundState();
                 if (groundState == 2) {
@@ -193,18 +159,16 @@ public class CindervaneAnimationHandler {
         state.getController().setAnimationSpeed(1.0f);
 
         if (aerialState) {
-            int syncedMode = dragon.getSyncedFlightMode();
-
-            if (dragon.isLanding() && dragon.isNearLandingTerrain(Cindervane.LANDING_BLEND_ALTITUDE)) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(LANDING);
-                return PlayState.CONTINUE;
-            }
-
             DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
 
             if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
                 return PlayState.STOP;
+            }
+
+            if (visualState == DragonFlightStateEvaluator.VisualState.LANDING) {
+                state.getController().transitionLength(4);
+                state.setAndContinue(LANDING);
+                return PlayState.CONTINUE;
             }
 
             if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {

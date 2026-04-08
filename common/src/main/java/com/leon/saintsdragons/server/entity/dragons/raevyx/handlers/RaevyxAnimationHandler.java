@@ -233,19 +233,22 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
-        if (wyvern.isLanding()) {
-            state.getController().transitionLength(4);
-            RawAnimation landingAnimation = wyvern.isNearLandingTerrain(Raevyx.LANDING_BLEND_ALTITUDE)
-                    ? LANDING
-                    : GLIDE_DOWN;
-            currentFlightAnimation = landingAnimation;
-            state.setAndContinue(landingAnimation);
-            return PlayState.CONTINUE;
-        }
-
         if (wyvern.isFallingForAnimation()) {
             state.getController().transitionLength(4);
             state.setAndContinue(FALLING);
+            return PlayState.CONTINUE;
+        }
+
+        DragonFlightStateEvaluator.VisualState visualState =
+                wyvern.getVisualFlightState(state.getPartialTick());
+
+        if (wyvern.isLanding()) {
+            RawAnimation landingAnimation = visualState == DragonFlightStateEvaluator.VisualState.LANDING
+                    ? LANDING
+                    : GLIDE_DOWN;
+            state.getController().transitionLength(landingAnimation == LANDING ? 4 : 6);
+            currentFlightAnimation = landingAnimation;
+            state.setAndContinue(landingAnimation);
             return PlayState.CONTINUE;
         }
 
@@ -257,16 +260,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return PlayState.CONTINUE;
             }
 
-            // Rider landing blend (overrides flight mode)
-            if (wyvern.isRiderLandingBlendActive()) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.LANDING) {
                 state.getController().transitionLength(4);
                 currentFlightAnimation = LANDING;
                 state.setAndContinue(LANDING);
                 return PlayState.CONTINUE;
             }
-
-            DragonFlightStateEvaluator.VisualState visualState =
-                    wyvern.getVisualFlightState(state.getPartialTick());
 
             if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
                 state.getController().transitionLength(4);

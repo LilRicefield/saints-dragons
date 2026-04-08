@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 public final class DragonAggroLandingHelper {
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
-    private static final double SHARED_LANDING_SPEED = 1.0D;
 
     private DragonAggroLandingHelper() {
     }
@@ -38,7 +37,7 @@ public final class DragonAggroLandingHelper {
             return false;
         }
         flightCapable.beginAiLanding();
-        dragon.getNavigation().moveTo(landingTarget.x, landingTarget.y, landingTarget.z, SHARED_LANDING_SPEED);
+        dragon.getNavigation().moveTo(landingTarget.x, landingTarget.y, landingTarget.z, landingSpeed);
         return true;
     }
 

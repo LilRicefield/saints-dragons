@@ -147,16 +147,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         }
 
         if (aerialState) {
-            // Get synced flight mode from physics controller
-            // 0 = glide, 1 = flap, 2 = hover, 3 = takeoff, 4 = sprint_flap, 5 = fly_idle, -1 = ground
-            int syncedMode = dragon.getSyncedFlightMode();
-            var vel = dragon.getDeltaMovement();
             boolean sprinting = dragon.isAccelerating();
+            DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
 
-            // Mode 3: Takeoff (highest priority)
-            if (syncedMode == 3 || dragon.isTakeoff() || (dragon.isFlying() && dragon.timeFlying < Ignivorus.TAKEOFF_ANIMATION_TICKS)) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF
+                    || dragon.isTakeoff()
+                    || (dragon.isFlying() && dragon.timeFlying < Ignivorus.TAKEOFF_ANIMATION_TICKS)) {
                 state.getController().transitionLength(4);
-                // Use Phase 2 takeoff animation if dragon is in Phase 2 mode
                 if (dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
                     state.setAndContinue(PHASE2_TAKEOFF);
                 } else {
@@ -165,15 +162,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 return PlayState.CONTINUE;
             }
 
-            // Landing animation (second priority) - use rider landing blend for ridden dragons
-            if (dragon.isRiderLandingBlendActive()
-                    || (dragon.isLanding() && dragon.isNearLandingTerrain(Ignivorus.LANDING_BLEND_ALTITUDE))) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.LANDING) {
                 state.getController().transitionLength(4);
                 state.setAndContinue(LANDING);
                 return PlayState.CONTINUE;
             }
 
-            DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
             if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
                 state.getController().transitionLength(6);
                 state.setAndContinue(GLIDE_DOWN);

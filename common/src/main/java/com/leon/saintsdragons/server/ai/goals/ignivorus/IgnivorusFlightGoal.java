@@ -18,7 +18,7 @@ import java.util.EnumSet;
 public class IgnivorusFlightGoal extends Goal {
     private static final DragonFlightBehaviorProfile PROFILE = DragonFlightBehaviorProfile.ignivorus();
     private static final double CRUISE_SPEED = 1.75D;
-    private static final double LANDING_SPEED = 1.0D;
+    private static final double LANDING_SPEED = 1.5D;
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
     private final Ignivorus dragon;
     private Vec3 targetPosition;

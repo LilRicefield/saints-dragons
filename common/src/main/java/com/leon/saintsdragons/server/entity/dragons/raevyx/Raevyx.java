@@ -1496,11 +1496,15 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
-        return DragonFlightStateEvaluator.evaluateVisualState(
+        return DragonFlightStateEvaluator.evaluateAnimationVisualState(
                 getSyncedFlightMode(),
                 isVehicle(),
                 getFlightPitchRadians(partialTick),
-                getDeltaMovement()
+                getDeltaMovement(),
+                isLanding(),
+                getAltitudeAboveTerrain(),
+                LANDING_BLEND_ALTITUDE,
+                isRiderLandingBlendActive()
         );
     }
 

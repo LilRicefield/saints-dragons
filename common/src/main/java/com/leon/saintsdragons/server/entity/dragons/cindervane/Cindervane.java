@@ -1320,7 +1320,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         }
         // Reset pitching when in water, not flying, or when controls are locked - INSTANT reset
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-        if (inWater || areRiderControlsLocked() || !isFlying() || isLanding() || isHovering() || (isOrderedToSit() && !riderOverridesSittingCommand())) {
+        if (inWater || areRiderControlsLocked() || ((!isFlying() && !isLanding()) || isHovering()) || (isOrderedToSit() && !riderOverridesSittingCommand())) {
             DragonFlightVisuals.resetPitch(this.flightVisualState);
             this.entityData.set(DATA_FLIGHT_PITCH, this.flightVisualState.flightPitchRad);
             return;
@@ -1369,6 +1369,10 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             }
         } else {
             targetPitchRad = DragonFlightVisuals.computeAiPitchTarget(velocity);
+            if (isLanding()) {
+                float landingPitchRad = (float) -Math.toRadians(18.0f);
+                targetPitchRad = Math.min(targetPitchRad, landingPitchRad);
+            }
         }
         this.flightVisualState.flightPitchRad =
                 DragonFlightVisuals.approachPitch(this.flightVisualState.flightPitchRad, targetPitchRad);
@@ -1677,11 +1681,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
-        return DragonFlightStateEvaluator.evaluateVisualState(
+        return DragonFlightStateEvaluator.evaluateAnimationVisualState(
                 getSyncedFlightMode(),
                 isVehicle(),
                 getFlightPitchRadians(partialTick),
-                getDeltaMovement()
+                getDeltaMovement(),
+                isLanding(),
+                getAltitudeAboveTerrain(),
+                LANDING_BLEND_ALTITUDE,
+                isRiderLandingBlendActive()
         );
     }
 

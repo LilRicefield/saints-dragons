@@ -16,6 +16,7 @@ public class IgnivorusAirCombatGoal extends Goal {
     private static final double FLIGHT_ACCEL = 0.12D;
     private static final double FLIGHT_DRAG = 0.94D;
     private static final double DIRECT_CHASE_SPEED = 3.75D;
+    private static final double LANDING_SPEED = 1.5D;
 
     private final Ignivorus dragon;
 
@@ -134,7 +135,7 @@ public class IgnivorusAirCombatGoal extends Goal {
         // Stop if target lands (switch to ground combat)
         if (!isTargetAirborne(target)) {
             if (dragon.isFlying() || dragon.isHovering()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, target, 1.0D);
+                DragonAggroLandingHelper.beginAggroLanding(dragon, target, LANDING_SPEED);
                 return true;
             }
             return false;
@@ -165,7 +166,7 @@ public class IgnivorusAirCombatGoal extends Goal {
                 && !isTargetAirborne(target)
                 && (dragon.isFlying() || dragon.isHovering())
                 && !dragon.isLanding()) {
-            DragonAggroLandingHelper.tryBeginAggroLanding(dragon, target, 1.0D);
+            DragonAggroLandingHelper.tryBeginAggroLanding(dragon, target, LANDING_SPEED);
         }
     }
 
@@ -189,7 +190,7 @@ public class IgnivorusAirCombatGoal extends Goal {
                 if (landingTarget != null
                         && dragon.isTargetValid(landingTarget)
                         && !isTargetAirborne(landingTarget)
-                        && DragonAggroLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.0D)) {
+                        && DragonAggroLandingHelper.tryBeginAggroLanding(dragon, landingTarget, LANDING_SPEED)) {
                     return;
                 }
                 dragon.setLanding(false);
@@ -428,7 +429,7 @@ public class IgnivorusAirCombatGoal extends Goal {
      * Force dragon to land (shot from below)
      */
     private void triggerEmergencyLanding() {
-        DragonAggroLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), 1.0D);
+        DragonAggroLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), LANDING_SPEED);
         shotFromBelowCounter = 0; // Reset counter
     }
 
