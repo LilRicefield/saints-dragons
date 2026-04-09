@@ -74,8 +74,6 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     private static final int MIN_AMBIENT_DELAY = 220;
     private static final int MAX_AMBIENT_DELAY = 420;
     private static final int TAME_CHANCE_DENOMINATOR = 5;
-    private static final int EAT_SOUND_DURATION_TICKS = 51;
-    private static final int HURT_SOUND_DURATION_TICKS = 13;
     private static final int DEATH_SOUND_DURATION_TICKS = 44;
     private static final double RIDER_FLIGHT_SPEED = 0.32D;
     private static final double RIDER_ASCEND_SPEED = 0.16D;

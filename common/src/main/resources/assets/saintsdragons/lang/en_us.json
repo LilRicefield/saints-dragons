@@ -189,6 +189,8 @@
 
   "advancement.saintsdragons.tame_ignivorus.title": "Scorched Earth",
   "advancement.saintsdragons.tame_ignivorus.description": "Earn the trust of an Ignivorus, the living calamity",
+  "advancement.saintsdragons.tame_volitans.title": "Mors per Venenum",
+  "advancement.saintsdragons.tame_volitans.description": "Tame a Volitans. Every direction hurts.",
 
   "entity.saintsdragons.ignivorus.baby_fed": "%s is growing stronger!",
   "entity.saintsdragons.ignivorus.baby_grown": "%s has grown into an adult!",

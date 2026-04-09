@@ -659,6 +659,13 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
                     clearBabyProtectionAggroTarget();
                 }
             });
+            this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
+                    this,
+                    80,
+                    this::isWildAggressionEnabled,
+                    target -> target instanceof net.minecraft.world.entity.animal.Salmon
+                            || target instanceof net.minecraft.world.entity.animal.Cod
+            ));
         }
     }
 

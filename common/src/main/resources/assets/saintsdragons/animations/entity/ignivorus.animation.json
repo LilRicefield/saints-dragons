@@ -45120,7 +45120,7 @@
 						}
 					}
 				},
-				"lowerJawController": {
+				"lowerjaw": {
 					"rotation": {
 						"0.0": {
 							"post": {
@@ -45557,7 +45557,7 @@
 						}
 					}
 				},
-				"lowerJawController": {
+				"lowerjaw": {
 					"rotation": {
 						"0.0": {
 							"post": {
@@ -45801,7 +45801,7 @@
 						}
 					}
 				},
-				"lowerJawController": {
+				"lowerjaw": {
 					"rotation": {
 						"0.0": {
 							"post": {
@@ -45823,7 +45823,7 @@
 						},
 						"1.7083": {
 							"post": {
-								"vector": [-4.49, 0, 0]
+								"vector": [13.01, 0, 0]
 							},
 							"lerp_mode": "catmullrom"
 						},
@@ -45840,12 +45840,6 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
-				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "ignivorus_grumble3",
-					"locator": "mouth_origin"
 				}
 			}
 		},

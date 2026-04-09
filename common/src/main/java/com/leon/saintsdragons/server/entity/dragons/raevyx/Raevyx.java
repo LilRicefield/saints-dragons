@@ -16,6 +16,7 @@ import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonRandomHuntTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
@@ -80,6 +81,8 @@ import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -3802,6 +3805,12 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
                 target -> shouldAggroOnSight()));
+        this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
+                this,
+                80,
+                this::shouldAggroOnSight,
+                target -> target instanceof Sheep || target instanceof Pig
+        ));
         // Neutral behavior: do not proactively target players. Only retaliate when hurt or defend owner.
     }
 

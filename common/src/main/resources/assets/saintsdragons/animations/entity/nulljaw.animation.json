@@ -10096,22 +10096,75 @@
 		"animation.nulljaw.hand_holding": {
 			"loop": true,
 			"bones": {
-				"rightarm": {
+				"leftarm": {
 					"rotation": {
-						"vector": [-30, 0, 40]
+						"vector": [-26.5489, -9.3913, -20.2835]
 					},
 					"position": {
-						"vector": [0, -5, 0]
+						"vector": [-1, -5, 0]
+					}
+				},
+				"leftforearm": {
+					"rotation": {
+						"vector": [56.7356, -19.4047, 38.9666]
+					}
+				},
+				"lefthand": {
+					"rotation": {
+						"vector": [5.329, -29.5783, -57.7966]
+					},
+					"position": {
+						"vector": [-2, -1, 0]
+					}
+				},
+				"index": {
+					"rotation": {
+						"vector": [10.8095, 35.48, 55.8086]
+					},
+					"position": {
+						"vector": [-2, 0, 0]
+					}
+				},
+				"middle": {
+					"rotation": {
+						"vector": [8.8426, 30.2515, 46.926]
+					},
+					"position": {
+						"vector": [-2, 0, 0]
+					}
+				},
+				"pinky": {
+					"rotation": {
+						"vector": [22.5, 20, 60]
+					},
+					"position": {
+						"vector": [-2, -1, -1]
+					}
+				},
+				"thumb": {
+					"rotation": {
+						"vector": [-10.2374, 40.6397, 16.3595]
+					},
+					"position": {
+						"vector": [-1, 0, 0]
+					}
+				},
+				"rightarm": {
+					"rotation": {
+						"vector": [-26.5489, 9.3913, 20.2835]
+					},
+					"position": {
+						"vector": [1, -5, 0]
 					}
 				},
 				"rightforearm": {
 					"rotation": {
-						"vector": [65, 0, 0]
+						"vector": [56.7356, 19.4047, -38.9666]
 					}
 				},
 				"righthand": {
 					"rotation": {
-						"vector": [0.1883, 26.0866, 47.1957]
+						"vector": [5.329, 29.5783, 57.7966]
 					},
 					"position": {
 						"vector": [2, -1, 0]
@@ -10119,7 +10172,7 @@
 				},
 				"index2": {
 					"rotation": {
-						"vector": [15, -37.5, -67.5]
+						"vector": [10.8095, -35.48, -55.8086]
 					},
 					"position": {
 						"vector": [2, 0, 0]
@@ -10127,7 +10180,7 @@
 				},
 				"thumb3": {
 					"rotation": {
-						"vector": [-10.5165, -39.6803, -13.8808]
+						"vector": [-10.2374, -40.6397, -16.3595]
 					},
 					"position": {
 						"vector": [1, 0, 0]

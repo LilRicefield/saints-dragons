@@ -15,6 +15,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonRandomHuntTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLeaveWaterGoal;
@@ -695,20 +696,12 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                     return !Volitans.this.isVehicle() && super.canContinueToUse();
                 }
             });
-            this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
-                    Volitans.this::shouldRandomlyAggroSeaLife) {
-                @Override
-                public boolean canUse() {
-                    return !Volitans.this.isVehicle()
-                            && Volitans.this.getRandom().nextInt(80) == 0
-                            && super.canUse();
-                }
-
-                @Override
-                public boolean canContinueToUse() {
-                    return !Volitans.this.isVehicle() && super.canContinueToUse();
-                }
-            });
+            this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
+                    this,
+                    80,
+                    this::shouldAggroOnSight,
+                    this::shouldRandomlyAggroSeaLife
+            ));
         }
     }
 

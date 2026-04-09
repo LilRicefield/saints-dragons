@@ -16,6 +16,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonRandomHuntTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
@@ -73,6 +74,9 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.animal.Sheep;
 import javax.annotation.Nonnull;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.MoverType;
@@ -670,6 +674,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
             this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
                     target -> shouldAggroOnSight()));
+            this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
+                    this,
+                    80,
+                    this::shouldAggroOnSight,
+                    target -> target instanceof Sheep || target instanceof Cow || target instanceof Pig
+            ));
         }
 
     }

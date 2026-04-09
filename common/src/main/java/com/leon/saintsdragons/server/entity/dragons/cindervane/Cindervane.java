@@ -10,6 +10,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonPackDefendPackGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonRandomHuntTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.cindervane.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
@@ -47,6 +48,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
@@ -698,6 +700,12 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         this.targetSelector.addGoal(5, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
                 target -> shouldAggroOnSight()));
+        this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(
+                this,
+                80,
+                this::shouldAggroOnSight,
+                target -> target instanceof Chicken
+        ));
         // Look goals that skip when being ridden (so rider has full control)
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
             @Override

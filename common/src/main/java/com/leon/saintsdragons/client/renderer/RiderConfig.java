@@ -84,12 +84,12 @@ public final class RiderConfig {
 
     // ===== NULLJAW TUNING =====
     public static final String NULLJAW_BONE = "passengerBone";
-    public static final float NULLJAW_SEAT_X = 0.96f;
+    public static final float NULLJAW_SEAT_X = 0.0f;
     public static final float NULLJAW_SEAT_Y = -1.6f;
     public static final float NULLJAW_SEAT_Z = -0.2f;
-    public static final float NULLJAW_FIRST_PERSON_X = 0.0f;
-    public static final float NULLJAW_FIRST_PERSON_Y = -1.25f;
-    public static final float NULLJAW_FIRST_PERSON_Z = -0.1f;
+    public static final float NULLJAW_FIRST_PERSON_X = 0.5f;
+    public static final float NULLJAW_FIRST_PERSON_Y = 0.0f;
+    public static final float NULLJAW_FIRST_PERSON_Z = 0.0f;
     public static final long NULLJAW_STALE_MS = 200L;
     public static final double NULLJAW_CAPTURE_DISTANCE = 80.0;
     public static final float NULLJAW_YAW_OFFSET_DEG = -180.0f;
@@ -199,9 +199,6 @@ public final class RiderConfig {
         return new RiderSpec("passengerBone");
     }
 
-    public static Vector3f getSeatOffset(Object dragon) {
-        return new Vector3f(getOrDefaultSpec(dragon).offset);
-    }
 
     public static Vector3f getSeatOffset(Object dragon, int seatIndex) {
         return new Vector3f(getOrDefaultSpec(dragon).getSeatSpec(seatIndex).offset);
@@ -261,9 +258,6 @@ public final class RiderConfig {
         public final float yawOffsetDeg;
         public final Vector3f firstPersonOffset;
 
-        public SeatSpec(String boneName, Vector3f offset, float yawOffsetDeg) {
-            this(boneName, offset, yawOffsetDeg, new Vector3f(0.0f, 0.0f, 0.0f));
-        }
 
         public SeatSpec(String boneName, Vector3f offset, float yawOffsetDeg, Vector3f firstPersonOffset) {
             this.boneName = boneName;

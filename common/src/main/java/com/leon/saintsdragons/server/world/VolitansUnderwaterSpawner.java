@@ -24,10 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Underwater fallback for Volitans where normal biome spawn entries are too unreliable.
- * It spawns them submerged above ocean floor / wetland floor instead of relying on vanilla pool placement.
- */
+
 public final class VolitansUnderwaterSpawner {
     private static final TagKey<Biome> DEFAULT_VOLITANS_BIOME_TAG = TagKey.create(
             Registries.BIOME,
@@ -36,8 +33,6 @@ public final class VolitansUnderwaterSpawner {
 
     private static final int CHECK_INTERVAL = 160;
     private static final int HORIZONTAL_RADIUS = 96;
-    private static final int VERTICAL_SEARCH_UP = 18;
-    private static final int VERTICAL_SEARCH_DOWN = 18;
     private static final int SEARCH_ATTEMPTS = 64;
     private static final int CLUSTER_SIZE = 128;
     private static final int NEARBY_SEARCH_RADIUS = 96;

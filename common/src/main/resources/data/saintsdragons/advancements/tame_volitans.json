@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:husbandry/tame_an_animal",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:volitans_binder"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.tame_volitans.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.tame_volitans.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "tame_volitans": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 300
+  }
+}
