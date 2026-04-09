@@ -470,6 +470,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
          .setSaveConsumer(value -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.set(value))
           .build());
         others.addEntry(entryBuilder.startBooleanToggle(
+                Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera"),
+                config.firstPersonBankingCameraEnabled
+        ).setDefaultValue(true)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera.tooltip"))
+         .setSaveConsumer(value -> config.firstPersonBankingCameraEnabled = value)
+          .build());
+        others.addEntry(entryBuilder.startBooleanToggle(
                 Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
                 SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()
         ).setDefaultValue(SaintsDragonsConfig.HUNGER_DECAY_ENABLED_DEFAULT)

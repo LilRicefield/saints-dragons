@@ -5,6 +5,7 @@ import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.fabric.client.camera.CameraLeanData;
 import com.leon.saintsdragons.fabric.client.camera.DragonCameraState;
 import com.leon.saintsdragons.fabric.client.event.FabricClientEventHandler;
+import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -96,7 +97,7 @@ public abstract class CameraMixin implements CameraAccessor {
             boolean inverseView,
             float partialTick,
             CallbackInfo ci) {
-        if (focusedEntity == null || thirdPerson) {
+        if (focusedEntity == null || thirdPerson || !FabricClientConfigAccess.isFirstPersonBankingCameraEnabled()) {
             DragonCameraState.clearRoll();
             CameraLeanData.reset();
             return;

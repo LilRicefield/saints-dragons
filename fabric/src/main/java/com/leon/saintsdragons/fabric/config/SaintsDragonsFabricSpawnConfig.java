@@ -186,6 +186,10 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
 
     @ConfigEntry.Category("others")
     @ConfigEntry.Gui.Tooltip
+    public boolean firstPersonBankingCameraEnabled = true;
+
+    @ConfigEntry.Category("others")
+    @ConfigEntry.Gui.Tooltip
     public boolean stegonautBuffsEnabled = true;
 
     @ConfigEntry.Category("others")
