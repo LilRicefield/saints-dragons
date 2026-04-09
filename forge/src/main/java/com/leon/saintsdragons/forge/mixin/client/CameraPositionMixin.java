@@ -46,7 +46,7 @@ public abstract class CameraPositionMixin {
         }
 
         Entity vehicle = entity.getVehicle();
-        if (!(vehicle instanceof RideableDragonBase dragon) || !usesBodCameraPath(dragon)) {
+        if (!(vehicle instanceof RideableDragonBase dragon) || !usesSeatAnchoredCameraPath(dragon)) {
             DragonCameraState.clearRoll();
             return;
         }
@@ -62,7 +62,7 @@ public abstract class CameraPositionMixin {
         }
 
         Entity vehicle = entity.getVehicle();
-        if (!(vehicle instanceof RideableDragonBase dragon) || !usesBodCameraPath(dragon)) {
+        if (!(vehicle instanceof RideableDragonBase dragon) || !usesSeatAnchoredCameraPath(dragon)) {
             return;
         }
 
@@ -106,7 +106,7 @@ public abstract class CameraPositionMixin {
         return 0;
     }
 
-    private static boolean usesBodCameraPath(RideableDragonBase dragon) {
+    private static boolean usesSeatAnchoredCameraPath(RideableDragonBase dragon) {
         return dragon instanceof Raevyx
                 || dragon instanceof Cindervane
                 || dragon instanceof Ignivorus

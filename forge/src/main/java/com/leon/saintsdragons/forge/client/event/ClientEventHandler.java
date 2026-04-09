@@ -85,7 +85,7 @@ public class ClientEventHandler {
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
         Entity player = Minecraft.getInstance().getCameraEntity();
         if (player == null) return;
-        if (!applyBodFirstPersonDragonCamera(player, event)) {
+        if (!applyFirstPersonDragonCamera(player, event)) {
             CameraLeanData.reset();
             DragonCameraState.clearRoll();
         }
@@ -170,7 +170,7 @@ public class ClientEventHandler {
                 raevyxCameraPitch += (raevyxTargetPitch - raevyxCameraPitch) * raevyxPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + raevyxCameraPitch, -90.0f, 90.0f));
             } else {
-                // First person is handled by the Forge BOD-style camera mixins.
+                // First person is handled by the Forge camera mixins.
             }
         } else {
             // Reset zoom and shift when not riding Raevyx
@@ -230,7 +230,7 @@ public class ClientEventHandler {
                 cindervaneCameraPitch += (cindervaneTargetPitch - cindervaneCameraPitch) * cindervanePitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + cindervaneCameraPitch, -90.0f, 90.0f));
             } else {
-                // First person is handled by the Forge BOD-style camera mixins.
+                // First person is handled by the Forge camera mixins.
             }
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
@@ -286,7 +286,7 @@ public class ClientEventHandler {
                 ignivorusCameraPitch += (ignivorusTargetPitch - ignivorusCameraPitch) * ignivorusPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + ignivorusCameraPitch, -90.0f, 90.0f));
             } else {
-                // First person is handled by the Forge BOD-style camera mixins.
+                // First person is handled by the Forge camera mixins.
             }
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom and shift when not riding Ignivorus
@@ -402,7 +402,7 @@ public class ClientEventHandler {
                 volitansCameraPitch += (volitansTargetPitch - volitansCameraPitch) * volitansPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + volitansCameraPitch, -90.0f, 90.0f));
             } else {
-                // First person is handled by the Forge BOD-style camera mixins.
+                // First person is handled by the Forge camera mixins.
             }
         } else if (!(player.getVehicle() instanceof Volitans)) {
             volitansCameraZoom = DragonRideCameraTuning.VOLITANS.grounded();
@@ -461,13 +461,13 @@ public class ClientEventHandler {
         VolitansBurrowSoundController.tick(minecraft);
     }
 
-    private static boolean applyBodFirstPersonDragonCamera(Entity player, ViewportEvent.ComputeCameraAngles event) {
+    private static boolean applyFirstPersonDragonCamera(Entity player, ViewportEvent.ComputeCameraAngles event) {
         if (event.getCamera().isDetached()) {
             return false;
         }
 
         Entity vehicle = player.getVehicle();
-        if (!(vehicle instanceof RideableDragonBase dragon) || !usesBodFirstPersonCamera(dragon)) {
+        if (!(vehicle instanceof RideableDragonBase dragon) || !usesFirstPersonDragonCamera(dragon)) {
             return false;
         }
 
@@ -506,7 +506,7 @@ public class ClientEventHandler {
         return true;
     }
 
-    private static boolean usesBodFirstPersonCamera(RideableDragonBase dragon) {
+    private static boolean usesFirstPersonDragonCamera(RideableDragonBase dragon) {
         return dragon instanceof Raevyx
                 || dragon instanceof Cindervane
                 || dragon instanceof Ignivorus
