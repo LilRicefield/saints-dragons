@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.cindervane;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
@@ -375,7 +375,7 @@ public class CindervaneFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        Vec3 landingTarget = DragonAggroLandingHelper.findLandingTarget(amphithere, null);
+        Vec3 landingTarget = DragonLandingHelper.findLandingTarget(amphithere, null);
         if (landingTarget == null) {
             return;
         }

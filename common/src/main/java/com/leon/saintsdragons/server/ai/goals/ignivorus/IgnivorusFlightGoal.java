@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.core.BlockPos;
@@ -298,7 +298,7 @@ public class IgnivorusFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        Vec3 landingTarget = DragonAggroLandingHelper.findLandingTarget(dragon, null);
+        Vec3 landingTarget = DragonLandingHelper.findLandingTarget(dragon, null);
         if (landingTarget == null) {
             return;
         }

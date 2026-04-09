@@ -152,7 +152,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             handleWaterFollowing(owner, distance);
         } else if (dragon.isLanding()) {
             if (!dragon.getNavigation().isInProgress()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, owner, getFlightFollowSpeed());
+                DragonLandingHelper.beginAggroLanding(dragon, owner, getFlightFollowSpeed());
             }
         } else if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
             handleFlightFollowing(owner, ownerAirborne);
@@ -192,7 +192,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             boolean shouldLand = !shouldFly && !ownerAirborne && horizontalDistance < config.landingDistance;
 
             if (shouldLand && !dragon.isLanding()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, owner, getFlightFollowSpeed());
+                DragonLandingHelper.beginAggroLanding(dragon, owner, getFlightFollowSpeed());
                 pathRecalcCooldown = 0;
             }
         }

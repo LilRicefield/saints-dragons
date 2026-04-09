@@ -3,10 +3,7 @@ package com.leon.saintsdragons.server.ai.navigation;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 
-/**
- * Shared arbiter for dragons that swap between ground and air movement authorities.
- * Only one side owns navigation/movement at a time.
- */
+
 public class DragonNavigationModeController {
     public interface Host {
         void setActiveNavigation(PathNavigation navigation);

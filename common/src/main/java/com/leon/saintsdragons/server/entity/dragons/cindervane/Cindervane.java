@@ -24,6 +24,7 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
+import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -127,6 +128,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                     Mth.HALF_PI
             );
     public static final int TAKEOFF_ANIMATION_TICKS = 24;
+    private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
     private static final float FIRE_BODY_EXPLOSION_RADIUS = 15.0F;
     private static final double FIRE_BODY_IMPRINT_RADIUS = 9.0D;
@@ -183,6 +185,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     public int timeFlying = 0;
     private int landingTicks;
     private int riderTakeoffTicks;
+    private int groundedAerialRecoveryTicks;
     private boolean wasVehicleLastTick;
     private int forceOwnerFollowTicks;
     private boolean fireBodyCrashArmed;
@@ -797,6 +800,22 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
         // === SERVER-SIDE: EVERY TICK (lightweight or critical) ===
         takeoffComponent.tick();
+        groundedAerialRecoveryTicks = DragonGroundedAerialRecovery.tick(
+                level(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                isTakeoff(),
+                isFlying(),
+                isHovering(),
+                isLanding(),
+                false,
+                getDeltaMovement(),
+                groundedAerialRecoveryTicks,
+                GROUNDED_AERIAL_RECOVERY_TICKS,
+                0.05D,
+                this::markLandedNow
+        );
         tickSittingState();
         tickRiderTakeoff();
         tickMountedState();
@@ -2956,10 +2975,16 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Override
     public void markLandedNow() {
         setFlying(false);
+        setTakeoff(false);
         setLanding(false);
+        setHovering(false);
         takeoffComponent.clear();
         this.riderTakeoffTicks = 0;
         this.timeFlying = 0;
+        if (!level().isClientSide) {
+            switchToGroundNavigation();
+            setNoGravity(false);
+        }
     }
 
     public void handleAiLandingComplete() {

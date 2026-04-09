@@ -38,6 +38,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansP
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
+import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
@@ -156,6 +157,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final double RIDER_SWIM_SPEED = 1.42D;
     private static final double RIDER_FLY_SPEED = 0.38D;
     public static final int TAKEOFF_ANIMATION_TICKS = 35;
+    private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     public static final int TAKEOFF_LAUNCH_DELAY_TICKS = 15;
     private static final int SIT_DOWN_ANIMATION_TICKS = 50;
     private static final int SIT_UP_ANIMATION_TICKS = 25;
@@ -257,6 +259,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private int timeFlying;
     private int spineDropCooldownTicks;
     private int riderTakeoffTicks;
+    private int groundedAerialRecoveryTicks;
     private boolean riderHighAltitudeGlide;
     private double lastCheckedX;
     private double lastCheckedY;
@@ -982,6 +985,13 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         setTakeoff(false);
         setLanding(false);
         setHovering(false);
+        takeoffComponent.clear();
+        this.riderTakeoffTicks = 0;
+        this.timeFlying = 0;
+        if (!level().isClientSide) {
+            switchToGroundNavigation();
+            setNoGravity(false);
+        }
     }
 
     @Override
@@ -1291,6 +1301,24 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             tickWaterPreferenceTimers();
             tickBreathGaugeEnergy();
             takeoffComponent.tick();
+            groundedAerialRecoveryTicks = isUltimateSlamActive()
+                    ? 0
+                    : DragonGroundedAerialRecovery.tick(
+                            level(),
+                            onGround(),
+                            isInWaterOrBubble(),
+                            isInLava(),
+                            isTakeoff(),
+                            isFlying(),
+                            isHovering(),
+                            isLanding(),
+                            true,
+                            getDeltaMovement(),
+                            groundedAerialRecoveryTicks,
+                            GROUNDED_AERIAL_RECOVERY_TICKS,
+                            0.05D,
+                            this::markLandedNow
+                    );
             if (riderTakeoffTicks > 0) {
                 riderTakeoffTicks--;
             }

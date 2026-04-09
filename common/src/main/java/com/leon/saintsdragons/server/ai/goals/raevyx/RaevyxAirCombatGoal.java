@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.LivingEntity;
@@ -114,7 +114,7 @@ public class RaevyxAirCombatGoal extends Goal {
         // Stop if target lands (switch to ground combat)
         if (!isTargetAirborne(target)) {
             if (dragon.isFlying() || dragon.isHovering()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, target, 1.6D);
+                DragonLandingHelper.beginAggroLanding(dragon, target, 1.6D);
                 return true;
             }
             return false;
@@ -146,7 +146,7 @@ public class RaevyxAirCombatGoal extends Goal {
                 && !isTargetAirborne(target)
                 && (dragon.isFlying() || dragon.isHovering())
                 && !dragon.isLanding()) {
-            DragonAggroLandingHelper.tryBeginAggroLanding(dragon, target, 1.6D);
+            DragonLandingHelper.tryBeginAggroLanding(dragon, target, 1.6D);
         }
     }
 
@@ -169,7 +169,7 @@ public class RaevyxAirCombatGoal extends Goal {
                 if (landingTarget != null
                         && dragon.isTargetValid(landingTarget)
                         && !isTargetAirborne(landingTarget)
-                        && DragonAggroLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.6D)) {
+                        && DragonLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.6D)) {
                     return;
                 }
                 dragon.setLanding(false);
@@ -203,7 +203,7 @@ public class RaevyxAirCombatGoal extends Goal {
 
         if (!isTargetAirborne(target)) {
             if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff()) {
-                DragonAggroLandingHelper.tryBeginAggroLanding(dragon, target, 1.6D);
+                DragonLandingHelper.tryBeginAggroLanding(dragon, target, 1.6D);
             }
             return;
         }
@@ -408,7 +408,7 @@ public class RaevyxAirCombatGoal extends Goal {
      * Force dragon to land (shot from below)
      */
     private void triggerEmergencyLanding() {
-        DragonAggroLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), 1.6D);
+        DragonLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), 1.6D);
         shotFromBelowCounter = 0; // Reset counter
     }
 

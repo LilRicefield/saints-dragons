@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
@@ -298,7 +298,7 @@ public class RaevyxFlightGoal extends Goal {
     }
 
     private void beginLandingApproach() {
-        Vec3 landingTarget = DragonAggroLandingHelper.findLandingTarget(wyvern, null);
+        Vec3 landingTarget = DragonLandingHelper.findLandingTarget(wyvern, null);
         if (landingTarget == null) {
             return;
         }

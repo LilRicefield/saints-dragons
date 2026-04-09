@@ -164,6 +164,15 @@ class AsyncFlightPathResolver {
         this.startPathing(currentWaypoint);
     }
 
+    public void forceRecalculatePath(Vec3 currentWaypoint) {
+        this.ticksSinceRecalc = 0;
+        if (currentWaypoint == null) {
+            return;
+        }
+        this.clearPathNodes();
+        this.startFlyingPathAsync(currentWaypoint);
+    }
+
     public void reset() {
         this.ticksSinceRecalc = 0;
     }

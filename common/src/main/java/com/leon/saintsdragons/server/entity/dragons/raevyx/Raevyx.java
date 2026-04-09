@@ -39,6 +39,7 @@ import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderControl
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
+import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
@@ -137,6 +138,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     /** Scale factor for the wyvern model */
     public static final float MODEL_SCALE = 1.0f;
     public static final int TAKEOFF_ANIMATION_TICKS = 35;
+    private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
 
     /** Time to live for aggression tracking (in ticks) */
     public static final int AGGRO_TTL_TICKS = 200; // ~10s
@@ -350,6 +352,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     // ===== STATE VARIABLES (Package-private for controller access) =====
     public int timeFlying = 0;
+    private int groundedAerialRecoveryTicks = 0;
     public boolean landingFlag = false;
     public boolean landedFlag = false;
 
@@ -532,7 +535,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     @Override
     public void markLandedNow() {
         setFlying(false);
+        setTakeoff(false);
         setLanding(false);
+        setHovering(false);
         this.setLanded(true);
         takeoffComponent.clear();
         this.riderTakeoffTicks = 0;
@@ -541,6 +546,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         if (!level().isClientSide) {
             this.lastLandingGameTime = level().getGameTime();
+            switchToGroundNavigation();
+            setNoGravity(false);
         }
 
         // Note: Rider landing is handled separately in tickRiderLandingBlendTimer()
@@ -2130,6 +2137,22 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // === SERVER-SIDE: EVERY TICK (lightweight or critical) ===
         tickSittingState();
         takeoffComponent.tick();
+        groundedAerialRecoveryTicks = DragonGroundedAerialRecovery.tick(
+                level(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                isTakeoff(),
+                isFlying(),
+                isHovering(),
+                isLanding(),
+                false,
+                getDeltaMovement(),
+                groundedAerialRecoveryTicks,
+                GROUNDED_AERIAL_RECOVERY_TICKS,
+                0.05D,
+                this::markLandedNow
+        );
         tickRiderTakeoff();
         tickHurtSoundCooldown();
         spawnBabiesIfNeeded(); // Has internal check, only spawns once

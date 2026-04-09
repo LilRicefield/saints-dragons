@@ -10,10 +10,10 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public final class DragonAggroLandingHelper {
+public final class DragonLandingHelper {
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
 
-    private DragonAggroLandingHelper() {
+    private DragonLandingHelper() {
     }
 
     public static void beginAggroLanding(
@@ -30,6 +30,14 @@ public final class DragonAggroLandingHelper {
             double landingSpeed
     ) {
         if (!(dragon instanceof DragonFlightCapable flightCapable)) {
+            return false;
+        }
+        if (dragon.onGround()) {
+            if (flightCapable.isFlying() || flightCapable.isHovering() || flightCapable.isLanding() || flightCapable.isTakeoff()) {
+                flightCapable.markLandedNow();
+                dragon.getNavigation().stop();
+                return true;
+            }
             return false;
         }
         Vec3 landingTarget = findLandingTarget(dragon, target);

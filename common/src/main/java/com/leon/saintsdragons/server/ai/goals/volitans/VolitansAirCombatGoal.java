@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -88,7 +88,7 @@ public class VolitansAirCombatGoal extends Goal {
         }
         if (!isTargetAirborne(target)) {
             if (dragon.isFlying() || dragon.isHovering()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, target, 1.0D);
+                DragonLandingHelper.beginAggroLanding(dragon, target, 1.0D);
                 return true;
             }
             return false;
@@ -126,7 +126,7 @@ public class VolitansAirCombatGoal extends Goal {
                 && dragon.isTargetValid(target)
                 && !isTargetAirborne(target)
                 && (dragon.isFlying() || dragon.isHovering())) {
-            DragonAggroLandingHelper.tryBeginAggroLanding(dragon, target, 1.0D);
+            DragonLandingHelper.tryBeginAggroLanding(dragon, target, 1.0D);
             return;
         }
         if (target == null || dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
@@ -144,7 +144,7 @@ public class VolitansAirCombatGoal extends Goal {
                 if (landingTarget != null
                         && dragon.isTargetValid(landingTarget)
                         && !isTargetAirborne(landingTarget)
-                        && DragonAggroLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.0D)) {
+                        && DragonLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.0D)) {
                     return;
                 }
                 dragon.setLanding(false);

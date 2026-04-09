@@ -4,7 +4,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
 class AsyncFlightStuckDetector {
-    private static final int RETRY_BACKOFF_TICKS = 60;
+    private static final int RETRY_BACKOFF_TICKS = 30;
 
     private final Mob dragon;
     private int stuckTicks = 0;

@@ -30,6 +30,7 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
+import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -111,6 +112,7 @@ import java.util.Map;
 
 public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
     public static final int TAKEOFF_ANIMATION_TICKS = 30;
+    private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     private final DragonTakeoff takeoffComponent;
 
     // ===== ENTITY DATA ACCESSORS =====
@@ -252,6 +254,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public int timeFlying = 0;
     private int airTicks;
     public int groundTicks;
+    private int groundedAerialRecoveryTicks;
     private int riderLandingBlendTicks = 0;
     private float prevSmoothedRoll = 0.0f;
     private float smoothedRoll = 0.0f;
@@ -724,6 +727,22 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
 
         takeoffComponent.tick();
+        groundedAerialRecoveryTicks = DragonGroundedAerialRecovery.tick(
+                level(),
+                onGround(),
+                isInWaterOrBubble(),
+                isInLava(),
+                isTakeoff(),
+                isFlying(),
+                isHovering(),
+                isLanding(),
+                false,
+                getDeltaMovement(),
+                groundedAerialRecoveryTicks,
+                GROUNDED_AERIAL_RECOVERY_TICKS,
+                0.05D,
+                this::markLandedNow
+        );
 
         // Update air/ground time
         if (isFlying()) {
@@ -2642,6 +2661,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public void markLandedNow() {
         setFlying(false);
+        setTakeoff(false);
         setLanding(false);
         takeoffComponent.clear();
         setHovering(false);

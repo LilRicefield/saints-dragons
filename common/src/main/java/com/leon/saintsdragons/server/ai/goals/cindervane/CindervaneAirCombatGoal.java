@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.cindervane;
 
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.world.entity.LivingEntity;
@@ -100,7 +100,7 @@ public class CindervaneAirCombatGoal extends Goal {
                 && !isTargetAirborne(target)
                 && (amphithere.isFlying() || amphithere.isHovering())
                 && !amphithere.isLanding()) {
-            DragonAggroLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED);
+            DragonLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED);
         }
     }
 
@@ -119,7 +119,7 @@ public class CindervaneAirCombatGoal extends Goal {
 
         if (amphithere.isLanding()) {
             if (!amphithere.getNavigation().isInProgress()) {
-                if (!isTargetAirborne(target) && DragonAggroLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED)) {
+                if (!isTargetAirborne(target) && DragonLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED)) {
                     return;
                 }
                 amphithere.setLanding(false);
@@ -129,7 +129,7 @@ public class CindervaneAirCombatGoal extends Goal {
 
         if (!isTargetAirborne(target)) {
             if (amphithere.isFlying() || amphithere.isHovering() || amphithere.isTakeoff()) {
-                DragonAggroLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED);
+                DragonLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED);
             }
             return;
         }

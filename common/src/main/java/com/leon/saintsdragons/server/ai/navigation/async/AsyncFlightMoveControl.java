@@ -4,10 +4,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Adapter that preserves existing setWantedPosition(...) call sites
- * while routing actual movement through the async flight controller.
- */
 public class AsyncFlightMoveControl extends MoveControl {
     private final AsyncFlightController controller;
 

@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.PathNavigationRegion;
@@ -26,6 +27,10 @@ public final class AsyncDragonPathfinder {
 
     public static void calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
         if (dragon.level().isClientSide) {
+            return;
+        }
+        MinecraftServer server = dragon.getServer();
+        if (server == null) {
             return;
         }
 
@@ -62,10 +67,16 @@ public final class AsyncDragonPathfinder {
                         return null;
                     }
                 }, EXECUTOR)
-                .thenAccept(path -> dragon.getServer().execute(() -> {
-                    if (dragon.isAlive()) {
-                        callback.accept(path);
+                .thenAccept(path -> {
+                    if (server.isStopped() || dragon.isRemoved()) {
+                        return;
                     }
-                }));
+                    server.execute(() -> {
+                        if (server.isStopped() || dragon.isRemoved() || !dragon.isAlive()) {
+                            return;
+                        }
+                        callback.accept(path);
+                    });
+                });
     }
 }

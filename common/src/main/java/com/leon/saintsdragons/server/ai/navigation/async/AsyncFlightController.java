@@ -9,9 +9,6 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Flying-only port of the Book of Dragons async movement stack.
- */
 public class AsyncFlightController {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncFlightController.class);
 
@@ -29,11 +26,13 @@ public class AsyncFlightController {
     private final int recalculationInterval = 40;
     private final int maxRetries = 5;
     private final double baseArrivalDistance = 1.5;
-    private final int stuckThresholdTicks = 60;
+    private final int stuckThresholdTicks = 20;
     private final double stuckMovementThreshold = 0.5;
     private final double maxSegmentDistance = 64.0;
     private final double flyingLookAhead = 6.0;
     private final double liveRetargetRefreshDistanceSq = 16.0D;
+    private final double liveRetargetMeaningfulVerticalDelta = 2.0D;
+    private final double liveRetargetMeaningfulHeadingDot = 0.75D;
 
     public AsyncFlightController(Mob host) {
         this.host = host;
@@ -121,9 +120,15 @@ public class AsyncFlightController {
                 && retargetDistSq >= 1.0D
                 && retargetDistSq < this.liveRetargetRefreshDistanceSq
                 && (this.state == PathState.CALCULATING || this.state == PathState.FOLLOWING)) {
+            Vec3 previousWaypoint = this.currentWaypoint;
+            boolean forceRecalculate = this.shouldForceRecalculateForRetarget(previousWaypoint, target);
             this.currentWaypoint = target;
             this.speedModifier = speed;
             this.currentArrivalCallback = onArrival;
+            if (forceRecalculate) {
+                this.resetPathingState();
+                this.pathResolver.forceRecalculatePath(target);
+            }
             return;
         }
 
@@ -261,6 +266,37 @@ public class AsyncFlightController {
 
     public List<AsyncFlightWaypointQueue.QueuedWaypoint> getQueuedWaypoints() {
         return this.waypointQueue.stream().toList();
+    }
+
+    private boolean shouldForceRecalculateForRetarget(Vec3 previousTarget, Vec3 newTarget) {
+        if (previousTarget == null) {
+            return false;
+        }
+
+        if (this.isLandingTarget(previousTarget) != this.isLandingTarget(newTarget)) {
+            return true;
+        }
+
+        if (Math.abs(newTarget.y - previousTarget.y) >= this.liveRetargetMeaningfulVerticalDelta) {
+            return true;
+        }
+
+        Vec3 currentDirection = horizontalDirectionTo(previousTarget);
+        Vec3 newDirection = horizontalDirectionTo(newTarget);
+        if (currentDirection == null || newDirection == null) {
+            return false;
+        }
+
+        return currentDirection.dot(newDirection) < this.liveRetargetMeaningfulHeadingDot;
+    }
+
+    private Vec3 horizontalDirectionTo(Vec3 target) {
+        Vec3 horizontal = target.subtract(this.host.position());
+        horizontal = new Vec3(horizontal.x, 0.0D, horizontal.z);
+        if (horizontal.lengthSqr() < 1.0D) {
+            return null;
+        }
+        return horizontal.normalize();
     }
 
     private boolean isLandingTarget(Vec3 waypoint) {

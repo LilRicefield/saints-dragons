@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.LivingEntity;
@@ -135,7 +135,7 @@ public class IgnivorusAirCombatGoal extends Goal {
         // Stop if target lands (switch to ground combat)
         if (!isTargetAirborne(target)) {
             if (dragon.isFlying() || dragon.isHovering()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, target, LANDING_SPEED);
+                DragonLandingHelper.beginAggroLanding(dragon, target, LANDING_SPEED);
                 return true;
             }
             return false;
@@ -166,7 +166,7 @@ public class IgnivorusAirCombatGoal extends Goal {
                 && !isTargetAirborne(target)
                 && (dragon.isFlying() || dragon.isHovering())
                 && !dragon.isLanding()) {
-            DragonAggroLandingHelper.tryBeginAggroLanding(dragon, target, LANDING_SPEED);
+            DragonLandingHelper.tryBeginAggroLanding(dragon, target, LANDING_SPEED);
         }
     }
 
@@ -190,7 +190,7 @@ public class IgnivorusAirCombatGoal extends Goal {
                 if (landingTarget != null
                         && dragon.isTargetValid(landingTarget)
                         && !isTargetAirborne(landingTarget)
-                        && DragonAggroLandingHelper.tryBeginAggroLanding(dragon, landingTarget, LANDING_SPEED)) {
+                        && DragonLandingHelper.tryBeginAggroLanding(dragon, landingTarget, LANDING_SPEED)) {
                     return;
                 }
                 dragon.setLanding(false);
@@ -429,7 +429,7 @@ public class IgnivorusAirCombatGoal extends Goal {
      * Force dragon to land (shot from below)
      */
     private void triggerEmergencyLanding() {
-        DragonAggroLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), LANDING_SPEED);
+        DragonLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), LANDING_SPEED);
         shotFromBelowCounter = 0; // Reset counter
     }
 

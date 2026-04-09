@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.ai.goals.ignivorus;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonAggroLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
@@ -190,7 +190,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         LivingEntity target = dragon.getTarget();
         if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff() || dragon.isLanding()) {
-            DragonAggroLandingHelper.beginAggroLanding(dragon, target, 1.5D);
+            DragonLandingHelper.beginAggroLanding(dragon, target, 1.5D);
             return;
         }
 
@@ -211,7 +211,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
     public void tick() {
         if (dragon.isLanding()) {
             if (!dragon.getNavigation().isInProgress()) {
-                DragonAggroLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.5D);
+                DragonLandingHelper.beginAggroLanding(dragon, dragon.getTarget(), 1.5D);
             }
             return;
         }
