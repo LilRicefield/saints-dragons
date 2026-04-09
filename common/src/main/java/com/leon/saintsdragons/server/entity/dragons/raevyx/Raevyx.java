@@ -4944,6 +4944,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return !isSleeping() && !isDying() && !isBeaming();
     }
 
+    @Override
+    public boolean ignoresLeashPull() {
+        return true;
+    }
+
     // ===== SCREEN SHAKE INTERFACE IMPLEMENTATION =====
     @Override
     public float getScreenShakeAmount(float partialTicks) {

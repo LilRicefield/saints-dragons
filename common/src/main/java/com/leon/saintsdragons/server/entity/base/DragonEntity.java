@@ -1455,6 +1455,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return true;
     }
 
+    public boolean ignoresLeashPull() {
+        return false;
+    }
+
+    public float getLeashBreakDistance() {
+        return 10.0F;
+    }
+
     public boolean isAlly(net.minecraft.world.entity.Entity entity) {
         if (entity == null) return false;
 

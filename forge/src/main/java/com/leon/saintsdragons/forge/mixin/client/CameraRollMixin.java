@@ -10,7 +10,11 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 public class CameraRollMixin {
     @ModifyArg(
             method = "setRotation",
-            at = @At(value = "INVOKE", target = "Lorg/joml/Quaternionf;rotationYXZ(FFF)Lorg/joml/Quaternionf;"),
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lorg/joml/Quaternionf;rotationYXZ(FFF)Lorg/joml/Quaternionf;",
+                    remap = false
+            ),
             index = 2
     )
     private float saintsdragons$injectRollIntoCamera(float originalRoll) {

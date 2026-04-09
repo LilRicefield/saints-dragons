@@ -2135,6 +2135,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
+    public boolean ignoresLeashPull() {
+        return true;
+    }
+
+    @Override
     public boolean canBeAffected(MobEffectInstance effectInstance) {
         if (effectInstance.getEffect() == MobEffects.POISON) {
             return false;
