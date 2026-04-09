@@ -310,12 +310,14 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return false;
         }
 
-        // Forced follow or owner is airborne
-        if (shouldForceFollow() || ownerAirborne) {
+        // If the owner is airborne, we need to recover into flight even at close range.
+        if (ownerAirborne) {
             return true;
         }
 
-        // Don't take off if very close
+        // Don't take off if very close. Forced follow is for immediately
+        // reacquiring the goal after states like rider dismount, not for
+        // blindly spamming takeoff while the owner is still right beside the dragon.
         if (distance < config.stopFollowDist * 1.5) {
             return false;
         }

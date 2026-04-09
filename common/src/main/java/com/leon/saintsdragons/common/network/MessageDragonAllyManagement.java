@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 /**
- * Network message for managing wyvern allies.
+ * Network message for managing player allies on a dragon.
  * Handles adding/removing allies and syncing ally lists.
  */
 public class MessageDragonAllyManagement {

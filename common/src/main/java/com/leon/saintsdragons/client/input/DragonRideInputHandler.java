@@ -147,12 +147,14 @@ public final class DragonRideInputHandler {
     private DragonRideInputHandler() {
     }
 
-    public static void registerKeys(Consumer<KeyMapping> registrar) {
+    public static void registerKeys(Consumer<KeyMapping> registrar, boolean rebuildMappings) {
         for (KeyMapping mapping : ALL_KEYS) {
             registrar.accept(mapping);
         }
-        // Ensure Minecraft rebuilds its key->binding lookup so our keys respond immediately (Fabric needs this).
-        KeyMapping.resetMapping();
+        if (rebuildMappings) {
+            // Ensure Minecraft rebuilds its key->binding lookup so our keys respond immediately on Fabric.
+            KeyMapping.resetMapping();
+        }
     }
 
     public static void clientTick() {

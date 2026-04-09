@@ -37,6 +37,7 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.varasuchus.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.varasuchus.run");
     private static final RawAnimation BUCKING = RawAnimation.begin().thenLoop("animation.varasuchus.bucking");
+    private static final RawAnimation THRASHING_UNDERWATER = RawAnimation.begin().thenLoop("animation.varasuchus.thrashing_underwater");
 
     // Phase 2 animations
     private static final RawAnimation IDLE2 = RawAnimation.begin().thenLoop("animation.varasuchus.idle2");
@@ -141,7 +142,7 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         // Wild ride uses the same rider-lock path, but it should still show the bucking loop.
         if (drake.isWildRideAnimationActive()) {
             controller.transitionLength(2);
-            state.setAndContinue(BUCKING);
+            state.setAndContinue(drake.isInWaterOrBubble() ? THRASHING_UNDERWATER : BUCKING);
             return PlayState.CONTINUE;
         }
 

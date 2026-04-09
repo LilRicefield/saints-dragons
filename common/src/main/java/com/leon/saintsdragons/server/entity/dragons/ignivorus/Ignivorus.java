@@ -2710,8 +2710,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
      * Whether this Ignivorus can be stored inside a binder.
      */
     public boolean canBeBound() {
-        return !isFlying()
-                && !isDying()
+        return !isDying()
                 && !isBreathingFire()
                 && !areRiderControlsLocked()
                 && getActiveAbility() == null;

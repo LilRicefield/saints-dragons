@@ -2106,10 +2106,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     public boolean canBeBound() {
         return !isDying()
-                && !isFlying()
                 && !isTakeoff()
                 && !isLanding()
-                && !isHovering()
                 && !isBurrowing()
                 && !areRiderControlsLocked()
                 && !isGroundMobilityActive()

@@ -1,5 +1,5 @@
 {
-	"credit": "With love, by Leon Saint",
+	"credit": "by leon saint, with <3",
 	"ambientocclusion": false,
 	"texture_size": [32, 32],
 	"textures": {
@@ -8,15 +8,15 @@
 	},
 	"elements": [
 		{
-			"from": [5, 0, 5],
-			"to": [11, 8, 11],
+			"from": [4, 0, 4],
+			"to": [12, 10, 12],
 			"faces": {
-				"north": {"uv": [3, 3, 6, 7], "texture": "#0"},
-				"east": {"uv": [0, 3, 3, 7], "texture": "#0"},
-				"south": {"uv": [9, 3, 12, 7], "texture": "#0"},
-				"west": {"uv": [6, 3, 9, 7], "texture": "#0"},
-				"up": {"uv": [6, 3, 3, 0], "texture": "#0"},
-				"down": {"uv": [9, 0, 6, 3], "texture": "#0"}
+				"north": {"uv": [0, 0, 4, 5], "texture": "#0"},
+				"east": {"uv": [4, 0, 8, 5], "texture": "#0"},
+				"south": {"uv": [0, 5, 4, 10], "texture": "#0"},
+				"west": {"uv": [4, 5, 8, 10], "texture": "#0"},
+				"up": {"uv": [12, 4, 8, 0], "texture": "#0"},
+				"down": {"uv": [12, 4, 8, 8], "texture": "#0"}
 			}
 		}
 	]

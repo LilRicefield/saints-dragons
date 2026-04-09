@@ -16,7 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages ally relationships for dragons.
+ * Manages player ally relationships for dragons.
  * Handles UUID validation, username resolution, and persistence.
  * Thread-safe for server-side operations.
  */
@@ -27,7 +27,7 @@ public class DragonAllyManager {
     // Cache for username-to-UUID resolution to avoid repeated lookups
     private static final Map<String, UUID> USERNAME_CACHE = new ConcurrentHashMap<>();
     
-    // Maximum number of allies per wyvern
+    // Maximum number of player allies per owner
     private static final int MAX_ALLIES = 10;
     
     public DragonAllyManager(DragonEntity dragon) {
@@ -62,7 +62,7 @@ public class DragonAllyManager {
             return AllyResult.INVALID_USERNAME;
         }
         
-        // Check if trying to add the wyvern owner as an ally (they're already the owner!)
+        // Check if trying to add the dragon owner as an ally (they're already the owner!)
         String ownerName = owner.getName().getString();
         if (username.equalsIgnoreCase(ownerName)) {
                 return AllyResult.IS_OWNER;
@@ -336,14 +336,14 @@ public class DragonAllyManager {
      * Result enum for ally operations
      */
     public enum AllyResult {
-        SUCCESS("Successfully managed ally"),
+        SUCCESS("Successfully managed player ally"),
         INVALID_USERNAME("Invalid username provided"),
         PLAYER_NOT_FOUND("Player not found on server"),
         UUID_MISMATCH("Username-UUID validation failed"),
         ALREADY_ALLY("Player is already an ally"),
         NOT_ALLY("Player is not an ally"),
-        ALLY_LIMIT_REACHED("Maximum ally limit reached"),
-        IS_OWNER("You are already the owner of this wyvern!");
+        ALLY_LIMIT_REACHED("Maximum player ally limit reached"),
+        IS_OWNER("You are already the owner of this dragon!");
         
         private final String message;
         

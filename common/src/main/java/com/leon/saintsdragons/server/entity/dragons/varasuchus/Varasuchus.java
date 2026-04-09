@@ -162,8 +162,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     // ===== UNTAMED RIDE / TAMING STATE =====
     private static final int MIN_WILD_TAME_TICKS = 60;
     private static final int MAX_TAMING_PROGRESS = 400;
-    private static final int BUCK_INTERVAL_MIN = 60;
-    private static final int BUCK_INTERVAL_MAX = 110;
+    private static final int WILD_RIDE_BUCK_DURATION_TICKS = 90; // 4.5 seconds
     private static final double WILD_RIDE_WALK_SPEED = 0.9D;
     private static final double BREED_PARTNER_RANGE = 30.0D;
     private static final double BREED_DISTANCE_SQR = 16.0D;
@@ -2036,11 +2035,19 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         wildRideActive = true;
         this.entityData.set(DATA_WILD_RIDE_ACTIVE, true);
         wildRideTicks = 0;
-        nextBuckAttemptTick = nextBuckDelay();
+        nextBuckAttemptTick = WILD_RIDE_BUCK_DURATION_TICKS;
         this.getNavigation().stop();
         this.setTarget(null);
         this.setAccelerating(false);
         this.setGroundMoveStateFromAI(1);
+        if (!this.level().isClientSide) {
+            this.getSoundHandler().playMovingEntitySound(
+                    ModSounds.VARASUCHUS_BUCKING.get(),
+                    1.0f,
+                    1.0f,
+                    WILD_RIDE_BUCK_DURATION_TICKS
+            );
+        }
     }
 
     private void tickWildRideState() {
@@ -2164,10 +2171,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         this.entityData.set(DATA_WILD_RIDE_ACTIVE, false);
         wildRideTicks = 0;
         nextBuckAttemptTick = 0;
-    }
-
-    private int nextBuckDelay() {
-        return Mth.nextInt(this.getRandom(), BUCK_INTERVAL_MIN, BUCK_INTERVAL_MAX);
     }
 
     private boolean isWildRideActive() {

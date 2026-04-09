@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 
 /**
- * Item used to open the wyvern ally management GUI.
- * Right-click on a wyvern to manage its allies.
+ * Item used to open the dragon player ally management GUI.
+ * Right-click on a dragon to manage its player allies.
  */
 public class DragonAllyBookItem extends Item {
     public DragonAllyBookItem(Properties properties) {

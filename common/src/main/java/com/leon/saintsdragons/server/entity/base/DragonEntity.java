@@ -1458,44 +1458,30 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public boolean isAlly(net.minecraft.world.entity.Entity entity) {
         if (entity == null) return false;
 
-        // Owner is always an ally
-        if (entity instanceof Player player && this.isTame() && this.isOwnedBy(player)) {
-            return true;
-        }
-        if (entity instanceof DragonEntity otherDragon && this.isTame() && otherDragon.isTame()) {
-            LivingEntity owner = this.getOwner();
-            if (owner instanceof Player ownerPlayer) {
-                if (otherDragon.isOwnedBy(ownerPlayer)) {
-                    return true;
-                }
-
-                LivingEntity otherOwner = otherDragon.getOwner();
-                if (otherOwner instanceof Player otherPlayer) {
-                    return allyManager.isAlly(otherPlayer);
-                }
-            }
-            return false;
-        }
-
-
         if (entity instanceof Player player) {
-            return allyManager.isAlly(player);
+            return isPlayerAlly(player);
+        }
+
+        // Dragons and other owned companions inherit protection from their player owner.
+        if (entity instanceof DragonEntity otherDragon && otherDragon.isTame()) {
+            LivingEntity otherOwner = otherDragon.getOwner();
+            return otherOwner instanceof Player otherPlayer && isPlayerAlly(otherPlayer);
         }
 
         if (entity instanceof net.minecraft.world.entity.TamableAnimal tamable && tamable.isTame()) {
             net.minecraft.world.entity.LivingEntity owner = tamable.getOwner();
-            if (owner instanceof Player playerOwner) {
-                return (this.isTame() && this.isOwnedBy(playerOwner)) || allyManager.isAlly(playerOwner);
-            }
+            return owner instanceof Player playerOwner && isPlayerAlly(playerOwner);
         }
 
         if (entity instanceof OwnableEntity ownable) {
             LivingEntity owner = ownable.getOwner();
-            if (owner instanceof Player playerOwner) {
-                return (this.isTame() && this.isOwnedBy(playerOwner)) || allyManager.isAlly(playerOwner);
-            }
+            return owner instanceof Player playerOwner && isPlayerAlly(playerOwner);
         }
         return false;
+    }
+
+    private boolean isPlayerAlly(Player player) {
+        return player != null && ((this.isTame() && this.isOwnedBy(player)) || allyManager.isAlly(player));
     }
 
     public boolean canTarget(net.minecraft.world.entity.Entity entity) {

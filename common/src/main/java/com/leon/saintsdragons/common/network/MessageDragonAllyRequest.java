@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 /**
- * Network message for requesting wyvern ally list from server.
+ * Network message for requesting a dragon's player ally list from server.
  * Sent by client when opening the ally management GUI.
  */
 public class MessageDragonAllyRequest {

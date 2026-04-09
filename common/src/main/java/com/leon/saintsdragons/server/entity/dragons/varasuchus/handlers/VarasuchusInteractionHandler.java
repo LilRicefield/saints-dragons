@@ -32,6 +32,11 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
                 .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
         boolean legacyTaming = config.extraBoolean("legacy_taming", false);
 
+        if (dragon.isSleeping() || dragon.isSleepingEntering() || dragon.isSleepingExiting()) {
+            sendStatusMessage(player, "entity.saintsdragons.varasuchus.sleeping");
+            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        }
+
         if (dragon.isBaby()) {
             return handleBabyTaming(player, heldItem, config);
         }

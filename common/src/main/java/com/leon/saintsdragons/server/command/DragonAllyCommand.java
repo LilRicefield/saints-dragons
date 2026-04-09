@@ -20,8 +20,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Server commands for managing drake allies.
- * Provides /dragonally add/remove/list commands for administrators and drake owners.
+ * Server commands for managing player allies on dragons.
+ * Provides /dragonally add/remove/list commands for administrators and dragon owners.
  */
 public class DragonAllyCommand {
     

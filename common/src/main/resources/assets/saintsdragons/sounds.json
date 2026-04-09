@@ -264,6 +264,17 @@
       }
     ]
   },
+  "varasuchus_bucking": {
+    "subtitle": "Varasuchus thrashes violently",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/varasuchus/varasuchus_bucking",
+        "volume": 1.6,
+        "pitch": 1.0,
+        "attenuation_distance": 20
+      }
+    ]
+  },
   "cindervane_grumble3": {
     "subtitle": "Cindervane grumbles",
     "sounds": [

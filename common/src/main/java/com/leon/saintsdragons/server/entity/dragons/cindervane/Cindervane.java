@@ -3028,7 +3028,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
      * Check if this amphithere can be bound (not flying, not dying, etc.)
      */
     public boolean canBeBound() {
-        return !isFlying() && !isDying() && !isAccelerating();
+        return !isDying() && !isAccelerating();
     }
 
     @Override
