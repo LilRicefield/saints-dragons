@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
@@ -217,7 +218,7 @@ public class DirectSwimWanderGoal extends Goal {
             cursor.set(targetBlockX, startY, targetBlockZ);
 
             // Never trigger synchronous chunk loading from AI goals on server thread.
-            if (!mob.level().hasChunkAt(cursor)) {
+            if (!isBlockAreaLoaded(targetBlockX, targetBlockZ, targetBlockX, targetBlockZ)) {
                 continue;
             }
 
@@ -278,8 +279,7 @@ public class DirectSwimWanderGoal extends Goal {
                 double rad = Math.toRadians(angle);
                 int x = start.getX() + (int) (Math.cos(rad) * radius);
                 int z = start.getZ() + (int) (Math.sin(rad) * radius);
-                BlockPos probe = new BlockPos(x, start.getY(), z);
-                if (!mob.level().hasChunkAt(probe)) {
+                if (!isBlockAreaLoaded(x - 1, z - 1, x + 1, z + 1)) {
                     continue;
                 }
 
@@ -317,6 +317,9 @@ public class DirectSwimWanderGoal extends Goal {
     }
 
     private boolean isLineObstructed(Vec3 from, Vec3 to) {
+        if (!isRayAreaLoaded(from, to)) {
+            return true;
+        }
         HitResult hit = mob.level().clip(new ClipContext(
                 from, to,
                 ClipContext.Block.COLLIDER,
@@ -324,6 +327,36 @@ public class DirectSwimWanderGoal extends Goal {
                 mob
         ));
         return hit.getType() != HitResult.Type.MISS;
+    }
+
+    private boolean isRayAreaLoaded(Vec3 from, Vec3 to) {
+        int minX = Mth.floor(Math.min(from.x, to.x)) - 1;
+        int maxX = Mth.floor(Math.max(from.x, to.x)) + 1;
+        int minZ = Mth.floor(Math.min(from.z, to.z)) - 1;
+        int maxZ = Mth.floor(Math.max(from.z, to.z)) + 1;
+        return isBlockAreaLoaded(minX, minZ, maxX, maxZ);
+    }
+
+    private boolean isBlockAreaLoaded(int minBlockX, int minBlockZ, int maxBlockX, int maxBlockZ) {
+        int minChunkX = SectionPos.blockToSectionCoord(Math.min(minBlockX, maxBlockX));
+        int maxChunkX = SectionPos.blockToSectionCoord(Math.max(minBlockX, maxBlockX));
+        int minChunkZ = SectionPos.blockToSectionCoord(Math.min(minBlockZ, maxBlockZ));
+        int maxChunkZ = SectionPos.blockToSectionCoord(Math.max(minBlockZ, maxBlockZ));
+
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                if (!isChunkLoaded(chunkX, chunkZ)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean isChunkLoaded(int chunkX, int chunkZ) {
+        int sampleX = (chunkX << 4) + 8;
+        int sampleZ = (chunkZ << 4) + 8;
+        return mob.level().hasChunkAt(new BlockPos(sampleX, Mth.floor(mob.getY()), sampleZ));
     }
 
 }

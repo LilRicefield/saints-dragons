@@ -6,10 +6,6 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
-/**
- * Dedicated animation handler for Volitans.
- * First pass focuses on stable locomotion loops: idle/walk/run.
- */
 public final class VolitansAnimationHandler {
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.volitans.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.volitans.walk");
@@ -131,7 +127,7 @@ public final class VolitansAnimationHandler {
         }
 
         if (dragon.isInWaterOrBubble() && !dragon.isFlying()) {
-            if (state.isMoving()) {
+            if (dragon.isSwimmingMoving()) {
                 state.setAndContinue(SWIM);
             } else {
                 state.setAndContinue(SWIM_IDLE);

@@ -915,6 +915,26 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         return !isFlying() && getEffectiveGroundState() == 2;
     }
 
+    public boolean isSwimmingMoving() {
+        if (!isInWaterOrBubble() || isFlying()) {
+            return false;
+        }
+
+        if (this.getNavigation().isInProgress() && this.getNavigation().getPath() != null) {
+            return true;
+        }
+
+        if (this.isVehicle()) {
+            float forward = Math.abs(this.entityData.get(DATA_RIDER_FORWARD));
+            float strafe = Math.abs(this.entityData.get(DATA_RIDER_STRAFE));
+            if (forward > 0.03F || strafe > 0.03F) {
+                return true;
+            }
+        }
+
+        return this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D;
+    }
+
     @Override
     public void setRunning(boolean running) {
     }
