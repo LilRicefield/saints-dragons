@@ -83,7 +83,8 @@ public class CameraRollMixin {
             method = "setRotation",
             at = @At(
                     value = "INVOKE",
-                    target = "Lorg/joml/Quaternionf;rotationYXZ(FFF)Lorg/joml/Quaternionf;"
+                    target = "Lorg/joml/Quaternionf;rotationYXZ(FFF)Lorg/joml/Quaternionf;",
+                    remap = false
             ),
             index = 2
     )
