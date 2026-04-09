@@ -18,6 +18,7 @@
     "taming_chance_hearty": 100.0,
     "egg_hatch_chance_normal": 2.0,
     "egg_drop_chance": 0.12,
+    "scale_drop_chance_brush": 0.3,
     "aggressive_wild": false
   }
 }

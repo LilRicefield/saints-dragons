@@ -29,14 +29,17 @@ public class FabricLootTableModifier {
                     .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
             DragonAttributeConfig ignivorusConfig = DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+            DragonAttributeConfig volitansConfig = DragonAttributeConfigLoader.getInstance()
+                    .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
 
             double raevyxOutpostChance = clampChance(raevyxConfig.extraDouble("egg_loot_pillager_outpost", 0.2D));
-            double raevyxShipwreckChance = clampChance(raevyxConfig.extraDouble("egg_loot_shipwreck_treasure", 0.15D));
             double raevyxAncientChance = clampChance(raevyxConfig.extraDouble("egg_loot_ancient_city", 0.15D));
 
             double ignivorusBastionChance = clampChance(ignivorusConfig.extraDouble("egg_loot_bastion_treasure", 0.15D));
             double ignivorusBridgeChance = clampChance(ignivorusConfig.extraDouble("egg_loot_nether_bridge", 0.15D));
             double ignivorusAncientChance = clampChance(ignivorusConfig.extraDouble("egg_loot_ancient_city", 0.10D));
+
+            double volitansShipwreckChance = clampChance(volitansConfig.extraDouble("egg_loot_shipwreck_treasure", 0.12D));
 
             // Add Raevyx Egg to Pillager Outpost chests
             if (PILLAGER_OUTPOST_CHEST.equals(id)) {
@@ -51,13 +54,13 @@ public class FabricLootTableModifier {
                 }
             }
 
-            // Add Raevyx Egg to Shipwreck Treasure chests
+            // Add Volitans Egg to Shipwreck Treasure chests
             if (SHIPWRECK_TREASURE_CHEST.equals(id)) {
-                if (raevyxShipwreckChance > 0.0D) {
+                if (volitansShipwreckChance > 0.0D) {
                     LootPool.Builder poolBuilder = LootPool.lootPool()
                             .setRolls(ConstantValue.exactly(1))
-                            .when(LootItemRandomChanceCondition.randomChance((float) raevyxShipwreckChance))
-                            .add(LootItem.lootTableItem(ModItems.RAEVYX_EGG.get())
+                            .when(LootItemRandomChanceCondition.randomChance((float) volitansShipwreckChance))
+                            .add(LootItem.lootTableItem(ModItems.VOLITANS_EGG.get())
                                     .apply(SetItemCountFunction.setCount(ConstantValue.exactly(1))));
 
                     tableBuilder.pool(poolBuilder.build());

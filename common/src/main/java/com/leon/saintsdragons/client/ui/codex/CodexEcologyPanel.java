@@ -65,7 +65,6 @@ public class CodexEcologyPanel {
     );
     private static final List<ResourceLocation> STEGONAUT_DROPS = List.of(
             new ResourceLocation("saintsdragons", "stegonaut_scale"),
-            new ResourceLocation("minecraft", "amethyst_shard"),
             new ResourceLocation("saintsdragons", "stegonaut_egg")
     );
     private static final List<ResourceLocation> VOLITANS_FAVORITE_FOODS = List.of(

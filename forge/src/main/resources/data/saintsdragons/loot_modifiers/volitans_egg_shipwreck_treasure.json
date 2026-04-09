@@ -6,9 +6,9 @@
       "loot_table_id": "minecraft:chests/shipwreck_treasure"
     }
   ],
-  "item": "saintsdragons:raevyx_egg",
+  "item": "saintsdragons:volitans_egg",
   "count": 1,
-  "chance": 0.15,
-  "dragon_id": "saintsdragons:raevyx",
+  "chance": 0.12,
+  "dragon_id": "saintsdragons:volitans",
   "config_key": "egg_loot_shipwreck_treasure"
 }

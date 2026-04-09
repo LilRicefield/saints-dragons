@@ -3,6 +3,9 @@
   "armor": 6.0,
   "flying_speed": 0.38,
   "extra": {
-    "egg_hatch_chance_normal": 3.0
+    "egg_hatch_chance_normal": 3.0,
+    "egg_loot_shipwreck_treasure": 0.12,
+    "egg_drop_chance": 0.12,
+    "scale_drop_chance_brush": 0.3
   }
 }
