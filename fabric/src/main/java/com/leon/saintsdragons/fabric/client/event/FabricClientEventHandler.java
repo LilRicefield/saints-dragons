@@ -30,7 +30,6 @@ import java.lang.reflect.Method;
 
 public class FabricClientEventHandler {
     private static final double[] randomTremorOffsets = new double[3];
-    private static float currentFirstPersonRoll = 0.0f;
 
     // Raevyx takeoff camera zoom transition
     private static float raevyxCameraZoom = DragonRideCameraTuning.RAEVYX.grounded();
@@ -106,7 +105,6 @@ public class FabricClientEventHandler {
     public static void onComputeCamera(Camera camera, float partialTicks) {
         Entity player = Minecraft.getInstance().getCameraEntity();
         if (player == null) return;
-        currentFirstPersonRoll = 0.0f;
 
         // Dragon riding camera adjustments - Raevyx
         if (player.isPassenger() && player.getVehicle() instanceof Raevyx raevyx) {
@@ -457,10 +455,6 @@ public class FabricClientEventHandler {
 
         // Screen shake detection and application
         applyScreenShake(camera, player, partialTicks);
-    }
-
-    public static float getCurrentFirstPersonRoll() {
-        return currentFirstPersonRoll;
     }
 
     private static void applyScreenShake(Camera camera, Entity player, float partialTicks) {

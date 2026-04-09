@@ -11,5 +11,4 @@ public interface CameraAccessor {
     void saintsdragons$invokeSetRotation(float yaw, float pitch);
     float saintsdragons$invokeGetXRot();
     float saintsdragons$invokeGetYRot();
-    void saintsdragons$setRoll(float roll);
 }
