@@ -217,11 +217,11 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.egg_drop_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.egg_drop_chance"),
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.scale_drop_chance_brush"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.CINDERVANE_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.CINDERVANE_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
@@ -273,11 +273,11 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_drop_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_drop_chance"),
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.scale_drop_chance_brush"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.STEGONAUT_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.STEGONAUT_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
@@ -379,19 +379,19 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_EGG_STORM_INSTANT_CHANCE::get,
                 ForgeDragonAttributesConfig.RAEVYX_EGG_STORM_INSTANT_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_pillager_outpost"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_pillager_outpost"),
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST::get,
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_ancient_city"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_ancient_city"),
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY::get,
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_drop_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_drop_chance"),
                 ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.scale_drop_chance_brush"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.RAEVYX_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.RAEVYX_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
@@ -459,11 +459,11 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_drop_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_drop_chance"),
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.scale_drop_chance_brush"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.VARASUCHUS_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
@@ -555,15 +555,15 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_ignite_block_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_ignite_block_chance"),
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_on_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_on_chance"),
                 ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_off_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_off_chance"),
                 ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE::set,
                 null));
@@ -599,23 +599,23 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_bastion_treasure"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_bastion_treasure"),
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_nether_bridge"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_nether_bridge"),
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_NETHER_BRIDGE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_NETHER_BRIDGE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_ancient_city"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_ancient_city"),
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_drop_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_drop_chance"),
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.scale_drop_chance_brush"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.IGNIVORUS_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
@@ -763,15 +763,15 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL::get,
                 ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.scale_drop_chance_brush"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"),
                 ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"),
                 ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE::set,
                 null));
@@ -779,11 +779,11 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_loot_shipwreck_treasure"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_loot_shipwreck_treasure"),
                 ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE::get,
                 ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"),
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"),
                 ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE::set,
                 null));

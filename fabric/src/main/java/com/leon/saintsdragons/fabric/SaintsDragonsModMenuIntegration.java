@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -562,6 +563,31 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         category.addEntry(entryBuilder.startSubCategory(label, rawEntries).setExpanded(false).build());
     }
 
+    private static AbstractConfigListEntry<Double> buildPercentChanceEntry(ConfigEntryBuilder entryBuilder,
+                                                                           Component label,
+                                                                           double storedValue,
+                                                                           double defaultStoredValue,
+                                                                           DoubleConsumer saveConsumer) {
+        return entryBuilder.startDoubleField(label, toPercentChance(storedValue))
+                .setDefaultValue(toPercentChance(defaultStoredValue))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> saveConsumer.accept(fromPercentChance(value)))
+                .build();
+    }
+
+    private static double toPercentChance(double storedValue) {
+        return clampChance(storedValue) * 100.0D;
+    }
+
+    private static double fromPercentChance(double percentValue) {
+        return clampChance(percentValue / 100.0D);
+    }
+
+    private static double clampChance(double value) {
+        return Math.max(0.0D, Math.min(1.0D, value));
+    }
+
     private void addCindervaneAttributes(ConfigCategory category,
                                          ConfigEntryBuilder entryBuilder,
                                          CindervaneAttributeBuffer buffer,
@@ -645,18 +671,16 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.egg_drop_chance"), buffer.eggDropChance)
-                .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggDropChance = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.scale_drop_chance_brush"), buffer.scaleDropChanceBrush)
-                .setDefaultValue(defaults.extraDouble("scale_drop_chance_brush", 0.30D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.scaleDropChanceBrush = value)
-                .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.cindervane.egg_drop_chance"),
+                buffer.eggDropChance,
+                defaults.extraDouble("egg_drop_chance", 0.12D),
+                value -> buffer.eggDropChance = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.cindervane.scale_drop_chance_brush"),
+                buffer.scaleDropChanceBrush,
+                defaults.extraDouble("scale_drop_chance_brush", 0.30D),
+                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_explosion_damage"), buffer.fireBodyExplosionDamage)
                 .setDefaultValue(defaults.extraDouble("fire_body_explosion_damage", 200.0D))
                 .setMin(0.0D)
@@ -734,18 +758,16 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_drop_chance"), buffer.eggDropChance)
-                .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggDropChance = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.scale_drop_chance_brush"), buffer.scaleDropChanceBrush)
-                .setDefaultValue(defaults.extraDouble("scale_drop_chance_brush", 0.30D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.scaleDropChanceBrush = value)
-                .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.stegonaut.egg_drop_chance"),
+                buffer.eggDropChance,
+                defaults.extraDouble("egg_drop_chance", 0.12D),
+                value -> buffer.eggDropChance = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.stegonaut.scale_drop_chance_brush"),
+                buffer.scaleDropChanceBrush,
+                defaults.extraDouble("scale_drop_chance_brush", 0.30D),
+                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
@@ -895,30 +917,26 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.eggStormInstantChance = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_pillager_outpost"), buffer.eggLootPillagerOutpost)
-                .setDefaultValue(defaults.extraDouble("egg_loot_pillager_outpost", 0.20D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggLootPillagerOutpost = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_ancient_city"), buffer.eggLootAncientCity)
-                .setDefaultValue(defaults.extraDouble("egg_loot_ancient_city", 0.15D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggLootAncientCity = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.egg_drop_chance"), buffer.eggDropChance)
-                .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggDropChance = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.scale_drop_chance_brush"), buffer.scaleDropChanceBrush)
-                .setDefaultValue(defaults.extraDouble("scale_drop_chance_brush", 0.35D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.scaleDropChanceBrush = value)
-                .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_pillager_outpost"),
+                buffer.eggLootPillagerOutpost,
+                defaults.extraDouble("egg_loot_pillager_outpost", 0.20D),
+                value -> buffer.eggLootPillagerOutpost = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_ancient_city"),
+                buffer.eggLootAncientCity,
+                defaults.extraDouble("egg_loot_ancient_city", 0.15D),
+                value -> buffer.eggLootAncientCity = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.raevyx.egg_drop_chance"),
+                buffer.eggDropChance,
+                defaults.extraDouble("egg_drop_chance", 0.12D),
+                value -> buffer.eggDropChance = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.raevyx.scale_drop_chance_brush"),
+                buffer.scaleDropChanceBrush,
+                defaults.extraDouble("scale_drop_chance_brush", 0.35D),
+                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.raevyx.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
@@ -1018,18 +1036,16 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_drop_chance"), buffer.eggDropChance)
-                .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggDropChance = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.scale_drop_chance_brush"), buffer.scaleDropChanceBrush)
-                .setDefaultValue(defaults.extraDouble("scale_drop_chance_brush", 0.30D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.scaleDropChanceBrush = value)
-                .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.varasuchus.egg_drop_chance"),
+                buffer.eggDropChance,
+                defaults.extraDouble("egg_drop_chance", 0.12D),
+                value -> buffer.eggDropChance = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.varasuchus.scale_drop_chance_brush"),
+                buffer.scaleDropChanceBrush,
+                defaults.extraDouble("scale_drop_chance_brush", 0.30D),
+                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.varasuchus.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
@@ -1196,24 +1212,21 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(5.0D)
                 .setSaveConsumer(value -> buffer.fireBreathFlameLifetimeMultiplier = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_ignite_block_chance"), buffer.fireBreathIgniteBlockChance)
-                .setDefaultValue(defaults.extraDouble("fire_breath_ignite_block_chance", 1.0D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.fireBreathIgniteBlockChance = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_on_chance"), buffer.phase2ToggleOnChance)
-                .setDefaultValue(defaults.extraDouble("phase2_toggle_on_chance", 0.85D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.phase2ToggleOnChance = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_off_chance"), buffer.phase2ToggleOffChance)
-                .setDefaultValue(defaults.extraDouble("phase2_toggle_off_chance", 0.05D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.phase2ToggleOffChance = value)
-                .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_ignite_block_chance"),
+                buffer.fireBreathIgniteBlockChance,
+                defaults.extraDouble("fire_breath_ignite_block_chance", 1.0D),
+                value -> buffer.fireBreathIgniteBlockChance = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_on_chance"),
+                buffer.phase2ToggleOnChance,
+                defaults.extraDouble("phase2_toggle_on_chance", 0.85D),
+                value -> buffer.phase2ToggleOnChance = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_off_chance"),
+                buffer.phase2ToggleOffChance,
+                defaults.extraDouble("phase2_toggle_off_chance", 0.05D),
+                value -> buffer.phase2ToggleOffChance = value));
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_min_ticks"), buffer.phase2DecisionMinTicks)
                 .setDefaultValue(defaults.extraDouble("phase2_decision_min_ticks", 60.0D))
                 .setMin(1.0D)
@@ -1232,36 +1245,31 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(300.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_bastion_treasure"), buffer.eggLootBastionTreasure)
-                .setDefaultValue(defaults.extraDouble("egg_loot_bastion_treasure", 0.15D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggLootBastionTreasure = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_nether_bridge"), buffer.eggLootNetherBridge)
-                .setDefaultValue(defaults.extraDouble("egg_loot_nether_bridge", 0.15D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggLootNetherBridge = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_ancient_city"), buffer.eggLootAncientCity)
-                .setDefaultValue(defaults.extraDouble("egg_loot_ancient_city", 0.10D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggLootAncientCity = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_drop_chance"), buffer.eggDropChance)
-                .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggDropChance = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.scale_drop_chance_brush"), buffer.scaleDropChanceBrush)
-                .setDefaultValue(defaults.extraDouble("scale_drop_chance_brush", 0.35D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.scaleDropChanceBrush = value)
-                .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_bastion_treasure"),
+                buffer.eggLootBastionTreasure,
+                defaults.extraDouble("egg_loot_bastion_treasure", 0.15D),
+                value -> buffer.eggLootBastionTreasure = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_nether_bridge"),
+                buffer.eggLootNetherBridge,
+                defaults.extraDouble("egg_loot_nether_bridge", 0.15D),
+                value -> buffer.eggLootNetherBridge = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_ancient_city"),
+                buffer.eggLootAncientCity,
+                defaults.extraDouble("egg_loot_ancient_city", 0.10D),
+                value -> buffer.eggLootAncientCity = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.egg_drop_chance"),
+                buffer.eggDropChance,
+                defaults.extraDouble("egg_drop_chance", 0.12D),
+                value -> buffer.eggDropChance = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.scale_drop_chance_brush"),
+                buffer.scaleDropChanceBrush,
+                defaults.extraDouble("scale_drop_chance_brush", 0.35D),
+                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.ignivorus.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
@@ -1463,42 +1471,37 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(4.0D)
                 .setSaveConsumer(value -> buffer.roarAirWaterPoisonLevel = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.scale_drop_chance_brush"), buffer.scaleDropChanceBrush)
-                .setDefaultValue(defaults.extraDouble("scale_drop_chance_brush", 0.30D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.scaleDropChanceBrush = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"), buffer.spineDropChance)
-                .setDefaultValue(defaults.extraDouble("spine_drop_chance", 1.0D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.spineDropChance = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"), buffer.fishDropChance)
-                .setDefaultValue(defaults.extraDouble("fish_drop_chance", 0.40D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.fishDropChance = value)
-                .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.volitans.scale_drop_chance_brush"),
+                buffer.scaleDropChanceBrush,
+                defaults.extraDouble("scale_drop_chance_brush", 0.30D),
+                value -> buffer.scaleDropChanceBrush = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"),
+                buffer.spineDropChance,
+                defaults.extraDouble("spine_drop_chance", 1.0D),
+                value -> buffer.spineDropChance = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"),
+                buffer.fishDropChance,
+                defaults.extraDouble("fish_drop_chance", 0.40D),
+                value -> buffer.fishDropChance = value));
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.egg_hatch_chance_normal"), buffer.eggHatchChanceNormal)
                 .setDefaultValue(defaults.extraDouble("egg_hatch_chance_normal", 3.0D))
                 .setMin(1.0D)
                 .setMax(200.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.egg_loot_shipwreck_treasure"), buffer.eggLootShipwreckTreasure)
-                .setDefaultValue(defaults.extraDouble("egg_loot_shipwreck_treasure", 0.12D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggLootShipwreckTreasure = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"), buffer.eggDropChance)
-                .setDefaultValue(defaults.extraDouble("egg_drop_chance", 0.12D))
-                .setMin(0.0D)
-                .setMax(1.0D)
-                .setSaveConsumer(value -> buffer.eggDropChance = value)
-                .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.volitans.egg_loot_shipwreck_treasure"),
+                buffer.eggLootShipwreckTreasure,
+                defaults.extraDouble("egg_loot_shipwreck_treasure", 0.12D),
+                value -> buffer.eggLootShipwreckTreasure = value));
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"),
+                buffer.eggDropChance,
+                defaults.extraDouble("egg_drop_chance", 0.12D),
+                value -> buffer.eggDropChance = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.volitans.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", true))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)

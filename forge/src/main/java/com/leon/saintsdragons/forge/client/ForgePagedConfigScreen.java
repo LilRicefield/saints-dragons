@@ -339,6 +339,86 @@ public abstract class ForgePagedConfigScreen extends Screen {
         }
     }
 
+    protected static final class PercentDoubleEntry extends ConfigEntry {
+        private final DoubleSupplier getter;
+        private final DoubleConsumer setter;
+        private final Runnable saver;
+        private String value;
+        private EditBox editBox;
+
+        protected PercentDoubleEntry(Component label, DoubleSupplier getter, DoubleConsumer setter, Runnable saver) {
+            super(label);
+            this.getter = getter;
+            this.setter = setter;
+            this.saver = saver;
+            this.value = formatDouble(clampChance(getter.getAsDouble()) * 100.0D);
+        }
+
+        @Override
+        protected void addWidgets(ForgePagedConfigScreen screen) {
+            editBox = new EditBox(screen.font, inputX, y, inputWidth, 18, label);
+            editBox.setValue(value);
+            editBox.setFilter(text -> text.isEmpty() || text.matches("-?\\d*(\\.\\d*)?"));
+            screen.addRenderableWidget(editBox);
+        }
+
+        @Override
+        protected void updateWidgetPositions() {
+            editBox.setX(inputX);
+            editBox.setY(y);
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            editBox.render(graphics, mouseX, mouseY, partialTick);
+        }
+
+        @Override
+        protected void setVisible(boolean visible) {
+            editBox.setVisible(visible);
+            editBox.active = visible;
+        }
+
+        @Override
+        protected void storeValue() {
+            if (editBox != null) {
+                value = editBox.getValue();
+            }
+        }
+
+        @Override
+        protected void applyValue() {
+            if (value == null || value.isBlank()) {
+                return;
+            }
+            try {
+                double parsedPercent = Double.parseDouble(value);
+                setter.accept(clampChance(parsedPercent / 100.0D));
+                if (saver != null) {
+                    saver.run();
+                }
+            } catch (NumberFormatException ignored) {
+                // Keep previous value if parsing fails.
+            }
+        }
+
+        @Override
+        protected int getHeight() {
+            return 24;
+        }
+
+        private static double clampChance(double value) {
+            return Math.max(0.0D, Math.min(1.0D, value));
+        }
+
+        private static String formatDouble(double value) {
+            if (value == (long) value) {
+                return String.format(Locale.ROOT, "%d", (long) value);
+            }
+            return String.format(Locale.ROOT, "%.4f", value);
+        }
+    }
+
     protected static final class IntEntry extends ConfigEntry {
         private final IntSupplier getter;
         private final IntConsumer setter;
