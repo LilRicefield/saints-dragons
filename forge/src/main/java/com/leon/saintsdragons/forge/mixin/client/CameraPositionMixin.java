@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.forge.mixin.client;
 
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
 import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
+import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -114,8 +114,8 @@ public abstract class CameraPositionMixin {
     }
 
     private static boolean isFirstPersonBankingCameraEnabled() {
-        return SaintsDragonsConfig.BARREL_ROLL_ENABLED == null
-                || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
+        return ForgeDragonAttributesConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED == null
+                || ForgeDragonAttributesConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get();
     }
 
     private static float getBodyRollDegrees(RideableDragonBase dragon, float partialTick) {

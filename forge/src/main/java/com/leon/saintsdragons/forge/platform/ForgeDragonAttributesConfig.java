@@ -174,6 +174,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue NULLJAW_ARMOR;
 
     // Others (NPCs, misc)
+    public static ForgeConfigSpec.BooleanValue FIRST_PERSON_BANKING_CAMERA_ENABLED;
     public static ForgeConfigSpec.IntValue IVY_RESTOCK_INTERVAL;
 
     static {
@@ -429,6 +430,9 @@ public final class ForgeDragonAttributesConfig {
 
         // Others (NPCs and Miscellaneous)
         builder.comment("Other Configuration (NPCs, etc.)").push("others");
+        FIRST_PERSON_BANKING_CAMERA_ENABLED = builder
+                .comment("Enable first-person banking and barrel-roll camera effects while riding dragons")
+                .define("first_person_banking_camera", true);
         builder.comment("Ivy the Dragon Merchant");
         IVY_RESTOCK_INTERVAL = builder
                 .comment("Ticks between Ivy's trade restocks (20 ticks = 1 second, 24000 = 20 minutes)")

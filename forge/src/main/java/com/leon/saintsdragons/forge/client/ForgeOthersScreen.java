@@ -41,6 +41,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.BARREL_ROLL_ENABLED::save
         ));
         entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera"),
+                () -> ForgeDragonAttributesConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get(),
+                val -> ForgeDragonAttributesConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.set(val),
+                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
+        ));
+        entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
                 () -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get(),
                 val -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.set(val),

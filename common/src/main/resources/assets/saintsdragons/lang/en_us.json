@@ -629,6 +629,8 @@
   "saintsdragons.config_screen.others.screen_shake.tooltip": "Disables dragon and ability-driven camera shake effects when turned off",
   "saintsdragons.config_screen.others.barrel_roll": "Enable Barrel Roll",
   "saintsdragons.config_screen.others.barrel_roll.tooltip": "Disables rider-triggered barrel roll for all flying dragons when turned off",
+  "saintsdragons.config_screen.others.first_person_banking_camera": "Enable First-Person Banking Camera",
+  "saintsdragons.config_screen.others.first_person_banking_camera.tooltip": "Disables first-person banking and barrel-roll camera effects while riding dragons when turned off",
   "saintsdragons.config_screen.others.stegonaut_buffs": "Enable Stegonaut Buffs",
   "saintsdragons.config_screen.others.stegonaut_buffs.tooltip": "Disables both the Stegonaut passive aura and the bound binder's portable buff when turned off",
   "saintsdragons.config_screen.others.hunger_decay": "Enable Hunger Decay",
