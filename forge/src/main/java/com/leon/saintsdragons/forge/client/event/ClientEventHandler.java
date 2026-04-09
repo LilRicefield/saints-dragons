@@ -9,13 +9,16 @@ import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundControlle
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.forge.client.accessor.CameraAccessor;
+import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
+import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import net.minecraft.client.Minecraft;
@@ -82,6 +85,10 @@ public class ClientEventHandler {
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {
         Entity player = Minecraft.getInstance().getCameraEntity();
         if (player == null) return;
+        if (!applyBodFirstPersonDragonCamera(player, event)) {
+            CameraLeanData.reset();
+            DragonCameraState.clearRoll();
+        }
 
 
         // Dragon riding camera adjustments
@@ -163,21 +170,7 @@ public class ClientEventHandler {
                 raevyxCameraPitch += (raevyxTargetPitch - raevyxCameraPitch) * raevyxPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + raevyxCameraPitch, -90.0f, 90.0f));
             } else {
-                // First person - anchor to saddle bone
-                float partialTick = (float) event.getPartialTick();
-                float firstPersonRoll = -(raevyx.getBankAngleDegrees(partialTick)
-                        + raevyx.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG);
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        raevyx,
-                        partialTick,
-                        firstPersonRoll,
-                        ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
-                );
-
-                // Apply camera roll to match the body rotation in first person only.
-                if (raevyx.isFlying()) {
-                    event.setRoll(firstPersonRoll);
-                }
+                // First person is handled by the Forge BOD-style camera mixins.
             }
         } else {
             // Reset zoom and shift when not riding Raevyx
@@ -237,22 +230,7 @@ public class ClientEventHandler {
                 cindervaneCameraPitch += (cindervaneTargetPitch - cindervaneCameraPitch) * cindervanePitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + cindervaneCameraPitch, -90.0f, 90.0f));
             } else {
-                // First person - anchor to saddle bone
-                float partialTick = (float) event.getPartialTick();
-                float firstPersonRoll = -(cindervane.getBankAngleDegrees(partialTick)
-                        + cindervane.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG);
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        cindervane,
-                        Math.max(seatIndex, 0),
-                        partialTick,
-                        firstPersonRoll,
-                        ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
-                );
-
-                // Apply camera roll to match dragon body rotation (first person only)
-                if (cindervane.isFlying()) {
-                    event.setRoll(firstPersonRoll);
-                }
+                // First person is handled by the Forge BOD-style camera mixins.
             }
         } else if (!(player.getVehicle() instanceof Cindervane)) {
             // Reset zoom and shift when not riding Cindervane
@@ -308,21 +286,7 @@ public class ClientEventHandler {
                 ignivorusCameraPitch += (ignivorusTargetPitch - ignivorusCameraPitch) * ignivorusPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + ignivorusCameraPitch, -90.0f, 90.0f));
             } else {
-                // First person - anchor to saddle bone
-                float partialTick = (float) event.getPartialTick();
-                float firstPersonRoll = -(ignivorus.getBankAngleDegrees(partialTick)
-                        + ignivorus.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG);
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        ignivorus,
-                        partialTick,
-                        firstPersonRoll,
-                        ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
-                );
-
-                // Apply camera roll to match dragon body rotation (first person only)
-                if (ignivorus.isFlying()) {
-                    event.setRoll(firstPersonRoll);
-                }
+                // First person is handled by the Forge BOD-style camera mixins.
             }
         } else if (!(player.getVehicle() instanceof Ignivorus)) {
             // Reset zoom and shift when not riding Ignivorus
@@ -438,21 +402,7 @@ public class ClientEventHandler {
                 volitansCameraPitch += (volitansTargetPitch - volitansCameraPitch) * volitansPitchBlendRate;
                 event.setPitch(Mth.clamp(event.getPitch() + volitansCameraPitch, -90.0f, 90.0f));
             } else {
-                // First person - anchor to saddle bone
-                float partialTick = (float) event.getPartialTick();
-                float firstPersonRoll = -(volitans.getBankAngleDegrees(partialTick)
-                        + volitans.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG);
-                DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                        volitans,
-                        partialTick,
-                        firstPersonRoll,
-                        ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
-                );
-
-                // Apply camera roll to match dragon body rotation (first person only)
-                if (volitans.isFlying()) {
-                    event.setRoll(firstPersonRoll);
-                }
+                // First person is handled by the Forge BOD-style camera mixins.
             }
         } else if (!(player.getVehicle() instanceof Volitans)) {
             volitansCameraZoom = DragonRideCameraTuning.VOLITANS.grounded();
@@ -509,6 +459,79 @@ public class ClientEventHandler {
         IgnivorusFireBreathSoundController.tick(minecraft);
         VolitansBreathSoundController.tick(minecraft);
         VolitansBurrowSoundController.tick(minecraft);
+    }
+
+    private static boolean applyBodFirstPersonDragonCamera(Entity player, ViewportEvent.ComputeCameraAngles event) {
+        if (event.getCamera().isDetached()) {
+            return false;
+        }
+
+        Entity vehicle = player.getVehicle();
+        if (!(vehicle instanceof RideableDragonBase dragon) || !usesBodFirstPersonCamera(dragon)) {
+            return false;
+        }
+
+        if (!isFirstPersonBankingCameraEnabled()) {
+            CameraLeanData.reset();
+            DragonCameraState.clearRoll();
+            return true;
+        }
+
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
+            CameraLeanData.reset();
+            DragonCameraState.clearRoll();
+            return true;
+        }
+
+        DragonCameraState.clearRoll();
+
+        float partialTick = (float) event.getPartialTick();
+        float rollDegrees = getBodyRollDegrees(dragon, partialTick);
+        float pitchDegrees = Mth.lerp(partialTick, dragon.xRotO, dragon.getXRot());
+        float yawSpeed = Mth.wrapDegrees(dragon.yBodyRot - dragon.yBodyRotO);
+        float yawLeanScale = 1.0f;
+
+        CameraLeanData.updateTarget(rollDegrees, pitchDegrees, yawSpeed, yawLeanScale);
+        CameraLeanData.update();
+
+        float cameraTilt = (float) CameraLeanData.getCameraTilt();
+        event.setRoll(event.getRoll() - rollDegrees + cameraTilt);
+
+        double leanX = CameraLeanData.getLeanX();
+        double leanY = CameraLeanData.getLeanY();
+        double leanZ = CameraLeanData.getLeanZ();
+        if (Math.abs(leanX) > 0.001 || Math.abs(leanY) > 0.001 || Math.abs(leanZ) > 0.001) {
+            event.getCamera().move(leanZ, leanY, leanX);
+        }
+        return true;
+    }
+
+    private static boolean usesBodFirstPersonCamera(RideableDragonBase dragon) {
+        return dragon instanceof Raevyx
+                || dragon instanceof Cindervane
+                || dragon instanceof Ignivorus
+                || dragon instanceof Volitans;
+    }
+
+    private static float getBodyRollDegrees(RideableDragonBase dragon, float partialTick) {
+        if (dragon instanceof Raevyx raevyx) {
+            return raevyx.getBankAngleDegrees(partialTick) + raevyx.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
+        }
+        if (dragon instanceof Cindervane cindervane) {
+            return cindervane.getBankAngleDegrees(partialTick) + cindervane.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
+        }
+        if (dragon instanceof Ignivorus ignivorus) {
+            return ignivorus.getBankAngleDegrees(partialTick) + ignivorus.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
+        }
+        if (dragon instanceof Volitans volitans) {
+            return volitans.getBankAngleDegrees(partialTick) + volitans.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
+        }
+        return 0.0f;
+    }
+
+    private static boolean isFirstPersonBankingCameraEnabled() {
+        return SaintsDragonsConfig.BARREL_ROLL_ENABLED == null
+                || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
     }
 }
 

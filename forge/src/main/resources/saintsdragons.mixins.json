@@ -10,6 +10,8 @@
   ],
   "client": [
     "client.CameraMixin",
+    "client.CameraPositionMixin",
+    "client.CameraRollMixin",
     "client.RiderMixin",
     "client.LivingEntityRendererMixin",
     "client.EntityRendererMixin"
