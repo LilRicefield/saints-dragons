@@ -66,7 +66,7 @@ public class AsyncFlightController {
         boolean landingTarget = this.isLandingTarget(this.currentWaypoint);
         double arrivalDist = this.calculateArrivalDistance(landingTarget);
         double distSq = this.host.position().distanceToSqr(this.currentWaypoint);
-        if (distSq <= arrivalDist * arrivalDist) {
+        if (this.hasReachedWaypoint(distSq, arrivalDist, landingTarget)) {
             this.onArrived();
             return;
         }
@@ -212,7 +212,12 @@ public class AsyncFlightController {
         AsyncFlightStuckDetector.StuckAction action = this.stuckDetector.handleStuck(this.maxRetries);
         if (action == AsyncFlightStuckDetector.StuckAction.FAILED) {
             this.state = PathState.FAILED;
+            this.currentWaypoint = null;
+            this.currentArrivalCallback = null;
+            this.waypointQueue.clear();
+            this.invalidatePathRequests();
             this.pathResolver.clearPathNodes();
+            this.movementExecutor.zeroVelocity();
         } else if (currentWaypoint != null) {
             this.state = PathState.STUCK;
             this.pathResolver.startFlyingPathAsync(currentWaypoint);
@@ -240,6 +245,13 @@ public class AsyncFlightController {
         return this.state;
     }
 
+    boolean hasReachedWaypoint(double distSq, double arrivalDist, boolean landingTarget) {
+        if (landingTarget) {
+            return this.host.onGround();
+        }
+        return distSq <= arrivalDist * arrivalDist;
+    }
+
     void setState(PathState state) {
         this.state = state;
     }
@@ -257,7 +269,9 @@ public class AsyncFlightController {
     }
 
     public boolean isIdle() {
-        return this.state == PathState.IDLE || this.state == PathState.ARRIVED;
+        return this.state == PathState.IDLE
+                || this.state == PathState.ARRIVED
+                || this.state == PathState.FAILED;
     }
 
     public Vec3 getCurrentWaypoint() {
@@ -299,7 +313,7 @@ public class AsyncFlightController {
         return horizontal.normalize();
     }
 
-    private boolean isLandingTarget(Vec3 waypoint) {
+    boolean isLandingTarget(Vec3 waypoint) {
         if (waypoint == null) {
             return false;
         }

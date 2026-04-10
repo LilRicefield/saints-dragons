@@ -96,11 +96,16 @@ public interface DragonFlightCapable {
 
     default void beginAiFlight() {
         setFlying(true);
-        setTakeoff(false);
+        boolean takeoffActive = isTakeoff();
+        if (!takeoffActive) {
+            setTakeoff(false);
+        }
         setLanding(false);
         setHovering(false);
         if (this instanceof RideableDragon rideable) {
-            rideable.setGoingUp(false);
+            if (!takeoffActive) {
+                rideable.setGoingUp(false);
+            }
             rideable.setGoingDown(false);
         }
     }

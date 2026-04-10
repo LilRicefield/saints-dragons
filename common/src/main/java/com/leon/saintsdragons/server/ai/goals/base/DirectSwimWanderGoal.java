@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -49,24 +50,21 @@ public class DirectSwimWanderGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        // Only use when in water, not being ridden, and no target
-        if (!mob.isInWaterOrBubble() || mob.isVehicle() || mob.getTarget() != null) {
+        if (!mob.isInWaterOrBubble() || mob.isVehicle() || mob.getTarget() != null || isAerialDragonState()) {
             return false;
         }
 
-        // Random chance to trigger
         if (mob.getRandom().nextInt(interval) != 0) {
             return false;
         }
 
-        // Try to find a random position
         this.targetPos = findRandomSwimTarget();
         return targetPos != null;
     }
 
     @Override
     public boolean canContinueToUse() {
-        if (!mob.isInWaterOrBubble() || mob.isVehicle() || mob.getTarget() != null) {
+        if (!mob.isInWaterOrBubble() || mob.isVehicle() || mob.getTarget() != null || isAerialDragonState()) {
             return false;
         }
 
@@ -86,13 +84,17 @@ public class DirectSwimWanderGoal extends Goal {
         this.recalcTimer = 0;
         this.obstructionCheckCooldown = 0;
         this.cachedObstructionResult = false;
-        this.mob.getNavigation().stop();
+        if (!isAerialDragonState()) {
+            this.mob.getNavigation().stop();
+        }
     }
 
     @Override
     public void stop() {
         this.targetPos = null;
-        // Gradually slow down
+        if (isAerialDragonState()) {
+            return;
+        }
         Vec3 vel = mob.getDeltaMovement();
         mob.setDeltaMovement(vel.x * 0.8, vel.y * 0.8, vel.z * 0.8);
     }
@@ -100,6 +102,11 @@ public class DirectSwimWanderGoal extends Goal {
     @Override
     public void tick() {
         if (targetPos == null) {
+            return;
+        }
+
+        if (isAerialDragonState()) {
+            stop();
             return;
         }
 
@@ -359,4 +366,8 @@ public class DirectSwimWanderGoal extends Goal {
         return mob.level().hasChunkAt(new BlockPos(sampleX, Mth.floor(mob.getY()), sampleZ));
     }
 
+    private boolean isAerialDragonState() {
+        return mob instanceof RideableDragonBase dragon
+                && (dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering());
+    }
 }

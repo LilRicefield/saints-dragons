@@ -27,6 +27,7 @@ class AsyncFlightMovementExecutor {
     public void executeMovement(Vec3 lookAheadTarget, Vec3 currentWaypoint, double speedModifier, double arrivalDist,
                                 boolean queueEmpty, boolean landingTarget) {
         Vec3 dragonPos = this.dragon.position();
+        Vec3 currentVelocity = this.dragon.getDeltaMovement();
         Vec3 target = lookAheadTarget != null ? lookAheadTarget : currentWaypoint;
         Vec3 toTarget = target.subtract(dragonPos);
         Vec3 toWaypoint = currentWaypoint.subtract(dragonPos);
@@ -62,7 +63,18 @@ class AsyncFlightMovementExecutor {
                 desiredVertical * desiredSpeed,
                 desiredDirection.z * desiredSpeed
         );
-        this.smoothedVelocity = lerpVelocity(this.smoothedVelocity, targetVelocity, landingTarget);
+        Vec3 velocityBaseline = this.smoothedVelocity;
+        if (velocityBaseline.lengthSqr() < 1.0E-4 && currentVelocity.lengthSqr() > 1.0E-4) {
+            velocityBaseline = currentVelocity;
+        }
+        this.smoothedVelocity = lerpVelocity(velocityBaseline, targetVelocity, landingTarget);
+        if (this.flightCapable.isTakeoff() && currentVelocity.y > 0.0D) {
+            this.smoothedVelocity = new Vec3(
+                    this.smoothedVelocity.x,
+                    Math.max(this.smoothedVelocity.y, currentVelocity.y),
+                    this.smoothedVelocity.z
+            );
+        }
         boolean shouldPreserveVerticalMotion = landingTarget
                 || this.flightCapable.isTakeoff()
                 || Math.abs(toWaypoint.y) > 1.0D

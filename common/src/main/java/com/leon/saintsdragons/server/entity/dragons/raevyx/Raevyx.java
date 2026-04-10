@@ -12,7 +12,6 @@ import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
-import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxTemptGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
@@ -3801,11 +3800,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.goalSelector.addGoal(9, new com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal<>(this, 1.0, 60));
         // Idle water behavior when no target: swim instead of passively sinking.
         this.goalSelector.addGoal(10, new com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
-        this.goalSelector.addGoal(10, new RaevyxTemptGoal(this, 1.2,
-                net.minecraft.world.item.crafting.Ingredient.of(net.minecraft.world.item.Items.SALMON,
-                                                               net.minecraft.world.item.Items.COD,
-                                                               net.minecraft.world.item.Items.PUFFERFISH), false));
-
         this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
         // Look goals that skip when being ridden (so rider has full control)
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {

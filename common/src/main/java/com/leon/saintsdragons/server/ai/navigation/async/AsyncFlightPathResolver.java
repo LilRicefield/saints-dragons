@@ -36,9 +36,18 @@ class AsyncFlightPathResolver {
             }
 
             double distToTarget = this.dragon.position().distanceTo(currentWaypoint);
-            if (path != null && path.getNodeCount() == 0 && distToTarget < this.component.calculateArrivalDistance()) {
-                this.component.onArrived();
-                return;
+            boolean landingTarget = this.component.isLandingTarget(currentWaypoint);
+            double arrivalDistance = this.component.calculateArrivalDistance(landingTarget);
+            if (path != null && path.getNodeCount() == 0) {
+                if (this.component.hasReachedWaypoint(distToTarget * distToTarget, arrivalDistance, landingTarget)) {
+                    this.component.onArrived();
+                    return;
+                }
+                if (landingTarget) {
+                    this.clearPathNodes();
+                    this.component.setState(AsyncFlightController.PathState.FOLLOWING);
+                    return;
+                }
             }
 
             if (path != null && path.getNodeCount() > 0) {
