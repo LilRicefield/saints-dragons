@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "saintsdragons:ivy_house",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 0,
+    "spacing": 128,
+    "separation": 5
+  }
+}

@@ -61,6 +61,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
 
         // Ivy the Dragon Merchant
         entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
+                () -> SaintsDragonsConfig.IVY_HOUSE_ENABLED.get(),
+                val -> SaintsDragonsConfig.IVY_HOUSE_ENABLED.set(val),
+                SaintsDragonsConfig.IVY_HOUSE_ENABLED::save
+        ));
         entries.add(new IntEntry(
                 Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
                 () -> ForgeDragonAttributesConfig.IVY_RESTOCK_INTERVAL.get(),
@@ -76,6 +82,7 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
         SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
         SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
         SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
+        SaintsDragonsConfig.IVY_HOUSE_ENABLED.save();
         ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
     }
 }

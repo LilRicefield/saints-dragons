@@ -202,6 +202,10 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
 
     @ConfigEntry.Category("others")
     @ConfigEntry.Gui.Tooltip
+    public boolean ivyHouseEnabled = true;
+
+    @ConfigEntry.Category("others")
+    @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 20, max = 72000)
     public int ivyRestockInterval = 24000;
 }

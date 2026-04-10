@@ -126,6 +126,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "stegonautBuffsEnabled" -> () -> holder().getConfig().stegonautBuffsEnabled;
             case "hungerDecayEnabled" -> () -> holder().getConfig().hungerDecayEnabled;
             case "happinessDecayEnabled" -> () -> holder().getConfig().happinessDecayEnabled;
+            case "ivyHouseEnabled" -> () -> holder().getConfig().ivyHouseEnabled;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -143,6 +144,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "stegonautBuffsEnabled" -> value -> holder().getConfig().stegonautBuffsEnabled = value;
             case "hungerDecayEnabled" -> value -> holder().getConfig().hungerDecayEnabled = value;
             case "happinessDecayEnabled" -> value -> holder().getConfig().happinessDecayEnabled = value;
+            case "ivyHouseEnabled" -> value -> holder().getConfig().ivyHouseEnabled = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
         };
     }

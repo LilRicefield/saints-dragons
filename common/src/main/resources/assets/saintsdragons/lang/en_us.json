@@ -330,6 +330,7 @@
   
   "text.autoconfig.saintsdragonsspawning.title": "Saint's Dragons Config",
   "text.autoconfig.saintsdragonsspawning.category.spawning": "Dragon Spawning",
+  "text.autoconfig.saintsdragonsspawning.category.others": "Others",
   
   "text.autoconfig.saintsdragonsspawning.option.raevyxSpawnWeight": "Raevyx Spawn Weight",
   "text.autoconfig.saintsdragonsspawning.option.raevyxSpawnWeight.@Tooltip": "How often Raevyx spawns (0 = disabled, higher = more common)",
@@ -638,7 +639,13 @@
   "saintsdragons.config_screen.others.happiness_decay": "Enable Happiness Decay",
   "saintsdragons.config_screen.others.happiness_decay.tooltip": "When turned off, tamed dragons no longer lose happiness over time from hunger pressure",
   "saintsdragons.config_screen.others.ivy": "Ivy the Dragon Merchant",
+  "saintsdragons.config_screen.others.ivy.enabled": "Enable Ivy House Worldgen",
+  "saintsdragons.config_screen.others.ivy.enabled.tooltip": "When turned off, Ivy's house no longer generates and Ivy no longer spawns from that structure in new or ungenerated chunks",
   "saintsdragons.config_screen.others.ivy.restock_interval": "Restock Interval (ticks)",
   "saintsdragons.config_screen.others.ivy.restock_interval.tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)",
+  "text.autoconfig.saintsdragonsspawning.option.ivyHouseEnabled": "Enable Ivy House Worldgen",
+  "text.autoconfig.saintsdragonsspawning.option.ivyHouseEnabled.@Tooltip": "When turned off, Ivy's house no longer generates and Ivy no longer spawns from that structure in new or ungenerated chunks",
+  "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval": "Ivy Restock Interval",
+  "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval.@Tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)",
   "saintsdragons.config_screen.others.dragon_terrain": "Dragon Anti-Stuck"
 }

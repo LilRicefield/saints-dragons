@@ -42,6 +42,7 @@ public final class SaintsDragonsConfig {
     public static final boolean STEGONAUT_BUFFS_ENABLED_DEFAULT = true;
     public static final boolean HUNGER_DECAY_ENABLED_DEFAULT = true;
     public static final boolean HAPPINESS_DECAY_ENABLED_DEFAULT = true;
+    public static final boolean IVY_HOUSE_ENABLED_DEFAULT = true;
 
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
@@ -93,6 +94,7 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.BooleanValue STEGONAUT_BUFFS_ENABLED;
     public static ConfigHelper.BooleanValue HUNGER_DECAY_ENABLED;
     public static ConfigHelper.BooleanValue HAPPINESS_DECAY_ENABLED;
+    public static ConfigHelper.BooleanValue IVY_HOUSE_ENABLED;
 
     private static volatile boolean initialized = false;
 
@@ -204,7 +206,16 @@ public final class SaintsDragonsConfig {
         HAPPINESS_DECAY_ENABLED = builder.defineBoolean("happinessDecayEnabled", HAPPINESS_DECAY_ENABLED_DEFAULT);
         builder.pop();
 
+        builder.push("others");
+        builder.comment("Global toggle for Ivy's house structure generation and Ivy spawning from that structure.");
+        IVY_HOUSE_ENABLED = builder.defineBoolean("ivyHouseEnabled", IVY_HOUSE_ENABLED_DEFAULT);
+        builder.pop();
+
         builder.build();
+    }
+
+    public static boolean isIvyHouseEnabled() {
+        return IVY_HOUSE_ENABLED == null || IVY_HOUSE_ENABLED.get();
     }
 
     private SaintsDragonsConfig() {

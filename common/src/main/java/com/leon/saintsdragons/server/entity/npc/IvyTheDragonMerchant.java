@@ -90,13 +90,16 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     private final HumanSoundHandler soundHandler;
 
-    private int restockTimer = getRestockInterval();
+    private final int restockInterval;
+    private int restockTimer;
 
     public IvyTheDragonMerchant(EntityType<? extends AbstractVillager> entityType, Level level) {
         super(entityType, level);
         this.setPersistenceRequired();
         this.lookControl = new HumanLookControl(this);
         this.soundHandler = new HumanSoundHandler(this, new IvySoundProfile());
+        this.restockInterval = Math.max(1, resolveRestockInterval());
+        this.restockTimer = this.restockInterval;
         this.idleVariantCooldown = IDLE_VARIANT_MIN_COOLDOWN + random.nextInt(IDLE_VARIANT_MAX_COOLDOWN - IDLE_VARIANT_MIN_COOLDOWN);
     }
 
@@ -324,7 +327,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private void tickRestocking() {
-        int interval = Math.max(1, getRestockInterval());
+        int interval = this.restockInterval;
         if (restockTimer > interval) {
             restockTimer = interval;
         }
@@ -371,7 +374,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         ItemStack result = new ItemStack(ModItems.HEARTY_DRAGON_MEAL.get(), HEARTY_MEAL_OUTPUT_COUNT);
         return new MerchantOffer(eggs, salmon, result, HEARTY_MEAL_MAX_USES, 0, 0.0f);
     }
-    private static int getRestockInterval() {
+    private static int resolveRestockInterval() {
         try {
             Class<?> forgeConfig = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
             java.lang.reflect.Field field = forgeConfig.getField("IVY_RESTOCK_INTERVAL");

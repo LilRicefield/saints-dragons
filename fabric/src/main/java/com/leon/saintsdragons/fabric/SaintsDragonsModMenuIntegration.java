@@ -326,6 +326,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.save();
             SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
             SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
+            SaintsDragonsConfig.IVY_HOUSE_ENABLED.save();
             persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer, nulljawBuffer);
             refreshLoadedDragonAttributesOnIntegratedServer();
         });
@@ -490,6 +491,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.happiness_decay.tooltip"))
          .setSaveConsumer(value -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.set(value))
           .build());
+        others.addEntry(entryBuilder.startBooleanToggle(
+                Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
+                SaintsDragonsConfig.IVY_HOUSE_ENABLED.get()
+        ).setDefaultValue(SaintsDragonsConfig.IVY_HOUSE_ENABLED_DEFAULT)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.ivy.enabled.tooltip"))
+         .setSaveConsumer(value -> SaintsDragonsConfig.IVY_HOUSE_ENABLED.set(value))
+         .build());
         others.addEntry(entryBuilder.startIntSlider(
                 Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
                 config.ivyRestockInterval,

@@ -6,7 +6,6 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.world.StegonautLushCaveSpawner;
 import com.leon.saintsdragons.server.world.VolitansUnderwaterSpawner;
-import com.leon.saintsdragons.server.world.VillageIvySpawner;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -34,7 +33,7 @@ public final class FabricServerEvents {
 
         ServerLifecycleEvents.SERVER_STOPPING.register(FabricServerEvents::handleServerStopping);
 
-        // Tick portable Stegonaut binder buffs and village Ivy spawner
+        // Tick portable Stegonaut binder buffs
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             if (server.getTickCount() % 20 == 0) {
                 for (var level : server.getAllLevels()) {
@@ -42,7 +41,6 @@ public final class FabricServerEvents {
                 }
             }
             for (var level : server.getAllLevels()) {
-                VillageIvySpawner.tick(level);
                 StegonautLushCaveSpawner.tick(level);
                 VolitansUnderwaterSpawner.tick(level);
             }
@@ -73,8 +71,6 @@ public final class FabricServerEvents {
             handlePlayerDisconnect(player);
         }
 
-        // Clean up village tracking
-        VillageIvySpawner.clearTracking();
         StegonautLushCaveSpawner.clearTracking();
         VolitansUnderwaterSpawner.clearTracking();
     }
