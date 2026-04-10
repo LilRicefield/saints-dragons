@@ -31,6 +31,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     /** Takeoff animation */
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.raevyx.takeoff");
 
+    /** Rider takeoff animation */
+    private static final RawAnimation RIDER_TAKEOFF = RawAnimation.begin().thenPlay("animation.raevyx.rider_takeoff");
+
     /** Flying glide animation */
     private static final RawAnimation FLY_GLIDE = RawAnimation.begin().thenLoop("animation.raevyx.fly_glide");
 
@@ -403,6 +406,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
 
     public void setupInstantActionController(AnimationController<Raevyx> controller) {
         controller.triggerableAnim("takeoff", TAKEOFF);
+        controller.triggerableAnim("rider_takeoff", RIDER_TAKEOFF);
         controller.triggerableAnim("raevyx_hurt",
                 RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
         controller.triggerableAnim("die",

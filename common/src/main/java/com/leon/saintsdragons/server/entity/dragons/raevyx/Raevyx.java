@@ -1386,7 +1386,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             return;
         }
         if (takeoff && !wasTakeoff && !level().isClientSide) {
-            triggerAnim("instant", "takeoff");
+            triggerAnim("instant", getControllingPassenger() != null ? "rider_takeoff" : "takeoff");
             float pitch = 0.94f + getRandom().nextFloat() * 0.12f;
             getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch, 56);
         }
