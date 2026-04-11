@@ -16,6 +16,7 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlock
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
+import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
@@ -100,6 +101,14 @@ public final class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .build("raevyx_lightning_chain"));
+
+    public static final Supplier<EntityType<RaevyxGroundRendTrailEntity>> RAEVYX_GROUND_REND_TRAIL =
+            REGISTER.register("raevyx_ground_rend_trail", () -> EntityType.Builder.<RaevyxGroundRendTrailEntity>of(RaevyxGroundRendTrailEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("raevyx_ground_rend_trail"));
 
     public static final Supplier<EntityType<CindervaneMagmaBlockEntity>> CINDERVANE_MAGMA_BLOCK =
             REGISTER.register("cindervane_magma_block", () -> EntityType.Builder.<CindervaneMagmaBlockEntity>of(CindervaneMagmaBlockEntity::new, MobCategory.MISC)

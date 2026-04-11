@@ -43,6 +43,7 @@ import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
+import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -98,7 +99,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.particles.ParticleTypes;
 
-
 //GeckoLib
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.*;
@@ -119,6 +119,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
     private static final float DEFAULT_DASH_DAMAGE = 10.0F;
     private static final int WALK_SOUND_DURATION_TICKS = 32;
+    private static final double GROUND_REND_BOLT_LINK_START_REACH = 1.1D;
+    private static final double GROUND_REND_MAX_LINK_DISTANCE_SQR = 16.0D;
+    private static final int GROUND_REND_BOLT_LIFETIME = 5;
     private static final int RUN_SOUND_DURATION_TICKS = 25;
     private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = WALK_SOUND_DURATION_TICKS;
     private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = RUN_SOUND_DURATION_TICKS;
@@ -390,6 +393,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private boolean groundRending = false;
     private Vec3 groundRendVec = Vec3.ZERO;
     private float groundRendTravelSpeed = 0.0F;
+    @Nullable
+    private Vec3 groundRendLeftTrailAnchor = null;
+    @Nullable
+    private Vec3 groundRendRightTrailAnchor = null;
 
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
@@ -1688,17 +1695,26 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // Ground Rend system
     public boolean isGroundRending() { return this.entityData.get(DATA_GROUND_RENDING); }
     public void setGroundRending(boolean rending) {
+        boolean wasGroundRending = this.groundRending;
         this.groundRending = rending;
         this.entityData.set(DATA_GROUND_RENDING, rending);
+        if (rending && !wasGroundRending) {
+            clearGroundRendTrailAnchors();
+        }
         if (!rending) {
             this.groundRendVec = Vec3.ZERO;
             this.groundRendTravelSpeed = 0.0F;
+            clearGroundRendTrailAnchors();
         }
     }
     public void setGroundRendVelocity(Vec3 vec) { this.groundRendVec = vec; }
     public float getGroundRendTravelSpeed() { return groundRendTravelSpeed; }
     public void setGroundRendTravelSpeed(float speed) {
         this.groundRendTravelSpeed = Math.max(0.0F, speed);
+    }
+    public void clearGroundRendTrailAnchors() {
+        this.groundRendLeftTrailAnchor = null;
+        this.groundRendRightTrailAnchor = null;
     }
     public float getRiderForwardInput() { return this.entityData.get(DATA_RIDER_FORWARD); }
 
@@ -4075,6 +4091,127 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             }
             pos = pos.add(step);
         }
+    }
+    public void spawnGroundRendTrailParticles(Vec3 forwardDir, double speed) {
+        if (!(this.level() instanceof ServerLevel server) || !this.onGround() || speed <= 0.0D) {
+            clearGroundRendTrailAnchors();
+            return;
+        }
+
+        Vec3 horizontal = new Vec3(forwardDir.x, 0.0D, forwardDir.z);
+        if (horizontal.lengthSqr() < 1.0E-6D) {
+            clearGroundRendTrailAnchors();
+            return;
+        }
+
+        horizontal = horizontal.normalize();
+        Vec3 right = new Vec3(-horizontal.z, 0.0D, horizontal.x);
+        Vec3 base = this.position()
+                .subtract(horizontal.scale(this.getBbWidth() * 0.42D))
+                .add(0.0D, 0.08D, 0.0D);
+        double spread = this.getBbWidth() * 0.26D;
+        double minY = this.getBoundingBox().minY - 0.2D;
+
+        for (int i = 0; i < 5; i++) {
+            double lateral = (i - 2) * spread * 0.6D + (this.random.nextDouble() - 0.5D) * 0.14D;
+            Vec3 sample = base.add(right.scale(lateral));
+            BlockPos groundPos = BlockPos.containing(sample.x, minY, sample.z);
+            BlockState groundState = this.level().getBlockState(groundPos);
+            if (groundState.isAir() || groundState.liquid()) {
+                groundPos = groundPos.below();
+                groundState = this.level().getBlockState(groundPos);
+            }
+            if (groundState.isAir() || groundState.liquid()) {
+                continue;
+            }
+
+            double particleY = groundPos.getY() + 1.02D;
+            server.sendParticles(
+                    new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, groundState),
+                    sample.x,
+                    particleY,
+                    sample.z,
+                    0,
+                    -horizontal.x * 0.12D + (this.random.nextDouble() - 0.5D) * 0.08D,
+                    0.08D + this.random.nextDouble() * 0.10D,
+                    -horizontal.z * 0.12D + (this.random.nextDouble() - 0.5D) * 0.08D,
+                    1.0D
+            );
+        }
+
+        spawnGroundRendLightningTrail(server, base, horizontal, right, -spread * 0.85D, false);
+        spawnGroundRendLightningTrail(server, base, horizontal, right, spread * 0.85D, true);
+    }
+
+    private void spawnGroundRendLightningTrail(ServerLevel server, Vec3 base, Vec3 forward, Vec3 right, double lateralOffset, boolean rightSideTrail) {
+        Vec3 anchorSample = base.add(right.scale(lateralOffset));
+        Vec3 currentAnchor = resolveGroundTrailPoint(anchorSample);
+        if (currentAnchor == null) {
+            setGroundRendTrailAnchor(rightSideTrail, null);
+            return;
+        }
+
+        Vec3 previousAnchor = getGroundRendTrailAnchor(rightSideTrail);
+        setGroundRendTrailAnchor(rightSideTrail, currentAnchor);
+
+        Vec3 start;
+        Vec3 end;
+        if (previousAnchor != null && previousAnchor.distanceToSqr(currentAnchor) <= GROUND_REND_MAX_LINK_DISTANCE_SQR) {
+            start = previousAnchor;
+            end = currentAnchor;
+        } else {
+            start = resolveGroundTrailPoint(anchorSample.subtract(forward.scale(GROUND_REND_BOLT_LINK_START_REACH)));
+            end = currentAnchor;
+            if (start == null) {
+                return;
+            }
+        }
+
+        if (start.distanceToSqr(end) < 0.04D) {
+            return;
+        }
+
+        float size = 0.56F + this.random.nextFloat() * 0.14F;
+        Vec3 midpoint = start.lerp(end, 0.5D);
+        server.addFreshEntity(new RaevyxGroundRendTrailEntity(server, start, end, size, GROUND_REND_BOLT_LIFETIME, this.random.nextLong()));
+        server.sendParticles(
+                ParticleTypes.ELECTRIC_SPARK,
+                midpoint.x,
+                midpoint.y,
+                midpoint.z,
+                1,
+                0.03D,
+                0.02D,
+                0.03D,
+                0.0D
+        );
+    }
+
+    @Nullable
+    private Vec3 getGroundRendTrailAnchor(boolean rightSideTrail) {
+        return rightSideTrail ? this.groundRendRightTrailAnchor : this.groundRendLeftTrailAnchor;
+    }
+
+    private void setGroundRendTrailAnchor(boolean rightSideTrail, @Nullable Vec3 anchor) {
+        if (rightSideTrail) {
+            this.groundRendRightTrailAnchor = anchor;
+        } else {
+            this.groundRendLeftTrailAnchor = anchor;
+        }
+    }
+
+    @Nullable
+    private Vec3 resolveGroundTrailPoint(Vec3 sample) {
+        BlockPos groundPos = BlockPos.containing(sample.x, this.getBoundingBox().minY - 0.2D, sample.z);
+        BlockState groundState = this.level().getBlockState(groundPos);
+        if (groundState.isAir() || groundState.liquid()) {
+            groundPos = groundPos.below();
+            groundState = this.level().getBlockState(groundPos);
+        }
+        if (groundState.isAir() || groundState.liquid()) {
+            return null;
+        }
+        return new Vec3(sample.x, groundPos.getY() + 1.02D, sample.z);
     }
     private static net.minecraft.world.phys.Vec3 randomUnit(net.minecraft.util.RandomSource rnd) {
         double u = rnd.nextDouble();

@@ -11,6 +11,7 @@ import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusNovaRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusNovaRingRenderer;
 import com.leon.saintsdragons.client.renderer.nulljaw.NulljawRenderer;
 import com.leon.saintsdragons.client.renderer.varasuchus.VarasuchusRenderer;
+import com.leon.saintsdragons.client.renderer.raevyx.RaevyxGroundRendTrailRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGroundChunkRenderer;
@@ -35,6 +36,7 @@ public final class CommonClientModEvents {
     public static void registerEntityRenderers(RendererRegistrar registrar) {
         registrar.register(ModEntities.RAEVYX.get(), RaevyxRenderer::new);
         registrar.register(ModEntities.RAEVYX_LIGHTNING_CHAIN.get(), RaevyxLightningChainRenderer::new);
+        registrar.register(ModEntities.RAEVYX_GROUND_REND_TRAIL.get(), RaevyxGroundRendTrailRenderer::new);
         registrar.register(ModEntities.STEGONAUT.get(), StegonautRenderer::new);
         registrar.register(ModEntities.CINDERVANE.get(), CindervaneRenderer::new);
         registrar.register(ModEntities.VARASUCHUS.get(), VarasuchusRenderer::new);

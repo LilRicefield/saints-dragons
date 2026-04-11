@@ -24,6 +24,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int GROUND_REND_SOUND_TICKS = 100;
     private static final int SLOWDOWN_START_TICKS = 25;
     private static final int STOP_TICKS = 55;
+    private static final int GROUND_REND_TRAIL_END_TICKS = 40;
     private static final double AI_STEER_BACK_RANGE = 6.0D;
     private static final float RIDER_SURGE_SPEED = 1.8F;
     private static final float RIDER_RECOVERY_END_SPEED = 0.18F;
@@ -122,6 +123,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 wyvern.setDeltaMovement(forward.x, current.y, forward.z);
                 wyvern.hasImpulse = true;
                 applyGroundRendHits(wyvern, getForwardDir(wyvern));
+                if (shouldSpawnGroundRendTrailParticles()) {
+                    wyvern.spawnGroundRendTrailParticles(getForwardDir(wyvern), speed);
+                }
                 return;
             }
             double speed = getAiTravelSpeed();
@@ -132,8 +136,12 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             }
             if (aiGroundRendDir.lengthSqr() > 1.0E-6D) {
                 Vec3 current = wyvern.getDeltaMovement();
-                Vec3 targetVelocity = aiGroundRendDir.normalize().scale(speed);
+                Vec3 trailDir = aiGroundRendDir.normalize();
+                Vec3 targetVelocity = trailDir.scale(speed);
                 wyvern.setGroundRendVelocity(new Vec3(targetVelocity.x, current.y, targetVelocity.z));
+                if (shouldSpawnGroundRendTrailParticles()) {
+                    wyvern.spawnGroundRendTrailParticles(trailDir, speed);
+                }
             }
             return;
         }
@@ -151,6 +159,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 wyvern.setDeltaMovement(forward.x, current.y, forward.z);
                 wyvern.hasImpulse = true;
                 applyGroundRendHits(wyvern, getForwardDir(wyvern));
+                if (shouldSpawnGroundRendTrailParticles()) {
+                    wyvern.spawnGroundRendTrailParticles(getForwardDir(wyvern), speed);
+                }
                 return;
             }
 
@@ -187,6 +198,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             wyvern.setGroundRendVelocity(new Vec3(targetVelocity.x, current.y, targetVelocity.z));
             wyvern.getNavigation().stop();
             applyGroundRendHits(wyvern, horizontal.normalize());
+            if (shouldSpawnGroundRendTrailParticles()) {
+                wyvern.spawnGroundRendTrailParticles(horizontal.normalize(), speed);
+            }
         }
     }
 
@@ -230,6 +244,10 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             case RECOVERY -> STARTUP_TICKS + ACTIVE_TICKS + getTicksInSection();
             default -> getTicksInSection();
         };
+    }
+
+    private boolean shouldSpawnGroundRendTrailParticles() {
+        return getOverallTrackTick() < GROUND_REND_TRAIL_END_TICKS;
     }
 
     private float getRiddenTravelSpeed() {

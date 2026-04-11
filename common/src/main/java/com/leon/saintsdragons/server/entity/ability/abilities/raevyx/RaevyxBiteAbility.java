@@ -2,7 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
+import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -15,6 +15,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
@@ -45,6 +46,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     private static final double CHAIN_RADIUS = 7.0;
     private static final int CHAIN_JUMPS = 5;
     private static final float CHAIN_FALLOFF = 0.75f;
+    private static final int CHAIN_VISUAL_LIFETIME = 5;
 
     // Sections: startup (windup), active (hit frame), recovery
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
@@ -296,17 +298,21 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
 
     private void spawnArc(Vec3 from, Vec3 to, ElectricalConductivityState conductivity) {
         if (!(getLevel() instanceof ServerLevel server)) return;
-        
-        // Create a single lightning chain entity instead of multiple particles
-        Raevyx wyvern = getUser();
-        float damage = CHAIN_DAMAGE_BASE * wyvern.getDamageMultiplier() * conductivity.damageMultiplier();
-        
-        RaevyxLightningChainEntity lightningEntity = new RaevyxLightningChainEntity(
-            server, from, to, 
-            damage, 1.2f,
-                wyvern, false // Not a chain lightning, just a single strike
+
+        float size = Mth.clamp(1.0f + (conductivity.damageMultiplier() - 1.0f) * 0.2f, 0.9f, 1.35f);
+        server.addFreshEntity(new RaevyxGroundRendTrailEntity(server, from, to, size, CHAIN_VISUAL_LIFETIME, server.random.nextLong()));
+
+        Vec3 midpoint = from.lerp(to, 0.5D);
+        server.sendParticles(
+                ParticleTypes.ELECTRIC_SPARK,
+                midpoint.x,
+                midpoint.y,
+                midpoint.z,
+                2,
+                0.06D,
+                0.06D,
+                0.06D,
+                0.0D
         );
-        
-        server.addFreshEntity(lightningEntity);
     }
 }
