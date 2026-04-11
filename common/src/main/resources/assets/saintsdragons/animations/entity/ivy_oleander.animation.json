@@ -12412,6 +12412,11 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "ivy_trade_stop"
+				}
 			}
 		},
 		"ivy_oleander.animation.bang_bang_bang": {
@@ -18507,6 +18512,11 @@
 							"vector": [1, 1, 1]
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "ivy_reaction_to_egg"
 				}
 			}
 		}

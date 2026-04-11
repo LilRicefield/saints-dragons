@@ -25,6 +25,7 @@ public class IvySoundProfile implements HumanSoundProfile {
             case "greeting" -> playGreeting(handler, volume, pitch);
             case "ivy_trade_start" -> playTradeStart(handler, volume, pitch);
             case "ivy_trade_stop" -> playTradeStop(handler, volume, pitch);
+            case "ivy_reaction_to_egg" -> playReactionToEgg(handler, volume, pitch);
             default -> false; // Unknown sound key
         };
     }
@@ -81,6 +82,10 @@ public class IvySoundProfile implements HumanSoundProfile {
 
     private boolean playTradeStop(HumanSoundHandler handler, float volume, float pitch) {
         return playCustomSound(handler, "ivy_trade_stop", ModSounds.IVY_TRADE_STOP.get(), volume, pitch, 20);
+    }
+
+    private boolean playReactionToEgg(HumanSoundHandler handler, float volume, float pitch) {
+        return playCustomSound(handler, "ivy_reaction_to_egg", ModSounds.IVY_REACTION_TO_EGG.get(), volume, pitch, 20);
     }
 
     /**

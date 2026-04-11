@@ -362,6 +362,8 @@ public class DraconicCodexScreen extends Screen {
             case "cindervane" -> ModSounds.CINDERVANE_GRUMBLE_1.get();
             case "varasuchus" -> ModSounds.VARASUCHUS_GRUMBLE_1.get();
             case "stegonaut" -> ModSounds.STEGONAUT_GRUMBLE_1.get();
+            case "volitans" -> ModSounds.VOLITANS_GRUMBLE_3.get();
+            case "nulljaw" -> ModSounds.NULLJAW_GRUMBLE_1.get();
             default -> null;
         };
 

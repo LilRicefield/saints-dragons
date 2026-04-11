@@ -19,6 +19,16 @@
       }
     ]
   },
+  "ivy_reaction_to_egg": {
+    "subtitle": "Ivy reacts to an egg",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_reaction_to_egg",
+        "volume": 1.5,
+        "pitch": 1.0
+      }
+    ]
+  },
   "bleeding_bolt": {
     "subtitle": "Bleeding Bolt",
     "sounds": [
