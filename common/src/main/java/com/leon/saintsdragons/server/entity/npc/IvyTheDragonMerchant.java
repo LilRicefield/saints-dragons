@@ -75,6 +75,14 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final int IDLE_VARIANT_DURATION = 66;
     private static final int IDLE_VARIANT_MIN_COOLDOWN = 200;
     private static final int IDLE_VARIANT_MAX_COOLDOWN = 600;
+    private static final int EGG_REACTION_MIN_LOOK_TICKS = 20;
+    private static final int EGG_REACTION_MAX_LOOK_TICKS = 40;
+    private static final int EGG_REACTION_DURATION_TICKS = 66;
+    private static final int EGG_REACTION_COOLDOWN_TICKS = 20;
+    private static final double EGG_REACTION_RANGE = 6.0;
+    private static final float EGG_REACTION_LOOK_YAW_SPEED = 30.0f;
+    private static final float EGG_REACTION_LOOK_PITCH_SPEED = 20.0f;
+    private static final float EGG_REACTION_FACE_THRESHOLD = 15.0f;
 
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
     private TradeAnimState tradeAnimState = TradeAnimState.NONE;
@@ -87,6 +95,11 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private boolean playingIdleVariant = false;
     private int idleVariantTicks = 0;
     private int idleVariantCooldown = 0;
+    private EggReactionState eggReactionState = EggReactionState.NONE;
+    private int eggReactionTicks = 0;
+    private int eggReactionCooldown = 0;
+    private int eggReactionTargetId = -1;
+    private int lastEggPresenterId = -1;
 
     private final HumanSoundHandler soundHandler;
 
@@ -267,7 +280,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private <T extends GeoEntity> PlayState animationPredicate(AnimationState<T> state) {
-        if (isTrading() || tradeAnimState != TradeAnimState.NONE || playingIdleVariant) {
+        if (isTrading() || tradeAnimState != TradeAnimState.NONE || playingIdleVariant || eggReactionState != EggReactionState.NONE) {
             wasMovementStopped = true;
             return PlayState.STOP;
         }
@@ -295,6 +308,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         if (!level().isClientSide) {
             boolean trading = player != null;
             if (trading && !lastTradingState) {
+                resetEggReaction();
                 startTradingSequence();
             } else if (!trading && lastTradingState) {
                 stopTradingSequence();
@@ -318,6 +332,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         updateRotationDeviation();
         if (!level().isClientSide) {
             tickTradingAnimation();
+            tickEggReaction();
             tickIdleVariant();
             tickRestocking();
             if (bodyControl != null) {
@@ -402,7 +417,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private void tickIdleVariant() {
-        if (isTrading() || tradeAnimState != TradeAnimState.NONE || getDeltaMovement().horizontalDistanceSqr() > 0.001) {
+        if (isTrading() || tradeAnimState != TradeAnimState.NONE || eggReactionState != EggReactionState.NONE || getDeltaMovement().horizontalDistanceSqr() > 0.001) {
             return;
         }
 
@@ -424,6 +439,148 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         playingIdleVariant = true;
         idleVariantTicks = 0;
         triggerAnim("action", "idle_variant1");
+    }
+
+    private void tickEggReaction() {
+        if (eggReactionState == EggReactionState.NONE && eggReactionCooldown > 0) {
+            eggReactionCooldown--;
+        }
+
+        if (isTrading() || tradeAnimState != TradeAnimState.NONE) {
+            if (eggReactionState != EggReactionState.NONE) {
+                resetEggReaction();
+            }
+            return;
+        }
+
+        if (eggReactionState == EggReactionState.NONE) {
+            Player presenter = findEggPresenter();
+            if (presenter == null) {
+                lastEggPresenterId = -1;
+                return;
+            }
+            if (eggReactionCooldown > 0 || presenter.getId() == lastEggPresenterId) {
+                return;
+            }
+            startEggReaction(presenter);
+            return;
+        }
+
+        Player target = getEggReactionTarget();
+        if (target == null) {
+            resetEggReaction();
+            return;
+        }
+
+        getNavigation().stop();
+        setDeltaMovement(0.0, 0.0, 0.0);
+        lookAtReactionTarget(target);
+
+        if (eggReactionState == EggReactionState.PREPARE) {
+            if (!isValidEggPresenter(target)) {
+                resetEggReaction();
+                return;
+            }
+
+            eggReactionTicks++;
+            if ((eggReactionTicks >= EGG_REACTION_MIN_LOOK_TICKS && isFacingReactionTarget(target))
+                    || eggReactionTicks >= EGG_REACTION_MAX_LOOK_TICKS) {
+                eggReactionState = EggReactionState.PLAY;
+                eggReactionTicks = EGG_REACTION_DURATION_TICKS;
+                lastEggPresenterId = target.getId();
+                triggerAnim("action", "reaction_to_egg");
+            }
+            return;
+        }
+
+        if (eggReactionTicks > 0) {
+            eggReactionTicks--;
+        }
+
+        if (eggReactionTicks <= 0) {
+            eggReactionCooldown = EGG_REACTION_COOLDOWN_TICKS;
+            resetEggReaction();
+        }
+    }
+
+    private void startEggReaction(Player player) {
+        playingIdleVariant = false;
+        idleVariantTicks = 0;
+        eggReactionState = EggReactionState.PREPARE;
+        eggReactionTicks = 0;
+        eggReactionTargetId = player.getId();
+        getNavigation().stop();
+        setDeltaMovement(0.0, 0.0, 0.0);
+        lookAtReactionTarget(player);
+    }
+
+    private void resetEggReaction() {
+        eggReactionState = EggReactionState.NONE;
+        eggReactionTicks = 0;
+        eggReactionTargetId = -1;
+    }
+
+    @Nullable
+    private Player getEggReactionTarget() {
+        if (eggReactionTargetId < 0) {
+            return null;
+        }
+        var entity = level().getEntity(eggReactionTargetId);
+        return entity instanceof Player player ? player : null;
+    }
+
+    @Nullable
+    private Player findEggPresenter() {
+        Player bestPlayer = null;
+        double bestDistance = EGG_REACTION_RANGE * EGG_REACTION_RANGE;
+        for (Player player : level().players()) {
+            if (!isValidEggPresenter(player)) {
+                continue;
+            }
+            double distance = distanceToSqr(player);
+            if (distance <= bestDistance) {
+                bestDistance = distance;
+                bestPlayer = player;
+            }
+        }
+        return bestPlayer;
+    }
+
+    private boolean isValidEggPresenter(Player player) {
+        return player.isAlive()
+                && !player.isSpectator()
+                && distanceToSqr(player) <= EGG_REACTION_RANGE * EGG_REACTION_RANGE
+                && (isReactionEgg(player.getMainHandItem()) || isReactionEgg(player.getOffhandItem()));
+    }
+
+    private boolean isReactionEgg(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        Item item = stack.getItem();
+        return item == ModItems.RAEVYX_EGG.get()
+                || item == ModItems.IGNIVORUS_EGG.get()
+                || item == ModItems.CINDERVANE_EGG.get()
+                || item == ModItems.VARASUCHUS_EGG.get()
+                || item == ModItems.STEGONAUT_EGG.get()
+                || item == ModItems.VOLITANS_EGG.get();
+    }
+
+    private void lookAtReactionTarget(Player player) {
+        getLookControl().setLookAt(player, EGG_REACTION_LOOK_YAW_SPEED, EGG_REACTION_LOOK_PITCH_SPEED);
+        lookAt(player, EGG_REACTION_LOOK_YAW_SPEED, EGG_REACTION_LOOK_PITCH_SPEED);
+    }
+
+    private boolean isFacingReactionTarget(Player player) {
+        double dx = player.getX() - getX();
+        double dz = player.getZ() - getZ();
+        if (dx * dx + dz * dz < 1.0E-4) {
+            return true;
+        }
+        float targetYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0f;
+        float headDelta = Math.abs(Mth.wrapDegrees(yHeadRot - targetYaw));
+        float bodyDelta = Math.abs(Mth.wrapDegrees(yBodyRot - targetYaw));
+        return headDelta <= EGG_REACTION_FACE_THRESHOLD || bodyDelta <= EGG_REACTION_FACE_THRESHOLD;
     }
 
     private void updateRotationDeviation() {
@@ -453,6 +610,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_stop"));
         controller.triggerableAnim("idle_variant1",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.idle_variant1"));
+        controller.triggerableAnim("reaction_to_egg",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.reaction_to_egg"));
     }
 
     @Override
@@ -488,6 +647,19 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         return soundHandler;
     }
 
+    public boolean shouldApplyHeadTracking() {
+        return !isTrading()
+                && tradeAnimState == TradeAnimState.NONE
+                && !playingIdleVariant
+                && eggReactionState != EggReactionState.PLAY;
+    }
+
+    private enum EggReactionState {
+        NONE,
+        PREPARE,
+        PLAY
+    }
+
     private enum TradeAnimState {
         NONE,
         START,
@@ -502,7 +674,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
         @Override
         public boolean canUse() {
-            return isTrading() || playingIdleVariant;
+            return isTrading() || playingIdleVariant || eggReactionState != EggReactionState.NONE;
         }
 
         @Override

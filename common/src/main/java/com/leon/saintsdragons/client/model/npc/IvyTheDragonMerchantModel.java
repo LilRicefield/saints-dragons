@@ -28,10 +28,9 @@ public class IvyTheDragonMerchantModel extends DefaultedEntityGeoModel<IvyTheDra
         float deviationRad = (float) (entity.bodyRotDeviation.get(animationState.getPartialTick()) * Mth.DEG_TO_RAD);
 
         GeoBone head = getBoneOrNull("head");
-        if (head != null) {
-            var snap = head.getInitialSnapshot();
-            head.setRotY(snap.getRotY() + headYawRad);
-            head.setRotX(snap.getRotX() + headPitchRad);
+        if (head != null && entity.shouldApplyHeadTracking()) {
+            head.setRotY(head.getRotY() + headYawRad);
+            head.setRotX(head.getRotX() + headPitchRad);
         }
 
         GeoBone body = getBoneOrNull("waist");
@@ -39,8 +38,7 @@ public class IvyTheDragonMerchantModel extends DefaultedEntityGeoModel<IvyTheDra
             body = getBoneOrNull("body");
         }
         if (body != null) {
-            var snap = body.getInitialSnapshot();
-            body.setRotY(snap.getRotY() - deviationRad);
+            body.setRotY(body.getRotY() - deviationRad);
         }
     }
 
