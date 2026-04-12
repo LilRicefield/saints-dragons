@@ -12,12 +12,6 @@ import net.minecraft.sounds.SoundEvents;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
-/**
- * Ultimate: Summon Storm
- * - Roars into the sky, triggers a thunderstorm in the current dimension
- * - Supercharges the wyvern for 1 minute: x2 damage on abilities
- * - Cooldown: 4 minutes
- */
 public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private static final int DEFAULT_SUPERCHARGE_TICKS = 20 * 60;
     private static final int DEFAULT_COOLDOWN_TICKS = 20 * 240;
@@ -25,7 +19,8 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private static final int MIN_COOLDOWN_TICKS = 20;
     private static final int GROUND_ONE_SHOT_TICKS = 125;
     private static final int GROUND_SOUND_TICKS = 140;
-    private static final int GROUND_SHAKE_START_TICKS = 53;
+    private static final int GROUND_EXTRA_SHAKE_TICK = 38;
+    private static final int GROUND_SHAKE_START_TICKS = 49;
     private static final int AIR_SHAKE_START_TICKS = 35;
     private static final int AIR_ONE_SHOT_TICKS = 110;
     private static final int AIR_SOUND_TICKS = 115;
@@ -38,6 +33,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
 
     private boolean isGroundCast;
     private boolean screenShakeActive;
+    private boolean groundExtraShakeTriggered;
     private int activeStartupDuration = AIR_ONE_SHOT_TICKS;
 
     public RaevyxSummonStormAbility(DragonAbilityType<Raevyx, RaevyxSummonStormAbility> type, Raevyx user) {
@@ -58,6 +54,10 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
 
         int ticks = getTicksInSection();
         if (isGroundCast) {
+            if (!groundExtraShakeTriggered && ticks >= GROUND_EXTRA_SHAKE_TICK) {
+                groundExtraShakeTriggered = true;
+                getUser().triggerScreenShake(1.8F);
+            }
             if (!screenShakeActive && ticks >= GROUND_SHAKE_START_TICKS) {
                 screenShakeActive = true;
             }
@@ -98,12 +98,14 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
                     getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM.get(), 1.6f, 1.0f, GROUND_SOUND_TICKS);
                 }
                 screenShakeActive = false;
+                groundExtraShakeTriggered = false;
             } else {
                 getUser().triggerAnim("action", "summon_storm_air");
                 if (!getUser().level().isClientSide) {
                     getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR.get(), 1.6f, 1.0f, AIR_SOUND_TICKS);
                 }
                 screenShakeActive = false;
+                groundExtraShakeTriggered = false;
             }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (!getLevel().isClientSide) {
@@ -159,6 +161,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         getUser().clearTakeoffLock();
         getUser().clearRiderControlLock();
         screenShakeActive = false;
+        groundExtraShakeTriggered = false;
     }
 
     @Override
