@@ -9,14 +9,12 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record RaevyxRiderController(Raevyx wyvern) {
-    private static final double RIDER_FLIGHT_SPEED_MULTIPLIER = 2.0D;
     private static final double SEAT_BASE_FACTOR = 0.50D; // 0.0..1.0 of bbHeight
     private static final double SEAT_HEIGHT_ADJUST = 0.00D;
     private static final double CRUISE_SPEED_MULT = 4.95;      // Use configured flight speed directly
@@ -273,8 +271,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
     }
 
     private double getMountedFlightBaseSpeed() {
-        double baseSpeed = wyvern.getAttributeValue(Attributes.FLYING_SPEED);
-        return baseSpeed * RIDER_FLIGHT_SPEED_MULTIPLIER;
+        return wyvern.getFlightSpeed();
     }
 
     // ===== RIDING SUPPORT =====

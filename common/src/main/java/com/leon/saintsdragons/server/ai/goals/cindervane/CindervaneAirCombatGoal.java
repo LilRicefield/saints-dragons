@@ -12,9 +12,10 @@ import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public class CindervaneAirCombatGoal extends Goal {
+    private static final int LOST_SIGHT_LANDING_TICKS = 30;
     private static final double BITE_TRIGGER_RANGE = 6.0D;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
-    private static final double AIR_CHASE_SPEED = 4.0D;
+    private static final double AIR_CHASE_SPEED = 10.0D;
     private static final double LANDING_SPEED = 2.2D;
     private static final double FIRE_BODY_ACTIVATION_RANGE = 8.0D;
     private static final double FLIGHT_ACCEL = 0.12D;
@@ -22,6 +23,7 @@ public class CindervaneAirCombatGoal extends Goal {
 
     private final Cindervane amphithere;
     private int fireBodyCheckCooldown = 0;
+    private int lostSightTicks = 0;
     public CindervaneAirCombatGoal(Cindervane amphithere) {
         this.amphithere = amphithere;
         this.setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE));
@@ -83,6 +85,7 @@ public class CindervaneAirCombatGoal extends Goal {
 
     @Override
     public void start() {
+        lostSightTicks = 0;
         if (amphithere.onGround() && !amphithere.isFlying() && !amphithere.isHovering() && !amphithere.isTakeoff() && !amphithere.isLanding()) {
             amphithere.beginAiTakeoff(Cindervane.TAKEOFF_ANIMATION_TICKS);
         } else if (amphithere.isFlying() || amphithere.isHovering()) {
@@ -92,6 +95,7 @@ public class CindervaneAirCombatGoal extends Goal {
 
     @Override
     public void stop() {
+        lostSightTicks = 0;
         deactivateFireBodyIfActive();
 
         LivingEntity target = amphithere.getTarget();
@@ -138,6 +142,17 @@ public class CindervaneAirCombatGoal extends Goal {
 
         double distance = amphithere.distanceTo(target);
         boolean hasLineOfSight = amphithere.getSensing().hasLineOfSight(target);
+        lostSightTicks = hasLineOfSight ? 0 : lostSightTicks + 1;
+
+        if (!hasLineOfSight && lostSightTicks >= LOST_SIGHT_LANDING_TICKS) {
+            if ((amphithere.isFlying() || amphithere.isHovering() || amphithere.isTakeoff()) && !amphithere.isLanding()) {
+                if (DragonLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED)) {
+                    return;
+                }
+                amphithere.setHovering(false);
+                amphithere.setTakeoff(false);
+            }
+        }
 
         if (distance <= BITE_TRIGGER_RANGE && hasLineOfSight) {
             maintainBitePosition(target);

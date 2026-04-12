@@ -39,7 +39,6 @@ import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
-import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
@@ -371,6 +370,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final int RIDER_DODGE_COOLDOWN_TICKS = 30;
     private static final int AI_DODGE_COOLDOWN_TICKS = 60;
     private static final double DODGE_DISTANCE_BLOCKS = 20;
+    private static final double AIR_DODGE_DISTANCE_MULTIPLIER = 5.75D;
     private static final float REACTIVE_HIT_DODGE_CHANCE = 0.35F;
     boolean dodging = false;
     int dodgeTicksLeft = 0;
@@ -1732,8 +1732,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (isGroundRending() || areRiderControlsLocked()) {
             return;
         }
-        // Only allow dodge on ground - dragon is fast enough in air with strafe
-        if (isFlying() || isInWaterOrBubble()) {
+        if (isInWaterOrBubble()) {
             return;
         }
 
@@ -1763,7 +1762,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // Account for drag so the integrated distance over the duration is ~DODGE_DISTANCE
         double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION_TICKS);
-        double perTickSpeed = DODGE_DISTANCE_BLOCKS * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
+        double dodgeDistance = isFlying() ? DODGE_DISTANCE_BLOCKS * AIR_DODGE_DISTANCE_MULTIPLIER : DODGE_DISTANCE_BLOCKS;
+        double perTickSpeed = dodgeDistance * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
 
         // Calculate dodge direction (left or right)
         // FLIPPED: was backwards, A went right and D went left!
@@ -1782,7 +1782,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
 
         // Trigger dodge animation
-        if (isLeft) {
+        if (isFlying()) {
+            if (isLeft) {
+                animationHandler.triggerDodgeAirLeftAnimation();
+            } else {
+                animationHandler.triggerDodgeAirRightAnimation();
+            }
+        } else if (isLeft) {
             animationHandler.triggerDodgeLeftAnimation();
         } else {
             animationHandler.triggerDodgeRightAnimation();
@@ -1794,8 +1800,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (isGroundRending() || areRiderControlsLocked()) {
             return;
         }
-        // Only allow dodge on ground - dragon is fast enough in air with strafe
-        if (isFlying() || isInWaterOrBubble()) {
+        if (isInWaterOrBubble()) {
             return;
         }
 
@@ -1823,7 +1828,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
         // Account for drag so the integrated distance over the duration is ~DODGE_DISTANCE
         double dragScale = 1.0D - Math.pow(DODGE_HORIZONTAL_DRAG, DODGE_DURATION_TICKS);
-        double perTickSpeed = DODGE_DISTANCE_BLOCKS * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
+        double dodgeDistance = isFlying() ? DODGE_DISTANCE_BLOCKS * AIR_DODGE_DISTANCE_MULTIPLIER : DODGE_DISTANCE_BLOCKS;
+        double perTickSpeed = dodgeDistance * (1.0D - DODGE_HORIZONTAL_DRAG) / dragScale;
 
         // Calculate backward dodge direction (opposite of forward)
         double dodgeDirX = -forwardX;
@@ -1840,8 +1846,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         dodgeCooldownTicks = RIDER_DODGE_COOLDOWN_TICKS;
         dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
 
-        // Trigger backward dodge animation
-        animationHandler.triggerDodgeBackwardAnimation();
+        if (isFlying()) {
+            animationHandler.triggerDodgeAirRightAnimation();
+        } else {
+            animationHandler.triggerDodgeBackwardAnimation();
+        }
     }
 
     public boolean tryAIGroundDodge(@Nullable LivingEntity threat) {
@@ -3257,11 +3266,13 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private void handleDodgeMovement() {
-        // Apply gravity when not on ground to prevent floating
+        boolean airDodge = this.isFlying();
         double yVel = this.getDeltaMovement().y;
         double horizontalX = dodgeVec.x;
         double horizontalZ = dodgeVec.z;
-        if (!this.onGround()) {
+        if (airDodge) {
+            yVel = this.getDeltaMovement().y;
+        } else if (!this.onGround()) {
             yVel = Math.min((yVel - 0.22D) * 0.98D, -0.45D);
             horizontalX *= 0.88D;
             horizontalZ *= 0.88D;
@@ -3273,7 +3284,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.hasImpulse = true;
 
         // Decay for next tick
-        dodgeVec = dodgeVec.multiply(DODGE_HORIZONTAL_DRAG, DODGE_VERTICAL_DRAG, DODGE_HORIZONTAL_DRAG);
+        double horizontalDrag = airDodge ? 0.96D : DODGE_HORIZONTAL_DRAG;
+        dodgeVec = dodgeVec.multiply(horizontalDrag, DODGE_VERTICAL_DRAG, horizontalDrag);
 
         if (--dodgeTicksLeft <= 0) {
             dodging = false;

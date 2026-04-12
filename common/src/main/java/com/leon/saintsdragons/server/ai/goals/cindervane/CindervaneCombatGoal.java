@@ -10,14 +10,12 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * Combat goal for Amphithere - uses bite attack and FireBody ability when in combat
- */
+
 public class CindervaneCombatGoal extends Goal {
     private final Cindervane amphithere;
     private final double attackRange = 4.5; // Amphithere has longer neck, slightly more range
     private final double fireBodyActivationRange = 8.0; // Activate FireBody when enemy is within this range
-    private final double chaseSpeed = 0.85D;
+    private final double chaseSpeed = 1.0D;
     private int fireBodyCheckCooldown = 0;
     private int pathRecalcCooldown = 0;
     private double lastTargetX;
@@ -191,10 +189,6 @@ public class CindervaneCombatGoal extends Goal {
         }
     }
 
-
-    /**
-     * Deactivates FireBody when there's no target (enemy killed or lost)
-     */
     private void deactivateFireBodyIfActive() {
         // Don't interfere if being ridden
         if (amphithere.isVehicle()) {

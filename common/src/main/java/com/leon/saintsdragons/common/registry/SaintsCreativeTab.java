@@ -34,11 +34,11 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAEVYX_SCALE.get());
                                 output.accept(ModItems.CINDERVANE_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());
-                                output.accept(ModItems.IGNIVORUS_HEART.get());
-                                output.accept(ModItems.IGNIVORUS_TOOTH.get());
                                 output.accept(ModItems.VARASUCHUS_SCALE.get());
                                 output.accept(ModItems.STEGONAUT_SCALE.get());
                                 output.accept(ModItems.VOLITANS_SCALE.get());
+                                output.accept(ModItems.IGNIVORUS_HEART.get());
+                                output.accept(ModItems.IGNIVORUS_TOOTH.get());
                                 output.accept(ModItems.VOLITANS_SPINE.get());
                                 output.accept(ModItems.POTION_OF_TIDEGUARD.get());
                                 output.accept(ModItems.POTION_OF_SEARING.get());

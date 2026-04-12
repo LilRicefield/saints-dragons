@@ -12,7 +12,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -78,10 +77,6 @@ public class VarasuchusEggBlock extends BaseEntityBlock {
         }
     }
 
-    public void instantHatch(ServerLevel level, BlockPos pos, BlockState state) {
-        this.hatchEgg(level, pos, state);
-    }
-
     private void hatchEgg(ServerLevel level, BlockPos pos, BlockState state) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
         level.playSound(null, pos, SoundEvents.TURTLE_EGG_HATCH, SoundSource.BLOCKS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
@@ -115,31 +110,6 @@ public class VarasuchusEggBlock extends BaseEntityBlock {
                 DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
             }
             level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
-        }
-    }
-
-    @Override
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        level.getEntitiesOfClass(LightningBolt.class,
-                new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
-                .stream()
-                .findFirst()
-                .ifPresent(bolt -> this.instantHatch(level, pos, state));
-    }
-
-    @Override
-    public void entityInside(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Entity entity) {
-        if (!level.isClientSide && entity instanceof LightningBolt) {
-            if (level instanceof ServerLevel serverLevel) {
-                this.instantHatch(serverLevel, pos, state);
-            }
-        }
-    }
-
-    @Override
-    public void neighborChanged(@NotNull BlockState state, Level level, @NotNull BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!level.isClientSide) {
-            level.scheduleTick(pos, this, 1);
         }
     }
 

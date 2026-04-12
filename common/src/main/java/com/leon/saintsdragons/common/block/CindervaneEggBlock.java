@@ -12,7 +12,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
@@ -35,7 +34,6 @@ import javax.annotation.Nullable;
 /**
  * Cindervane egg block that hatches into baby Cindervanes over time.
  * Supports clustering up to 3 eggs in the same block (like turtle eggs).
- * Instantly hatches when struck by lightning.
  */
 public class CindervaneEggBlock extends BaseEntityBlock {
     public static final int MAX_HATCH_LEVEL = 2;
@@ -122,13 +120,6 @@ public class CindervaneEggBlock extends BaseEntityBlock {
     }
 
     /**
-     * Instantly hatch the eggs (called by lightning strike)
-     */
-    public void instantHatch(ServerLevel level, BlockPos pos, BlockState state) {
-        this.hatchEggs(level, pos, state);
-    }
-
-    /**
      * Spawn baby Cindervanes based on egg count and remove egg block
      */
     private void hatchEggs(ServerLevel level, BlockPos pos, BlockState state) {
@@ -195,34 +186,6 @@ public class CindervaneEggBlock extends BaseEntityBlock {
             }
         }
         super.stepOn(level, pos, state, entity);
-    }
-
-    @Override
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        // Check for nearby lightning bolts every tick
-        level.getEntitiesOfClass(LightningBolt.class,
-            new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
-            .stream()
-            .findFirst()
-            .ifPresent(bolt -> this.instantHatch(level, pos, state));
-    }
-
-    @Override
-    public void entityInside(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Entity entity) {
-        // Lightning strike instantly hatches the eggs
-        if (!level.isClientSide && entity instanceof LightningBolt) {
-            if (level instanceof ServerLevel serverLevel) {
-                this.instantHatch(serverLevel, pos, state);
-            }
-        }
-    }
-
-    @Override
-    public void neighborChanged(@NotNull BlockState state, Level level, @NotNull BlockPos pos, net.minecraft.world.level.block.Block block, BlockPos fromPos, boolean isMoving) {
-        // Schedule a tick to check for lightning when neighbors change (like when lightning strikes nearby)
-        if (!level.isClientSide) {
-            level.scheduleTick(pos, this, 1);
-        }
     }
 
     /**

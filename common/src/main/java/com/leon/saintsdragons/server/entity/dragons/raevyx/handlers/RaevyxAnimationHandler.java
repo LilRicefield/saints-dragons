@@ -145,6 +145,20 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         }
     }
 
+    public void triggerDodgeAirLeftAnimation() {
+        wyvern.triggerAnim("action", "dodge_air_left");
+        if (!wyvern.level().isClientSide) {
+            wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
+        }
+    }
+
+    public void triggerDodgeAirRightAnimation() {
+        wyvern.triggerAnim("action", "dodge_air_right");
+        if (!wyvern.level().isClientSide) {
+            wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
+        }
+    }
+
 
     // ===== MOVEMENT CONTROLLER =====
     public PlayState handleMovementAnimation(AnimationState<Raevyx> state) {
@@ -358,6 +372,10 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
         actionController.triggerableAnim("dodge_right",
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_right"));
+        actionController.triggerableAnim("dodge_air_left",
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"));
+        actionController.triggerableAnim("dodge_air_right",
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_right"));
         actionController.triggerableAnim("dash_backward",
                 RawAnimation.begin().thenPlay("animation.raevyx.dash_backward"));
 

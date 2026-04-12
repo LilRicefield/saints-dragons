@@ -7,8 +7,8 @@
 				"texture_width": 966,
 				"texture_height": 884,
 				"visible_bounds_width": 47,
-				"visible_bounds_height": 26,
-				"visible_bounds_offset": [0, 1, 0]
+				"visible_bounds_height": 36,
+				"visible_bounds_offset": [0, 6, 0]
 			},
 			"bones": [
 				{
@@ -26,8 +26,13 @@
 					"pivot": [0, 50, -7.5]
 				},
 				{
-					"name": "spinBone",
+					"name": "anotherSpinBone",
 					"parent": "heightController",
+					"pivot": [0, 50, 2.5]
+				},
+				{
+					"name": "spinBone",
+					"parent": "anotherSpinBone",
 					"pivot": [0, 50, 2.5]
 				},
 				{
