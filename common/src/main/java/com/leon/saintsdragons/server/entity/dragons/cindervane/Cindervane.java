@@ -35,6 +35,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.Cinderva
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.util.ClientAnimationInitHelper;
 import java.util.Map;
 import java.util.HashMap;
@@ -204,8 +205,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
 
-    private float prevScreenShakeAmount = 0f;
-    private float screenShakeAmount = 0f;
+    private final ScreenShakeComponent screenShakeComponent;
     private final DragonTakeoff takeoffComponent;
 
     private static final double MODEL_SCALE = 1.0D;
@@ -315,6 +315,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public Cindervane(EntityType<? extends Cindervane> type, Level level) {
         super(type, level);
+        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.12F);
         this.setMaxUpStep(1.1F);
 
         this.asyncAirController = new AsyncFlightController(this);
@@ -821,9 +822,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         tickMountedState();
         updateSittingProgress();
         spawnBabiesIfNeeded();
-        if (isFlying() && tickCount % 2 == 0) {
-            tickWaterSlicing();
-        }
         if (isBreathingFire() || fireBodyCrashArmed) {
             handleFireBodyCrash();
         }
@@ -1452,104 +1450,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     private void tickScreenShake() {
-        // Client side: just read the synced value from entity data
-        if (level().isClientSide) {
-            prevScreenShakeAmount = screenShakeAmount;
-            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-            return;
-        }
-
-        // Server side: decay and update entity data
-        prevScreenShakeAmount = screenShakeAmount;
-        if (screenShakeAmount > 0f) {
-            screenShakeAmount = Math.max(0f, screenShakeAmount - 0.12F);
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
-        } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        }
-    }
-
-    // ===== WATER DISTURBANCE EFFECT (wing downforce) =====
-
-    // Tuneable constants
-    private static final double WATER_EFFECT_MAX_HEIGHT = 10.0;  // Max height above water to trigger effect
-    private static final double WATER_EFFECT_INTENSITY = 0.6;    // Multiplier for particle count (bigger = more splash)
-
-    /**
-     * Creates water disturbance effects when flying over water.
-     * Uses vanilla-style splash logic based on bounding box size.
-     * Bigger dragons automatically create bigger splashes!
-     */
-    private void tickWaterSlicing() {
-        // Only run on server side
-        if (level().isClientSide) return;
-
-        // Only when flying
-        if (!isFlying()) return;
-
-        // Get dragon position and bounding box
-        Vec3 pos = position();
-        AABB box = getBoundingBox();
-
-        // Check for water below (scan down from dragon position)
-        for (int checkDown = 0; checkDown < WATER_EFFECT_MAX_HEIGHT; checkDown++) {
-            BlockPos checkPos = new BlockPos(
-                    Mth.floor(pos.x),
-                    Mth.floor(pos.y) - checkDown,
-                    Mth.floor(pos.z)
-            );
-
-            if (!level().hasChunkAt(checkPos)) continue;
-
-            BlockState state = level().getBlockState(checkPos);
-
-            // Found water surface?
-            if (!state.getFluidState().isEmpty()) {
-                double waterY = checkPos.getY() + 1.0; // Top of water block
-
-                // === VANILLA-STYLE SPLASH BASED ON BOUNDING BOX SIZE ===
-                // Calculate bounding box dimensions
-                double boxWidth = box.getXsize();   // Width (X axis)
-                double boxLength = box.getZsize();  // Length (Z axis)
-
-                // Calculate particle count based on entity size (vanilla formula)
-                // Bigger bounding box = more particles
-                int particleCount = (int) Math.ceil((boxWidth + boxLength) / 2.0 * WATER_EFFECT_INTENSITY * 8.0);
-                particleCount = Math.min(particleCount, 50); // Cap to prevent lag
-
-                // Spawn particles around the perimeter of the bounding box
-                for (int i = 0; i < particleCount; i++) {
-                    // Random position within bounding box horizontal area
-                    double offsetX = (random.nextDouble() - 0.5) * boxWidth;
-                    double offsetZ = (random.nextDouble() - 0.5) * boxLength;
-
-                    double particleX = pos.x + offsetX;
-                    double particleZ = pos.z + offsetZ;
-
-                    // Spawn splash particles
-                    ((ServerLevel) level()).sendParticles(
-                            ParticleTypes.SPLASH,
-                            particleX, waterY, particleZ,
-                            1,
-                            offsetX * 0.2, 0.1, offsetZ * 0.2,  // Velocity based on offset (spreads outward)
-                            0.1
-                    );
-
-                    // Bubbles (fewer than splashes)
-                    if (random.nextFloat() < 0.3f) {
-                        ((ServerLevel) level()).sendParticles(
-                                ParticleTypes.BUBBLE_POP,
-                                particleX, waterY, particleZ,
-                                1,
-                                0.0, 0.0, 0.0,
-                                0.0
-                        );
-                    }
-                }
-
-                break; // Found water, stop scanning down
-            }
-        }
+        screenShakeComponent.tick();
     }
 
     /**
@@ -3108,8 +3009,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public float getScreenShakeAmount(float partialTicks) {
-        float current = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-        return prevScreenShakeAmount + (current - prevScreenShakeAmount) * partialTicks;
+        return screenShakeComponent.getAmount(partialTicks);
     }
 
     @Override
@@ -3125,8 +3025,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     public void triggerScreenShake(float intensity) {
-        screenShakeAmount = Math.max(screenShakeAmount, intensity);
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+        screenShakeComponent.trigger(intensity);
     }
 
     // ===== SIT TRANSITION HELPERS =====

@@ -20,6 +20,7 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.*;
 import com.leon.saintsdragons.common.block.VarasuchusEggBlockEntity;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -132,10 +133,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     private boolean useLeftClawNext = true;
     private boolean useLeftTailAttackNext = true;
     private static final float SHAKE_DECAY_PER_TICK = 0.02F;
-    private float prevScreenShakeAmount = 0.0F;
-    private float screenShakeAmount = 0.0F;
-    private int phaseShiftShakeTicks = 0;
-    private float phaseShiftShakeIntensity = 0.0F;
+    private final ScreenShakeComponent screenShakeComponent;
     private boolean isSittingDown = false;
     private boolean isStandingUp = false;
     private int sitTransitionTicks = 0;
@@ -205,6 +203,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
 
     public Varasuchus(EntityType<? extends Varasuchus> type, Level level) {
         super(type, level);
+        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
         this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
         this.setMaxUpStep(1.4F);
@@ -2472,29 +2471,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     }
 
     private void tickScreenShake() {
-        if (level().isClientSide) {
-            prevScreenShakeAmount = screenShakeAmount;
-            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-            return;
-        }
-
-        prevScreenShakeAmount = screenShakeAmount;
-        if (phaseShiftShakeTicks > 0) {
-            phaseShiftShakeTicks--;
-            screenShakeAmount = phaseShiftShakeIntensity;
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, phaseShiftShakeIntensity);
-            if (phaseShiftShakeTicks <= 0) {
-                phaseShiftShakeIntensity = 0.0F;
-                screenShakeAmount = 0.0F;
-                this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-            }
-        } else if (screenShakeAmount > 0.0F) {
-            float newAmount = Math.max(0.0F, screenShakeAmount - SHAKE_DECAY_PER_TICK);
-            screenShakeAmount = newAmount;
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, newAmount);
-        } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        }
+        screenShakeComponent.tick();
     }
 
     @Override
@@ -2624,8 +2601,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
 
     @Override
     public float getScreenShakeAmount(float partialTicks) {
-        float currentAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-        return prevScreenShakeAmount + (currentAmount - prevScreenShakeAmount) * partialTicks;
+        return screenShakeComponent.getAmount(partialTicks);
     }
 
     @Override
@@ -2639,35 +2615,15 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     }
 
     public void triggerScreenShake(float intensity) {
-        float clamped = Math.max(0.0F, intensity);
-        if (clamped <= 0.0F) {
-            return;
-        }
-        if (level().isClientSide) {
-            return;
-        }
-        screenShakeAmount = Math.max(screenShakeAmount, clamped);
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+        screenShakeComponent.trigger(intensity);
     }
 
     public void startPhaseShiftScreenShake(int durationTicks, float intensity) {
-        if (level().isClientSide) {
-            return;
-        }
-        phaseShiftShakeTicks = Math.max(0, durationTicks);
-        phaseShiftShakeIntensity = Math.max(0.0F, intensity);
-        screenShakeAmount = phaseShiftShakeIntensity;
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+        screenShakeComponent.hold(intensity, durationTicks);
     }
 
     public void stopPhaseShiftScreenShake() {
-        if (level().isClientSide) {
-            return;
-        }
-        phaseShiftShakeTicks = 0;
-        phaseShiftShakeIntensity = 0.0F;
-        screenShakeAmount = 0.0F;
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
+        screenShakeComponent.clear();
     }
 
     public boolean canBeBound() {

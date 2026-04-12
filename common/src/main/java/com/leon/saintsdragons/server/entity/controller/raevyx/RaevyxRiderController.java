@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record RaevyxRiderController(Raevyx wyvern) {
+    private static final double RIDER_FLIGHT_SPEED_MULTIPLIER = 2.0D;
     private static final double SEAT_BASE_FACTOR = 0.50D; // 0.0..1.0 of bbHeight
     private static final double SEAT_HEIGHT_ADJUST = 0.00D;
     private static final double CRUISE_SPEED_MULT = 4.95;      // Use configured flight speed directly
@@ -99,7 +100,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
     public float getRiddenSpeed(@SuppressWarnings("unused") Player rider) {
         if (wyvern.isFlying()) {
             // Flying speed - use ONLY the attributed flying speed, no modifiers
-            return (float) wyvern.getAttributeValue(Attributes.FLYING_SPEED);
+            return (float) getMountedFlightBaseSpeed();
         } else {
             // Ground speed - HARDCODED (not configurable)
             // Check if actually moving to prevent sprint animation when standing still
@@ -125,7 +126,7 @@ public record RaevyxRiderController(Raevyx wyvern) {
 
         if (wyvern.isFlying()) {
             // === SETUP ===
-            final double baseSpeed = wyvern.getAttributeValue(Attributes.FLYING_SPEED);
+            final double baseSpeed = getMountedFlightBaseSpeed();
             final boolean sprinting = wyvern.isAccelerating();
             double targetSpeed = (sprinting ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
 
@@ -269,6 +270,11 @@ public record RaevyxRiderController(Raevyx wyvern) {
             return (float) Math.toRadians(Raevyx.RIDER_KEY_PITCH_DEG);
         }
         return 0.0f;
+    }
+
+    private double getMountedFlightBaseSpeed() {
+        double baseSpeed = wyvern.getAttributeValue(Attributes.FLYING_SPEED);
+        return baseSpeed * RIDER_FLIGHT_SPEED_MULTIPLIER;
     }
 
     // ===== RIDING SUPPORT =====

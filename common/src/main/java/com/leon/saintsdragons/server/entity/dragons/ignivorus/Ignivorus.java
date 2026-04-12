@@ -43,6 +43,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -193,8 +194,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     public static final int RIDER_WATER_SCAN_RADIUS = 2;
     public static final int RIDER_WATER_SCAN_DEPTH = 8;
-    private static final double WATER_EFFECT_MAX_HEIGHT = 8.0D;
-    private static final double WATER_EFFECT_INTENSITY = 0.6D;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
     private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
@@ -329,8 +328,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     // Screen shake system
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
-    private float prevScreenShakeAmount = 0.0F;
-    private float screenShakeAmount = 0.0F;
+    private final ScreenShakeComponent screenShakeComponent;
 
     private float cinematicZoomProgress = 0.0F;
     private float prevCinematicZoomProgress = 0.0F;
@@ -359,6 +357,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public Ignivorus(EntityType<? extends Ignivorus> type, Level level) {
         super(type, level);
+        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
         this.setMaxUpStep(1.1F);
 
         this.asyncAirController = new AsyncFlightController(this);
@@ -812,10 +811,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             tickTerrainClearing();
             tickGroundStepAudio();
             handleAmbientSounds();
-            if (isFlying() && tickCount % 2 == 0) {
-                tickWaterDisturbance();
-            }
-
             int cooldown = this.entityData.get(DATA_FEEDING_COOLDOWN);
             if (cooldown > 0) {
                 this.entityData.set(DATA_FEEDING_COOLDOWN, cooldown - 1);
@@ -3603,62 +3598,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return getAltitudeAboveCollisionTerrain(24, true);
     }
 
-    private void tickWaterDisturbance() {
-        if (level().isClientSide || !isFlying()) {
-            return;
-        }
-
-        Vec3 pos = position();
-        AABB box = getBoundingBox();
-        ServerLevel serverLevel = (ServerLevel) level();
-
-        for (int checkDown = 0; checkDown < WATER_EFFECT_MAX_HEIGHT; checkDown++) {
-            BlockPos checkPos = new BlockPos(
-                    Mth.floor(pos.x),
-                    Mth.floor(pos.y) - checkDown,
-                    Mth.floor(pos.z)
-            );
-
-            if (!level().hasChunkAt(checkPos)) continue;
-
-            BlockState state = level().getBlockState(checkPos);
-            if (!state.getFluidState().isEmpty()) {
-                double waterY = checkPos.getY() + 1.0;
-                double boxWidth = box.getXsize();
-                double boxLength = box.getZsize();
-                int particleCount = (int) Math.ceil((boxWidth + boxLength) / 2.0 * WATER_EFFECT_INTENSITY * 8.0);
-                particleCount = Math.min(particleCount, 40);
-
-                for (int i = 0; i < particleCount; i++) {
-                    double offsetX = (random.nextDouble() - 0.5) * boxWidth;
-                    double offsetZ = (random.nextDouble() - 0.5) * boxLength;
-                    double particleX = pos.x + offsetX;
-                    double particleZ = pos.z + offsetZ;
-
-                    serverLevel.sendParticles(
-                            ParticleTypes.SPLASH,
-                            particleX, waterY, particleZ,
-                            1,
-                            offsetX * 0.2, 0.1, offsetZ * 0.2,
-                            0.1
-                    );
-
-                    if (random.nextFloat() < 0.25f) {
-                        serverLevel.sendParticles(
-                                ParticleTypes.BUBBLE_POP,
-                                particleX, waterY, particleZ,
-                                1,
-                                0.0, 0.0, 0.0,
-                                0.0
-                        );
-                    }
-                }
-
-                break;
-            }
-        }
-    }
-
     private void tickTerrainClearing() {
         if (level().isClientSide || this.isBaby() || !this.isAlive()) {
             return;
@@ -4255,28 +4194,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     // ===== SCREEN SHAKE SYSTEM =====
 
     private void tickScreenShake() {
-        // Client side: just read the synced value from entity data
-        if (level().isClientSide) {
-            prevScreenShakeAmount = screenShakeAmount;
-            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-            return;
-        }
-
-        // Server side: decay and update entity data
-        prevScreenShakeAmount = screenShakeAmount;
-        if (screenShakeAmount > 0.0F) {
-            float newAmount = Math.max(0.0F, screenShakeAmount - SHAKE_DECAY_PER_TICK);
-            screenShakeAmount = newAmount;
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, newAmount);
-        } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        }
+        screenShakeComponent.tick();
     }
 
     @Override
     public float getScreenShakeAmount(float partialTicks) {
-        float currentAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-        return prevScreenShakeAmount + (currentAmount - prevScreenShakeAmount) * partialTicks;
+        return screenShakeComponent.getAmount(partialTicks);
     }
 
     @Override
@@ -4292,15 +4215,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     public void triggerScreenShake(float intensity) {
-        float clamped = Math.max(0.0F, intensity);
-        if (clamped <= 0.0F) {
-            return;
-        }
-        if (level().isClientSide) {
-            return;
-        }
-        screenShakeAmount = Math.max(screenShakeAmount, clamped);
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+        screenShakeComponent.trigger(intensity);
     }
 
     @Override

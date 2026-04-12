@@ -88,7 +88,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> VARASUCHUS_PHASE2 = registerSound("varasuchus_phase2");
     public static final Supplier<SoundEvent> VARASUCHUS_PHASE2_UNDERWATER = registerSound("varasuchus_phase2_underwater");
     public static final Supplier<SoundEvent> VARASUCHUS_ROAR = registerSound("varasuchus_roar");
-    public static final Supplier<SoundEvent> VARASUCHUS_ROAR2 = registerSound("varasuchus_roar2");
     public static final Supplier<SoundEvent> VARASUCHUS_WALK = registerSound("varasuchus_walk");
     public static final Supplier<SoundEvent> VARASUCHUS_RUN = registerSound("varasuchus_run");
     public static final Supplier<SoundEvent> VARASUCHUS_WALK2 = registerSound("varasuchus_walk2");

@@ -95,8 +95,6 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         // Roar animations (different for each phase) - player triggered
         actionController.triggerableAnim("roar",
                 RawAnimation.begin().thenPlay("animation.varasuchus.roar"));
-        actionController.triggerableAnim("roar2",
-                RawAnimation.begin().thenPlay("animation.varasuchus.roar2"));
 
         // Eat animation - triggered when feeding
         actionController.triggerableAnim("eat",

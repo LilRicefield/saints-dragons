@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -31,6 +32,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final double AI_FORWARD_SPEED = 1.6D;
     private static final double AI_RECOVERY_END_SPEED = AI_FORWARD_SPEED * (RIDER_RECOVERY_END_SPEED / RIDER_SURGE_SPEED);
     private static final float HIT_DAMAGE = 5.0F;
+    private static final float SUPERCHARGED_HIT_DAMAGE = HIT_DAMAGE * 2.0F;
     private static final double HIT_KNOCKBACK = 0.55D;
     private static final int HIT_COOLDOWN_TICKS = 5;
 
@@ -328,12 +330,35 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
 
             float armor = (float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR);
             float toughness = (float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS);
-            float rawDamage = rawDamageForDesiredPostArmor(HIT_DAMAGE, Math.max(0f, armor), toughness);
+            float desiredDamage = wyvern.isSupercharged() ? SUPERCHARGED_HIT_DAMAGE : HIT_DAMAGE;
+            float rawDamage = rawDamageForDesiredPostArmor(desiredDamage, Math.max(0f, armor), toughness);
             target.hurt(wyvern.damageSources().mobAttack(wyvern), rawDamage);
+            if (wyvern.isSupercharged()) {
+                spawnSuperchargedGroundRendLightning(wyvern, target);
+            }
             wyvern.noteAggroFrom(target);
             target.knockback((float) HIT_KNOCKBACK, -forwardDir.x, -forwardDir.z);
             hitCooldowns.put(entityId, HIT_COOLDOWN_TICKS);
         }
+    }
+
+    private void spawnSuperchargedGroundRendLightning(Raevyx wyvern, LivingEntity target) {
+        if (!(wyvern.level() instanceof ServerLevel server)) {
+            return;
+        }
+
+        var bolt = net.minecraft.world.entity.EntityType.LIGHTNING_BOLT.create(server);
+        if (bolt == null) {
+            return;
+        }
+
+        bolt.moveTo(target.getX(), target.getY(), target.getZ());
+        bolt.setVisualOnly(true);
+        var owner = wyvern.getOwner();
+        if (owner instanceof net.minecraft.server.level.ServerPlayer sp) {
+            bolt.setCause(sp);
+        }
+        server.addFreshEntity(bolt);
     }
 
     private static float damageAfterArmor(float damage, float armor, float toughness) {

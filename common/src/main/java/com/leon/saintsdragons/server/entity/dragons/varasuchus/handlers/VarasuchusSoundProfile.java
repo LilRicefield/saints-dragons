@@ -22,7 +22,6 @@ public final class VarasuchusSoundProfile implements DragonSoundProfile {
             Map.entry("grumble2", 136),
             Map.entry("grumble3", 135),
             Map.entry("roar", 140),
-            Map.entry("roar2", 180),
             Map.entry("phase1", 85),
             Map.entry("phase2", 60),
             Map.entry("phase2_start", 60),
@@ -67,7 +66,6 @@ public final class VarasuchusSoundProfile implements DragonSoundProfile {
             case "grumble2", "varasuchus_grumble2" -> 136;
             case "grumble3", "varasuchus_grumble3" -> 135;
             case "roar", "varasuchus_roar" -> 140;
-            case "roar2", "varasuchus_roar2" -> 180;
             case "phase1", "varasuchus_phase1" -> 85;
             case "phase2_start", "varasuchus_phase2_start" -> 38;
             case "phase2", "varasuchus_phase2" -> 60;

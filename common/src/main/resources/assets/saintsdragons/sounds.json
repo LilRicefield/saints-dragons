@@ -667,17 +667,6 @@
       }
     ]
   },
-  "varasuchus_roar2": {
-    "subtitle": "Varasuchus roars aggressively",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/varasuchus/varasuchus_roar2",
-        "volume": 2.5,
-        "pitch": 1.0,
-        "attenuation_distance": 48
-      }
-    ]
-  },
   "varasuchus_walk": {
     "subtitle": "Varasuchus walks",
     "sounds": [

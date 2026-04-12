@@ -1,6 +1,9 @@
 {
   "replace": false,
   "values": [
-    "irons_spellbooks:lightning_magic"
+    {
+      "id": "irons_spellbooks:lightning_magic",
+      "required": false
+    }
   ]
 }

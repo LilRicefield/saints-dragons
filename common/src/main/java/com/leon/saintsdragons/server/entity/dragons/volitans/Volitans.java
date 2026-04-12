@@ -49,6 +49,7 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAn
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansTamingHandler;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -275,10 +276,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private float smoothedPlayerPitchRad = 0f;
     private float prevSmoothedRoll = 0.0f;
     private float smoothedRoll = 0.0f;
-    private float prevScreenShakeAmount = 0.0F;
-    private float screenShakeAmount = 0.0F;
-    private int screenShakeHoldTicks = 0;
-    private float screenShakeHoldIntensity = 0.0F;
+    private final ScreenShakeComponent screenShakeComponent;
     private int sitTransitionTicks = 0;
     private boolean isSittingDown = false;
     private boolean isStandingUp = false;
@@ -310,6 +308,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     public Volitans(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
+        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.setRideable();
         this.setMaxUpStep(1.0F);
         this.riderController = new VolitansRiderController(this);
@@ -2252,8 +2251,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public float getScreenShakeAmount(float partialTicks) {
-        float current = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-        return prevScreenShakeAmount + (current - prevScreenShakeAmount) * partialTicks;
+        return screenShakeComponent.getAmount(partialTicks);
     }
 
     @Override
@@ -2267,19 +2265,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     public void triggerScreenShake(float intensity) {
-        screenShakeAmount = Math.max(screenShakeAmount, intensity);
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+        screenShakeComponent.trigger(intensity);
     }
 
     public void triggerScreenShake(float intensity, int durationTicks) {
-        if (durationTicks <= 0) {
-            triggerScreenShake(intensity);
-            return;
-        }
-        screenShakeHoldIntensity = Math.max(screenShakeHoldIntensity, intensity);
-        screenShakeHoldTicks = Math.max(screenShakeHoldTicks, durationTicks);
-        screenShakeAmount = Math.max(screenShakeAmount, screenShakeHoldIntensity);
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
+        screenShakeComponent.hold(intensity, durationTicks);
     }
 
     public void useRidingAbility(String abilityName) {
@@ -3148,28 +3138,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private void tickScreenShake() {
-        if (level().isClientSide) {
-            prevScreenShakeAmount = screenShakeAmount;
-            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-            return;
-        }
-
-        prevScreenShakeAmount = screenShakeAmount;
-        if (screenShakeHoldTicks > 0) {
-            screenShakeHoldTicks--;
-            screenShakeAmount = Math.max(screenShakeAmount, screenShakeHoldIntensity);
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, screenShakeAmount);
-            if (screenShakeHoldTicks == 0) {
-                screenShakeHoldIntensity = 0.0F;
-                screenShakeAmount = 0.0F;
-                this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-            }
-            return;
-        }
-        if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
-            screenShakeAmount = 0.0F;
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        }
+        screenShakeComponent.tick();
     }
 
     private void tickBurrowRumbleShake() {
@@ -3180,11 +3149,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 || Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.03F
                 || this.getDeltaMovement().horizontalDistanceSqr() > 0.0016D;
         float target = moving ? BURROW_MOVE_SHAKE_INTENSITY : 0.0F;
-        this.screenShakeAmount = target;
-        this.prevScreenShakeAmount = target;
-        this.screenShakeHoldTicks = 0;
-        this.screenShakeHoldIntensity = 0.0F;
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, target);
+        screenShakeComponent.force(target);
     }
 
     private boolean shouldSuppressTakeoffInput() {

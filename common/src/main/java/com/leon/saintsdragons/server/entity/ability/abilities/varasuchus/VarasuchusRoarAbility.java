@@ -38,18 +38,13 @@ public class VarasuchusRoarAbility extends DragonAbility<Varasuchus> {
         }
         if (section.sectionType == STARTUP) {
             Varasuchus dragon = getUser();
-            boolean phaseTwo = dragon.isPhaseTwoActive();
-
-            // Use different roar animation based on phase
-            // Sound is handled via animation keyframe (client-side, no delay)
-            String trigger = phaseTwo ? "roar2" : "roar";
-            dragon.triggerAnim("action", trigger);
+            dragon.triggerAnim("action", "roar");
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(
-                        phaseTwo ? ModSounds.VARASUCHUS_ROAR2.get() : ModSounds.VARASUCHUS_ROAR.get(),
+                        ModSounds.VARASUCHUS_ROAR.get(),
                         1.0f,
                         1.0f,
-                        180
+                        140
                 );
             }
 

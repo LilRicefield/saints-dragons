@@ -45,6 +45,7 @@ import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.util.ClientAnimationInitHelper;
@@ -320,8 +321,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private int ambientSoundTimer;
     private int nextAmbientSoundDelay;
     // ===== SCREEN SHAKE SYSTEM =====
-    private float prevScreenShakeAmount = 0.0F;
-    private float screenShakeAmount = 0.0F;
+    private final ScreenShakeComponent screenShakeComponent;
     // ===== ENTITY DATA HELPER METHODS =====
     /**
      * Helper method for boolean entity data access
@@ -605,6 +605,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     public Raevyx(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
+        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.34F);
         this.setMaxUpStep(1.25F);
 
         // Initialize both navigators with custom pathfinding
@@ -1473,8 +1474,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         double altitudeAboveTerrain = this.getY() - groundY;
         boolean riddenByOwner = isRiddenByOwner();
         boolean forceSurfaceGlide = riddenByOwner
-                && (shouldGlideNearWaterSurface() || altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD);
-
+                && ( altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD);
         DragonFlightStateEvaluator.FlightInput input = new DragonFlightStateEvaluator.FlightInput(
                 isFlying(),
                 shouldPlayTakeoff(),
@@ -2203,9 +2203,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // === SERVER-SIDE: EVERY 2 TICKS (input/movement - slight delay acceptable) ===
         if (tickCount % 2 == 0) {
             tickRiderControlLockMovement();
-            if (isFlying()) {
-                tickWaterDisturbance();
-            }
         }
 
         // === SERVER-SIDE: EVERY TICK (precise timing needed) ===
@@ -2366,21 +2363,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // ===== TICK SUBMETHODS =====
 
     private void tickScreenShake() {
-        // Client side: just read the synced value from entity data
-        if (level().isClientSide) {
-            prevScreenShakeAmount = screenShakeAmount;
-            screenShakeAmount = this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT);
-            return;
-        }
-
-        // Server side: decay and update entity data
-        prevScreenShakeAmount = screenShakeAmount;
-        if (screenShakeAmount > 0) {
-            screenShakeAmount = Math.max(0, screenShakeAmount - 0.34F);
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
-        } else if (this.entityData.get(DATA_SCREEN_SHAKE_AMOUNT) != 0.0F) {
-            this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        }
+        screenShakeComponent.tick();
     }
 
     /**
@@ -2397,123 +2380,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         }
     }
 
-    // ===== WATER DISTURBANCE EFFECT (wing downforce) =====
-
-    // Tuneable constants
-    private static final double WATER_EFFECT_MAX_HEIGHT = 8.0;   // Max height above water to trigger effect
-    private static final double WATER_EFFECT_INTENSITY = 0.6;    // Multiplier for particle count (smaller than Cindervane)
-
-    /**
-     * Creates water disturbance effects when flying over water.
-     * Uses vanilla-style splash logic based on bounding box size.
-     * Bigger dragons automatically create bigger splashes!
-     */
-    private void tickWaterDisturbance() {
-        // Only run on server side
-        if (level().isClientSide) return;
-
-        // Only when flying
-        if (!isFlying()) return;
-
-        // Get dragon position and bounding box
-        Vec3 pos = position();
-        AABB box = getBoundingBox();
-
-        // Check for water below (scan down from dragon position)
-        for (int checkDown = 0; checkDown < WATER_EFFECT_MAX_HEIGHT; checkDown++) {
-            BlockPos checkPos = new BlockPos(
-                (int) Math.floor(pos.x),
-                (int) Math.floor(pos.y) - checkDown,
-                (int) Math.floor(pos.z)
-            );
-
-            if (!level().hasChunkAt(checkPos)) continue;
-
-            BlockState state = level().getBlockState(checkPos);
-
-            // Found water surface?
-            if (!state.getFluidState().isEmpty()) {
-                double waterY = checkPos.getY() + 1.0; // Top of water block
-
-                // === VANILLA-STYLE SPLASH BASED ON BOUNDING BOX SIZE ===
-                // Calculate bounding box dimensions
-                double boxWidth = box.getXsize();   // Width (X axis)
-                double boxLength = box.getZsize();  // Length (Z axis)
-
-                // Calculate particle count based on entity size (vanilla formula)
-                // Bigger bounding box = more particles
-                int particleCount = (int) Math.ceil((boxWidth + boxLength) / 2.0 * WATER_EFFECT_INTENSITY * 8.0);
-                particleCount = Math.min(particleCount, 50); // Cap to prevent lag
-
-                // Spawn particles around the perimeter of the bounding box
-                for (int i = 0; i < particleCount; i++) {
-                    // Random position within bounding box horizontal area
-                    double offsetX = (random.nextDouble() - 0.5) * boxWidth;
-                    double offsetZ = (random.nextDouble() - 0.5) * boxLength;
-
-                    double particleX = pos.x + offsetX;
-                    double particleZ = pos.z + offsetZ;
-
-                    // Spawn splash particles
-                    ((ServerLevel) level()).sendParticles(
-                        ParticleTypes.SPLASH,
-                        particleX, waterY, particleZ,
-                        1,
-                        offsetX * 0.2, 0.1, offsetZ * 0.2,  // Velocity based on offset (spreads outward)
-                        0.1
-                    );
-
-                    // Bubbles (fewer than splashes)
-                    if (random.nextFloat() < 0.25f) {
-                        ((ServerLevel) level()).sendParticles(
-                            ParticleTypes.BUBBLE_POP,
-                            particleX, waterY, particleZ,
-                            1,
-                            0.0, 0.0, 0.0,
-                            0.0
-                        );
-                    }
-                }
-
-                break; // Found water, stop scanning down
-            }
-        }
-    }
-
-    private boolean shouldGlideNearWaterSurface() {
-        if (!isFlying()) {
-            return false;
-        }
-        // Quick altitude gate so we only scan when close to ocean level
-        if (this.getY() > RIDER_WATER_SURFACE_LEVEL + RIDER_WATER_SURFACE_TOLERANCE) {
-            return false;
-        }
-
-        int baseX = Mth.floor(getX());
-        int baseY = Mth.floor(getY());
-        int baseZ = Mth.floor(getZ());
-        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
-
-        for (int dx = -RIDER_WATER_SCAN_RADIUS; dx <= RIDER_WATER_SCAN_RADIUS; dx++) {
-            for (int dz = -RIDER_WATER_SCAN_RADIUS; dz <= RIDER_WATER_SCAN_RADIUS; dz++) {
-                for (int dy = 0; dy < WATER_EFFECT_MAX_HEIGHT; dy++) {
-                    checkPos.set(baseX + dx, baseY - dy, baseZ + dz);
-                    if (!level().hasChunkAt(checkPos)) {
-                        continue;
-                    }
-                    BlockState state = level().getBlockState(checkPos);
-                    if (!state.getFluidState().isEmpty()) {
-                        double surfaceY = checkPos.getY() + 1.0;
-                        if (Math.abs(this.getY() - surfaceY) <= RIDER_WATER_SURFACE_TOLERANCE) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
 
     private void tickHurtSoundCooldown() {
         // Cool down hurt sound throttle
@@ -5083,8 +4949,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     // ===== SCREEN SHAKE INTERFACE IMPLEMENTATION =====
     @Override
     public float getScreenShakeAmount(float partialTicks) {
-        float currentAmount = getFloatData(DATA_SCREEN_SHAKE_AMOUNT);
-        return prevScreenShakeAmount + (currentAmount - prevScreenShakeAmount) * partialTicks;
+        return screenShakeComponent.getAmount(partialTicks);
     }
 
     @Override
@@ -5097,8 +4962,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return true;
     }
     public void triggerScreenShake(float intensity) {
-        this.screenShakeAmount = Math.max(this.screenShakeAmount, intensity);
-        this.entityData.set(DATA_SCREEN_SHAKE_AMOUNT, this.screenShakeAmount);
+        screenShakeComponent.trigger(intensity);
     }
 
     @Override
