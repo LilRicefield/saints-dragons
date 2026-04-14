@@ -59,11 +59,6 @@ public class StegonautBinderItem extends AbstractDragonBinderItem<Stegonaut> {
         return false;
     }
 
-    @Override
-    protected void appendExtraBoundTooltip(@NotNull List<Component> tooltip, @Nullable String dragonName) {
-        tooltip.add(Component.translatable("saintsdragons.tooltip.stegonaut_binder.bound_desc"));
-    }
-
     public static boolean isBound(ItemStack stack) {
         return BinderComponentUtil.isBound(stack);
     }
