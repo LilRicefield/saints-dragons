@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.common.registry.ModPotions;
@@ -54,6 +55,8 @@ import java.util.Map;
 @Mod(SaintsDragonsCommon.MOD_ID)
 public final class SaintsDragonsForge {
     private static final double ATTRIBUTE_CAP = 100000.0D;
+    private static boolean commonGameplayConfigReady = false;
+    private static boolean pendingForgeOthersSync = false;
 
     private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIERS =
             DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, SaintsDragonsCommon.MOD_ID);
@@ -184,12 +187,43 @@ public final class SaintsDragonsForge {
         if (config.getType() != ModConfig.Type.COMMON) {
             return;
         }
-        if (!"saintsdragons-attributes.toml".equals(config.getFileName())) {
+
+        if ("saintsdragonsspawning.toml".equals(config.getFileName())) {
+            commonGameplayConfigReady = true;
+            if (pendingForgeOthersSync) {
+                syncForgeOthersIntoCommonConfig();
+                pendingForgeOthersSync = false;
+            }
             return;
         }
 
-        DragonAttributeConfigLoader.getInstance().refreshFromForgeConfig();
-        applyAttributesToLoadedDragons();
+        if ("saintsdragons-attributes.toml".equals(config.getFileName())) {
+            if (commonGameplayConfigReady) {
+                syncForgeOthersIntoCommonConfig();
+            } else {
+                pendingForgeOthersSync = true;
+            }
+            DragonAttributeConfigLoader.getInstance().refreshFromForgeConfig();
+            applyAttributesToLoadedDragons();
+        }
+    }
+
+    private void syncForgeOthersIntoCommonConfig() {
+        syncBoolean(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED, ForgeDragonAttributesConfig.DRAGON_GRIEFING_ENABLED.get());
+        syncBoolean(SaintsDragonsConfig.SCREEN_SHAKE_ENABLED, ForgeDragonAttributesConfig.SCREEN_SHAKE_ENABLED.get());
+        syncBoolean(SaintsDragonsConfig.BARREL_ROLL_ENABLED, ForgeDragonAttributesConfig.BARREL_ROLL_ENABLED.get());
+        syncBoolean(SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED, ForgeDragonAttributesConfig.STEGONAUT_BUFFS_ENABLED.get());
+        syncBoolean(SaintsDragonsConfig.HUNGER_DECAY_ENABLED, ForgeDragonAttributesConfig.HUNGER_DECAY_ENABLED.get());
+        syncBoolean(SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED, ForgeDragonAttributesConfig.HAPPINESS_DECAY_ENABLED.get());
+        syncBoolean(SaintsDragonsConfig.IVY_HOUSE_ENABLED, ForgeDragonAttributesConfig.IVY_HOUSE_ENABLED.get());
+    }
+
+    private static void syncBoolean(com.leon.saintsdragons.platform.ConfigHelper.BooleanValue value, boolean newValue) {
+        if (value == null) {
+            return;
+        }
+        value.set(newValue);
+        value.save();
     }
 
     private void applyAttributesToLoadedDragons() {

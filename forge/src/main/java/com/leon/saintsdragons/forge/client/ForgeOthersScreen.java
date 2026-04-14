@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.forge.client;
 
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -24,21 +23,21 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
         entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.section")));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.dragon_griefing"),
-                () -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get(),
-                val -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(val),
-                SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED::save
+                () -> ForgeDragonAttributesConfig.DRAGON_GRIEFING_ENABLED.get(),
+                ForgeDragonAttributesConfig.DRAGON_GRIEFING_ENABLED::set,
+                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
         ));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.screen_shake"),
-                () -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get(),
-                val -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.set(val),
-                SaintsDragonsConfig.SCREEN_SHAKE_ENABLED::save
+                () -> ForgeDragonAttributesConfig.SCREEN_SHAKE_ENABLED.get(),
+                ForgeDragonAttributesConfig.SCREEN_SHAKE_ENABLED::set,
+                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
         ));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.barrel_roll"),
-                () -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.get(),
-                val -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.set(val),
-                SaintsDragonsConfig.BARREL_ROLL_ENABLED::save
+                () -> ForgeDragonAttributesConfig.BARREL_ROLL_ENABLED.get(),
+                ForgeDragonAttributesConfig.BARREL_ROLL_ENABLED::set,
+                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
         ));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera"),
@@ -48,24 +47,24 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
         ));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
-                () -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get(),
-                val -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.set(val),
-                SaintsDragonsConfig.HUNGER_DECAY_ENABLED::save
+                () -> ForgeDragonAttributesConfig.HUNGER_DECAY_ENABLED.get(),
+                ForgeDragonAttributesConfig.HUNGER_DECAY_ENABLED::set,
+                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
         ));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.happiness_decay"),
-                () -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get(),
-                val -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.set(val),
-                SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED::save
+                () -> ForgeDragonAttributesConfig.HAPPINESS_DECAY_ENABLED.get(),
+                ForgeDragonAttributesConfig.HAPPINESS_DECAY_ENABLED::set,
+                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
         ));
 
         // Ivy the Dragon Merchant
         entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
-                () -> SaintsDragonsConfig.IVY_HOUSE_ENABLED.get(),
-                val -> SaintsDragonsConfig.IVY_HOUSE_ENABLED.set(val),
-                SaintsDragonsConfig.IVY_HOUSE_ENABLED::save
+                () -> ForgeDragonAttributesConfig.IVY_HOUSE_ENABLED.get(),
+                ForgeDragonAttributesConfig.IVY_HOUSE_ENABLED::set,
+                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
         ));
         entries.add(new IntEntry(
                 Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
@@ -77,12 +76,6 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
 
     @Override
     protected void onSave() {
-        SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
-        SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
-        SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
-        SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
-        SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
-        SaintsDragonsConfig.IVY_HOUSE_ENABLED.save();
         ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
     }
 }

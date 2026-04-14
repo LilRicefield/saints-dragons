@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.forge.client;
 
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -121,7 +120,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
 
     @Override
     protected void onSave() {
-        SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.save();
         ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
         DragonAttributeConfigLoader.getInstance().refreshFromForgeConfig();
         applyAttributesToLoadedDragons();
@@ -287,9 +285,9 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 null));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs"),
-                () -> SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.get(),
-                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED::set,
-                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED::save
+                () -> ForgeDragonAttributesConfig.STEGONAUT_BUFFS_ENABLED.get(),
+                ForgeDragonAttributesConfig.STEGONAUT_BUFFS_ENABLED::set,
+                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
         ));
     }
 
