@@ -225,15 +225,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static DragonAttributeConfig varasuchusDefaults() {
-        double maxHealth = 250.0D;
+        double maxHealth = 200.0D;
         double armor = 8.0D;
-        double bitePhase1Damage = 40.0D;
-        double bitePhase2Damage = 50.0D;
-        double tailAttackDamage = 8.0D;
-        double dashTailSwipeDamage = 14.0D;
-        double dashClawDamage = 16.0D;
-        double hornPhase1Damage = 16.0D;
-        double hornPhase2Damage = 20.8D;
+        double bitePhase1Damage = 15.0D;
+        double bitePhase2Damage = 25.0D;
+        double tailAttackDamage = 7.0D;
+        double dashTailSwipeDamage = 10.0D;
+        double dashClawDamage = 15.0D;
+        double clawAttackDamage = 8.0D;
+        double hornPhase1Damage = 8.0D;
+        double hornPhase2Damage = 15.8D;
         double swimSpeed = 1.45D;
         double tamingChance = 16.6667D;
         double tamingChanceTropical = 25.0D;
@@ -253,6 +254,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tailAttackDamage = (double) configClass.getField("VARASUCHUS_TAIL_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAIL_ATTACK_DAMAGE").get(null));
                 dashTailSwipeDamage = (double) configClass.getField("VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE").get(null));
                 dashClawDamage = (double) configClass.getField("VARASUCHUS_DASH_CLAW_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_DASH_CLAW_DAMAGE").get(null));
+                clawAttackDamage = (double) configClass.getField("VARASUCHUS_CLAW_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_CLAW_ATTACK_DAMAGE").get(null));
                 hornPhase1Damage = (double) configClass.getField("VARASUCHUS_HORN_GORE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_HORN_GORE_PHASE1_DAMAGE").get(null));
                 hornPhase2Damage = (double) configClass.getField("VARASUCHUS_HORN_GORE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_HORN_GORE_PHASE2_DAMAGE").get(null));
                 swimSpeed = (double) configClass.getField("VARASUCHUS_SWIM_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_SWIM_SPEED").get(null));
@@ -277,6 +279,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "tail_attack", DragonAbilityOverride.ofDamage(tailAttackDamage),
                         "dash_tail_swipe", DragonAbilityOverride.ofDamage(dashTailSwipeDamage),
                         "dash_claw", DragonAbilityOverride.ofDamage(dashClawDamage),
+                        "claw_attack", DragonAbilityOverride.ofDamage(clawAttackDamage),
                         "horn_gore_phase1", DragonAbilityOverride.ofDamage(hornPhase1Damage),
                         "horn_gore_phase2", DragonAbilityOverride.ofDamage(hornPhase2Damage)
                 ),
@@ -296,7 +299,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static DragonAttributeConfig ignivorusDefaults() {
-        double maxHealth = 300.0D;
+        double maxHealth = 450.0D;
         double armor = 4.0D;
         double flyingSpeed = 0.35D;
         double biteDamage = 50.0D;
@@ -521,7 +524,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static DragonAttributeConfig volitansDefaults() {
-        double maxHealth = 140.0D;
+        double maxHealth = 160.0D;
         double armor = 6.0D;
         double flyingSpeed = 0.38D;
         double biteDamage = 12.0D;
@@ -541,7 +544,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double eggDropChance = 0.12D;
         double wildFlyingSpeedMultiplier = 1.0D;
         double scaleDropChanceBrush = 0.30D;
-        double spineDropChance = 1.0D;
+        double spineDropChance = 0.3D;
         double fishDropChance = 0.40D;
         double breathActiveTicksMax = 240.0D;
         double breathDrainPerTick = 1.0D / (20.0D * 12.0D);

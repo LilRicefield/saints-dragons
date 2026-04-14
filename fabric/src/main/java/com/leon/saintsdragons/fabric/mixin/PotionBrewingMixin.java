@@ -18,12 +18,24 @@ public final class PotionBrewingMixin {
         return ingredient.is(ModItems.VARASUCHUS_SCALE.get()) || ingredient.is(ModItems.IGNIVORUS_TOOTH.get());
     }
 
+    private static boolean isSaintsDragonsPotion(ItemStack stack) {
+        return stack.is(ModItems.POTION_OF_TIDEGUARD.get())
+                || stack.is(ModItems.POTION_OF_SEARING.get())
+                || PotionUtils.getPotion(stack) == ModPotions.VARASUCHUS_TIDEGUARD.get()
+                || PotionUtils.getPotion(stack) == ModPotions.SEARING.get();
+    }
+
     @Inject(method = "hasMix", at = @At("HEAD"), cancellable = true)
     private static void saintsdragons$blockAwkwardSplashAndLingering(
             ItemStack input,
             ItemStack ingredient,
             CallbackInfoReturnable<Boolean> cir
     ) {
+        if (isSaintsDragonsPotion(input)) {
+            cir.setReturnValue(false);
+            return;
+        }
+
         if (!isCustomRecipeIngredient(ingredient)) {
             return;
         }
@@ -37,12 +49,28 @@ public final class PotionBrewingMixin {
         }
     }
 
+    @Inject(method = "hasPotionMix", at = @At("HEAD"), cancellable = true)
+    private static void saintsdragons$blockVanillaPotionFamilyConversions(
+            ItemStack input,
+            ItemStack ingredient,
+            CallbackInfoReturnable<Boolean> cir
+    ) {
+        if (isSaintsDragonsPotion(input)) {
+            cir.setReturnValue(false);
+        }
+    }
+
     @Inject(method = "mix", at = @At("HEAD"), cancellable = true)
     private static void saintsdragons$customPotionItemOutput(
-            ItemStack ingredient,
             ItemStack input,
+            ItemStack ingredient,
             CallbackInfoReturnable<ItemStack> cir
     ) {
+        if (isSaintsDragonsPotion(input)) {
+            cir.setReturnValue(ItemStack.EMPTY);
+            return;
+        }
+
         if (PotionUtils.getPotion(input) != Potions.AWKWARD || !input.is(Items.POTION)) {
             return;
         }

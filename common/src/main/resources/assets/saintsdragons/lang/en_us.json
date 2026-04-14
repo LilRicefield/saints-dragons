@@ -523,6 +523,7 @@
   "config.saintsdragons.attributes.varasuchus.tail_attack": "Tail Attack Damage",
   "config.saintsdragons.attributes.varasuchus.dash_tail_swipe": "Dash Tail Swipe Damage",
   "config.saintsdragons.attributes.varasuchus.dash_claw": "Dash Claw Damage",
+  "config.saintsdragons.attributes.varasuchus.claw_attack": "Claw Attack Damage",
   "config.saintsdragons.attributes.varasuchus.horn_phase1": "Horn Gore Damage (Phase 1)",
   "config.saintsdragons.attributes.varasuchus.horn_phase2": "Horn Gore Damage (Phase 2)",
   "config.saintsdragons.attributes.varasuchus.taming_chance": "Taming Chance % (Base, Rodeo/Legacy)",

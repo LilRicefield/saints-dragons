@@ -115,7 +115,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
 public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, PackMember<Cindervane> {
-    private static final float ALBINO_VARIANT_CHANCE = 0.50F;
+    private static final float ALBINO_VARIANT_CHANCE = 0.15F;
     private static final int LANDING_SETTLE_TICKS = 4;
     private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
     private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;

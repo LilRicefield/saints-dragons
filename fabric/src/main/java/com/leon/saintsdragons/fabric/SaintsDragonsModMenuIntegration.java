@@ -135,13 +135,14 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         varasuchusBuffer.maxHealth = varasuchusCurrent.maxHealth();
         varasuchusBuffer.armor = varasuchusCurrent.armor();
         varasuchusBuffer.swimSpeed = varasuchusCurrent.extraDouble("swim_speed", 1.45D);
-        varasuchusBuffer.bitePhase1 = varasuchusCurrent.abilityDamage("bite_phase1", 40.0D);
-        varasuchusBuffer.bitePhase2 = varasuchusCurrent.abilityDamage("bite_phase2", 50.0D);
-        varasuchusBuffer.tailAttack = varasuchusCurrent.abilityDamage("tail_attack", 8.0D);
-        varasuchusBuffer.dashTailSwipe = varasuchusCurrent.abilityDamage("dash_tail_swipe", 14.0D);
-        varasuchusBuffer.dashClaw = varasuchusCurrent.abilityDamage("dash_claw", 16.0D);
-        varasuchusBuffer.hornPhase1 = varasuchusCurrent.abilityDamage("horn_gore_phase1", 16.0D);
-        varasuchusBuffer.hornPhase2 = varasuchusCurrent.abilityDamage("horn_gore_phase2", 20.8D);
+        varasuchusBuffer.bitePhase1 = varasuchusCurrent.abilityDamage("bite_phase1", 15.0D);
+        varasuchusBuffer.bitePhase2 = varasuchusCurrent.abilityDamage("bite_phase2", 25.0D);
+        varasuchusBuffer.tailAttack = varasuchusCurrent.abilityDamage("tail_attack", 7.0D);
+        varasuchusBuffer.dashTailSwipe = varasuchusCurrent.abilityDamage("dash_tail_swipe", 10.0D);
+        varasuchusBuffer.dashClaw = varasuchusCurrent.abilityDamage("dash_claw", 15.0D);
+        varasuchusBuffer.clawAttack = varasuchusCurrent.abilityDamage("claw_attack", 8.0D);
+        varasuchusBuffer.hornPhase1 = varasuchusCurrent.abilityDamage("horn_gore_phase1", 8.0D);
+        varasuchusBuffer.hornPhase2 = varasuchusCurrent.abilityDamage("horn_gore_phase2", 15.8D);
         varasuchusBuffer.tamingChance = varasuchusCurrent.extraDouble("taming_chance", 16.6667D);
         varasuchusBuffer.tamingChanceTropical = varasuchusCurrent.extraDouble("taming_chance_tropical", 25.0D);
         varasuchusBuffer.legacyTaming = varasuchusCurrent.extraBoolean("legacy_taming", false);
@@ -275,7 +276,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         volitansBuffer.scaleDropChanceBrush = volitansCurrent.extraDouble("scale_drop_chance_brush",
                 volitansDefaults.extraDouble("scale_drop_chance_brush", 0.30D));
         volitansBuffer.spineDropChance = volitansCurrent.extraDouble("spine_drop_chance",
-                volitansDefaults.extraDouble("spine_drop_chance", 1.0D));
+                volitansDefaults.extraDouble("spine_drop_chance", 0.3D));
         volitansBuffer.fishDropChance = volitansCurrent.extraDouble("fish_drop_chance",
                 volitansDefaults.extraDouble("fish_drop_chance", 0.40D));
         volitansBuffer.breathActiveTicksMax = volitansCurrent.extraDouble("breath_active_ticks_max",
@@ -987,43 +988,49 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.swimSpeed = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.bite_phase1"), buffer.bitePhase1)
-                .setDefaultValue(defaults.abilityDamage("bite_phase1", 40.0D))
+                .setDefaultValue(defaults.abilityDamage("bite_phase1", 15.0D))
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.bitePhase1 = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.bite_phase2"), buffer.bitePhase2)
-                .setDefaultValue(defaults.abilityDamage("bite_phase2", 50.0D))
+                .setDefaultValue(defaults.abilityDamage("bite_phase2", 25.0D))
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.bitePhase2 = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.tail_attack"), buffer.tailAttack)
-                .setDefaultValue(defaults.abilityDamage("tail_attack", 8.0D))
+                .setDefaultValue(defaults.abilityDamage("tail_attack", 7.0D))
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.tailAttack = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_tail_swipe"), buffer.dashTailSwipe)
-                .setDefaultValue(defaults.abilityDamage("dash_tail_swipe", 14.0D))
+                .setDefaultValue(defaults.abilityDamage("dash_tail_swipe", 10.0D))
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.dashTailSwipe = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_claw"), buffer.dashClaw)
-                .setDefaultValue(defaults.abilityDamage("dash_claw", 16.0D))
+                .setDefaultValue(defaults.abilityDamage("dash_claw", 15.0D))
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.dashClaw = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.claw_attack"), buffer.clawAttack)
+                .setDefaultValue(defaults.abilityDamage("claw_attack", 8.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.clawAttack = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase1"), buffer.hornPhase1)
-                .setDefaultValue(defaults.abilityDamage("horn_gore_phase1", 16.0D))
+                .setDefaultValue(defaults.abilityDamage("horn_gore_phase1", 8.0D))
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.hornPhase1 = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase2"), buffer.hornPhase2)
-                .setDefaultValue(defaults.abilityDamage("horn_gore_phase2", 20.8D))
+                .setDefaultValue(defaults.abilityDamage("horn_gore_phase2", 15.8D))
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.hornPhase2 = value)
@@ -1494,7 +1501,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         entries.add(buildPercentChanceEntry(entryBuilder,
                 Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"),
                 buffer.spineDropChance,
-                defaults.extraDouble("spine_drop_chance", 1.0D),
+                defaults.extraDouble("spine_drop_chance", 0.3D),
                 value -> buffer.spineDropChance = value));
         entries.add(buildPercentChanceEntry(entryBuilder,
                 Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"),
@@ -1637,6 +1644,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         varasuchusAbilities.put("tail_attack", DragonAbilityOverride.ofDamage(varasuchusBuffer.tailAttack));
         varasuchusAbilities.put("dash_tail_swipe", DragonAbilityOverride.ofDamage(varasuchusBuffer.dashTailSwipe));
         varasuchusAbilities.put("dash_claw", DragonAbilityOverride.ofDamage(varasuchusBuffer.dashClaw));
+        varasuchusAbilities.put("claw_attack", DragonAbilityOverride.ofDamage(varasuchusBuffer.clawAttack));
         varasuchusAbilities.put("horn_gore_phase1", DragonAbilityOverride.ofDamage(varasuchusBuffer.hornPhase1));
         varasuchusAbilities.put("horn_gore_phase2", DragonAbilityOverride.ofDamage(varasuchusBuffer.hornPhase2));
         DragonAttributeConfig updatedVarasuchus = new DragonAttributeConfig(
@@ -1793,6 +1801,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double tailAttack;
         double dashTailSwipe;
         double dashClaw;
+        double clawAttack;
         double hornPhase1;
         double hornPhase2;
         double tamingChance;

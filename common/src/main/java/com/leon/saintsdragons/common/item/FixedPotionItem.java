@@ -11,7 +11,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.alchemy.Potion;
@@ -82,19 +81,8 @@ public class FixedPotionItem extends PotionItem {
             if (!player.getAbilities().instabuild) {
                 stack.shrink(1);
             }
-
-            if (!player.getAbilities().instabuild) {
-                ItemStack bottle = new ItemStack(Items.GLASS_BOTTLE);
-                if (stack.isEmpty()) {
-                    return bottle;
-                }
-                player.getInventory().add(bottle);
-            }
         } else {
             stack.shrink(1);
-            if (stack.isEmpty()) {
-                return new ItemStack(Items.GLASS_BOTTLE);
-            }
         }
 
         return stack;

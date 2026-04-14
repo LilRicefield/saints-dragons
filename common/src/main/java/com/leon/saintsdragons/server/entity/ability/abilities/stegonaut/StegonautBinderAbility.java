@@ -31,8 +31,8 @@ public final class StegonautBinderAbility {
     // Buff parameters
     private static final double BUFF_RANGE = 8.0; // Same range as the drake's original ability
     private static final int BUFF_DURATION_TICKS = 40; // Short duration so we can expire it when binder removed
-    private static final int BUFF_AMPLIFIER = 2; // Resistance
-    private static final int ABSORPTION_AMPLIFIER = 1; // Absorption
+    private static final int BUFF_AMPLIFIER = 0; // Resistance I
+    private static final int ABSORPTION_AMPLIFIER = 0; // Absorption I
 
     // Track which entities are currently buffed per dimension so effects can be cleaned up
     private static final Map<ResourceKey<Level>, Set<UUID>> ACTIVE_BUFF_TARGETS = new HashMap<>();

@@ -1,8 +1,8 @@
 package com.leon.saintsdragons.fabric;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.init.CommonBrewingRecipes;
 import com.leon.saintsdragons.common.init.CommonModEvents;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModPotions;
 import com.leon.saintsdragons.fabric.entity.part.FabricPartEntities;
 import com.leon.saintsdragons.fabric.loot.FabricLootTableModifier;
@@ -15,7 +15,9 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.SpawnPlacements;
@@ -29,11 +31,17 @@ import net.minecraft.world.item.alchemy.PotionUtils;
 
 public final class SaintsDragonsFabric implements ModInitializer {
     private static final double ATTRIBUTE_CAP = 100000.0D;
+    private static final ResourceKey<net.minecraft.world.item.CreativeModeTab>[] POTION_HIDE_TABS = new ResourceKey[] {
+            CreativeModeTabs.FOOD_AND_DRINKS,
+            CreativeModeTabs.INGREDIENTS,
+            CreativeModeTabs.COMBAT,
+            CreativeModeTabs.TOOLS_AND_UTILITIES,
+            CreativeModeTabs.SEARCH
+    };
 
     @Override
     public void onInitialize() {
         SaintsDragonsCommon.init();
-        CommonBrewingRecipes.register();
         raiseVanillaAttributeCaps();
         FabricPartEntities.register();
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonAttributeReloadListener());
@@ -49,11 +57,13 @@ public final class SaintsDragonsFabric implements ModInitializer {
                 ItemGroupEvents.modifyEntriesEvent(tab)
                         .register(entries -> entries.accept(itemSupplier.get())));
 
-        // Hide vanilla bottle variants for custom potions from vanilla tabs/search.
-        ItemGroupEvents.modifyEntriesEvent(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES)
-                .register(entries -> entries.getDisplayStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant));
-        ItemGroupEvents.modifyEntriesEvent(net.minecraft.world.item.CreativeModeTabs.SEARCH)
-                .register(entries -> entries.getSearchTabStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant));
+        // Hide Saints' Dragons custom potion items and any vanilla potion-family variants from Minecraft tabs.
+        for (ResourceKey<net.minecraft.world.item.CreativeModeTab> tab : POTION_HIDE_TABS) {
+            ItemGroupEvents.modifyEntriesEvent(tab).register(entries -> {
+                entries.getDisplayStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant);
+                entries.getSearchTabStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant);
+            });
+        }
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 CommonModEvents.registerCommands(dispatcher));
@@ -89,6 +99,10 @@ public final class SaintsDragonsFabric implements ModInitializer {
     private static boolean isHiddenVanillaPotionVariant(ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             return false;
+        }
+
+        if (stack.is(ModItems.POTION_OF_TIDEGUARD.get()) || stack.is(ModItems.POTION_OF_SEARING.get())) {
+            return true;
         }
 
         if (!stack.is(Items.POTION) && !stack.is(Items.SPLASH_POTION) && !stack.is(Items.LINGERING_POTION)) {

@@ -433,6 +433,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.claw_attack"),
+                ForgeDragonAttributesConfig.VARASUCHUS_CLAW_ATTACK_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_CLAW_ATTACK_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.horn_phase1"),
                 ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE::set,
@@ -862,6 +866,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_CLAW_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_CLAW_ATTACK_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE2_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE.set(ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE.getDefault());

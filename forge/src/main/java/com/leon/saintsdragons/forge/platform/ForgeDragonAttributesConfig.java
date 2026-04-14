@@ -7,6 +7,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
  * Forge dragon attributes configuration.
  * Builds a ForgeConfigSpec for all dragon attributes including health, armor, speeds, abilities, and taming.
  */
+
 public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec ATTRIBUTES_SPEC;
 
@@ -66,6 +67,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAIL_ATTACK_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_DASH_CLAW_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_CLAW_ATTACK_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_HORN_GORE_PHASE1_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_HORN_GORE_PHASE2_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_SWIM_SPEED;
@@ -269,17 +271,18 @@ public final class ForgeDragonAttributesConfig {
         // Varasuchus Configuration
         builder.comment("Varasuchus Dragon Attributes").push("varasuchus");
         builder.comment("Core Attributes");
-        VARASUCHUS_MAX_HEALTH = builder.defineInRange("max_health", 250.0, 1.0, 100000.0);
+        VARASUCHUS_MAX_HEALTH = builder.defineInRange("max_health", 200.0, 1.0, 100000.0);
         VARASUCHUS_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 100000.0);
         VARASUCHUS_SWIM_SPEED = builder.defineInRange("swim_speed", 1.45, 0.1, 5.0);
         builder.comment("Ability Damage");
-        VARASUCHUS_BITE_PHASE1_DAMAGE = builder.defineInRange("bite_phase1_damage", 40.0, 0.0, 100000.0);
-        VARASUCHUS_BITE_PHASE2_DAMAGE = builder.defineInRange("bite_phase2_damage", 50.0, 0.0, 100000.0);
-        VARASUCHUS_TAIL_ATTACK_DAMAGE = builder.defineInRange("tail_attack_damage", 8.0, 0.0, 100000.0);
-        VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE = builder.defineInRange("dash_tail_swipe_damage", 14.0, 0.0, 100000.0);
-        VARASUCHUS_DASH_CLAW_DAMAGE = builder.defineInRange("dash_claw_damage", 16.0, 0.0, 100000.0);
-        VARASUCHUS_HORN_GORE_PHASE1_DAMAGE = builder.defineInRange("horn_gore_phase1_damage", 16.0, 0.0, 100000.0);
-        VARASUCHUS_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", 20.8, 0.0, 100000.0);
+        VARASUCHUS_BITE_PHASE1_DAMAGE = builder.defineInRange("bite_phase1_damage", 15.0, 0.0, 100000.0);
+        VARASUCHUS_BITE_PHASE2_DAMAGE = builder.defineInRange("bite_phase2_damage", 25.0, 0.0, 100000.0);
+        VARASUCHUS_TAIL_ATTACK_DAMAGE = builder.defineInRange("tail_attack_damage", 7.0, 0.0, 100000.0);
+        VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE = builder.defineInRange("dash_tail_swipe_damage", 10.0, 0.0, 100000.0);
+        VARASUCHUS_DASH_CLAW_DAMAGE = builder.defineInRange("dash_claw_damage", 15.0, 0.0, 100000.0);
+        VARASUCHUS_CLAW_ATTACK_DAMAGE = builder.defineInRange("claw_attack_damage", 8.0, 0.0, 100000.0);
+        VARASUCHUS_HORN_GORE_PHASE1_DAMAGE = builder.defineInRange("horn_gore_phase1_damage", 8.0, 0.0, 100000.0);
+        VARASUCHUS_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", 15.8, 0.0, 100000.0);
         builder.comment("Base taming chance percent. Legacy food taming rolls it directly; rodeo taming converts it into a smaller per-tick chance");
         VARASUCHUS_TAMING_CHANCE = builder.defineInRange("taming_chance", 16.6667, 0.0, 100.0);
         VARASUCHUS_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", 25.0, 0.0, 100.0);
@@ -298,7 +301,7 @@ public final class ForgeDragonAttributesConfig {
         // Ignivorus Configuration
         builder.comment("Ignivorus Dragon Attributes").push("ignivorus");
         builder.comment("Core Attributes");
-        IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 300.0, 1.0, 100000.0);
+        IGNIVORUS_MAX_HEALTH = builder.defineInRange("max_health", 450.0, 1.0, 100000.0);
         IGNIVORUS_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
         builder.comment("Base rider flying speed");
         IGNIVORUS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.35, 0.0, 2.0);
@@ -378,7 +381,7 @@ public final class ForgeDragonAttributesConfig {
         // Volitans Configuration
         builder.comment("Volitans Dragon Attributes").push("volitans");
         builder.comment("Core Attributes");
-        VOLITANS_MAX_HEALTH = builder.defineInRange("max_health", 140.0, 1.0, 100000.0);
+        VOLITANS_MAX_HEALTH = builder.defineInRange("max_health", 160.0, 1.0, 100000.0);
         VOLITANS_ARMOR = builder.defineInRange("armor", 6.0, 0.0, 100000.0);
         builder.comment("Base rider flying speed");
         VOLITANS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.38, 0.0, 2.0);
@@ -407,7 +410,7 @@ public final class ForgeDragonAttributesConfig {
         VOLITANS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
         builder.comment("Loot drop chances (0-1)");
         VOLITANS_SCALE_DROP_CHANCE_BRUSH = builder.defineInRange("scale_drop_chance_brush", 0.30, 0.0, 1.0);
-        VOLITANS_SPINE_DROP_CHANCE = builder.defineInRange("spine_drop_chance", 1.0, 0.0, 1.0);
+        VOLITANS_SPINE_DROP_CHANCE = builder.defineInRange("spine_drop_chance", 0.3, 0.0, 1.0);
         VOLITANS_FISH_DROP_CHANCE = builder.defineInRange("fish_drop_chance", 0.40, 0.0, 1.0);
         builder.comment("Breath Gauge Tuning");
         VOLITANS_BREATH_ACTIVE_TICKS_MAX = builder.defineInRange("breath_active_ticks_max", 240.0, 1.0, 24000.0);
