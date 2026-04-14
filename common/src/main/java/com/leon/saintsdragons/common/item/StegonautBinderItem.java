@@ -54,11 +54,6 @@ public class StegonautBinderItem extends AbstractDragonBinderItem<Stegonaut> {
         return "saintsdragons.tooltip.stegonaut_binder.description";
     }
 
-    @Override
-    protected boolean shouldShowReleaseTooltipWhenBound() {
-        return false;
-    }
-
     public static boolean isBound(ItemStack stack) {
         return BinderComponentUtil.isBound(stack);
     }
