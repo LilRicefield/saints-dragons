@@ -492,9 +492,21 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static DragonAttributeConfig nulljawDefaults() {
+        double maxHealth = 70.0D;
+        double armor = 4.0D;
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                maxHealth = (double) configClass.getField("NULLJAW_MAX_HEALTH").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("NULLJAW_MAX_HEALTH").get(null));
+                armor = (double) configClass.getField("NULLJAW_ARMOR").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("NULLJAW_ARMOR").get(null));
+            } catch (Exception ignored) {
+            }
+        }
         return new DragonAttributeConfig(
-                70.0D,
-                4.0D,
+                maxHealth,
+                armor,
                 0.42D,
                 Map.of(),
                 Map.of(

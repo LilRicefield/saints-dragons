@@ -123,6 +123,15 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
         boolean ridden = dragon.getControllingPassenger() != null;
 
         double range = CLAW_RANGE + (ridden ? CLAW_RANGE_RIDDEN_BONUS : 0.0);
+
+        if (!ridden) {
+            LivingEntity target = dragon.getTarget();
+            if (isDirectTargetValid(dragon, target, range)) {
+                return List.of(target);
+            }
+            return List.of();
+        }
+
         double horizontal = ridden ? CLAW_HORIZONTAL_RIDDEN : CLAW_HORIZONTAL;
 
         AABB sweep = new AABB(origin, origin.add(forward.scale(range)))
@@ -164,6 +173,14 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
         }
 
         return valid;
+    }
+
+    private boolean isDirectTargetValid(Varasuchus dragon, LivingEntity target, double range) {
+        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
+            return false;
+        }
+        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
+        return dragon.distanceTo(target) <= Math.max(range, widthReach);
     }
 
     private static double distancePointToAABB(Vec3 point, AABB box) {

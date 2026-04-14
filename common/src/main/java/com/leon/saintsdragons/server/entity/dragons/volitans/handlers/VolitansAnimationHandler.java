@@ -76,17 +76,17 @@ public final class VolitansAnimationHandler {
         var controller = state.getController();
         controller.transitionLength(6);
 
+        if (dragon.isTamingStunned()) {
+            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
+            return PlayState.CONTINUE;
+        }
+
         if (dragon.isSleeping()) {
             return PlayState.STOP;
         }
 
         if (dragon.isSleepTransitioning()) {
             return PlayState.STOP;
-        }
-
-        if (dragon.isTamingStunned()) {
-            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
-            return PlayState.CONTINUE;
         }
 
         float sitProgress = dragon.getSitProgress();

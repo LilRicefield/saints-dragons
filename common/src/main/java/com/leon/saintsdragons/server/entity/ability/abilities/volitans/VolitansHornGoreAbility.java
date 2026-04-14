@@ -80,7 +80,7 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
 
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
-            if (isValidTarget(dragon, target) && isTargetInArc(target, origin, look, range, cosLimit)) {
+            if (isValidTarget(dragon, target) && isTargetInDirectRange(dragon, target, range)) {
                 return List.of(target);
             }
             return List.of();
@@ -101,6 +101,11 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
                 && target.attackable()
                 && !dragon.isAlly(target)
                 && dragon.isTargetValid(target);
+    }
+
+    private boolean isTargetInDirectRange(Volitans dragon, LivingEntity target, double range) {
+        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 2.0D;
+        return dragon.distanceTo(target) <= Math.max(range, widthReach);
     }
 
     private boolean isTargetInArc(LivingEntity entity, Vec3 origin, Vec3 look, double range, double cosLimit) {

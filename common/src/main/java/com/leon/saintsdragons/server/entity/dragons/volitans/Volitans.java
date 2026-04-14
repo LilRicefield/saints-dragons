@@ -70,14 +70,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.AgeableMob;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Pufferfish;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -91,7 +84,6 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.animal.Dolphin;
@@ -104,7 +96,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.entity.GlowSquid;
 import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.entity.animal.TropicalFish;
 import org.jetbrains.annotations.NotNull;
@@ -544,6 +535,20 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
         BlockState below = level.getBlockState(pos.below());
         return below.isFaceSturdy(level, pos.below(), net.minecraft.core.Direction.UP);
+    }
+
+    @Override
+    public @NotNull SpawnGroupData finalizeSpawn(
+            @NotNull net.minecraft.world.level.ServerLevelAccessor level,
+            @NotNull net.minecraft.world.DifficultyInstance difficulty,
+            @NotNull MobSpawnType spawnReason,
+            @Nullable SpawnGroupData spawnData,
+            @Nullable CompoundTag dataTag
+    ) {
+        spawnData = super.finalizeSpawn(level, difficulty, spawnReason, spawnData, dataTag);
+        applyConfiguredAttributes();
+        this.setHealth(this.getMaxHealth());
+        return spawnData;
     }
 
     @Override
@@ -1179,7 +1184,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (isBurrowing() || riderBackDashCooldownTicks > 0 || riderForwardDashing
                 || riderBackDashing || riderBackDashRecoveryTicks > 0
                 || riderSideDodging || riderSideDodgeRecoveryTicks > 0
-                || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition()) {
+                || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition() || (isTamingStunned() && !isTame())) {
             return;
         }
 
@@ -1231,7 +1236,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (isBurrowing() || isFlying() || isInWaterOrBubble() || riderBackDashCooldownTicks > 0
                 || riderForwardDashing || riderBackDashing || riderBackDashRecoveryTicks > 0
                 || riderSideDodging || riderSideDodgeRecoveryTicks > 0
-                || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition()) {
+                || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition() || (isTamingStunned() && !isTame())) {
             return;
         }
 
@@ -2182,7 +2187,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private boolean tryReactiveHitEvade(@NotNull DamageSource source, float amount) {
-        if (level().isClientSide || amount <= 0.0F || isVehicle() || !isAlive() || isDying()) {
+        if (level().isClientSide || amount <= 0.0F || isVehicle() || !isAlive() || isDying() || (isTamingStunned() && !isTame())) {
             return false;
         }
 
@@ -2196,10 +2201,10 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             attacker = living;
         }
 
-        if (!(attacker instanceof Player player)) {
+        if (attacker instanceof Player player && (player.isCreative() || player.isSpectator())) {
             return false;
         }
-        if (player.isCreative() || player.isSpectator()) {
+        if (attacker == null && source.getEntity() == null && source.getDirectEntity() == null) {
             return false;
         }
         if (this.getRandom().nextFloat() >= REACTIVE_HIT_EVADE_CHANCE) {
@@ -2207,19 +2212,23 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
 
         boolean evaded = this.getRandom().nextBoolean()
-                ? tryAiGroundBackstep(player)
-                : tryAiGroundDodge(player);
+                ? tryAiGroundBackstep(attacker)
+                : tryAiGroundDodge(attacker);
         if (!evaded) {
             evaded = this.getRandom().nextBoolean()
-                    ? tryAiGroundBackstep(player)
-                    : tryAiGroundDodge(player);
+                    ? tryAiGroundBackstep(attacker)
+                    : tryAiGroundDodge(attacker);
         }
         if (!evaded) {
             return false;
         }
 
-        this.setLastHurtByMob(player);
-        this.setTarget(player);
+        if (attacker != null) {
+            this.setLastHurtByMob(attacker);
+            if (!this.isAlly(attacker)) {
+                this.setTarget(attacker);
+            }
+        }
         return true;
     }
 
@@ -2574,7 +2583,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     public boolean tryAiGroundDodge(@Nullable LivingEntity threat) {
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || isBurrowing()) {
+        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || isBurrowing() || (isTamingStunned() && !isTame())) {
             return false;
         }
         if (isGroundMobilityActive() || aiGroundMobilityCooldownTicks > 0 || areRiderControlsLocked()) {
@@ -2611,7 +2620,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     public boolean tryAiGroundBackstep(@Nullable LivingEntity threat) {
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || isBurrowing()) {
+        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || isBurrowing() || (isTamingStunned() && !isTame())) {
             return false;
         }
         if (isGroundMobilityActive() || aiGroundMobilityCooldownTicks > 0 || riderBackDashCooldownTicks > 0 || areRiderControlsLocked()) {

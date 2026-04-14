@@ -137,6 +137,14 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
             radius += AIR_RADIUS_BONUS;
         }
 
+        if (dragon.getControllingPassenger() == null) {
+            LivingEntity target = dragon.getTarget();
+            if (isDirectTargetValid(dragon, target, radius)) {
+                return List.of(target);
+            }
+            return List.of();
+        }
+
         // Get mouth position from mouth_origin locator in .geo file (with fallback)
         Vec3 mouthPos = dragon.getMouthPosition();
 
@@ -166,5 +174,13 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
         ));
 
         return candidates;
+    }
+
+    private boolean isDirectTargetValid(Ignivorus dragon, LivingEntity target, double range) {
+        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
+            return false;
+        }
+        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
+        return dragon.distanceTo(target) <= Math.max(range, widthReach);
     }
 }

@@ -1729,7 +1729,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void onRiderDodge(net.minecraft.world.entity.player.Player player, boolean isLeft) {
-        if (isGroundRending() || areRiderControlsLocked()) {
+        if (isGroundRending() || areRiderControlsLocked() || (isTamingStunned() && !isTame())) {
             return;
         }
         if (isInWaterOrBubble()) {
@@ -1797,7 +1797,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected void onRiderBackwardDodge(net.minecraft.world.entity.player.Player player) {
-        if (isGroundRending() || areRiderControlsLocked()) {
+        if (isGroundRending() || areRiderControlsLocked() || (isTamingStunned() && !isTame())) {
             return;
         }
         if (isInWaterOrBubble()) {
@@ -1855,7 +1855,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     public boolean tryAIGroundDodge(@Nullable LivingEntity threat) {
         // Only allow dodge on ground - dragon is fast enough in air with strafe
-        if (isFlying() || isInWaterOrBubble() || isDodging()) {
+        if (isFlying() || isInWaterOrBubble() || isDodging() || (isTamingStunned() && !isTame())) {
             return false;
         }
 
@@ -1912,7 +1912,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private boolean tryReactiveHitDodge(@Nonnull DamageSource damageSource, float amount) {
-        if (level().isClientSide || amount <= 0.0F || aiDodgeCooldownTicks > 0 || isVehicle() || !isAlive() || isDying()) {
+        if (level().isClientSide || amount <= 0.0F || aiDodgeCooldownTicks > 0 || isVehicle() || !isAlive() || isDying() || (isTamingStunned() && !isTame())) {
             return false;
         }
 
@@ -1926,22 +1926,26 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             attacker = living;
         }
 
-        if (!(attacker instanceof Player player)) {
+        if (attacker instanceof Player player && (player.isCreative() || player.isSpectator())) {
             return false;
         }
-        if (player.isCreative() || player.isSpectator()) {
+        if (attacker == null && damageSource.getEntity() == null && damageSource.getDirectEntity() == null) {
             return false;
         }
         if (this.getRandom().nextFloat() >= REACTIVE_HIT_DODGE_CHANCE) {
             return false;
         }
-        if (!tryAIGroundDodge(player)) {
+        if (!tryAIGroundDodge(attacker)) {
             return false;
         }
 
         // The hit still counts as a real interaction for retaliation; we just snub the damage and sell the dodge.
-        this.setLastHurtByMob(player);
-        this.setTarget(player);
+        if (attacker != null) {
+            this.setLastHurtByMob(attacker);
+            if (!this.isAlly(attacker)) {
+                this.setTarget(attacker);
+            }
+        }
         return true;
     }
 

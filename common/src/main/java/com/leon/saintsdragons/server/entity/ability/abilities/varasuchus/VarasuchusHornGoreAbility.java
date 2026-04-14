@@ -86,6 +86,14 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
         boolean ridden = dragon.getControllingPassenger() != null;
         double range = ridden ? GORE_RANGE_RIDDEN : GORE_RANGE;
 
+        if (!ridden) {
+            LivingEntity target = dragon.getTarget();
+            if (isDirectTargetValid(dragon, target, range)) {
+                return java.util.List.of(target);
+            }
+            return java.util.List.of();
+        }
+
         // Use drake body bounding box inflated by range as broadphase
         AABB broad = dragon.getBoundingBox().inflate(range, range, range);
         List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, broad,
@@ -116,6 +124,14 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
             hits.add(e);
         }
         return hits;
+    }
+
+    private boolean isDirectTargetValid(Varasuchus dragon, LivingEntity target, double range) {
+        if (target == null || !target.isAlive() || !target.attackable() || isAllied(dragon, target) || !dragon.isTargetValid(target)) {
+            return false;
+        }
+        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 2.0D;
+        return dragon.distanceTo(target) <= Math.max(range, widthReach);
     }
 
     private void applyGore(LivingEntity target) {

@@ -286,6 +286,14 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
         boolean ridden = dragon.getControllingPassenger() != null;
         double effectiveRange = getEffectiveRange();
 
+        if (!ridden) {
+            LivingEntity target = dragon.getTarget();
+            if (isDirectTargetValid(dragon, target, effectiveRange)) {
+                return java.util.List.of(target);
+            }
+            return java.util.List.of();
+        }
+
         // Wide forward sweep for claw attacks
         double horizontalInflate = ridden ? CLAW_SWIPE_HORIZONTAL_RIDDEN : CLAW_SWIPE_HORIZONTAL;
         AABB forwardSweep = new AABB(mouth, mouth.add(look.scale(effectiveRange)))
@@ -323,6 +331,14 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
             validTargets.add(e);
         }
         return validTargets;
+    }
+
+    private boolean isDirectTargetValid(Varasuchus dragon, LivingEntity target, double range) {
+        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
+            return false;
+        }
+        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
+        return dragon.distanceTo(target) <= Math.max(range, widthReach);
     }
 
     // ===== Geometry helpers =====

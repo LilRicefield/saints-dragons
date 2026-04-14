@@ -31,9 +31,9 @@ public final class SaintsDragonsConfig {
     public static final int VOLITANS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int VOLITANS_MAX_GROUP_SIZE_DEFAULT = 1;
 
-    public static final int NULLJAW_SPAWN_WEIGHT_DEFAULT = 10;
-    public static final int NULLJAW_MIN_GROUP_SIZE_DEFAULT = 1;
-    public static final int NULLJAW_MAX_GROUP_SIZE_DEFAULT = 2;
+    public static final int NULLJAW_SPAWN_WEIGHT_DEFAULT = 4;
+    public static final int NULLJAW_MIN_GROUP_SIZE_DEFAULT = 4;
+    public static final int NULLJAW_MAX_GROUP_SIZE_DEFAULT = 4;
     public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;

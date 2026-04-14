@@ -7,6 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 public final class DragonSleepComponent {
+    private static final int RECENT_COMBAT_SLEEP_BLOCK_TICKS = 20 * 30;
     private final DragonEntity dragon;
     private final EntityDataAccessor<Boolean> dataSleeping;
     private final EntityDataAccessor<Boolean> dataSleepingEntering;
@@ -232,6 +233,8 @@ public final class DragonSleepComponent {
         if (dragon.isDying() || !dragon.isAlive() || dragon.isDeadOrDying()) return false;
         if (dragon.isVehicle()) return false;
         if (dragon.getTarget() != null) return false;
+        int recentCombatTick = Math.max(dragon.getLastDamagerTimestamp(), dragon.getLastHurtByMobTimestamp());
+        if (recentCombatTick > 0 && dragon.tickCount - recentCombatTick < RECENT_COMBAT_SLEEP_BLOCK_TICKS) return false;
         if ((dragon.isInWaterOrBubble() && !dragon.canSleepInWater()) || dragon.isInLava()) return false;
 
         boolean alreadySleepingOrTransitioning = dragon.isSleeping() || dragon.isSleepTransitioning();

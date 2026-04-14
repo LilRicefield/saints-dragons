@@ -90,7 +90,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
 
         if (!ridden) {
             LivingEntity target = wyvern.getTarget();
-            if (isDirectAiTargetValid(wyvern, target, head, look, range, cosLimit)) {
+            if (isDirectAiTargetValid(wyvern, target, range)) {
                 return java.util.List.of(target);
             }
             return java.util.List.of();
@@ -127,26 +127,12 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
         return hits;
     }
 
-    private boolean isDirectAiTargetValid(Raevyx wyvern, LivingEntity target, Vec3 head, Vec3 look,
-                                          double range, double cosLimit) {
+    private boolean isDirectAiTargetValid(Raevyx wyvern, LivingEntity target, double range) {
         if (target == null || !target.isAlive() || !target.attackable() || isAllied(wyvern, target) || !wyvern.isTargetValid(target)) {
             return false;
         }
-
-        double dist = distancePointToAABB(head, target.getBoundingBox());
-        if (dist > range + 0.4) {
-            return false;
-        }
-
-        Vec3 toward = target.getBoundingBox().getCenter().subtract(head);
-        double len = toward.length();
-        if (len < 1.0e-4) {
-            return false;
-        }
-
-        double dot = toward.normalize().dot(look);
-        boolean close = dist < (range * 0.6);
-        return close || dot >= cosLimit;
+        double widthReach = wyvern.getBbWidth() + target.getBbWidth() + 2.0D;
+        return wyvern.distanceTo(target) <= Math.max(range, widthReach);
     }
 
     private void applyGore(LivingEntity target) {

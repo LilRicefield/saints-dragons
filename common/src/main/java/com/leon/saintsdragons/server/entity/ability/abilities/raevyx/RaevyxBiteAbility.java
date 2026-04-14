@@ -121,7 +121,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
 
         if (!ridden) {
             LivingEntity target = wyvern.getTarget();
-            if (isDirectAiTargetValid(wyvern, target, mouth, look, effectiveRange, cosLimit)) {
+            if (isDirectAiTargetValid(wyvern, target, effectiveRange)) {
                 return target;
             }
             return null;
@@ -172,30 +172,12 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
         return best;
     }
 
-    private boolean isDirectAiTargetValid(Raevyx wyvern, LivingEntity target, Vec3 mouth, Vec3 look,
-                                          double effectiveRange, double cosLimit) {
+    private boolean isDirectAiTargetValid(Raevyx wyvern, LivingEntity target, double effectiveRange) {
         if (target == null || !target.isAlive() || !target.attackable() || isAllied(wyvern, target) || !wyvern.isTargetValid(target)) {
             return false;
         }
-
-        double distToAabb = distancePointToAABB(mouth, target.getBoundingBox());
-        if (distToAabb > effectiveRange + 0.4) {
-            return false;
-        }
-
-        Vec3 toward = closestPointOnAABB(mouth, target.getBoundingBox()).subtract(mouth);
-        double len = toward.length();
-        if (len <= 0.0001) {
-            return false;
-        }
-
-        double dot = toward.scale(1.0 / len).dot(look);
-        if (dot <= 0.0) {
-            return false;
-        }
-
-        boolean veryClose = distToAabb < (effectiveRange * 0.35);
-        return veryClose || dot >= cosLimit;
+        double widthReach = wyvern.getBbWidth() + target.getBbWidth() + 1.5D;
+        return wyvern.distanceTo(target) <= Math.max(effectiveRange, widthReach);
     }
 
     private void bitePrimary(LivingEntity primary) {

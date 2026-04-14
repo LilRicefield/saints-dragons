@@ -40,6 +40,7 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         stunGraceTicks = Math.max(stunGraceTicks, 20);
         recoveryTargetHealth = -1.0F;
         stunTimeoutTicks = 0;
+        forceWakeForStun();
         ensureStunState();
     }
 
@@ -48,6 +49,7 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         stunGraceTicks = 0;
         recoveryTargetHealth = -1.0F;
         stunTimeoutTicks = STUN_TIMEOUT;
+        forceWakeForStun();
         ensureStunState();
 
         if (!dragon.level().isClientSide) {
@@ -60,6 +62,7 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         recoveryTargetHealth = Math.max(0.0F, Math.min(targetHealth, dragon.getMaxHealth()));
         stunGraceTicks = Math.max(stunGraceTicks, 40);
         stunTimeoutTicks = 0;
+        forceWakeForStun();
         ensureStunState();
     }
 
@@ -218,6 +221,13 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
             dragon.ejectPassengers();
         }
         setTamingStunned(true);
+    }
+
+    private void forceWakeForStun() {
+        if (!dragon.level().isClientSide) {
+            dragon.wakeUpImmediately();
+            dragon.suppressSleep(200);
+        }
     }
 
     private boolean enforceGroundedStunPhysics() {

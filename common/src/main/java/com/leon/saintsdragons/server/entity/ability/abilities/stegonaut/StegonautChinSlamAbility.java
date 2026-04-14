@@ -84,6 +84,15 @@ public class StegonautChinSlamAbility extends DragonAbility<Stegonaut> {
         Vec3 look = dragon.getLookAngle().normalize();
 
         double range = BASE_RANGE + (dragon.getControllingPassenger() != null ? RIDDEN_RANGE_BONUS : 0.0);
+
+        if (dragon.getControllingPassenger() == null) {
+            LivingEntity target = dragon.getTarget();
+            if (isDirectTargetValid(dragon, target, range)) {
+                return List.of(target);
+            }
+            return List.of();
+        }
+
         AABB sweep = new AABB(mouth, mouth.add(look.scale(range)))
                 .inflate(SWEEP_HORIZONTAL, SWEEP_VERTICAL, SWEEP_HORIZONTAL);
 
@@ -95,6 +104,14 @@ public class StegonautChinSlamAbility extends DragonAbility<Stegonaut> {
                 .filter(e -> isValidForwardTarget(mouth, look, range, cosLimit, e))
                 .sorted(Comparator.comparingDouble(e -> distancePointToAABB(mouth, e.getBoundingBox())))
                 .toList();
+    }
+
+    private boolean isDirectTargetValid(Stegonaut dragon, LivingEntity target, double range) {
+        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
+            return false;
+        }
+        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
+        return dragon.distanceTo(target) <= Math.max(range, widthReach);
     }
 
     private static boolean isValidForwardTarget(Vec3 origin, Vec3 look, double range, double cosLimit, LivingEntity target) {

@@ -152,17 +152,17 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
-    public int nulljawSpawnWeight = 10;
+    public int nulljawSpawnWeight = 4;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int nulljawMinGroupSize = 1;
+    public int nulljawMinGroupSize = 4;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int nulljawMaxGroupSize = 2;
+    public int nulljawMaxGroupSize = 4;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)

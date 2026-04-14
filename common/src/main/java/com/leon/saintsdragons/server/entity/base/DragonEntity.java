@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.UUID;
 
 public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
+    protected static final int DAMAGE_SLEEP_SUPPRESSION_TICKS = 20 * 30;
     protected static final EntityDataAccessor<Integer> DATA_COMMAND =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Float> DATA_SIT_PROGRESS =
@@ -755,6 +756,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
         boolean result = super.hurt(source, amount);
         if (result) {
+            if (isSleeping() || isSleepingEntering() || isSleepingExiting() || isSleepTransitioning()) {
+                wakeUpImmediately();
+            }
+            suppressSleep(DAMAGE_SLEEP_SUPPRESSION_TICKS);
+
             LivingEntity attacker = null;
             if (source.getEntity() instanceof LivingEntity living) {
                 attacker = living;

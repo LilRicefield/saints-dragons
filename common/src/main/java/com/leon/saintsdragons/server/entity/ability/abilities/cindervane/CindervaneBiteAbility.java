@@ -117,6 +117,14 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
             range += AIR_RANGE_BONUS;
         }
 
+        if (dragon.getControllingPassenger() == null) {
+            LivingEntity target = dragon.getTarget();
+            if (isDirectTargetValid(dragon, target, range)) {
+                return List.of(target);
+            }
+            return List.of();
+        }
+
         Vec3 origin = dragon.getMouthPosition();
         Vec3 look = dragon.getLookAngle().normalize();
         Vec3 end = origin.add(look.scale(range));
@@ -158,6 +166,14 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
                 });
 
         return results;
+    }
+
+    private boolean isDirectTargetValid(Cindervane dragon, LivingEntity target, double range) {
+        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
+            return false;
+        }
+        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
+        return dragon.distanceTo(target) <= Math.max(range, widthReach);
     }
 
     private record TargetScore(LivingEntity entity, double dot, double distanceSqr) {}
