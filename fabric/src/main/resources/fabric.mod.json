@@ -13,6 +13,9 @@
     "client": [
       "com.leon.saintsdragons.fabric.SaintsDragonsFabricClient"
     ],
+    "emi": [
+      "com.leon.saintsdragons.fabric.compat.emi.SaintsDragonsEmiPlugin"
+    ],
     "modmenu": [
       "com.leon.saintsdragons.fabric.SaintsDragonsModMenuIntegration"
     ]
@@ -29,6 +32,7 @@
     "geckolib": ">=4.8.1"
   },
   "suggests": {
-    "cloth-config": ">=${cloth_config_version}"
+    "cloth-config": ">=${cloth_config_version}",
+    "emi": "*"
   }
 }
