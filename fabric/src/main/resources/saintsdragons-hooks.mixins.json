@@ -4,6 +4,7 @@
   "package": "com.leon.saintsdragons.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "BrewingStandBlockEntityMixin",
     "IgnivorusPartLifecycleMixin",
     "PotionBrewingMixin",
     "RangedAttributeAccessor",

@@ -25,6 +25,26 @@ public final class PotionBrewingMixin {
                 || PotionUtils.getPotion(stack) == ModPotions.SEARING.get();
     }
 
+    @Inject(method = "isIngredient", at = @At("HEAD"), cancellable = true)
+    private static void saintsdragons$allowCustomIngredients(
+            ItemStack stack,
+            CallbackInfoReturnable<Boolean> cir
+    ) {
+        if (isCustomRecipeIngredient(stack)) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    @Inject(method = "isPotionIngredient", at = @At("HEAD"), cancellable = true)
+    private static void saintsdragons$allowCustomPotionIngredients(
+            ItemStack stack,
+            CallbackInfoReturnable<Boolean> cir
+    ) {
+        if (isCustomRecipeIngredient(stack)) {
+            cir.setReturnValue(true);
+        }
+    }
+
     @Inject(method = "hasMix", at = @At("HEAD"), cancellable = true)
     private static void saintsdragons$blockAwkwardSplashAndLingering(
             ItemStack input,
@@ -46,7 +66,10 @@ public final class PotionBrewingMixin {
 
         if (!input.is(Items.POTION)) {
             cir.setReturnValue(false);
+            return;
         }
+
+        cir.setReturnValue(true);
     }
 
     @Inject(method = "hasPotionMix", at = @At("HEAD"), cancellable = true)
@@ -55,6 +78,13 @@ public final class PotionBrewingMixin {
             ItemStack ingredient,
             CallbackInfoReturnable<Boolean> cir
     ) {
+        if (isCustomRecipeIngredient(ingredient)
+                && input.is(Items.POTION)
+                && PotionUtils.getPotion(input) == Potions.AWKWARD) {
+            cir.setReturnValue(true);
+            return;
+        }
+
         if (isSaintsDragonsPotion(input)) {
             cir.setReturnValue(false);
         }
