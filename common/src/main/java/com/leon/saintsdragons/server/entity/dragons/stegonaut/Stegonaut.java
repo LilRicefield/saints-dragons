@@ -334,7 +334,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return getCombatMeleeMode() == MELEE_MODE_PRIMARY
+        return getMeleeMode() == 0
                 ? StegonautAbilities.STEGONAUT_BITE
                 : StegonautAbilities.STEGONAUT_CHIN_SLAM;
     }
@@ -347,7 +347,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        String abilityId = getCombatMeleeMode() == MELEE_MODE_PRIMARY
+        String abilityId = getMeleeMode() == 0
                 ? StegonautAbilities.STEGONAUT_BITE_ID
                 : StegonautAbilities.STEGONAUT_CHIN_SLAM_ID;
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);

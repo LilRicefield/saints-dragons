@@ -1388,7 +1388,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         // Use melee mode to switch between bite and horn gore
         // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
-        boolean useHornGore = getCombatMeleeMode() == MELEE_MODE_SECONDARY;
+        boolean useHornGore = getMeleeMode() == 1;
 
         // Phase 2 uses bite2 (faster bite) instead of normal bite
         if (isPhaseTwoActive()) {
@@ -1706,7 +1706,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     public RiderAbilityBinding getAttackRiderAbility() {
         // Use melee mode to switch between horn gore and bite/bite2
         // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
-        if (getCombatMeleeMode() == MELEE_MODE_SECONDARY) {
+        if (getMeleeMode() == 1) {
             return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_HORN_GORE_ID, RiderAbilityBinding.Activation.PRESS);
         } else {
             // Phase 2 uses bite2, Phase 1 uses bite

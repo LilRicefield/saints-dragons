@@ -338,7 +338,6 @@
   "entity.saintsdragons.cindervane.mount_occupied": "Uh... you shouldn't be here.",
   "ui.saintsdragons.melee_mode.primary": "Primary Melee",
   "ui.saintsdragons.melee_mode.secondary": "Secondary Melee",
-  "ui.saintsdragons.melee_mode.mining": "Mining Mode",
   
   "text.autoconfig.saintsdragonsspawning.title": "Saint's Dragons Config",
   "text.autoconfig.saintsdragonsspawning.category.spawning": "Dragon Spawning",

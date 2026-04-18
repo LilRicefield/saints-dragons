@@ -1655,7 +1655,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public RiderAbilityBinding getAttackRiderAbility() {
         // Use melee mode to switch between bite and horn gore
         // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
-        if (getCombatMeleeMode() == MELEE_MODE_PRIMARY) {
+        if (getMeleeMode() == 0) {
             return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
         } else {
             return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_HORN_GORE.getName(), RiderAbilityBinding.Activation.PRESS);
@@ -4624,7 +4624,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         // Use melee mode to switch between bite and horn gore
         // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
-        return getCombatMeleeMode() == MELEE_MODE_PRIMARY ?
+        return getMeleeMode() == 0 ?
             RaevyxAbilities.RAEVYX_BITE :
             RaevyxAbilities.RAEVYX_HORN_GORE;
     }

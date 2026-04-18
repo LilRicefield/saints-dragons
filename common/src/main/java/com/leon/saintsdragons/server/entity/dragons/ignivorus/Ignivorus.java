@@ -2271,14 +2271,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             if (isFlying()) {
                 return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_BITE_ID, RiderAbilityBinding.Activation.PRESS);
             }
-            String abilityId = getCombatMeleeMode() == MELEE_MODE_SECONDARY
+            String abilityId = getMeleeMode() == 1
                     ? IgnivorusAbilities.IGNIVORUS_STOMP_ID
                     : IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID;
             return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
         }
 
         // Normal mode uses melee mode toggle (bite or body slam)
-        String abilityId = getCombatMeleeMode() == MELEE_MODE_SECONDARY
+        String abilityId = getMeleeMode() == 1
                 ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM_ID
                 : IgnivorusAbilities.IGNIVORUS_BITE_ID;
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
@@ -3399,18 +3399,18 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             if (isFlying()) {
                 return IgnivorusAbilities.IGNIVORUS_BITE;
             }
-            return getCombatMeleeMode() == MELEE_MODE_SECONDARY ? IgnivorusAbilities.IGNIVORUS_STOMP : IgnivorusAbilities.IGNIVORUS_WING_SWIPE;
+            return getMeleeMode() == 1 ? IgnivorusAbilities.IGNIVORUS_STOMP : IgnivorusAbilities.IGNIVORUS_WING_SWIPE;
         }
 
         // Normal mode uses melee mode toggle (bite or body slam)
-        return getCombatMeleeMode() == MELEE_MODE_SECONDARY ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM : IgnivorusAbilities.IGNIVORUS_BITE;
+        return getMeleeMode() == 1 ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM : IgnivorusAbilities.IGNIVORUS_BITE;
     }
 
     private void enforcePrimaryMeleeForFlight(@Nullable Player rider) {
-        if (level().isClientSide || getMeleeMode() != MELEE_MODE_SECONDARY) {
+        if (level().isClientSide || getMeleeMode() == 0) {
             return;
         }
-        setMeleeMode(MELEE_MODE_PRIMARY);
+        setMeleeMode(0);
         syncMeleeMode(rider);
     }
 
