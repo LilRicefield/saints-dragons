@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.sound.api.DragonSoundSpec;
 import com.leon.saintsdragons.sound.server.DragonSoundOrchestrator;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -90,6 +91,10 @@ public class DragonSoundHandler {
         if (sound == null) {
             return;
         }
+        if (shouldSuppressLocomotionSound(sound)) {
+            lastStepTick = dragon.tickCount;
+            return;
+        }
         DragonSoundOrchestrator.play(
                 dragon,
                 DragonSoundSpec.moving(sound, SoundSource.NEUTRAL, volume, pitch, durationTicks)
@@ -155,5 +160,17 @@ public class DragonSoundHandler {
 
     public void setLastStepTick(long tick) {
         this.lastStepTick = tick;
+    }
+
+    private boolean shouldSuppressLocomotionSound(net.minecraft.sounds.SoundEvent sound) {
+        if (!dragon.areRiderControlsLocked()) {
+            return false;
+        }
+        var key = BuiltInRegistries.SOUND_EVENT.getKey(sound);
+        if (key == null) {
+            return false;
+        }
+        String path = key.getPath();
+        return path.contains("walk") || path.contains("run");
     }
 }
