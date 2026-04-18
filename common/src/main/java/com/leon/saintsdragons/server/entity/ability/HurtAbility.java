@@ -38,13 +38,14 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             case "ignivorus_hurt" -> "ignivorus_hurt";
             case "stegonaut_hurt" -> "stegonaut_hurt";
             case "volitans_hurt" -> "volitans_hurt";
+            case "nulljaw_hurt" -> "nulljaw_hurt";
             default -> "hurt";
         };
     }
 
     private static String resolveControllerId(String abilityId) {
         return switch (abilityId) {
-            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "varasuchus_hurt", "stegonaut_hurt", "volitans_hurt" -> "instant";
+            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "varasuchus_hurt", "stegonaut_hurt", "volitans_hurt", "nulljaw_hurt" -> "instant";
             default -> DEFAULT_CONTROLLER;
         };
     }
@@ -89,6 +90,11 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
                 && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans volitans) {
             float pitch = 0.95f + volitans.getRandom().nextFloat() * 0.1f;
             volitans.getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_HURT.get(), 1.3f, pitch, 30);
+        }
+        if ("nulljaw_hurt".equals(animationTrigger) && !getUser().level().isClientSide
+                && getUser() instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw nulljaw) {
+            float pitch = 0.95f + nulljaw.getRandom().nextFloat() * 0.1f;
+            nulljaw.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_HURT.get(), 1.2f, pitch, 44);
         }
     }
 

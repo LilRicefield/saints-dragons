@@ -11,6 +11,7 @@ public final class NulljawFloatGoal extends DragonBaseGoal<Nulljaw> {
     private static final double ARRIVAL_DISTANCE_SQR = 4.0D;
     private static final int MIN_TRAVEL_TICKS = 50;
     private static final int MAX_TRAVEL_TICKS = 100;
+    private static final double TRAVEL_SPEED = 1.0D;
 
     private Vec3 target;
     private int travelTicks;
@@ -42,12 +43,14 @@ public final class NulljawFloatGoal extends DragonBaseGoal<Nulljaw> {
         this.travelTicks = MIN_TRAVEL_TICKS + dragon.getRandom().nextInt(MAX_TRAVEL_TICKS - MIN_TRAVEL_TICKS + 1);
         if (this.target == null) {
             this.cooldownTicks = 20;
+            return;
         }
+        dragon.getNavigation().moveTo(this.target.x, this.target.y, this.target.z, TRAVEL_SPEED);
     }
 
     @Override
     protected boolean canContinueAdditional() {
-        return this.target != null && this.travelTicks > 0;
+        return this.target != null && this.travelTicks > 0 && !dragon.getNavigation().isDone();
     }
 
     @Override
@@ -56,16 +59,17 @@ public final class NulljawFloatGoal extends DragonBaseGoal<Nulljaw> {
             return;
         }
 
-        dragon.flyToward(this.target, 1.0D);
         this.travelTicks--;
 
         if (dragon.distanceToSqr(this.target) <= ARRIVAL_DISTANCE_SQR) {
             this.travelTicks = 0;
+            dragon.getNavigation().stop();
         }
     }
 
     @Override
     public void stop() {
+        dragon.getNavigation().stop();
         this.target = null;
         this.cooldownTicks = 25 + dragon.getRandom().nextInt(35);
     }

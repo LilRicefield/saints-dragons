@@ -87,7 +87,7 @@ public final class RiderConfig {
     public static final float NULLJAW_SEAT_X = 0.0f;
     public static final float NULLJAW_SEAT_Y = -1.6f;
     public static final float NULLJAW_SEAT_Z = -0.2f;
-    public static final float NULLJAW_FIRST_PERSON_X = 0.5f;
+    public static final float NULLJAW_FIRST_PERSON_X = 0.0f;
     public static final float NULLJAW_FIRST_PERSON_Y = 0.0f;
     public static final float NULLJAW_FIRST_PERSON_Z = 0.0f;
     public static final long NULLJAW_STALE_MS = 200L;

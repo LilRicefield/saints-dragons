@@ -31,7 +31,7 @@
     "swim_speed": 1.45,
     "taming_chance": 16.6667,
     "taming_chance_tropical": 25.0,
-    "egg_hatch_chance_normal": 3.0,
+    "egg_hatch_time_ticks_normal": 24000.0,
     "egg_drop_chance": 0.12,
     "scale_drop_chance_brush": 0.3,
     "aggressive_wild": true

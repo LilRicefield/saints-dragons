@@ -67,13 +67,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingChanceBase = 25.0D;
         double tamingChanceChicken = 33.3333D;
         double tamingChanceHearty = 50.0D;
-        double eggHatchChanceNormal = 2.0D;
+        double eggHatchTimeTicksNormal = 12000.0D;
         double eggDropChance = 0.12D;
         double scaleDropChanceBrush = 0.30D;
         double fireBodyExplosionDamage = 200.0D;
         double fireBodySelfDamageOnCrash = 40.0D;
         double wildFlyingSpeedMultiplier = 1.0D;
-        boolean aggressiveWild = true;
+        boolean aggressiveWild = false;
 
         if (IS_FORGE) {
             try {
@@ -89,7 +89,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingChanceBase = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_BASE").get(null));
                 tamingChanceChicken = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_CHICKEN").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_CHICKEN").get(null));
                 tamingChanceHearty = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_HEARTY").get(null));
-                eggHatchChanceNormal = (double) configClass.getField("CINDERVANE_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_EGG_HATCH_CHANCE_NORMAL").get(null));
+                eggHatchTimeTicksNormal = (double) configClass.getField("CINDERVANE_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggDropChance = (double) configClass.getField("CINDERVANE_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_EGG_DROP_CHANCE").get(null));
                 scaleDropChanceBrush = (double) configClass.getField("CINDERVANE_SCALE_DROP_CHANCE_BRUSH").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_SCALE_DROP_CHANCE_BRUSH").get(null));
                 fireBodyExplosionDamage = (double) configClass.getField("CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE").get(null));
@@ -115,7 +115,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "taming_chance_base", tamingChanceBase,
                         "taming_chance_chicken", tamingChanceChicken,
                         "taming_chance_hearty", tamingChanceHearty,
-                        "egg_hatch_chance_normal", eggHatchChanceNormal,
+                        "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal,
                         "egg_drop_chance", eggDropChance,
                         "scale_drop_chance_brush", scaleDropChanceBrush,
                         "fire_body_explosion_damage", fireBodyExplosionDamage,
@@ -143,16 +143,15 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double summonStormSuperchargeDamageMultiplier = 2.0D;
         double summonStormDurationTicks = 1200.0D;
         boolean legacyTaming = false;
-        double eggHatchChanceNormal = 2.0D;
-        double eggHatchChanceThunder = 1.0D;
-        double eggStormInstantChance = 100.0D;
+        double eggHatchTimeTicksNormal = 18000.0D;
+        double eggHatchTimeTicksThunder = 9600.0D;
         double eggLootPillagerOutpost = 0.20D;
         double eggLootAncientCity = 0.15D;
         double eggDropChance = 0.12D;
         double scaleDropChanceBrush = 0.35D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
-        boolean aggressiveWild = true;
+        boolean aggressiveWild = false;
 
         if (IS_FORGE) {
             try {
@@ -173,9 +172,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 summonStormSuperchargeDamageMultiplier = (double) configClass.getField("RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER").get(null));
                 summonStormDurationTicks = (double) configClass.getField("RAEVYX_SUMMON_STORM_DURATION_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_SUMMON_STORM_DURATION_TICKS").get(null));
                 legacyTaming = (boolean) configClass.getField("RAEVYX_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_LEGACY_TAMING").get(null));
-                eggHatchChanceNormal = (double) configClass.getField("RAEVYX_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_CHANCE_NORMAL").get(null));
-                eggHatchChanceThunder = (double) configClass.getField("RAEVYX_EGG_HATCH_CHANCE_THUNDER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_CHANCE_THUNDER").get(null));
-                eggStormInstantChance = (double) configClass.getField("RAEVYX_EGG_STORM_INSTANT_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_STORM_INSTANT_CHANCE").get(null));
+                eggHatchTimeTicksNormal = (double) configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL").get(null));
+                eggHatchTimeTicksThunder = (double) configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER").get(null));
                 eggLootPillagerOutpost = (double) configClass.getField("RAEVYX_EGG_LOOT_PILLAGER_OUTPOST").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_LOOT_PILLAGER_OUTPOST").get(null));
                 eggLootAncientCity = (double) configClass.getField("RAEVYX_EGG_LOOT_ANCIENT_CITY").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_LOOT_ANCIENT_CITY").get(null));
                 eggDropChance = (double) configClass.getField("RAEVYX_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_DROP_CHANCE").get(null));
@@ -196,9 +194,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("summon_storm_supercharge_ticks", summonStormSuperchargeTicks);
         extras.put("summon_storm_supercharge_damage_multiplier", summonStormSuperchargeDamageMultiplier);
         extras.put("summon_storm_duration_ticks", summonStormDurationTicks);
-        extras.put("egg_hatch_chance_normal", eggHatchChanceNormal);
-        extras.put("egg_hatch_chance_thunder", eggHatchChanceThunder);
-        extras.put("egg_storm_instant_chance", eggStormInstantChance);
+        extras.put("egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal);
+        extras.put("egg_hatch_time_ticks_thunder", eggHatchTimeTicksThunder);
         extras.put("egg_loot_pillager_outpost", eggLootPillagerOutpost);
         extras.put("egg_loot_ancient_city", eggLootAncientCity);
         extras.put("egg_drop_chance", eggDropChance);
@@ -239,10 +236,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingChance = 16.6667D;
         double tamingChanceTropical = 25.0D;
         boolean legacyTaming = false;
-        double eggHatchChanceNormal = 3.0D;
+        double eggHatchTimeTicksNormal = 24000.0D;
         double eggDropChance = 0.12D;
         double scaleDropChanceBrush = 0.30D;
-        boolean aggressiveWild = false;
+        boolean aggressiveWild = true;
 
         if (IS_FORGE) {
             try {
@@ -261,7 +258,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingChance = (double) configClass.getField("VARASUCHUS_TAMING_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAMING_CHANCE").get(null));
                 tamingChanceTropical = (double) configClass.getField("VARASUCHUS_TAMING_CHANCE_TROPICAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAMING_CHANCE_TROPICAL").get(null));
                 legacyTaming = (boolean) configClass.getField("VARASUCHUS_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_LEGACY_TAMING").get(null));
-                eggHatchChanceNormal = (double) configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null));
+                eggHatchTimeTicksNormal = (double) configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggDropChance = (double) configClass.getField("VARASUCHUS_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_EGG_DROP_CHANCE").get(null));
                 scaleDropChanceBrush = (double) configClass.getField("VARASUCHUS_SCALE_DROP_CHANCE_BRUSH").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_SCALE_DROP_CHANCE_BRUSH").get(null));
                 aggressiveWild = (boolean) configClass.getField("VARASUCHUS_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_AGGRESSIVE_WILD").get(null));
@@ -287,7 +284,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "swim_speed", swimSpeed,
                         "taming_chance", tamingChance,
                         "taming_chance_tropical", tamingChanceTropical,
-                        "egg_hatch_chance_normal", eggHatchChanceNormal,
+                        "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal,
                         "egg_drop_chance", eggDropChance,
                         "scale_drop_chance_brush", scaleDropChanceBrush
                 ),
@@ -328,7 +325,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double phase2ToggleOffChance = 0.05D;
         double phase2DecisionMinTicks = 60.0D;
         double phase2DecisionMaxTicks = 120.0D;
-        double eggHatchChanceNormal = 9.0D;
+        double eggHatchTimeTicksNormal = 36000.0D;
         double eggLootBastionTreasure = 0.15D;
         double eggLootNetherBridge = 0.15D;
         double eggLootAncientCity = 0.10D;
@@ -370,7 +367,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 phase2ToggleOffChance = (double) configClass.getField("IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE").get(null));
                 phase2DecisionMinTicks = (double) configClass.getField("IGNIVORUS_PHASE2_DECISION_MIN_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_DECISION_MIN_TICKS").get(null));
                 phase2DecisionMaxTicks = (double) configClass.getField("IGNIVORUS_PHASE2_DECISION_MAX_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_DECISION_MAX_TICKS").get(null));
-                eggHatchChanceNormal = (double) configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null));
+                eggHatchTimeTicksNormal = (double) configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggLootBastionTreasure = (double) configClass.getField("IGNIVORUS_EGG_LOOT_BASTION_TREASURE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_LOOT_BASTION_TREASURE").get(null));
                 eggLootNetherBridge = (double) configClass.getField("IGNIVORUS_EGG_LOOT_NETHER_BRIDGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_LOOT_NETHER_BRIDGE").get(null));
                 eggLootAncientCity = (double) configClass.getField("IGNIVORUS_EGG_LOOT_ANCIENT_CITY").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_LOOT_ANCIENT_CITY").get(null));
@@ -399,7 +396,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("taming_chance_base", tamingChanceBase);
         extras.put("taming_chance_beef", tamingChanceBeef);
         extras.put("taming_chance_hearty", tamingChanceHearty);
-        extras.put("egg_hatch_chance_normal", eggHatchChanceNormal);
+        extras.put("egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal);
         extras.put("egg_loot_bastion_treasure", eggLootBastionTreasure);
         extras.put("egg_loot_nether_bridge", eggLootNetherBridge);
         extras.put("egg_loot_ancient_city", eggLootAncientCity);
@@ -440,7 +437,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double groundEatingDamage = 10.0D;
         double tamingChanceBase = 100.0D;
         double tamingChanceHearty = 100.0D;
-        double eggHatchChanceNormal = 2.0D;
+        double eggHatchTimeTicksNormal = 30000.0D;
         double eggDropChance = 0.12D;
         double scaleDropChanceBrush = 0.30D;
         boolean aggressiveWild = false;
@@ -462,7 +459,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         .invoke(configClass.getField("STEGONAUT_TAMING_CHANCE_BASE").get(null));
                 tamingChanceHearty = (double) configClass.getField("STEGONAUT_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_TAMING_CHANCE_HEARTY").get(null));
-                eggHatchChanceNormal = (double) configClass.getField("STEGONAUT_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get")
+                eggHatchTimeTicksNormal = (double) configClass.getField("STEGONAUT_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggDropChance = (double) configClass.getField("STEGONAUT_EGG_DROP_CHANCE").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_EGG_DROP_CHANCE").get(null));
@@ -486,7 +483,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "taming_chance_base", tamingChanceBase,
                         "taming_chance_hearty", tamingChanceHearty,
-                        "egg_hatch_chance_normal", eggHatchChanceNormal,
+                        "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal,
                         "egg_drop_chance", eggDropChance,
                         "scale_drop_chance_brush", scaleDropChanceBrush
                 ),
@@ -536,10 +533,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double poisonBallDamage = 12.0D;
         double waterBreathDamage = 1.8D;
         double poisonBreathDamage = 1.4D;
-        double tamingChanceBase = 5.0D;
-        double tamingChanceHearty = 3.0D;
+        double tamingChanceBase = 20.0D;
+        double tamingChanceHearty = 30.0D;
         double tamingStunHealth = 60.0D;
-        double eggHatchChanceNormal = 3.0D;
+        double eggHatchTimeTicksNormal = 18000.0D;
         double eggLootShipwreckTreasure = 0.12D;
         double eggDropChance = 0.12D;
         double wildFlyingSpeedMultiplier = 1.0D;
@@ -581,7 +578,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingChanceBase = (double) configClass.getField("VOLITANS_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_TAMING_CHANCE_BASE").get(null));
                 tamingChanceHearty = (double) configClass.getField("VOLITANS_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_TAMING_CHANCE_HEARTY").get(null));
                 tamingStunHealth = (double) configClass.getField("VOLITANS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_TAMING_STUN_HEALTH").get(null));
-                eggHatchChanceNormal = (double) configClass.getField("VOLITANS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_EGG_HATCH_CHANCE_NORMAL").get(null));
+                eggHatchTimeTicksNormal = (double) configClass.getField("VOLITANS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_EGG_HATCH_CHANCE_NORMAL").get(null));
                 eggLootShipwreckTreasure = (double) configClass.getField("VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE").get(null));
                 eggDropChance = (double) configClass.getField("VOLITANS_EGG_DROP_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_EGG_DROP_CHANCE").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("VOLITANS_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_WILD_FLYING_SPEED_MULTIPLIER").get(null));
@@ -623,7 +620,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("taming_chance_base", tamingChanceBase);
         extras.put("taming_chance_hearty", tamingChanceHearty);
         extras.put("taming_stun_health", tamingStunHealth);
-        extras.put("egg_hatch_chance_normal", eggHatchChanceNormal);
+        extras.put("egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal);
         extras.put("egg_loot_shipwreck_treasure", eggLootShipwreckTreasure);
         extras.put("egg_drop_chance", eggDropChance);
         extras.put("wild_flying_speed_multiplier", wildFlyingSpeedMultiplier);
@@ -740,6 +737,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillExtraBooleans(path, entry.getKey());
                 backfillBeamEnergyTuning(path, entry.getKey(), entry.getValue());
                 backfillRaevyxSummonStormTuning(path, entry.getKey(), entry.getValue());
+                backfillNormalEggTimerTuning(path, entry.getKey(), entry.getValue());
+                backfillRaevyxEggTimerTuning(path, entry.getKey(), entry.getValue());
                 backfillTamingStunHealth(path, entry.getKey(), entry.getValue());
                 backfillCindervaneFireBodyExplosionDamage(path, entry.getKey(), entry.getValue());
                 backfillWildFlyingSpeedMultiplier(path, entry.getKey(), entry.getValue());
@@ -1078,6 +1077,78 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         }
     }
 
+    private void backfillNormalEggTimerTuning(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
+        boolean applies = id.equals(CINDERVANE_ID)
+                || id.equals(VARASUCHUS_ID)
+                || id.equals(IGNIVORUS_ID)
+                || id.equals(STEGONAUT_ID)
+                || id.equals(VOLITANS_ID);
+        if (!applies) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            JsonObject extra = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            boolean updated = false;
+
+            if (!extra.has("egg_hatch_time_ticks_normal")) {
+                extra.addProperty("egg_hatch_time_ticks_normal",
+                        mergedConfig.extraDouble("egg_hatch_time_ticks_normal", 18000.0D));
+                updated = true;
+            }
+            if (extra.has("egg_hatch_chance_normal")) {
+                extra.remove("egg_hatch_chance_normal");
+                updated = true;
+            }
+
+            if (updated) {
+                json.add("extra", extra);
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill normal egg timer tuning at {}", path, e);
+        }
+    }
+
+    private void backfillRaevyxEggTimerTuning(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
+        if (!id.equals(RAEVYX_ID)) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            JsonObject extra = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            boolean updated = false;
+
+            if (!extra.has("egg_hatch_time_ticks_normal")) {
+                extra.addProperty("egg_hatch_time_ticks_normal",
+                        mergedConfig.extraDouble("egg_hatch_time_ticks_normal", 18000.0D));
+                updated = true;
+            }
+            if (!extra.has("egg_hatch_time_ticks_thunder")) {
+                extra.addProperty("egg_hatch_time_ticks_thunder",
+                        mergedConfig.extraDouble("egg_hatch_time_ticks_thunder", 9600.0D));
+                updated = true;
+            }
+            if (extra.has("egg_hatch_chance_normal")) {
+                extra.remove("egg_hatch_chance_normal");
+                updated = true;
+            }
+            if (extra.has("egg_hatch_chance_thunder")) {
+                extra.remove("egg_hatch_chance_thunder");
+                updated = true;
+            }
+
+            if (updated) {
+                json.add("extra", extra);
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill raevyx egg timer tuning at {}", path, e);
+        }
+    }
+
     private void backfillTamingStunHealth(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
         boolean isRaevyx = id.equals(RAEVYX_ID);
         boolean isIgnivorus = id.equals(IGNIVORUS_ID);
@@ -1173,9 +1244,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         hints.addProperty("taming_chance", "Percent chance base used by Varasuchus taming. Legacy food taming rolls it directly; rodeo taming converts it into a smaller per-tick chance");
         hints.addProperty("taming_chance_tropical", "Percent chance per feed for Varasuchus tropical fish taming, from 0 to 100");
         hints.addProperty("legacy_taming", "true = simple food taming, false = special mechanics (rodeo/low-health)");
-        hints.addProperty("egg_hatch_chance_normal", "1 in N random-tick roll. Lower = faster hatching");
-        hints.addProperty("egg_hatch_chance_thunder", "1 in N random-tick roll during thunderstorms. Lower = faster hatching");
-        hints.addProperty("egg_storm_instant_chance", "1 in N chance to instantly hatch when placed during a storm");
+        hints.addProperty("egg_hatch_chance_normal", "Legacy random-tick hatch roll. Kept only for older egg configs");
+        hints.addProperty("egg_hatch_chance_thunder", "Legacy thunder random-tick hatch roll. Kept only for older egg configs");
+        hints.addProperty("egg_hatch_time_ticks_normal", "How long the egg takes to hatch in normal weather (20 ticks = 1 second)");
+        hints.addProperty("egg_hatch_time_ticks_thunder", "How long the egg takes to hatch during thunderstorms (20 ticks = 1 second)");
         hints.addProperty("egg_drop_chance", "Chance from 0 to 1 for females to drop an egg on death");
         hints.addProperty("egg_loot_pillager_outpost", "Chance from 0 to 1 for an egg in pillager outpost chests");
         hints.addProperty("egg_loot_shipwreck_treasure", "Chance from 0 to 1 for an egg in shipwreck treasure chests");

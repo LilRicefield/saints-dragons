@@ -711,6 +711,12 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     @Override
     public void tick() {
         super.tick();
+
+        if (isDying() || this.dead) {
+            stopCustomStateForDeath();
+            return;
+        }
+
         soundHandler.tick();
         tickRiderControlLock();
         tickBulldozeState();
@@ -822,6 +828,41 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         // Update sitting progress
         updateSittingProgress();
+    }
+
+    private void stopCustomStateForDeath() {
+        if (!level().isClientSide) {
+            clearRiderControlLock();
+            this.getNavigation().stop();
+            this.setTarget(null);
+        }
+
+        bulldozing = false;
+        this.entityData.set(DATA_BULLDOZING, false);
+
+        phase2Active = false;
+        this.entityData.set(DATA_PHASE2, false);
+        phase2WasVehicle = false;
+        phase2InvalidTargetTicks = 0;
+        aiPhase2LockTicks = 0;
+
+        leaping = false;
+        leapWasVehicle = false;
+        leapImpactTriggered = false;
+        wasAirborneBeforeLanding = false;
+        leapGroundedTicks = 0;
+        leapVelocity = Vec3.ZERO;
+        leapAnimState = LEAP_STATE_NONE;
+        leapImpactRecoveryTicks = 0;
+        this.entityData.set(DATA_LEAPING, false);
+        this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_NONE);
+
+        setFlying(false);
+        setTakeoff(false);
+        setHovering(false);
+        setLanding(false);
+        setNoGravity(false);
+        setDeltaMovement(Vec3.ZERO);
     }
 
     private boolean isDirectAirCombatActive() {

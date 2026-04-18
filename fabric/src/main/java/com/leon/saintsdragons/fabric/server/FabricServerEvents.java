@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBinderAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.world.RaevyxStormSpawner;
 import com.leon.saintsdragons.server.world.StegonautLushCaveSpawner;
 import com.leon.saintsdragons.server.world.VolitansUnderwaterSpawner;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
@@ -41,6 +42,7 @@ public final class FabricServerEvents {
                 }
             }
             for (var level : server.getAllLevels()) {
+                RaevyxStormSpawner.tick(level);
                 StegonautLushCaveSpawner.tick(level);
                 VolitansUnderwaterSpawner.tick(level);
             }
@@ -71,6 +73,7 @@ public final class FabricServerEvents {
             handlePlayerDisconnect(player);
         }
 
+        RaevyxStormSpawner.clearTracking();
         StegonautLushCaveSpawner.clearTracking();
         VolitansUnderwaterSpawner.clearTracking();
     }

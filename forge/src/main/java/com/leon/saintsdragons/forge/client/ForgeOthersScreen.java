@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.client;
 
+import com.leon.saintsdragons.forge.SaintsDragonsForge;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -77,5 +78,6 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
     @Override
     protected void onSave() {
         ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
+        SaintsDragonsForge.syncRuntimeOthersFromForgeConfig();
     }
 }

@@ -211,7 +211,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY::get,
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.egg_hatch_chance_normal"),
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.egg_hatch_time_ticks_normal"),
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
@@ -267,7 +267,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY::get,
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_hatch_chance_normal"),
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_hatch_time_ticks_normal"),
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
@@ -279,16 +279,16 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.STEGONAUT_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"),
-                () -> ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.get(),
-                ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD::set,
-                null));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs"),
                 () -> ForgeDragonAttributesConfig.STEGONAUT_BUFFS_ENABLED.get(),
                 ForgeDragonAttributesConfig.STEGONAUT_BUFFS_ENABLED::set,
                 ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
         ));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"),
+                () -> ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.get(),
+                ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD::set,
+                null));
     }
 
     private void addRaevyxEntries(List<ConfigEntry> entries) {
@@ -361,21 +361,13 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_STUN_HEALTH::get,
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_STUN_HEALTH::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.raevyx.legacy_taming"),
-                () -> ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.get(),
-                ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_hatch_time_ticks_normal"),
+                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL::get,
+                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_hatch_chance_normal"),
-                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_CHANCE_NORMAL::get,
-                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_CHANCE_NORMAL::set,
-                null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_hatch_chance_thunder"),
-                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_CHANCE_THUNDER::get,
-                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_CHANCE_THUNDER::set,
-                null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_storm_instant_chance"),
-                ForgeDragonAttributesConfig.RAEVYX_EGG_STORM_INSTANT_CHANCE::get,
-                ForgeDragonAttributesConfig.RAEVYX_EGG_STORM_INSTANT_CHANCE::set,
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_hatch_time_ticks_thunder"),
+                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER::get,
+                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER::set,
                 null));
         entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_pillager_outpost"),
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST::get,
@@ -392,6 +384,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.RAEVYX_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.RAEVYX_SCALE_DROP_CHANCE_BRUSH::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.raevyx.legacy_taming"),
+                () -> ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.get(),
+                ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.raevyx.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD.get(),
@@ -453,11 +449,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.legacy_taming"),
-                () -> ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.get(),
-                ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING::set,
-                null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_hatch_chance_normal"),
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_hatch_time_ticks_normal"),
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
@@ -468,6 +460,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.VARASUCHUS_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_SCALE_DROP_CHANCE_BRUSH::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.legacy_taming"),
+                () -> ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.get(),
+                ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.get(),
@@ -593,11 +589,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_STUN_HEALTH::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_STUN_HEALTH::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.legacy_taming"),
-                () -> ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.get(),
-                ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING::set,
-                null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_hatch_chance_normal"),
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_hatch_time_ticks_normal"),
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
@@ -620,6 +612,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.scale_drop_chance_brush"),
                 ForgeDragonAttributesConfig.IGNIVORUS_SCALE_DROP_CHANCE_BRUSH::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_SCALE_DROP_CHANCE_BRUSH::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.legacy_taming"),
+                () -> ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.get(),
+                ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.get(),
@@ -705,10 +701,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_TAMING_STUN_HEALTH::get,
                 ForgeDragonAttributesConfig.VOLITANS_TAMING_STUN_HEALTH::set,
                 null));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.volitans.legacy_taming"),
-                ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::get,
-                ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::set,
-                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_active_ticks_max"),
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX::get,
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX::set,
@@ -777,7 +769,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_hatch_chance_normal"),
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_hatch_time_ticks_normal"),
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
@@ -788,6 +780,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"),
                 ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE::get,
                 ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.volitans.legacy_taming"),
+                ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::get,
+                ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.volitans.aggressive_wild"),
                 ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD::get,
@@ -848,9 +844,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.set(ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_CHANCE_NORMAL.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_CHANCE_THUNDER.set(ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_CHANCE_THUNDER.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_EGG_STORM_INSTANT_CHANCE.set(ForgeDragonAttributesConfig.RAEVYX_EGG_STORM_INSTANT_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL.set(ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER.set(ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST.set(ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE.getDefault());

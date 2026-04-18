@@ -208,7 +208,15 @@ public final class SaintsDragonsForge {
         }
     }
 
-    private void syncForgeOthersIntoCommonConfig() {
+    public static void syncRuntimeOthersFromForgeConfig() {
+        if (!commonGameplayConfigReady) {
+            pendingForgeOthersSync = true;
+            return;
+        }
+        syncForgeOthersIntoCommonConfig();
+    }
+
+    private static void syncForgeOthersIntoCommonConfig() {
         syncBoolean(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED, ForgeDragonAttributesConfig.DRAGON_GRIEFING_ENABLED.get());
         syncBoolean(SaintsDragonsConfig.SCREEN_SHAKE_ENABLED, ForgeDragonAttributesConfig.SCREEN_SHAKE_ENABLED.get());
         syncBoolean(SaintsDragonsConfig.BARREL_ROLL_ENABLED, ForgeDragonAttributesConfig.BARREL_ROLL_ENABLED.get());

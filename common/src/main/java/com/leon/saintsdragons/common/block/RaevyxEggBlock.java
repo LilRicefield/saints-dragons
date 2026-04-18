@@ -20,6 +20,8 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -38,11 +40,8 @@ import javax.annotation.Nullable;
 public class RaevyxEggBlock extends BaseEntityBlock {
     public static final int MAX_HATCH_LEVEL = 2;
     public static final IntegerProperty HATCH = BlockStateProperties.HATCH;
-
-    // Hatching speeds (lower = faster)
-    private static final int NORMAL_HATCH_CHANCE = 2;      // ~7 minutes total (1/2 per random tick)
-    private static final int THUNDER_HATCH_CHANCE = 1;     // ~3 minutes total (100% per random tick, 2x faster)
-    private static final int STORM_INSTANT_HATCH_CHANCE = 100; // 1 in 100 when placed during storm
+    private static final int DEFAULT_NORMAL_TOTAL_HATCH_TICKS = 18000; // 15 minutes
+    private static final int DEFAULT_THUNDER_TOTAL_HATCH_TICKS = 9600; // 8 minutes
 
     // Egg shape (similar to turtle egg but slightly larger)
     private static final VoxelShape SHAPE = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 10.0D, 13.0D);
@@ -62,18 +61,6 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         builder.add(HATCH);
     }
 
-    @Override
-    public void randomTick(@NotNull BlockState state, ServerLevel level, @NotNull BlockPos pos, RandomSource random) {
-        int hatchChance = resolveHatchChance(level);
-
-        if (random.nextInt(hatchChance) == 0) {
-            this.incrementHatch(level, pos, state);
-        }
-    }
-
-    /**
-     * Increment the hatch level or spawn baby if fully hatched
-     */
     private void incrementHatch(ServerLevel level, BlockPos pos, BlockState state) {
         int currentHatch = state.getValue(HATCH);
 
@@ -153,21 +140,6 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
-        if (level instanceof ServerLevel serverLevel) {
-            // Check if there's a lightning bolt nearby on placement
-            if (serverLevel.isThundering() && serverLevel.canSeeSky(pos)) {
-                // Small chance to instantly hatch if placed during a storm near sky
-                int chance = resolveStormInstantChance();
-                if (serverLevel.random.nextInt(chance) == 0) {
-                    this.hatchEgg(serverLevel, pos, state);
-                    level.scheduleTick(pos, this, 1);
-                }
-            }
-        }
-    }
-
-    @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         // Check for nearby lightning bolts every tick
         level.getEntitiesOfClass(LightningBolt.class,
@@ -175,6 +147,54 @@ public class RaevyxEggBlock extends BaseEntityBlock {
             .stream()
             .findFirst()
             .ifPresent(bolt -> this.instantHatch(level, pos, state));
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@NotNull Level level,
+                                                                  @NotNull BlockState state,
+                                                                  @NotNull BlockEntityType<T> blockEntityType) {
+        return level.isClientSide ? null : createTickerHelper(
+                blockEntityType,
+                com.leon.saintsdragons.common.registry.ModBlockEntities.RAEVYX_EGG.get(),
+                this::serverTick
+        );
+    }
+
+    private void serverTick(Level level, BlockPos pos, BlockState state, RaevyxEggBlockEntity eggEntity) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        serverLevel.getEntitiesOfClass(LightningBolt.class,
+                new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
+                .stream()
+                .findFirst()
+                .ifPresent(bolt -> this.instantHatch(serverLevel, pos, state));
+
+        if (serverLevel.getBlockState(pos).getBlock() != this) {
+            return;
+        }
+
+        int normalHatchTicks = resolveNormalHatchTicks();
+        int thunderHatchTicks = resolveThunderHatchTicks(normalHatchTicks);
+        double previousProgress = eggEntity.getHatchProgress();
+        int previousStage = getHatchStageForProgress(previousProgress);
+        double perTickProgress = serverLevel.isThundering()
+                ? 1.0D / thunderHatchTicks
+                : 1.0D / normalHatchTicks;
+        double nextProgress = Math.min(1.0D, previousProgress + perTickProgress);
+        eggEntity.setHatchProgress(nextProgress);
+
+        int nextStage = getHatchStageForProgress(nextProgress);
+        if (nextStage != previousStage && nextStage <= MAX_HATCH_LEVEL) {
+            incrementHatch(serverLevel, pos, serverLevel.getBlockState(pos));
+            return;
+        }
+
+        if (nextProgress >= 1.0D) {
+            hatchEgg(serverLevel, pos, serverLevel.getBlockState(pos));
+        }
     }
 
     @Override
@@ -225,19 +245,21 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
-    private int resolveHatchChance(ServerLevel level) {
+    private int resolveNormalHatchTicks() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-        double normal = config.extraDouble("egg_hatch_chance_normal", NORMAL_HATCH_CHANCE);
-        double thunder = config.extraDouble("egg_hatch_chance_thunder", THUNDER_HATCH_CHANCE);
-        double selected = level.isThundering() ? thunder : normal;
-        return Math.max(1, (int) Math.round(selected));
+        double ticks = config.extraDouble("egg_hatch_time_ticks_normal", DEFAULT_NORMAL_TOTAL_HATCH_TICKS);
+        return Math.max(1, (int) Math.round(ticks));
     }
 
-    private int resolveStormInstantChance() {
+    private int resolveThunderHatchTicks(int normalHatchTicks) {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-        double chance = config.extraDouble("egg_storm_instant_chance", STORM_INSTANT_HATCH_CHANCE);
-        return Math.max(1, (int) Math.round(chance));
+        double ticks = config.extraDouble("egg_hatch_time_ticks_thunder", DEFAULT_THUNDER_TOTAL_HATCH_TICKS);
+        return Math.max(1, Math.min(normalHatchTicks, (int) Math.round(ticks)));
+    }
+
+    private int getHatchStageForProgress(double progress) {
+        return Math.min(MAX_HATCH_LEVEL, (int) Math.floor(progress * (MAX_HATCH_LEVEL + 1)));
     }
 }

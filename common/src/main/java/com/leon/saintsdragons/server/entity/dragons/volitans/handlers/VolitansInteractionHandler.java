@@ -132,10 +132,10 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
         }
 
         if (isOwner) {
-            if (player.isCrouching() && itemstack.isEmpty() && dragon.canOwnerCommand(player) && hand == InteractionHand.MAIN_HAND) {
+            if (player.isCrouching() && dragon.canOwnerCommand(player) && hand == InteractionHand.MAIN_HAND) {
                 return handleCommandCycling(player);
             }
-            if (!player.isCrouching() && itemstack.isEmpty() && hand == InteractionHand.MAIN_HAND && dragon.canOwnerMount(player)) {
+            if (!player.isCrouching() && !isVolitansFood(itemstack) && hand == InteractionHand.MAIN_HAND && dragon.canOwnerMount(player)) {
                 return handleMounting(player);
             }
         }

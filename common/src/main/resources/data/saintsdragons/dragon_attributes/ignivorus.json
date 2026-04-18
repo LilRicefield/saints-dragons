@@ -50,7 +50,7 @@
     "taming_chance_base": 14.2857,
     "taming_chance_beef": 20.0,
     "taming_chance_hearty": 25.0,
-    "egg_hatch_chance_normal": 9.0,
+    "egg_hatch_time_ticks_normal": 36000.0,
     "egg_loot_bastion_treasure": 0.15,
     "egg_loot_nether_bridge": 0.15,
     "egg_loot_ancient_city": 0.1,
