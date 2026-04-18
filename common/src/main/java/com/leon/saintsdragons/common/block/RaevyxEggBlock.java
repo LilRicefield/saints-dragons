@@ -259,6 +259,17 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         return Math.max(1, Math.min(normalHatchTicks, (int) Math.round(ticks)));
     }
 
+    public int getRemainingHatchTicks(Level level, @Nullable RaevyxEggBlockEntity eggEntity) {
+        if (eggEntity == null) {
+            return resolveNormalHatchTicks();
+        }
+        int normalHatchTicks = resolveNormalHatchTicks();
+        int activeHatchTicks = level.isThundering()
+                ? resolveThunderHatchTicks(normalHatchTicks)
+                : normalHatchTicks;
+        return Math.max(0, (int) Math.ceil((1.0D - eggEntity.getHatchProgress()) * activeHatchTicks));
+    }
+
     private int getHatchStageForProgress(double progress) {
         return Math.min(MAX_HATCH_LEVEL, (int) Math.floor(progress * (MAX_HATCH_LEVEL + 1)));
     }

@@ -62,7 +62,8 @@ dependencies {
         exclude group: "net.fabricmc.fabric-api"
     }
     modCompileOnly "dev.emi:emi-fabric:${rootProject.emi_version}"
-    
+    modCompileOnly "maven.modrinth:jade:${rootProject.jade_fabric_version}"
+
     // ModMenu integration - Cloth Config will automatically provide the config screen
     modImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
     common(project(path: ':common', configuration: 'namedElements')) { transitive false }

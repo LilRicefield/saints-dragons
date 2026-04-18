@@ -92,6 +92,14 @@ public class VolitansEggBlock extends AbstractTimedDragonEggBlock<VolitansEggBlo
     }
 
     @Override
+    public boolean isHatchingPaused(Level level, BlockPos pos, BlockState state, AbstractDragonEggBlockEntity eggEntity) {
+        if (syncWaterloggedState(level, pos, state)) {
+            state = level.getBlockState(pos);
+        }
+        return !state.getValue(WATERLOGGED);
+    }
+
+    @Override
     protected ResourceLocation getDragonConfigId() {
         return DragonAttributeConfigLoader.VOLITANS_ID;
     }

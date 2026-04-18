@@ -14,7 +14,7 @@ import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 
-public final class SaintsDragonsEmiPlugin implements EmiPlugin {
+public final class SaintsDragonsEmi implements EmiPlugin {
     @Override
     public void register(EmiRegistry registry) {
         ItemStack awkwardPotion = PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.AWKWARD);

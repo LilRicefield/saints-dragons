@@ -9,6 +9,8 @@ loom {
 
     runs {
         client {
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             client()
             setConfigName("Forge Client")
             ideConfigGenerated(true)
@@ -76,6 +78,9 @@ dependencies {
     // GeckoLib Forge
     modImplementation "software.bernie.geckolib:geckolib-forge-${rootProject.minecraft_version}:${rootProject.geckolib_version}"
     forgeRuntimeLibrary("com.eliotlash.mclib:mclib:20")
+
+    // Jade integration (optional)
+    modCompileOnly "maven.modrinth:jade:${rootProject.jade_forge_version}"
 }
 
 processResources {

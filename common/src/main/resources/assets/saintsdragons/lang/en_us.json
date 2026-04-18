@@ -160,14 +160,22 @@
   "saintsdragons.command.setvariant.invalid_variant": "Invalid variant for this dragon",
   "saintsdragons.command.setvariant.not_ignivorus": "Only Ignivorus dragons have variants",
 
-  "saintsdragons.gender.male": "Male",
-  "saintsdragons.gender.female": "Female",
+  "saintsdragons.gender.male": "§9Male ♂§r",
+  "saintsdragons.gender.female": "§dFemale ♀§r",
 
   "saintsdragons.variant.default": "Default",
   "saintsdragons.variant.crimson": "Crimson",
   "saintsdragons.variant.albino": "Albino",
   "saintsdragons.variant.night_gold": "Night Gold",
   "saintsdragons.variant.bloodshot": "Bloodshot",
+
+  "jade.saintsdragons.gender": "Gender: %s",
+  "jade.saintsdragons.variant": "Variant: %s",
+  "jade.saintsdragons.egg_timer": "Hatches In: %s",
+  "jade.saintsdragons.egg_timer_paused": "Hatching Paused",
+  "jade.saintsdragons.time.minutes_seconds": "%sm %ss",
+  "jade.saintsdragons.time.minutes": "%sm",
+  "jade.saintsdragons.time.seconds": "%ss",
 
   "advancement.saintsdragons.tame_raevyx.title": "Bleeding Bolt",
   "advancement.saintsdragons.tame_raevyx.description": "Tame a Raevyx. Zeus who?",
