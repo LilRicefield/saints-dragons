@@ -4,8 +4,8 @@
 		{
 			"description": {
 				"identifier": "geometry.cindervane",
-				"texture_width": 765,
-				"texture_height": 744,
+				"texture_width": 800,
+				"texture_height": 770,
 				"visible_bounds_width": 45,
 				"visible_bounds_height": 26,
 				"visible_bounds_offset": [0, 3, 0]
