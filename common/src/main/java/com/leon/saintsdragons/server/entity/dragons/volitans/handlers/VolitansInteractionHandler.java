@@ -144,43 +144,42 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
     }
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
-        boolean client = dragon.level().isClientSide;
         var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
-        if (!dragon.isFood(itemstack) && !itemstack.is(Items.COD) && !itemstack.is(Items.SALMON)
-                && !itemstack.is(Items.PUFFERFISH) && !itemstack.is(Items.TROPICAL_FISH) && !hearty) {
-            return InteractionResult.PASS;
+        boolean validFood = dragon.isFood(itemstack)
+                || itemstack.is(Items.COD)
+                || itemstack.is(Items.SALMON)
+                || itemstack.is(Items.PUFFERFISH)
+                || itemstack.is(Items.TROPICAL_FISH)
+                || hearty;
+        if (baby == null) {
+            return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
 
-        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.volitans", dragon.canFeed())) {
-            return InteractionResult.CONSUME;
-        }
-
-        if (!client && baby != null) {
-            double tameChance = hearty
-                    ? config.extraDouble("taming_chance_hearty", 3.0D)
-                    : config.extraDouble("taming_chance_base", 5.0D);
-            baby.handleBabyFoodTaming(
-                    player,
-                    itemstack,
-                    61,
-                    hearty,
-                    () -> {
-                        dragon.triggerAnim("actions", "eat");
-                        dragon.playEatMovingSound();
-                    },
-                    dragon::setFeedingCooldown,
-                    tameChance,
-                    () -> {
-                        dragon.tame(player);
-                        dragon.setOrderedToSit(true);
-                        dragon.setCommand(1);
-                        triggerTamingAdvancement(player);
-                    }
-            );
-        }
-
-        return InteractionResult.sidedSuccess(client);
+        double tameChance = hearty
+                ? config.extraDouble("taming_chance_hearty", 3.0D)
+                : config.extraDouble("taming_chance_base", 5.0D);
+        return baby.tryHandleBabyFoodTaming(
+                player,
+                itemstack,
+                "entity.saintsdragons.volitans",
+                validFood,
+                dragon.canFeed(),
+                61,
+                hearty,
+                () -> {
+                    dragon.triggerAnim("actions", "eat");
+                    dragon.playEatMovingSound();
+                },
+                dragon::setFeedingCooldown,
+                tameChance,
+                () -> {
+                    dragon.tame(player);
+                    dragon.setOrderedToSit(true);
+                    dragon.setCommand(1);
+                    triggerTamingAdvancement(player);
+                }
+        );
     }
 
     private InteractionResult handleBreeding(Player player, ItemStack food) {

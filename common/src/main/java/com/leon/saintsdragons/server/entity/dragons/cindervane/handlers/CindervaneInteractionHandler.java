@@ -354,42 +354,37 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
     }
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
-        boolean client = dragon.level().isClientSide;
         var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        if (!dragon.isFood(itemstack) && !itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
-            return InteractionResult.PASS;
+        boolean validFood = dragon.isFood(itemstack) || itemstack.is(net.minecraft.world.item.Items.SALMON) || hearty;
+        if (baby == null) {
+            return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
 
-        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.cindervane", dragon.canFeed())) {
-            return InteractionResult.CONSUME;
-        }
-
-        if (!client && baby != null) {
-            double tameChance = resolveTamingChance(itemstack, config);
-            baby.handleBabyFoodTaming(
-                    player,
-                    itemstack,
-                    44,
-                    hearty,
-                    () -> {
-                        dragon.triggerAnim("actions", "eat");
-                        dragon.playEatMovingSound();
-                    },
-                    dragon::setFeedingCooldown,
-                    tameChance,
-                    () -> {
-                        dragon.tame(player);
-                        dragon.getNavigation().stop();
-                        dragon.setOrderedToSit(true);
-                        dragon.setCommand(1);
-                        dragon.setTarget(null);
-                        triggerTamingAdvancement(player);
-                    }
-            );
-        }
-
-        return InteractionResult.sidedSuccess(client);
+        double tameChance = resolveTamingChance(itemstack, config);
+        return baby.tryHandleBabyFoodTaming(
+                player,
+                itemstack,
+                "entity.saintsdragons.cindervane",
+                validFood,
+                dragon.canFeed(),
+                44,
+                hearty,
+                () -> {
+                    dragon.triggerAnim("actions", "eat");
+                    dragon.playEatMovingSound();
+                },
+                dragon::setFeedingCooldown,
+                tameChance,
+                () -> {
+                    dragon.tame(player);
+                    dragon.getNavigation().stop();
+                    dragon.setOrderedToSit(true);
+                    dragon.setCommand(1);
+                    dragon.setTarget(null);
+                    triggerTamingAdvancement(player);
+                }
+        );
     }
 
     private double resolveTamingChance(ItemStack food, DragonAttributeConfig config) {

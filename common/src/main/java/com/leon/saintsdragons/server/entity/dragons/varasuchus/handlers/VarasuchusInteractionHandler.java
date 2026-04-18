@@ -239,44 +239,39 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
     }
 
     private InteractionResult handleBabyTaming(Player player, ItemStack food, DragonAttributeConfig config) {
-        boolean client = dragon.level().isClientSide;
         var baby = dragon.getBabyComponent();
         boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
         boolean tropicalFish = food.is(net.minecraft.world.item.Items.TROPICAL_FISH);
-        if (!isVarasuchusFood(food)) {
-            return InteractionResult.PASS;
+        boolean validFood = isVarasuchusFood(food);
+        if (baby == null) {
+            return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
 
-        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.varasuchus", dragon.canFeed())) {
-            return InteractionResult.CONSUME;
-        }
-
-        if (!client && baby != null) {
-            double tameChance = heartyMeal
-                    ? Math.min(100.0D, config.extraDoubles().getOrDefault("taming_chance", 16.6667D) * 2.0D)
-                    : tropicalFish
-                        ? config.extraDoubles().getOrDefault("taming_chance_tropical", 25.0D)
-                        : config.extraDoubles().getOrDefault("taming_chance", 16.6667D);
-            baby.handleBabyFoodTaming(
-                    player,
-                    food,
-                    50,
-                    heartyMeal,
-                    () -> {
-                        dragon.triggerAnim("action", "eat");
-                        playEatSound();
-                    },
-                    dragon::setFeedingCooldown,
-                    tameChance,
-                    () -> {
-                        dragon.tame(player);
-                        dragon.setOrderedToSit(true);
-                        dragon.awardTamingAdvancement(player);
-                    }
-            );
-        }
-
-        return InteractionResult.sidedSuccess(client);
+        double tameChance = heartyMeal
+                ? Math.min(100.0D, config.extraDoubles().getOrDefault("taming_chance", 16.6667D) * 2.0D)
+                : tropicalFish
+                    ? config.extraDoubles().getOrDefault("taming_chance_tropical", 25.0D)
+                    : config.extraDoubles().getOrDefault("taming_chance", 16.6667D);
+        return baby.tryHandleBabyFoodTaming(
+                player,
+                food,
+                "entity.saintsdragons.varasuchus",
+                validFood,
+                dragon.canFeed(),
+                50,
+                heartyMeal,
+                () -> {
+                    dragon.triggerAnim("action", "eat");
+                    playEatSound();
+                },
+                dragon::setFeedingCooldown,
+                tameChance,
+                () -> {
+                    dragon.tame(player);
+                    dragon.setOrderedToSit(true);
+                    dragon.awardTamingAdvancement(player);
+                }
+        );
     }
 
     private void playEatSound() {

@@ -15,6 +15,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautSoundProfile;
 import com.leon.saintsdragons.server.entity.controller.stegonaut.StegonautRiderController;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -22,7 +23,6 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
-import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
@@ -65,8 +65,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +79,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
 
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
+    private final StegonautInteractionHandler interactionHandler = new StegonautInteractionHandler(this);
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final StegonautRiderController riderController = new StegonautRiderController(this);
     private final SimpleContainer stegonautChestInventory = new SimpleContainer(STEGONAUT_CHEST_SLOTS);
@@ -605,118 +604,10 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-        if (com.leon.saintsdragons.common.registry.ModItems.isDragonBrush(itemstack)) {
-            // Match other dragons: acknowledge brush on client so hand swing plays,
-            // while the actual grooming logic executes on the server.
-            if (this.level().isClientSide) {
-                return InteractionResult.sidedSuccess(true);
-            }
-            boolean brushed = this.tryBrush(player, itemstack);
-            return brushed ? InteractionResult.sidedSuccess(false) : InteractionResult.CONSUME;
+        InteractionResult handlerResult = interactionHandler.handleInteraction(player, hand);
+        if (handlerResult != InteractionResult.PASS) {
+            return handlerResult;
         }
-        if (!this.isTame()) {
-            return handleUntamedInteraction(player, hand);
-        } else {
-            return handleTamedInteraction(player, hand);
-        }
-    }
-
-    /**
-     * Handle interactions with untamed drakes (100% success taming)
-     */
-    private InteractionResult handleUntamedInteraction(Player player, InteractionHand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-
-        if (!this.isFood(itemstack)) {
-            return InteractionResult.PASS;
-        }
-
-        // Taming logic must be server-only to avoid client-only visual state changes
-        if (!this.level().isClientSide) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
-
-            // Trigger eat animation
-            this.triggerAnim("action", "eat");
-            playEatMovingSound();
-
-            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                    .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
-            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            double tamingChance = hearty
-                    ? config.extraDoubles().getOrDefault("taming_chance_hearty", 1.0)
-                    : config.extraDoubles().getOrDefault("taming_chance_base", 1.0);
-            if (DragonTamingChance.rollPercent(this.getRandom(), tamingChance)) {
-                this.tame(player);
-                this.setPackLeaderUuid(null); // Tamed Stegonauts leave wild packs immediately.
-                this.setOrderedToSit(true);
-                this.setCommand(1); // Set command to Sit (1) to match the sitting state
-
-                this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
-
-                // Send taming success message
-                player.displayClientMessage(
-                        Component.translatable("entity.saintsdragons.stegonaut.tamed", this.getName()),
-                        true
-                );
-
-                // Trigger advancement for taming Primitive Drake
-                if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                    var advancement = serverPlayer.server.getAdvancements()
-                            .getAdvancement(com.leon.saintsdragons.common.SaintsDragonsCommon.rl("tame_stegonaut"));
-                    if (advancement != null) {
-                        serverPlayer.getAdvancements().award(advancement, "tame_stegonaut");
-                    }
-                }
-            } else {
-                this.level().broadcastEntityEvent(this, (byte) 6); // Smoke particles
-            }
-        }
-
-        return InteractionResult.sidedSuccess(this.level().isClientSide);
-    }
-
-    /**
-     * Handle interactions with tamed drakes (feeding, commands)
-     */
-    private InteractionResult handleTamedInteraction(Player player, InteractionHand hand) {
-        ItemStack itemstack = player.getItemInHand(hand);
-
-        if (itemstack.getItem() instanceof com.leon.saintsdragons.common.item.StegonautBinderItem) {
-            InteractionResult result = itemstack.interactLivingEntity(player, this, hand);
-            if (result != InteractionResult.PASS) {
-                return result;
-            }
-        }
-
-        if (itemstack.is(com.leon.saintsdragons.common.registry.ModItems.DRACONIC_CODEX.get())) {
-            return InteractionResult.PASS;
-        }
-
-        if (player.equals(this.getOwner()) && player.isShiftKeyDown() && this.isFood(itemstack)) {
-            return handleBreeding(player, itemstack);
-        }
-
-        // Handle feeding for healing
-        if (this.isFood(itemstack)) {
-            return handleFeeding(player, itemstack);
-        }
-
-        // Handle owner commands
-        if (player.equals(this.getOwner())) {
-            // Command cycling - Shift+Right-click cycles through commands
-            if (player.isShiftKeyDown() && this.canOwnerCommand(player) && !this.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
-                return handleCommandCycling(player);
-            }
-
-            if (!player.isShiftKeyDown() && !this.isFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
-                return handleMounting(player);
-            }
-        }
-
-        // Fall back to base implementation for other interactions
         return super.mobInteract(player, hand);
     }
 
@@ -739,20 +630,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
     }
 
-    private InteractionResult handleMounting(Player player) {
-        if (!this.canOwnerMount(player) || this.isVehicle()) {
-            return InteractionResult.sidedSuccess(this.level().isClientSide);
-        }
-
-        if (!this.level().isClientSide) {
-            prepareForMounting();
-            player.startRiding(this);
-        }
-
-        return InteractionResult.sidedSuccess(this.level().isClientSide);
-    }
-
-    private void prepareForMounting() {
+    public void prepareForMounting() {
         if (this.level().isClientSide) {
             return;
         }
@@ -767,135 +645,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         this.setTarget(null);
         if (this.getNavigation().getPath() != null) {
             this.getNavigation().stop();
-        }
-    }
-
-    private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
-        boolean client = this.level().isClientSide;
-
-        if (this.isBaby()) {
-            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_too_young");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (this.getAge() != 0) {
-            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_cooling_down");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (this.isInLove()) {
-            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_already_ready");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (!client) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
-
-            this.triggerAnim("action", "eat");
-            playEatMovingSound();
-            this.setInLove(player);
-            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_ready");
-        }
-
-        return InteractionResult.sidedSuccess(client);
-    }
-
-    /**
-     * Handle feeding tamed drakes for healing
-     */
-    private InteractionResult handleFeeding(Player player, ItemStack itemstack) {
-        if (!this.level().isClientSide) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
-
-            // Trigger eat animation
-            this.triggerAnim("action", "eat");
-            playEatMovingSound();
-
-            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            boolean wasHungry = this.isHungry();
-
-            if (this.isBaby()) {
-                // Baby growth logic
-                int growthTicks = hearty ? 4800 : 2400; // Hearty meal: 4 minutes vs 2 minutes
-                int currentAge = this.getAge();
-                int newAge = Math.min(0, currentAge + growthTicks);
-                this.setAge(newAge);
-
-                this.level().broadcastEntityEvent(this, (byte) 7); // Hearts
-
-                if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                    String messageKey = (newAge == 0)
-                            ? "entity.saintsdragons.stegonaut.baby_grown"
-                            : "entity.saintsdragons.stegonaut.baby_fed";
-                    serverPlayer.displayClientMessage(
-                            Component.translatable(messageKey, this.getName()),
-                            true
-                    );
-                }
-                this.applyFeedingHunger(hearty);
-            } else {
-                // Adult healing logic
-                float healAmount = hearty ? 18.0f : 8.0f; // Hearty meal: +7 hearts vs +4 hearts
-                float oldHealth = this.getHealth();
-                float newHealth = Math.min(oldHealth + healAmount, this.getMaxHealth());
-                this.setHealth(newHealth);
-                this.applyFeedingHunger(hearty);
-
-                // Play eating sound and particles
-                this.level().broadcastEntityEvent(this, (byte) 6); // Eating sound
-                this.level().broadcastEntityEvent(this, (byte) 7); // Hearts particles
-
-                // Send appropriate feedback message
-                String messageKey;
-                if (newHealth >= this.getMaxHealth()) {
-                    messageKey = wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.stegonaut.fed";
-                } else {
-                    messageKey = "entity.saintsdragons.stegonaut.fed_partial";
-                }
-
-                player.displayClientMessage(
-                        Component.translatable(messageKey, this.getName()),
-                        true
-                );
-            }
-        }
-
-        return InteractionResult.sidedSuccess(this.level().isClientSide);
-    }
-
-    /**
-     * Handle command cycling (Follow/Sit/Wander)
-     */
-    private InteractionResult handleCommandCycling(Player player) {
-        // Get current command and cycle to next
-        int currentCommand = this.getCommand();
-        int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
-
-        // Apply the new command
-        this.setCommand(nextCommand);
-        applyCommandState(nextCommand);
-
-        // Send feedback message to player (action bar), server-side only to avoid duplicates
-        if (!this.level().isClientSide) {
-            player.displayClientMessage(
-                    Component.translatable(
-                            "entity.saintsdragons.all.command_" + nextCommand,
-                            this.getName()
-                    ),
-                    true
-            );
-        }
-
-        return InteractionResult.SUCCESS;
-    }
-
-    private void sendStatusMessage(Player player, String key) {
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            serverPlayer.displayClientMessage(Component.translatable(key, this.getName()), true);
         }
     }
 
@@ -1239,7 +988,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         groundStepSoundCooldownTicks = duration;
     }
 
-    private void playEatMovingSound() {
+    public void playEatMovingSound() {
         if (!level().isClientSide) {
             getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_EAT.get(), 1.0f, isBaby() ? 1.6f : 1.0f, 22);
         }

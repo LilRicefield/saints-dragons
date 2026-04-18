@@ -148,43 +148,37 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
     }
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
-        boolean client = dragon.level().isClientSide;
         var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        if (!dragon.isFood(itemstack) && !itemstack.is(net.minecraft.world.item.Items.SALMON) && !hearty) {
-            return InteractionResult.PASS;
+        boolean validFood = dragon.isFood(itemstack) || itemstack.is(net.minecraft.world.item.Items.SALMON) || hearty;
+        if (baby == null) {
+            return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
 
-        // Check feeding cooldown to prevent spam-feeding
-        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.raevyx", dragon.canFeed())) {
-            return InteractionResult.CONSUME;
-        }
-
-        if (!client && baby != null) {
-            double tameChance = hearty
-                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
-                : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
-            baby.handleBabyFoodTaming(
-                    player,
-                    itemstack,
-                    61,
-                    hearty,
-                    () -> {
-                        dragon.triggerAnim("action", "eat");
-                        dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
-                    },
-                    dragon::setFeedingCooldown,
-                    tameChance,
-                    () -> {
-                        dragon.tame(player);
-                        dragon.setOrderedToSit(true);
-                        dragon.setCommandManual(1);
-                        triggerTamingAdvancement(player);
-                    }
-            );
-        }
-
-        return InteractionResult.sidedSuccess(client);
+        double tameChance = hearty
+            ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
+            : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
+        return baby.tryHandleBabyFoodTaming(
+                player,
+                itemstack,
+                "entity.saintsdragons.raevyx",
+                validFood,
+                dragon.canFeed(),
+                61,
+                hearty,
+                () -> {
+                    dragon.triggerAnim("action", "eat");
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
+                },
+                dragon::setFeedingCooldown,
+                tameChance,
+                () -> {
+                    dragon.tame(player);
+                    dragon.setOrderedToSit(true);
+                    dragon.setCommandManual(1);
+                    triggerTamingAdvancement(player);
+                }
+        );
     }
     
     /**

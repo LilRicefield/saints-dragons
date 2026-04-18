@@ -9,6 +9,7 @@ import java.util.function.IntConsumer;
 import javax.annotation.Nullable;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
@@ -52,6 +53,42 @@ public final class DragonBabyComponent {
             );
         }
         return false;
+    }
+
+    public InteractionResult tryHandleBabyFoodTaming(Player player,
+                                                     ItemStack food,
+                                                     String translationPrefix,
+                                                     boolean validFood,
+                                                     boolean canFeed,
+                                                     int feedingCooldownTicks,
+                                                     boolean heartyMeal,
+                                                     Runnable eatFeedback,
+                                                     IntConsumer feedingCooldownSetter,
+                                                     double tameChance,
+                                                     Runnable onSuccess) {
+        boolean client = dragon.level().isClientSide;
+        if (!validFood) {
+            return InteractionResult.PASS;
+        }
+
+        if (!ensureCanFeed(player, translationPrefix, canFeed)) {
+            return InteractionResult.CONSUME;
+        }
+
+        if (!client) {
+            handleBabyFoodTaming(
+                    player,
+                    food,
+                    feedingCooldownTicks,
+                    heartyMeal,
+                    eatFeedback,
+                    feedingCooldownSetter,
+                    tameChance,
+                    onSuccess
+            );
+        }
+
+        return InteractionResult.sidedSuccess(client);
     }
 
     public void applyBabyGrowth(Player player, boolean heartyMeal, String translationPrefix, int normalGrowthTicks, int heartyGrowthTicks) {
