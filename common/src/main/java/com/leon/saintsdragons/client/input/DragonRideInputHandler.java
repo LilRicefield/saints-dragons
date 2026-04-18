@@ -259,18 +259,10 @@ public final class DragonRideInputHandler {
             // Volitans breath mode switch uses X while actively breathing; skip melee UI/messages.
             if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans && volitansBreathActive) {
                 sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
-            } else
-            if (dragon.hasSecondaryMelee()) {
-                sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
-
-                int newMode = (dragon.getMeleeMode() + 1) % 2;
-                DragonUIRegistry.getMeleeModeNotification()
-                        .showNotification(newMode);
             } else {
-                player.displayClientMessage(
-                        net.minecraft.network.chat.Component.translatable("saintsdragons.message.no_secondary_melee"),
-                        true
-                );
+                sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
+                DragonUIRegistry.getMeleeModeNotification()
+                        .showNotification(dragon.getNextMeleeMode());
             }
         }
         if (togglePitchModeDown && !wasTogglePitchModeDown
@@ -363,7 +355,13 @@ public final class DragonRideInputHandler {
         } else {
             handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
         }
-        handleAbilityBinding(dragon.getAttackRiderAbility(), attackDown, wasAttackDown, forward, strafe, yaw);
+        if (dragon.isMiningMode()) {
+            if (wasAttackDown) {
+                handleLockedAbilityRelease(dragon.getAttackRiderAbility(), false, true);
+            }
+        } else {
+            handleAbilityBinding(dragon.getAttackRiderAbility(), attackDown, wasAttackDown, forward, strafe, yaw);
+        }
 
         wasAscendPressed = ascendDown;
         wasAccelerateDown = accelerateDown;

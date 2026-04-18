@@ -22,7 +22,7 @@ public class MeleeModeNotification {
 
     /**
      * Show a notification for the given melee mode
-     * @param mode 0 = primary (bite), 1 = secondary (horn gore, etc.)
+     * @param mode 0 = primary, 1 = secondary, 2 = mining
      */
     public void showNotification(int mode) {
         this.meleeMode = mode;
@@ -34,6 +34,8 @@ public class MeleeModeNotification {
             this.message = Component.translatable("ui.saintsdragons.melee_mode.primary");
         } else if (mode == 1) {
             this.message = Component.translatable("ui.saintsdragons.melee_mode.secondary");
+        } else if (mode == 2) {
+            this.message = Component.translatable("ui.saintsdragons.melee_mode.mining");
         } else {
             this.message = Component.literal("Mode " + mode);
         }

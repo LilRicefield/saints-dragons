@@ -1805,7 +1805,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        String abilityId = getMeleeMode() == 0
+        String abilityId = getCombatMeleeMode() == MELEE_MODE_PRIMARY
                 ? CindervaneAbilities.BITE_ID
                 : CindervaneAbilities.SLASH_GRAB_ID;
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
@@ -2385,7 +2385,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return getMeleeMode() == 0
+        return getCombatMeleeMode() == MELEE_MODE_PRIMARY
                 ? CindervaneAbilities.BITE
                 : CindervaneAbilities.SLASH_GRAB;
     }

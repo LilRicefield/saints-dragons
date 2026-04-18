@@ -258,17 +258,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     protected void onRiderToggleMelee(Player player) {
-        // Check if this dragon has a secondary melee attack
-        if (!hasSecondaryMelee()) {
-            if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable("saintsdragons.message.no_secondary_melee"),
-                    true // Action bar
-                );
-            }
-            return;
-        }
-
         toggleMeleeMode();
     }
 
@@ -360,25 +349,48 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return null;
     }
 
+    public static final int MELEE_MODE_PRIMARY = 0;
+    public static final int MELEE_MODE_SECONDARY = 1;
+    public static final int MELEE_MODE_MINING = 2;
+
     /**
-     * Get the current melee mode (0=primary, 1=secondary)
+     * Get the current rider melee mode (0=primary, 1=secondary, 2=mining)
      */
     public int getMeleeMode() {
         return this.entityData.get(DATA_MELEE_MODE);
     }
 
     /**
-     * Set the melee mode (0=primary, 1=secondary)
+     * Set the rider melee mode (0=primary, 1=secondary, 2=mining)
      */
     public void setMeleeMode(int mode) {
-        this.entityData.set(DATA_MELEE_MODE, Mth.clamp(mode, 0, 1));
+        this.entityData.set(DATA_MELEE_MODE, Mth.clamp(mode, MELEE_MODE_PRIMARY, MELEE_MODE_MINING));
     }
 
     /**
-     * Toggle between primary and secondary melee mode
+     * Returns the effective combat melee mode. Mining mode falls back to primary so
+     * rider utility state never leaks into AI or generic combat selection.
+     */
+    public int getCombatMeleeMode() {
+        return getMeleeMode() == MELEE_MODE_SECONDARY ? MELEE_MODE_SECONDARY : MELEE_MODE_PRIMARY;
+    }
+
+    public boolean isMiningMode() {
+        return getMeleeMode() == MELEE_MODE_MINING;
+    }
+
+    public int getNextMeleeMode() {
+        if (hasSecondaryMelee()) {
+            return (getMeleeMode() + 1) % 3;
+        }
+        return getMeleeMode() == MELEE_MODE_PRIMARY ? MELEE_MODE_MINING : MELEE_MODE_PRIMARY;
+    }
+
+    /**
+     * Toggle between available rider modes.
      */
     public void toggleMeleeMode() {
-        setMeleeMode(getMeleeMode() == 0 ? 1 : 0);
+        setMeleeMode(getNextMeleeMode());
     }
 
     @Override

@@ -1620,7 +1620,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return getMeleeMode() == 0 ? VolitansAbilities.VOLITANS_BITE : VolitansAbilities.VOLITANS_HORN_GORE;
+        return getCombatMeleeMode() == MELEE_MODE_PRIMARY ? VolitansAbilities.VOLITANS_BITE : VolitansAbilities.VOLITANS_HORN_GORE;
     }
 
     @Override
@@ -1653,7 +1653,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        String abilityId = getMeleeMode() == 0
+        String abilityId = getCombatMeleeMode() == MELEE_MODE_PRIMARY
                 ? VolitansAbilities.VOLITANS_BITE_ID
                 : VolitansAbilities.VOLITANS_HORN_GORE_ID;
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
