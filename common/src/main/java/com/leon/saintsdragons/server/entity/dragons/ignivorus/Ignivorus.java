@@ -2877,6 +2877,15 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return this.entityData.get(DATA_LANDING);
     }
 
+    public boolean isFlightControllerStuck() {
+        if (!this.navigationModeController.isUsingAirNavigation()) {
+            return false;
+        }
+        AsyncFlightController.PathState state = this.asyncAirController.getState();
+        return state == AsyncFlightController.PathState.STUCK
+                || state == AsyncFlightController.PathState.FAILED;
+    }
+
     @Override
     public int getFlightMode() {
         double altitude = getY() - level().getHeight(

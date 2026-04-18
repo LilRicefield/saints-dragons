@@ -234,6 +234,12 @@ public class IgnivorusFlightGoal extends Goal {
                 stuckCounter = 0;
             }
 
+            // Check if async flight controller is stuck
+            if (dragon.isFlightControllerStuck() && distanceToTarget > 25.0) {
+                needNewTarget = true;
+                stuckCounter = 0;
+            }
+
             // Better stuck detection
             if (dragon.horizontalCollision && timeSinceTargetChange % 5 == 0) {
                 stuckCounter++;
@@ -422,7 +428,7 @@ public class IgnivorusFlightGoal extends Goal {
     }
 
     private Vec3 generateFlightCandidate(Vec3 anchor, Vec3 dragonPos, int attempt) {
-        boolean isStuck = dragon.horizontalCollision || stuckCounter > 0;
+        boolean isStuck = dragon.horizontalCollision || stuckCounter > 0 || dragon.isFlightControllerStuck();
 
         boolean tethered = isTamedWander();
 

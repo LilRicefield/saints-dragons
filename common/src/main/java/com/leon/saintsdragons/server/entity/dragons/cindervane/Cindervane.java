@@ -1140,7 +1140,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             return;
         }
 
-        if (isVehicle() || isTakeoff() || isLanding() || isHovering()) {
+        if (isVehicle() || isTakeoff() || isLanding()) {
             return;
         }
 
@@ -2844,6 +2844,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             setHovering(false);
             setTakeoff(false);
         }
+    }
+
+    public boolean isFlightControllerStuck() {
+        if (!this.navigationModeController.isUsingAirNavigation()) {
+            return false;
+        }
+        AsyncFlightController.PathState state = this.asyncAirController.getState();
+        return state == AsyncFlightController.PathState.STUCK
+                || state == AsyncFlightController.PathState.FAILED;
     }
 
     @Override

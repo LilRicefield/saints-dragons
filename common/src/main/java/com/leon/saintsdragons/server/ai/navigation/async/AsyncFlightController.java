@@ -237,7 +237,12 @@ public class AsyncFlightController {
         if (landingTarget) {
             return 1.0D;
         }
-        double widthScale = Math.max(1.0, this.host.getBbWidth());
+        double width = this.host.getBbWidth();
+        // Use square root scaling for large dragons to prevent excessive arrival distances
+        // Small dragons (width <= 2): ~1.5-3.0 blocks
+        // Medium dragons (width 4): ~4.5 blocks
+        // Large dragons (width 8): ~6.4 blocks instead of 12.0
+        double widthScale = Math.max(1.0, Math.sqrt(width * 2.0));
         return Math.max(0.75D, this.baseArrivalDistance * widthScale);
     }
 

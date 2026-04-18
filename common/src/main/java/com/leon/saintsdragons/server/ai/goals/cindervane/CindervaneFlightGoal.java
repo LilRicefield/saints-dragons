@@ -311,6 +311,12 @@ public class CindervaneFlightGoal extends Goal {
                 stuckCounter = 0;
             }
 
+            // Check if async flight controller is stuck
+            if (amphithere.isFlightControllerStuck() && distanceToTarget > 25.0) {
+                needNewTarget = true;
+                stuckCounter = 0;
+            }
+
             // Better stuck detection
             if (amphithere.horizontalCollision && timeSinceTargetChange % 5 == 0) {
                 stuckCounter++;
@@ -499,7 +505,7 @@ public class CindervaneFlightGoal extends Goal {
     }
 
     private Vec3 generateFlightCandidate(Vec3 anchor, Vec3 dragonPos, int attempt) {
-        boolean isStuck = amphithere.horizontalCollision || stuckCounter > 0;
+        boolean isStuck = amphithere.horizontalCollision || stuckCounter > 0 || amphithere.isFlightControllerStuck();
 
         boolean tethered = isTamedWander();
         float range;
