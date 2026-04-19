@@ -859,10 +859,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // === SERVER-SIDE: EVERY TICK (precise timing needed) ===
         tickFeedingCooldown();
 
-        // === SERVER-SIDE: EVERY 5 TICKS (timers/cooldowns/state machines - no precision needed) ===
-        if (tickCount % 5 == 0) {
-            handleAmbientSounds();
-        }
+        handleAmbientSounds();
         tickGroundStepAudio();
 
         // === SERVER-SIDE: SLEEP WAKE-UP LOGIC ===

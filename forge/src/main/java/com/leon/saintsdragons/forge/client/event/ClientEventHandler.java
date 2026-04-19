@@ -12,6 +12,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.forge.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
 import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
+import com.leon.saintsdragons.forge.client.camera.NulljawFirstPersonCamera;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -67,13 +68,8 @@ public class ClientEventHandler {
                     0.0f,
                     ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
             );
-        } else if (vehicle instanceof Nulljaw nulljaw) {
-            DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                    nulljaw,
-                    (float) event.getPartialTick(),
-                    0.0f,
-                    ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
-            );
+        } else if (vehicle instanceof Nulljaw) {
+            event.getCamera().move(0.0D, NulljawFirstPersonCamera.Y_OFFSET, 0.0D);
         } else if (!player.isPassenger() || !DragonRideCameraController.supports(vehicle)) {
             DragonRideCameraController.reset();
         }

@@ -19,9 +19,9 @@ public class DragonAttackEventHandler {
         if (dragon.areRiderControlsLocked()) return;
         if (!dragon.isTame() || !dragon.isOwnedBy(player)) return;
         var abilityType = dragon.getPrimaryAttackAbility();
-        if (abilityType != null) {
-            dragon.combatManager.tryUseAbility(abilityType);
-        }
+        if (abilityType == null) return;
+
+        dragon.combatManager.tryUseAbility(abilityType);
         event.setCanceled(true);
     }
 }

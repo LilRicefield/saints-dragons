@@ -37,7 +37,7 @@
 				{
 					"name": "passengerBone",
 					"parent": "mainbody",
-					"pivot": [0, -3.6, -5.5]
+					"pivot": [0, -17.6, -5.5]
 				},
 				{
 					"name": "leftarm",

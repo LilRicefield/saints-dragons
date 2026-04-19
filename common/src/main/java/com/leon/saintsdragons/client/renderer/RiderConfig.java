@@ -85,7 +85,7 @@ public final class RiderConfig {
     // ===== NULLJAW TUNING =====
     public static final String NULLJAW_BONE = "passengerBone";
     public static final float NULLJAW_SEAT_X = 0.0f;
-    public static final float NULLJAW_SEAT_Y = -1.6f;
+    public static final float NULLJAW_SEAT_Y = -2.0f;
     public static final float NULLJAW_SEAT_Z = -0.2f;
     public static final float NULLJAW_FIRST_PERSON_X = 0.0f;
     public static final float NULLJAW_FIRST_PERSON_Y = 0.0f;

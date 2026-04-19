@@ -6,6 +6,7 @@
   "client": [
     "CameraMixin",
     "CameraRollMixin",
+    "EntityEyePositionMixin",
     "GameRendererMixin",
     "RiderMixin",
     "LivingEntityRendererMixin",

@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRe
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,15 +30,17 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionUtils;
 
+import java.util.List;
+
 public final class SaintsDragonsFabric implements ModInitializer {
     private static final double ATTRIBUTE_CAP = 100000.0D;
-    private static final ResourceKey<net.minecraft.world.item.CreativeModeTab>[] POTION_HIDE_TABS = new ResourceKey[] {
+    private static final List<ResourceKey<CreativeModeTab>> POTION_HIDE_TABS = List.of(
             CreativeModeTabs.FOOD_AND_DRINKS,
             CreativeModeTabs.INGREDIENTS,
             CreativeModeTabs.COMBAT,
             CreativeModeTabs.TOOLS_AND_UTILITIES,
             CreativeModeTabs.SEARCH
-    };
+    );
 
     @Override
     public void onInitialize() {

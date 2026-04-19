@@ -56,6 +56,7 @@ import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.Animal;
@@ -63,6 +64,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
@@ -72,6 +74,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -86,10 +90,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, PackMember<Nulljaw> {
     private static final double NATURAL_SPAWN_NULLJAW_RADIUS = 96.0D;
     private static final int MAX_NEARBY_WILD_NULLJAWS = 4;
-    private static final float CARRIED_HITBOX_WIDTH = 1.45F;
-    private static final float CARRIED_HITBOX_HEIGHT = 1.15F;
     private static final double CARRIED_HITBOX_DOWNWARD_EXTENSION = 1.65D;
     private static final double CARRIED_COLLISION_ESCAPE_LIFT = 0.20D;
+    private static final int MAX_CARRIED_RIDER_ESCAPE_LIFTS = 8;
     private static final int MIN_AMBIENT_DELAY = 220;
     private static final int MAX_AMBIENT_DELAY = 420;
     private static final int TAME_CHANCE_DENOMINATOR = 5;
@@ -137,8 +140,6 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     private int hoverVisualTicks;
     private boolean running;
     private boolean deathSoundQueued;
-    private boolean hadPassengerLastTick;
-
     public Nulljaw(EntityType<? extends Nulljaw> type, Level level) {
         super(type, level);
         this.asyncAirController = new AsyncFlightController(this);
@@ -317,10 +318,11 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
                 Nulljaw.this.flyToward(targetPos, getFlightFollowSpeed());
             }
         });
-        this.goalSelector.addGoal(2, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
-        this.goalSelector.addGoal(3, new NulljawFloatGoal(this));
-        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 12.0F));
-        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(2, new TemptGoal(this, 1.0D, Ingredient.of(Items.CHORUS_FRUIT), false));
+        this.goalSelector.addGoal(3, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
+        this.goalSelector.addGoal(4, new NulljawFloatGoal(this));
+        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 12.0F));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
     }
 
     @Override
@@ -381,7 +383,7 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         this.soundHandler.tick();
         tickBankingLogic();
         tickPitchingLogic();
-        updateMountedCollisionShell();
+        nudgeUpIfCarriedRiderInWall();
         if (!this.level().isClientSide) {
             this.setFlying(true);
             this.setTakeoff(false);
@@ -582,14 +584,7 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         return this.getFirstPassenger() instanceof LivingEntity living ? living : null;
     }
 
-    public boolean shouldRiderSit() {
-        return false;
-    }
 
-    @Override
-    public double getPassengersRidingOffset() {
-        return this.getBbHeight() * 0.45D;
-    }
 
     @Override
     protected void positionRider(@NotNull Entity passenger, @NotNull Entity.MoveFunction moveFunction) {
@@ -617,6 +612,10 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack heldItem = player.getItemInHand(hand);
+        if (player.getVehicle() == this) {
+            return InteractionResult.PASS;
+        }
+
 
         if (heldItem.is(Items.CHORUS_FRUIT)) {
             if (this.isTame()) {
@@ -699,8 +698,7 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
             if (!player.isCrouching() && hand == InteractionHand.MAIN_HAND) {
                 if (!this.level().isClientSide) {
                     if (player.startRiding(this)) {
-                        this.refreshDimensions();
-                        this.updateMountedCollisionShell();
+                        nudgeUpIfCarriedRiderInWall();
                     }
                 }
                 return InteractionResult.sidedSuccess(this.level().isClientSide);
@@ -758,8 +756,6 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     @Override
     public void removePassenger(@NotNull Entity passenger) {
         super.removePassenger(passenger);
-        this.refreshDimensions();
-        this.updateMountedCollisionShell();
     }
 
     @Override
@@ -773,10 +769,6 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         if (isBaby()) {
             base = base.scale(BABY_HITBOX_SCALE);
         }
-        if (this.isVehicle()) {
-            float width = Math.max(base.width, CARRIED_HITBOX_WIDTH);
-            return EntityDimensions.scalable(width, base.height);
-        }
         return base;
     }
 
@@ -787,25 +779,43 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         refreshDimensions();
     }
 
-    private void updateMountedCollisionShell() {
-        boolean hasPassenger = this.isVehicle();
-        if (this.hadPassengerLastTick != hasPassenger) {
-            this.hadPassengerLastTick = hasPassenger;
-            this.refreshDimensions();
-        }
-
-        if (!hasPassenger) {
+    private void nudgeUpIfCarriedRiderInWall() {
+        if (!this.isVehicle() || !isCarriedRiderInWall()) {
             return;
         }
 
-        AABB mountedShell = createMountedCollisionShell(this.position());
         int lifts = 0;
-        while (lifts < 8 && !this.level().noCollision(this, mountedShell)) {
+        while (lifts < MAX_CARRIED_RIDER_ESCAPE_LIFTS && isCarriedRiderInWall()) {
             this.setPos(this.getX(), this.getY() + CARRIED_COLLISION_ESCAPE_LIFT, this.getZ());
-            mountedShell = createMountedCollisionShell(this.position());
             lifts++;
         }
-        this.setBoundingBox(mountedShell);
+
+        if (lifts > 0) {
+            Vec3 velocity = this.getDeltaMovement();
+            double raisedY = Math.max(velocity.y, CARRIED_COLLISION_ESCAPE_LIFT);
+            this.setDeltaMovement(velocity.x, raisedY, velocity.z);
+            this.hasImpulse = true;
+        }
+    }
+
+    private boolean isCarriedRiderInWall() {
+        Entity rider = getControllingPassenger();
+        if (rider == null || rider.noPhysics) {
+            return false;
+        }
+
+        float width = rider.getDimensions(Pose.STANDING).width * 0.8F;
+        AABB riderProbe = AABB.ofSize(rider.position().add(0.0D, 0.5D, 0.0D), width, 1.0E-6D, width);
+        return BlockPos.betweenClosedStream(riderProbe).anyMatch(pos -> {
+            BlockState state = this.level().getBlockState(pos);
+            return !state.isAir()
+                    && state.isSuffocating(this.level(), pos)
+                    && Shapes.joinIsNotEmpty(
+                    state.getCollisionShape(this.level(), pos).move(pos.getX(), pos.getY(), pos.getZ()),
+                    Shapes.create(riderProbe),
+                    BooleanOp.AND
+            );
+        });
     }
 
     private Vec3 resolveMountedFlightCollision(Vec3 desiredMotion) {
@@ -1051,13 +1061,13 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
     @Override
     public Vec3 getHeadPosition() {
         Vec3 forward = this.getLookAngle().normalize().scale(this.getBbWidth() * 0.55D);
-        return this.position().add(0.0D, this.getBbHeight() * 0.72D, 0.0D).add(forward);
+        return this.position().add(0.0D, this.getBbHeight() * 0.0D, 0.0D).add(forward);
     }
 
     @Override
     public Vec3 getMouthPosition() {
         Vec3 forward = this.getLookAngle().normalize().scale(this.getBbWidth() * 0.8D);
-        return this.position().add(0.0D, this.getBbHeight() * 0.66D, 0.0D).add(forward);
+        return this.position().add(0.0D, this.getBbHeight() * 0.0D, 0.0D).add(forward);
     }
 
     public void setClientLocatorPosition(String name, Vec3 pos) {

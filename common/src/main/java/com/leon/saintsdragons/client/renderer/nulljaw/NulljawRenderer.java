@@ -3,7 +3,6 @@ package com.leon.saintsdragons.client.renderer.nulljaw;
 import com.leon.saintsdragons.client.model.nulljaw.NulljawModel;
 import com.leon.saintsdragons.client.renderer.RenderPassContext;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
-import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -23,12 +22,11 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 @Environment(EnvType.CLIENT)
 public final class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
-    private static final String PASSENGER_BONE = "passengerBone";
-    private static final float PASSENGER_X = 0.0f;
-    private static final float PASSENGER_Y = -3.0f;
-    private static final float PASSENGER_Z = 0.0f;
-
     private BakedGeoModel lastBakedModel;
+    private static final String PASSENGER_BONE = "passengerBone";
+    private static final float PASSENGER_X = -0.5f;
+    private static final float PASSENGER_Y = 1.0f;
+    private static final float PASSENGER_Z = 0.0f;
 
     public NulljawRenderer(EntityRendererProvider.Context context) {
         super(context, new NulljawModel());
@@ -78,18 +76,7 @@ public final class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
         } finally {
             RenderPassContext.endExtraction();
         }
-
-        if (this.lastBakedModel == null) {
-            return;
-        }
-
-        this.lastBakedModel.getBone(PASSENGER_BONE).ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
-            if (world != null) {
-                entity.setClientLocatorPosition("passengerLocator", world);
-                entity.setClientLocatorPosition("passengerSeat0", world);
-            }
-        });
+        sampleAndStashLocators(entity);
     }
 
     @Override
@@ -100,26 +87,48 @@ public final class NulljawRenderer extends GeoEntityRenderer<Nulljaw> {
         super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
 
-        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(animatable);
-        if (riderSpec == null || !bone.getName().equals(riderSpec.boneName)) {
-            return;
-        }
-        if (!RenderPassContext.isExtractionAllowed(animatable.getId())) {
-            return;
-        }
-        if (!RiderBullcrap.tryLockForFrame(animatable.getId())) {
+        if (!bone.getName().equals(PASSENGER_BONE)) {
             return;
         }
 
-        Matrix4f viewMatrix = new Matrix4f((Matrix4fc) poseStack.last().pose());
-        RiderBullcrap.store(animatable.getId(), viewMatrix);
-        Vector3d boneWorldPosJoml = bone.getWorldPosition();
-        net.minecraft.world.phys.Vec3 boneWorldPos = new net.minecraft.world.phys.Vec3(
-                boneWorldPosJoml.x,
-                boneWorldPosJoml.y,
-                boneWorldPosJoml.z
-        );
-        RiderBullcrap.storeCameraOffset(animatable.getId(), boneWorldPos.subtract(animatable.position()));
+        if (RenderPassContext.isExtractionAllowed(animatable.getId())) {
+            Matrix4f viewMatrix = new Matrix4f((Matrix4fc) poseStack.last().pose());
+            Vector4f boneViewPos4 = new Vector4f(0.0f, 0.0f, 0.0f, 0.0f).mul((Matrix4fc) viewMatrix);
+            double viewSpaceDistance = Math.sqrt(
+                    boneViewPos4.x() * boneViewPos4.x()
+                            + boneViewPos4.y() * boneViewPos4.y()
+                            + boneViewPos4.z() * boneViewPos4.z()
+            );
+            if (viewSpaceDistance < 80.0D && RiderBullcrap.tryLockForFrame(animatable.getId())) {
+                RiderBullcrap.store(animatable.getId(), viewMatrix);
+                Vector3d boneWorldPosJoml = bone.getWorldPosition();
+                net.minecraft.world.phys.Vec3 boneWorldPos = new net.minecraft.world.phys.Vec3(
+                        boneWorldPosJoml.x,
+                        boneWorldPosJoml.y,
+                        boneWorldPosJoml.z
+                );
+                RiderBullcrap.storeCameraOffset(animatable.getId(), boneWorldPos.subtract(animatable.position()));
+            }
+        }
+
+        net.minecraft.world.phys.Vec3 world = transformLocator(bone, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+        if (world != null) {
+            animatable.setClientLocatorPosition("passengerLocator", world);
+            animatable.setClientLocatorPosition("passengerSeat0", world);
+        }
+    }
+
+    private void sampleAndStashLocators(Nulljaw entity) {
+        if (this.lastBakedModel == null || entity == null) {
+            return;
+        }
+        this.lastBakedModel.getBone(PASSENGER_BONE).ifPresent(b -> {
+            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+            if (world != null) {
+                entity.setClientLocatorPosition("passengerLocator", world);
+                entity.setClientLocatorPosition("passengerSeat0", world);
+            }
+        });
     }
 
     private static net.minecraft.world.phys.Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {

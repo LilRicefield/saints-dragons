@@ -2,13 +2,13 @@ package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
-import com.leon.saintsdragons.client.renderer.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
+import com.leon.saintsdragons.fabric.client.camera.NulljawFirstPersonCamera;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -77,13 +77,8 @@ public class FabricClientEventHandler {
             if (!applyDetachedDragonCamera(camera, vehicle, partialTicks)) {
                 DragonRideCameraController.reset();
             }
-        } else if (vehicle instanceof Nulljaw nulljaw) {
-            DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                    nulljaw,
-                    partialTicks,
-                    0.0f,
-                    ((CameraAccessor) camera)::saintsdragons$invokeSetPosition
-            );
+        } else if (vehicle instanceof Nulljaw) {
+            ((CameraAccessor) camera).saintsdragons$invokeMove(0.0D, NulljawFirstPersonCamera.Y_OFFSET, 0.0D);
         } else if (!player.isPassenger() || !(vehicle instanceof RideableDragonBase)) {
             DragonRideCameraController.reset();
         }

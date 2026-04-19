@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -137,9 +138,15 @@ public final class VolitansAnimationHandler {
 
         if (dragon.isFlying()) {
             int mode = dragon.getSyncedFlightMode();
+            float animationPitchRad = -dragon.getFlightPitchRadians(state.getPartialTick());
+            DragonFlightStateEvaluator.VisualState visualState = DragonFlightStateEvaluator.evaluateVisualState(
+                    mode,
+                    dragon.isRiddenByOwner(),
+                    animationPitchRad,
+                    dragon.getDeltaMovement()
+            );
 
-            float pitchDegrees = (float) Math.toDegrees(dragon.getFlightPitchRadians(state.getPartialTick()));
-            if (dragon.isRiddenByOwner() && pitchDegrees > 10.0f) {
+            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
                 state.setAndContinue(GLIDE_DOWN);
                 return PlayState.CONTINUE;
             }
@@ -155,6 +162,11 @@ public final class VolitansAnimationHandler {
             }
 
             if (mode == 2 || mode == 1) {
+                state.setAndContinue(FLAP);
+                return PlayState.CONTINUE;
+            }
+
+            if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
                 state.setAndContinue(FLAP);
                 return PlayState.CONTINUE;
             }

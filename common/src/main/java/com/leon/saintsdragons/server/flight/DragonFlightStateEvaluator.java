@@ -20,6 +20,10 @@ public final class DragonFlightStateEvaluator {
     private static final double AI_IDLE_VERTICAL_SPEED = 0.03D;
     private static final double AI_GLIDE_ENTER_ALTITUDE = 46.0D;
     private static final double AI_GLIDE_EXIT_ALTITUDE = 32.0D;
+    private static final float RIDER_CLIMB_FLAP_DEGREES = 12.0f;
+    private static final double AI_CLIMB_FLAP_MIN_HORIZONTAL_SPEED = 0.10D;
+    private static final double AI_CLIMB_FLAP_MIN_ASCENT = 0.08D;
+    private static final double AI_CLIMB_FLAP_DEGREES = 18.0D;
     private static final float RIDER_GLIDE_DOWN_DEGREES = -12.0f;
     private static final double AI_GLIDE_DOWN_MIN_HORIZONTAL_SPEED = 0.14D;
     private static final double AI_GLIDE_DOWN_MIN_DESCENT = -0.12D;
@@ -63,19 +67,21 @@ public final class DragonFlightStateEvaluator {
     }
 
     public static VisualState evaluateVisualState(int syncedMode, boolean ridden, float flightPitchRadians, Vec3 velocity) {
+        boolean climbing = shouldUseClimbFlap(ridden, flightPitchRadians, velocity);
+        boolean diving = shouldUseGlideDown(ridden, flightPitchRadians, velocity);
         return switch (syncedMode) {
             case MODE_TAKEOFF -> VisualState.TAKEOFF;
             case MODE_LANDING -> VisualState.GLIDE_DOWN;
             case MODE_FLY_IDLE -> VisualState.FLY_IDLE;
-            case MODE_SPRINT_FLAP -> shouldUseGlideDown(ridden, flightPitchRadians, velocity)
+            case MODE_SPRINT_FLAP -> diving
                     ? VisualState.GLIDE_DOWN
                     : VisualState.SPRINT_FLAP;
-            case MODE_HOVER, MODE_FLAP -> shouldUseGlideDown(ridden, flightPitchRadians, velocity)
+            case MODE_HOVER, MODE_FLAP -> diving
                     ? VisualState.GLIDE_DOWN
                     : VisualState.FLAP;
-            case MODE_GLIDE -> shouldUseGlideDown(ridden, flightPitchRadians, velocity)
+            case MODE_GLIDE -> diving
                     ? VisualState.GLIDE_DOWN
-                    : VisualState.GLIDE;
+                    : climbing ? VisualState.FLAP : VisualState.GLIDE;
             default -> VisualState.GROUND;
         };
     }
@@ -107,6 +113,21 @@ public final class DragonFlightStateEvaluator {
 
         double pitchDegrees = Math.toDegrees(Math.atan2(-velocity.y, horizontalSpeed));
         return pitchDegrees > AI_GLIDE_DOWN_DEGREES;
+    }
+
+    public static boolean shouldUseClimbFlap(boolean ridden, float flightPitchRadians, Vec3 velocity) {
+        if (ridden) {
+            float pitchDegrees = (float) Math.toDegrees(flightPitchRadians);
+            return pitchDegrees > RIDER_CLIMB_FLAP_DEGREES;
+        }
+
+        double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        if (horizontalSpeed <= AI_CLIMB_FLAP_MIN_HORIZONTAL_SPEED || velocity.y <= AI_CLIMB_FLAP_MIN_ASCENT) {
+            return false;
+        }
+
+        double pitchDegrees = Math.toDegrees(Math.atan2(velocity.y, horizontalSpeed));
+        return pitchDegrees > AI_CLIMB_FLAP_DEGREES;
     }
 
     private static int evaluateRiderMode(State state, FlightInput input) {
