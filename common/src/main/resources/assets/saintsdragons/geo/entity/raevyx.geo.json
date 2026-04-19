@@ -7,8 +7,8 @@
 				"texture_width": 966,
 				"texture_height": 884,
 				"visible_bounds_width": 47,
-				"visible_bounds_height": 36,
-				"visible_bounds_offset": [0, 6, 0]
+				"visible_bounds_height": 26,
+				"visible_bounds_offset": [0, 1, 0]
 			},
 			"bones": [
 				{
@@ -223,7 +223,7 @@
 					]
 				},
 				{
-					"name": "bone3",
+					"name": "leftmiddlephalanegs",
 					"parent": "leftinnerphalanges",
 					"pivot": [121.12705, 63.5, -45.24741],
 					"cubes": [
@@ -233,8 +233,8 @@
 					]
 				},
 				{
-					"name": "bone4",
-					"parent": "bone3",
+					"name": "lefttmostmiddlephalanges",
+					"parent": "leftmiddlephalanegs",
 					"pivot": [121.12705, 63.5, -45.24741],
 					"cubes": [
 						{"origin": [120.12705, 61, -46.24741], "size": [186, 3, 3], "pivot": [121.12705, 63.5, -45.24741], "rotation": [0, -30, 0], "uv": [588, 662]},
@@ -244,7 +244,7 @@
 				},
 				{
 					"name": "leftouterphalanges",
-					"parent": "bone4",
+					"parent": "lefttmostmiddlephalanges",
 					"pivot": [120.62705, 63, -44.74741],
 					"cubes": [
 						{"origin": [120.12705, 60.5, -47.24741], "size": [76, 4, 3], "uv": [732, 245]},
@@ -282,7 +282,7 @@
 					]
 				},
 				{
-					"name": "bone2",
+					"name": "rightmiddlephalanges",
 					"parent": "rightinnerphalanges",
 					"pivot": [-121.12705, 63.5, -45.24741],
 					"cubes": [
@@ -292,8 +292,8 @@
 					]
 				},
 				{
-					"name": "bone5",
-					"parent": "bone2",
+					"name": "rightmostmiddlephalanges",
+					"parent": "rightmiddlephalanges",
 					"pivot": [-121.12705, 63.5, -45.24741],
 					"cubes": [
 						{"origin": [-306.12705, 61, -46.24741], "size": [186, 3, 3], "pivot": [-121.12705, 63.5, -45.24741], "rotation": [0, 30, 0], "uv": [588, 662], "mirror": true},
@@ -303,7 +303,7 @@
 				},
 				{
 					"name": "rightouterphalanges",
-					"parent": "bone5",
+					"parent": "rightmostmiddlephalanges",
 					"pivot": [-120.62705, 63, -44.74741],
 					"cubes": [
 						{"origin": [-276.10696, 61.2737, -43.14054], "size": [81, 2.5, 2], "pivot": [-210.10696, 63.5237, -42.64054], "rotation": [0, 14.69279, 0], "uv": [732, 241]},

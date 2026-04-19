@@ -20036,6 +20036,11 @@
 					"rotation": {
 						"vector": [0, 0, "-2+math.sin(query.anim_time * 200) * -25"]
 					}
+				},
+				"upperbody": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			},
 			"sound_effects": {
@@ -23600,6 +23605,11 @@
 					"rotation": {
 						"vector": [0, "5-math.sin(query.anim_time * 350- 150) * 6", 0]
 					}
+				},
+				"upperbody": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			},
 			"sound_effects": {
@@ -23750,6 +23760,41 @@
 				"rightinnerphalanges": {
 					"rotation": {
 						"vector": [0, 0, "-10+math.sin(query.anim_time * 400 + 100) * 2"]
+					}
+				},
+				"leftouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"bone3": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"bone4": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"bone2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"bone5": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"upperbody": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}
