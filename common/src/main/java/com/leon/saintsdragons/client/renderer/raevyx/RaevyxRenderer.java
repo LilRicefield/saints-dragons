@@ -4,6 +4,7 @@ import com.leon.saintsdragons.client.model.raevyx.RaevyxModel;
 import com.leon.saintsdragons.client.renderer.RenderPassContext;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
@@ -95,6 +96,9 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     @Override
     public void render(@NotNull Raevyx entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        if (ShaderPassCompatibility.isIrisShadowPass()) {
+            return;
+        }
         RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
         try {

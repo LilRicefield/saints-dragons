@@ -174,6 +174,22 @@ public abstract class DragonAbility<T extends LivingEntity> {
         return true;
     }
 
+    /**
+     * Shared post-action recovery applied after this ability finishes.
+     * This is the runtime "endlag" window before another primary ability can begin.
+     */
+    public int getRecoveryTicks() {
+        return 10;
+    }
+
+    /**
+     * Recovery applied when the ability is interrupted or force-ended.
+     * Defaults to normal recovery, but abilities can soften or harden this if needed.
+     */
+    public int getInterruptRecoveryTicks() {
+        return getRecoveryTicks();
+    }
+
     @SuppressWarnings("unused") // Override in abilities that should be interruptible by damage
     public boolean damageInterrupts() {
         return false;

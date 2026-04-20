@@ -4,6 +4,7 @@ import com.leon.saintsdragons.client.model.varasuchus.VarasuchusModel;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.RenderPassContext;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -67,6 +68,9 @@ public class VarasuchusRenderer extends GeoEntityRenderer<Varasuchus> {
     @Override
     public void render(@NotNull Varasuchus entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        if (ShaderPassCompatibility.isIrisShadowPass()) {
+            return;
+        }
         RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
         try {

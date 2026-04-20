@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.renderer.cindervane;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.RenderPassContext;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -72,7 +73,6 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
 
-        // Baby dragons have smaller shadows
         if (entity.isBaby()) {
             this.shadowRadius = 0.8f;
         } else {
@@ -99,6 +99,9 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     @Override
     public void render(@NotNull Cindervane entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        if (ShaderPassCompatibility.isIrisShadowPass()) {
+            return;
+        }
         RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
         try {

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.renderer.stegonaut;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.RenderPassContext;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.client.model.stegonaut.StegonautModel;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.fabricmc.api.EnvType;
@@ -77,6 +78,9 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
     @Override
     public void render(@NotNull Stegonaut entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        if (ShaderPassCompatibility.isIrisShadowPass()) {
+            return;
+        }
         RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
         try {

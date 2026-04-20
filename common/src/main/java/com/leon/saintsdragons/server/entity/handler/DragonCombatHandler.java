@@ -289,7 +289,7 @@ public class DragonCombatHandler {
             setAbilityCooldown(type, ability.getCooldownTimer());
         }
         if (applyGlobalCooldown) {
-            globalCooldown = Math.max(globalCooldown, 6);
+            globalCooldown = Math.max(globalCooldown, ability.getInterruptRecoveryTicks());
         }
     }
 
@@ -330,13 +330,12 @@ public class DragonCombatHandler {
             if (activeAbility.isUsing()) {
                 activeAbility.tick();
             } else {
-                // Ability finished, set a small fixed global cooldown between abilities
-                // ~0.3s between abilities
-                globalCooldown = 6;
+                DragonAbility<?> finishedAbility = activeAbility;
+                globalCooldown = Math.max(globalCooldown, finishedAbility.getRecoveryTicks());
                 // Apply per-ability cooldown based on the finished ability's current cooldown
                 DragonAbilityType<?, ?> finishedType = getActiveAbilityType();
                 if (finishedType != null) {
-                    setAbilityCooldown(finishedType, activeAbility.getCooldownTimer());
+                    setAbilityCooldown(finishedType, finishedAbility.getCooldownTimer());
                 }
                 setActiveAbility(null);
             }

@@ -5,7 +5,6 @@ package com.leon.saintsdragons.server.entity.base;
 import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.component.DragonAnimationSyncComponent;
 import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
 import com.leon.saintsdragons.server.entity.component.DragonBabyComponent;
 import com.leon.saintsdragons.server.entity.component.DragonCommandComponent;
@@ -53,6 +52,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -76,12 +76,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Float> DATA_BODY_DEVIATION =
-            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> DATA_PITCH_DEVIATION =
-            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Float> DATA_YAW_VELOCITY =
-            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_PENDING_ADULT_TEXTURE_VARIANT =
@@ -91,8 +85,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     private DragonAbility<?> activeAbility = null;
     public final DragonCombatHandler combatManager;
     public final DragonAllyManager allyManager;
-    @Nullable
-    private final DragonAnimationSyncComponent animationSyncComponent;
     @Nullable
     private final DragonCommandComponent commandComponent;
     @Nullable
@@ -119,6 +111,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             com.leon.saintsdragons.util.math.SmoothValue.rotation(0.0);
     private final com.leon.saintsdragons.util.math.SmoothValue fallbackYawVelocity =
             com.leon.saintsdragons.util.math.SmoothValue.value(0.0);
+    private float clientTailDragVelocity = 0.0f;
     @Nullable
     private DragonType cachedDragonType;
     private boolean dying = false;
@@ -146,7 +139,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.groomingComponent = createGroomingComponent();
         this.sleepComponent = createSleepComponent();
         this.recoveryComponent = createRecoveryComponent();
-        this.animationSyncComponent = createAnimationSyncComponent();
         this.sitComponent = createSitComponent();
         this.babyComponent = createBabyComponent();
         this.lookControl = new com.leon.saintsdragons.server.entity.controller.DragonLookControl<>(this);
@@ -185,11 +177,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     @Nullable
     protected DragonRecoveryComponent createRecoveryComponent() {
         return new DragonRecoveryComponent(this);
-    }
-
-    @Nullable
-    protected DragonAnimationSyncComponent createAnimationSyncComponent() {
-        return new DragonAnimationSyncComponent(this, DATA_BODY_DEVIATION, DATA_PITCH_DEVIATION, DATA_YAW_VELOCITY);
     }
 
     @Nullable
@@ -241,46 +228,30 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
-        this.entityData.define(DATA_BODY_DEVIATION, 0.0f);
-        this.entityData.define(DATA_PITCH_DEVIATION, 0.0f);
-        this.entityData.define(DATA_YAW_VELOCITY, 0.0f);
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
         this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT, -1);
     }
 
     public float smoothTailDragVelocity(float targetDegrees) {
-        if (animationSyncComponent == null) {
-            return targetDegrees;
-        }
-        return animationSyncComponent.smoothTailDragVelocity(targetDegrees);
+        clientTailDragVelocity = Mth.lerp(0.15f, clientTailDragVelocity, targetDegrees);
+        return clientTailDragVelocity;
     }
 
 
     public void resetTailDragVelocity() {
-        if (animationSyncComponent != null) {
-            animationSyncComponent.resetTailDragVelocity();
-        }
+        clientTailDragVelocity = 0.0f;
     }
 
     public com.leon.saintsdragons.util.math.SmoothValue getBodyRotDeviation() {
-        if (animationSyncComponent == null) {
-            return fallbackBodyRotDeviation;
-        }
-        return animationSyncComponent.getBodyRotDeviation();
+        return fallbackBodyRotDeviation;
     }
 
     public com.leon.saintsdragons.util.math.SmoothValue getPitchDeviation() {
-        if (animationSyncComponent == null) {
-            return fallbackPitchDeviation;
-        }
-        return animationSyncComponent.getPitchDeviation();
+        return fallbackPitchDeviation;
     }
 
     public com.leon.saintsdragons.util.math.SmoothValue getYawVelocity() {
-        if (animationSyncComponent == null) {
-            return fallbackYawVelocity;
-        }
-        return animationSyncComponent.getYawVelocity();
+        return fallbackYawVelocity;
     }
 
     public DragonGender getGender() {
@@ -1406,12 +1377,31 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
         if (level().isClientSide) {
             syncClientSitProgress();
-            if (animationSyncComponent != null) {
-                animationSyncComponent.tickClientRotationDeviations();
-            }
-        } else if (animationSyncComponent != null) {
-            animationSyncComponent.tickServerRotationTargets();
+            tickClientRotationAnimationState();
         }
+    }
+
+    private void tickClientRotationAnimationState() {
+        double bodyYawDelta = Mth.wrapDegrees(this.yBodyRot - this.yBodyRotO) * 2.0;
+        fallbackYawVelocity.setTo(bodyYawDelta);
+        fallbackYawVelocity.update(0.25f);
+
+        if (this.isVehicle()) {
+            fallbackBodyRotDeviation.setTo(0.0);
+            fallbackBodyRotDeviation.update(0.25f);
+            fallbackPitchDeviation.setTo(0.0);
+            fallbackPitchDeviation.update(0.25f);
+            return;
+        }
+
+        double headToBody = Mth.wrapDegrees(this.yHeadRot - this.yBodyRot) * 0.25;
+        double pitchDelta = (this.getXRot() - this.xRotO) * 0.5f;
+
+        fallbackBodyRotDeviation.setTo(headToBody);
+        fallbackBodyRotDeviation.update(0.25f);
+
+        fallbackPitchDeviation.setTo(pitchDelta);
+        fallbackPitchDeviation.update(0.25f);
     }
 
     // ===== COMMAND SYSTEM (shared) =====
