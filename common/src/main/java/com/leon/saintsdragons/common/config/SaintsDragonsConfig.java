@@ -6,6 +6,10 @@ import com.leon.saintsdragons.platform.Services;
 import java.util.Collections;
 
 public final class SaintsDragonsConfig {
+    public static final String CONFIG_FOLDER = "saintsdragons";
+    public static final String SPAWNING_CONFIG_FILE = CONFIG_FOLDER + "/spawning.toml";
+    public static final String SERVER_CONFIG_FILE = CONFIG_FOLDER + "/server.toml";
+
     public static final int SPAWN_WEIGHT_MAX = 5000;
     public static final int RAEVYX_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int RAEVYX_MIN_GROUP_SIZE_DEFAULT = 1;
@@ -43,6 +47,7 @@ public final class SaintsDragonsConfig {
     public static final boolean HUNGER_DECAY_ENABLED_DEFAULT = true;
     public static final boolean HAPPINESS_DECAY_ENABLED_DEFAULT = true;
     public static final boolean IVY_HOUSE_ENABLED_DEFAULT = true;
+    public static final int IVY_RESTOCK_INTERVAL_DEFAULT = 24000;
 
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
@@ -95,6 +100,7 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.BooleanValue HUNGER_DECAY_ENABLED;
     public static ConfigHelper.BooleanValue HAPPINESS_DECAY_ENABLED;
     public static ConfigHelper.BooleanValue IVY_HOUSE_ENABLED;
+    public static ConfigHelper.IntValue IVY_RESTOCK_INTERVAL;
 
     private static volatile boolean initialized = false;
 
@@ -112,7 +118,7 @@ public final class SaintsDragonsConfig {
 
     private static void initializeConfig() {
         ConfigHelper.ConfigBuilder builder = Services.PLATFORM.getConfigHelper()
-                .commonBuilder("saintsdragonsspawning.toml");
+                .commonBuilder(SPAWNING_CONFIG_FILE);
 
         builder.push("spawning");
         builder.comment("Dragon spawn configuration - control where and how often dragons spawn");
@@ -189,33 +195,43 @@ public final class SaintsDragonsConfig {
         NULLJAW_EXCLUDED_BIOMES = builder.defineList("nulljawExcludedBiomes", Collections.emptyList());
 
         builder.pop();
-
-        builder.push("gameplay");
-        builder.comment("Extra Saints & Dragons griefing toggle layered on top of the vanilla mobGriefing gamerule.");
-        builder.comment("If false, dragon-caused block destruction is disabled even when mobGriefing is true.");
-        DRAGON_GRIEFING_ENABLED = builder.defineBoolean("dragonGriefingEnabled", DRAGON_GRIEFING_ENABLED_DEFAULT);
-        builder.comment("Global toggle for dragon and ability-driven screen shake effects.");
-        SCREEN_SHAKE_ENABLED = builder.defineBoolean("screenShakeEnabled", SCREEN_SHAKE_ENABLED_DEFAULT);
-        builder.comment("Global toggle for rider-triggered barrel roll on flying dragons.");
-        BARREL_ROLL_ENABLED = builder.defineBoolean("barrelRollEnabled", BARREL_ROLL_ENABLED_DEFAULT);
-        builder.comment("Global toggle for Stegonaut passive aura buffs and portable binder buffs.");
-        STEGONAUT_BUFFS_ENABLED = builder.defineBoolean("stegonautBuffsEnabled", STEGONAUT_BUFFS_ENABLED_DEFAULT);
-        builder.comment("Global toggle for tame dragon hunger decay.");
-        HUNGER_DECAY_ENABLED = builder.defineBoolean("hungerDecayEnabled", HUNGER_DECAY_ENABLED_DEFAULT);
-        builder.comment("Global toggle for tame dragon happiness decay.");
-        HAPPINESS_DECAY_ENABLED = builder.defineBoolean("happinessDecayEnabled", HAPPINESS_DECAY_ENABLED_DEFAULT);
-        builder.pop();
-
-        builder.push("others");
-        builder.comment("Global toggle for Ivy's house structure generation and Ivy spawning from that structure.");
-        IVY_HOUSE_ENABLED = builder.defineBoolean("ivyHouseEnabled", IVY_HOUSE_ENABLED_DEFAULT);
-        builder.pop();
-
         builder.build();
+
+        ConfigHelper.ConfigBuilder serverBuilder = Services.PLATFORM.getConfigHelper()
+                .commonBuilder(SERVER_CONFIG_FILE);
+
+        serverBuilder.push("gameplay");
+        serverBuilder.comment("Extra Saint's Dragons griefing toggle layered on top of the vanilla mobGriefing gamerule.");
+        serverBuilder.comment("If false, dragon-caused block destruction is disabled even when mobGriefing is true.");
+        DRAGON_GRIEFING_ENABLED = serverBuilder.defineBoolean("dragonGriefingEnabled", DRAGON_GRIEFING_ENABLED_DEFAULT);
+        serverBuilder.comment("Global toggle for dragon and ability-driven screen shake effects.");
+        SCREEN_SHAKE_ENABLED = serverBuilder.defineBoolean("screenShakeEnabled", SCREEN_SHAKE_ENABLED_DEFAULT);
+        serverBuilder.comment("Global toggle for rider-triggered barrel roll on flying dragons.");
+        BARREL_ROLL_ENABLED = serverBuilder.defineBoolean("barrelRollEnabled", BARREL_ROLL_ENABLED_DEFAULT);
+        serverBuilder.comment("Global toggle for Stegonaut passive aura buffs and portable binder buffs.");
+        STEGONAUT_BUFFS_ENABLED = serverBuilder.defineBoolean("stegonautBuffsEnabled", STEGONAUT_BUFFS_ENABLED_DEFAULT);
+        serverBuilder.comment("Global toggle for tame dragon hunger decay.");
+        HUNGER_DECAY_ENABLED = serverBuilder.defineBoolean("hungerDecayEnabled", HUNGER_DECAY_ENABLED_DEFAULT);
+        serverBuilder.comment("Global toggle for tame dragon happiness decay.");
+        HAPPINESS_DECAY_ENABLED = serverBuilder.defineBoolean("happinessDecayEnabled", HAPPINESS_DECAY_ENABLED_DEFAULT);
+        serverBuilder.pop();
+
+        serverBuilder.push("ivy");
+        serverBuilder.comment("Global toggle for Ivy's house structure generation and Ivy spawning from that structure.");
+        IVY_HOUSE_ENABLED = serverBuilder.defineBoolean("ivyHouseEnabled", IVY_HOUSE_ENABLED_DEFAULT);
+        serverBuilder.comment("Ticks between Ivy's trade restocks (20 ticks = 1 second, 24000 = 20 minutes).");
+        IVY_RESTOCK_INTERVAL = serverBuilder.defineInt("ivyRestockInterval", IVY_RESTOCK_INTERVAL_DEFAULT, 20, 72000);
+        serverBuilder.pop();
+
+        serverBuilder.build();
     }
 
     public static boolean isIvyHouseEnabled() {
         return IVY_HOUSE_ENABLED == null || IVY_HOUSE_ENABLED.get();
+    }
+
+    public static int getIvyRestockInterval() {
+        return IVY_RESTOCK_INTERVAL == null ? IVY_RESTOCK_INTERVAL_DEFAULT : IVY_RESTOCK_INTERVAL.get();
     }
 
     private SaintsDragonsConfig() {

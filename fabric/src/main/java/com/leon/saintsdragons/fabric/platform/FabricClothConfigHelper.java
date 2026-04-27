@@ -1,7 +1,10 @@
 package com.leon.saintsdragons.fabric.platform;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricClientConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricSpawnConfig;
+import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricServerConfig;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
@@ -10,6 +13,7 @@ import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -17,35 +21,82 @@ import java.util.function.Supplier;
  * Cloth Config-backed implementation. Only loaded if Cloth Config is present.
  */
 final class FabricClothConfigHelper implements ConfigHelper {
-    private static volatile ConfigHolder<SaintsDragonsFabricSpawnConfig> holder;
+    private static volatile ConfigHolder<SaintsDragonsFabricSpawnConfig> spawnHolder;
+    private static volatile ConfigHolder<SaintsDragonsFabricServerConfig> serverHolder;
+    private static volatile ConfigHolder<SaintsDragonsFabricClientConfig> clientHolder;
 
     static FabricClothConfigHelper create() {
         return new FabricClothConfigHelper();
     }
 
-    private static ConfigHolder<SaintsDragonsFabricSpawnConfig> holder() {
-        ConfigHolder<SaintsDragonsFabricSpawnConfig> current = holder;
+    private static ConfigHolder<SaintsDragonsFabricSpawnConfig> spawnHolder() {
+        ConfigHolder<SaintsDragonsFabricSpawnConfig> current = spawnHolder;
         if (current == null) {
             synchronized (FabricClothConfigHelper.class) {
-                current = holder;
+                current = spawnHolder;
                 if (current == null) {
-                    SaintsDragonsCommon.LOGGER.info("[Fabric] Detected Cloth Config; enabling editable spawn config");
+                    SaintsDragonsCommon.LOGGER.info("[Fabric] Detected Cloth Config; enabling editable Saint's Dragons configs");
                     AutoConfig.register(SaintsDragonsFabricSpawnConfig.class, Toml4jConfigSerializer::new);
                     current = AutoConfig.getConfigHolder(SaintsDragonsFabricSpawnConfig.class);
-                    holder = current;
+                    spawnHolder = current;
                 }
             }
         }
         return current;
     }
 
+    private static ConfigHolder<SaintsDragonsFabricServerConfig> serverHolder() {
+        ConfigHolder<SaintsDragonsFabricServerConfig> current = serverHolder;
+        if (current == null) {
+            synchronized (FabricClothConfigHelper.class) {
+                current = serverHolder;
+                if (current == null) {
+                    AutoConfig.register(SaintsDragonsFabricServerConfig.class, Toml4jConfigSerializer::new);
+                    current = AutoConfig.getConfigHolder(SaintsDragonsFabricServerConfig.class);
+                    serverHolder = current;
+                }
+            }
+        }
+        return current;
+    }
+
+    private static ConfigHolder<SaintsDragonsFabricClientConfig> clientHolder() {
+        ConfigHolder<SaintsDragonsFabricClientConfig> current = clientHolder;
+        if (current == null) {
+            synchronized (FabricClothConfigHelper.class) {
+                current = clientHolder;
+                if (current == null) {
+                    AutoConfig.register(SaintsDragonsFabricClientConfig.class, Toml4jConfigSerializer::new);
+                    current = AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class);
+                    clientHolder = current;
+                }
+            }
+        }
+        return current;
+    }
+
+    private static void ensureRegistered() {
+        spawnHolder();
+        serverHolder();
+        clientHolder();
+    }
+
     @Override
     public ConfigBuilder commonBuilder(String fileName) {
-        holder(); // ensure config registration
-        return new ClothBuilder();
+        ensureRegistered();
+        Runnable saver = SaintsDragonsConfig.SERVER_CONFIG_FILE.equals(fileName)
+                ? serverHolder()::save
+                : spawnHolder()::save;
+        return new ClothBuilder(saver);
     }
 
     private static final class ClothBuilder implements ConfigBuilder {
+        private final Runnable saver;
+
+        private ClothBuilder(Runnable saver) {
+            this.saver = saver;
+        }
+
         @Override
         public void push(String category) {
             // Categories handled via annotations.
@@ -64,7 +115,8 @@ final class FabricClothConfigHelper implements ConfigHelper {
         @Override
         public IntValue defineInt(String key, int defaultValue, int min, int max) {
             IntSupplier supplier = supplierForKey(key, defaultValue);
-            return new ClothIntValue(supplier, min, max);
+            IntConsumer setter = intSetterForKey(key);
+            return new ClothIntValue(supplier, setter, saver, min, max);
         }
 
         @Override
@@ -82,33 +134,34 @@ final class FabricClothConfigHelper implements ConfigHelper {
 
         @Override
         public void build() {
-            holder().save();
+            saver.run();
         }
     }
 
     private static IntSupplier supplierForKey(String key, int defaultValue) {
         return switch (key) {
-            case "raevyxSpawnWeight" -> () -> holder().getConfig().raevyxSpawnWeight;
-            case "raevyxMinGroupSize" -> () -> holder().getConfig().raevyxMinGroupSize;
-            case "raevyxMaxGroupSize" -> () -> holder().getConfig().raevyxMaxGroupSize;
-            case "stegonautSpawnWeight" -> () -> holder().getConfig().stegonautSpawnWeight;
-            case "stegonautMinGroupSize" -> () -> holder().getConfig().stegonautMinGroupSize;
-            case "stegonautMaxGroupSize" -> () -> holder().getConfig().stegonautMaxGroupSize;
-            case "cindervaneSpawnWeight" -> () -> holder().getConfig().cindervaneSpawnWeight;
-            case "cindervaneMinGroupSize" -> () -> holder().getConfig().cindervaneMinGroupSize;
-            case "cindervaneMaxGroupSize" -> () -> holder().getConfig().cindervaneMaxGroupSize;
-            case "varasuchusSpawnWeight" -> () -> holder().getConfig().varasuchusSpawnWeight;
-            case "varasuchusMinGroupSize" -> () -> holder().getConfig().varasuchusMinGroupSize;
-            case "varasuchusMaxGroupSize" -> () -> holder().getConfig().varasuchusMaxGroupSize;
-            case "ignivorusSpawnWeight" -> () -> holder().getConfig().ignivorusSpawnWeight;
-            case "ignivorusMinGroupSize" -> () -> holder().getConfig().ignivorusMinGroupSize;
-            case "ignivorusMaxGroupSize" -> () -> holder().getConfig().ignivorusMaxGroupSize;
-            case "volitansSpawnWeight" -> () -> holder().getConfig().volitansSpawnWeight;
-            case "volitansMinGroupSize" -> () -> holder().getConfig().volitansMinGroupSize;
-            case "volitansMaxGroupSize" -> () -> holder().getConfig().volitansMaxGroupSize;
-            case "nulljawSpawnWeight" -> () -> holder().getConfig().nulljawSpawnWeight;
-            case "nulljawMinGroupSize" -> () -> holder().getConfig().nulljawMinGroupSize;
-            case "nulljawMaxGroupSize" -> () -> holder().getConfig().nulljawMaxGroupSize;
+            case "raevyxSpawnWeight" -> () -> spawnHolder().getConfig().raevyxSpawnWeight;
+            case "raevyxMinGroupSize" -> () -> spawnHolder().getConfig().raevyxMinGroupSize;
+            case "raevyxMaxGroupSize" -> () -> spawnHolder().getConfig().raevyxMaxGroupSize;
+            case "stegonautSpawnWeight" -> () -> spawnHolder().getConfig().stegonautSpawnWeight;
+            case "stegonautMinGroupSize" -> () -> spawnHolder().getConfig().stegonautMinGroupSize;
+            case "stegonautMaxGroupSize" -> () -> spawnHolder().getConfig().stegonautMaxGroupSize;
+            case "cindervaneSpawnWeight" -> () -> spawnHolder().getConfig().cindervaneSpawnWeight;
+            case "cindervaneMinGroupSize" -> () -> spawnHolder().getConfig().cindervaneMinGroupSize;
+            case "cindervaneMaxGroupSize" -> () -> spawnHolder().getConfig().cindervaneMaxGroupSize;
+            case "varasuchusSpawnWeight" -> () -> spawnHolder().getConfig().varasuchusSpawnWeight;
+            case "varasuchusMinGroupSize" -> () -> spawnHolder().getConfig().varasuchusMinGroupSize;
+            case "varasuchusMaxGroupSize" -> () -> spawnHolder().getConfig().varasuchusMaxGroupSize;
+            case "ignivorusSpawnWeight" -> () -> spawnHolder().getConfig().ignivorusSpawnWeight;
+            case "ignivorusMinGroupSize" -> () -> spawnHolder().getConfig().ignivorusMinGroupSize;
+            case "ignivorusMaxGroupSize" -> () -> spawnHolder().getConfig().ignivorusMaxGroupSize;
+            case "volitansSpawnWeight" -> () -> spawnHolder().getConfig().volitansSpawnWeight;
+            case "volitansMinGroupSize" -> () -> spawnHolder().getConfig().volitansMinGroupSize;
+            case "volitansMaxGroupSize" -> () -> spawnHolder().getConfig().volitansMaxGroupSize;
+            case "nulljawSpawnWeight" -> () -> spawnHolder().getConfig().nulljawSpawnWeight;
+            case "nulljawMinGroupSize" -> () -> spawnHolder().getConfig().nulljawMinGroupSize;
+            case "nulljawMaxGroupSize" -> () -> spawnHolder().getConfig().nulljawMaxGroupSize;
+            case "ivyRestockInterval" -> () -> serverHolder().getConfig().ivyRestockInterval;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -116,17 +169,45 @@ final class FabricClothConfigHelper implements ConfigHelper {
         };
     }
 
+    private static IntConsumer intSetterForKey(String key) {
+        return switch (key) {
+            case "raevyxSpawnWeight" -> value -> spawnHolder().getConfig().raevyxSpawnWeight = value;
+            case "raevyxMinGroupSize" -> value -> spawnHolder().getConfig().raevyxMinGroupSize = value;
+            case "raevyxMaxGroupSize" -> value -> spawnHolder().getConfig().raevyxMaxGroupSize = value;
+            case "stegonautSpawnWeight" -> value -> spawnHolder().getConfig().stegonautSpawnWeight = value;
+            case "stegonautMinGroupSize" -> value -> spawnHolder().getConfig().stegonautMinGroupSize = value;
+            case "stegonautMaxGroupSize" -> value -> spawnHolder().getConfig().stegonautMaxGroupSize = value;
+            case "cindervaneSpawnWeight" -> value -> spawnHolder().getConfig().cindervaneSpawnWeight = value;
+            case "cindervaneMinGroupSize" -> value -> spawnHolder().getConfig().cindervaneMinGroupSize = value;
+            case "cindervaneMaxGroupSize" -> value -> spawnHolder().getConfig().cindervaneMaxGroupSize = value;
+            case "varasuchusSpawnWeight" -> value -> spawnHolder().getConfig().varasuchusSpawnWeight = value;
+            case "varasuchusMinGroupSize" -> value -> spawnHolder().getConfig().varasuchusMinGroupSize = value;
+            case "varasuchusMaxGroupSize" -> value -> spawnHolder().getConfig().varasuchusMaxGroupSize = value;
+            case "ignivorusSpawnWeight" -> value -> spawnHolder().getConfig().ignivorusSpawnWeight = value;
+            case "ignivorusMinGroupSize" -> value -> spawnHolder().getConfig().ignivorusMinGroupSize = value;
+            case "ignivorusMaxGroupSize" -> value -> spawnHolder().getConfig().ignivorusMaxGroupSize = value;
+            case "volitansSpawnWeight" -> value -> spawnHolder().getConfig().volitansSpawnWeight = value;
+            case "volitansMinGroupSize" -> value -> spawnHolder().getConfig().volitansMinGroupSize = value;
+            case "volitansMaxGroupSize" -> value -> spawnHolder().getConfig().volitansMaxGroupSize = value;
+            case "nulljawSpawnWeight" -> value -> spawnHolder().getConfig().nulljawSpawnWeight = value;
+            case "nulljawMinGroupSize" -> value -> spawnHolder().getConfig().nulljawMinGroupSize = value;
+            case "nulljawMaxGroupSize" -> value -> spawnHolder().getConfig().nulljawMaxGroupSize = value;
+            case "ivyRestockInterval" -> value -> serverHolder().getConfig().ivyRestockInterval = value;
+            default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config int key '{}' for setter", key);
+        };
+    }
+
     private static BooleanSupplier booleanSupplierForKey(String key, boolean defaultValue) {
         return switch (key) {
-            case "cindervaneEggBlockWorldgen" -> () -> holder().getConfig().cindervaneEggBlockWorldgen;
-            case "varasuchusEggBlockWorldgen" -> () -> holder().getConfig().varasuchusEggBlockWorldgen;
-            case "dragonGriefingEnabled" -> () -> holder().getConfig().dragonGriefingEnabled;
-            case "screenShakeEnabled" -> () -> holder().getConfig().screenShakeEnabled;
-            case "barrelRollEnabled" -> () -> holder().getConfig().barrelRollEnabled;
-            case "stegonautBuffsEnabled" -> () -> holder().getConfig().stegonautBuffsEnabled;
-            case "hungerDecayEnabled" -> () -> holder().getConfig().hungerDecayEnabled;
-            case "happinessDecayEnabled" -> () -> holder().getConfig().happinessDecayEnabled;
-            case "ivyHouseEnabled" -> () -> holder().getConfig().ivyHouseEnabled;
+            case "cindervaneEggBlockWorldgen" -> () -> spawnHolder().getConfig().cindervaneEggBlockWorldgen;
+            case "varasuchusEggBlockWorldgen" -> () -> spawnHolder().getConfig().varasuchusEggBlockWorldgen;
+            case "dragonGriefingEnabled" -> () -> serverHolder().getConfig().dragonGriefingEnabled;
+            case "screenShakeEnabled" -> () -> serverHolder().getConfig().screenShakeEnabled;
+            case "barrelRollEnabled" -> () -> serverHolder().getConfig().barrelRollEnabled;
+            case "stegonautBuffsEnabled" -> () -> serverHolder().getConfig().stegonautBuffsEnabled;
+            case "hungerDecayEnabled" -> () -> serverHolder().getConfig().hungerDecayEnabled;
+            case "happinessDecayEnabled" -> () -> serverHolder().getConfig().happinessDecayEnabled;
+            case "ivyHouseEnabled" -> () -> serverHolder().getConfig().ivyHouseEnabled;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -136,35 +217,35 @@ final class FabricClothConfigHelper implements ConfigHelper {
 
     private static Consumer<Boolean> booleanSetterForKey(String key) {
         return switch (key) {
-            case "cindervaneEggBlockWorldgen" -> value -> holder().getConfig().cindervaneEggBlockWorldgen = value;
-            case "varasuchusEggBlockWorldgen" -> value -> holder().getConfig().varasuchusEggBlockWorldgen = value;
-            case "dragonGriefingEnabled" -> value -> holder().getConfig().dragonGriefingEnabled = value;
-            case "screenShakeEnabled" -> value -> holder().getConfig().screenShakeEnabled = value;
-            case "barrelRollEnabled" -> value -> holder().getConfig().barrelRollEnabled = value;
-            case "stegonautBuffsEnabled" -> value -> holder().getConfig().stegonautBuffsEnabled = value;
-            case "hungerDecayEnabled" -> value -> holder().getConfig().hungerDecayEnabled = value;
-            case "happinessDecayEnabled" -> value -> holder().getConfig().happinessDecayEnabled = value;
-            case "ivyHouseEnabled" -> value -> holder().getConfig().ivyHouseEnabled = value;
+            case "cindervaneEggBlockWorldgen" -> value -> spawnHolder().getConfig().cindervaneEggBlockWorldgen = value;
+            case "varasuchusEggBlockWorldgen" -> value -> spawnHolder().getConfig().varasuchusEggBlockWorldgen = value;
+            case "dragonGriefingEnabled" -> value -> serverHolder().getConfig().dragonGriefingEnabled = value;
+            case "screenShakeEnabled" -> value -> serverHolder().getConfig().screenShakeEnabled = value;
+            case "barrelRollEnabled" -> value -> serverHolder().getConfig().barrelRollEnabled = value;
+            case "stegonautBuffsEnabled" -> value -> serverHolder().getConfig().stegonautBuffsEnabled = value;
+            case "hungerDecayEnabled" -> value -> serverHolder().getConfig().hungerDecayEnabled = value;
+            case "happinessDecayEnabled" -> value -> serverHolder().getConfig().happinessDecayEnabled = value;
+            case "ivyHouseEnabled" -> value -> serverHolder().getConfig().ivyHouseEnabled = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
         };
     }
 
     private static Supplier<List<String>> listSupplierForKey(String key, List<String> defaultValue) {
         return switch (key) {
-            case "raevyxAdditionalBiomes" -> () -> holder().getConfig().raevyxAdditionalBiomes;
-            case "raevyxExcludedBiomes" -> () -> holder().getConfig().raevyxExcludedBiomes;
-            case "stegonautAdditionalBiomes" -> () -> holder().getConfig().stegonautAdditionalBiomes;
-            case "stegonautExcludedBiomes" -> () -> holder().getConfig().stegonautExcludedBiomes;
-            case "cindervaneAdditionalBiomes" -> () -> holder().getConfig().cindervaneAdditionalBiomes;
-            case "cindervaneExcludedBiomes" -> () -> holder().getConfig().cindervaneExcludedBiomes;
-            case "varasuchusAdditionalBiomes" -> () -> holder().getConfig().varasuchusAdditionalBiomes;
-            case "varasuchusExcludedBiomes" -> () -> holder().getConfig().varasuchusExcludedBiomes;
-            case "ignivorusAdditionalBiomes" -> () -> holder().getConfig().ignivorusAdditionalBiomes;
-            case "ignivorusExcludedBiomes" -> () -> holder().getConfig().ignivorusExcludedBiomes;
-            case "volitansAdditionalBiomes" -> () -> holder().getConfig().volitansAdditionalBiomes;
-            case "volitansExcludedBiomes" -> () -> holder().getConfig().volitansExcludedBiomes;
-            case "nulljawAdditionalBiomes" -> () -> holder().getConfig().nulljawAdditionalBiomes;
-            case "nulljawExcludedBiomes" -> () -> holder().getConfig().nulljawExcludedBiomes;
+            case "raevyxAdditionalBiomes" -> () -> spawnHolder().getConfig().raevyxAdditionalBiomes;
+            case "raevyxExcludedBiomes" -> () -> spawnHolder().getConfig().raevyxExcludedBiomes;
+            case "stegonautAdditionalBiomes" -> () -> spawnHolder().getConfig().stegonautAdditionalBiomes;
+            case "stegonautExcludedBiomes" -> () -> spawnHolder().getConfig().stegonautExcludedBiomes;
+            case "cindervaneAdditionalBiomes" -> () -> spawnHolder().getConfig().cindervaneAdditionalBiomes;
+            case "cindervaneExcludedBiomes" -> () -> spawnHolder().getConfig().cindervaneExcludedBiomes;
+            case "varasuchusAdditionalBiomes" -> () -> spawnHolder().getConfig().varasuchusAdditionalBiomes;
+            case "varasuchusExcludedBiomes" -> () -> spawnHolder().getConfig().varasuchusExcludedBiomes;
+            case "ignivorusAdditionalBiomes" -> () -> spawnHolder().getConfig().ignivorusAdditionalBiomes;
+            case "ignivorusExcludedBiomes" -> () -> spawnHolder().getConfig().ignivorusExcludedBiomes;
+            case "volitansAdditionalBiomes" -> () -> spawnHolder().getConfig().volitansAdditionalBiomes;
+            case "volitansExcludedBiomes" -> () -> spawnHolder().getConfig().volitansExcludedBiomes;
+            case "nulljawAdditionalBiomes" -> () -> spawnHolder().getConfig().nulljawAdditionalBiomes;
+            case "nulljawExcludedBiomes" -> () -> spawnHolder().getConfig().nulljawExcludedBiomes;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config list key '{}'; using default", key);
                 yield () -> defaultValue;
@@ -193,17 +274,22 @@ final class FabricClothConfigHelper implements ConfigHelper {
 
         @Override
         public void save() {
-            holder().save();
+            spawnHolder().save();
+            serverHolder().save();
         }
     }
 
     private static final class ClothIntValue implements IntValue {
         private final IntSupplier supplier;
+        private final IntConsumer setter;
+        private final Runnable saver;
         private final int min;
         private final int max;
 
-        private ClothIntValue(IntSupplier supplier, int min, int max) {
+        private ClothIntValue(IntSupplier supplier, IntConsumer setter, Runnable saver, int min, int max) {
             this.supplier = supplier;
+            this.setter = setter;
+            this.saver = saver;
             this.min = min;
             this.max = max;
         }
@@ -218,6 +304,16 @@ final class FabricClothConfigHelper implements ConfigHelper {
                 return max;
             }
             return value;
+        }
+
+        @Override
+        public void set(int value) {
+            setter.accept(Math.max(min, Math.min(max, value)));
+        }
+
+        @Override
+        public void save() {
+            saver.run();
         }
     }
 }

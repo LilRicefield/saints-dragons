@@ -8,12 +8,11 @@ import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundContro
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.forge.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
 import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
 import com.leon.saintsdragons.forge.client.camera.NulljawFirstPersonCamera;
-import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
+import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -72,11 +71,6 @@ public class ClientEventHandler {
             event.getCamera().move(0.0D, NulljawFirstPersonCamera.Y_OFFSET, 0.0D);
         } else if (!player.isPassenger() || !DragonRideCameraController.supports(vehicle)) {
             DragonRideCameraController.reset();
-        }
-
-        // Screen shake detection and application
-        if (!SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()) {
-            return;
         }
 
         double shakeDistanceScale = 64.0;
@@ -249,8 +243,8 @@ public class ClientEventHandler {
     }
 
     private static boolean isFirstPersonBankingCameraEnabled() {
-        return ForgeDragonAttributesConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED == null
-                || ForgeDragonAttributesConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get();
+        return ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED == null
+                || ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get();
     }
 }
 

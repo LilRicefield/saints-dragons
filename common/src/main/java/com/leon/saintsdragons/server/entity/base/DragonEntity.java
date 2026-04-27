@@ -3,6 +3,7 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.registry.DragonType;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
@@ -628,6 +629,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public void triggerScreenShake(float intensity) {
         ScreenShakeComponent screenShake = getScreenShakeComponent();
         if (screenShake != null) {
+            if (!SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()) {
+                screenShake.clear();
+                return;
+            }
             screenShake.trigger(intensity);
         }
     }
@@ -635,6 +640,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public void triggerScreenShake(float intensity, int durationTicks) {
         ScreenShakeComponent screenShake = getScreenShakeComponent();
         if (screenShake != null) {
+            if (!SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()) {
+                screenShake.clear();
+                return;
+            }
             screenShake.hold(intensity, durationTicks);
         }
     }

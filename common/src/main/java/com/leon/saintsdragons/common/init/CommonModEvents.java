@@ -51,7 +51,7 @@ public final class CommonModEvents {
 
     public static void registerCreativeTabEntries(CreativeTabRegistrar registrar) {
         // All items are registered in SaintsCreativeTab only
-        // No vanilla tab registrations to keep everything in the Saints Dragons tab
+        // No vanilla tab registrations to keep everything in the Saint's Dragons tab
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegistrar registrar) {

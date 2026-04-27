@@ -11,6 +11,8 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricClientConfig;
+import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricServerConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricSpawnConfig;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
@@ -54,7 +56,11 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
 
     private Screen createScreen(Screen parent) {
         ConfigHolder<SaintsDragonsFabricSpawnConfig> holder = AutoConfig.getConfigHolder(SaintsDragonsFabricSpawnConfig.class);
+        ConfigHolder<SaintsDragonsFabricServerConfig> serverHolder = AutoConfig.getConfigHolder(SaintsDragonsFabricServerConfig.class);
+        ConfigHolder<SaintsDragonsFabricClientConfig> clientHolder = AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class);
         SaintsDragonsFabricSpawnConfig config = holder.getConfig();
+        SaintsDragonsFabricClientConfig clientConfig = clientHolder.getConfig();
+        boolean remoteServer = isRemoteServerSession();
 
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig cindervaneCurrent = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
@@ -319,22 +325,28 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setTitle(TITLE);
         builder.setTransparentBackground(true);
         builder.setSavingRunnable(() -> {
-            holder.save();
-            SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
-            SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
-            SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
-            SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.save();
-            SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
-            SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
-            SaintsDragonsConfig.IVY_HOUSE_ENABLED.save();
-            persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer, nulljawBuffer);
-            refreshLoadedDragonAttributesOnIntegratedServer();
+            clientHolder.save();
+            if (!remoteServer) {
+                holder.save();
+                serverHolder.save();
+                SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
+                SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
+                SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
+                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.save();
+                SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
+                SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
+                SaintsDragonsConfig.IVY_HOUSE_ENABLED.save();
+                SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.save();
+                persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer, nulljawBuffer);
+                refreshLoadedDragonAttributesOnIntegratedServer();
+            }
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-        ConfigCategory spawning = builder.getOrCreateCategory(SPAWN_CATEGORY);
-        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.raevyx"),
+        if (!remoteServer) {
+            ConfigCategory spawning = builder.getOrCreateCategory(SPAWN_CATEGORY);
+            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.raevyx"),
                 () -> config.raevyxSpawnWeight, value -> config.raevyxSpawnWeight = value,
                 () -> config.raevyxMinGroupSize, value -> config.raevyxMinGroupSize = value,
                 () -> config.raevyxMaxGroupSize, value -> config.raevyxMaxGroupSize = value,
@@ -439,74 +451,79 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 null, null, false,
                 20, 1, 2);
 
-        ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
-        addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
-        addStegonautAttributes(attributes, entryBuilder, stegonautBuffer, stegonautDefaults);
-        addRaevyxAttributes(attributes, entryBuilder, raevyxBuffer, raevyxDefaults);
-        addVarasuchusAttributes(attributes, entryBuilder, varasuchusBuffer, varasuchusDefaults);
-        addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
-        addVolitansAttributes(attributes, entryBuilder, volitansBuffer, volitansDefaults);
-        addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
+            ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
+            addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
+            addStegonautAttributes(attributes, entryBuilder, stegonautBuffer, stegonautDefaults);
+            addRaevyxAttributes(attributes, entryBuilder, raevyxBuffer, raevyxDefaults);
+            addVarasuchusAttributes(attributes, entryBuilder, varasuchusBuffer, varasuchusDefaults);
+            addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
+            addVolitansAttributes(attributes, entryBuilder, volitansBuffer, volitansDefaults);
+            addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
+        }
 
         ConfigCategory others = builder.getOrCreateCategory(OTHERS_CATEGORY);
-        others.addEntry(entryBuilder.startBooleanToggle(
-                Component.translatable("saintsdragons.config_screen.others.dragon_griefing"),
-                SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get()
-        ).setDefaultValue(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED_DEFAULT)
-         .setTooltip(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.tooltip"))
-         .setSaveConsumer(value -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(value))
-         .build());
-        others.addEntry(entryBuilder.startBooleanToggle(
-                Component.translatable("saintsdragons.config_screen.others.screen_shake"),
-                SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()
-        ).setDefaultValue(SaintsDragonsConfig.SCREEN_SHAKE_ENABLED_DEFAULT)
-         .setTooltip(Component.translatable("saintsdragons.config_screen.others.screen_shake.tooltip"))
-         .setSaveConsumer(value -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.set(value))
-          .build());
-        others.addEntry(entryBuilder.startBooleanToggle(
-                Component.translatable("saintsdragons.config_screen.others.barrel_roll"),
-                SaintsDragonsConfig.BARREL_ROLL_ENABLED.get()
-        ).setDefaultValue(SaintsDragonsConfig.BARREL_ROLL_ENABLED_DEFAULT)
-         .setTooltip(Component.translatable("saintsdragons.config_screen.others.barrel_roll.tooltip"))
-         .setSaveConsumer(value -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.set(value))
-          .build());
+        if (!remoteServer) {
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.dragon_griefing"),
+                    SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(value))
+             .build());
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.screen_shake"),
+                    SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.SCREEN_SHAKE_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.screen_shake.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.set(value))
+              .build());
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.barrel_roll"),
+                    SaintsDragonsConfig.BARREL_ROLL_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.BARREL_ROLL_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.barrel_roll.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.set(value))
+              .build());
+        }
         others.addEntry(entryBuilder.startBooleanToggle(
                 Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera"),
-                config.firstPersonBankingCameraEnabled
+                clientConfig.firstPersonBankingCameraEnabled
         ).setDefaultValue(true)
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera.tooltip"))
-         .setSaveConsumer(value -> config.firstPersonBankingCameraEnabled = value)
+         .setSaveConsumer(value -> clientConfig.firstPersonBankingCameraEnabled = value)
           .build());
-        others.addEntry(entryBuilder.startBooleanToggle(
-                Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
-                SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()
-        ).setDefaultValue(SaintsDragonsConfig.HUNGER_DECAY_ENABLED_DEFAULT)
-         .setTooltip(Component.translatable("saintsdragons.config_screen.others.hunger_decay.tooltip"))
-         .setSaveConsumer(value -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.set(value))
-          .build());
-        others.addEntry(entryBuilder.startBooleanToggle(
-                Component.translatable("saintsdragons.config_screen.others.happiness_decay"),
-                SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get()
-        ).setDefaultValue(SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED_DEFAULT)
-         .setTooltip(Component.translatable("saintsdragons.config_screen.others.happiness_decay.tooltip"))
-         .setSaveConsumer(value -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.set(value))
-          .build());
-        others.addEntry(entryBuilder.startBooleanToggle(
-                Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
-                SaintsDragonsConfig.IVY_HOUSE_ENABLED.get()
-        ).setDefaultValue(SaintsDragonsConfig.IVY_HOUSE_ENABLED_DEFAULT)
-         .setTooltip(Component.translatable("saintsdragons.config_screen.others.ivy.enabled.tooltip"))
-         .setSaveConsumer(value -> SaintsDragonsConfig.IVY_HOUSE_ENABLED.set(value))
-         .build());
-        others.addEntry(entryBuilder.startIntSlider(
-                Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
-                config.ivyRestockInterval,
-                20,
-                72000
-        ).setDefaultValue(24000)
-         .setTooltip(Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval.tooltip"))
-         .setSaveConsumer(value -> config.ivyRestockInterval = value)
-         .build());
+        if (!remoteServer) {
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
+                    SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.HUNGER_DECAY_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.hunger_decay.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.set(value))
+              .build());
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.happiness_decay"),
+                    SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.happiness_decay.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.set(value))
+              .build());
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
+                    SaintsDragonsConfig.IVY_HOUSE_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.IVY_HOUSE_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.ivy.enabled.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.IVY_HOUSE_ENABLED.set(value))
+             .build());
+            others.addEntry(entryBuilder.startIntSlider(
+                    Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
+                    SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.get(),
+                    20,
+                    72000
+            ).setDefaultValue(SaintsDragonsConfig.IVY_RESTOCK_INTERVAL_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.set(value))
+             .build());
+        }
 
         return builder.build();
     }
@@ -1995,5 +2012,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 }
             }
         });
+    }
+
+    private static boolean isRemoteServerSession() {
+        Minecraft minecraft = Minecraft.getInstance();
+        return minecraft.level != null && minecraft.getSingleplayerServer() == null;
     }
 }

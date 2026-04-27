@@ -8,7 +8,7 @@ public final class FabricClientConfigAccess {
 
     public static boolean isFirstPersonBankingCameraEnabled() {
         try {
-            return AutoConfig.getConfigHolder(SaintsDragonsFabricSpawnConfig.class)
+            return AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class)
                     .getConfig()
                     .firstPersonBankingCameraEnabled;
         } catch (RuntimeException ignored) {

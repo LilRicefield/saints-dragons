@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.registry.ModPotions;
 import com.leon.saintsdragons.forge.init.ForgeBrewingRecipes;
 import com.leon.saintsdragons.forge.loot.ModLootModifiers;
 import com.leon.saintsdragons.forge.mixin.RangedAttributeAccessor;
+import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.forge.world.AddConditionalFeaturesBiomeModifier;
 import com.leon.saintsdragons.forge.world.AddDragonsBiomeModifier;
@@ -55,8 +56,8 @@ import java.util.Map;
 @Mod(SaintsDragonsCommon.MOD_ID)
 public final class SaintsDragonsForge {
     private static final double ATTRIBUTE_CAP = 100000.0D;
-    private static boolean commonGameplayConfigReady = false;
-    private static boolean pendingForgeOthersSync = false;
+    private static final String FORGE_ATTRIBUTES_CONFIG_FILE = SaintsDragonsConfig.CONFIG_FOLDER + "/attributes.toml";
+    private static final String FORGE_CLIENT_CONFIG_FILE = SaintsDragonsConfig.CONFIG_FOLDER + "/client.toml";
 
     private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIERS =
             DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, SaintsDragonsCommon.MOD_ID);
@@ -76,7 +77,7 @@ public final class SaintsDragonsForge {
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON,
                 ForgeDragonAttributesConfig.ATTRIBUTES_SPEC,
-                "saintsdragons-attributes.toml");
+                FORGE_ATTRIBUTES_CONFIG_FILE);
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> ClientOnly::registerConfigScreen);
 
@@ -188,50 +189,14 @@ public final class SaintsDragonsForge {
             return;
         }
 
-        if ("saintsdragonsspawning.toml".equals(config.getFileName())) {
-            commonGameplayConfigReady = true;
-            if (pendingForgeOthersSync) {
-                syncForgeOthersIntoCommonConfig();
-                pendingForgeOthersSync = false;
-            }
-            return;
-        }
-
-        if ("saintsdragons-attributes.toml".equals(config.getFileName())) {
-            if (commonGameplayConfigReady) {
-                syncForgeOthersIntoCommonConfig();
-            } else {
-                pendingForgeOthersSync = true;
-            }
+        if (matchesConfigFile(config.getFileName(), FORGE_ATTRIBUTES_CONFIG_FILE)) {
             DragonAttributeConfigLoader.getInstance().refreshFromForgeConfig();
             applyAttributesToLoadedDragons();
         }
     }
 
-    public static void syncRuntimeOthersFromForgeConfig() {
-        if (!commonGameplayConfigReady) {
-            pendingForgeOthersSync = true;
-            return;
-        }
-        syncForgeOthersIntoCommonConfig();
-    }
-
-    private static void syncForgeOthersIntoCommonConfig() {
-        syncBoolean(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED, ForgeDragonAttributesConfig.DRAGON_GRIEFING_ENABLED.get());
-        syncBoolean(SaintsDragonsConfig.SCREEN_SHAKE_ENABLED, ForgeDragonAttributesConfig.SCREEN_SHAKE_ENABLED.get());
-        syncBoolean(SaintsDragonsConfig.BARREL_ROLL_ENABLED, ForgeDragonAttributesConfig.BARREL_ROLL_ENABLED.get());
-        syncBoolean(SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED, ForgeDragonAttributesConfig.STEGONAUT_BUFFS_ENABLED.get());
-        syncBoolean(SaintsDragonsConfig.HUNGER_DECAY_ENABLED, ForgeDragonAttributesConfig.HUNGER_DECAY_ENABLED.get());
-        syncBoolean(SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED, ForgeDragonAttributesConfig.HAPPINESS_DECAY_ENABLED.get());
-        syncBoolean(SaintsDragonsConfig.IVY_HOUSE_ENABLED, ForgeDragonAttributesConfig.IVY_HOUSE_ENABLED.get());
-    }
-
-    private static void syncBoolean(com.leon.saintsdragons.platform.ConfigHelper.BooleanValue value, boolean newValue) {
-        if (value == null) {
-            return;
-        }
-        value.set(newValue);
-        value.save();
+    private static boolean matchesConfigFile(String actual, String expected) {
+        return actual != null && actual.replace('\\', '/').equals(expected);
     }
 
     private void applyAttributesToLoadedDragons() {
@@ -272,6 +237,9 @@ public final class SaintsDragonsForge {
 
     private static final class ClientOnly {
         private static void registerConfigScreen() {
+            ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT,
+                    ForgeClientConfig.CLIENT_SPEC,
+                    FORGE_CLIENT_CONFIG_FILE);
             ModLoadingContext.get().registerExtensionPoint(
                     ConfigScreenHandler.ConfigScreenFactory.class,
                     () -> new ConfigScreenHandler.ConfigScreenFactory(

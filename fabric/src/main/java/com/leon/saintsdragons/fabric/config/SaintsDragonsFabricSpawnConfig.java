@@ -7,7 +7,7 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import java.util.ArrayList;
 import java.util.List;
 
-@Config(name = "saintsdragonsspawning")
+@Config(name = "saintsdragons/spawning")
 public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -170,42 +170,4 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip(count = 0)
     public List<String> nulljawExcludedBiomes = new ArrayList<>();
-
-    // Others (NPCs, etc.)
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    public boolean dragonGriefingEnabled = true;
-
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    public boolean screenShakeEnabled = true;
-
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    public boolean barrelRollEnabled = true;
-
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    public boolean firstPersonBankingCameraEnabled = true;
-
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    public boolean stegonautBuffsEnabled = true;
-
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    public boolean hungerDecayEnabled = true;
-
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    public boolean happinessDecayEnabled = true;
-
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    public boolean ivyHouseEnabled = true;
-
-    @ConfigEntry.Category("others")
-    @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 20, max = 72000)
-    public int ivyRestockInterval = 24000;
 }

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.client;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -281,9 +282,9 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 null));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs"),
-                () -> ForgeDragonAttributesConfig.STEGONAUT_BUFFS_ENABLED.get(),
-                ForgeDragonAttributesConfig.STEGONAUT_BUFFS_ENABLED::set,
-                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
+                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED::get,
+                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED::set,
+                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED::save
         ));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"),
                 () -> ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.get(),

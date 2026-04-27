@@ -113,9 +113,11 @@ public final class DragonHungerComponent {
 
     public void saveToNBT(CompoundTag tag) {
         tag.putInt("Hunger", this.hunger);
+        tag.putInt("HungerDecayTicks", this.hungerDecayTicks);
     }
 
     public void loadFromNBT(CompoundTag tag) {
         this.hunger = tag.contains("Hunger") ? Mth.clamp(tag.getInt("Hunger"), 0, HUNGER_MAX) : HUNGER_MAX;
+        this.hungerDecayTicks = tag.contains("HungerDecayTicks") ? Math.max(0, tag.getInt("HungerDecayTicks")) : 0;
     }
 }

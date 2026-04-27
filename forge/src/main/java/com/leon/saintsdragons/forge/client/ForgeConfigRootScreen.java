@@ -23,14 +23,17 @@ public final class ForgeConfigRootScreen extends Screen {
         int buttonHeight = 20;
         int x = (width - buttonWidth) / 2;
         int y = height / 2 - 36;
+        boolean remoteServer = minecraft != null && minecraft.level != null && minecraft.getSingleplayerServer() == null;
 
-        addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.attributes"), button -> {
+        Button attributesButton = addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.attributes"), button -> {
             minecraft.setScreen(new ForgeDragonAttributesScreen(this));
         }).bounds(x, y, buttonWidth, buttonHeight).build());
+        attributesButton.active = !remoteServer;
 
-        addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.spawning"), button -> {
+        Button spawningButton = addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.spawning"), button -> {
             minecraft.setScreen(new ForgeDragonSpawningScreen(this));
         }).bounds(x, y + 24, buttonWidth, buttonHeight).build());
+        spawningButton.active = !remoteServer;
 
         addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.others"), button -> {
             minecraft.setScreen(new ForgeOthersScreen(this));

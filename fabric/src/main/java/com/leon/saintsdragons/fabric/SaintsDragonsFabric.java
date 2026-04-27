@@ -60,7 +60,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
                 ItemGroupEvents.modifyEntriesEvent(tab)
                         .register(entries -> entries.accept(itemSupplier.get())));
 
-        // Hide Saints' Dragons custom potion items and any vanilla potion-family variants from Minecraft tabs.
+        // Hide Saint's Dragons custom potion items and any vanilla potion-family variants from Minecraft tabs.
         for (ResourceKey<net.minecraft.world.item.CreativeModeTab> tab : POTION_HIDE_TABS) {
             ItemGroupEvents.modifyEntriesEvent(tab).register(entries -> {
                 entries.getDisplayStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant);

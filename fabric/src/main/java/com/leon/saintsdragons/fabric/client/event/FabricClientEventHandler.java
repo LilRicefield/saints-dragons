@@ -6,7 +6,6 @@ import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundCon
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.fabric.client.camera.NulljawFirstPersonCamera;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
@@ -151,10 +150,6 @@ public class FabricClientEventHandler {
     }
 
     private static void applyScreenShake(Camera camera, Entity player, float partialTicks) {
-        if (!SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()) {
-            return;
-        }
-
         double shakeDistanceScale = 64.0;
         double distance = Double.MAX_VALUE;
         float tremorAmount = 0.0F; // Reset tremor amount each frame

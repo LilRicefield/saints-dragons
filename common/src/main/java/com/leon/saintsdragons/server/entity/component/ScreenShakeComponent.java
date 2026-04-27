@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.component;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
@@ -25,6 +26,11 @@ public class ScreenShakeComponent {
         if (entity.level().isClientSide) {
             previousAmount = amount;
             amount = entityData.get(syncedAmountAccessor);
+            return;
+        }
+
+        if (!SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()) {
+            clear();
             return;
         }
 

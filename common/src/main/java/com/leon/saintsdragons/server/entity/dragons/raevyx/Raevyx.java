@@ -3088,8 +3088,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
      */
     private void tickBarrelRollLogic() {
         float currentRoll = getAccumulatedRoll();
+        boolean serverSide = !level().isClientSide;
         boolean isRidden = isVehicle() && getControllingPassenger() != null;
-        boolean barrelRollEnabled = SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
+        boolean barrelRollEnabled = level().isClientSide || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
         boolean canBarrelRoll = barrelRollEnabled
                 && isRidden
                 && isFlying()
@@ -3097,14 +3098,14 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 && !isDodging()
                 && !isDashing()
                 && !isGroundRending();
-        if (canBarrelRoll) {
+        if (serverSide && canBarrelRoll) {
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
                 currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
             }
         }
-        boolean isActivelyRolling = canBarrelRoll && isActivelyBarrelRolling();
+        boolean isActivelyRolling = serverSide && canBarrelRoll && isActivelyBarrelRolling();
         boolean riderLandingBlendActive = isRiderLandingBlendActive();
         double altitudeAboveTerrain = riderLandingBlendActive ? getAltitudeAboveTerrain() : Double.POSITIVE_INFINITY;
         DragonBarrelRollHelper.Output rollState = DragonBarrelRollHelper.tick(

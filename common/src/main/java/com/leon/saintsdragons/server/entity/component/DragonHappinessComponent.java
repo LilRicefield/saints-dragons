@@ -205,10 +205,12 @@ public final class DragonHappinessComponent {
 
     public void saveToNBT(CompoundTag tag) {
         tag.putInt("Happiness", this.happiness);
+        tag.putInt("HappinessDecayTicks", this.happinessDecayTicks);
     }
 
     public void loadFromNBT(CompoundTag tag) {
         this.happiness = tag.contains("Happiness") ? Mth.clamp(tag.getInt("Happiness"), 0, HAPPINESS_MAX) : HAPPINESS_MAX;
+        this.happinessDecayTicks = tag.contains("HappinessDecayTicks") ? Math.max(0, tag.getInt("HappinessDecayTicks")) : 0;
         dragon.getEntityData().set(dataAccessor, this.happiness);
     }
 }

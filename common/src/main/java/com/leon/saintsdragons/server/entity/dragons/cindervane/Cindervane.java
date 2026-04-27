@@ -1413,10 +1413,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private void tickBarrelRollLogic() {
         float currentRoll = getAccumulatedRoll();
-        boolean barrelRollEnabled = SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
+        boolean serverSide = !level().isClientSide;
+        boolean barrelRollEnabled = level().isClientSide || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
         boolean inWater = isInWaterOrBubble();
         boolean barrelRollAllowed = barrelRollEnabled && !inWater;
-        if (barrelRollAllowed && isVehicle() && getControllingPassenger() != null) {
+        if (serverSide && barrelRollAllowed && isVehicle() && getControllingPassenger() != null) {
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
@@ -1430,7 +1431,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
                         isVehicle(),
                         onGround() || inWater,
                         isLanding(),
-                        barrelRollAllowed && isActivelyBarrelRolling(),
+                        serverSide && barrelRollAllowed && isActivelyBarrelRolling(),
                         shouldEaseAirAutoAlign(),
                         isRiderLandingBlendActive(),
                         LANDING_BLEND_ALTITUDE,

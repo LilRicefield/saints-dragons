@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.forge.client;
 
-import com.leon.saintsdragons.forge.SaintsDragonsForge;
-import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,63 +21,78 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
 
     @Override
     protected void buildEntries(List<ConfigEntry> entries) {
-        entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.section")));
-        entries.add(new BooleanEntry(
-                Component.translatable("saintsdragons.config_screen.others.dragon_griefing"),
-                () -> ForgeDragonAttributesConfig.DRAGON_GRIEFING_ENABLED.get(),
-                ForgeDragonAttributesConfig.DRAGON_GRIEFING_ENABLED::set,
-                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
-        ));
-        entries.add(new BooleanEntry(
-                Component.translatable("saintsdragons.config_screen.others.screen_shake"),
-                () -> ForgeDragonAttributesConfig.SCREEN_SHAKE_ENABLED.get(),
-                ForgeDragonAttributesConfig.SCREEN_SHAKE_ENABLED::set,
-                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
-        ));
-        entries.add(new BooleanEntry(
-                Component.translatable("saintsdragons.config_screen.others.barrel_roll"),
-                () -> ForgeDragonAttributesConfig.BARREL_ROLL_ENABLED.get(),
-                ForgeDragonAttributesConfig.BARREL_ROLL_ENABLED::set,
-                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
-        ));
+        SaintsDragonsConfig.bootstrap();
+        boolean remoteServer = isRemoteServerSession();
+
+        if (remoteServer) {
+            entries.add(new SectionEntry(Component.literal("Server settings are controlled by the dedicated server TOML files.")));
+        } else {
+            entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.section")));
+            entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.dragon_griefing"),
+                    SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED::get,
+                    SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED::set,
+                    SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED::save
+            ));
+            entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.screen_shake"),
+                    SaintsDragonsConfig.SCREEN_SHAKE_ENABLED::get,
+                    SaintsDragonsConfig.SCREEN_SHAKE_ENABLED::set,
+                    SaintsDragonsConfig.SCREEN_SHAKE_ENABLED::save
+            ));
+            entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.barrel_roll"),
+                    SaintsDragonsConfig.BARREL_ROLL_ENABLED::get,
+                    SaintsDragonsConfig.BARREL_ROLL_ENABLED::set,
+                    SaintsDragonsConfig.BARREL_ROLL_ENABLED::save
+            ));
+        }
+
+        entries.add(new SectionEntry(Component.literal("Client")));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera"),
-                () -> ForgeDragonAttributesConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get(),
-                val -> ForgeDragonAttributesConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.set(val),
-                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
-        ));
-        entries.add(new BooleanEntry(
-                Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
-                () -> ForgeDragonAttributesConfig.HUNGER_DECAY_ENABLED.get(),
-                ForgeDragonAttributesConfig.HUNGER_DECAY_ENABLED::set,
-                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
-        ));
-        entries.add(new BooleanEntry(
-                Component.translatable("saintsdragons.config_screen.others.happiness_decay"),
-                () -> ForgeDragonAttributesConfig.HAPPINESS_DECAY_ENABLED.get(),
-                ForgeDragonAttributesConfig.HAPPINESS_DECAY_ENABLED::set,
-                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
+                () -> ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get(),
+                ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED::set,
+                ForgeClientConfig.CLIENT_SPEC::save
         ));
 
-        // Ivy the Dragon Merchant
-        entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));
-        entries.add(new BooleanEntry(
-                Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
-                () -> ForgeDragonAttributesConfig.IVY_HOUSE_ENABLED.get(),
-                ForgeDragonAttributesConfig.IVY_HOUSE_ENABLED::set,
-                ForgeDragonAttributesConfig.ATTRIBUTES_SPEC::save
-        ));
-        entries.add(new IntEntry(
-                Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
-                () -> ForgeDragonAttributesConfig.IVY_RESTOCK_INTERVAL.get(),
-                val -> ForgeDragonAttributesConfig.IVY_RESTOCK_INTERVAL.set(val),
-                null
-        ));
+        if (!remoteServer) {
+            entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
+                    SaintsDragonsConfig.HUNGER_DECAY_ENABLED::get,
+                    SaintsDragonsConfig.HUNGER_DECAY_ENABLED::set,
+                    SaintsDragonsConfig.HUNGER_DECAY_ENABLED::save
+            ));
+            entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.happiness_decay"),
+                    SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED::get,
+                    SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED::set,
+                    SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED::save
+            ));
+
+            // Ivy the Dragon Merchant
+            entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));
+            entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
+                    SaintsDragonsConfig.IVY_HOUSE_ENABLED::get,
+                    SaintsDragonsConfig.IVY_HOUSE_ENABLED::set,
+                    SaintsDragonsConfig.IVY_HOUSE_ENABLED::save
+            ));
+            entries.add(new IntEntry(
+                    Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
+                    SaintsDragonsConfig.IVY_RESTOCK_INTERVAL::get,
+                    SaintsDragonsConfig.IVY_RESTOCK_INTERVAL::set,
+                    SaintsDragonsConfig.IVY_RESTOCK_INTERVAL::save
+            ));
+        }
     }
 
     @Override
     protected void onSave() {
-        ForgeDragonAttributesConfig.ATTRIBUTES_SPEC.save();
-        SaintsDragonsForge.syncRuntimeOthersFromForgeConfig();
+        ForgeClientConfig.CLIENT_SPEC.save();
+    }
+
+    private boolean isRemoteServerSession() {
+        return minecraft != null && minecraft.level != null && minecraft.getSingleplayerServer() == null;
     }
 }

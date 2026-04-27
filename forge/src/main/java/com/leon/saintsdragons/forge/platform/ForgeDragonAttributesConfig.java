@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.forge.platform;
 
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 /**
@@ -174,17 +173,6 @@ public final class ForgeDragonAttributesConfig {
     // Nulljaw
     public static ForgeConfigSpec.DoubleValue NULLJAW_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue NULLJAW_ARMOR;
-
-    // Others (NPCs, misc)
-    public static ForgeConfigSpec.BooleanValue DRAGON_GRIEFING_ENABLED;
-    public static ForgeConfigSpec.BooleanValue SCREEN_SHAKE_ENABLED;
-    public static ForgeConfigSpec.BooleanValue BARREL_ROLL_ENABLED;
-    public static ForgeConfigSpec.BooleanValue FIRST_PERSON_BANKING_CAMERA_ENABLED;
-    public static ForgeConfigSpec.BooleanValue STEGONAUT_BUFFS_ENABLED;
-    public static ForgeConfigSpec.BooleanValue HUNGER_DECAY_ENABLED;
-    public static ForgeConfigSpec.BooleanValue HAPPINESS_DECAY_ENABLED;
-    public static ForgeConfigSpec.BooleanValue IVY_HOUSE_ENABLED;
-    public static ForgeConfigSpec.IntValue IVY_RESTOCK_INTERVAL;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -435,38 +423,6 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Core Attributes");
         NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 70.0, 1.0, 100000.0);
         NULLJAW_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
-        builder.pop();
-
-        // Others (NPCs and Miscellaneous)
-        builder.comment("Other Configuration (NPCs, etc.)").push("others");
-        DRAGON_GRIEFING_ENABLED = builder
-                .comment("Enable dragon-caused block destruction when mobGriefing is also enabled")
-                .define("dragon_griefing_enabled", SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED_DEFAULT);
-        SCREEN_SHAKE_ENABLED = builder
-                .comment("Enable dragon and ability-driven screen shake effects")
-                .define("screen_shake_enabled", SaintsDragonsConfig.SCREEN_SHAKE_ENABLED_DEFAULT);
-        BARREL_ROLL_ENABLED = builder
-                .comment("Enable rider-triggered barrel roll on flying dragons")
-                .define("barrel_roll_enabled", SaintsDragonsConfig.BARREL_ROLL_ENABLED_DEFAULT);
-        FIRST_PERSON_BANKING_CAMERA_ENABLED = builder
-                .comment("Enable first-person banking and barrel-roll camera effects while riding dragons")
-                .define("first_person_banking_camera", true);
-        STEGONAUT_BUFFS_ENABLED = builder
-                .comment("Enable Stegonaut passive aura buffs and portable binder buffs")
-                .define("stegonaut_buffs_enabled", SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED_DEFAULT);
-        HUNGER_DECAY_ENABLED = builder
-                .comment("Enable tame dragon hunger decay")
-                .define("hunger_decay_enabled", SaintsDragonsConfig.HUNGER_DECAY_ENABLED_DEFAULT);
-        HAPPINESS_DECAY_ENABLED = builder
-                .comment("Enable tame dragon happiness decay")
-                .define("happiness_decay_enabled", SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED_DEFAULT);
-        builder.comment("Ivy the Dragon Merchant");
-        IVY_HOUSE_ENABLED = builder
-                .comment("Enable Ivy's house structure generation and Ivy spawning from that structure")
-                .define("ivy_house_enabled", SaintsDragonsConfig.IVY_HOUSE_ENABLED_DEFAULT);
-        IVY_RESTOCK_INTERVAL = builder
-                .comment("Ticks between Ivy's trade restocks (20 ticks = 1 second, 24000 = 20 minutes)")
-                .defineInRange("ivy_restock_interval", 24000, 20, 72000);
         builder.pop();
 
         ATTRIBUTES_SPEC = builder.build();

@@ -3013,7 +3013,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     private void tickBarrelRollLogic() {
         float currentRoll = getAccumulatedRoll();
-        boolean barrelRollEnabled = SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
+        boolean serverSide = !level().isClientSide;
+        boolean barrelRollEnabled = level().isClientSide || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
         boolean inWater = isInWaterOrBubble();
         boolean canBarrelRoll = barrelRollEnabled
                 && isFlying()
@@ -3025,7 +3026,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 && riderBackDashRecoveryTicks <= 0
                 && !riderSideDodging
                 && riderSideDodgeRecoveryTicks <= 0;
-        if (canBarrelRoll && isVehicle() && getControllingPassenger() != null) {
+        if (serverSide && canBarrelRoll && isVehicle() && getControllingPassenger() != null) {
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
@@ -3039,7 +3040,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                         isVehicle(),
                         onGround() || inWater,
                         isLanding(),
-                        canBarrelRoll && isActivelyBarrelRolling(),
+                        serverSide && canBarrelRoll && isActivelyBarrelRolling(),
                         shouldEaseAirAutoAlign(),
                         isLanding(),
                         LANDING_BLEND_ALTITUDE,

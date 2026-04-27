@@ -2,6 +2,7 @@
 
 package com.leon.saintsdragons.server.entity.npc;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
@@ -467,30 +468,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         return new MerchantOffer(eggs, salmon, result, HEARTY_MEAL_MAX_USES, 0, 0.0f);
     }
     private static int resolveRestockInterval() {
-        try {
-            Class<?> forgeConfig = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
-            java.lang.reflect.Field field = forgeConfig.getField("IVY_RESTOCK_INTERVAL");
-            Object configValue = field.get(null);
-            java.lang.reflect.Method getMethod = configValue.getClass().getMethod("get");
-            Object value = getMethod.invoke(configValue);
-            return value instanceof Number ? ((Number) value).intValue() : 24000;
-        } catch (Exception ignored) {
-        }
-
-        try {
-            Class<?> fabricConfig = Class.forName("com.leon.saintsdragons.fabric.config.SaintsDragonsFabricConfig");
-            Class<?> autoConfig = Class.forName("me.shedaniel.autoconfig.AutoConfig");
-            java.lang.reflect.Method getConfigHolder = autoConfig.getMethod("getConfigHolder", Class.class);
-            Object holder = getConfigHolder.invoke(null, fabricConfig);
-            java.lang.reflect.Method getConfig = holder.getClass().getMethod("getConfig");
-            Object instance = getConfig.invoke(holder);
-            java.lang.reflect.Field field = instance.getClass().getField("ivyRestockInterval");
-            Object value = field.get(instance);
-            return value instanceof Number ? ((Number) value).intValue() : 24000;
-        } catch (Exception ignored) {
-        }
-
-        return 24000; // 20 minutes
+        return SaintsDragonsConfig.getIvyRestockInterval();
     }
 
     private void tickIdleVariant() {
