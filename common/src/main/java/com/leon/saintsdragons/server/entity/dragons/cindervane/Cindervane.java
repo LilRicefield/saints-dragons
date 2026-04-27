@@ -5,7 +5,6 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
-import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonPackDefendPackGoal;
@@ -17,7 +16,6 @@ import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
-import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -1756,20 +1754,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
-    protected void onRiderAbilityUse(Player player, String abilityName) {
-        if (abilityName != null && !abilityName.isEmpty()) {
-            useRidingAbility(abilityName);
-        }
-    }
-
-    @Override
-    protected void onRiderAbilityStop(Player player, String abilityName) {
-        if (abilityName != null && !abilityName.isEmpty()) {
-            forceEndActiveAbility();
-        }
-    }
-
-    @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
         if (locked) {
@@ -2443,14 +2427,19 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         return super.hurt(source, amount);
     }
 
-    /**
-     * Returns a larger bounding box for frustum culling to prevent the model from
-     * disappearing when the entity's collision box is off-screen but the visual model
-     * (wings, tail, etc.) should still be visible.
-     */
     @Override
-    public AABB getBoundingBoxForCulling() {
-        return super.getBoundingBoxForCulling().inflate(6.0, 3.0, 6.0);
+    protected double getCullingInflateX() {
+        return 6.0D;
+    }
+
+    @Override
+    protected double getCullingInflateY() {
+        return 3.0D;
+    }
+
+    @Override
+    protected double getCullingInflateZ() {
+        return 6.0D;
     }
 
     @Override
@@ -2459,40 +2448,15 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T extends DragonEntity> DragonAbility<T> getActiveAbility() {
-        return (DragonAbility<T>) combatManager.getActiveAbility();
+    protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
+        return abilityType == CindervaneAbilities.BITE
+                || abilityType == CindervaneAbilities.SLASH_GRAB
+                || abilityType == CindervaneAbilities.FIRE_BODY
+                || abilityType == CindervaneAbilities.ROAR
+                || abilityType == CindervaneAbilities.FIRE_BREATH_VOLLEY;
     }
 
-    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
-        return combatManager.isAbilityActive(abilityType);
-    }
-
-    public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
-        combatManager.forceEndAbility(abilityType);
-    }
-
-    public void useRidingAbility(String abilityName) {
-        if (abilityName == null || abilityName.isEmpty()) {
-            return;
-        }
-        Entity rider = this.getControllingPassenger();
-        if (!(rider instanceof LivingEntity)) {
-            return;
-        }
-        if (this.isTame() && rider instanceof Player player && !this.isOwnedBy(player)) {
-            return;
-        }
-        DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
-        if (type == CindervaneAbilities.BITE
-                || type == CindervaneAbilities.SLASH_GRAB
-                || type == CindervaneAbilities.FIRE_BODY
-                || type == CindervaneAbilities.ROAR
-                || type == CindervaneAbilities.FIRE_BREATH_VOLLEY) {
-            combatManager.tryUseAbility(type);
-        }
-    }
-
+    @Override
     public void forceEndActiveAbility() {
         combatManager.forceEndActiveAbility();
         fireBodyCrashArmed = false;
@@ -2570,14 +2534,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
-    protected void dropAllDeathLoot(@NotNull DamageSource source) {
-        // Don't drop loot until death animation completes
-        if (deathTime < getDeathAnimationDurationTicks()) {
-            return;
-        }
-
-        super.dropAllDeathLoot(source);
-
+    protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
@@ -3014,24 +2971,13 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     @Override
-    public float getScreenShakeAmount(float partialTicks) {
-        return screenShakeComponent.getAmount(partialTicks);
+    protected ScreenShakeComponent getScreenShakeComponent() {
+        return screenShakeComponent;
     }
 
     @Override
     public double getShakeDistance() {
         return 18.0;
-    }
-
-    @Override
-    public boolean canFeelShake(Entity player) {
-        // Allow screen shake regardless of whether player is on ground
-        // This is important for dragon riding scenarios
-        return true;
-    }
-
-    public void triggerScreenShake(float intensity) {
-        screenShakeComponent.trigger(intensity);
     }
 
     // ===== SIT TRANSITION HELPERS =====

@@ -27,7 +27,6 @@ import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -53,7 +52,6 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
 import com.leon.saintsdragons.server.entity.util.ClientAnimationInitHelper;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
@@ -270,24 +268,15 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
     }
 
     @Override
-    protected void onRiderAbilityUse(Player player, String abilityName) {
-        if (abilityName != null && !abilityName.isEmpty()) {
-            useRidingAbility(abilityName);
-        }
-    }
-
-    @Override
-    protected void onRiderAbilityStop(Player player, String abilityName) {
-        if (abilityName != null && !abilityName.isEmpty()) {
-            if (StegonautAbilities.STEGONAUT_GROUND_EATING_ID.equals(abilityName)) {
-                var active = combatManager.getActiveAbility();
-                if (active != null && active.getAbilityType() == StegonautAbilities.STEGONAUT_GROUND_EATING) {
-                    ((StegonautGroundEatingAbility) active).requestRelease();
-                    return;
-                }
+    protected boolean tryReleaseHeldRidingAbility(String abilityName) {
+        if (StegonautAbilities.STEGONAUT_GROUND_EATING_ID.equals(abilityName)) {
+            var active = combatManager.getActiveAbility();
+            if (active != null && active.getAbilityType() == StegonautAbilities.STEGONAUT_GROUND_EATING) {
+                ((StegonautGroundEatingAbility) active).requestRelease();
+                return true;
             }
-            forceEndActiveAbility();
         }
+        return false;
     }
 
     @Override
@@ -357,27 +346,11 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         return new RiderAbilityBinding(StegonautAbilities.STEGONAUT_GROUND_EATING_ID, RiderAbilityBinding.Activation.HOLD);
     }
 
-    public void useRidingAbility(String abilityName) {
-        if (abilityName == null || abilityName.isEmpty()) {
-            return;
-        }
-        net.minecraft.world.entity.Entity rider = this.getControllingPassenger();
-        if (!(rider instanceof LivingEntity)) {
-            return;
-        }
-        if (this.isTame() && rider instanceof Player player && !this.isOwnedBy(player)) {
-            return;
-        }
-        DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
-        if (type == StegonautAbilities.STEGONAUT_BITE
-                || type == StegonautAbilities.STEGONAUT_CHIN_SLAM
-                || type == StegonautAbilities.STEGONAUT_GROUND_EATING) {
-            combatManager.tryUseAbility(type);
-        }
-    }
-
-    public void forceEndActiveAbility() {
-        combatManager.forceEndActiveAbility();
+    @Override
+    protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
+        return abilityType == StegonautAbilities.STEGONAUT_BITE
+                || abilityType == StegonautAbilities.STEGONAUT_CHIN_SLAM
+                || abilityType == StegonautAbilities.STEGONAUT_GROUND_EATING;
     }
 
     @Override
@@ -391,14 +364,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
     }
 
     @Override
-    protected void dropAllDeathLoot(@NotNull DamageSource source) {
-        // Keep loot timing aligned with death animation completion.
-        if (deathTime < getDeathAnimationDurationTicks()) {
-            return;
-        }
-
-        super.dropAllDeathLoot(source);
-
+    protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
         double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
@@ -440,14 +406,19 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
         return false;
     }
 
-    /**
-     * Returns a larger bounding box for frustum culling to prevent the model from
-     * disappearing when the entity's collision box is off-screen but the visual model
-     * should still be visible.
-     */
     @Override
-    public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
-        return super.getBoundingBoxForCulling().inflate(6.0, 3.0, 6.0);
+    protected double getCullingInflateX() {
+        return 6.0D;
+    }
+
+    @Override
+    protected double getCullingInflateY() {
+        return 3.0D;
+    }
+
+    @Override
+    protected double getCullingInflateZ() {
+        return 6.0D;
     }
 
     @Override

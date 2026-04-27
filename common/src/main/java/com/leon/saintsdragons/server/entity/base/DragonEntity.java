@@ -15,6 +15,7 @@ import com.leon.saintsdragons.server.entity.component.DragonHungerComponent;
 import com.leon.saintsdragons.server.entity.component.DragonRecoveryComponent;
 import com.leon.saintsdragons.server.entity.component.DragonSitComponent;
 import com.leon.saintsdragons.server.entity.component.DragonSleepComponent;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.controller.BodyControl;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -51,6 +52,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
@@ -534,7 +536,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     @Override
-    public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor levelAccessor, @NotNull DifficultyInstance difficulty, MobSpawnType reason,
+    public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor levelAccessor, @NotNull DifficultyInstance difficulty, @NotNull MobSpawnType reason,
                                                  @Nullable SpawnGroupData spawnData, @Nullable CompoundTag spawnTag) {
         SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
         ensureGenderInitialized();
@@ -595,6 +597,53 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return;
         }
         combatManager.tryUseAbility(abilityType);
+    }
+
+    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
+        return combatManager.isAbilityActive(abilityType);
+    }
+
+    public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
+        combatManager.forceEndAbility(abilityType);
+    }
+
+    public void forceEndActiveAbility() {
+        combatManager.forceEndActiveAbility();
+    }
+
+    @Nullable
+    protected ScreenShakeComponent getScreenShakeComponent() {
+        return null;
+    }
+
+    public float getScreenShakeAmount(float partialTicks) {
+        ScreenShakeComponent screenShake = getScreenShakeComponent();
+        return screenShake != null ? screenShake.getAmount(partialTicks) : 0.0F;
+    }
+
+    public boolean canFeelShake(Entity player) {
+        return true;
+    }
+
+    public void triggerScreenShake(float intensity) {
+        ScreenShakeComponent screenShake = getScreenShakeComponent();
+        if (screenShake != null) {
+            screenShake.trigger(intensity);
+        }
+    }
+
+    public void triggerScreenShake(float intensity, int durationTicks) {
+        ScreenShakeComponent screenShake = getScreenShakeComponent();
+        if (screenShake != null) {
+            screenShake.hold(intensity, durationTicks);
+        }
+    }
+
+    public void clearScreenShake() {
+        ScreenShakeComponent screenShake = getScreenShakeComponent();
+        if (screenShake != null) {
+            screenShake.clear();
+        }
     }
 
     public Map<String, VocalEntry> getVocalEntries() {
@@ -676,7 +725,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
 
     @Override
-    protected void playStepSound(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+    protected void playStepSound(net.minecraft.core.@NotNull BlockPos pos, @NotNull BlockState state) {
 
     }
 
@@ -860,6 +909,30 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return;
         }
         super.dropAllDeathLoot(source);
+        dropAdditionalDeathLootAfterBase(source);
+    }
+
+    protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
+    }
+
+    @Override
+    public @NotNull AABB getBoundingBoxForCulling() {
+        return super.getBoundingBoxForCulling().inflate(
+                getCullingInflateX(),
+                getCullingInflateY(),
+                getCullingInflateZ());
+    }
+
+    protected double getCullingInflateX() {
+        return 0.0D;
+    }
+
+    protected double getCullingInflateY() {
+        return 0.0D;
+    }
+
+    protected double getCullingInflateZ() {
+        return 0.0D;
     }
 
     @Nullable
@@ -1782,7 +1855,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
 
 
     @Override
-    public void spawnChildFromBreeding(net.minecraft.server.level.ServerLevel level, net.minecraft.world.entity.animal.Animal otherParent) {
+    public void spawnChildFromBreeding(net.minecraft.server.level.@NotNull ServerLevel level, net.minecraft.world.entity.animal.Animal otherParent) {
         net.minecraft.world.entity.AgeableMob baby = this.getBreedOffspring(level, otherParent);
         if (baby != null) {
             net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());

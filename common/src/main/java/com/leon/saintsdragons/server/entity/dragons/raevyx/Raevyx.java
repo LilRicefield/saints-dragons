@@ -45,12 +45,10 @@ import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
-import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.util.ClientAnimationInitHelper;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 
 import java.util.Map;
@@ -254,13 +252,9 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
     private static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
-    private static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
-    private static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
-    private static final int RIDER_WATER_SCAN_RADIUS = 2;
     public static final double LANDING_BLEND_ALTITUDE = 8.0D;
     private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
     private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
-    private static final float INVERTED_PITCH_TRIGGER_RAD = Mth.HALF_PI;
     private static final float BARREL_ROLL_INPUT_SPEED = 0.275f;
     private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
             new DragonBarrelRollHelper.Config(
@@ -936,41 +930,26 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         setLanding(landing);
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T extends DragonEntity> DragonAbility<T> getActiveAbility() {
-        return (DragonAbility<T>) combatManager.getActiveAbility();
-    }
-
-    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
-        return combatManager.isAbilityActive(abilityType);
-    }
-
     public boolean canUseAbility() {
         return !isBaby() && !isGroundRending() && !areRiderControlsLocked() && combatManager.canUseAbility();
     }
-    public void useRidingAbility(String abilityName) {
-        if (isBaby()) {
-            return;
+
+    @Override
+    protected boolean canUseResolvedRidingAbility(DragonAbilityType<?, ?> abilityType) {
+        if (isBaby() || isGroundRending() || areRiderControlsLocked()) {
+            return false;
         }
-        if (abilityName == null || abilityName.isEmpty()) return;
-        // Only allow when actually being ridden by a living controller (owner ideally)
-        var cp = getControllingPassenger();
-        if (!(cp instanceof net.minecraft.world.entity.LivingEntity)) {
-            return;
-        }
-        // Block during rider control lock (e.g., Summon Storm windup)
-        if (areRiderControlsLocked()) {
-            return;
-        }
-        if (this.isTame() && cp instanceof net.minecraft.world.entity.player.Player p && !this.isOwnedBy(p)) {
-            return; // owner-gate abilities on tamed dragons
-        }
-        var type = AbilityRegistry.get(abilityName);
-        if (type != null) {
-            // Delegate to combat manager which handles proper generic casting
-            combatManager.tryUseAbility(type);
-        }
+        return super.canUseResolvedRidingAbility(abilityType);
+    }
+
+    @Override
+    protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
+        return abilityType == RaevyxAbilities.RAEVYX_BITE
+            || abilityType == RaevyxAbilities.RAEVYX_HORN_GORE
+            || abilityType == RaevyxAbilities.RAEVYX_LIGHTNING_BEAM
+            || abilityType == RaevyxAbilities.RAEVYX_SUMMON_STORM
+            || abilityType == RaevyxAbilities.RAEVYX_GROUND_REND
+            || abilityType == RaevyxAbilities.RAEVYX_ROAR;
     }
 
     @Override
@@ -1054,26 +1033,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             return;
         }
         requestRiderTakeoff();
-    }
-
-    @Override
-    protected void onRiderAbilityUse(Player player, String abilityName) {
-        if (isGroundRending()) {
-            return;
-        }
-        if (abilityName != null && !abilityName.isEmpty()) {
-            useRidingAbility(abilityName);
-        }
-    }
-
-    @Override
-    protected void onRiderAbilityStop(Player player, String abilityName) {
-        if (abilityName != null && !abilityName.isEmpty()) {
-            var active = getActiveAbility();
-            if (active != null) {
-                forceEndActiveAbility();
-            }
-        }
     }
 
     @Override
@@ -1173,10 +1132,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             return clientBone;
         }
         return computeHeadMouthOrigin(partialTicks);
-    }
-
-    public void forceEndActiveAbility() {
-        combatManager.forceEndActiveAbility();
     }
 
     public boolean isBeaming() { return getBooleanData(DATA_BEAMING); }
@@ -3729,14 +3684,19 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         // Neutral behavior: do not proactively target players. Only retaliate when hurt or defend owner.
     }
 
-    /**
-     * Returns a larger bounding box for frustum culling to prevent the model from
-     * disappearing when the entity's collision box is off-screen but the visual model
-     * (wings, tail, etc.) should still be visible.
-     */
     @Override
-    public AABB getBoundingBoxForCulling() {
-        return super.getBoundingBoxForCulling().inflate(5.0, 3.0, 5.0);
+    protected double getCullingInflateX() {
+        return 5.0D;
+    }
+
+    @Override
+    protected double getCullingInflateY() {
+        return 3.0D;
+    }
+
+    @Override
+    protected double getCullingInflateZ() {
+        return 5.0D;
     }
 
     @Override
@@ -4964,8 +4924,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     // ===== SCREEN SHAKE INTERFACE IMPLEMENTATION =====
     @Override
-    public float getScreenShakeAmount(float partialTicks) {
-        return screenShakeComponent.getAmount(partialTicks);
+    protected ScreenShakeComponent getScreenShakeComponent() {
+        return screenShakeComponent;
     }
 
     @Override
@@ -4974,22 +4934,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     @Override
-    public boolean canFeelShake(Entity player) {
-        return true;
-    }
-    public void triggerScreenShake(float intensity) {
-        screenShakeComponent.trigger(intensity);
-    }
-
-    @Override
-    protected void dropAllDeathLoot(@NotNull DamageSource source) {
-        // Don't drop loot until death animation completes
-        if (deathTime < getDeathAnimationDurationTicks()) {
-            return;
-        }
-
-        super.dropAllDeathLoot(source);
-
+    protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);

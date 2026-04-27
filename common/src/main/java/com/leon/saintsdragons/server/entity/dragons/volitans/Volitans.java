@@ -7,7 +7,6 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModBlocks;
-import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
@@ -39,7 +38,6 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
-import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
@@ -552,7 +550,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
-    protected void playStepSound(net.minecraft.core.BlockPos pos, BlockState state) {
+    protected void playStepSound(net.minecraft.core.@NotNull BlockPos pos, @NotNull BlockState state) {
         if (isBaby()) {
             return;
         }
@@ -1116,20 +1114,18 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
-    protected void onRiderAbilityStop(Player player, String abilityName) {
+    protected boolean tryReleaseHeldRidingAbility(String abilityName) {
         if (isBurrowing()) {
-            return;
+            return true;
         }
-        if (abilityName != null && !abilityName.isEmpty()) {
-            if (VolitansAbilities.VOLITANS_POISON_BALL_ID.equals(abilityName)) {
-                var active = combatManager.getActiveAbility();
-                if (active != null && active.getAbilityType() == VolitansAbilities.VOLITANS_POISON_BALL) {
-                    ((VolitansPoisonBallAbility) active).requestRelease();
-                    return;
-                }
+        if (VolitansAbilities.VOLITANS_POISON_BALL_ID.equals(abilityName)) {
+            var active = combatManager.getActiveAbility();
+            if (active != null && active.getAbilityType() == VolitansAbilities.VOLITANS_POISON_BALL) {
+                ((VolitansPoisonBallAbility) active).requestRelease();
+                return true;
             }
-            forceEndActiveAbility();
         }
+        return false;
     }
 
     @Override
@@ -1181,7 +1177,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected void onRiderBackwardDodge(Player player) {
-        if (isBurrowing() || riderBackDashCooldownTicks > 0 || riderForwardDashing
+        if (isBurrowing() || isFlying() || isInWaterOrBubble() || riderBackDashCooldownTicks > 0 || riderForwardDashing
                 || riderBackDashing || riderBackDashRecoveryTicks > 0
                 || riderSideDodging || riderSideDodgeRecoveryTicks > 0
                 || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition() || (isTamingStunned() && !isTame())) {
@@ -2030,13 +2026,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
-    protected void dropAllDeathLoot(@NotNull DamageSource source) {
-        if (deathTime < getDeathAnimationDurationTicks()) {
-            return;
-        }
-
-        super.dropAllDeathLoot(source);
-
+    protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
         if (level().isClientSide) {
             return;
         }
@@ -2259,8 +2249,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
-    public float getScreenShakeAmount(float partialTicks) {
-        return screenShakeComponent.getAmount(partialTicks);
+    protected ScreenShakeComponent getScreenShakeComponent() {
+        return screenShakeComponent;
     }
 
     @Override
@@ -2269,40 +2259,15 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
-    public boolean canFeelShake(Entity player) {
-        return true;
-    }
-
-    public void triggerScreenShake(float intensity) {
-        screenShakeComponent.trigger(intensity);
-    }
-
-    public void triggerScreenShake(float intensity, int durationTicks) {
-        screenShakeComponent.hold(intensity, durationTicks);
-    }
-
-    public void useRidingAbility(String abilityName) {
-        if (abilityName == null || abilityName.isEmpty()) {
-            return;
-        }
-        Entity controlling = this.getControllingPassenger();
-        if (!(controlling instanceof LivingEntity)) {
-            return;
-        }
-        if (this.isTame() && controlling instanceof Player player && !this.isOwnedBy(player)) {
-            return;
-        }
-        DragonAbilityType<?, ?> type = AbilityRegistry.get(abilityName);
-        if (type == VolitansAbilities.VOLITANS_ROAR
-                || type == VolitansAbilities.VOLITANS_BURROW
-                || type == VolitansAbilities.VOLITANS_BITE
-                || type == VolitansAbilities.VOLITANS_CLAW
-                || type == VolitansAbilities.VOLITANS_BREATH
-                || type == VolitansAbilities.VOLITANS_POISON_BALL
-                || type == VolitansAbilities.VOLITANS_HORN_GORE
-                || type == VolitansAbilities.VOLITANS_ULTIMATE) {
-            combatManager.tryUseAbility(type);
-        }
+    protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
+        return abilityType == VolitansAbilities.VOLITANS_ROAR
+                || abilityType == VolitansAbilities.VOLITANS_BURROW
+                || abilityType == VolitansAbilities.VOLITANS_BITE
+                || abilityType == VolitansAbilities.VOLITANS_CLAW
+                || abilityType == VolitansAbilities.VOLITANS_BREATH
+                || abilityType == VolitansAbilities.VOLITANS_POISON_BALL
+                || abilityType == VolitansAbilities.VOLITANS_HORN_GORE
+                || abilityType == VolitansAbilities.VOLITANS_ULTIMATE;
     }
 
     public int getBreathMode() {
@@ -2497,10 +2462,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         markLandedNow();
     }
 
-    public void forceEndActiveAbility() {
-        combatManager.forceEndActiveAbility();
-    }
-
     public boolean isAiSpecialCombatActive() {
         return aiSpecialCombatActive;
     }
@@ -2521,10 +2482,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         if (reserved) {
             this.aiSpecialCombatActive = false;
         }
-    }
-
-    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
-        return combatManager.isAbilityActive(abilityType);
     }
 
     public boolean isGroundMobilityActive() {
@@ -3687,7 +3644,17 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     @Override
-    public @NotNull AABB getBoundingBoxForCulling() {
-        return super.getBoundingBoxForCulling().inflate(4.0D, 2.0D, 4.0D);
+    protected double getCullingInflateX() {
+        return 4.0D;
+    }
+
+    @Override
+    protected double getCullingInflateY() {
+        return 2.0D;
+    }
+
+    @Override
+    protected double getCullingInflateZ() {
+        return 4.0D;
     }
 }

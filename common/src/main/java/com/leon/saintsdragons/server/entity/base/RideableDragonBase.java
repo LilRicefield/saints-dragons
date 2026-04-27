@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.entity.base;
 
+import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
 import net.minecraft.nbt.CompoundTag;
@@ -13,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
@@ -308,6 +311,9 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             warnMissingAction("ability_use");
             return;
         }
+        if (abilityName != null && !abilityName.isEmpty()) {
+            useRidingAbility(abilityName);
+        }
     }
 
     protected void onRiderAbilityStop(Player player, String abilityName) {
@@ -315,6 +321,47 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             warnMissingAction("ability_stop");
             return;
         }
+        if (abilityName != null && !abilityName.isEmpty()) {
+            if (tryReleaseHeldRidingAbility(abilityName)) {
+                return;
+            }
+            forceEndActiveAbility();
+        }
+    }
+
+    protected boolean tryReleaseHeldRidingAbility(String abilityName) {
+        return false;
+    }
+
+    public void useRidingAbility(String abilityName) {
+        DragonAbilityType<?, ?> abilityType = resolveRidingAbilityType(abilityName);
+        if (abilityType == null || !canUseResolvedRidingAbility(abilityType)) {
+            return;
+        }
+        combatManager.tryUseAbility(abilityType);
+    }
+
+    @Nullable
+    protected DragonAbilityType<?, ?> resolveRidingAbilityType(String abilityName) {
+        if (abilityName == null || abilityName.isEmpty()) {
+            return null;
+        }
+        return AbilityRegistry.get(abilityName);
+    }
+
+    protected boolean canUseResolvedRidingAbility(DragonAbilityType<?, ?> abilityType) {
+        Entity rider = this.getControllingPassenger();
+        if (!(rider instanceof LivingEntity)) {
+            return false;
+        }
+        if (this.isTame() && rider instanceof Player player && !this.isOwnedBy(player)) {
+            return false;
+        }
+        return isRidingAbilityAllowed(abilityType);
+    }
+
+    protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
+        return true;
     }
 
     protected void onRiderOpenInventory(Player player) {

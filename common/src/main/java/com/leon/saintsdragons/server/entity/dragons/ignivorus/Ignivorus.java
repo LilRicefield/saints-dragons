@@ -6,7 +6,6 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.NetworkHandler;
-import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -31,7 +30,6 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
-import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
@@ -96,7 +94,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
@@ -915,15 +912,19 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return hurt;
     }
 
-    /**
-     * Returns a larger bounding box for frustum culling to prevent the model from
-     * disappearing when the entity's collision box is off-screen but the visual model
-     * (wings, tail, etc.) should still be visible.
-     */
     @Override
-    public AABB getBoundingBoxForCulling() {
-        // Expand the culling box significantly to account for wings, tail, and neck
-        return super.getBoundingBoxForCulling().inflate(8.0, 4.0, 8.0);
+    protected double getCullingInflateX() {
+        return 8.0D;
+    }
+
+    @Override
+    protected double getCullingInflateY() {
+        return 4.0D;
+    }
+
+    @Override
+    protected double getCullingInflateZ() {
+        return 8.0D;
     }
 
     @Override
@@ -1926,40 +1927,44 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
-    @Override
-    protected void onRiderAbilityUse(Player player, String abilityName) {
-        if (abilityName == null || abilityName.isEmpty()) {
-            return;
-        }
-        if (isBaby() && isBabyAbilityBlocked(abilityName)) {
-            return;
-        }
-        // Block non-attack abilities while in Phase 2
-        // Wing swipe, stomp, bite (for air), fire breath, and ultimate are allowed in Phase 2
-        if (isPhase2Active() &&
-            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID) &&
-            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID) &&
-            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_BITE_ID) &&
-            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID) &&
-            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID) &&
-            !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID)) {
-            return;
-        }
-        useRidingAbility(abilityName);
+    private boolean isPhaseTwoRidingAbilityBlocked(String abilityName) {
+        return isPhase2Active()
+                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID)
+                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID)
+                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_BITE_ID)
+                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID)
+                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID)
+                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID);
     }
 
     @Override
-    protected void onRiderAbilityStop(Player player, String abilityName) {
-        if (abilityName != null && !abilityName.isEmpty()) {
-            if (IgnivorusAbilities.IGNIVORUS_FIREBALL_ID.equals(abilityName)) {
-                var active = combatManager.getActiveAbility();
-                if (active != null && active.getAbilityType() == IgnivorusAbilities.IGNIVORUS_FIREBALL) {
-                    ((IgnivorusFireballAbility) active).requestRelease();
-                    return;
-                }
-            }
-            forceEndActiveAbility();
+    protected DragonAbilityType<?, ?> resolveRidingAbilityType(String abilityName) {
+        if (abilityName == null || abilityName.isEmpty()) {
+            return null;
         }
+        if (isBaby() && isBabyAbilityBlocked(abilityName)) {
+            return null;
+        }
+        if (isPhaseTwoRidingAbilityBlocked(abilityName)) {
+            return null;
+        }
+        if ((isFlying() || isTakeoff() || isLanding() || isHovering())
+                && IgnivorusAbilities.IGNIVORUS_ROAR_ID.equals(abilityName)) {
+            abilityName = IgnivorusAbilities.IGNIVORUS_FIREBALL_ID;
+        }
+        return super.resolveRidingAbilityType(abilityName);
+    }
+
+    @Override
+    protected boolean tryReleaseHeldRidingAbility(String abilityName) {
+        if (IgnivorusAbilities.IGNIVORUS_FIREBALL_ID.equals(abilityName)) {
+            var active = combatManager.getActiveAbility();
+            if (active != null && active.getAbilityType() == IgnivorusAbilities.IGNIVORUS_FIREBALL) {
+                ((IgnivorusFireballAbility) active).requestRelease();
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -2169,36 +2174,14 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 || IgnivorusAbilities.IGNIVORUS_STOMP_ID.equals(abilityName);
     }
 
-    public void useRidingAbility(String abilityName) {
-        if (abilityName == null || abilityName.isEmpty()) {
-            return;
-        }
-        if (isBaby() && isBabyAbilityBlocked(abilityName)) {
-            return;
-        }
-        if ((isFlying() || isTakeoff() || isLanding() || isHovering())
-                && IgnivorusAbilities.IGNIVORUS_ROAR_ID.equals(abilityName)) {
-            abilityName = IgnivorusAbilities.IGNIVORUS_FIREBALL_ID;
-        }
-        Entity controller = this.getControllingPassenger();
-        if (!(controller instanceof LivingEntity living)) {
-            return;
-        }
-        if (this.isTame() && controller instanceof Player player && !this.isOwnedBy(player)) {
-            return;
-        }
-        var type = AbilityRegistry.get(abilityName);
-        if (type != null) {
-            this.combatManager.tryUseAbility(type);
-        }
-    }
-
+    @Override
     public void forceEndActiveAbility() {
         this.combatManager.forceEndActiveAbility();
         clearFireBreathPath();
         setBreathingFire(false);
     }
 
+    @Override
     public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
         combatManager.forceEndAbility(abilityType);
         // Clear fire breath state if fire breath was cancelled
@@ -2206,10 +2189,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             clearFireBreathPath();
             setBreathingFire(false);
         }
-    }
-
-    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
-        return combatManager.isAbilityActive(abilityType);
     }
 
     public void requestFireballReleaseForAI() {
@@ -4248,8 +4227,8 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    public float getScreenShakeAmount(float partialTicks) {
-        return screenShakeComponent.getAmount(partialTicks);
+    protected ScreenShakeComponent getScreenShakeComponent() {
+        return screenShakeComponent;
     }
 
     @Override
@@ -4258,25 +4237,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    public boolean canFeelShake(Entity player) {
-        // Allow screen shake regardless of whether player is on ground
-        // This is important for dragon riding scenarios
-        return true;
-    }
-
-    public void triggerScreenShake(float intensity) {
-        screenShakeComponent.trigger(intensity);
-    }
-
-    @Override
-    protected void dropAllDeathLoot(@NotNull DamageSource source) {
-        // Don't drop loot until death animation completes
-        if (deathTime < getDeathAnimationDurationTicks()) {
-            return;
-        }
-
-        super.dropAllDeathLoot(source);
-
+    protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);

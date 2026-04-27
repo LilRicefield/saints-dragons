@@ -333,20 +333,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     }
 
     @Override
-    protected void onRiderAbilityUse(Player player, String abilityName) {
-        if (abilityName != null && !abilityName.isEmpty()) {
-            useRidingAbility(abilityName);
-        }
-    }
-
-    @Override
-    protected void onRiderAbilityStop(Player player, String abilityName) {
-        if (abilityName != null && !abilityName.isEmpty()) {
-            forceEndActiveAbility();
-        }
-    }
-
-    @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
         if (locked) {
@@ -1185,29 +1171,12 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         return new Vec3(x + offX, y + pitchedUp, z + offZ);
     }
 
-    public void useRidingAbility(String abilityName) {
-        if (abilityName == null || abilityName.isEmpty()) {
-            return;
-        }
+    @Override
+    protected boolean canUseResolvedRidingAbility(DragonAbilityType<?, ?> abilityType) {
         if (areRiderControlsLocked()) {
-            return;
+            return false;
         }
-        Entity rider = this.getControllingPassenger();
-        if (!(rider instanceof LivingEntity)) {
-            return;
-        }
-        if (this.isTame() && rider instanceof Player player && !this.isOwnedBy(player)) {
-            return;
-        }
-
-        DragonAbilityType<?, ?> type = com.leon.saintsdragons.common.registry.AbilityRegistry.get(abilityName);
-        if (type != null) {
-            combatManager.tryUseAbility(type);
-        }
-    }
-
-    public void forceEndActiveAbility() {
-        combatManager.forceEndActiveAbility();
+        return super.canUseResolvedRidingAbility(abilityType);
     }
 
     // ===== RIDING METHODS =====
@@ -1395,14 +1364,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
             return useHornGore ? VarasuchusAbilities.VARASUCHUS_HORN_GORE : VarasuchusAbilities.VARASUCHUS_BITE2;
         }
         return useHornGore ? VarasuchusAbilities.VARASUCHUS_HORN_GORE : VarasuchusAbilities.VARASUCHUS_BITE;
-    }
-
-    public boolean isAbilityActive(DragonAbilityType<?, ?> abilityType) {
-        return combatManager.isAbilityActive(abilityType);
-    }
-
-    public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
-        combatManager.forceEndAbility(abilityType);
     }
 
     public static boolean canSpawnHere(EntityType<? extends Varasuchus> type,
@@ -2488,25 +2449,23 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         return super.hurt(damageSource, amount);
     }
 
-    /**
-     * Returns a larger bounding box for frustum culling to prevent the model from
-     * disappearing when the entity's collision box is off-screen but the visual model
-     * (wings, tail, etc.) should still be visible.
-     */
     @Override
-    public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
-        return super.getBoundingBoxForCulling().inflate(8.0, 4.0, 8.0);
+    protected double getCullingInflateX() {
+        return 8.0D;
     }
 
     @Override
-    protected void dropAllDeathLoot(@NotNull DamageSource source) {
-        // Don't drop loot until death animation completes
-        if (deathTime < getDeathAnimationDurationTicks()) {
-            return;
-        }
+    protected double getCullingInflateY() {
+        return 4.0D;
+    }
 
-        super.dropAllDeathLoot(source);
+    @Override
+    protected double getCullingInflateZ() {
+        return 8.0D;
+    }
 
+    @Override
+    protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
         double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
@@ -2600,8 +2559,8 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     }
 
     @Override
-    public float getScreenShakeAmount(float partialTicks) {
-        return screenShakeComponent.getAmount(partialTicks);
+    protected ScreenShakeComponent getScreenShakeComponent() {
+        return screenShakeComponent;
     }
 
     @Override
@@ -2609,21 +2568,12 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         return 18.0;
     }
 
-    @Override
-    public boolean canFeelShake(Entity player) {
-        return true;
-    }
-
-    public void triggerScreenShake(float intensity) {
-        screenShakeComponent.trigger(intensity);
-    }
-
     public void startPhaseShiftScreenShake(int durationTicks, float intensity) {
-        screenShakeComponent.hold(intensity, durationTicks);
+        triggerScreenShake(intensity, durationTicks);
     }
 
     public void stopPhaseShiftScreenShake() {
-        screenShakeComponent.clear();
+        clearScreenShake();
     }
 
     public boolean canBeBound() {
