@@ -58,8 +58,9 @@ public final class VolitansUnderwaterSpawner {
             return;
         }
 
-        // Custom tick spawners need a stronger roll than vanilla biome entries or they feel absent.
-        int effectiveChance = Mth.clamp(weight * 8, 0, 100);
+        // This custom spawner bypasses vanilla biome spawn weighting, so keep the
+        // config value conservative: weight 1 means a 1% roll per interval.
+        int effectiveChance = Mth.clamp(weight, 0, 100);
         if (level.random.nextInt(100) >= effectiveChance) {
             return;
         }

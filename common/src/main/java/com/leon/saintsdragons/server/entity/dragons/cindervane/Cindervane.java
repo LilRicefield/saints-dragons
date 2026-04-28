@@ -19,6 +19,8 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigati
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.base.DragonVariant;
+import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
@@ -113,7 +115,12 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
 public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, PackMember<Cindervane> {
-    private static final float ALBINO_VARIANT_CHANCE = 0.15F;
+    public static final int VARIANT_DEFAULT = 0;
+    public static final int VARIANT_ALBINO = 1;
+    private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
+            DragonVariant.of(VARIANT_DEFAULT, "default", 85),
+            DragonVariant.of(VARIANT_ALBINO, "albino", 15)
+    );
     private static final int LANDING_SETTLE_TICKS = 4;
     private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
     private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
@@ -287,21 +294,17 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     protected int getMaxTextureVariant() {
-        // 0 = default, 1 = albino
-        return 1;
+        return VARIANTS.maxId();
     }
 
     @Override
     public java.util.Map<String, Integer> getTextureVariantNameMap() {
-        return java.util.Map.of(
-                "default", 0,
-                "albino", 1
-        );
+        return VARIANTS.nameMap();
     }
 
     @Override
     protected int chooseAdultTextureVariant() {
-        return this.getRandom().nextFloat() < ALBINO_VARIANT_CHANCE ? 1 : 0;
+        return VARIANTS.roll(this.getRandom());
     }
 
     // ===== CLIENT LOCATOR CACHE (client-side only) =====

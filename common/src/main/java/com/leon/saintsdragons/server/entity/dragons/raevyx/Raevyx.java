@@ -23,6 +23,8 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.base.DragonVariant;
+import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
 import com.leon.saintsdragons.server.entity.interfaces.*;
@@ -125,7 +127,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = RUN_SOUND_DURATION_TICKS;
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_NIGHT_GOLD = 50;
-    private static final float NIGHT_GOLD_VARIANT_CHANCE = 0.10F;
+    private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
+            DragonVariant.of(VARIANT_DEFAULT, "default", 90),
+            DragonVariant.of(VARIANT_NIGHT_GOLD, "night_gold", 10)
+    );
 
     // ===== CONSTANTS =====
 
@@ -433,8 +438,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     protected int getMaxTextureVariant() {
-        // 0 = default, 1 = night_gold
-        return VARIANT_NIGHT_GOLD;
+        return VARIANTS.maxId();
     }
 
     @Override
@@ -454,10 +458,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     @Override
     public java.util.Map<String, Integer> getTextureVariantNameMap() {
-        return java.util.Map.of(
-                "default", VARIANT_DEFAULT,
-                "night_gold", VARIANT_NIGHT_GOLD
-        );
+        return VARIANTS.nameMap();
     }
 
     public boolean isTamingStunned() {
@@ -4694,7 +4695,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
 
     private int rollAdultVariant() {
-        return this.getRandom().nextFloat() < NIGHT_GOLD_VARIANT_CHANCE ? VARIANT_NIGHT_GOLD : VARIANT_DEFAULT;
+        return VARIANTS.roll(this.getRandom());
     }
     @Override
     public boolean canMate(@Nonnull Animal otherAnimal) {

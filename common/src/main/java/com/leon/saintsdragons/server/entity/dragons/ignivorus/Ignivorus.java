@@ -26,6 +26,8 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigati
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.base.DragonVariant;
+import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
@@ -109,6 +111,16 @@ import java.util.List;
 import java.util.Map;
 
 public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
+    public static final int VARIANT_DEFAULT = 0;
+    public static final int VARIANT_CRIMSON = 1;
+    private static final DragonVariantSet SPAWN_VARIANTS = DragonVariantSet.of(
+            DragonVariant.of(VARIANT_DEFAULT, "default", 95),
+            DragonVariant.of(VARIANT_CRIMSON, "crimson", 5)
+    );
+    private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
+            DragonVariant.of(VARIANT_DEFAULT, "default", 50),
+            DragonVariant.of(VARIANT_CRIMSON, "crimson", 50)
+    );
     public static final int TAKEOFF_ANIMATION_TICKS = 30;
     private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     private final DragonTakeoff takeoffComponent;
@@ -1009,8 +1021,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     protected int getMaxTextureVariant() {
-        // 0 = default, 1 = crimson
-        return 1;
+        return VARIANTS.maxId();
     }
 
     @Override
@@ -1019,20 +1030,17 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                                             @NotNull MobSpawnType reason,
                                             @Nullable SpawnGroupData spawnData,
                                             @Nullable CompoundTag spawnTag) {
-        return this.getRandom().nextFloat() < 0.05F ? 1 : 0;
+        return SPAWN_VARIANTS.roll(this.getRandom());
     }
 
     @Override
     protected int chooseAdultTextureVariant() {
-        return this.getRandom().nextFloat() < 0.50F ? 1 : 0;
+        return VARIANTS.roll(this.getRandom());
     }
 
     @Override
     public java.util.Map<String, Integer> getTextureVariantNameMap() {
-        return java.util.Map.of(
-                "default", 0,
-                "crimson", 1
-        );
+        return VARIANTS.nameMap();
     }
 
     // ===== FIREBALL CHARGE SYSTEM =====

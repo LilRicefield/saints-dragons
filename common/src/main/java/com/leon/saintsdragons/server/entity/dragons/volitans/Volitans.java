@@ -22,6 +22,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DirectSwimToTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansBreedGoal;
+import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFindSleepDepthGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansSlamSequenceGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansGroundCombatGoal;
@@ -36,6 +37,8 @@ import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansB
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.DragonVariant;
+import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
@@ -109,9 +112,15 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final double BABY_MAX_HEALTH = 60.0D;
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
+    private static final int SLEEP_AFTER_SPAWN_GRACE_TICKS = 600;
+    private static final int WATER_SURFACE_SLEEP_SCAN_BLOCKS = 16;
+    private static final double MIN_UNDERWATER_SLEEP_SURFACE_CLEARANCE = 10D;
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_BLOODSHOT = 1;
-    private static final float BLOODSHOT_VARIANT_CHANCE = 0.50F;
+    private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
+            DragonVariant.of(VARIANT_DEFAULT, "default", 85),
+            DragonVariant.of(VARIANT_BLOODSHOT, "bloodshot", 15)
+    );
     private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_ACCUMULATED_ROLL =
@@ -586,6 +595,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
             this.goalSelector.addGoal(4, new VolitansWaterCombatGoal(this));
             this.goalSelector.addGoal(5, new VolitansBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         }
+        this.goalSelector.addGoal(6, new VolitansFindSleepDepthGoal(this, 6.0F, 0.16D));
         this.goalSelector.addGoal(6, new DirectSwimToTargetGoal(this, 8.0F, 0.28D, true) {
             @Override
             public boolean canUse() {
@@ -631,7 +641,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         });
         this.goalSelector.addGoal(11, new VolitansFlightGoal(this));
         this.goalSelector.addGoal(12, new DragonGroundWanderGoal<>(this, 0.9D, 70));
-        this.goalSelector.addGoal(13, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30) {
+        this.goalSelector.addGoal(14, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isSleepLocked() && super.canUse();
@@ -642,7 +652,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 return !Volitans.this.isSleepLocked() && super.canContinueToUse();
             }
         });
-        this.goalSelector.addGoal(14, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+        this.goalSelector.addGoal(15, new LookAtPlayerGoal(this, Player.class, 8.0F) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
@@ -653,7 +663,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 return !Volitans.this.isVehicle() && super.canContinueToUse();
             }
         });
-        this.goalSelector.addGoal(15, new RandomLookAroundGoal(this) {
+        this.goalSelector.addGoal(16, new RandomLookAroundGoal(this) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isVehicle() && super.canUse();
@@ -1805,7 +1815,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected int getMaxTextureVariant() {
-        return VARIANT_BLOODSHOT;
+        return VARIANTS.maxId();
     }
 
     @Override
@@ -1824,14 +1834,11 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public java.util.Map<String, Integer> getTextureVariantNameMap() {
-        return java.util.Map.of(
-                "default", VARIANT_DEFAULT,
-                "bloodshot", VARIANT_BLOODSHOT
-        );
+        return VARIANTS.nameMap();
     }
 
     private int rollAdultVariant() {
-        return this.getRandom().nextFloat() < BLOODSHOT_VARIANT_CHANCE ? VARIANT_BLOODSHOT : VARIANT_DEFAULT;
+        return VARIANTS.roll(this.getRandom());
     }
 
     @Override
@@ -3366,6 +3373,17 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     public boolean canSleepNow() {
+        boolean basicAllowed = canSeekSleepDepthNow();
+        if (!basicAllowed) {
+            return false;
+        }
+        if (isInWaterOrBubble()) {
+            return isDeepEnoughForUnderwaterSleep();
+        }
+        return true;
+    }
+
+    public boolean canSeekSleepDepthNow() {
         return !isVehicle()
                 && !isBurrowing()
                 && !isFlying()
@@ -3373,12 +3391,59 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 && !isTakeoff()
                 && !isLanding()
                 && !isBreathing()
-                && getActiveAbility() == null;
+                && getActiveAbility() == null
+                && (isSleeping() || isSleepTransitioning() || tickCount >= SLEEP_AFTER_SPAWN_GRACE_TICKS);
     }
 
     @Override
     public boolean canSleepInWater() {
         return true;
+    }
+
+    public boolean shouldSeekUnderwaterSleepDepth() {
+        return !isTame()
+                && supportsSleep()
+                && getSleepPreferences().canSleepDuringConditions(level())
+                && !isSleeping()
+                && !isSleepTransitioning()
+                && !isSleepSuppressed()
+                && getTarget() == null
+                && canSeekSleepDepthNow()
+                && isInWaterOrBubble()
+                && !isDeepEnoughForUnderwaterSleep();
+    }
+
+    private boolean isDeepEnoughForUnderwaterSleep() {
+        if (!isUnderWater()) {
+            return false;
+        }
+
+        double bodyTopY = getBoundingBox().maxY;
+        double surfaceY = getWaterSurfaceYAbove(getX(), getZ(), bodyTopY);
+        return surfaceY - bodyTopY >= MIN_UNDERWATER_SLEEP_SURFACE_CLEARANCE;
+    }
+
+    public boolean isDeepEnoughForUnderwaterSleepAt(Vec3 position) {
+        double bodyTopY = position.y + getBbHeight();
+        double surfaceY = getWaterSurfaceYAbove(position.x, position.z, bodyTopY);
+        return surfaceY - bodyTopY >= MIN_UNDERWATER_SLEEP_SURFACE_CLEARANCE;
+    }
+
+    private double getWaterSurfaceYAbove(double positionX, double positionZ, double fromY) {
+        int x = Mth.floor(positionX);
+        int z = Mth.floor(positionZ);
+        int startY = Mth.floor(fromY);
+        int maxY = Math.min(level().getMaxBuildHeight() - 1, startY + WATER_SURFACE_SLEEP_SCAN_BLOCKS);
+        net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos(x, startY, z);
+
+        for (int y = startY; y <= maxY; y++) {
+            cursor.setY(y);
+            if (!level().getFluidState(cursor).is(net.minecraft.tags.FluidTags.WATER)) {
+                return y;
+            }
+        }
+
+        return Double.POSITIVE_INFINITY;
     }
 
     @Override
